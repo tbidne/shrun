@@ -1,8 +1,9 @@
-{-# LANGUAGE RankNTypes #-}
-
 module ShellRunner.Utils
-  ( diffTime,
+  ( -- * Timing Utils
+    diffTime,
     formatSeconds,
+
+    -- * Functor Utils
     monoBimap,
   )
 where
@@ -14,7 +15,7 @@ import Data.Text qualified as T
 import ShellRunner.Types.NonNegative (NonNegative)
 import ShellRunner.Types.NonNegative qualified as NN
 import ShellRunner.Types.Positive (Positive)
-import ShellRunner.Types.Positive as P
+import ShellRunner.Types.Positive qualified as P
 import System.Clock qualified as C
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\).

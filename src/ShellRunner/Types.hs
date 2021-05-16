@@ -10,3 +10,4 @@ import ShellRunner.Types.NonNegative as T
 import ShellRunner.Types.Positive as T
 
 newtype Command = MkCommand {getCommand :: Text}
+  deriving (Show)
