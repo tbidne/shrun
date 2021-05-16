@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:shell-runner"
+
+    - path: "app/Main.hs"
+      component: "shell-runner:exe:shell-runner"

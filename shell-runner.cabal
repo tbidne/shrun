@@ -1,0 +1,69 @@
+cabal-version:      3.4
+name:               shell-runner
+version:            0.1.0.0
+license:            BSD-3-Clause
+author:             Thomas Bidne
+extra-source-files: CHANGELOG.md
+
+library
+  build-depends:
+    base ^>=4.14.1.0
+  hs-source-dirs: src
+  default-extensions:
+    BangPatterns
+    DeriveFunctor
+    FlexibleInstances
+    GeneralizedNewtypeDeriving
+    ImportQualifiedPost
+    LambdaCase
+    NamedFieldPuns
+    NumericUnderscores
+    OverloadedStrings
+    ScopedTypeVariables
+    TypeOperators
+    TypeSynonymInstances
+  ghc-options:
+    -haddock
+    -O2
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-home-modules
+    -Wmissing-export-lists
+    -Wpartial-fields
+    -Wredundant-constraints
+  default-language: Haskell2010
+
+executable shell-runner
+    main-is: Main.hs
+    build-depends:
+      base ^>=4.14.1.0
+    hs-source-dirs: app
+    default-extensions:
+      BangPatterns
+      DeriveFunctor
+      FlexibleInstances
+      GeneralizedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      NamedFieldPuns
+      NumericUnderscores
+      OverloadedStrings
+      ScopedTypeVariables
+      TypeOperators
+      TypeSynonymInstances
+    ghc-options:
+      -haddock
+      -O2
+      -Wall
+      -Wcompat
+      -Widentities
+      -Wincomplete-record-updates
+      -Wincomplete-uni-patterns
+      -Wmissing-home-modules
+      -Wmissing-export-lists
+      -Wpartial-fields
+      -Wredundant-constraints
+    default-language: Haskell2010
