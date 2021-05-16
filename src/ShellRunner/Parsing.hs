@@ -1,6 +1,5 @@
 module ShellRunner.Parsing
   ( Args (..),
-    argsParser,
     runParser,
   )
 where
@@ -12,9 +11,8 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import ShellRunner.Types.NonNegative (NonNegative)
+import ShellRunner.Types (Command (..), NonNegative)
 import ShellRunner.Types.NonNegative qualified as NN
-import ShellRunner.Types (Command(..))
 
 data Args = MkArgs
   { legend :: Maybe Text,
