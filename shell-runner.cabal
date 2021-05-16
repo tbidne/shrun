@@ -6,8 +6,24 @@ author:             Thomas Bidne
 extra-source-files: CHANGELOG.md
 
 library
+  exposed-modules:
+    ShellRunner
+    ShellRunner.IO
+    ShellRunner.Logger
+    ShellRunner.Types
+    ShellRunner.Types.IO
+    ShellRunner.Types.NonNegative
+    ShellRunner.Types.Positive
+    ShellRunner.Utils
   build-depends:
-    base ^>=4.14.1.0
+      async
+    , base ^>=4.14.1.0
+    , clock
+    , monad-loops
+    , pretty-terminal
+    , process
+    , silently
+    , text
   hs-source-dirs: src
   default-extensions:
     BangPatterns
@@ -20,6 +36,7 @@ library
     NumericUnderscores
     OverloadedStrings
     ScopedTypeVariables
+    TupleSections
     TypeOperators
     TypeSynonymInstances
   ghc-options:
@@ -39,7 +56,8 @@ library
 executable shell-runner
     main-is: Main.hs
     build-depends:
-      base ^>=4.14.1.0
+        base ^>=4.14.1.0
+      , shell-runner
     hs-source-dirs: app
     default-extensions:
       BangPatterns
@@ -52,6 +70,7 @@ executable shell-runner
       NumericUnderscores
       OverloadedStrings
       ScopedTypeVariables
+      TupleSections
       TypeOperators
       TypeSynonymInstances
     ghc-options:
