@@ -67,5 +67,5 @@ timedOut start curr =
       let timeSoFar = U.diffTime start curr
        in timeSoFar > t
 
-unfinished :: A.Async a -> IO Bool
+unfinished :: Async a -> IO Bool
 unfinished = A.poll >=> pure . May.isNothing

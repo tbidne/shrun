@@ -12,6 +12,7 @@ library
     ShellRunner.Logger
     ShellRunner.Parsing
     ShellRunner.Types
+    ShellRunner.Types.Command
     ShellRunner.Types.IO
     ShellRunner.Types.NonNegative
     ShellRunner.Types.Positive
