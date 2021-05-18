@@ -6,7 +6,7 @@ module ShellRunner.Types.Positive
   )
 where
 
-newtype Positive = MkPositive { getPositive :: Int }
+newtype Positive = MkPositive {getPositive :: Int}
   deriving (Eq, Ord, Show)
 
 mkPositive :: Int -> Maybe Positive

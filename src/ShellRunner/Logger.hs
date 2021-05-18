@@ -14,14 +14,14 @@ module ShellRunner.Logger
     logInfoCyan,
     logInfoSuccess,
     logWarn,
-    logError
+    logError,
   )
 where
 
 import Data.Text (Text)
 import Data.Text qualified as T
 import System.Console.Pretty qualified as P
-import qualified System.IO as IO
+import System.IO qualified as IO
 
 -- | Logs without a newline character.
 logNoLine :: Text -> IO ()

@@ -1,11 +1,12 @@
 module ShellRunner.Parsing.Commands
-  ( translateCommands
-  ) where
+  ( translateCommands,
+  )
+where
 
-import qualified Data.Map.Strict as Map
+import Data.Map.Strict qualified as Map
 import Data.Text (Text)
-import qualified Data.Text as T
-import ShellRunner.Types (Command(..))
+import Data.Text qualified as T
+import ShellRunner.Types (Command (..))
 import ShellRunner.Types.LegendMap (LegendMap)
 
 -- | Returns a list of 'T.Text' commands, potentially transforming a
