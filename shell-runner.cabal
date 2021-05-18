@@ -10,10 +10,13 @@ library
     ShellRunner
     ShellRunner.IO
     ShellRunner.Logger
-    ShellRunner.Parsing
+    ShellRunner.Parsing.Args
+    ShellRunner.Parsing.Commands
+    ShellRunner.Parsing.Legend
     ShellRunner.Types
     ShellRunner.Types.Command
     ShellRunner.Types.IO
+    ShellRunner.Types.LegendMap
     ShellRunner.Types.NonNegative
     ShellRunner.Types.Positive
     ShellRunner.Utils
@@ -21,6 +24,7 @@ library
       async
     , base ^>=4.14.1.0
     , clock
+    , containers
     , monad-loops
     , optparse-applicative
     , pretty-terminal
@@ -42,6 +46,7 @@ library
     TupleSections
     TypeOperators
     TypeSynonymInstances
+    ViewPatterns
   ghc-options:
     -haddock
     -O2
@@ -76,6 +81,7 @@ executable shell-runner
       TupleSections
       TypeOperators
       TypeSynonymInstances
+      ViewPatterns
     ghc-options:
       -haddock
       -O2

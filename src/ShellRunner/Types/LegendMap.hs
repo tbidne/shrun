@@ -1,0 +1,8 @@
+module ShellRunner.Types.LegendMap
+  ( LegendMap
+  ) where
+
+import Data.Map.Strict (Map)
+import Data.Text (Text, Text)
+
+type LegendMap = Map Text Text

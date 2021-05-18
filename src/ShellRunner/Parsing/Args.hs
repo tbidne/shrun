@@ -1,4 +1,4 @@
-module ShellRunner.Parsing
+module ShellRunner.Parsing.Args
   ( Args (..),
     runParser,
   )
@@ -17,7 +17,7 @@ import ShellRunner.Types.NonNegative qualified as NN
 data Args = MkArgs
   { legend :: Maybe Text,
     timeout :: Maybe NonNegative,
-    commands :: [Command]
+    commands :: [Text]
   }
   deriving (Show)
 
@@ -76,7 +76,5 @@ timeoutParser =
                 <> show v
                 <> "!"
 
-commandsParser :: Parser [Command]
-commandsParser = App.some (toCommand <$> OptApp.argument OptApp.str (OptApp.metavar "Commands..."))
-  where
-    toCommand = MkCommand . T.pack
+commandsParser :: Parser [Text]
+commandsParser = App.some (T.pack <$> OptApp.argument OptApp.str (OptApp.metavar "[Commands]"))

@@ -41,6 +41,7 @@ counter asyn timeout = do
   start <- C.getTime C.Monotonic
   Loops.whileM_ (keepRunning asyn start timeout) $ do
     ShIO.sh_ "sleep 1" Nothing
+    -- TODO: We can just count, don't need IO action probably
     elapsed <- C.getTime C.Monotonic
     let diff = U.diffTime start elapsed
     L.resetCR
