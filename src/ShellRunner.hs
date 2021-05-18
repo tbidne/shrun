@@ -10,7 +10,9 @@ import Control.Monad.Loops qualified as Loops
 import Data.Maybe qualified as May
 import ShellRunner.IO qualified as ShIO
 import ShellRunner.Logger qualified as L
-import ShellRunner.Types (Command (..), NonNegative, Stderr (..))
+import ShellRunner.Types.Command (Command (..))
+import ShellRunner.Types.IO (Stderr (..))
+import ShellRunner.Types.NonNegative (NonNegative)
 import ShellRunner.Utils qualified as U
 import System.Clock (TimeSpec)
 import System.Clock qualified as C

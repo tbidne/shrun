@@ -11,7 +11,9 @@ import Data.Bifunctor qualified as Bifunctor
 import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRunner.Types (Command (..), NonNegative, Stderr (..), Stdout (..))
+import ShellRunner.Types.Command (Command (..))
+import ShellRunner.Types.NonNegative (NonNegative (..))
+import ShellRunner.Types.IO (Stderr (..), Stdout (..))
 import ShellRunner.Utils qualified as Utils
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))

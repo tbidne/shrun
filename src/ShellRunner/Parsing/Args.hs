@@ -11,7 +11,7 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import ShellRunner.Types (NonNegative)
+import ShellRunner.Types.NonNegative (NonNegative)
 import ShellRunner.Types.NonNegative qualified as NN
 
 data Args = MkArgs

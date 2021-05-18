@@ -13,7 +13,6 @@ library
     ShellRunner.Parsing.Args
     ShellRunner.Parsing.Commands
     ShellRunner.Parsing.Legend
-    ShellRunner.Types
     ShellRunner.Types.Command
     ShellRunner.Types.IO
     ShellRunner.Types.LegendMap

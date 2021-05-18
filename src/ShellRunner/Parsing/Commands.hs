@@ -6,7 +6,7 @@ where
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRunner.Types (Command (..))
+import ShellRunner.Types.Command (Command (..))
 import ShellRunner.Types.LegendMap (LegendMap)
 
 -- | Returns a list of 'T.Text' commands, potentially transforming a

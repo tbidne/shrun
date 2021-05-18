@@ -12,8 +12,9 @@ import Data.Bifunctor (Bifunctor)
 import Data.Bifunctor qualified as Bifunctor
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRunner.Types (NonNegative, Positive)
+import ShellRunner.Types.NonNegative (NonNegative)
 import ShellRunner.Types.NonNegative qualified as NN
+import ShellRunner.Types.Positive (Positive)
 import ShellRunner.Types.Positive qualified as P
 import System.Clock qualified as C
 
