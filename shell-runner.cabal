@@ -28,7 +28,6 @@ library
     , optparse-applicative
     , pretty-terminal
     , process
-    , silently
     , text
   hs-source-dirs: src
   default-extensions:
