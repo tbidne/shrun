@@ -1,4 +1,4 @@
-module ShellRunner
+module ShellRun
   ( runCommands,
   )
 where
@@ -8,12 +8,12 @@ import Control.Concurrent.Async qualified as A
 import Control.Monad ((>=>))
 import Control.Monad.Loops qualified as Loops
 import Data.Maybe qualified as May
-import ShellRunner.IO qualified as ShIO
-import ShellRunner.Logger qualified as L
-import ShellRunner.Types.Command (Command (..))
-import ShellRunner.Types.IO (Stderr (..))
-import ShellRunner.Types.NonNegative (NonNegative)
-import ShellRunner.Utils qualified as U
+import ShellRun.IO qualified as ShIO
+import ShellRun.Logger qualified as L
+import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.IO (Stderr (..))
+import ShellRun.Types.NonNegative (NonNegative)
+import ShellRun.Utils qualified as U
 import System.Clock (TimeSpec)
 import System.Clock qualified as C
 

@@ -1,3 +1,3 @@
-# Shell Runner
+# Shell Run
 
 Runs arbitrary shell commands asynchronously.

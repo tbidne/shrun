@@ -1,4 +1,4 @@
-module ShellRunner.Types.NonNegative
+module ShellRun.Types.NonNegative
   ( NonNegative,
     getNonNegative,
     mkNonNegative,

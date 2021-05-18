@@ -1,4 +1,4 @@
-module ShellRunner.Types.LegendMap
+module ShellRun.Types.LegendMap
   ( LegendMap,
   )
 where

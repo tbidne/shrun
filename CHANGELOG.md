@@ -1,4 +1,4 @@
-# Revision history for shell-runner
+# Revision history for shell-run
 
 ## 0.1.0.0 -- YYYY-mm-dd
 

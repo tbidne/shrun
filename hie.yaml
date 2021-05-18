@@ -1,7 +1,7 @@
 cradle:
   cabal:
     - path: "src"
-      component: "lib:shell-runner"
+      component: "lib:shell-run"
 
     - path: "app/Main.hs"
-      component: "shell-runner:exe:shell-runner"
+      component: "shell-run:exe:shell-run"

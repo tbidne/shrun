@@ -1,4 +1,4 @@
-module ShellRunner.Types.Positive
+module ShellRun.Types.Positive
   ( Positive,
     getPositive,
     mkPositive,

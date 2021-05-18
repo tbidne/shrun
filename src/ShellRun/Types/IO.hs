@@ -1,4 +1,4 @@
-module ShellRunner.Types.IO
+module ShellRun.Types.IO
   ( Stdout (..),
     Stderr (..),
   )

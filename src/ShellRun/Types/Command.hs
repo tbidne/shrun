@@ -1,4 +1,4 @@
-module ShellRunner.Types.Command (Command (..)) where
+module ShellRun.Types.Command (Command (..)) where
 
 import Data.Text (Text)
 

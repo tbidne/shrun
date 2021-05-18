@@ -1,4 +1,4 @@
-module ShellRunner.Logger
+module ShellRun.Logger
   ( -- * Basic logging functions
     logNoLine,
     logLine,

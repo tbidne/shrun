@@ -1,4 +1,4 @@
-module ShellRunner.Utils
+module ShellRun.Utils
   ( -- * Timing Utils
     diffTime,
     formatSeconds,
@@ -12,10 +12,10 @@ import Data.Bifunctor (Bifunctor)
 import Data.Bifunctor qualified as Bifunctor
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRunner.Types.NonNegative (NonNegative)
-import ShellRunner.Types.NonNegative qualified as NN
-import ShellRunner.Types.Positive (Positive)
-import ShellRunner.Types.Positive qualified as P
+import ShellRun.Types.NonNegative (NonNegative)
+import ShellRun.Types.NonNegative qualified as NN
+import ShellRun.Types.Positive (Positive)
+import ShellRun.Types.Positive qualified as P
 import System.Clock qualified as C
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\).

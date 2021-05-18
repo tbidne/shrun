@@ -1,4 +1,4 @@
-module ShellRunner.IO
+module ShellRun.IO
   ( sh,
     sh_,
     shExitCode,
@@ -11,10 +11,10 @@ import Data.Bifunctor qualified as Bifunctor
 import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRunner.Types.Command (Command (..))
-import ShellRunner.Types.NonNegative (NonNegative (..))
-import ShellRunner.Types.IO (Stderr (..), Stdout (..))
-import ShellRunner.Utils qualified as Utils
+import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.NonNegative (NonNegative (..))
+import ShellRun.Types.IO (Stderr (..), Stdout (..))
+import ShellRun.Utils qualified as Utils
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))
 import System.Process qualified as P

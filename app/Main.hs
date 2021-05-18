@@ -1,11 +1,11 @@
 module Main (main) where
 
-import ShellRunner qualified as Sh
-import ShellRunner.Parsing.Args (Args (..))
-import ShellRunner.Parsing.Args qualified as ParseArgs
-import ShellRunner.Parsing.Legend qualified as ParseLegend
-import ShellRunner.Parsing.Commands qualified as ParseCommands
-import ShellRunner.Types.Command (Command (..))
+import ShellRun qualified as Sh
+import ShellRun.Parsing.Args (Args (..))
+import ShellRun.Parsing.Args qualified as ParseArgs
+import ShellRun.Parsing.Legend qualified as ParseLegend
+import ShellRun.Parsing.Commands qualified as ParseCommands
+import ShellRun.Types.Command (Command (..))
 
 main :: IO ()
 main = do

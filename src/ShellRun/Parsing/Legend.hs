@@ -1,4 +1,4 @@
-module ShellRunner.Parsing.Legend
+module ShellRun.Parsing.Legend
   ( legendPathToMap,
   )
 where
@@ -8,7 +8,7 @@ import Control.Exception qualified as Ex
 import Data.Map qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRunner.Types.LegendMap (LegendMap)
+import ShellRun.Types.LegendMap (LegendMap)
 
 data LegendErr
   = FileErr Text
