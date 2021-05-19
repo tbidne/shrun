@@ -11,6 +11,7 @@ import Control.Monad ((>=>))
 import Control.Monad.Loops qualified as Loops
 import Data.Maybe qualified as May
 import Data.Text (Text)
+import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.IO qualified as ShIO
 import ShellRun.Parsing.Args qualified as ParseArgs
 import ShellRun.Parsing.Legend qualified as ParseLegend
@@ -22,7 +23,6 @@ import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Utils qualified as U
 import System.Clock (TimeSpec)
 import System.Clock qualified as C
-import ShellRun.Class.MonadLogger qualified as ML
 
 class Monad m => MonadShell m where
   parseArgs :: m Args
