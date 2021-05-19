@@ -1,9 +1,8 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
-module ShellRun.Logger
-  ( -- * Basic logging functions
-    logNoLine,
-    logLine,
+module ShellRun.Class.MonadLogger
+  ( -- * Class for logging
+    MonadLogger (..),
 
     -- * Functions for manipulating carriage returns
     resetCR,
@@ -25,20 +24,23 @@ import Data.Text qualified as T
 import System.Console.Pretty qualified as P
 import System.IO qualified as IO
 
--- | Logs without a newline character.
-logNoLine :: Text -> IO ()
-logNoLine txt = putStr (T.unpack txt) *> IO.hFlush IO.stdout
+class Monad m => MonadLogger m where
+  logNoLine :: Text -> m ()
+  logLine :: Text -> m ()
 
--- | Logs with a newline character.
-logLine :: Text -> IO ()
-logLine = putStrLn . T.unpack
+instance MonadLogger IO where
+  logNoLine :: Text -> IO ()
+  logNoLine txt = putStr (T.unpack txt) *> IO.hFlush IO.stdout
+
+  logLine :: Text -> IO ()
+  logLine = putStrLn . T.unpack
 
 -- | 'logNoLine' with a carriage return.
-resetCR :: IO ()
+resetCR :: MonadLogger m => m ()
 resetCR = logNoLine "\r"
 
 -- | 'resetCR' then `logLine` with 60 spaces.
-clearLine :: IO ()
+clearLine :: MonadLogger m => m ()
 clearLine = do
   resetCR
   logLine spaces
@@ -46,29 +48,29 @@ clearLine = do
     spaces = T.pack $ replicate 80 ' '
 
 -- | Debug formatted 'logLine'.
-logDebug :: Text -> IO ()
+logDebug :: MonadLogger m => Text -> m ()
 logDebug = logLine . (<>) "[Debug] "
 
 -- | Info formatted 'logLine'.
-logInfo :: Text -> IO ()
+logInfo :: MonadLogger m => Text -> m ()
 logInfo = logLine . (<>) "[Info] "
 
 -- | Blue Info formatted 'logLine'.
-logInfoBlue :: Text -> IO ()
+logInfoBlue :: MonadLogger m => Text -> m ()
 logInfoBlue = logLine . P.color P.Blue . (<>) "[Info] "
 
 -- | Cyan Info formatted 'logLine'.
-logInfoCyan :: Text -> IO ()
+logInfoCyan :: MonadLogger m => Text -> m ()
 logInfoCyan = logLine . P.color P.Cyan . (<>) "[Info] "
 
 -- | Success Info formatted 'logLine'.
-logInfoSuccess :: Text -> IO ()
+logInfoSuccess :: MonadLogger m => Text -> m ()
 logInfoSuccess = logLine . P.color P.Green . (<>) "[Info] "
 
 -- | Warn formatted 'logLine'.
-logWarn :: Text -> IO ()
+logWarn :: MonadLogger m => Text -> m ()
 logWarn = logLine . P.color P.Magenta . (<>) "[Warn] "
 
 -- | Error formatted 'logLine'.
-logError :: Text -> IO ()
+logError :: MonadLogger m => Text -> m ()
 logError = logLine . P.color P.Red . (<>) "[Error] "

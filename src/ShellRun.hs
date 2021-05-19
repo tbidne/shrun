@@ -5,13 +5,16 @@ module ShellRun
   )
 where
 
+import Data.Text qualified as T
+import ShellRun.Class.MonadLogger (MonadLogger)
+import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Types.Args (Args (..))
 import ShellRun.Types.Command (Command (..))
 
 -- TODO: improve this
-runShell :: MonadShell m => m ()
+runShell :: (MonadLogger m, MonadShell m) => m ()
 runShell = do
   MkArgs {legend, timeout, commands} <- parseArgs
   maybeCommands <- case legend of
@@ -24,4 +27,4 @@ runShell = do
 
   case maybeCommands of
     Right cmds -> runCommands cmds timeout
-    Left err -> printM err
+    Left err -> ML.logError $ T.pack $ show err

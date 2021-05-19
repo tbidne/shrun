@@ -8,9 +8,9 @@ extra-source-files: CHANGELOG.md
 library
   exposed-modules:
     ShellRun
+    ShellRun.Class.MonadLogger
     ShellRun.Class.MonadShell
     ShellRun.IO
-    ShellRun.Logger
     ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Legend
