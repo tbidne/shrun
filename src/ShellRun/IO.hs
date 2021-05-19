@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module ShellRun.IO
   ( sh,
     sh_,
@@ -12,8 +14,8 @@ import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.NonNegative (NonNegative (..))
 import ShellRun.Types.IO (Stderr (..), Stdout (..))
+import ShellRun.Types.NonNegative (NonNegative (..))
 import ShellRun.Utils qualified as Utils
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))

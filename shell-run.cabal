@@ -35,7 +35,6 @@ library
     DeriveFunctor
     FlexibleInstances
     GeneralizedNewtypeDeriving
-    ImportQualifiedPost
     LambdaCase
     NamedFieldPuns
     NumericUnderscores
@@ -70,7 +69,6 @@ executable shell-run
     DeriveFunctor
     FlexibleInstances
     GeneralizedNewtypeDeriving
-    ImportQualifiedPost
     LambdaCase
     NamedFieldPuns
     NumericUnderscores
@@ -118,7 +116,6 @@ test-suite unit
     DeriveFunctor
     FlexibleInstances
     GeneralizedNewtypeDeriving
-    ImportQualifiedPost
     LambdaCase
     NamedFieldPuns
     NumericUnderscores

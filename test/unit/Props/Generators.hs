@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module Props.Generators
   ( genNonNegative,
     genPositive,

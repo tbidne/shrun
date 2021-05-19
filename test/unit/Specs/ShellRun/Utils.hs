@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module Specs.ShellRun.Utils (specs) where
 
 import ShellRun.Types.NonNegative as NN
