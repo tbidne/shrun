@@ -26,7 +26,9 @@ in pkgs.mkShell {
 
   shellHook = ''
     alias dev-build='cabal v2-build --ghc-options="-Wwarning"'
-    alias dev-test='cabal v2-test --ghc-options="-Wwarning"'
+    alias dev-unit='cabal v2-test unit --ghc-options="-Wwarning" --test-show-details=direct'
+    alias dev-functional='cabal v2-test functional --ghc-options="-Wwarning" --test-show-details=direct'
+    alias dev-test='cabal v2-test --ghc-options="-Wwarning" --test-show-details=direct'
     alias dev-run='cabal v2-run shell-run --ghc-options="-Wwarning"'
   '';
 }

@@ -1,10 +1,13 @@
 cradle:
   cabal:
-    - path: "src"
+    - path: "./src"
       component: "lib:shell-run"
 
-    - path: "app/Main.hs"
+    - path: "./app/Main.hs"
       component: "shell-run:exe:shell-run"
 
-    - path: "test/unit"
+    - path: "./test/unit"
       component: "shell-run:test:unit"
+
+    - path: "./test/functional"
+      component: "shell-run:test:functional"
