@@ -5,6 +5,9 @@ module ShellRun.Utils
 
     -- * Functor Utils
     monoBimap,
+
+    -- * Math Utils
+    divWithRem,
   )
 where
 
@@ -16,10 +19,11 @@ import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Types.NonNegative qualified as NN
 import ShellRun.Types.Positive (Positive)
 import ShellRun.Types.Positive qualified as P
+import System.Clock (TimeSpec)
 import System.Clock qualified as C
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\).
-diffTime :: C.TimeSpec -> C.TimeSpec -> NonNegative
+diffTime :: TimeSpec -> TimeSpec -> NonNegative
 diffTime t1 t2 =
   let diff = fromIntegral $ C.sec $ C.diffTimeSpec t1 t2
    in -- Safe because 'C.diffTimeSpec' guaranteed to be non-negative.
@@ -39,7 +43,7 @@ divWithRem n d = monoBimap NN.unsafeNonNegative (n' `div` d', n' `rem` d')
     n' = NN.getNonNegative n
     d' = P.getPositive d
 
--- | For \(n \ge 0\) seconds, returns a 'T.Text' description of the minutes
+-- | For \(n \ge 0\) seconds, returns a 'Text' description of the minutes
 -- and seconds.
 formatSeconds :: NonNegative -> Text
 formatSeconds seconds =
@@ -53,8 +57,7 @@ formatSeconds seconds =
           pluralize m " minute",
           " and ",
           NN.prettyPrint s,
-          pluralize s " second",
-          "  "
+          pluralize s " second"
         ]
 
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
