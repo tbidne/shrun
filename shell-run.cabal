@@ -101,6 +101,8 @@ test-suite unit
     Props
     Props.Generators
     Props.ShellRun.Utils
+    Specs
+    Specs.ShellRun.Utils
   build-depends:
       base ^>=4.14.1.0
     , clock
