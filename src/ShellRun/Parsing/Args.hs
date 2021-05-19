@@ -79,4 +79,4 @@ timeoutParser =
                 <> "!"
 
 commandsParser :: Parser [Text]
-commandsParser = App.some (T.pack <$> OptApp.argument OptApp.str (OptApp.metavar "[Commands]"))
+commandsParser = App.some (T.pack <$> OptApp.argument OptApp.str (OptApp.metavar "Commands..."))
