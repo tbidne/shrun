@@ -7,9 +7,6 @@ import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun qualified
-import ShellRun.Parsing.Commands qualified as ParseCommands
-import ShellRun.Parsing.Legend qualified as ParseLegend
-import ShellRun.Types.NonNegative qualified as NN
 import System.IO qualified as IO
 import System.IO.Silently qualified as Shh
 import System.Process qualified as P
@@ -17,6 +14,7 @@ import Test.Hspec (Spec, shouldSatisfy)
 import Test.Hspec qualified as Hspec
 import Test.Tasty qualified as T
 import Test.Tasty.Hspec qualified as TH
+import System.Environment qualified as SysEnv
 
 main :: IO ()
 main = tastySpec >>= T.defaultMain
@@ -28,24 +26,13 @@ spec = Hspec.afterAll_ tearDown $
   Hspec.beforeAll_ setup $
     Hspec.describe "" $ do
       Hspec.it "Should run commands" $ do
-        -- TODO: We really shouldn't have to care about these low level details
-        -- here, but we do for now because app/Main.hs has this logic.
-        -- Eventually we will extract that to a function, then we can
-        -- call that with our bare args
-        maybeLegend <- ParseLegend.legendPathToMap legendPath
-        case maybeLegend of
-          Left err -> do
-            -- NOTE: Lame, but leaving this until we refactor per above.
-            print err
-            True `shouldSatisfy` const False
-          Right legend -> do
-            let cds = ParseCommands.translateCommands legend commands
-            result <- Shh.capture_ (ShellRun.runCommands cds timeout)
+            result <- Shh.capture_ $ SysEnv.withArgs args ShellRun.runShell
             T.lines (T.pack result) `shouldSatisfy` allFound . foldMap sToVerifier
   where
-    legendPath = workingDirectory <> "/output/legend.txt"
+    args = [legendPath, timeout] <> commands
+    legendPath = "--legend=" <> workingDirectory <> "/output/legend.txt"
     commands = ["bad", "both", "echo hi"]
-    timeout = Just $ NN.unsafeNonNegative 5
+    timeout = "--timeout=5"
 
 workingDirectory :: IsString a => a
 workingDirectory = "./test/functional/scripts"

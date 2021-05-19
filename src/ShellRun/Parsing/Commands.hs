@@ -9,7 +9,7 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.LegendMap (LegendMap)
+import ShellRun.Types.Legend (LegendMap)
 
 -- | Returns a list of 'T.Text' commands, potentially transforming a
 -- given string via the `Map.Map` legend.

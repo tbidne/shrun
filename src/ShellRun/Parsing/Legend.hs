@@ -10,12 +10,7 @@ import Control.Exception qualified as Ex
 import Data.Map qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRun.Types.LegendMap (LegendMap)
-
-data LegendErr
-  = FileErr Text
-  | ParseErr Text
-  deriving (Show)
+import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
 legendPathToMap :: Text -> IO (Either LegendErr LegendMap)
 legendPathToMap legendPath = do

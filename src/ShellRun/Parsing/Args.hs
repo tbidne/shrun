@@ -1,8 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
 module ShellRun.Parsing.Args
-  ( Args (..),
-    runParser,
+  ( runParser,
   )
 where
 
@@ -13,15 +12,9 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
+import ShellRun.Types.Args (Args (..))
 import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Types.NonNegative qualified as NN
-
-data Args = MkArgs
-  { legend :: Maybe Text,
-    timeout :: Maybe NonNegative,
-    commands :: [Text]
-  }
-  deriving (Show)
 
 runParser :: IO Args
 runParser = OptApp.execParser parserInfo
