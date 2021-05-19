@@ -4,15 +4,25 @@
 
 let
   haskellDeps = ps: with ps; [
+    hlint
     implicit-hie
   ];
 
+  # NOTE: This has to be separate because if it's included above then we don't
+  # get the exe on the PATH (no idea why).
+  haskellOtherDeps = [ pkgs.haskellPackages.ormolu ];
+
   ghc = pkgs.haskell.packages.${compiler}.ghcWithPackages haskellDeps;
+
+  otherDeps = [
+    pkgs.cabal-install
+  ];
 in pkgs.mkShell {
 
-  buildInputs = [
-    ghc
-  ];
+  buildInputs =
+    [ghc]
+    ++ haskellOtherDeps
+    ++ otherDeps;
 
   shellHook = ''
     alias dev-build='cabal v2-build --ghc-options="-Wwarning"'
