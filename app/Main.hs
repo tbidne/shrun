@@ -2,7 +2,7 @@
 
 module Main (main) where
 
-import ShellRun.Class.MonadShell qualified as MonadShell
+import ShellRun qualified
 
 main :: IO ()
-main = MonadShell.runShell
+main = ShellRun.runShell
