@@ -8,14 +8,16 @@ extra-source-files: CHANGELOG.md
 library
   exposed-modules:
     ShellRun
+    ShellRun.Class.MonadShell
     ShellRun.IO
     ShellRun.Logger
     ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Legend
+    ShellRun.Types.Args
     ShellRun.Types.Command
     ShellRun.Types.IO
-    ShellRun.Types.LegendMap
+    ShellRun.Types.Legend
     ShellRun.Types.NonNegative
     ShellRun.Types.Positive
     ShellRun.Utils
@@ -35,6 +37,7 @@ library
     DeriveFunctor
     FlexibleInstances
     GeneralizedNewtypeDeriving
+    InstanceSigs
     LambdaCase
     NamedFieldPuns
     NumericUnderscores
@@ -69,6 +72,7 @@ executable shell-run
     DeriveFunctor
     FlexibleInstances
     GeneralizedNewtypeDeriving
+    InstanceSigs
     LambdaCase
     NamedFieldPuns
     NumericUnderscores
@@ -116,6 +120,7 @@ test-suite unit
     DeriveFunctor
     FlexibleInstances
     GeneralizedNewtypeDeriving
+    InstanceSigs
     LambdaCase
     NamedFieldPuns
     NumericUnderscores
@@ -157,6 +162,7 @@ test-suite functional
     DeriveFunctor
     FlexibleInstances
     GeneralizedNewtypeDeriving
+    InstanceSigs
     LambdaCase
     NamedFieldPuns
     NumericUnderscores
