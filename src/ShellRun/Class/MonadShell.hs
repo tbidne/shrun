@@ -12,7 +12,6 @@ import Control.Monad.Loops qualified as Loops
 import Data.Maybe qualified as May
 import Data.Text (Text)
 import ShellRun.IO qualified as ShIO
-import ShellRun.Logger qualified as L
 import ShellRun.Parsing.Args qualified as ParseArgs
 import ShellRun.Parsing.Legend qualified as ParseLegend
 import ShellRun.Types.Args (Args (..))
@@ -23,12 +22,12 @@ import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Utils qualified as U
 import System.Clock (TimeSpec)
 import System.Clock qualified as C
+import ShellRun.Class.MonadLogger qualified as ML
 
 class Monad m => MonadShell m where
   parseArgs :: m Args
   legendPathToMap :: Text -> m (Either LegendErr LegendMap)
   runCommands :: [Command] -> Maybe NonNegative -> m ()
-  printM :: Show a => a -> m ()
 
 instance MonadShell IO where
   parseArgs :: IO Args
@@ -44,20 +43,17 @@ instance MonadShell IO where
     counter actionAsync timeout
     end <- C.getTime C.Monotonic
     let totalTime = U.diffTime start end
-    L.clearLine
-    L.logInfoBlue "Finished!"
-    L.logInfoBlue $ "Total time elapsed: " <> U.formatSeconds totalTime
-
-  printM :: Show a => a -> IO ()
-  printM = print
+    ML.clearLine
+    ML.logInfoBlue "Finished!"
+    ML.logInfoBlue $ "Total time elapsed: " <> U.formatSeconds totalTime
 
 runCommand :: Command -> IO ()
 runCommand command@(MkCommand cmd) = do
   res <- ShIO.tryTimeSh command Nothing
   (seconds, logFn, msg) <- case res of
-    Left (t, MkStderr err) -> pure (t, L.logError, err)
-    Right (t, _) -> pure (t, L.logInfoSuccess, "Successfully ran `" <> cmd <> "`")
-  L.clearLine
+    Left (t, MkStderr err) -> pure (t, ML.logError, err)
+    Right (t, _) -> pure (t, ML.logInfoSuccess, "Successfully ran `" <> cmd <> "`")
+  ML.clearLine
   logFn msg
   logFn $ "Time elapsed: " <> U.formatSeconds seconds <> "\n"
 
@@ -69,8 +65,8 @@ counter asyn timeout = do
     -- TODO: We can just count, don't need IO action probably
     elapsed <- C.getTime C.Monotonic
     let diff = U.diffTime start elapsed
-    L.resetCR
-    L.logNoLine $ "Running time: " <> U.formatSeconds diff
+    ML.resetCR
+    ML.logNoLine $ "Running time: " <> U.formatSeconds diff
 
 keepRunning :: Async a -> TimeSpec -> Maybe NonNegative -> IO Bool
 keepRunning asyn start to = do
@@ -80,8 +76,8 @@ keepRunning asyn start to = do
   if running && hasTimedOut
     then do
       A.cancel asyn
-      L.clearLine
-      L.logWarn "Timed out, cancelling remaining tasks."
+      ML.clearLine
+      ML.logWarn "Timed out, cancelling remaining tasks."
       pure False
     else pure running
 

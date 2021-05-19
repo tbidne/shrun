@@ -7,6 +7,7 @@ import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun qualified
+import System.Environment qualified as SysEnv
 import System.IO qualified as IO
 import System.IO.Silently qualified as Shh
 import System.Process qualified as P
@@ -14,7 +15,6 @@ import Test.Hspec (Spec, shouldSatisfy)
 import Test.Hspec qualified as Hspec
 import Test.Tasty qualified as T
 import Test.Tasty.Hspec qualified as TH
-import System.Environment qualified as SysEnv
 
 main :: IO ()
 main = tastySpec >>= T.defaultMain
@@ -26,8 +26,8 @@ spec = Hspec.afterAll_ tearDown $
   Hspec.beforeAll_ setup $
     Hspec.describe "" $ do
       Hspec.it "Should run commands" $ do
-            result <- Shh.capture_ $ SysEnv.withArgs args ShellRun.runShell
-            T.lines (T.pack result) `shouldSatisfy` allFound . foldMap sToVerifier
+        result <- Shh.capture_ $ SysEnv.withArgs args ShellRun.runShell
+        T.lines (T.pack result) `shouldSatisfy` allFound . foldMap sToVerifier
   where
     args = [legendPath, timeout] <> commands
     legendPath = "--legend=" <> workingDirectory <> "/output/legend.txt"
