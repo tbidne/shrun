@@ -1,0 +1,4 @@
+packages: .
+
+package shell-run
+  ghc-options: -Werror
