@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module ShellRun.Utils
   ( -- * Timing Utils
     diffTime,

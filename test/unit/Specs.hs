@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module Specs (specs) where
 
 import Specs.ShellRun.Utils qualified as Utils

@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module ShellRun.Parsing.Args
   ( Args (..),
     runParser,

@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module Props.ShellRun.Utils
   ( props,
   )
@@ -11,10 +13,10 @@ import ShellRun.Types.NonNegative qualified as NN
 import ShellRun.Types.Positive (Positive)
 import ShellRun.Types.Positive qualified as P
 import ShellRun.Utils qualified as U
+import System.Clock (TimeSpec)
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
-import System.Clock (TimeSpec)
 
 props :: TestTree
 props = T.testGroup "ShellRun.Utils" [diffTimeProps, divWithRemProps]
@@ -54,7 +56,7 @@ vDivWithRem (n, divisor) (e, remainder) = do
     remainderRaw = NN.getNonNegative remainder
 
 genTimeSpecs :: Gen (TimeSpec, TimeSpec)
-genTimeSpecs = (,) <$> PGens.genTimeSpec <*> PGens.genTimeSpec 
+genTimeSpecs = (,) <$> PGens.genTimeSpec <*> PGens.genTimeSpec
 
 genNNAndPos :: Gen (NonNegative, Positive)
 genNNAndPos = (,) <$> PGens.genNonNegative <*> PGens.genPositive

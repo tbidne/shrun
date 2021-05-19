@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module ShellRun.Logger
   ( -- * Basic logging functions
     logNoLine,

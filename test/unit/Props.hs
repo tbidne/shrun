@@ -1,3 +1,5 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module Props (props) where
 
 import Props.ShellRun.Utils qualified as Utils
