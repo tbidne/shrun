@@ -3,10 +3,8 @@ module Props.ShellRun.Utils
   )
 where
 
-import Hedgehog (Gen, PropertyT, (===))
+import Hedgehog (Gen, PropertyT)
 import Hedgehog qualified as H
-import Hedgehog.Gen qualified as HGen
-import Hedgehog.Range qualified as HRange
 import Props.Generators qualified as PGens
 import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Types.NonNegative qualified as NN
