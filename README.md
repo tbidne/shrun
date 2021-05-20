@@ -130,11 +130,12 @@ The project is set to build with `-Werror` in `cabal.project`, so if for some re
 
 # Tests
 
-There are two test suites, `unit` and `functional`. These can be run via:
+There are three test suites, `unit`, `integration` and `functional`. These can be run via:
 
 ```sh
 # --test-show-details=direct gives nicer output
 cabal test unit --test-show-details=direct
+cabal test integration --test-show-details=direct
 cabal test functional --test-show-details=direct
 
 # everything

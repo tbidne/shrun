@@ -25,6 +25,9 @@ jobs:
 
       - name: Unit Test
         run: nix-shell shell.nix --command "cabal update && cabal v2-test unit --test-show-details=direct"
+      
+      - name: Integration Test
+        run: nix-shell shell.nix --command "cabal update && cabal v2-test integration --test-show-details=direct"
 
       - name: Functional Test
         run: nix-shell shell.nix --command "cabal update && cabal v2-test functional --test-show-details=direct"

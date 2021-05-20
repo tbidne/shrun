@@ -9,5 +9,8 @@ cradle:
     - path: "./test/unit"
       component: "shell-run:test:unit"
 
+    - path: "./test/integration"
+      component: "shell-run:test:integration"
+
     - path: "./test/functional"
       component: "shell-run:test:functional"
