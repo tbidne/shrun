@@ -4,6 +4,7 @@ module Props.Generators
   ( genNonNegative,
     genPositive,
     genTimeSpec,
+    genInt,
   )
 where
 
@@ -33,3 +34,8 @@ genInt64 :: Gen Int64
 genInt64 =
   let range = Range.linearFrom 0 minBound maxBound
    in Gen.int64 range
+
+genInt :: Gen Int 
+genInt =
+  let range = Range.linearFrom 0 minBound maxBound 
+   in Gen.int range
