@@ -5,6 +5,7 @@ module ShellRun.Parsing.Args
   )
 where
 
+import Control.Applicative ((<**>))
 import Control.Applicative qualified as App
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -37,6 +38,7 @@ argsParser =
     <$> legendParser
     <*> timeoutParser
     <*> commandsParser
+      <**> OptApp.helper
 
 legendParser :: Parser (Maybe Text)
 legendParser =
@@ -72,4 +74,8 @@ timeoutParser =
                 <> "!"
 
 commandsParser :: Parser [Text]
-commandsParser = App.some (T.pack <$> OptApp.argument OptApp.str (OptApp.metavar "Commands..."))
+commandsParser =
+  App.some
+    ( T.pack
+        <$> OptApp.argument OptApp.str (OptApp.metavar "Commands...")
+    )

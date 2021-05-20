@@ -48,7 +48,7 @@ alias run_commands_cmd3a="cmd1 && cmd2 && cmd3a"
 alias run_commands_cmd3b="cmd1 && cmd2 && cmd3b"
 ```
 
-But this is messy and obviously does not scale. You would need an exponential number of aliases for each variation.
+But this is messy and grows exponentially in the number of aliases for each variation.
 
 This application purports to overcome these limitations.
 
@@ -57,6 +57,11 @@ This application purports to overcome these limitations.
 The application has the following usage:
 ```sh
 Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] Commands...
+
+Available options:
+  -l,--legend ARG          Path to legend file, used for translating commands
+  -t,--timeout ARG         Non-negative integer setting a timeout
+  -h,--help                Show this help text
 ```
 
 In general, `shell-run` is a wrapper around running shell commands. For instance:
