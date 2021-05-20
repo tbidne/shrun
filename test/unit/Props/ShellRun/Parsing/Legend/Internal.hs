@@ -17,13 +17,17 @@ import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
 props :: TestTree
-props = T.testGroup "ShellRun.Parsing.Legend.Internal" [successProps]
+props =
+  T.testGroup
+    "ShellRun.Parsing.Legend.Internal"
+    [ successProps,
+      failureProps
+    ]
 
 successProps :: TestTree
 successProps = TH.testProperty "linesToMap success props" $
   H.property $ do
     commands <- H.forAll genGoodLines
-    H.annotate "Parse should succeed"
     let result = Internal.linesToMap commands
     case result of
       Left err -> do
@@ -32,6 +36,15 @@ successProps = TH.testProperty "linesToMap success props" $
       Right legend -> do
         H.annotate "Unique keys in original list should match legend"
         verifySize commands legend
+
+failureProps :: TestTree
+failureProps = TH.testProperty "linesToMap failure props" $
+  H.property $ do
+    commands <- H.forAll genBadLines
+    let result = Internal.linesToMap commands
+    case result of
+      Left _ -> H.success
+      Right _ -> H.failure
 
 verifySize :: [Text] -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do
@@ -80,3 +93,17 @@ genVal :: MonadGen m => m Text
 genVal = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 10 1 30
+
+genBadLines :: forall m. MonadGen m => m [Text]
+genBadLines = Gen.shuffle =<< (:) <$> genBadLine <*> genGoodLines
+
+-- Since we have the format 'key=val' where val can also include '=', the only
+-- way a line can be "bad" is if:
+--   1. non-empty
+--   2. not a comment (does not start with #)
+--   3. has no '='
+genBadLine :: MonadGen m => m Text
+genBadLine = Gen.filterT noEquals $ Gen.text range Gen.latin1
+  where
+    range = Range.linearFrom 5 1 10
+    noEquals t = Txt.head t /= '#' && Txt.all (/= '=') t
