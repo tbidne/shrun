@@ -14,6 +14,7 @@ library
     ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Legend
+    ShellRun.Parsing.Legend.Internal
     ShellRun.Types.Args
     ShellRun.Types.Command
     ShellRun.Types.IO
@@ -104,18 +105,23 @@ test-suite unit
   other-modules:
     Props
     Props.Generators
+    Props.ShellRun.Parsing.Legend.Internal
+    Props.ShellRun.Types.NonNegative
+    Props.ShellRun.Types.Positive
     Props.ShellRun.Utils
     Specs
     Specs.ShellRun.Utils
   build-depends:
       base ^>=4.14.1.0
     , clock
+    , containers
     , hedgehog
     , hspec
     , shell-run
     , tasty
     , tasty-hedgehog
     , tasty-hspec
+    , text
   hs-source-dirs: test/unit
   default-extensions:
     BangPatterns
