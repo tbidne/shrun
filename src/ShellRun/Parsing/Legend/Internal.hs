@@ -21,8 +21,9 @@ linesToMap = foldr f (Right Map.empty)
 
 parseLine :: Text -> Either LegendErr (Text, Text)
 parseLine l =
-  case T.splitOn "=" l of
-    ["", _] -> Left $ ParseErr l
-    [_, ""] -> Left $ ParseErr l
-    [key, cmd] -> Right (key, cmd)
-    _ -> Left $ ParseErr l
+  case T.break (== '=') l of
+    ("", _) -> Left $ ParseErr $ "Key cannot be empty: " <> l
+    (_, "") -> Left $ ParseErr $ "Value cannot be empty: " <> l
+    -- T.tail is safe because v can't be empty, or it would have matched
+    -- the previous pattern.
+    (k, v) -> Right (k, T.tail v)

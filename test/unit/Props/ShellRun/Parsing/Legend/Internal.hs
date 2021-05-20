@@ -37,8 +37,8 @@ verifySize :: [Text] -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do
   H.annotateShow commands
   let noComments = filter (not . Txt.isPrefixOf "#") commands
-  textKeys <- traverse getKey noComments
-  let numUniqueKeys = length $ Set.fromList textKeys
+      textKeys = fmap getKey noComments
+      numUniqueKeys = length $ Set.fromList textKeys
       numLegendKeys = length $ Map.keys legend
 
   H.annotate $ "Commands: " <> show commands
@@ -47,11 +47,7 @@ verifySize commands legend = do
   H.annotate $ "numLegendKeys: " <> show numLegendKeys
   numLegendKeys === numUniqueKeys
   where
-    getKey c = case Txt.splitOn "=" c of
-      [k, _] -> pure k
-      badList -> do
-        H.annotate $ "Splitting on `=` failed!: " <> show badList
-        H.failure
+    getKey = fst . Txt.break (== '=')
 
 genGoodLines :: MonadGen m => m [Text]
 genGoodLines = do
@@ -70,18 +66,17 @@ genComment = do
 
 genGoodLine :: MonadGen m => m Text
 genGoodLine = do
-  key <- genNoSpaceOrEquals
-  value <- genNoEquals
+  key <- genKey
+  value <- genVal
   pure $ key <> "=" <> value
 
-genNoSpaceOrEquals :: MonadGen m => m Text
-genNoSpaceOrEquals = Gen.filterT noSpaceOrEquals $ Gen.text range Gen.latin1
+genKey :: MonadGen m => m Text
+genKey = Gen.filterT noSpaceOrEquals $ Gen.text range Gen.latin1
   where
     range = Range.linearFrom 5 1 10
     noSpaceOrEquals = Txt.all (\c -> c /= ' ' && c /= '=')
 
-genNoEquals :: MonadGen m => m Text
-genNoEquals = Gen.filterT noEquals $ Gen.text range Gen.latin1
+genVal :: MonadGen m => m Text
+genVal = Gen.text range Gen.latin1
   where
-    range = Range.linearFrom 5 1 10
-    noEquals = Txt.all (/= '=')
+    range = Range.linearFrom 10 1 30
