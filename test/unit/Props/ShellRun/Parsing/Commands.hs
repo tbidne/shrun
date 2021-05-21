@@ -5,6 +5,7 @@ module Props.ShellRun.Parsing.Commands
   )
 where
 
+import Control.Monad qualified as M
 import Data.Map.Strict qualified as Map
 import Data.Set (Set)
 import Data.Set qualified as Set
@@ -39,12 +40,13 @@ translateProps = TH.testProperty "translateCommands includes everything" $
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands
 noCommandsMissing :: Set Text -> [Text] -> PropertyT IO ()
-noCommandsMissing _ [] = pure ()
-noCommandsMissing allKeys (cmd : origCmds)
-  | Set.member cmd allKeys = noCommandsMissing allKeys origCmds
-  | otherwise = do
-    H.footnote $ "Missing command: " <> show cmd
-    H.failure
+noCommandsMissing allKeys = M.void . traverse failIfMissing
+  where
+    failIfMissing cmd
+      | Set.member cmd allKeys = pure ()
+      | otherwise = do
+        H.footnote $ "Missing command: " <> show cmd
+        H.failure
 
 genLegendCommands :: MonadGen m => m (LegendMap, [Text])
 genLegendCommands = (,) <$> genLegend <*> genCommands
@@ -52,7 +54,7 @@ genLegendCommands = (,) <$> genLegend <*> genCommands
 genLegend :: MonadGen m => m LegendMap
 genLegend = Map.fromList <$> Gen.list range genKeyVal
   where
-    range = Range.linearFrom 20 1 80
+    range = Range.linearFrom 0 0 80
 
 genKeyVal :: MonadGen m => m (Text, Text)
 genKeyVal = (,) <$> genKey <*> genVal
@@ -60,19 +62,19 @@ genKeyVal = (,) <$> genKey <*> genVal
 genKey :: MonadGen m => m Text
 genKey = Gen.text range Gen.latin1
   where
-    range = Range.linearFrom 5 1 10
+    range = Range.linearFrom 1 1 10
 
 genVal :: MonadGen m => m Text
 genVal = Gen.text range Gen.latin1
   where
-    range = Range.linearFrom 10 1 50
+    range = Range.linearFrom 1 1 50
 
 genCommands :: MonadGen m => m [Text]
 genCommands = Gen.list range genCommand
   where
-    range = Range.linearFrom 10 1 50
+    range = Range.linearFrom 1 1 50
 
 genCommand :: MonadGen m => m Text
 genCommand = Gen.text range Gen.latin1
   where
-    range = Range.linearFrom 10 1 50
+    range = Range.linearFrom 1 1 50
