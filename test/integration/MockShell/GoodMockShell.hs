@@ -32,7 +32,7 @@ instance MonadShell GoodMockShell where
         Map.fromList
           [ ("cmd1", "command 1"),
             ("cmd2", "command 2"),
-            ("both", "cmd1,cmd2")
+            ("both", "cmd1,,cmd2")
           ]
 
   runCommands :: [Command] -> Maybe NonNegative -> GoodMockShell ()

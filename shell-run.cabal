@@ -105,11 +105,13 @@ test-suite unit
   other-modules:
     Props
     Props.Generators
+    Props.ShellRun.Parsing.Commands
     Props.ShellRun.Parsing.Legend.Internal
     Props.ShellRun.Types.NonNegative
     Props.ShellRun.Types.Positive
     Props.ShellRun.Utils
     Specs
+    Specs.ShellRun.Parsing.Commands
     Specs.ShellRun.Utils
   build-depends:
       base ^>=4.14.1.0
