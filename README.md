@@ -55,11 +55,15 @@ This application purports to overcome these limitations.
 # Introduction
 
 The application has the following usage:
-```sh
+```text
 Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] Commands...
 
 Available options:
-  -l,--legend ARG          Path to legend file, used for translating commands
+  -l,--legend ARG          Path to legend file, used for translating commands.
+                           Key/value pairs have the form `key=cmd1,,cmd2,,...`,
+                           i.e., keys can refer to multiple commands and refer
+                           to other keys recursively. Lines starting with `#`
+                           are considered comments and ignored.
   -t,--timeout ARG         Non-negative integer setting a timeout
   -h,--help                Show this help text
 ```
@@ -90,7 +94,7 @@ A legend file can be specified by `-l <path/to/legend>` or `--legend=<path/to/le
 
 Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
 
-Each line can be separated by as many new lines as desired, and comment lines start with a #. Command values themselves can include multiple commands delimited by commas, and they may reference other commands. For instance, given a legend file:
+Each line can be separated by as many new lines as desired, and comment lines start with a #. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands. For instance, given a legend file:
 
 ```text
 cmd1=echo "command one"
@@ -102,7 +106,7 @@ cmd3=cmd2
 cmd4=command four
 
 # runs 3 and 4
-all=cmd3,cmd4,echo hi
+all=cmd3,,cmd4,,echo hi
 ```
 
 Then the command

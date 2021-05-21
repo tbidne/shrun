@@ -47,9 +47,16 @@ legendParser =
         <$> OptApp.strOption
           ( OptApp.long "legend"
               <> OptApp.short 'l'
-              <> OptApp.help "Path to legend file, used for translating commands"
+              <> OptApp.help legendHelp
           )
     )
+  where
+    legendHelp =
+      "Path to legend file, used for translating commands."
+        <> " Key/value pairs have the form `key=cmd1,,cmd2,,...`"
+        <> ", i.e., keys can refer to multiple commands and refer to"
+        <> " other keys recursively. Lines starting with `#` are"
+        <> " considered comments and ignored."
 
 timeoutParser :: Parser (Maybe NonNegative)
 timeoutParser =
