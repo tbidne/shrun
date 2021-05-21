@@ -3,6 +3,7 @@
 # Shell Run
 
 ![cabal](https://github.com/tbidne/shell-run/workflows/cabal/badge.svg?branch=main)
+![stack](https://github.com/tbidne/shell-run/workflows/stack/badge.svg?branch=main)
 ![hlint](https://github.com/tbidne/shell-run/workflows/hlint/badge.svg?branch=main)
 ![ormolu](https://github.com/tbidne/shell-run/workflows/ormolu/badge.svg?branch=main)
 
@@ -121,16 +122,25 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 ## Prerequisites
 
-- `cabal-install 3.4`
-- `ghc 8.10.4+`
+You will need one of:
 
-The app can be built via `cabal`. If you are using `nix`, a `shell.nix` file exists that will provide the needed dependencies, including the right `ghc`. Otherwise, building is the same as `cabal`.
+- `cabal-install 2.4` and `ghc 8.10.4+`
+- `stack`
+- `nix`
+
+
+
+The app can be built via `cabal` or `stack`. If you are using `nix`, a `shell.nix` file exists that will provide the needed dependencies, including the right `ghc`. Otherwise, building is the same as `cabal`.
 
 ## Cabal
 
 You will need `ghc 8.10.4+` and `cabal-install 3.4`. From there the app can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
 The project is set to build with `-Werror` in `cabal.project`, so if for some reason that's a problem, you can disable this with `cabal build --ghc-options="-Wwarn"`.
+
+## Stack
+
+Like `cabal`, the app can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
 
 # Tests
 
