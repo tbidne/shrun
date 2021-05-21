@@ -124,7 +124,7 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 You will need one of:
 
-- `cabal-install 2.4` and `ghc 8.10.4+`
+- `cabal-install 2.4+` and `ghc 8.10.4+`
 - `stack`
 - `nix`
 
