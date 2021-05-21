@@ -21,7 +21,7 @@ import ShellRun.Types.Legend (LegendMap)
 -- For example,
 --
 -- @
---   m = { "cmd1": "one", "cmd2": "two", "all": "cmd1,cmd2,other" }
+--   m = { "cmd1": "one", "cmd2": "two", "all": "cmd1,,cmd2,,other" }
 --   translateCommands m ["all", "blah"] == ["one", "two", "other", "blah"]
 -- @
 translateCommands :: LegendMap -> [Text] -> [Command]
@@ -29,9 +29,10 @@ translateCommands mp = foldMap (lineToCommands mp)
 
 lineToCommands :: LegendMap -> Text -> [Command]
 lineToCommands mp line =
-  case T.splitOn "," line of
-    [l] ->
-      case Map.lookup l mp of
-        Just c -> lineToCommands mp c
-        Nothing -> [MkCommand l]
-    xs -> xs >>= lineToCommands mp
+  case Map.lookup line mp of
+    Nothing -> [MkCommand line]
+    Just c ->
+      -- WARN: Using a double comma right now as a delimiter. Hoping
+      -- this isn't a thing that appears in real bash commands...
+      let cmds = T.splitOn ",," c
+       in cmds >>= lineToCommands mp
