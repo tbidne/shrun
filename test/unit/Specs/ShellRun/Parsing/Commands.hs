@@ -26,6 +26,9 @@ specs = TH.testSpecs $ do
     Hspec.it "Should return recursive commands and other" $ do
       ParseCommands.translateCommands legend ["all", "other"]
         `shouldBe` fmap MkCommand ["cmd1", "cmd2", "cmd3", "other"]
+    Hspec.it "Should not split non-key commands" $ do
+      ParseCommands.translateCommands legend ["echo ,,"]
+        `shouldBe` fmap MkCommand ["echo ,,"]
 
 legend :: LegendMap
 legend =
