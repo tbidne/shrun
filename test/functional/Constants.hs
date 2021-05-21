@@ -11,12 +11,12 @@ module Constants
     errPrefix,
 
     -- * Miscellaneous
-    workingDirectory
+    workingDirectory,
   )
 where
 
-import Data.Text (Text)
 import Data.String (IsString)
+import Data.Text (Text)
 
 cancelled :: Text
 cancelled = warnPrefix <> "Timed out, cancelling remaining tasks"

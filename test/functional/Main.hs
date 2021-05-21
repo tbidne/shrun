@@ -2,7 +2,9 @@
 
 module Main (main) where
 
+import Constants qualified
 import Data.Functor (($>))
+import Success qualified
 import System.IO qualified as IO
 import System.IO.Silently qualified as Shh
 import System.Process qualified as P
@@ -10,8 +12,6 @@ import Test.Hspec (Spec)
 import Test.Hspec qualified as Hspec
 import Test.Tasty qualified as T
 import Test.Tasty.Hspec qualified as TH
-import Success qualified
-import Constants qualified
 import Timeout qualified
 
 main :: IO ()

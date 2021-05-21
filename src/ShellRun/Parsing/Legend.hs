@@ -8,8 +8,8 @@ where
 import Control.Exception qualified as Ex
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 import ShellRun.Parsing.Legend.Internal qualified as Internal
+import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
 legendPathToMap :: Text -> IO (Either LegendErr LegendMap)
 legendPathToMap legendPath = do
