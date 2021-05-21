@@ -35,7 +35,7 @@ genInt64 =
   let range = Range.linearFrom 0 minBound maxBound
    in Gen.int64 range
 
-genInt :: Gen Int 
+genInt :: Gen Int
 genInt =
-  let range = Range.linearFrom 0 minBound maxBound 
+  let range = Range.linearFrom 0 minBound maxBound
    in Gen.int range
