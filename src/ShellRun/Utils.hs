@@ -8,6 +8,9 @@ module ShellRun.Utils
     -- * Functor Utils
     monoBimap,
 
+    -- * Monad Utils
+    whileNothing,
+
     -- * Math Utils
     divWithRem,
   )
@@ -64,3 +67,10 @@ formatSeconds seconds =
 
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = Bifunctor.bimap f f
+
+whileNothing :: Monad m => m (Maybe b) -> m a -> m b
+whileNothing mb ma = do
+  maybeB <- mb
+  case maybeB of
+    Nothing -> ma *> whileNothing mb ma
+    Just b -> pure b

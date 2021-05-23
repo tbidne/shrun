@@ -6,20 +6,26 @@ module ShellRun.IO
     shExitCode,
     tryShExitCode,
     tryTimeSh,
+    tryTimeShWithStdout,
   )
 where
 
+import Control.Exception (IOException)
+import Control.Exception qualified as Except
 import Data.Bifunctor qualified as Bifunctor
 import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Text qualified as T
+import GHC.IO.Handle qualified as Handle
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.IO (Stderr (..), Stdout (..))
 import ShellRun.Types.NonNegative (NonNegative (..))
 import ShellRun.Utils qualified as Utils
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))
+import System.Process (CreateProcess (..), StdStream (..))
 import System.Process qualified as P
+import ShellRun.Class.MonadLogger qualified as ML
 
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
@@ -62,10 +68,41 @@ tryShExitCode command@(MkCommand cmd) path = do
 tryTimeSh ::
   Command ->
   Maybe FilePath ->
-  IO (Either (NonNegative, Stderr) (NonNegative, Stdout))
+  IO (Either (NonNegative, Stderr) NonNegative)
 tryTimeSh cmd path = do
   start <- C.getTime C.Monotonic
   res <- tryShExitCode cmd path
   end <- C.getTime C.Monotonic
   let diff = Utils.diffTime start end
-  pure $ Bifunctor.bimap (diff,) (diff,) res
+  pure $ Bifunctor.bimap (diff,) (const diff) res
+
+tryTimeShWithStdout ::
+  Command ->
+  Maybe FilePath ->
+  IO (Either (NonNegative, Stderr) NonNegative)
+tryTimeShWithStdout (MkCommand cmd) path = do
+  start <- C.getTime C.Monotonic
+  ec <- P.withCreateProcess pr $ \stdin stdout stderr ph -> do
+    Utils.whileNothing (P.getProcessExitCode ph) $ do
+      case (stdin, stdout, stderr) of
+        (_, Just hOut, _) -> do
+          out :: Either IOException String <- Except.try $ Handle.hGetLine hOut
+          case out of
+            Left _ -> pure ()
+            Right x -> do
+              ML.clearNoLine
+              ML.logLine $ cmd <> ": " <> T.pack x
+        _ -> pure ()
+  end <- C.getTime C.Monotonic
+  let diff = Utils.diffTime start end
+
+  case ec of
+    ExitSuccess -> pure $ Right diff
+    ExitFailure _ -> pure $ Left (diff, MkStderr "failed")
+  where
+    pr =
+      (P.shell (T.unpack cmd))
+        { std_out = CreatePipe,
+          std_in = CreatePipe,
+          cwd = path
+        }

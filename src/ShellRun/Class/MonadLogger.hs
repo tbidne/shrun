@@ -7,12 +7,14 @@ module ShellRun.Class.MonadLogger
     -- * Functions for manipulating carriage returns
     resetCR,
     clearLine,
+    clearNoLine,
 
     -- * Pretty formatted logging
     logDebug,
     logInfo,
     logInfoBlue,
     logInfoCyan,
+    logNoLineCyan,
     logInfoSuccess,
     logWarn,
     logError,
@@ -39,13 +41,26 @@ instance MonadLogger IO where
 resetCR :: MonadLogger m => m ()
 resetCR = logNoLine "\r"
 
--- | 'resetCR' then `logLine` with 60 spaces.
+-- | 'resetCR' then `logLine` with 80 spaces.
 clearLine :: MonadLogger m => m ()
 clearLine = do
   resetCR
   logLine spaces
   where
     spaces = T.pack $ replicate 80 ' '
+
+-- | Clears the line and resets the carriage return.
+clearNoLine :: MonadLogger m => m ()
+clearNoLine = do
+  resetCR
+  logNoLine spaces
+  resetCR
+  where
+    spaces = T.pack $ replicate 80 ' '
+
+-- TODO: Refactor this module (e.g., log levels, general fn)
+logNoLineCyan :: MonadLogger m => Text -> m ()
+logNoLineCyan = logNoLine . P.color P.Cyan
 
 -- | Debug formatted 'logLine'.
 logDebug :: MonadLogger m => Text -> m ()
