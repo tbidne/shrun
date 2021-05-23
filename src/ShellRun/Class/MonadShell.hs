@@ -49,10 +49,10 @@ instance MonadShell IO where
 
 runCommand :: Command -> IO ()
 runCommand command@(MkCommand cmd) = do
-  res <- ShIO.tryTimeSh command Nothing
+  res <- ShIO.tryTimeShWithStdout command Nothing
   (seconds, logFn, msg) <- case res of
     Left (t, MkStderr err) -> pure (t, ML.logError, err)
-    Right (t, _) -> pure (t, ML.logInfoSuccess, "Successfully ran `" <> cmd <> "`")
+    Right t -> pure (t, ML.logInfoSuccess, "Successfully ran `" <> cmd <> "`")
   ML.clearLine
   logFn msg
   logFn $ "Time elapsed: " <> U.formatSeconds seconds <> "\n"
@@ -66,7 +66,7 @@ counter asyn timeout = do
     elapsed <- C.getTime C.Monotonic
     let diff = U.diffTime start elapsed
     ML.resetCR
-    ML.logNoLine $ "Running time: " <> U.formatSeconds diff
+    ML.logNoLineCyan $ "Running time: " <> U.formatSeconds diff
 
 keepRunning :: Async a -> TimeSpec -> Maybe NonNegative -> IO Bool
 keepRunning asyn start to = do

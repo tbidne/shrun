@@ -128,8 +128,6 @@ You will need one of:
 - `stack`
 - `nix`
 
-
-
 The app can be built via `cabal` or `stack`. If you are using `nix`, a `shell.nix` file exists that will provide the needed dependencies, including the right `ghc`. Otherwise, building is the same as `cabal`.
 
 ## Cabal
@@ -142,7 +140,7 @@ The project is set to build with `-Werror` in `cabal.project`, so if for some re
 
 Like `cabal`, the app can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
 
-# Tests
+# Testing
 
 There are three test suites, `unit`, `integration` and `functional`. These can be run via:
 
@@ -155,3 +153,8 @@ cabal test functional --test-show-details=direct
 # everything
 cabal test --test-show-details=direct
 ```
+
+# Limitations / TODO
+
+## Legend file infinite recursion
+It is possible to define legend keys that lead to infinite loops. Of course we cannot prevent this in general, but it would be nice to have some basic detection.
