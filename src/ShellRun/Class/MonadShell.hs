@@ -11,6 +11,7 @@ import Control.Monad ((>=>))
 import Control.Monad.Loops qualified as Loops
 import Data.Maybe qualified as May
 import Data.Text (Text)
+import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..))
 import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.IO qualified as ShIO
 import ShellRun.Parsing.Args qualified as ParseArgs
@@ -66,7 +67,7 @@ counter asyn timeout = do
     elapsed <- C.getTime C.Monotonic
     let diff = U.diffTime start elapsed
     ML.resetCR
-    ML.logNoLineCyan $ "Running time: " <> U.formatSeconds diff
+    ML.logLevelMode InfoCyan NoLine $ "Running time: " <> U.formatSeconds diff
 
 keepRunning :: Async a -> TimeSpec -> Maybe NonNegative -> IO Bool
 keepRunning asyn start to = do

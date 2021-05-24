@@ -1,8 +1,10 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
 module ShellRun.Class.MonadLogger
-  ( -- * Class for logging
+  ( -- * Types for logging
     MonadLogger (..),
+    LogLevel (..),
+    LogMode (..),
 
     -- * Functions for manipulating carriage returns
     resetCR,
@@ -10,11 +12,11 @@ module ShellRun.Class.MonadLogger
     clearNoLine,
 
     -- * Pretty formatted logging
+    logLevelMode,
     logDebug,
     logInfo,
     logInfoBlue,
     logInfoCyan,
-    logNoLineCyan,
     logInfoSuccess,
     logWarn,
     logError,
@@ -23,6 +25,7 @@ where
 
 import Data.Text (Text)
 import Data.Text qualified as T
+import System.Console.Pretty (Color)
 import System.Console.Pretty qualified as P
 import System.IO qualified as IO
 
@@ -36,6 +39,47 @@ instance MonadLogger IO where
 
   logLine :: Text -> IO ()
   logLine = putStrLn . T.unpack
+
+data LogMode
+  = Line
+  | NoLine
+
+data LogLevel
+  = Debug
+  | Info
+  | InfoBlue
+  | InfoCyan
+  | InfoSuccess
+  | Warn
+  | Error
+  deriving (Show)
+
+levelToColor :: LogLevel -> Color
+levelToColor Debug = P.White
+levelToColor Info = P.White
+levelToColor InfoBlue = P.Blue
+levelToColor InfoCyan = P.Cyan
+levelToColor InfoSuccess = P.Green
+levelToColor Warn = P.Magenta
+levelToColor Error = P.Red
+
+levelToPrefix :: LogLevel -> Text
+levelToPrefix Debug = "[Debug] "
+levelToPrefix Info = "[Info] "
+levelToPrefix InfoBlue = "[Info] "
+levelToPrefix InfoCyan = "[Info] "
+levelToPrefix InfoSuccess = "[Info] "
+levelToPrefix Warn = "[Warn] "
+levelToPrefix Error = "[Error] "
+
+logLevelMode :: MonadLogger m => LogLevel -> LogMode -> Text -> m ()
+logLevelMode l t = logFn . P.color color . (<>) prefix
+  where
+    color = levelToColor l
+    prefix = levelToPrefix l
+    logFn = case t of
+      Line -> logLine
+      NoLine -> logNoLine
 
 -- | 'logNoLine' with a carriage return.
 resetCR :: MonadLogger m => m ()
@@ -58,34 +102,30 @@ clearNoLine = do
   where
     spaces = T.pack $ replicate 80 ' '
 
--- TODO: Refactor this module (e.g., log levels, general fn)
-logNoLineCyan :: MonadLogger m => Text -> m ()
-logNoLineCyan = logNoLine . P.color P.Cyan
-
 -- | Debug formatted 'logLine'.
 logDebug :: MonadLogger m => Text -> m ()
-logDebug = logLine . (<>) "[Debug] "
+logDebug = logLevelMode Debug Line
 
 -- | Info formatted 'logLine'.
 logInfo :: MonadLogger m => Text -> m ()
-logInfo = logLine . (<>) "[Info] "
+logInfo = logLevelMode Info Line
 
 -- | Blue Info formatted 'logLine'.
 logInfoBlue :: MonadLogger m => Text -> m ()
-logInfoBlue = logLine . P.color P.Blue . (<>) "[Info] "
+logInfoBlue = logLevelMode InfoBlue Line
 
 -- | Cyan Info formatted 'logLine'.
 logInfoCyan :: MonadLogger m => Text -> m ()
-logInfoCyan = logLine . P.color P.Cyan . (<>) "[Info] "
+logInfoCyan = logLevelMode InfoCyan Line
 
 -- | Success Info formatted 'logLine'.
 logInfoSuccess :: MonadLogger m => Text -> m ()
-logInfoSuccess = logLine . P.color P.Green . (<>) "[Info] "
+logInfoSuccess = logLevelMode InfoSuccess Line
 
 -- | Warn formatted 'logLine'.
 logWarn :: MonadLogger m => Text -> m ()
-logWarn = logLine . P.color P.Magenta . (<>) "[Warn] "
+logWarn = logLevelMode Warn Line
 
 -- | Error formatted 'logLine'.
 logError :: MonadLogger m => Text -> m ()
-logError = logLine . P.color P.Red . (<>) "[Error] "
+logError = logLevelMode Error Line

@@ -17,6 +17,8 @@ import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Text qualified as T
 import GHC.IO.Handle qualified as Handle
+import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..))
+import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.IO (Stderr (..), Stdout (..))
 import ShellRun.Types.NonNegative (NonNegative (..))
@@ -25,7 +27,6 @@ import System.Clock qualified as C
 import System.Exit (ExitCode (..))
 import System.Process (CreateProcess (..), StdStream (..))
 import System.Process qualified as P
-import ShellRun.Class.MonadLogger qualified as ML
 
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
@@ -91,7 +92,7 @@ tryTimeShWithStdout (MkCommand cmd) path = do
             Left _ -> pure ()
             Right x -> do
               ML.clearNoLine
-              ML.logLine $ cmd <> ": " <> T.pack x
+              ML.logLevelMode Info Line $ cmd <> ": " <> T.pack x
         _ -> pure ()
   end <- C.getTime C.Monotonic
   let diff = Utils.diffTime start end
