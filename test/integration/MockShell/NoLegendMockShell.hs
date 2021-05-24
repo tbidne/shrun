@@ -6,7 +6,7 @@ import Data.Text (Text)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Types.Args (Args (..))
+import ShellRun.Types.Args (Args (..), NativeLog (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 import ShellRun.Types.NonNegative (NonNegative)
@@ -18,7 +18,7 @@ newtype NoLegendMockShell a = MkNoLegendMockShell (MockShellBase a)
 
 instance MonadShell NoLegendMockShell where
   parseArgs :: NoLegendMockShell Args
-  parseArgs = pure $ MkArgs legendPath timeout commands
+  parseArgs = pure $ MkArgs legendPath timeout None commands
     where
       legendPath = Nothing
       timeout = Just $ NN.unsafeNonNegative 5
@@ -27,8 +27,8 @@ instance MonadShell NoLegendMockShell where
   legendPathToMap :: Text -> NoLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ ParseErr "Bad key"
 
-  runCommands :: [Command] -> Maybe NonNegative -> NoLegendMockShell ()
-  runCommands commands _ = foldr f (MkNoLegendMockShell (MkMockShellBase () [])) commands
+  runCommands :: [Command] -> Maybe NonNegative -> NativeLog -> NoLegendMockShell ()
+  runCommands commands _ _ = foldr f (MkNoLegendMockShell (MkMockShellBase () [])) commands
     where
       f (MkCommand cmd) acc = acc <> MkNoLegendMockShell (MkMockShellBase () [cmd])
 

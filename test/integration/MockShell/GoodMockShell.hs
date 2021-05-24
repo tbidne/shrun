@@ -7,7 +7,7 @@ import Data.Text (Text)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Types.Args (Args (..))
+import ShellRun.Types.Args (Args (..), NativeLog (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 import ShellRun.Types.NonNegative (NonNegative)
@@ -19,7 +19,7 @@ newtype GoodMockShell a = MkGoodMockShell (MockShellBase a)
 
 instance MonadShell GoodMockShell where
   parseArgs :: GoodMockShell Args
-  parseArgs = pure $ MkArgs legendPath timeout commands
+  parseArgs = pure $ MkArgs legendPath timeout None commands
     where
       legendPath = Just "legend.txt"
       timeout = Just $ NN.unsafeNonNegative 5
@@ -35,8 +35,8 @@ instance MonadShell GoodMockShell where
             ("both", "cmd1,,cmd2")
           ]
 
-  runCommands :: [Command] -> Maybe NonNegative -> GoodMockShell ()
-  runCommands commands _ = foldr f (MkGoodMockShell (MkMockShellBase () [])) commands
+  runCommands :: [Command] -> Maybe NonNegative -> NativeLog -> GoodMockShell ()
+  runCommands commands _ _ = foldr f (MkGoodMockShell (MkMockShellBase () [])) commands
     where
       f (MkCommand cmd) acc = acc <> MkGoodMockShell (MkMockShellBase () [cmd])
 
