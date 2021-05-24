@@ -16,7 +16,7 @@ import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.IO qualified as ShIO
 import ShellRun.Parsing.Args qualified as ParseArgs
 import ShellRun.Parsing.Legend qualified as ParseLegend
-import ShellRun.Types.Args (Args (..))
+import ShellRun.Types.Args (Args (..), NativeLog (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.IO (Stderr (..))
 import ShellRun.Types.Legend (LegendErr, LegendMap)
@@ -28,19 +28,16 @@ import System.Clock qualified as C
 class Monad m => MonadShell m where
   parseArgs :: m Args
   legendPathToMap :: Text -> m (Either LegendErr LegendMap)
-  runCommands :: [Command] -> Maybe NonNegative -> m ()
+  runCommands :: [Command] -> Maybe NonNegative -> NativeLog -> m ()
 
 instance MonadShell IO where
-  parseArgs :: IO Args
   parseArgs = ParseArgs.runParser
 
-  legendPathToMap :: Text -> IO (Either LegendErr LegendMap)
   legendPathToMap = ParseLegend.legendPathToMap
 
-  runCommands :: [Command] -> Maybe NonNegative -> IO ()
-  runCommands commands timeout = do
+  runCommands commands timeout nativeLog = do
     start <- C.getTime C.Monotonic
-    actionAsync <- A.async $ A.mapConcurrently_ runCommand commands
+    actionAsync <- A.async $ A.mapConcurrently_ (runCommand nativeLog) commands
     counter actionAsync timeout
     end <- C.getTime C.Monotonic
     let totalTime = U.diffTime start end
@@ -48,15 +45,19 @@ instance MonadShell IO where
     ML.logInfoBlue "Finished!"
     ML.logInfoBlue $ "Total time elapsed: " <> U.formatSeconds totalTime
 
-runCommand :: Command -> IO ()
-runCommand command@(MkCommand cmd) = do
-  res <- ShIO.tryTimeShWithStdout command Nothing
+runCommand :: NativeLog -> Command -> IO ()
+runCommand nativeLog command@(MkCommand cmd) = do
+  res <- shFn command Nothing
   (seconds, logFn, msg) <- case res of
     Left (t, MkStderr err) -> pure (t, ML.logError, err)
     Right t -> pure (t, ML.logInfoSuccess, "Successfully ran `" <> cmd <> "`")
   ML.clearLine
   logFn msg
   logFn $ "Time elapsed: " <> U.formatSeconds seconds <> "\n"
+  where
+    shFn = case nativeLog of
+      None -> ShIO.tryTimeSh
+      Stdout -> ShIO.tryTimeShWithStdout
 
 counter :: Async a -> Maybe NonNegative -> IO ()
 counter asyn timeout = do

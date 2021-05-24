@@ -99,6 +99,7 @@ tryTimeShWithStdout (MkCommand cmd) path = do
 
   case ec of
     ExitSuccess -> pure $ Right diff
+    -- TODO: actually get stderr
     ExitFailure _ -> pure $ Left (diff, MkStderr "failed")
   where
     pr =

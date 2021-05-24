@@ -13,7 +13,7 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import ShellRun.Types.Args (Args (..))
+import ShellRun.Types.Args (Args (..), NativeLog (..))
 import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Types.NonNegative qualified as NN
 
@@ -37,6 +37,7 @@ argsParser =
   MkArgs
     <$> legendParser
     <*> timeoutParser
+    <*> nativeLogParser
     <*> commandsParser
       <**> OptApp.helper
 
@@ -79,6 +80,19 @@ timeoutParser =
               "Timeout must be non-negative, received: "
                 <> show v
                 <> "!"
+
+nativeLogParser :: Parser NativeLog
+nativeLogParser =
+  OptApp.flag
+    None
+    Stdout
+    ( OptApp.long "nativeLog"
+        <> OptApp.short 'n'
+        <> OptApp.help
+          ( "If this is flag is on, we will log all commands' stdout. "
+              <> "The default behavior is to swallow stdout."
+          )
+    )
 
 commandsParser :: Parser [Text]
 commandsParser =
