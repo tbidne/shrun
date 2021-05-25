@@ -29,13 +29,19 @@ translateProps = TH.testProperty "translateCommands includes everything" $
   H.property $ do
     (legend, origCmds) <- H.forAll genLegendCommands
     let legendKeySet = Set.fromList $ Map.keys legend
-        finalCmds = ParseCommands.translateCommands legend origCmds
-        finalCmdsSet = Set.fromList $ fmap Command.getCommand finalCmds
-        combinedKeySet = Set.union legendKeySet finalCmdsSet
+        maybeFinalCmds = ParseCommands.translateCommands legend origCmds
 
-    H.footnote $ "Final commands: " <> show finalCmdsSet
-    H.footnote $ "Legend: " <> show legendKeySet
-    noCommandsMissing combinedKeySet origCmds
+    case maybeFinalCmds of
+      Left err -> do
+        H.footnote $ "Received a LegendErr: " <> show err
+        H.failure
+      Right finalCmds -> do
+        let finalCmdsSet = Set.fromList $ fmap Command.getCommand finalCmds
+            combinedKeySet = Set.union legendKeySet finalCmdsSet
+
+        H.footnote $ "Final commands: " <> show finalCmdsSet
+        H.footnote $ "Legend: " <> show legendKeySet
+        noCommandsMissing combinedKeySet origCmds
 
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands

@@ -5,6 +5,9 @@ module ShellRun.Utils
     diffTime,
     formatSeconds,
 
+    -- * Misc Utils
+    headMaybe,
+
     -- * Functor Utils
     monoBimap,
 
@@ -74,3 +77,7 @@ whileNothing mb ma = do
   case maybeB of
     Nothing -> ma *> whileNothing mb ma
     Just b -> pure b
+
+headMaybe :: [a] -> Maybe a
+headMaybe [] = Nothing
+headMaybe (x : _) = Just x

@@ -9,7 +9,9 @@ import Data.Text (Text)
 
 data LegendErr
   = FileErr Text
-  | ParseErr Text
-  deriving (Show)
+  | EntryErr Text
+  | CyclicKeyErr Text
+  | DuplicateKeyErr Text
+  deriving (Eq, Show)
 
 type LegendMap = Map Text Text
