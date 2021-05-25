@@ -57,7 +57,8 @@ This application purports to overcome these limitations.
 
 The application has the following usage:
 ```text
-Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] Commands...
+Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-n|--nativeLog]
+                 Commands...
 
 Available options:
   -l,--legend ARG          Path to legend file, used for translating commands.
@@ -66,6 +67,8 @@ Available options:
                            to other keys recursively. Lines starting with `#`
                            are considered comments and ignored.
   -t,--timeout ARG         Non-negative integer setting a timeout
+  -n,--nativeLog           If this is flag is on, we will log all commands'
+                           stdout. The default behavior is to swallow stdout.
   -h,--help                Show this help text
 ```
 
@@ -117,6 +120,10 @@ shell-run --legend=path/to/legend all "echo cat"
 ```
 
 Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurrently.
+
+### Native Log
+
+If this flag is enabled, then the commands' output will be logged to `stdout`. The default behavior is to swallow `stdout`.
 
 # Building
 
