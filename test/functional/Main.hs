@@ -5,6 +5,7 @@ module Main (main) where
 import Constants qualified
 import Data.Functor (($>))
 import Success qualified
+import SuccessWithStdout qualified
 import System.IO qualified as IO
 import System.IO.Silently qualified as Shh
 import System.Process qualified as P
@@ -24,6 +25,7 @@ spec = Hspec.afterAll_ tearDown $
   Hspec.beforeAll_ setup $
     Hspec.describe "Run scenarios" $ do
       Success.spec
+      SuccessWithStdout.spec
       Timeout.spec
 
 setup :: IO ()
