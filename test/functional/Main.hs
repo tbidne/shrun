@@ -21,8 +21,8 @@ main = tastySpec >>= T.defaultMain
     tastySpec = T.testGroup "Functional Tests" <$> TH.testSpecs spec
 
 spec :: Spec
-spec = Hspec.afterAll_ tearDown $
-  Hspec.beforeAll_ setup $
+spec = Hspec.after_ tearDown $
+  Hspec.before_ setup $
     Hspec.describe "Run scenarios" $ do
       Success.spec
       SuccessWithStdout.spec
