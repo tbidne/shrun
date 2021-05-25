@@ -2,7 +2,6 @@
 
 module SuccessWithStdout (spec) where
 
-import Constants qualified
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun qualified
