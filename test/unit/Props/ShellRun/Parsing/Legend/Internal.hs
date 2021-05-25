@@ -66,7 +66,9 @@ genGoodLines :: MonadGen m => m [Text]
 genGoodLines = do
   keyVals <- Gen.list range genGoodLine
   comments <- Gen.list range genComment
-  Gen.shuffle (keyVals <> comments)
+  let uniqueKeys = Set.toList $ Set.fromList keyVals
+      textKeyVals = fmap unGoodLine uniqueKeys
+  Gen.shuffle (textKeyVals <> comments)
   where
     range = Range.linearFrom 20 1 80
 
@@ -77,11 +79,25 @@ genComment = do
   where
     range = Range.linearFrom 20 1 80
 
-genGoodLine :: MonadGen m => m Text
+newtype GoodLine = MkGoodLine {unGoodLine :: Text}
+
+instance Eq GoodLine where
+  (MkGoodLine lhs) == (MkGoodLine rhs) = lKey == rKey
+    where
+      lKey = Txt.breakOn "=" lhs
+      rKey = Txt.breakOn "=" rhs
+
+instance Ord GoodLine where
+  (MkGoodLine lhs) <= (MkGoodLine rhs) = lKey <= rKey
+    where
+      lKey = Txt.breakOn "=" lhs
+      rKey = Txt.breakOn "=" rhs
+
+genGoodLine :: MonadGen m => m GoodLine
 genGoodLine = do
   key <- genKey
   value <- genVal
-  pure $ key <> "=" <> value
+  pure $ MkGoodLine $ key <> "=" <> value
 
 genKey :: MonadGen m => m Text
 genKey = Gen.filterT noSpaceOrEquals $ Gen.text range Gen.latin1

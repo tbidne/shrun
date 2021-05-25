@@ -16,19 +16,19 @@ specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Parsing.Commands" $ do
     Hspec.it "Should translate one command" $ do
       ParseCommands.translateCommands legend ["one"]
-        `shouldBe` fmap MkCommand ["cmd1"]
+        `shouldBe` Right (fmap MkCommand ["cmd1"])
     Hspec.it "Should return non-map command" $ do
       ParseCommands.translateCommands legend ["other"]
-        `shouldBe` fmap MkCommand ["other"]
+        `shouldBe` Right (fmap MkCommand ["other"])
     Hspec.it "Should return recursive commands" $ do
       ParseCommands.translateCommands legend ["all"]
-        `shouldBe` fmap MkCommand ["cmd1", "cmd2", "cmd3"]
+        `shouldBe` Right (fmap MkCommand ["cmd1", "cmd2", "cmd3"])
     Hspec.it "Should return recursive commands and other" $ do
       ParseCommands.translateCommands legend ["all", "other"]
-        `shouldBe` fmap MkCommand ["cmd1", "cmd2", "cmd3", "other"]
+        `shouldBe` Right (fmap MkCommand ["cmd1", "cmd2", "cmd3", "other"])
     Hspec.it "Should not split non-key commands" $ do
       ParseCommands.translateCommands legend ["echo ,,"]
-        `shouldBe` fmap MkCommand ["echo ,,"]
+        `shouldBe` Right (fmap MkCommand ["echo ,,"])
 
 legend :: LegendMap
 legend =

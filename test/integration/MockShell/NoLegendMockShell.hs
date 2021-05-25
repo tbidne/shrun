@@ -25,7 +25,7 @@ instance MonadShell NoLegendMockShell where
       commands = ["cmd1", "cmd2"]
 
   legendPathToMap :: Text -> NoLegendMockShell (Either LegendErr LegendMap)
-  legendPathToMap _ = pure $ Left $ ParseErr "Bad key"
+  legendPathToMap _ = pure $ Left $ EntryErr "Bad key"
 
   runCommands :: [Command] -> Maybe NonNegative -> NativeLog -> NoLegendMockShell ()
   runCommands commands _ _ = foldr f (MkNoLegendMockShell (MkMockShellBase () [])) commands

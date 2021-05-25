@@ -26,8 +26,10 @@ maybePathToCommands :: MonadShell m => Maybe Text -> [Text] -> m (Either LegendE
 maybePathToCommands Nothing commands = pure $ Right $ fmap MkCommand commands
 maybePathToCommands (Just path) commands = do
   lMap <- legendPathToMap path
-  pure $ fmap (`ParseCommands.translateCommands` commands) lMap
+  pure $ lMap >>= (`ParseCommands.translateCommands` commands)
 
 runCommandsOrLogErr :: (MonadLogger m, MonadShell m) => Either LegendErr [Command] -> Maybe NonNegative -> NativeLog -> m ()
 runCommandsOrLogErr (Right cmds) timeout nativeLog = runCommands cmds timeout nativeLog
-runCommandsOrLogErr (Left err) _ _ = ML.logError $ T.pack $ show err
+runCommandsOrLogErr (Left err) _ _ = ML.logError errTxt
+  where
+    errTxt = "Error parsing legend file: " <> T.pack (show err)

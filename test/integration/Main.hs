@@ -39,7 +39,7 @@ badLegendMockShell = ShellRun.runShell
 
 verifyBadLegendShell :: BadLegendMockShell () -> Bool
 verifyBadLegendShell (MkBadLegendMockShell (MkMockShellBase _ logs)) =
-  logs == ["\ESC[91m[Error] FileErr \"File not found\"\ESC[0m\n"]
+  logs == ["\ESC[91m[Error] Error parsing legend file: FileErr \"File not found\"\ESC[0m\n"]
 
 noLegendMockShell :: NoLegendMockShell ()
 noLegendMockShell = ShellRun.runShell

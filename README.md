@@ -162,6 +162,3 @@ cabal test --test-show-details=direct
 ```
 
 # Limitations / TODO
-
-## Legend file infinite recursion
-It is possible to define legend keys that lead to infinite loops. Of course we cannot prevent this in general, but it would be nice to have some basic detection.
