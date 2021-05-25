@@ -16,6 +16,7 @@ import Data.Bifunctor qualified as Bifunctor
 import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Text qualified as T
+import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..))
 import ShellRun.Class.MonadLogger qualified as ML
@@ -52,17 +53,11 @@ shExitCode (MkCommand cmd) path = do
 
 -- | Returns 'Left' stderr if there is a failure, 'Right' stdout otherwise.
 tryShExitCode :: Command -> Maybe FilePath -> IO (Either Stderr Stdout)
-tryShExitCode command@(MkCommand cmd) path = do
+tryShExitCode command path = do
   (code, stdout, MkStderr err) <- shExitCode command path
   pure $ case code of
     ExitSuccess -> Right stdout
-    ExitFailure _ ->
-      Left $
-        MkStderr $
-          "Error running `"
-            <> cmd
-            <> "`: "
-            <> err
+    ExitFailure _ -> Left $ makeStdErr command err
 
 -- | Version of 'tryShExitCode' that also returns (t, stdout/stderr), where
 -- /t/ is the time the command took in seconds.
@@ -81,12 +76,12 @@ tryTimeShWithStdout ::
   Command ->
   Maybe FilePath ->
   IO (Either (NonNegative, Stderr) NonNegative)
-tryTimeShWithStdout (MkCommand cmd) path = do
+tryTimeShWithStdout command@(MkCommand cmd) path = do
   start <- C.getTime C.Monotonic
-  ec <- P.withCreateProcess pr $ \stdin stdout stderr ph -> do
-    Utils.whileNothing (P.getProcessExitCode ph) $ do
-      case (stdin, stdout, stderr) of
-        (_, Just hOut, _) -> do
+  result <- P.withCreateProcess pr $ \_ maybeHStdout maybeHStderr ph -> do
+    exitCode <- Utils.whileNothing (P.getProcessExitCode ph) $ do
+      case maybeHStdout of
+        Just hOut -> do
           out :: Either IOException String <- Except.try $ Handle.hGetLine hOut
           case out of
             Left _ -> pure ()
@@ -94,17 +89,47 @@ tryTimeShWithStdout (MkCommand cmd) path = do
               ML.clearNoLine
               ML.logLevelMode Info Line $ cmd <> ": " <> T.pack x
         _ -> pure ()
+
+    case exitCode of
+      ExitSuccess -> pure $ Right ()
+      ExitFailure _ -> do
+        err <- handleToStderr command maybeHStderr
+        pure $ Left err
+
   end <- C.getTime C.Monotonic
   let diff = Utils.diffTime start end
+      finalResult = Bifunctor.bimap (diff,) (const diff) result
 
-  case ec of
-    ExitSuccess -> pure $ Right diff
-    -- TODO: actually get stderr
-    ExitFailure _ -> pure $ Left (diff, MkStderr "failed")
+  pure finalResult
   where
     pr =
       (P.shell (T.unpack cmd))
         { std_out = CreatePipe,
           std_in = CreatePipe,
+          std_err = CreatePipe,
           cwd = path
         }
+
+handleToStderr :: Command -> Maybe Handle -> IO Stderr
+handleToStderr command = \case
+  Nothing -> pure $ makeStdErr command noHandle
+  Just hErr -> do
+    -- TODO: Using hGetLine over hGetContents really isn't desirable,
+    -- but hGetContents causes an async crash. Possible hGetContents'
+    -- will help, though we have to wait until we can upgrade to base
+    -- 4.15 to use it. Either wait or figure out a workaround.
+    errStr :: Either IOException String <- Except.try $ Handle.hGetLine hErr
+    pure $ case errStr of
+      Left ex -> makeStdErr command $ readHErr ex
+      Right err -> makeStdErr command $ T.pack err
+  where
+    noHandle = "No handle from which to read stderr"
+    readHErr = (<>) "IOException reading stderr: " . T.pack . show
+
+makeStdErr :: Command -> Text -> Stderr
+makeStdErr (MkCommand cmd) err =
+  MkStderr $
+    "Error running `"
+      <> cmd
+      <> "`: "
+      <> err
