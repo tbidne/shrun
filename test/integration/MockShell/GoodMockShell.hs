@@ -2,29 +2,22 @@
 
 module MockShell.GoodMockShell (GoodMockShell (..)) where
 
+import Control.Monad.Reader (MonadReader)
+import Control.Monad.Writer (MonadWriter)
+import Control.Monad.Writer qualified as MTL
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Types.Args (Args (..), NativeLog (..))
 import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.Env (Env)
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
-import ShellRun.Types.NonNegative (NonNegative)
-import ShellRun.Types.NonNegative qualified as NN
 
-newtype GoodMockShell a = MkGoodMockShell (MockShellBase a)
-  deriving (Show, Semigroup, Monoid) via MockShellBase a
-  deriving (Functor, Applicative, Monad) via MockShellBase
+newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
+  deriving (Functor, Applicative, Monad, MonadReader Env, MonadWriter [Text], MonadLogger)
 
 instance MonadShell GoodMockShell where
-  parseArgs :: GoodMockShell Args
-  parseArgs = pure $ MkArgs legendPath timeout None commands
-    where
-      legendPath = Just "legend.txt"
-      timeout = Just $ NN.unsafeNonNegative 5
-      commands = ["both", "echo hi"]
-
   legendPathToMap :: Text -> GoodMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Right mp
     where
@@ -35,14 +28,8 @@ instance MonadShell GoodMockShell where
             ("both", "cmd1,,cmd2")
           ]
 
-  runCommands :: [Command] -> Maybe NonNegative -> NativeLog -> GoodMockShell ()
-  runCommands commands _ _ = foldr f (MkGoodMockShell (MkMockShellBase () [])) commands
-    where
-      f (MkCommand cmd) acc = acc <> MkGoodMockShell (MkMockShellBase () [cmd])
+  runCommands :: [Command] -> GoodMockShell ()
+  runCommands = MTL.tell . fmap getCommand
 
-instance MonadLogger GoodMockShell where
-  logNoLine :: Text -> GoodMockShell ()
-  logNoLine t = MkGoodMockShell $ MkMockShellBase () [t]
-
-  logLine :: Text -> GoodMockShell ()
-  logLine t = MkGoodMockShell $ MkMockShellBase () [t <> "\n"]
+instance Show a => Show (GoodMockShell a) where
+  show _ = "MkGoodMockShell"

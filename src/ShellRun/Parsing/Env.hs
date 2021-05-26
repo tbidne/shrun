@@ -1,6 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
-module ShellRun.Parsing.Args
+module ShellRun.Parsing.Env
   ( runParser,
   )
 where
@@ -13,17 +13,17 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import ShellRun.Types.Args (Args (..), NativeLog (..))
+import ShellRun.Types.Env (Env (..), NativeLog (..))
 import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Types.NonNegative qualified as NN
 
-runParser :: IO Args
+runParser :: IO Env
 runParser = OptApp.execParser parserInfo
 
-parserInfo :: ParserInfo Args
+parserInfo :: ParserInfo Env
 parserInfo =
   ParserInfo
-    { infoParser = argsParser,
+    { infoParser = envParser,
       infoFullDesc = True,
       infoProgDesc = Chunk Nothing,
       infoHeader = Chunk Nothing,
@@ -32,9 +32,9 @@ parserInfo =
       infoPolicy = Intersperse
     }
 
-argsParser :: Parser Args
-argsParser =
-  MkArgs
+envParser :: Parser Env
+envParser =
+  MkEnv
     <$> legendParser
     <*> timeoutParser
     <*> nativeLogParser

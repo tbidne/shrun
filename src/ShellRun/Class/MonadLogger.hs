@@ -23,6 +23,8 @@ module ShellRun.Class.MonadLogger
   )
 where
 
+import Control.Monad.Reader (ReaderT)
+import Control.Monad.Reader qualified as MTL
 import Data.Text (Text)
 import Data.Text qualified as T
 import System.Console.Pretty (Color)
@@ -39,6 +41,10 @@ instance MonadLogger IO where
 
   logLine :: Text -> IO ()
   logLine = putStrLn . T.unpack
+
+instance MonadLogger m => MonadLogger (ReaderT e m) where
+  logNoLine = MTL.lift . logNoLine
+  logLine = MTL.lift . logLine
 
 data LogMode
   = Line

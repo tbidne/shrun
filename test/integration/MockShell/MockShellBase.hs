@@ -1,26 +1,24 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+
 module MockShell.MockShellBase (MockShellBase (..)) where
 
+import Control.Monad.Reader (MonadReader, ReaderT)
+import Control.Monad.Reader qualified as MTL
+import Control.Monad.Writer (MonadWriter, WriterT)
+import Control.Monad.Writer qualified as MTL
+import Data.Functor.Identity (Identity)
 import Data.Text (Text)
+import ShellRun.Class.MonadLogger (MonadLogger (..))
+import ShellRun.Types.Env (Env)
 
-data MockShellBase a = MkMockShellBase a [Text]
+newtype MockShellBase a = MkMockShellBase
+  { runMockShellBase :: ReaderT Env (WriterT [Text] Identity) a
+  }
+  deriving (Functor, Applicative, Monad, MonadReader Env, MonadWriter [Text])
 
-instance Functor MockShellBase where
-  fmap f (MkMockShellBase x lg) = MkMockShellBase (f x) lg
-
-instance Applicative MockShellBase where
-  pure x = MkMockShellBase x []
-  MkMockShellBase f lhs <*> MkMockShellBase x rhs = MkMockShellBase (f x) (lhs <> rhs)
-
-instance Monad MockShellBase where
-  MkMockShellBase x lhs >>= f = MkMockShellBase y (lhs <> rhs)
-    where
-      MkMockShellBase y rhs = f x
+instance MonadLogger MockShellBase where
+  logNoLine = MTL.tell . pure
+  logLine = MTL.tell . pure . (<> "\n")
 
 instance Show a => Show (MockShellBase a) where
-  show (MkMockShellBase x lg) = "MockShellBase " <> show x <> " " <> show lg
-
-instance Semigroup a => Semigroup (MockShellBase a) where
-  MkMockShellBase x lhs <> MkMockShellBase y rhs = MkMockShellBase (x <> y) (lhs <> rhs)
-
-instance Monoid a => Monoid (MockShellBase a) where
-  mempty = MkMockShellBase mempty mempty
+  show _ = "MkMockShellBase"

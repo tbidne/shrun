@@ -2,39 +2,28 @@
 
 module MockShell.NoLegendMockShell (NoLegendMockShell (..)) where
 
+import Control.Monad.Reader (MonadReader)
+import Control.Monad.Writer (MonadWriter)
+import Control.Monad.Writer qualified as MTL
 import Data.Text (Text)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Types.Args (Args (..), NativeLog (..))
 import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.Env (Env)
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
-import ShellRun.Types.NonNegative (NonNegative)
-import ShellRun.Types.NonNegative qualified as NN
 
-newtype NoLegendMockShell a = MkNoLegendMockShell (MockShellBase a)
-  deriving (Show, Semigroup, Monoid) via MockShellBase a
-  deriving (Functor, Applicative, Monad) via MockShellBase
+newtype NoLegendMockShell a = MkNoLegendMockShell {runNoLegendMockShell :: MockShellBase a}
+  deriving (Functor, Applicative, Monad, MonadReader Env, MonadWriter [Text], MonadLogger)
 
 instance MonadShell NoLegendMockShell where
-  parseArgs :: NoLegendMockShell Args
-  parseArgs = pure $ MkArgs legendPath timeout None commands
-    where
-      legendPath = Nothing
-      timeout = Just $ NN.unsafeNonNegative 5
-      commands = ["cmd1", "cmd2"]
-
+  -- Purposely giving a bad shell function here to prove that no legend skips
+  -- this (otherwise would die here)
   legendPathToMap :: Text -> NoLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ EntryErr "Bad key"
 
-  runCommands :: [Command] -> Maybe NonNegative -> NativeLog -> NoLegendMockShell ()
-  runCommands commands _ _ = foldr f (MkNoLegendMockShell (MkMockShellBase () [])) commands
-    where
-      f (MkCommand cmd) acc = acc <> MkNoLegendMockShell (MkMockShellBase () [cmd])
+  runCommands :: [Command] -> NoLegendMockShell ()
+  runCommands = MTL.tell . fmap getCommand
 
-instance MonadLogger NoLegendMockShell where
-  logNoLine :: Text -> NoLegendMockShell ()
-  logNoLine t = MkNoLegendMockShell $ MkMockShellBase () [t]
-
-  logLine :: Text -> NoLegendMockShell ()
-  logLine t = MkNoLegendMockShell $ MkMockShellBase () [t <> "\n"]
+instance Show a => Show (NoLegendMockShell a) where
+  show _ = "MkNoLegendMockShell"
