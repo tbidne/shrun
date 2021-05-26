@@ -22,6 +22,7 @@ library
     ShellRun.Types.NonNegative
     ShellRun.Types.Positive
     ShellRun.Utils
+    ShellRun.Utils.Text
   build-depends:
       async
     , base ^>=4.14.1.0
@@ -112,7 +113,9 @@ test-suite unit
     Props.ShellRun.Utils
     Specs
     Specs.ShellRun.Parsing.Commands
+    Specs.ShellRun.Parsing.Legend.Internal
     Specs.ShellRun.Utils
+    Specs.ShellRun.Utils.Text
   build-depends:
       base ^>=4.14.1.0
     , clock

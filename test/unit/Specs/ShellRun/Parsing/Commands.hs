@@ -5,7 +5,7 @@ module Specs.ShellRun.Parsing.Commands (specs) where
 import Data.Map.Strict qualified as Map
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Legend (LegendMap)
+import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
@@ -29,6 +29,9 @@ specs = TH.testSpecs $ do
     Hspec.it "Should not split non-key commands" $ do
       ParseCommands.translateCommands legend ["echo ,,"]
         `shouldBe` Right (fmap MkCommand ["echo ,,"])
+    Hspec.it "Should fail on cycle" $ do
+      ParseCommands.translateCommands cyclicLegend ["a"]
+        `shouldBe` Left (CyclicKeyErr "a -> b -> c -> a")
 
 legend :: LegendMap
 legend =
@@ -38,4 +41,12 @@ legend =
       ("three", "cmd3"),
       ("oneAndTwo", "one,,two"),
       ("all", "oneAndTwo,,cmd3")
+    ]
+
+cyclicLegend :: LegendMap
+cyclicLegend =
+  Map.fromList
+    [ ("a", "b,,x"),
+      ("b", "c,,x"),
+      ("c", "a,,x")
     ]

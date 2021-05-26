@@ -26,16 +26,20 @@ props =
 
 successProps :: TestTree
 successProps = TH.testProperty "linesToMap success props" $
-  H.property $ do
-    commands <- H.forAll genGoodLines
-    let result = Internal.linesToMap commands
-    case result of
-      Left err -> do
-        H.footnoteShow err
-        H.failure
-      Right legend -> do
-        H.annotate "Unique keys in original list should match legend"
-        verifySize commands legend
+  -- NOTE: This set to 1,000 as we have had test errors before that got
+  -- through (i.e. duplicate keys) because 100 was not enough, and
+  -- it's still fast.
+  H.withTests 1_000 $
+    H.property $ do
+      commands <- H.forAll genGoodLines
+      let result = Internal.linesToMap commands
+      case result of
+        Left err -> do
+          H.footnoteShow err
+          H.failure
+        Right legend -> do
+          H.annotate "Unique keys in original list should match legend"
+          verifySize commands legend
 
 failureProps :: TestTree
 failureProps = TH.testProperty "linesToMap failure props" $
@@ -79,19 +83,22 @@ genComment = do
   where
     range = Range.linearFrom 20 1 80
 
+-- This newtype is used to provide a custom equals/ord that
+-- relies on the key part of `key=val`, so that we can
+-- eliminate duplicate keys
 newtype GoodLine = MkGoodLine {unGoodLine :: Text}
 
 instance Eq GoodLine where
   (MkGoodLine lhs) == (MkGoodLine rhs) = lKey == rKey
     where
-      lKey = Txt.breakOn "=" lhs
-      rKey = Txt.breakOn "=" rhs
+      (lKey, _) = Txt.breakOn "=" lhs
+      (rKey, _) = Txt.breakOn "=" rhs
 
 instance Ord GoodLine where
   (MkGoodLine lhs) <= (MkGoodLine rhs) = lKey <= rKey
     where
-      lKey = Txt.breakOn "=" lhs
-      rKey = Txt.breakOn "=" rhs
+      (lKey, _) = Txt.breakOn "=" lhs
+      (rKey, _) = Txt.breakOn "=" rhs
 
 genGoodLine :: MonadGen m => m GoodLine
 genGoodLine = do

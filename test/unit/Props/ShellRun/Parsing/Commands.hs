@@ -57,6 +57,10 @@ noCommandsMissing allKeys = M.void . traverse failIfMissing
 genLegendCommands :: MonadGen m => m (LegendMap, [Text])
 genLegendCommands = (,) <$> genLegend <*> genCommands
 
+-- WARN: This can technically generate a map that has cycles in it,
+-- e.g., a -> b -> c -> a, which would cause an infinite loop if
+-- we also happen to generate a command in that cycle. The odds of this
+-- happening have to be really low, so not worrying about this for now...
 genLegend :: MonadGen m => m LegendMap
 genLegend = Map.fromList <$> Gen.list range genKeyVal
   where
