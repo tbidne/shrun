@@ -13,7 +13,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 
 newtype NonEmptyText = MkNonEmptyText {unNonEmptyText :: Text}
-  deriving (Eq, Ord, Semigroup)
+  deriving (Eq, Ord, Semigroup, Show)
 
 mkNonEmptyText :: Text -> Maybe NonEmptyText
 mkNonEmptyText "" = Nothing
