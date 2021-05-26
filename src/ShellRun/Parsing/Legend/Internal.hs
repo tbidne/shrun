@@ -11,6 +11,8 @@ import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
+import ShellRun.Utils qualified as Utils
+import ShellRun.Utils.Text qualified as TextUtils
 
 linesToMap :: [Text] -> Either LegendErr LegendMap
 linesToMap = foldr f (Right Map.empty)
@@ -25,9 +27,9 @@ linesToMap = foldr f (Right Map.empty)
 
 parseLine :: Text -> Either LegendErr (Text, Text)
 parseLine l =
-  case T.break (== '=') l of
+  case TextUtils.breakStripPoint break l of
     ("", _) -> Left $ EntryErr $ "Key cannot be empty: " <> l
     (_, "") -> Left $ EntryErr $ "Value cannot be empty: " <> l
-    -- T.tail is safe because v can't be empty, or it would have matched
-    -- the previous pattern.
-    (k, v) -> Right (k, T.tail v)
+    (k, v) -> Right (k, v)
+  where
+    break = TextUtils.unsafeMkNonEmptyText "="
