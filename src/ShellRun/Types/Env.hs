@@ -1,6 +1,7 @@
-module ShellRun.Types.Args
-  ( Args (..),
+module ShellRun.Types.Env
+  ( Env (..),
     NativeLog (..),
+    defaultEnv,
   )
 where
 
@@ -12,10 +13,19 @@ data NativeLog
   | Stdout
   deriving (Show)
 
-data Args = MkArgs
+data Env = MkEnv
   { legend :: Maybe Text,
     timeout :: Maybe NonNegative,
     nativeLog :: NativeLog,
     commands :: [Text]
   }
   deriving (Show)
+
+defaultEnv :: Env
+defaultEnv =
+  MkEnv
+    { legend = Nothing,
+      timeout = Nothing,
+      nativeLog = None,
+      commands = []
+    }

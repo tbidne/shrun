@@ -3,9 +3,11 @@
 module Timeout (spec) where
 
 import Constants qualified
+import Control.Monad.Reader qualified as MTL
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRun qualified
+import ShellRun qualified as SR
+import ShellRun.Parsing.Env qualified as Env
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
 import Test.Hspec (Spec, shouldSatisfy)
@@ -13,10 +15,12 @@ import Test.Hspec qualified as Hspec
 
 spec :: Spec
 spec = Hspec.it "Should time out" $ do
-  result <- Shh.capture_ $ SysEnv.withArgs args ShellRun.runShell
+  env <- SysEnv.withArgs argList Env.runParser
+  let action = MTL.runReaderT (SR.runShellT SR.runShell) env
+  result <- Shh.capture_ action
   T.lines (T.pack result) `shouldSatisfy` allFound . foldMap sToVerifier
   where
-    args = [timeout] <> commands
+    argList = [timeout] <> commands
     commands = ["sleep 10"]
     timeout = "--timeout=5"
 

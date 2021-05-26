@@ -1,31 +1,24 @@
 module MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
 
+import Control.Monad.Reader (MonadReader)
+import Control.Monad.Writer (MonadWriter)
 import Data.Text (Text)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Types.Args (Args (..), NativeLog (..))
 import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.Env (Env)
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
-import ShellRun.Types.NonNegative (NonNegative)
 
-newtype BadLegendMockShell a = MkBadLegendMockShell (MockShellBase a)
-  deriving (Show, Semigroup, Monoid) via MockShellBase a
-  deriving (Functor, Applicative, Monad) via MockShellBase
+newtype BadLegendMockShell a = MkBadLegendMockShell {runBadLegendMockShell :: MockShellBase a}
+  deriving (Functor, Applicative, Monad, MonadReader Env, MonadWriter [Text], MonadLogger)
 
 instance MonadShell BadLegendMockShell where
-  parseArgs :: BadLegendMockShell Args
-  parseArgs = pure $ MkArgs (Just "path") Nothing None []
-
   legendPathToMap :: Text -> BadLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ FileErr "File not found"
 
-  runCommands :: [Command] -> Maybe NonNegative -> NativeLog -> BadLegendMockShell ()
-  runCommands _ _ _ = pure ()
+  runCommands :: [Command] -> BadLegendMockShell ()
+  runCommands _ = pure ()
 
-instance MonadLogger BadLegendMockShell where
-  logNoLine :: Text -> BadLegendMockShell ()
-  logNoLine t = MkBadLegendMockShell $ MkMockShellBase () [t]
-
-  logLine :: Text -> BadLegendMockShell ()
-  logLine t = MkBadLegendMockShell $ MkMockShellBase () [t <> "\n"]
+instance Show a => Show (BadLegendMockShell a) where
+  show _ = "MkBadLegendMockShell"

@@ -3,9 +3,11 @@
 module Success (spec) where
 
 import Constants qualified
+import Control.Monad.Reader qualified as MTL
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRun qualified
+import ShellRun qualified as SR
+import ShellRun.Parsing.Env qualified as Env
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
 import Test.Hspec (Spec, shouldSatisfy)
@@ -14,10 +16,12 @@ import Test.Hspec qualified as Hspec
 spec :: Spec
 spec =
   Hspec.it "Should run commands successfully" $ do
-    result <- Shh.capture_ $ SysEnv.withArgs args ShellRun.runShell
+    env <- SysEnv.withArgs argList Env.runParser
+    let action = MTL.runReaderT (SR.runShellT SR.runShell) env
+    result <- Shh.capture_ action
     T.lines (T.pack result) `shouldSatisfy` verified . foldMap sToVerifier
   where
-    args = [legendPath, timeout] <> commands
+    argList = [legendPath, timeout] <> commands
     legendPath = "--legend=" <> Constants.workingDirectory <> "/output/legend.txt"
     commands = ["bad", "both", "echo hi"]
     timeout = "--timeout=5"

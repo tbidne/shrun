@@ -8,14 +8,15 @@ extra-source-files: CHANGELOG.md
 library
   exposed-modules:
     ShellRun
+    ShellRun.Async
     ShellRun.Class.MonadLogger
     ShellRun.Class.MonadShell
     ShellRun.IO
-    ShellRun.Parsing.Args
+    ShellRun.Parsing.Env
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Legend
     ShellRun.Parsing.Legend.Internal
-    ShellRun.Types.Args
+    ShellRun.Types.Env
     ShellRun.Types.Command
     ShellRun.Types.IO
     ShellRun.Types.Legend
@@ -29,15 +30,19 @@ library
     , clock
     , containers
     , monad-loops
+    , mtl
     , optparse-applicative
     , pretty-terminal
     , process
     , text
+    , unliftio
+    , unliftio-core
   hs-source-dirs: src
   default-extensions:
     BangPatterns
     DeriveFunctor
     DerivingVia
+    FlexibleContexts
     FlexibleInstances
     GeneralizedNewtypeDeriving
     InstanceSigs
@@ -68,12 +73,14 @@ executable shell-run
   main-is: Main.hs
   build-depends:
       base ^>=4.14.1.0
+    , mtl
     , shell-run
   hs-source-dirs: app
   default-extensions:
     BangPatterns
     DeriveFunctor
     DerivingVia
+    FlexibleContexts
     FlexibleInstances
     GeneralizedNewtypeDeriving
     InstanceSigs
@@ -82,6 +89,7 @@ executable shell-run
     NumericUnderscores
     OverloadedStrings
     ScopedTypeVariables
+    StandaloneDeriving
     TupleSections
     TypeOperators
     TypeSynonymInstances
@@ -133,6 +141,7 @@ test-suite unit
     BangPatterns
     DeriveFunctor
     DerivingVia
+    FlexibleContexts
     FlexibleInstances
     GeneralizedNewtypeDeriving
     InstanceSigs
@@ -141,6 +150,7 @@ test-suite unit
     NumericUnderscores
     OverloadedStrings
     ScopedTypeVariables
+    StandaloneDeriving
     TupleSections
     TypeOperators
     TypeSynonymInstances
@@ -171,6 +181,7 @@ test-suite integration
       base ^>=4.14.1.0
     , containers
     , hspec
+    , mtl
     , shell-run
     , tasty
     , tasty-hspec
@@ -180,6 +191,7 @@ test-suite integration
     BangPatterns
     DeriveFunctor
     DerivingVia
+    FlexibleContexts
     FlexibleInstances
     GeneralizedNewtypeDeriving
     InstanceSigs
@@ -188,6 +200,7 @@ test-suite integration
     NumericUnderscores
     OverloadedStrings
     ScopedTypeVariables
+    StandaloneDeriving
     TupleSections
     TypeOperators
     TypeSynonymInstances
@@ -217,6 +230,7 @@ test-suite functional
   build-depends:
       base ^>=4.14.1.0
     , hspec
+    , mtl
     , process
     , shell-run
     , silently
@@ -228,6 +242,7 @@ test-suite functional
     BangPatterns
     DeriveFunctor
     DerivingVia
+    FlexibleContexts
     FlexibleInstances
     GeneralizedNewtypeDeriving
     InstanceSigs
@@ -236,6 +251,7 @@ test-suite functional
     NumericUnderscores
     OverloadedStrings
     ScopedTypeVariables
+    StandaloneDeriving
     TupleSections
     TypeOperators
     TypeSynonymInstances
