@@ -2,6 +2,7 @@
 
 module Props.ShellRun.Utils.Text (props) where
 
+import Data.Text qualified as Txt
 import Hedgehog ((===))
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
@@ -9,7 +10,6 @@ import ShellRun.Utils.Text qualified as TextUtils
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
-import Data.Text qualified as Txt
 
 props :: TestTree
 props = T.testGroup "ShellRun.Utils.Text" [mkNonEmptyText, unsafeNonEmptyText]
