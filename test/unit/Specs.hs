@@ -2,6 +2,7 @@
 
 module Specs (specs) where
 
+import Control.Monad qualified as M
 import Specs.ShellRun.Parsing.Commands qualified as ParseCommands
 import Specs.ShellRun.Parsing.Legend.Internal qualified as LegendI
 import Specs.ShellRun.Utils qualified as Utils
@@ -13,8 +14,10 @@ specs :: IO TestTree
 specs = T.testGroup "HSpec Specs" <$> allSpecs
   where
     allSpecs =
-      (\a b c d -> a <> b <> c <> d)
-        <$> LegendI.specs
-        <*> ParseCommands.specs
-        <*> TextUtils.specs
-        <*> Utils.specs
+      M.join
+        <$> sequenceA
+          [ LegendI.specs,
+            ParseCommands.specs,
+            TextUtils.specs,
+            Utils.specs
+          ]
