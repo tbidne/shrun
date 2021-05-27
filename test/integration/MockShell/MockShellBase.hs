@@ -8,13 +8,13 @@ import Control.Monad.Writer (MonadWriter, WriterT)
 import Control.Monad.Writer qualified as MTL
 import Data.Functor.Identity (Identity)
 import Data.Text (Text)
+import MockEnv (MockEnv)
 import ShellRun.Class.MonadLogger (MonadLogger (..))
-import ShellRun.Types.Env (Env)
 
 newtype MockShellBase a = MkMockShellBase
-  { runMockShellBase :: ReaderT Env (WriterT [Text] Identity) a
+  { runMockShellBase :: ReaderT MockEnv (WriterT [Text] Identity) a
   }
-  deriving (Functor, Applicative, Monad, MonadReader Env, MonadWriter [Text])
+  deriving (Functor, Applicative, Monad, MonadReader MockEnv, MonadWriter [Text])
 
 instance MonadLogger MockShellBase where
   logNoLine = MTL.tell . pure

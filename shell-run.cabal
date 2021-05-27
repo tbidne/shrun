@@ -175,6 +175,7 @@ test-suite integration
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+    MockEnv
     MockShell.BadLegendMockShell
     MockShell.GoodMockShell
     MockShell.MockShellBase

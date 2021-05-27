@@ -7,15 +7,15 @@ import Control.Monad.Writer (MonadWriter)
 import Control.Monad.Writer qualified as MTL
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
+import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env (Env)
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
 newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
-  deriving (Functor, Applicative, Monad, MonadReader Env, MonadWriter [Text], MonadLogger)
+  deriving (Functor, Applicative, Monad, MonadReader MockEnv, MonadWriter [Text], MonadLogger)
 
 instance MonadShell GoodMockShell where
   legendPathToMap :: Text -> GoodMockShell (Either LegendErr LegendMap)

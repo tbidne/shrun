@@ -6,15 +6,15 @@ import Control.Monad.Reader (MonadReader)
 import Control.Monad.Writer (MonadWriter)
 import Control.Monad.Writer qualified as MTL
 import Data.Text (Text)
+import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env (Env)
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
 newtype NoLegendMockShell a = MkNoLegendMockShell {runNoLegendMockShell :: MockShellBase a}
-  deriving (Functor, Applicative, Monad, MonadReader Env, MonadWriter [Text], MonadLogger)
+  deriving (Functor, Applicative, Monad, MonadReader MockEnv, MonadWriter [Text], MonadLogger)
 
 instance MonadShell NoLegendMockShell where
   -- Purposely giving a bad shell function here to prove that no legend skips
