@@ -5,6 +5,7 @@ module ShellRun.Async
   )
 where
 
+import Control.Concurrent qualified as Concurrent
 import Control.Concurrent.Async (Async)
 import Control.Concurrent.Async qualified as Async
 import Control.Monad ((>=>))
@@ -12,17 +13,21 @@ import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Loops qualified as Loops
 import Control.Monad.Reader (MonadIO, MonadReader)
 import Control.Monad.Reader qualified as MTL
+import Data.IORef (IORef)
+import Data.IORef qualified as IORef
 import Data.Maybe qualified as May
 import ShellRun.Class.Has (HasNativeLog (..), HasTimeout (..))
 import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..), MonadLogger)
 import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.IO qualified as ShIO
+import ShellRun.Math (RAdd (..))
+import ShellRun.Math.NonNegative (NonNegative)
+import ShellRun.Math.NonNegative qualified as NN
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Env (NativeLog (..))
 import ShellRun.Types.IO (Stderr (..))
-import ShellRun.Types.NonNegative (NonNegative)
 import ShellRun.Utils qualified as U
-import System.Clock (TimeSpec)
+import System.Clock (Clock (..))
 import System.Clock qualified as C
 import UnliftIO.Async qualified as UAsync
 
@@ -37,11 +42,11 @@ runCommands ::
   [Command] ->
   m ()
 runCommands commands = do
-  start <- MTL.liftIO $ C.getTime C.Monotonic
+  start <- MTL.liftIO $ C.getTime Monotonic
   actionsAsync <- UAsync.async $ UAsync.mapConcurrently_ runCommand commands
 
   counter actionsAsync
-  end <- MTL.liftIO $ C.getTime C.Monotonic
+  end <- MTL.liftIO $ C.getTime Monotonic
   let totalTime = U.diffTime start end
   ML.clearLine
   ML.logInfoBlue "Finished!"
@@ -73,20 +78,20 @@ counter :: (HasTimeout env, MonadReader env m, MonadIO m) => Async a -> m ()
 counter asyn = do
   timeout <- MTL.asks getTimeout
   MTL.liftIO $ do
-    start <- C.getTime C.Monotonic
-    Loops.whileM_ (keepRunning asyn start timeout) $ do
-      ShIO.sh_ "sleep 1" Nothing
-      -- TODO: We can just count, don't need IO action probably
-      elapsed <- C.getTime C.Monotonic
-      let diff = U.diffTime start elapsed
+    timer <- IORef.newIORef $ NN.unsafeNonNegative 0
+    let inc = NN.unsafeNonNegative 1
+    Loops.whileM_ (keepRunning asyn timer timeout) $ do
+      Concurrent.threadDelay 1_000_000
+      IORef.modifyIORef' timer (+:+ inc)
+      elapsed <- IORef.readIORef timer
       ML.resetCR
-      ML.logLevelMode InfoCyan NoLine $ "Running time: " <> U.formatSeconds diff
+      ML.logLevelMode InfoCyan NoLine $ "Running time: " <> U.formatSeconds elapsed
 
-keepRunning :: Async a -> TimeSpec -> Maybe NonNegative -> IO Bool
-keepRunning asyn start to = do
+keepRunning :: Async a -> IORef NonNegative -> Maybe NonNegative -> IO Bool
+keepRunning asyn timer to = do
   running <- unfinished asyn
-  currTime <- C.getTime C.Monotonic
-  let hasTimedOut = timedOut start currTime to
+  elapsed <- IORef.readIORef timer
+  let hasTimedOut = timedOut elapsed to
   if running && hasTimedOut
     then do
       Async.cancel asyn
@@ -95,13 +100,11 @@ keepRunning asyn start to = do
       pure False
     else pure running
 
-timedOut :: TimeSpec -> TimeSpec -> Maybe NonNegative -> Bool
-timedOut start curr =
+timedOut :: NonNegative -> Maybe NonNegative -> Bool
+timedOut timer =
   \case
     Nothing -> False
-    Just t ->
-      let timeSoFar = U.diffTime start curr
-       in timeSoFar > t
+    Just t -> timer > t
 
 unfinished :: Async a -> IO Bool
 unfinished = Async.poll >=> pure . May.isNothing

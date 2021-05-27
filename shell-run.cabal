@@ -13,6 +13,9 @@ library
     ShellRun.Class.MonadLogger
     ShellRun.Class.MonadShell
     ShellRun.IO
+    ShellRun.Math
+    ShellRun.Math.NonNegative
+    ShellRun.Math.Positive
     ShellRun.Parsing.Env
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Legend
@@ -22,8 +25,6 @@ library
     ShellRun.Types.Command
     ShellRun.Types.IO
     ShellRun.Types.Legend
-    ShellRun.Types.NonNegative
-    ShellRun.Types.Positive
     ShellRun.Utils
     ShellRun.Utils.Text
   build-depends:
@@ -49,6 +50,7 @@ library
     GeneralizedNewtypeDeriving
     InstanceSigs
     LambdaCase
+    MultiParamTypeClasses
     NamedFieldPuns
     NumericUnderscores
     OverloadedStrings
@@ -87,6 +89,7 @@ executable shell-run
     GeneralizedNewtypeDeriving
     InstanceSigs
     LambdaCase
+    MultiParamTypeClasses
     NamedFieldPuns
     NumericUnderscores
     OverloadedStrings
@@ -118,8 +121,8 @@ test-suite unit
     Props.Generators
     Props.ShellRun.Parsing.Commands
     Props.ShellRun.Parsing.Legend.Internal
-    Props.ShellRun.Types.NonNegative
-    Props.ShellRun.Types.Positive
+    Props.ShellRun.Math.NonNegative
+    Props.ShellRun.Math.Positive
     Props.ShellRun.Utils
     Props.ShellRun.Utils.Text
     Specs
@@ -148,6 +151,7 @@ test-suite unit
     GeneralizedNewtypeDeriving
     InstanceSigs
     LambdaCase
+    MultiParamTypeClasses
     NamedFieldPuns
     NumericUnderscores
     OverloadedStrings
@@ -199,6 +203,7 @@ test-suite integration
     GeneralizedNewtypeDeriving
     InstanceSigs
     LambdaCase
+    MultiParamTypeClasses
     NamedFieldPuns
     NumericUnderscores
     OverloadedStrings
@@ -250,6 +255,7 @@ test-suite functional
     GeneralizedNewtypeDeriving
     InstanceSigs
     LambdaCase
+    MultiParamTypeClasses
     NamedFieldPuns
     NumericUnderscores
     OverloadedStrings

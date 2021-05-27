@@ -13,9 +13,9 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
+import ShellRun.Math.NonNegative (NonNegative)
+import ShellRun.Math.NonNegative qualified as NN
 import ShellRun.Types.Env (Env (..), NativeLog (..))
-import ShellRun.Types.NonNegative (NonNegative)
-import ShellRun.Types.NonNegative qualified as NN
 
 runParser :: IO Env
 runParser = OptApp.execParser parserInfo

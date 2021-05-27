@@ -7,8 +7,8 @@ module ShellRun.Class.Has
 where
 
 import Data.Text (Text)
+import ShellRun.Math.NonNegative (NonNegative)
 import ShellRun.Types.Env.NativeLog (NativeLog)
-import ShellRun.Types.NonNegative (NonNegative)
 
 class HasLegend env where
   getLegend :: env -> Maybe Text

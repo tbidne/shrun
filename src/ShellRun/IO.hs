@@ -20,10 +20,11 @@ import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..))
 import ShellRun.Class.MonadLogger qualified as ML
+import ShellRun.Math.NonNegative (NonNegative (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.IO (Stderr (..), Stdout (..))
-import ShellRun.Types.NonNegative (NonNegative (..))
 import ShellRun.Utils qualified as Utils
+import System.Clock (Clock (..))
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))
 import System.Process (CreateProcess (..), StdStream (..))
@@ -66,9 +67,9 @@ tryTimeSh ::
   Maybe FilePath ->
   IO (Either (NonNegative, Stderr) NonNegative)
 tryTimeSh cmd path = do
-  start <- C.getTime C.Monotonic
+  start <- C.getTime Monotonic
   res <- tryShExitCode cmd path
-  end <- C.getTime C.Monotonic
+  end <- C.getTime Monotonic
   let diff = Utils.diffTime start end
   pure $ Bifunctor.bimap (diff,) (const diff) res
 
@@ -77,7 +78,7 @@ tryTimeShWithStdout ::
   Maybe FilePath ->
   IO (Either (NonNegative, Stderr) NonNegative)
 tryTimeShWithStdout command@(MkCommand cmd) path = do
-  start <- C.getTime C.Monotonic
+  start <- C.getTime Monotonic
   result <- P.withCreateProcess pr $ \_ maybeHStdout maybeHStderr ph -> do
     exitCode <- Utils.whileNothing (P.getProcessExitCode ph) $ do
       case maybeHStdout of
@@ -96,7 +97,7 @@ tryTimeShWithStdout command@(MkCommand cmd) path = do
         err <- handleToStderr command maybeHStderr
         pure $ Left err
 
-  end <- C.getTime C.Monotonic
+  end <- C.getTime Monotonic
   let diff = Utils.diffTime start end
       finalResult = Bifunctor.bimap (diff,) (const diff) result
 

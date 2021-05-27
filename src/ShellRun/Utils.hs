@@ -23,10 +23,10 @@ import Data.Bifunctor (Bifunctor)
 import Data.Bifunctor qualified as Bifunctor
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRun.Types.NonNegative (NonNegative)
-import ShellRun.Types.NonNegative qualified as NN
-import ShellRun.Types.Positive (Positive)
-import ShellRun.Types.Positive qualified as P
+import ShellRun.Math.NonNegative (NonNegative)
+import ShellRun.Math.NonNegative qualified as NN
+import ShellRun.Math.Positive (Positive)
+import ShellRun.Math.Positive qualified as P
 import System.Clock (TimeSpec)
 import System.Clock qualified as C
 
