@@ -12,8 +12,8 @@ import ShellRun.Class.Has
     HasNativeLog (..),
     HasTimeout (..),
   )
+import ShellRun.Math.NonNegative (NonNegative)
 import ShellRun.Types.Env.NativeLog (NativeLog (..))
-import ShellRun.Types.NonNegative (NonNegative)
 
 data Env = MkEnv
   { legend :: Maybe Text,

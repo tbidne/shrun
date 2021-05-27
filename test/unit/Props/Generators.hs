@@ -15,10 +15,10 @@ import Data.Text (Text)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import ShellRun.Types.NonNegative (NonNegative (..))
-import ShellRun.Types.NonNegative qualified as NN
-import ShellRun.Types.Positive (Positive (..))
-import ShellRun.Types.Positive qualified as P
+import ShellRun.Math.NonNegative (NonNegative (..))
+import ShellRun.Math.NonNegative qualified as NN
+import ShellRun.Math.Positive (Positive (..))
+import ShellRun.Math.Positive qualified as P
 import ShellRun.Utils.Text (NonEmptyText)
 import ShellRun.Utils.Text qualified as TextUtils
 import System.Clock (TimeSpec (..))

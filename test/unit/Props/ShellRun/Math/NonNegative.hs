@@ -1,17 +1,17 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
-module Props.ShellRun.Types.NonNegative (props) where
+module Props.ShellRun.Math.NonNegative (props) where
 
 import Hedgehog ((===))
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
-import ShellRun.Types.NonNegative qualified as NN
+import ShellRun.Math.NonNegative qualified as NN
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
 props :: TestTree
-props = T.testGroup "ShellRun.Types.NonNegative" [mkNonNegativeProps, unsafeNonNegative]
+props = T.testGroup "ShellRun.Math.NonNegative" [mkNonNegativeProps, unsafeNonNegative]
 
 mkNonNegativeProps :: TestTree
 mkNonNegativeProps = TH.testProperty "mkNonNegative" $

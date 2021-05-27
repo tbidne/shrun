@@ -1,6 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
-module ShellRun.Types.NonNegative
+module ShellRun.Math.NonNegative
   ( NonNegative,
     getNonNegative,
     mkNonNegative,

@@ -2,7 +2,7 @@
 
 module Specs.ShellRun.Utils (specs) where
 
-import ShellRun.Types.NonNegative qualified as NN
+import ShellRun.Math.NonNegative qualified as NN
 import ShellRun.Utils qualified as Utils
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec

@@ -8,10 +8,10 @@ where
 import Hedgehog (Gen, PropertyT)
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
-import ShellRun.Types.NonNegative (NonNegative)
-import ShellRun.Types.NonNegative qualified as NN
-import ShellRun.Types.Positive (Positive)
-import ShellRun.Types.Positive qualified as P
+import ShellRun.Math.NonNegative (NonNegative)
+import ShellRun.Math.NonNegative qualified as NN
+import ShellRun.Math.Positive (Positive)
+import ShellRun.Math.Positive qualified as P
 import ShellRun.Utils qualified as U
 import System.Clock (TimeSpec)
 import Test.Tasty (TestTree)
