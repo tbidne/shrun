@@ -9,6 +9,7 @@ library
   exposed-modules:
     ShellRun
     ShellRun.Async
+    ShellRun.Class.Has
     ShellRun.Class.MonadLogger
     ShellRun.Class.MonadShell
     ShellRun.IO
@@ -17,6 +18,7 @@ library
     ShellRun.Parsing.Legend
     ShellRun.Parsing.Legend.Internal
     ShellRun.Types.Env
+    ShellRun.Types.Env.NativeLog
     ShellRun.Types.Command
     ShellRun.Types.IO
     ShellRun.Types.Legend

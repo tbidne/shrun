@@ -12,6 +12,7 @@ import Control.Monad.Reader qualified as MTL
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Async qualified as ShAsync
+import ShellRun.Class.Has (HasCommands (..), HasLegend (..))
 import ShellRun.Class.MonadLogger (MonadLogger)
 import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.Class.MonadShell (MonadShell (..))
@@ -22,26 +23,52 @@ import ShellRun.Types.Env (Env (..))
 import ShellRun.Types.Legend (LegendErr)
 
 newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}
-  deriving (Functor, Applicative, Monad, MonadReader e, MonadIO, MonadLogger, MonadTrans, MonadUnliftIO)
+  deriving
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadReader e,
+      MonadIO,
+      MonadLogger,
+      MonadTrans,
+      MonadUnliftIO
+    )
 
-instance (MonadIO m, MonadLogger m, MonadUnliftIO m) => MonadShell (ShellT Env m) where
+instance
+  (MonadIO m, MonadLogger m, MonadUnliftIO m) =>
+  MonadShell (ShellT Env m)
+  where
   legendPathToMap = MTL.liftIO . ParseLegend.legendPathToMap
   runCommands = ShAsync.runCommands
 
-runShell :: (MonadReader Env m, MonadLogger m, MonadShell m) => m ()
+runShell ::
+  ( HasCommands env,
+    HasLegend env,
+    MonadReader env m,
+    MonadLogger m,
+    MonadShell m
+  ) =>
+  m ()
 runShell = do
-  legend <- MTL.asks legend
-  commands <- MTL.asks commands
+  legend <- MTL.asks getLegend
+  commands <- MTL.asks getCommands
   parsedCommands <- maybePathToCommands legend commands
   runCommandsOrLogErr parsedCommands
 
-maybePathToCommands :: MonadShell m => Maybe Text -> [Text] -> m (Either LegendErr [Command])
+maybePathToCommands ::
+  MonadShell m =>
+  Maybe Text ->
+  [Text] ->
+  m (Either LegendErr [Command])
 maybePathToCommands Nothing commands = pure $ Right $ fmap MkCommand commands
 maybePathToCommands (Just path) commands = do
   lMap <- legendPathToMap path
   pure $ lMap >>= (`ParseCommands.translateCommands` commands)
 
-runCommandsOrLogErr :: (MonadLogger m, MonadShell m) => Either LegendErr [Command] -> m ()
+runCommandsOrLogErr ::
+  (MonadLogger m, MonadShell m) =>
+  Either LegendErr [Command] ->
+  m ()
 runCommandsOrLogErr (Right cmds) = runCommands cmds
 runCommandsOrLogErr (Left err) = ML.logError errTxt
   where
