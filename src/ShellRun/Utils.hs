@@ -3,7 +3,7 @@
 module ShellRun.Utils
   ( -- * Timing Utils
     diffTime,
-    formatSeconds,
+    formatTime,
 
     -- * Misc Utils
     headMaybe,
@@ -51,22 +51,66 @@ divWithRem n d = monoBimap NN.unsafeNonNegative (n' `div` d', n' `rem` d')
     n' = NN.getNonNegative n
     d' = P.getPositive d
 
--- | For \(n \ge 0\) seconds, returns a 'Text' description of the minutes
--- and seconds.
+-- | For \(n \ge 0\) seconds, returns a 'Text' description of the days, hours,
+-- minutes and seconds.
+formatTime :: NonNegative -> Text
+formatTime seconds
+  | n < 60 = formatSeconds seconds
+  | n < 3600 = formatMinutes seconds
+  | n < 86400 = formatHours seconds
+  | otherwise = formatDays seconds
+  where
+    n = NN.getNonNegative seconds
+
 formatSeconds :: NonNegative -> Text
-formatSeconds seconds =
+formatSeconds seconds = pluralize seconds " second"
+
+formatMinutes :: NonNegative -> Text
+formatMinutes seconds =
   let d = P.unsafePositive 60
       (m, s) = divWithRem seconds d
-      pluralize i t
-        | NN.getNonNegative i == 1 = t
-        | otherwise = t <> "s"
-   in T.concat
-        [ NN.prettyPrint m,
-          pluralize m " minute",
-          " and ",
-          NN.prettyPrint s,
-          pluralize s " second"
-        ]
+      minutesTxt = pluralize m " minute"
+      secondsTxt = pluralize s " second"
+   in minutesTxt <> " and " <> secondsTxt
+
+formatHours :: NonNegative -> Text
+formatHours seconds =
+  let hoursDiv = P.unsafePositive 3600
+      minutesDiv = P.unsafePositive 60
+      (h, rest) = divWithRem seconds hoursDiv
+      (m, s) = divWithRem rest minutesDiv
+      hoursTxt = pluralize h " hour"
+      minutesTxt = pluralize m " minute"
+      secondsTxt = pluralize s " second"
+   in hoursTxt <> ", " <> minutesTxt <> " and " <> secondsTxt
+
+formatDays :: NonNegative -> Text
+formatDays seconds =
+  let daysDiv = P.unsafePositive 86400
+      hoursDiv = P.unsafePositive 3600
+      minutesDiv = P.unsafePositive 60
+      (d, rest) = divWithRem seconds daysDiv
+      (h, rest') = divWithRem rest hoursDiv
+      (m, s) = divWithRem rest' minutesDiv
+      daysTxt = pluralize d " day"
+      hoursTxt = pluralize h " hour"
+      minutesTxt = pluralize m " minute"
+      secondsTxt = pluralize s " second"
+   in daysTxt
+        <> ", "
+        <> hoursTxt
+        <> ", "
+        <> minutesTxt
+        <> " and "
+        <> secondsTxt
+
+pluralize :: NonNegative -> Text -> Text
+pluralize val txt
+  | n == 1 = valUnit
+  | otherwise = valUnit <> "s"
+  where
+    n = NN.getNonNegative val
+    valUnit = T.pack (show n) <> txt
 
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = Bifunctor.bimap f f

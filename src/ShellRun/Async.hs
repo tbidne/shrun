@@ -50,7 +50,7 @@ runCommands commands = do
   let totalTime = U.diffTime start end
   ML.clearLine
   ML.logInfoBlue "Finished!"
-  ML.logInfoBlue $ "Total time elapsed: " <> U.formatSeconds totalTime
+  ML.logInfoBlue $ "Total time elapsed: " <> U.formatTime totalTime
 
 runCommand ::
   ( HasNativeLog env,
@@ -72,7 +72,7 @@ runCommand command@(MkCommand cmd) = do
       Right t -> pure (t, ML.logInfoSuccess, "Successfully ran `" <> cmd <> "`")
     ML.clearLine
     logFn msg
-    logFn $ "Time elapsed: " <> U.formatSeconds seconds <> "\n"
+    logFn $ "Time elapsed: " <> U.formatTime seconds <> "\n"
 
 counter :: (HasTimeout env, MonadReader env m, MonadIO m) => Async a -> m ()
 counter asyn = do
@@ -85,7 +85,7 @@ counter asyn = do
       IORef.modifyIORef' timer (+:+ inc)
       elapsed <- IORef.readIORef timer
       ML.resetCR
-      ML.logLevelMode InfoCyan NoLine $ "Running time: " <> U.formatSeconds elapsed
+      ML.logLevelMode InfoCyan NoLine $ "Running time: " <> U.formatTime elapsed
 
 keepRunning :: Async a -> IORef NonNegative -> Maybe NonNegative -> IO Bool
 keepRunning asyn timer to = do
