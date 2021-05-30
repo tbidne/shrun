@@ -27,6 +27,7 @@ import ShellRun.Utils qualified as Utils
 import System.Clock (Clock (..))
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))
+import System.IO.Strict qualified as StrictIO
 import System.Process (CreateProcess (..), StdStream (..))
 import System.Process qualified as P
 
@@ -115,11 +116,15 @@ handleToStderr :: Command -> Maybe Handle -> IO Stderr
 handleToStderr command = \case
   Nothing -> pure $ makeStdErr command noHandle
   Just hErr -> do
-    -- TODO: Using hGetLine over hGetContents really isn't desirable,
-    -- but hGetContents causes an async crash. Possible hGetContents'
-    -- will help, though we have to wait until we can upgrade to base
-    -- 4.15 to use it. Either wait or figure out a workaround.
-    errStr :: Either IOException String <- Except.try $ Handle.hGetLine hErr
+    -- NOTE: Using `StrictIO` here as the one in base is lazy, which causes an
+    -- error where we end up reading after the FD is closed. This can be "fixed"
+    -- by printing the output first, but adding a superfluous print statement
+    -- to force the read is suboptimal. For now, StrictIO seems to solve this
+    -- problem, though once we may be able to remove the dependency in favor
+    -- of Handle.hGetContents' once we can upgrade to base 4.15.0.0.
+    errStr :: Either IOException String <-
+      Except.try $
+        StrictIO.run $ StrictIO.hGetContents hErr
     pure $ case errStr of
       Left ex -> makeStdErr command $ readHErr ex
       Right err -> makeStdErr command $ T.pack err

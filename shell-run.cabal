@@ -37,6 +37,7 @@ library
     , optparse-applicative
     , pretty-terminal
     , process
+    , strict-io
     , text
     , unliftio
     , unliftio-core
