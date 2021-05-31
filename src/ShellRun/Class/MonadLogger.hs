@@ -80,7 +80,7 @@ levelToPrefix InfoCyan = "[Info] "
 levelToPrefix InfoSuccess = "[Info] "
 levelToPrefix Warn = "[Warn] "
 levelToPrefix Error = "[Error] "
-levelToPrefix Fatal = "[Fatal] "
+levelToPrefix Fatal = "[Fatal Error] "
 
 logLevelMode :: MonadLogger m => LogLevel -> LogMode -> Text -> m ()
 logLevelMode l t = logFn . P.color color . (<>) prefix

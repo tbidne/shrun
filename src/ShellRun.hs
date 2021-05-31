@@ -70,6 +70,6 @@ runCommandsOrLogErr ::
   Either LegendErr [Command] ->
   m ()
 runCommandsOrLogErr (Right cmds) = runCommands cmds
-runCommandsOrLogErr (Left err) = ML.logError errTxt
+runCommandsOrLogErr (Left err) = ML.logFatal errTxt
   where
     errTxt = "Error parsing legend file: " <> T.pack (show err)
