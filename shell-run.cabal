@@ -60,7 +60,6 @@ library
     OverloadedStrings
     ScopedTypeVariables
     TupleSections
-    TypeApplications
     TypeOperators
     TypeSynonymInstances
     ViewPatterns

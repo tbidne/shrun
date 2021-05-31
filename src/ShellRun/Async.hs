@@ -53,7 +53,7 @@ runCommands commands = do
       ML.logFatal $
         T.pack $
           "Encountered an exception. This is likely not an error in any of the "
-            <> "commands run, but rather an error in ShellRun itself: "
+            <> "commands run but rather an error in ShellRun itself: "
             <> Except.displayException ex
     Right _ -> pure ()
 
