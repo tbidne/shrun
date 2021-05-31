@@ -15,19 +15,17 @@ import Data.Text (Text)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import ShellRun.Math.NonNegative (NonNegative (..))
-import ShellRun.Math.NonNegative qualified as NN
-import ShellRun.Math.Positive (Positive (..))
-import ShellRun.Math.Positive qualified as P
+import ShellRun.Math (NonNegative (..), Positive (..))
+import ShellRun.Math qualified as Math
 import ShellRun.Utils.Text (NonEmptyText)
 import ShellRun.Utils.Text qualified as TextUtils
 import System.Clock (TimeSpec (..))
 
 genNonNegative :: Gen NonNegative
-genNonNegative = NN.unsafeNonNegative <$> Gen.integral (Range.constant 0 1_000_000)
+genNonNegative = Math.unsafeNonNegative <$> Gen.integral (Range.constant 0 1_000_000)
 
 genPositive :: Gen Positive
-genPositive = P.unsafePositive <$> Gen.integral (Range.constant 1 1_000_000)
+genPositive = Math.unsafePositive <$> Gen.integral (Range.constant 1 1_000_000)
 
 genTimeSpec :: Gen TimeSpec
 genTimeSpec = do

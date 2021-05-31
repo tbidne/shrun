@@ -19,9 +19,8 @@ import ShellRun.Class.Has (HasNativeLog (..), HasTimeout (..))
 import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..), MonadLogger)
 import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.IO qualified as ShIO
-import ShellRun.Math (RAdd (..))
-import ShellRun.Math.NonNegative (NonNegative)
-import ShellRun.Math.NonNegative qualified as NN
+import ShellRun.Math (NonNegative, RAdd (..))
+import ShellRun.Math qualified as Math
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Env (NativeLog (..))
 import ShellRun.Types.IO (Stderr (..))
@@ -89,8 +88,8 @@ counter :: (HasTimeout env, MonadReader env m, MonadIO m) => m ()
 counter = do
   timeout <- MTL.asks getTimeout
   MTL.liftIO $ do
-    timer <- IORef.newIORef $ NN.unsafeNonNegative 0
-    let inc = NN.unsafeNonNegative 1
+    timer <- IORef.newIORef $ Math.unsafeNonNegative 0
+    let inc = Math.unsafeNonNegative 1
     Loops.whileM_ (keepRunning timer timeout) $ do
       Concurrent.threadDelay 1_000_000
       IORef.modifyIORef' timer (+:+ inc)

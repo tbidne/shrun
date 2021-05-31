@@ -12,7 +12,7 @@ import ShellRun.Class.Has
     HasNativeLog (..),
     HasTimeout (..),
   )
-import ShellRun.Math.NonNegative (NonNegative)
+import ShellRun.Math (NonNegative)
 import ShellRun.Types.Env.NativeLog (NativeLog (..))
 
 data Env = MkEnv
