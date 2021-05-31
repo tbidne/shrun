@@ -166,6 +166,4 @@ cabal test functional --test-show-details=direct
 cabal test --test-show-details=direct
 ```
 
-# Limitations / TODO
-
-Because the functional tests run asynchronous actions, the test output when running all suites (e.g. `cabal test`) can be wonky (out of order, non-deterministic). The test themselves _should_ be synchronous, so why this happens is a mystery. Still, it would be nice if this was fixed.
+Because the functional tests run asynchronous actions, the test output when running all suites (e.g. `cabal test`) can be wonky (out of order, non-deterministic). A workaround is to explicitly run the tests synchronously a la `cabal test -j1`.
