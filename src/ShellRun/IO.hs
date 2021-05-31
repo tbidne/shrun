@@ -20,7 +20,7 @@ import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..))
 import ShellRun.Class.MonadLogger qualified as ML
-import ShellRun.Math.NonNegative (NonNegative (..))
+import ShellRun.Math (NonNegative (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.IO (Stderr (..), Stdout (..))
 import ShellRun.Utils qualified as Utils

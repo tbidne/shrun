@@ -13,8 +13,8 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import ShellRun.Math.NonNegative (NonNegative)
-import ShellRun.Math.NonNegative qualified as NN
+import ShellRun.Math (NonNegative)
+import ShellRun.Math qualified as Math
 import ShellRun.Types.Env (Env (..), NativeLog (..))
 
 runParser :: IO Env
@@ -72,7 +72,7 @@ timeoutParser =
   where
     readNN = do
       v <- OptApp.auto
-      case NN.mkNonNegative v of
+      case Math.mkNonNegative v of
         Just n -> pure n
         Nothing ->
           OptApp.readerAbort $

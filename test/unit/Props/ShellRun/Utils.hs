@@ -8,10 +8,8 @@ where
 import Hedgehog (Gen, PropertyT)
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
-import ShellRun.Math.NonNegative (NonNegative)
-import ShellRun.Math.NonNegative qualified as NN
-import ShellRun.Math.Positive (Positive)
-import ShellRun.Math.Positive qualified as P
+import ShellRun.Math (NonNegative, Positive)
+import ShellRun.Math qualified as Math
 import ShellRun.Utils qualified as U
 import System.Clock (TimeSpec)
 import Test.Tasty (TestTree)
@@ -26,7 +24,7 @@ diffTimeProps = TH.testProperty "diffTime" $
   H.property $ do
     (t1, t2) <- H.forAll genTimeSpecs
     let result = U.diffTime t1 t2
-    H.assert $ result >= NN.unsafeNonNegative 0
+    H.assert $ result >= Math.unsafeNonNegative 0
 
 divWithRemProps :: TestTree
 divWithRemProps = TH.testProperty "divWithRem" $
@@ -50,10 +48,10 @@ vDivWithRem (n, divisor) (e, remainder) = do
   H.assert $ remainderRaw <= nRaw
   H.footnote $ show remainderRaw <> " <= " <> show nRaw
   where
-    nRaw = NN.getNonNegative n
-    divisorRaw = P.getPositive divisor
-    eRaw = NN.getNonNegative e
-    remainderRaw = NN.getNonNegative remainder
+    nRaw = Math.getNonNegative n
+    divisorRaw = Math.getPositive divisor
+    eRaw = Math.getNonNegative e
+    remainderRaw = Math.getNonNegative remainder
 
 genTimeSpecs :: Gen (TimeSpec, TimeSpec)
 genTimeSpecs = (,) <$> PGens.genTimeSpec <*> PGens.genTimeSpec
