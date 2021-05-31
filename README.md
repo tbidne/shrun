@@ -129,7 +129,6 @@ There are a few caveats for enabling native logging:
 
 - The utility of this flag is heavily dependent on how data is flushed in the sub processes. For instance, many programming languages will default to buffering data when printing, so if you want to have _some_ hope for streaming output, you will have to ensure your commands flush appropriately.
 - If the subprocess' logging is consistently very fast, it will make the running timer (updating once per second) difficult/impossible to read. Throttling the native logging was considered, but this added complexity and made the logging arguably misleading, as it can easily "fall behind" real-time.
-- Stderr is limited to just the last line, so if a process reports useful info to `stderr`, we will unfortunately only report the last line of it. A fix for this would be nice.
 
 # Building
 
