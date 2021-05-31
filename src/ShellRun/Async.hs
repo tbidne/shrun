@@ -6,16 +6,15 @@ module ShellRun.Async
 where
 
 import Control.Concurrent qualified as Concurrent
-import Control.Concurrent.Async (Async)
-import Control.Concurrent.Async qualified as Async
-import Control.Monad ((>=>))
+import Control.Exception (IOException)
+import Control.Exception qualified as Except
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Loops qualified as Loops
 import Control.Monad.Reader (MonadIO, MonadReader)
 import Control.Monad.Reader qualified as MTL
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
-import Data.Maybe qualified as May
+import Data.Text qualified as T
 import ShellRun.Class.Has (HasNativeLog (..), HasTimeout (..))
 import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..), MonadLogger)
 import ShellRun.Class.MonadLogger qualified as ML
@@ -29,6 +28,7 @@ import ShellRun.Types.IO (Stderr (..))
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
 import System.Clock qualified as C
+import UnliftIO qualified
 import UnliftIO.Async qualified as UAsync
 
 runCommands ::
@@ -43,9 +43,20 @@ runCommands ::
   m ()
 runCommands commands = do
   start <- MTL.liftIO $ C.getTime Monotonic
-  actionsAsync <- UAsync.async $ UAsync.mapConcurrently_ runCommand commands
+  let actions = UAsync.mapConcurrently_ runCommand commands
+  let actionsWithTimer = UAsync.race_ actions counter
 
-  counter actionsAsync
+  result :: Either IOException () <- UnliftIO.withRunInIO $ \runner -> Except.try $ runner actionsWithTimer
+
+  case result of
+    Left ex ->
+      ML.logFatal $
+        T.pack $
+          "Encountered an exception. This is likely not an error in any of the "
+            <> "commands run, but rather an error in ShellRun itself: "
+            <> Except.displayException ex
+    Right _ -> pure ()
+
   end <- MTL.liftIO $ C.getTime Monotonic
   let totalTime = U.diffTime start end
   ML.clearLine
@@ -74,37 +85,31 @@ runCommand command@(MkCommand cmd) = do
     logFn msg
     logFn $ "Time elapsed: " <> U.formatTime seconds <> "\n"
 
-counter :: (HasTimeout env, MonadReader env m, MonadIO m) => Async a -> m ()
-counter asyn = do
+counter :: (HasTimeout env, MonadReader env m, MonadIO m) => m ()
+counter = do
   timeout <- MTL.asks getTimeout
   MTL.liftIO $ do
     timer <- IORef.newIORef $ NN.unsafeNonNegative 0
     let inc = NN.unsafeNonNegative 1
-    Loops.whileM_ (keepRunning asyn timer timeout) $ do
+    Loops.whileM_ (keepRunning timer timeout) $ do
       Concurrent.threadDelay 1_000_000
       IORef.modifyIORef' timer (+:+ inc)
       elapsed <- IORef.readIORef timer
       ML.resetCR
       ML.logLevelMode InfoCyan NoLine $ "Running time: " <> U.formatTime elapsed
 
-keepRunning :: Async a -> IORef NonNegative -> Maybe NonNegative -> IO Bool
-keepRunning asyn timer to = do
-  running <- unfinished asyn
+keepRunning :: IORef NonNegative -> Maybe NonNegative -> IO Bool
+keepRunning timer to = do
   elapsed <- IORef.readIORef timer
-  let hasTimedOut = timedOut elapsed to
-  if running && hasTimedOut
+  if timedOut elapsed to
     then do
-      Async.cancel asyn
       ML.clearLine
       ML.logWarn "Timed out, cancelling remaining tasks."
       pure False
-    else pure running
+    else pure True
 
 timedOut :: NonNegative -> Maybe NonNegative -> Bool
 timedOut timer =
   \case
     Nothing -> False
     Just t -> timer > t
-
-unfinished :: Async a -> IO Bool
-unfinished = Async.poll >=> pure . May.isNothing

@@ -20,6 +20,7 @@ module ShellRun.Class.MonadLogger
     logInfoSuccess,
     logWarn,
     logError,
+    logFatal,
   )
 where
 
@@ -58,6 +59,7 @@ data LogLevel
   | InfoSuccess
   | Warn
   | Error
+  | Fatal
   deriving (Show)
 
 levelToColor :: LogLevel -> Color
@@ -68,6 +70,7 @@ levelToColor InfoCyan = P.Cyan
 levelToColor InfoSuccess = P.Green
 levelToColor Warn = P.Magenta
 levelToColor Error = P.Red
+levelToColor Fatal = P.Red
 
 levelToPrefix :: LogLevel -> Text
 levelToPrefix Debug = "[Debug] "
@@ -77,6 +80,7 @@ levelToPrefix InfoCyan = "[Info] "
 levelToPrefix InfoSuccess = "[Info] "
 levelToPrefix Warn = "[Warn] "
 levelToPrefix Error = "[Error] "
+levelToPrefix Fatal = "[Fatal] "
 
 logLevelMode :: MonadLogger m => LogLevel -> LogMode -> Text -> m ()
 logLevelMode l t = logFn . P.color color . (<>) prefix
@@ -135,3 +139,7 @@ logWarn = logLevelMode Warn Line
 -- | Error formatted 'logLine'.
 logError :: MonadLogger m => Text -> m ()
 logError = logLevelMode Error Line
+
+-- | Fatal formatted 'logLine'.
+logFatal :: MonadLogger m => Text -> m ()
+logFatal = logLevelMode Fatal Line
