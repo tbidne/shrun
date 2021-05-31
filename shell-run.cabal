@@ -16,6 +16,8 @@ library
     ShellRun.Math
     ShellRun.Math.NonNegative
     ShellRun.Math.Positive
+    ShellRun.Math.RAdd
+    ShellRun.Math.REquals
     ShellRun.Parsing.Env
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Legend
@@ -26,6 +28,7 @@ library
     ShellRun.Types.IO
     ShellRun.Types.Legend
     ShellRun.Utils
+    ShellRun.Utils.Internal
     ShellRun.Utils.Text
   build-depends:
       async
@@ -57,14 +60,13 @@ library
     OverloadedStrings
     ScopedTypeVariables
     TupleSections
+    TypeApplications
     TypeOperators
     TypeSynonymInstances
     ViewPatterns
   ghc-options:
     -haddock
     -O2
-    -threaded
-    "-with-rtsopts=-N"
     -Wall
     -Wcompat
     -Widentities
@@ -129,6 +131,7 @@ test-suite unit
     Props.ShellRun.Math.NonNegative
     Props.ShellRun.Math.Positive
     Props.ShellRun.Utils
+    Props.ShellRun.Utils.Internal
     Props.ShellRun.Utils.Text
     Specs
     Specs.ShellRun.Parsing.Commands

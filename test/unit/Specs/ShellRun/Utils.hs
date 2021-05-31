@@ -13,15 +13,15 @@ specs :: IO [TestTree]
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Utils" $ do
     Hspec.describe "formatTime" $ do
-      Hspec.it "0 should pluralize seconds" $ do
-        Utils.formatTime (NN.unsafeNonNegative 0) `shouldBe` "0 seconds"
+      Hspec.it "0 should be empty" $ do
+        Utils.formatTime (NN.unsafeNonNegative 0) `shouldBe` ""
       Hspec.it "61 should be singular minute and seconds" $ do
-        Utils.formatTime (NN.unsafeNonNegative 61) `shouldBe` "1 minute and 1 second"
-      Hspec.it "180 should be plural minutes and singular seconds" $ do
-        Utils.formatTime (NN.unsafeNonNegative 180) `shouldBe` "3 minutes and 0 seconds"
+        Utils.formatTime (NN.unsafeNonNegative 61) `shouldBe` "1 minute, 1 second"
+      Hspec.it "180 should be plural minutes" $ do
+        Utils.formatTime (NN.unsafeNonNegative 180) `shouldBe` "3 minutes"
       Hspec.it "200 should pluralize minutes and seconds" $ do
-        Utils.formatTime (NN.unsafeNonNegative 200) `shouldBe` "3 minutes and 20 seconds"
+        Utils.formatTime (NN.unsafeNonNegative 200) `shouldBe` "3 minutes, 20 seconds"
       Hspec.it "4000 should include hours" $ do
-        Utils.formatTime (NN.unsafeNonNegative 4_000) `shouldBe` "1 hour, 6 minutes and 40 seconds"
+        Utils.formatTime (NN.unsafeNonNegative 4_000) `shouldBe` "1 hour, 6 minutes, 40 seconds"
       Hspec.it "100,000 should include days" $ do
-        Utils.formatTime (NN.unsafeNonNegative 100_000) `shouldBe` "1 day, 3 hours, 46 minutes and 40 seconds"
+        Utils.formatTime (NN.unsafeNonNegative 100_000) `shouldBe` "1 day, 3 hours, 46 minutes, 40 seconds"
