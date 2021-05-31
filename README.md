@@ -44,12 +44,11 @@ All well and good, but this approach has several deficiencies:
 
 1. It does not scale. Imagine you have variations of `cmd3` you want to run under different circumstances. You could create multiple aliases:
 
-```sh
-alias run_commands_cmd3a="cmd1 && cmd2 && cmd3a"
-alias run_commands_cmd3b="cmd1 && cmd2 && cmd3b"
-```
+        
+        alias run_commands_cmd3a="cmd1 && cmd2 && cmd3a"
+        alias run_commands_cmd3b="cmd1 && cmd2 && cmd3b"
 
-But this is messy and grows exponentially in the number of aliases for each variation.
+    But this is messy and grows exponentially in the number of aliases for each variation.
 
 This application purports to overcome these limitations.
 
