@@ -63,6 +63,8 @@ library
   ghc-options:
     -haddock
     -O2
+    -threaded
+    "-with-rtsopts=-N"
     -Wall
     -Wcompat
     -Widentities
@@ -103,6 +105,8 @@ executable shell-run
   ghc-options:
     -haddock
     -O2
+    -threaded
+    "-with-rtsopts=-N"
     -Wall
     -Wcompat
     -Widentities
