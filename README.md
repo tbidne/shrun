@@ -72,7 +72,7 @@ Available options:
   -h,--help                Show this help text
 ```
 
-In general, `shell-run` is a wrapper around running shell commands. For instance:
+In a nut-shell (😉), `shell-run` is a wrapper around running shell commands. For instance:
 
 ```sh
 shell-run "some long command" "another command"
@@ -136,9 +136,9 @@ There are a few caveats for enabling native logging:
 
 You will need one of:
 
-- `cabal-install 2.4+` and `ghc 8.10.4+`
-- `stack`
-- `nix`
+- [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 8.10.4+](https://www.haskell.org/ghc/download.html)
+- [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
+- [nix](https://nixos.org/download.html)
 
 The app can be built via `cabal` or `stack`. If you are using `nix`, a `shell.nix` file exists that will provide the needed dependencies, including the right `ghc`. Otherwise, building is the same as `cabal`.
 
