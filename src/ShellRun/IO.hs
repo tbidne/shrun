@@ -120,7 +120,7 @@ handleToStderr command = \case
     -- error where we end up reading after the FD is closed. This can be "fixed"
     -- by printing the output first, but adding a superfluous print statement
     -- to force the read is suboptimal. For now, StrictIO seems to solve this
-    -- problem, though once we may be able to remove the dependency in favor
+    -- problem, though we may be able to remove the dependency in favor
     -- of Handle.hGetContents' once we can upgrade to base 4.15.0.0.
     errStr :: Either IOException String <-
       Except.try $
