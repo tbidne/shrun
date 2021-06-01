@@ -151,6 +151,10 @@ The project is set to build with `-Werror` in `cabal.project`, so if for some re
 
 Like `cabal`, the app can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
 
+## Haddock
+
+Haddock docs can be built via cabal with `./scripts/haddock.sh`.
+
 # Testing
 
 There are three test suites, `unit`, `integration` and `functional`. These can be run via:
