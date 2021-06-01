@@ -65,7 +65,7 @@ verifyBadLegendShell blms =
           { legend = Just "bad/path"
           }
       logs = getLogs runBadLegendMockShell blms env
-   in (logs, logs == ["\ESC[91m[Error] Error parsing legend file: FileErr \"File not found\"\ESC[0m\n"])
+   in (logs, logs == ["\ESC[91m[Fatal Error] Error parsing legend file: FileErr \"File not found\"\ESC[0m\n"])
 
 noLegendMockShell :: NoLegendMockShell ()
 noLegendMockShell = ShellRun.runShell
