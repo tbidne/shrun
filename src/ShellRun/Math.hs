@@ -1,3 +1,4 @@
+-- | Re-exports 'Math' modules.
 module ShellRun.Math
   ( module Math,
   )

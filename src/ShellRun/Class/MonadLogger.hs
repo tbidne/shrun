@@ -1,15 +1,14 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Provides the `MonadLogger` class, used for having pretty logs in
+-- a monadic setting. Logging via this class includes both textual
+-- prefixes (e.g. @[INFO]@, @[ERROR]@) and also common terminal control
+-- prefixes for colors.
 module ShellRun.Class.MonadLogger
   ( -- * Types for logging
     MonadLogger (..),
     LogLevel (..),
     LogMode (..),
-
-    -- * Functions for manipulating carriage returns
-    resetCR,
-    clearLine,
-    clearNoLine,
 
     -- * Pretty formatted logging
     logLevelMode,
@@ -21,6 +20,11 @@ module ShellRun.Class.MonadLogger
     logWarn,
     logError,
     logFatal,
+
+    -- * Functions for manipulating carriage returns
+    resetCR,
+    clearLine,
+    clearNoLine,
   )
 where
 
@@ -32,25 +36,26 @@ import System.Console.Pretty (Color)
 import System.Console.Pretty qualified as P
 import System.IO qualified as IO
 
+-- | `MonadLogger` is a simple typeclass for abstracting logging functions.
 class Monad m => MonadLogger m where
   logNoLine :: Text -> m ()
   logLine :: Text -> m ()
 
 instance MonadLogger IO where
-  logNoLine :: Text -> IO ()
+  -- NOTE: We want to force printing with flush.
   logNoLine txt = putStr (T.unpack txt) *> IO.hFlush IO.stdout
-
-  logLine :: Text -> IO ()
   logLine = putStrLn . T.unpack
 
 instance MonadLogger m => MonadLogger (ReaderT e m) where
   logNoLine = MTL.lift . logNoLine
   logLine = MTL.lift . logLine
 
+-- | Determines the logging newline behavior.
 data LogMode
   = Line
   | NoLine
 
+-- | Determines the logging level.
 data LogLevel
   = Debug
   | Info
@@ -82,6 +87,8 @@ levelToPrefix Warn = "[Warn] "
 levelToPrefix Error = "[Error] "
 levelToPrefix Fatal = "[Fatal Error] "
 
+-- | This is the most general way to log, includes options for
+-- `LogLevel` and `LogMode`.
 logLevelMode :: MonadLogger m => LogLevel -> LogMode -> Text -> m ()
 logLevelMode l t = logFn . P.color color . (<>) prefix
   where
@@ -91,11 +98,11 @@ logLevelMode l t = logFn . P.color color . (<>) prefix
       Line -> logLine
       NoLine -> logNoLine
 
--- | 'logNoLine' with a carriage return.
+-- | Resets the carriage return.
 resetCR :: MonadLogger m => m ()
 resetCR = logNoLine "\r"
 
--- | 'resetCR' then `logLine` with 80 spaces.
+-- | Clears 80 characters on the given line, then prints a newline.
 clearLine :: MonadLogger m => m ()
 clearLine = do
   resetCR
@@ -103,7 +110,7 @@ clearLine = do
   where
     spaces = T.pack $ replicate 80 ' '
 
--- | Clears the line and resets the carriage return.
+-- | Clears the current line without starting a new one.
 clearNoLine :: MonadLogger m => m ()
 clearNoLine = do
   resetCR

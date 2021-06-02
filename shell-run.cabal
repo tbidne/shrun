@@ -2,8 +2,19 @@ cabal-version:      2.4
 name:               shell-run
 version:            0.1.0.0
 license:            BSD-3-Clause
+license-file:       LICENSE
+copyright:          2021 Thomas Bidne
 author:             Thomas Bidne
-extra-source-files: CHANGELOG.md
+maintainer:         tbidne@prontonmail.com
+homepage:           https://github.com/tbidne/shell-run/
+bug-reports:        https://github.com/tbidne/shell-run/issues
+synopsis:           A utility program for running shell commands asynchronously.
+description:        Please see the README at https://github.com/tbidne/shell-run/#readme
+category:           Shell scripting, Utils
+extra-source-files: CHANGELOG.md, README.md
+Source-Repository head
+    Type: git
+    Location: https://github.com/tbidne/shell-run
 
 library
   exposed-modules:
