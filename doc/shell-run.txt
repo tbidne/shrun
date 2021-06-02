@@ -89,6 +89,18 @@ data NonNegative
 getNonNegative :: NonNegative -> Int
 
 -- | Smart constructor for <a>NonNegative</a>.
+--   
+--   Examples:
+--   
+--   <pre>
+--   &gt;&gt;&gt; mkNonNegative 7
+--   Just (MkNonNegative {getNonNegative = 7})
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; mkNonNegative (-2)
+--   Nothing
+--   </pre>
 mkNonNegative :: Int -> Maybe NonNegative
 
 -- | Unsafe constructor for <a>NonNegative</a>, intended to be used with
@@ -110,6 +122,18 @@ data Positive
 getPositive :: Positive -> Int
 
 -- | Smart constructor for <a>Positive</a>.
+--   
+--   Examples:
+--   
+--   <pre>
+--   &gt;&gt;&gt; mkPositive 7
+--   Just (MkPositive {getPositive = 7})
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; mkPositive 0
+--   Nothing
+--   </pre>
 mkPositive :: Int -> Maybe Positive
 
 -- | Unsafe constructor for <a>Positive</a>, intended to be used with known
@@ -291,13 +315,43 @@ runCommands :: MonadShell m => [Command] -> m ()
 -- | Internal module for utilities.
 module ShellRun.Utils.Internal
 
--- | For &lt;math&gt;, returns non-negative &lt;math&gt; such that
+-- | For &lt;math&gt;, <tt>divWithRem n d</tt> returns non-negative
+--   &lt;math&gt; such that
 --   
 --   &lt;math&gt;
+--   
+--   Examples:
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let n = Math.unsafeNonNegative 34
+--         d = Math.unsafePositive 5
+--         result = divWithRem n d
+--     in monoBimap Math.getNonNegative result
+--   :}
+--   (6,4)
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let n = Math.unsafeNonNegative 12
+--         d = Math.unsafePositive 18
+--         result = divWithRem n d
+--     in monoBimap Math.getNonNegative result
+--   :}
+--   (0,12)
+--   </pre>
 divWithRem :: NonNegative -> Positive -> (NonNegative, NonNegative)
 
 -- | Convenience function for mapping <tt>(a -&gt; b)</tt> over a
 --   monomorphic bifunctor.
+--   
+--   Example:
+--   
+--   <pre>
+--   &gt;&gt;&gt; monoBimap length ("hey","listen")
+--   (3,6)
+--   </pre>
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 
 -- | Represents a relative time.
@@ -310,9 +364,28 @@ MkTimeSummary :: NonNegative -> NonNegative -> NonNegative -> NonNegative -> Tim
 
 -- | Transforms <a>NonNegative</a> <tt>seconds</tt> into a
 --   <a>TimeSummary</a>.
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds
+--         summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)
+--         showSummary (MkTimeSummary d h m s) = fmap Math.getNonNegative [d, h, m, s]
+--     in showSummary summary
+--   :}
+--   [2,7,33,20]
+--   </pre>
 secondsToTimeSummary :: NonNegative -> TimeSummary
 
 -- | Formats a <a>TimeSummary</a> to <a>Text</a>.
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds
+--         summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)
+--     in formatTimeSummary summary
+--   :}
+--   "2 days, 7 hours, 33 minutes, 20 seconds"
+--   </pre>
 formatTimeSummary :: TimeSummary -> Text
 instance GHC.Show.Show ShellRun.Utils.Internal.TimeSummary
 
@@ -343,14 +416,37 @@ unsafeMkNonEmptyText :: Text -> NonEmptyText
 --   do not include it in the second part of the pair.</li>
 --   </ol>
 --   
---   For instance,
+--   For instance:
 --   
 --   <pre>
---   -- Data.Text
---   breakOn "=" "HEY=LISTEN" === ("HEY","=LISTEN")
+--   &gt;&gt;&gt; -- Data.Text
 --   
---   -- ShellRun.Utils.Text
---   breakStripPoint (unsafeMkNonEmptyText "=") "HEY=LISTEN" === ("HEY", "LISTEN")
+--   &gt;&gt;&gt; T.breakOn "=" "HEY=LISTEN"
+--   ("HEY","=LISTEN")
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; -- ShellRun.Utils.Text
+--   
+--   &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText "=") "HEY=LISTEN"
+--   ("HEY","LISTEN")
+--   </pre>
+--   
+--   Other examples:
+--   
+--   <pre>
+--   &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText "=") "HEYLISTEN"
+--   ("HEYLISTEN","")
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText "=") "=HEYLISTEN"
+--   ("","HEYLISTEN")
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText "=") "HEYLISTEN="
+--   ("HEYLISTEN","")
 --   </pre>
 breakStripPoint :: NonEmptyText -> Text -> (Text, Text)
 instance GHC.Show.Show ShellRun.Utils.Text.NonEmptyText
@@ -362,18 +458,55 @@ instance GHC.Classes.Eq ShellRun.Utils.Text.NonEmptyText
 -- | Provides utilities.
 module ShellRun.Utils
 
--- | For given &lt;math&gt;, returns the absolute difference &lt;math&gt;.
+-- | For given &lt;math&gt;, returns the absolute difference &lt;math&gt;
+--   in seconds.
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let t1 = TimeSpec 5 0
+--         -- 20 s + 1 billion ns = 21 s
+--         t2 = TimeSpec 20 1_000_000_000
+--     in diffTime t1 t2
+--   :}
+--   MkNonNegative {getNonNegative = 16}
+--   </pre>
 diffTime :: TimeSpec -> TimeSpec -> NonNegative
 
 -- | For &lt;math&gt; seconds, returns a <a>Text</a> description of the
 --   days, hours, minutes and seconds.
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     -- 2 days, 7 hours, 33 minutes, 20 seconds
+--     let totalSeconds = Math.unsafeNonNegative 200_000
+--     in formatTime totalSeconds
+--   :}
+--   "2 days, 7 hours, 33 minutes, 20 seconds"
+--   </pre>
 formatTime :: NonNegative -> Text
 
 -- | Safe <tt>head</tt>.
+--   
+--   <pre>
+--   &gt;&gt;&gt; headMaybe [1,2,3]
+--   Just 1
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; headMaybe []
+--   Nothing
+--   </pre>
 headMaybe :: [a] -> Maybe a
 
 -- | Convenience function for mapping <tt>(a -&gt; b)</tt> over a
 --   monomorphic bifunctor.
+--   
+--   Example:
+--   
+--   <pre>
+--   &gt;&gt;&gt; monoBimap length ("hey","listen")
+--   (3,6)
+--   </pre>
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 
 -- | For <tt>m (Maybe b)</tt>, <tt>m a</tt>, runs <tt>m a</tt> until <tt>m
@@ -381,9 +514,32 @@ monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 --   is true.
 whileNothing :: Monad m => m (Maybe b) -> m a -> m b
 
--- | For &lt;math&gt;, returns non-negative &lt;math&gt; such that
+-- | For &lt;math&gt;, <tt>divWithRem n d</tt> returns non-negative
+--   &lt;math&gt; such that
 --   
 --   &lt;math&gt;
+--   
+--   Examples:
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let n = Math.unsafeNonNegative 34
+--         d = Math.unsafePositive 5
+--         result = divWithRem n d
+--     in monoBimap Math.getNonNegative result
+--   :}
+--   (6,4)
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let n = Math.unsafeNonNegative 12
+--         d = Math.unsafePositive 18
+--         result = divWithRem n d
+--     in monoBimap Math.getNonNegative result
+--   :}
+--   (0,12)
+--   </pre>
 divWithRem :: NonNegative -> Positive -> (NonNegative, NonNegative)
 
 
@@ -406,15 +562,35 @@ module ShellRun.Parsing.Commands
 --   We stop and return &lt;math&gt; when it does not exist as a key in the
 --   map.
 --   
---   For example,
+--   Example:
 --   
 --   <pre>
---   m = { "cmd1": "one", "cmd2": "two", "all": "cmd1,,cmd2,,other" }
---   translateCommands m ["all", "blah"] == ["one", "two", "other", "blah"]
+--   &gt;&gt;&gt; :{
+--     let m = Map.fromList
+--           [ ("cmd1", "one"),
+--             ("cmd2", "two"),
+--             ("all", "cmd1,,cmd2,,other")
+--           ]
+--         cmds = translateCommands m ["all","blah"]
+--     in (fmap . fmap) getCommand cmds
+--   :}
+--   Right ["one","two","other","blah"]
 --   </pre>
 --   
 --   Note: If -- when looking up a line -- we detect a cycle, then a
 --   <a>CyclicKeyErr</a> will be returned.
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--     let m = Map.fromList
+--           [ ("a", "b"),
+--             ("b", "c"),
+--             ("c", "a")
+--           ]
+--     in translateCommands m ["a"]
+--   :}
+--   Left (CyclicKeyErr "a -&gt; b -&gt; c -&gt; a")
+--   </pre>
 translateCommands :: LegendMap -> [Text] -> Either LegendErr [Command]
 
 
@@ -475,6 +651,23 @@ module ShellRun.Parsing.Legend.Internal
 --   <li>Value is empty.</li>
 --   <li>There are duplicate keys.</li>
 --   </ul>
+--   
+--   Examples:
+--   
+--   <pre>
+--   &gt;&gt;&gt; linesToMap ["=val"]
+--   Left (EntryErr "Key cannot be empty: =val")
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; linesToMap ["key="]
+--   Left (EntryErr "Value cannot be empty: key=")
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; linesToMap ["key=value"]
+--   Right (fromList [("key","value")])
+--   </pre>
 linesToMap :: [Text] -> Either LegendErr LegendMap
 
 

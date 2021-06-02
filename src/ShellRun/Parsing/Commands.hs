@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides functionality for translating 'Text' commands
 -- via a 'LegendMap'.
@@ -30,17 +31,34 @@ import ShellRun.Utils qualified as Utils
 -- @
 --
 -- where \(v = v_1,,\ldots,,v_n\), then we recursively search on each
--- \(v_i\). We stop and return \(v_i\) when it does not exist as a key in the map.
+-- \(v_i\). We stop and return \(v_i\) when it does not exist as a key in the
+-- map.
 --
--- For example,
+-- Example:
 --
--- @
--- m = { "cmd1": "one", "cmd2": "two", "all": "cmd1,,cmd2,,other" }
--- translateCommands m ["all", "blah"] == ["one", "two", "other", "blah"]
--- @
+-- >>> :{
+--   let m = Map.fromList
+--         [ ("cmd1", "one"),
+--           ("cmd2", "two"),
+--           ("all", "cmd1,,cmd2,,other")
+--         ]
+--       cmds = translateCommands m ["all","blah"]
+--   in (fmap . fmap) getCommand cmds
+-- :}
+-- Right ["one","two","other","blah"]
 --
--- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyErr' will be
--- returned.
+-- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyErr'
+-- will be returned.
+--
+-- >>> :{
+--   let m = Map.fromList
+--         [ ("a", "b"),
+--           ("b", "c"),
+--           ("c", "a")
+--         ]
+--   in translateCommands m ["a"]
+-- :}
+-- Left (CyclicKeyErr "a -> b -> c -> a")
 translateCommands :: LegendMap -> [Text] -> Either LegendErr [Command]
 translateCommands mp = sequenceA . foldMap (lineToCommands mp)
 

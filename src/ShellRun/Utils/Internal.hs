@@ -1,4 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Internal module for utilities.
 module ShellRun.Utils.Internal
@@ -18,14 +20,34 @@ import Data.Text qualified as T
 import ShellRun.Math (NonNegative, Positive, REquals (..))
 import ShellRun.Math qualified as Math
 
--- | For \(n \ge 0, d > 0\), returns non-negative \((e, r)\) such that
+-- $ >>> :set -XNumericUnderscores
+
+-- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
 --
 -- \[
 --    \begin{align}
 --      de + r = n \\
---      r < n \\
+--      r \le n \\
 --    \end{align}
 -- \]
+--
+-- Examples:
+--
+-- >>> :{
+--   let n = Math.unsafeNonNegative 34
+--       d = Math.unsafePositive 5
+--       result = divWithRem n d
+--   in monoBimap Math.getNonNegative result
+-- :}
+-- (6,4)
+--
+-- >>> :{
+--   let n = Math.unsafeNonNegative 12
+--       d = Math.unsafePositive 18
+--       result = divWithRem n d
+--   in monoBimap Math.getNonNegative result
+-- :}
+-- (0,12)
 divWithRem :: NonNegative -> Positive -> (NonNegative, NonNegative)
 divWithRem n d = monoBimap Math.unsafeNonNegative (n' `div` d', n' `rem` d')
   where
@@ -42,6 +64,14 @@ data TimeSummary = MkTimeSummary
   deriving (Show)
 
 -- | Transforms 'NonNegative' @seconds@ into a 'TimeSummary'.
+--
+-- >>> :{
+--   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds
+--       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)
+--       showSummary (MkTimeSummary d h m s) = fmap Math.getNonNegative [d, h, m, s]
+--   in showSummary summary
+-- :}
+-- [2,7,33,20]
 secondsToTimeSummary :: NonNegative -> TimeSummary
 secondsToTimeSummary nn = MkTimeSummary days hours minutes seconds
   where
@@ -50,6 +80,13 @@ secondsToTimeSummary nn = MkTimeSummary days hours minutes seconds
     (minutes, seconds) = divWithRem hoursRem $ Math.unsafePositive 60
 
 -- | Formats a 'TimeSummary' to 'Text'.
+--
+-- >>> :{
+--   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds
+--       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)
+--   in formatTimeSummary summary
+-- :}
+-- "2 days, 7 hours, 33 minutes, 20 seconds"
 formatTimeSummary :: TimeSummary -> Text
 formatTimeSummary (MkTimeSummary d h m s) =
   let f acc (n, units)
@@ -67,5 +104,10 @@ pluralize val txt
     valUnit = T.pack (show n) <> txt
 
 -- | Convenience function for mapping @(a -> b)@ over a monomorphic bifunctor.
+--
+-- Example:
+--
+-- >>> monoBimap length ("hey","listen")
+-- (3,6)
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = Bifunctor.bimap f f

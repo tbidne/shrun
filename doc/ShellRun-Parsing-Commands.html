@@ -4,7 +4,25 @@
  <code>legend</code>. If it does not, we return <em>s</em>. If there is a key matching
  <em>s</em>, i.e.,</p><pre>legend = fromList [...,(s, v),...]
 </pre><p>where <span class="mathjax">\(v = v_1,,\ldots,,v_n\)</span>, then we recursively search on each
- <span class="mathjax">\(v_i\)</span>. We stop and return <span class="mathjax">\(v_i\)</span> when it does not exist as a key in the map.</p><p>For example,</p><pre>m = { &quot;cmd1&quot;: &quot;one&quot;, &quot;cmd2&quot;: &quot;two&quot;, &quot;all&quot;: &quot;cmd1,,cmd2,,other&quot; }
-translateCommands m [&quot;all&quot;, &quot;blah&quot;] == [&quot;one&quot;, &quot;two&quot;, &quot;other&quot;, &quot;blah&quot;]
-</pre><p>Note: If -- when looking up a line -- we detect a cycle, then a <code><a href="ShellRun-Types-Legend.html#v:CyclicKeyErr" title="ShellRun.Types.Legend">CyclicKeyErr</a></code> will be
- returned.</p></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.24.0</p></div></body></html>
+ <span class="mathjax">\(v_i\)</span>. We stop and return <span class="mathjax">\(v_i\)</span> when it does not exist as a key in the
+ map.</p><p>Example:</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>:{
+</code></strong>  let m = Map.fromList
+        [ (&quot;cmd1&quot;, &quot;one&quot;),
+          (&quot;cmd2&quot;, &quot;two&quot;),
+          (&quot;all&quot;, &quot;cmd1,,cmd2,,other&quot;)
+        ]
+      cmds = translateCommands m [&quot;all&quot;,&quot;blah&quot;]
+  in (fmap . fmap) getCommand cmds
+:}
+Right [&quot;one&quot;,&quot;two&quot;,&quot;other&quot;,&quot;blah&quot;]
+</pre><p>Note: If -- when looking up a line -- we detect a cycle, then a <code><a href="ShellRun-Types-Legend.html#v:CyclicKeyErr" title="ShellRun.Types.Legend">CyclicKeyErr</a></code>
+ will be returned.</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>:{
+</code></strong>  let m = Map.fromList
+        [ (&quot;a&quot;, &quot;b&quot;),
+          (&quot;b&quot;, &quot;c&quot;),
+          (&quot;c&quot;, &quot;a&quot;)
+        ]
+  in translateCommands m [&quot;a&quot;]
+:}
+Left (CyclicKeyErr &quot;a -&gt; b -&gt; c -&gt; a&quot;)
+</pre></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.24.0</p></div></body></html>

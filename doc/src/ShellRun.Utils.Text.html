@@ -1,25 +1,28 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
-</span><span id="line-2"></span><span>
-</span><span id="line-3"></span><span class="hs-comment">-- | Provides 'Text' utils.</span><span>
-</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ShellRun.Utils.Text</span><span>
-</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier">NonEmptyText</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-6"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#unNonEmptyText"><span class="hs-identifier">unNonEmptyText</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-7"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier">mkNonEmptyText</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-8"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier">unsafeMkNonEmptyText</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-9"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier">breakStripPoint</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
-</span><span id="line-11"></span><span class="hs-keyword">where</span><span>
-</span><span id="line-12"></span><span>
-</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE GeneralizedNewtypeDeriving #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns #-}</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- | Provides 'Text' utils.</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ShellRun.Utils.Text</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier">NonEmptyText</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#unNonEmptyText"><span class="hs-identifier">unNonEmptyText</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier">mkNonEmptyText</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier">unsafeMkNonEmptyText</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier">breakStripPoint</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">where</span><span>
 </span><span id="line-15"></span><span>
-</span><span id="line-16"></span><span class="hs-comment">-- | Newtype wrapper for non-empty 'Text'.</span><span>
-</span><span id="line-17"></span><span class="hs-keyword">newtype</span><span> </span><span id="NonEmptyText"><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-var">NonEmptyText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkNonEmptyText"><span class="annot"><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-var">MkNonEmptyText</span></a></span></span><span>
-</span><span id="line-18"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | Unwraps the 'NonEmptyText'</span><span>
-</span><span id="line-19"></span><span>    </span><span id="unNonEmptyText"><span class="annot"><span class="annottext">NonEmptyText -&gt; Text
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- | Newtype wrapper for non-empty 'Text'.</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">newtype</span><span> </span><span id="NonEmptyText"><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-var">NonEmptyText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkNonEmptyText"><span class="annot"><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-var">MkNonEmptyText</span></a></span></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | Unwraps the 'NonEmptyText'</span><span>
+</span><span id="line-22"></span><span>    </span><span id="unNonEmptyText"><span class="annot"><span class="annottext">NonEmptyText -&gt; Text
 </span><a href="ShellRun.Utils.Text.html#unNonEmptyText"><span class="hs-identifier hs-var hs-var">unNonEmptyText</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
-</span><span id="line-20"></span><span>  </span><span class="hs-special">}</span><span>
-</span><span id="line-21"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679067294"><span id="local-6989586621679067296"><span class="annot"><span class="annottext">NonEmptyText -&gt; NonEmptyText -&gt; Bool
+</span><span id="line-23"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679067294"><span id="local-6989586621679067296"><span class="annot"><span class="annottext">NonEmptyText -&gt; NonEmptyText -&gt; Bool
 (NonEmptyText -&gt; NonEmptyText -&gt; Bool)
 -&gt; (NonEmptyText -&gt; NonEmptyText -&gt; Bool) -&gt; Eq NonEmptyText
 forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
@@ -100,15 +103,15 @@ $cshow :: NonEmptyText -&gt; String
 showsPrec :: Int -&gt; NonEmptyText -&gt; ShowS
 $cshowsPrec :: Int -&gt; NonEmptyText -&gt; ShowS
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
-</span><span id="line-22"></span><span>
-</span><span id="line-23"></span><span class="hs-comment">-- | Smart constructor for 'NonEmptyText'.</span><span>
-</span><span id="line-24"></span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier hs-type">mkNonEmptyText</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-type">NonEmptyText</span></a></span><span>
-</span><span id="line-25"></span><span id="mkNonEmptyText"><span class="annot"><span class="annottext">mkNonEmptyText :: Text -&gt; Maybe NonEmptyText
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- | Smart constructor for 'NonEmptyText'.</span><span>
+</span><span id="line-27"></span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier hs-type">mkNonEmptyText</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-type">NonEmptyText</span></a></span><span>
+</span><span id="line-28"></span><span id="mkNonEmptyText"><span class="annot"><span class="annottext">mkNonEmptyText :: Text -&gt; Maybe NonEmptyText
 </span><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier hs-var hs-var">mkNonEmptyText</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe NonEmptyText
 forall a. Maybe a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Nothing</span></a></span><span>
-</span><span id="line-26"></span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier hs-var">mkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067262"><span class="annot"><span class="annottext">Text
+</span><span id="line-29"></span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier hs-var">mkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067262"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067262"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonEmptyText -&gt; Maybe NonEmptyText
 forall a. a -&gt; Maybe a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Just</span></a></span><span> </span><span class="annot"><span class="annottext">(NonEmptyText -&gt; Maybe NonEmptyText)
@@ -117,53 +120,64 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; NonEmptyText
 </span><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-var">MkNonEmptyText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067262"><span class="hs-identifier hs-var">t</span></a></span><span>
-</span><span id="line-27"></span><span>
-</span><span id="line-28"></span><span class="hs-comment">-- | Unsafe constructor for 'NonEmptyText', intended to be used with</span><span>
-</span><span id="line-29"></span><span class="hs-comment">-- know constants, e.g., @unsafeMkNonEmptyText &quot;hi&quot;@. Exercise restraint!</span><span>
-</span><span id="line-30"></span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-type">unsafeMkNonEmptyText</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-type">NonEmptyText</span></a></span><span>
-</span><span id="line-31"></span><span id="unsafeMkNonEmptyText"><span class="annot"><span class="annottext">unsafeMkNonEmptyText :: Text -&gt; NonEmptyText
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- | Unsafe constructor for 'NonEmptyText', intended to be used with</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- know constants, e.g., @unsafeMkNonEmptyText &quot;hi&quot;@. Exercise restraint!</span><span>
+</span><span id="line-33"></span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-type">unsafeMkNonEmptyText</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-type">NonEmptyText</span></a></span><span>
+</span><span id="line-34"></span><span id="unsafeMkNonEmptyText"><span class="annot"><span class="annottext">unsafeMkNonEmptyText :: Text -&gt; NonEmptyText
 </span><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-var hs-var">unsafeMkNonEmptyText</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; NonEmptyText
 forall a. HasCallStack =&gt; String -&gt; a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">error</span></a></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;Passed empty to unsafeMkNonEmptyText!&quot;</span></span><span>
-</span><span id="line-32"></span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-var">unsafeMkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067260"><span class="annot"><span class="annottext">Text
+</span><span id="line-35"></span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-var">unsafeMkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067260"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067260"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; NonEmptyText
 </span><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-var">MkNonEmptyText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067260"><span class="hs-identifier hs-var">t</span></a></span><span>
-</span><span id="line-33"></span><span>
-</span><span id="line-34"></span><span class="hs-comment">-- | Wrapper for 'Text'\'s 'T.breakOn' that differs in two ways:</span><span>
-</span><span id="line-35"></span><span class="hs-comment">--</span><span>
-</span><span id="line-36"></span><span class="hs-comment">-- 1. Total, since we restrict the @needle@ to 'NonEmptyText'</span><span>
-</span><span id="line-37"></span><span class="hs-comment">-- ('Text' throws a pure exception here).</span><span>
-</span><span id="line-38"></span><span class="hs-comment">-- 2. If the @needle@ is found within the @haystack@, we do not include it</span><span>
-</span><span id="line-39"></span><span class="hs-comment">-- in the second part of the pair.</span><span>
-</span><span id="line-40"></span><span class="hs-comment">--</span><span>
-</span><span id="line-41"></span><span class="hs-comment">-- For instance,</span><span>
-</span><span id="line-42"></span><span class="hs-comment">--</span><span>
-</span><span id="line-43"></span><span class="hs-comment">-- @</span><span>
-</span><span id="line-44"></span><span class="hs-comment">-- -- Data.Text</span><span>
-</span><span id="line-45"></span><span class="hs-comment">-- breakOn \&quot;=\&quot; \&quot;HEY=LISTEN\&quot; === (\&quot;HEY\&quot;,\&quot;=LISTEN\&quot;)</span><span>
-</span><span id="line-46"></span><span class="hs-comment">--</span><span>
-</span><span id="line-47"></span><span class="hs-comment">-- -- ShellRun.Utils.Text</span><span>
-</span><span id="line-48"></span><span class="hs-comment">-- breakStripPoint (unsafeMkNonEmptyText \&quot;=\&quot;) \&quot;HEY=LISTEN\&quot; === (\&quot;HEY\&quot;, \&quot;LISTEN\&quot;)</span><span>
-</span><span id="line-49"></span><span class="hs-comment">-- @</span><span>
-</span><span id="line-50"></span><span class="annot"><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier hs-type">breakStripPoint</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-type">NonEmptyText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-51"></span><span id="breakStripPoint"><span class="annot"><span class="annottext">breakStripPoint :: NonEmptyText -&gt; Text -&gt; (Text, Text)
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- | Wrapper for 'Text'\'s 'T.breakOn' that differs in two ways:</span><span>
+</span><span id="line-38"></span><span class="hs-comment">--</span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- 1. Total, since we restrict the @needle@ to 'NonEmptyText'</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- ('Text' throws a pure exception here).</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- 2. If the @needle@ is found within the @haystack@, we do not include it</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- in the second part of the pair.</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- For instance:</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- &gt;&gt;&gt; -- Data.Text</span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- &gt;&gt;&gt; T.breakOn &quot;=&quot; &quot;HEY=LISTEN&quot;</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- (&quot;HEY&quot;,&quot;=LISTEN&quot;)</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- &gt;&gt;&gt; -- ShellRun.Utils.Text</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText &quot;=&quot;) &quot;HEY=LISTEN&quot;</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- (&quot;HEY&quot;,&quot;LISTEN&quot;)</span><span>
+</span><span id="line-53"></span><span class="hs-comment">--</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- Other examples:</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText &quot;=&quot;) &quot;HEYLISTEN&quot;</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- (&quot;HEYLISTEN&quot;,&quot;&quot;)</span><span>
+</span><span id="line-58"></span><span class="hs-comment">--</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText &quot;=&quot;) &quot;=HEYLISTEN&quot;</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- (&quot;&quot;,&quot;HEYLISTEN&quot;)</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint (unsafeMkNonEmptyText &quot;=&quot;) &quot;HEYLISTEN=&quot;</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- (&quot;HEYLISTEN&quot;,&quot;&quot;)</span><span>
+</span><span id="line-64"></span><span class="annot"><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier hs-type">breakStripPoint</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-type">NonEmptyText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span id="breakStripPoint"><span class="annot"><span class="annottext">breakStripPoint :: NonEmptyText -&gt; Text -&gt; (Text, Text)
 </span><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier hs-var hs-var">breakStripPoint</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-type">MkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067259"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067259"><span class="hs-identifier hs-var">point</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679067258"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067258"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; (Text, Text)
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.breakOn</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067259"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067258"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-52"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679067256"><span class="annot"><span class="annottext">Text
+</span><span id="line-66"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679067256"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067256"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Maybe Text
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.stripPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067259"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679067254"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067254"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067256"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067254"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-53"></span><span>  </span><span id="local-6989586621679067253"><span class="annot"><span class="annottext">(Text, Text)
+</span><span id="line-67"></span><span>  </span><span id="local-6989586621679067253"><span class="annot"><span class="annottext">(Text, Text)
 </span><a href="#local-6989586621679067253"><span class="hs-identifier hs-var">pair</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Text, Text)
 </span><a href="#local-6989586621679067253"><span class="hs-identifier hs-var">pair</span></a></span><span>
-</span><span id="line-54"></span></pre></body></html>
+</span><span id="line-68"></span></pre></body></html>

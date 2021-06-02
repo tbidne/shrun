@@ -16,6 +16,14 @@ newtype Positive = MkPositive
   deriving (Eq, Ord, Show)
 
 -- | Smart constructor for 'Positive'.
+--
+-- Examples:
+--
+-- >>> mkPositive 7
+-- Just (MkPositive {getPositive = 7})
+--
+-- >>> mkPositive 0
+-- Nothing
 mkPositive :: Int -> Maybe Positive
 mkPositive n
   | n > 0 = Just $ MkPositive n
