@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Functional test for a successful run with native logging.
 module SuccessWithStdout (spec) where

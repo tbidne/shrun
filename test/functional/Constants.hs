@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Provides useful constants.
 module Constants
   ( -- * Logging messages

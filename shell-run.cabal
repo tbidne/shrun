@@ -56,24 +56,6 @@ library
     , unliftio
     , unliftio-core
   hs-source-dirs: src
-  default-extensions:
-    BangPatterns
-    DeriveFunctor
-    DerivingVia
-    FlexibleContexts
-    FlexibleInstances
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    LambdaCase
-    MultiParamTypeClasses
-    NamedFieldPuns
-    NumericUnderscores
-    OverloadedStrings
-    ScopedTypeVariables
-    TupleSections
-    TypeOperators
-    TypeSynonymInstances
-    ViewPatterns
   ghc-options:
     -haddock
     -O2
@@ -95,25 +77,6 @@ executable shell-run
     , mtl
     , shell-run
   hs-source-dirs: app
-  default-extensions:
-    BangPatterns
-    DeriveFunctor
-    DerivingVia
-    FlexibleContexts
-    FlexibleInstances
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    LambdaCase
-    MultiParamTypeClasses
-    NamedFieldPuns
-    NumericUnderscores
-    OverloadedStrings
-    ScopedTypeVariables
-    StandaloneDeriving
-    TupleSections
-    TypeOperators
-    TypeSynonymInstances
-    ViewPatterns
   ghc-options:
     -haddock
     -O2
@@ -160,25 +123,6 @@ test-suite unit
     , tasty-hspec
     , text
   hs-source-dirs: test/unit
-  default-extensions:
-    BangPatterns
-    DeriveFunctor
-    DerivingVia
-    FlexibleContexts
-    FlexibleInstances
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    LambdaCase
-    MultiParamTypeClasses
-    NamedFieldPuns
-    NumericUnderscores
-    OverloadedStrings
-    ScopedTypeVariables
-    StandaloneDeriving
-    TupleSections
-    TypeOperators
-    TypeSynonymInstances
-    ViewPatterns
   ghc-options:
     -haddock
     -O2
@@ -212,25 +156,6 @@ test-suite integration
     , tasty-hspec
     , text
   hs-source-dirs: test/integration
-  default-extensions:
-    BangPatterns
-    DeriveFunctor
-    DerivingVia
-    FlexibleContexts
-    FlexibleInstances
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    LambdaCase
-    MultiParamTypeClasses
-    NamedFieldPuns
-    NumericUnderscores
-    OverloadedStrings
-    ScopedTypeVariables
-    StandaloneDeriving
-    TupleSections
-    TypeOperators
-    TypeSynonymInstances
-    ViewPatterns
   ghc-options:
     -haddock
     -O2
@@ -264,25 +189,6 @@ test-suite functional
     , tasty-hspec
     , text
   hs-source-dirs: test/functional
-  default-extensions:
-    BangPatterns
-    DeriveFunctor
-    DerivingVia
-    FlexibleContexts
-    FlexibleInstances
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    LambdaCase
-    MultiParamTypeClasses
-    NamedFieldPuns
-    NumericUnderscores
-    OverloadedStrings
-    ScopedTypeVariables
-    StandaloneDeriving
-    TupleSections
-    TypeOperators
-    TypeSynonymInstances
-    ViewPatterns
   ghc-options:
     -haddock
     -O2
@@ -304,25 +210,6 @@ test-suite doctest
       base ^>=4.14.1.0
     , doctest
   hs-source-dirs: test/doctest
-  default-extensions:
-    BangPatterns
-    DeriveFunctor
-    DerivingVia
-    FlexibleContexts
-    FlexibleInstances
-    GeneralizedNewtypeDeriving
-    InstanceSigs
-    LambdaCase
-    MultiParamTypeClasses
-    NamedFieldPuns
-    NumericUnderscores
-    OverloadedStrings
-    ScopedTypeVariables
-    StandaloneDeriving
-    TupleSections
-    TypeOperators
-    TypeSynonymInstances
-    ViewPatterns
   ghc-options:
     -haddock
     -O2

@@ -1,3 +1,6 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Provides the 'GoodMockShell' type.
 module MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
 
@@ -8,8 +11,7 @@ import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Legend (LegendErr (..), LegendMap)
+import ShellRun.Types.Legend (LegendErr (..))
 
 -- | 'BadLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the path to the legend file is bad.
@@ -25,10 +27,8 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
     )
 
 instance MonadShell BadLegendMockShell where
-  legendPathToMap :: Text -> BadLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ FileErr "File not found"
 
-  runCommands :: [Command] -> BadLegendMockShell ()
   runCommands _ = pure ()
 
 instance Show a => Show (BadLegendMockShell a) where

@@ -73,11 +73,11 @@ data TimeSummary = MkTimeSummary
 -- :}
 -- [2,7,33,20]
 secondsToTimeSummary :: NonNegative -> TimeSummary
-secondsToTimeSummary nn = MkTimeSummary days hours minutes seconds
+secondsToTimeSummary nn = MkTimeSummary d h m s
   where
-    (days, daysRem) = divWithRem nn $ Math.unsafePositive 86_400
-    (hours, hoursRem) = divWithRem daysRem $ Math.unsafePositive 3_600
-    (minutes, seconds) = divWithRem hoursRem $ Math.unsafePositive 60
+    (d, daysRem) = divWithRem nn $ Math.unsafePositive 86_400
+    (h, hoursRem) = divWithRem daysRem $ Math.unsafePositive 3_600
+    (m, s) = divWithRem hoursRem $ Math.unsafePositive 60
 
 -- | Formats a 'TimeSummary' to 'Text'.
 --

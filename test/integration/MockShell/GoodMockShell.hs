@@ -1,4 +1,6 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides the 'GoodMockShell' type.
 module MockShell.GoodMockShell (GoodMockShell (..)) where
@@ -13,7 +15,6 @@ import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
 -- | 'GoodMockShell' is intended to test a \"Happy path\" run of
 -- 'ShellRun.runShell'.
@@ -28,7 +29,6 @@ newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
     )
 
 instance MonadShell GoodMockShell where
-  legendPathToMap :: Text -> GoodMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Right mp
     where
       mp =
@@ -38,7 +38,6 @@ instance MonadShell GoodMockShell where
             ("both", "cmd1,,cmd2")
           ]
 
-  runCommands :: [Command] -> GoodMockShell ()
   runCommands = MTL.tell . fmap getCommand
 
 instance Show a => Show (GoodMockShell a) where
