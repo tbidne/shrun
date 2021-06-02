@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 -- | Provides the 'REquals' class.
 module ShellRun.Math.REquals

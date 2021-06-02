@@ -16,6 +16,14 @@ newtype NonNegative = MkNonNegative
   deriving (Eq, Ord, Show)
 
 -- | Smart constructor for 'NonNegative'.
+--
+-- Examples:
+--
+-- >>> mkNonNegative 7
+-- Just (MkNonNegative {getNonNegative = 7})
+--
+-- >>> mkNonNegative (-2)
+-- Nothing
 mkNonNegative :: Int -> Maybe NonNegative
 mkNonNegative n
   | n >= 0 = Just $ MkNonNegative n

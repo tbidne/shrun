@@ -1,4 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for parsing 'Text' lines into a 'LegendMap'.
 module ShellRun.Parsing.Legend.Internal
@@ -14,6 +16,8 @@ import Data.Text qualified as T
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 import ShellRun.Utils.Text qualified as TextUtils
 
+-- $ >>> :set -XOverloadedStrings
+
 -- | Attempts to parse the given ['Text'] into 'LegendMap'.
 -- The text lines can either be comments (start with '#') or
 -- key value pairs. The pairs have the form:
@@ -27,6 +31,17 @@ import ShellRun.Utils.Text qualified as TextUtils
 -- - Key is empty.
 -- - Value is empty.
 -- - There are duplicate keys.
+--
+-- Examples:
+--
+-- >>> linesToMap ["=val"]
+-- Left (EntryErr "Key cannot be empty: =val")
+--
+-- >>> linesToMap ["key="]
+-- Left (EntryErr "Value cannot be empty: key=")
+--
+-- >>> linesToMap ["key=value"]
+-- Right (fromList [("key","value")])
 linesToMap :: [Text] -> Either LegendErr LegendMap
 linesToMap = foldr f (Right Map.empty)
   where

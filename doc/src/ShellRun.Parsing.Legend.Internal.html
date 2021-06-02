@@ -1,34 +1,49 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
-</span><span id="line-2"></span><span>
-</span><span id="line-3"></span><span class="hs-comment">-- | Internal module for parsing 'Text' lines into a 'LegendMap'.</span><span>
-</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ShellRun.Parsing.Legend.Internal</span><span>
-</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ShellRun.Parsing.Legend.Internal.html#linesToMap"><span class="hs-identifier">linesToMap</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
-</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
-</span><span id="line-8"></span><span>
-</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Control.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">A</span></span><span>
-</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Control.Monad</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">M</span></span><span>
-</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/containers-0.6.2.1/src"><span class="hs-identifier">Data.Map.Strict</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
-</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
-</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html"><span class="hs-identifier">ShellRun.Types.Legend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendErr"><span class="hs-identifier">LegendErr</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendMap"><span class="hs-identifier">LegendMap</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html"><span class="hs-identifier">ShellRun.Utils.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TextUtils</span></span><span>
-</span><span id="line-16"></span><span>
-</span><span id="line-17"></span><span class="hs-comment">-- | Attempts to parse the given ['Text'] into 'LegendMap'.</span><span>
-</span><span id="line-18"></span><span class="hs-comment">-- The text lines can either be comments (start with '#') or</span><span>
-</span><span id="line-19"></span><span class="hs-comment">-- key value pairs. The pairs have the form:</span><span>
-</span><span id="line-20"></span><span class="hs-comment">--</span><span>
-</span><span id="line-21"></span><span class="hs-comment">-- @</span><span>
-</span><span id="line-22"></span><span class="hs-comment">-- key=val</span><span>
-</span><span id="line-23"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- | Internal module for parsing 'Text' lines into a 'LegendMap'.</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ShellRun.Parsing.Legend.Internal</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ShellRun.Parsing.Legend.Internal.html#linesToMap"><span class="hs-identifier">linesToMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Control.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">A</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Control.Monad</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">M</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/containers-0.6.2.1/src"><span class="hs-identifier">Data.Map.Strict</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html"><span class="hs-identifier">ShellRun.Types.Legend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendErr"><span class="hs-identifier">LegendErr</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendMap"><span class="hs-identifier">LegendMap</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html"><span class="hs-identifier">ShellRun.Utils.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TextUtils</span></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- $ &gt;&gt;&gt; :set -XOverloadedStrings</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- | Attempts to parse the given ['Text'] into 'LegendMap'.</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- The text lines can either be comments (start with '#') or</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- key value pairs. The pairs have the form:</span><span>
 </span><span id="line-24"></span><span class="hs-comment">--</span><span>
-</span><span id="line-25"></span><span class="hs-comment">-- Parsing can fail if, for any non-comment line:</span><span>
-</span><span id="line-26"></span><span class="hs-comment">--</span><span>
-</span><span id="line-27"></span><span class="hs-comment">-- - Key is empty.</span><span>
-</span><span id="line-28"></span><span class="hs-comment">-- - Value is empty.</span><span>
-</span><span id="line-29"></span><span class="hs-comment">-- - There are duplicate keys.</span><span>
-</span><span id="line-30"></span><span class="annot"><a href="ShellRun.Parsing.Legend.Internal.html#linesToMap"><span class="hs-identifier hs-type">linesToMap</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Either</span></a></span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendErr"><span class="hs-identifier hs-type">LegendErr</span></a></span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendMap"><span class="hs-identifier hs-type">LegendMap</span></a></span><span>
-</span><span id="line-31"></span><span id="linesToMap"><span class="annot"><span class="annottext">linesToMap :: [Text] -&gt; Either LegendErr LegendMap
+</span><span id="line-25"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- key=val</span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-28"></span><span class="hs-comment">--</span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- Parsing can fail if, for any non-comment line:</span><span>
+</span><span id="line-30"></span><span class="hs-comment">--</span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- - Key is empty.</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- - Value is empty.</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- - There are duplicate keys.</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--</span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- Examples:</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- &gt;&gt;&gt; linesToMap [&quot;=val&quot;]</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- Left (EntryErr &quot;Key cannot be empty: =val&quot;)</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- &gt;&gt;&gt; linesToMap [&quot;key=&quot;]</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- Left (EntryErr &quot;Value cannot be empty: key=&quot;)</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- &gt;&gt;&gt; linesToMap [&quot;key=value&quot;]</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- Right (fromList [(&quot;key&quot;,&quot;value&quot;)])</span><span>
+</span><span id="line-45"></span><span class="annot"><a href="ShellRun.Parsing.Legend.Internal.html#linesToMap"><span class="hs-identifier hs-type">linesToMap</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Either</span></a></span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendErr"><span class="hs-identifier hs-type">LegendErr</span></a></span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendMap"><span class="hs-identifier hs-type">LegendMap</span></a></span><span>
+</span><span id="line-46"></span><span id="linesToMap"><span class="annot"><span class="annottext">linesToMap :: [Text] -&gt; Either LegendErr LegendMap
 </span><a href="ShellRun.Parsing.Legend.Internal.html#linesToMap"><span class="hs-identifier hs-var hs-var">linesToMap</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Either LegendErr LegendMap -&gt; Either LegendErr LegendMap)
 -&gt; Either LegendErr LegendMap
 -&gt; [Text]
@@ -42,19 +57,19 @@ forall a b. b -&gt; Either a b
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Right</span></a></span><span> </span><span class="annot"><span class="annottext">LegendMap
 forall k a. Map k a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/containers-0.6.2.1/src"><span class="hs-identifier hs-var">Map.empty</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-32"></span><span>  </span><span class="hs-keyword">where</span><span>
-</span><span id="line-33"></span><span>    </span><span id="local-6989586621679067755"><span class="annot"><span class="annottext">f :: Text -&gt; Either LegendErr LegendMap -&gt; Either LegendErr LegendMap
+</span><span id="line-47"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-48"></span><span>    </span><span id="local-6989586621679067755"><span class="annot"><span class="annottext">f :: Text -&gt; Either LegendErr LegendMap -&gt; Either LegendErr LegendMap
 </span><a href="#local-6989586621679067755"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;&quot;</span></span><span> </span><span id="local-6989586621679067753"><span class="annot"><span class="annottext">Either LegendErr LegendMap
 </span><a href="#local-6989586621679067753"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either LegendErr LegendMap
 </span><a href="#local-6989586621679067753"><span class="hs-identifier hs-var">mp</span></a></span><span>
-</span><span id="line-34"></span><span>    </span><span class="annot"><a href="#local-6989586621679067755"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Maybe Text
+</span><span id="line-49"></span><span>    </span><span class="annot"><a href="#local-6989586621679067755"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Maybe Text
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.stripPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;#&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679067751"><span class="annot"><span class="annottext">Either LegendErr LegendMap
 </span><a href="#local-6989586621679067751"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either LegendErr LegendMap
 </span><a href="#local-6989586621679067751"><span class="hs-identifier hs-var">mp</span></a></span><span>
-</span><span id="line-35"></span><span>    </span><span class="annot"><a href="#local-6989586621679067755"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span id="local-6989586621679067750"><span class="annot"><span class="annottext">Text
+</span><span id="line-50"></span><span>    </span><span class="annot"><a href="#local-6989586621679067755"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span id="local-6989586621679067750"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067750"><span class="hs-identifier hs-var">line</span></a></span></span><span> </span><span id="local-6989586621679067749"><span class="annot"><span class="annottext">Either LegendErr LegendMap
 </span><a href="#local-6989586621679067749"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either LegendErr (Either LegendErr LegendMap)
 -&gt; Either LegendErr LegendMap
@@ -77,17 +92,17 @@ forall a. (Text, a) -&gt; Map Text a -&gt; Either LegendErr (Map Text a)
 </span><a href="ShellRun.Parsing.Legend.Internal.html#parseLine"><span class="hs-identifier hs-var">parseLine</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067750"><span class="hs-identifier hs-var">line</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Either LegendErr LegendMap
 </span><a href="#local-6989586621679067749"><span class="hs-identifier hs-var">mp</span></a></span><span>
-</span><span id="line-36"></span><span>    </span><span id="local-6989586621679067747"><span class="annot"><span class="annottext">insertPair :: (Text, a) -&gt; Map Text a -&gt; Either LegendErr (Map Text a)
+</span><span id="line-51"></span><span>    </span><span id="local-6989586621679067747"><span class="annot"><span class="annottext">insertPair :: (Text, a) -&gt; Map Text a -&gt; Either LegendErr (Map Text a)
 </span><a href="#local-6989586621679067747"><span class="hs-identifier hs-var hs-var">insertPair</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679067745"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067745"><span class="hs-identifier hs-var">key</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067744"><span class="annot"><span class="annottext">a
 </span><a href="#local-6989586621679067744"><span class="hs-identifier hs-var">cmd</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679067743"><span class="annot"><span class="annottext">Map Text a
 </span><a href="#local-6989586621679067743"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-37"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Map Text a -&gt; Maybe a
+</span><span id="line-52"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Map Text a -&gt; Maybe a
 forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/containers-0.6.2.1/src"><span class="hs-identifier hs-var">Map.lookup</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067745"><span class="hs-identifier hs-var">key</span></a></span><span> </span><span class="annot"><span class="annottext">Map Text a
 </span><a href="#local-6989586621679067743"><span class="hs-identifier hs-var">mp</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-38"></span><span>        </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span id="line-53"></span><span>        </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LegendErr -&gt; Either LegendErr (Map Text a)
 forall a b. a -&gt; Either a b
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Left</span></a></span><span> </span><span class="annot"><span class="annottext">(LegendErr -&gt; Either LegendErr (Map Text a))
@@ -96,7 +111,7 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; LegendErr
 </span><a href="ShellRun.Types.Legend.html#DuplicateKeyErr"><span class="hs-identifier hs-var">DuplicateKeyErr</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067745"><span class="hs-identifier hs-var">key</span></a></span><span>
-</span><span id="line-39"></span><span>        </span><span class="annot"><span class="annottext">Maybe a
+</span><span id="line-54"></span><span>        </span><span class="annot"><span class="annottext">Maybe a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Nothing</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Map Text a -&gt; Either LegendErr (Map Text a)
 forall a b. b -&gt; Either a b
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Right</span></a></span><span> </span><span class="annot"><span class="annottext">(Map Text a -&gt; Either LegendErr (Map Text a))
@@ -108,16 +123,16 @@ forall k a. Ord k =&gt; k -&gt; a -&gt; Map k a -&gt; Map k a
 </span><a href="#local-6989586621679067745"><span class="hs-identifier hs-var">key</span></a></span><span> </span><span class="annot"><span class="annottext">a
 </span><a href="#local-6989586621679067744"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">Map Text a
 </span><a href="#local-6989586621679067743"><span class="hs-identifier hs-var">mp</span></a></span><span>
-</span><span id="line-40"></span><span>
-</span><span id="line-41"></span><span class="annot"><a href="ShellRun.Parsing.Legend.Internal.html#parseLine"><span class="hs-identifier hs-type">parseLine</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Either</span></a></span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendErr"><span class="hs-identifier hs-type">LegendErr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-42"></span><span id="parseLine"><span class="annot"><span class="annottext">parseLine :: Text -&gt; Either LegendErr (Text, Text)
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="annot"><a href="ShellRun.Parsing.Legend.Internal.html#parseLine"><span class="hs-identifier hs-type">parseLine</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Either</span></a></span><span> </span><span class="annot"><a href="ShellRun.Types.Legend.html#LegendErr"><span class="hs-identifier hs-type">LegendErr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span id="parseLine"><span class="annot"><span class="annottext">parseLine :: Text -&gt; Either LegendErr (Text, Text)
 </span><a href="ShellRun.Parsing.Legend.Internal.html#parseLine"><span class="hs-identifier hs-var hs-var">parseLine</span></a></span></span><span> </span><span id="local-6989586621679067739"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067739"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-43"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">NonEmptyText -&gt; Text -&gt; (Text, Text)
+</span><span id="line-58"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">NonEmptyText -&gt; Text -&gt; (Text, Text)
 </span><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier hs-var">TextUtils.breakStripPoint</span></a></span><span> </span><span class="annot"><span class="annottext">NonEmptyText
 </span><a href="#local-6989586621679067737"><span class="hs-identifier hs-var">breakPoint</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067739"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-44"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><span id="line-59"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LegendErr -&gt; Either LegendErr (Text, Text)
 forall a b. a -&gt; Either a b
@@ -132,7 +147,7 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067739"><span class="hs-identifier hs-var">l</span></a></span><span>
-</span><span id="line-45"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><span id="line-60"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
 </span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LegendErr -&gt; Either LegendErr (Text, Text)
 forall a b. a -&gt; Either a b
@@ -147,16 +162,16 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067739"><span class="hs-identifier hs-var">l</span></a></span><span>
-</span><span id="line-46"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679067735"><span class="annot"><span class="annottext">Text
+</span><span id="line-61"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679067735"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067735"><span class="hs-identifier hs-var">k</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067734"><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067734"><span class="hs-identifier hs-var">v</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Text, Text) -&gt; Either LegendErr (Text, Text)
 forall a b. b -&gt; Either a b
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Right</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067735"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><a href="#local-6989586621679067734"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-47"></span><span>  </span><span class="hs-keyword">where</span><span>
-</span><span id="line-48"></span><span>    </span><span id="local-6989586621679067737"><span class="annot"><span class="annottext">breakPoint :: NonEmptyText
+</span><span id="line-62"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-63"></span><span>    </span><span id="local-6989586621679067737"><span class="annot"><span class="annottext">breakPoint :: NonEmptyText
 </span><a href="#local-6989586621679067737"><span class="hs-identifier hs-var hs-var">breakPoint</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; NonEmptyText
 </span><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-var">TextUtils.unsafeMkNonEmptyText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;=&quot;</span></span><span>
-</span><span id="line-49"></span></pre></body></html>
+</span><span id="line-64"></span></pre></body></html>

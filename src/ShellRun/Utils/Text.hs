@@ -1,4 +1,7 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | Provides 'Text' utils.
 module ShellRun.Utils.Text
@@ -38,15 +41,26 @@ unsafeMkNonEmptyText t = MkNonEmptyText t
 -- 2. If the @needle@ is found within the @haystack@, we do not include it
 -- in the second part of the pair.
 --
--- For instance,
+-- For instance:
 --
--- @
--- -- Data.Text
--- breakOn \"=\" \"HEY=LISTEN\" === (\"HEY\",\"=LISTEN\")
+-- >>> -- Data.Text
+-- >>> T.breakOn "=" "HEY=LISTEN"
+-- ("HEY","=LISTEN")
 --
--- -- ShellRun.Utils.Text
--- breakStripPoint (unsafeMkNonEmptyText \"=\") \"HEY=LISTEN\" === (\"HEY\", \"LISTEN\")
--- @
+-- >>> -- ShellRun.Utils.Text
+-- >>> breakStripPoint (unsafeMkNonEmptyText "=") "HEY=LISTEN"
+-- ("HEY","LISTEN")
+--
+-- Other examples:
+--
+-- >>> breakStripPoint (unsafeMkNonEmptyText "=") "HEYLISTEN"
+-- ("HEYLISTEN","")
+--
+-- >>> breakStripPoint (unsafeMkNonEmptyText "=") "=HEYLISTEN"
+-- ("","HEYLISTEN")
+--
+-- >>> breakStripPoint (unsafeMkNonEmptyText "=") "HEYLISTEN="
+-- ("HEYLISTEN","")
 breakStripPoint :: NonEmptyText -> Text -> (Text, Text)
 breakStripPoint (MkNonEmptyText point) txt = case T.breakOn point txt of
   (x, T.stripPrefix point -> Just y) -> (x, y)
