@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Internal module for parsing 'Text' lines into a 'LegendMap'.
 module ShellRun.Parsing.Legend.Internal
   ( linesToMap,
   )
@@ -13,6 +14,19 @@ import Data.Text qualified as T
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 import ShellRun.Utils.Text qualified as TextUtils
 
+-- | Attempts to parse the given ['Text'] into 'LegendMap'.
+-- The text lines can either be comments (start with '#') or
+-- key value pairs. The pairs have the form:
+--
+-- @
+-- key=val
+-- @
+--
+-- Parsing can fail if, for any non-comment line:
+--
+-- - Key is empty.
+-- - Value is empty.
+-- - There are duplicate keys.
 linesToMap :: [Text] -> Either LegendErr LegendMap
 linesToMap = foldr f (Right Map.empty)
   where

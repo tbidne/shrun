@@ -1,5 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Parses command line args into the core 'Env' type used by the main
+-- application.
 module ShellRun.Parsing.Env
   ( runParser,
   )
@@ -17,6 +19,7 @@ import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
 import ShellRun.Types.Env (Env (..), NativeLog (..))
 
+-- | Runs the parser.
 runParser :: IO Env
 runParser = OptApp.execParser parserInfo
 

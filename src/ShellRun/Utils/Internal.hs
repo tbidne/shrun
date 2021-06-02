@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Internal module for utilities.
 module ShellRun.Utils.Internal
   ( divWithRem,
     monoBimap,
@@ -31,6 +32,7 @@ divWithRem n d = monoBimap Math.unsafeNonNegative (n' `div` d', n' `rem` d')
     n' = Math.getNonNegative n
     d' = Math.getPositive d
 
+-- | Represents a relative time.
 data TimeSummary = MkTimeSummary
   { days :: NonNegative,
     hours :: NonNegative,
@@ -39,6 +41,7 @@ data TimeSummary = MkTimeSummary
   }
   deriving (Show)
 
+-- | Transforms 'NonNegative' @seconds@ into a 'TimeSummary'.
 secondsToTimeSummary :: NonNegative -> TimeSummary
 secondsToTimeSummary nn = MkTimeSummary days hours minutes seconds
   where
@@ -46,6 +49,7 @@ secondsToTimeSummary nn = MkTimeSummary days hours minutes seconds
     (hours, hoursRem) = divWithRem daysRem $ Math.unsafePositive 3_600
     (minutes, seconds) = divWithRem hoursRem $ Math.unsafePositive 60
 
+-- | Formats a 'TimeSummary' to 'Text'.
 formatTimeSummary :: TimeSummary -> Text
 formatTimeSummary (MkTimeSummary d h m s) =
   let f acc (n, units)
@@ -62,5 +66,6 @@ pluralize val txt
     n = Math.getNonNegative val
     valUnit = T.pack (show n) <> txt
 
+-- | Convenience function for mapping @(a -> b)@ over a monomorphic bifunctor.
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = Bifunctor.bimap f f

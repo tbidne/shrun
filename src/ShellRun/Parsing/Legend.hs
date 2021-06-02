@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Provides parsing a legend file into a 'LegendMap'.
 module ShellRun.Parsing.Legend
   ( legendPathToMap,
   )
@@ -11,6 +12,9 @@ import Data.Text qualified as T
 import ShellRun.Parsing.Legend.Internal qualified as Internal
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
+-- | Given a filepath, attempts to parse the file's contents into
+-- a 'LegendMap'. If the file does not exist or the parsing fails
+-- (see 'Internal.linesToMap'), an error will be returned.
 legendPathToMap :: Text -> IO (Either LegendErr LegendMap)
 legendPathToMap legendPath = do
   res <- Ex.try (readFile strPath) :: IO (Either Ex.SomeException String)

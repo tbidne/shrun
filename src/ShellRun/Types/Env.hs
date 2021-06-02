@@ -1,3 +1,4 @@
+-- | Provides core 'Env' types.
 module ShellRun.Types.Env
   ( Env (..),
     NativeLog (..),
@@ -15,6 +16,8 @@ import ShellRun.Class.Has
 import ShellRun.Math (NonNegative)
 import ShellRun.Types.Env.NativeLog (NativeLog (..))
 
+-- | The main 'Env' type used by Shell Run. Intended to be used with
+-- 'MonadReader'.
 data Env = MkEnv
   { legend :: Maybe Text,
     timeout :: Maybe NonNegative,
@@ -35,6 +38,7 @@ instance HasNativeLog Env where
 instance HasCommands Env where
   getCommands = commands
 
+-- | Constructs a default 'Env'.
 defaultEnv :: Env
 defaultEnv =
   MkEnv

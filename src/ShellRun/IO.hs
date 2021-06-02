@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Provides the low-level `IO` functions for running shell commands.
 module ShellRun.IO
   ( sh,
     sh_,
@@ -39,12 +40,10 @@ sh (MkCommand cmd) fp = T.pack <$> P.readCreateProcess proc ""
     proc = (P.shell (T.unpack cmd)) {P.cwd = fp}
 
 -- | Version of 'sh' that ignores the return value.
-sh_ :: T.Text -> Maybe FilePath -> IO ()
-sh_ cmd fp = P.readCreateProcess proc "" $> ()
-  where
-    proc = (P.shell (T.unpack cmd)) {P.cwd = fp}
+sh_ :: Command -> Maybe FilePath -> IO ()
+sh_ cmd = ($> ()) . sh cmd
 
--- | Version of 'sh' that returns ('ExitCode', stdout, stderr)
+-- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
 shExitCode :: Command -> Maybe FilePath -> IO (ExitCode, Stdout, Stderr)
 shExitCode (MkCommand cmd) path = do
   (exitCode, stdout, stderr) <- P.readCreateProcessWithExitCode proc ""
@@ -53,7 +52,8 @@ shExitCode (MkCommand cmd) path = do
     proc = (P.shell (T.unpack cmd)) {P.cwd = path}
     wrap f = f . T.strip . T.pack
 
--- | Returns 'Left' stderr if there is a failure, 'Right' stdout otherwise.
+-- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
+-- 'Right' 'Stdout' otherwise.
 tryShExitCode :: Command -> Maybe FilePath -> IO (Either Stderr Stdout)
 tryShExitCode command path = do
   (code, stdout, MkStderr err) <- shExitCode command path
@@ -61,8 +61,8 @@ tryShExitCode command path = do
     ExitSuccess -> Right stdout
     ExitFailure _ -> Left $ makeStdErr command err
 
--- | Version of 'tryShExitCode' that also returns (t, stdout/stderr), where
--- /t/ is the time the command took in seconds.
+-- | Version of 'tryShExitCode' that also returns the command's
+-- duration. 'Stdout' is not returned on success.
 tryTimeSh ::
   Command ->
   Maybe FilePath ->
@@ -74,6 +74,9 @@ tryTimeSh cmd path = do
   let diff = Utils.diffTime start end
   pure $ Bifunctor.bimap (diff,) (const diff) res
 
+-- | Version of 'tryTimeSh' that attempts to stream the command's
+-- @stdout@ to its @stdout@. Naturally, this is heavily dependent on the
+-- command's flushing behavior.
 tryTimeShWithStdout ::
   Command ->
   Maybe FilePath ->

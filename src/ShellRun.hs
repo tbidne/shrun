@@ -1,5 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | This module is the entry point to the @ShellRun@ library used by
+-- the @ShellRun@ executable.
 module ShellRun
   ( ShellT (..),
     runShell,
@@ -22,6 +24,7 @@ import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Env (Env (..))
 import ShellRun.Types.Legend (LegendErr)
 
+-- | `ShellT` is the main application type that runs shell commands.
 newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}
   deriving
     ( Functor,
@@ -41,6 +44,8 @@ instance
   legendPathToMap = MTL.liftIO . ParseLegend.legendPathToMap
   runCommands = ShAsync.runCommands
 
+-- | `runShell` is the entry point for running shell commands, i.e.,
+-- `MonadShell` instances.
 runShell ::
   ( HasCommands env,
     HasLegend env,

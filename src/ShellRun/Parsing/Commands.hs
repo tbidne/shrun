@@ -1,5 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Provides functionality for translating 'Text' commands
+-- via a 'LegendMap'.
 module ShellRun.Parsing.Commands
   ( translateCommands,
   )
@@ -16,19 +18,29 @@ import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 import ShellRun.Utils qualified as Utils
 
--- | Returns a list of 'T.Text' commands, potentially transforming a
--- given string via the `Map.Map` legend.
+-- | Returns a list of 'Text' commands, potentially transforming a
+-- given string via the `LegendMap` @legend@.
 --
--- For a string \(s = s_1,\ldots,s_n\), we split \(s\) by commas then recursively
--- search on each \(s_i\). We stop and return \(s_i\) when it does not exist
--- as a key in the map.
+-- Given a command string /s/, we first check if /s/ exists as a key in
+-- @legend@. If it does not, we return /s/. If there is a key matching
+-- /s/, i.e.,
+--
+-- @
+-- legend = fromList [...,(s, v),...]
+-- @
+--
+-- where \(v = v_1,,\ldots,,v_n\), then we recursively search on each
+-- \(v_i\). We stop and return \(v_i\) when it does not exist as a key in the map.
 --
 -- For example,
 --
 -- @
---   m = { "cmd1": "one", "cmd2": "two", "all": "cmd1,,cmd2,,other" }
---   translateCommands m ["all", "blah"] == ["one", "two", "other", "blah"]
+-- m = { "cmd1": "one", "cmd2": "two", "all": "cmd1,,cmd2,,other" }
+-- translateCommands m ["all", "blah"] == ["one", "two", "other", "blah"]
 -- @
+--
+-- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyErr' will be
+-- returned.
 translateCommands :: LegendMap -> [Text] -> Either LegendErr [Command]
 translateCommands mp = sequenceA . foldMap (lineToCommands mp)
 
