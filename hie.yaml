@@ -14,3 +14,6 @@ cradle:
 
     - path: "./test/functional"
       component: "shell-run:test:functional"
+
+    - path: "./test/doctest"
+      component: "shell-run:test:doctest"
