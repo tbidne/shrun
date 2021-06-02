@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Functional test for a successful run with native logging.
 module SuccessWithStdout (spec) where
 
 import Control.Monad.Reader qualified as MTL
@@ -12,6 +13,7 @@ import System.IO.Silently qualified as Shh
 import Test.Hspec (Spec, shouldSatisfy)
 import Test.Hspec qualified as Hspec
 
+-- | Spec that should run commands successfully and print stdout.
 spec :: Spec
 spec =
   Hspec.it "Should print commands stdout" $ do

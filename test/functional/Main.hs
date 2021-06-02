@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Runs functional tests.
 module Main (main) where
 
 import Constants qualified
@@ -15,6 +16,7 @@ import Test.Tasty qualified as T
 import Test.Tasty.Hspec qualified as TH
 import Timeout qualified
 
+-- | Entry point for functional tests.
 main :: IO ()
 main = tastySpec >>= T.defaultMain
   where

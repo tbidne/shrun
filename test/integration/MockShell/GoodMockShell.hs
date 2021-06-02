@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Provides the 'GoodMockShell' type.
 module MockShell.GoodMockShell (GoodMockShell (..)) where
 
 import Control.Monad.Reader (MonadReader)
@@ -14,8 +15,17 @@ import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
+-- | 'GoodMockShell' is intended to test a \"Happy path\" run of
+-- 'ShellRun.runShell'.
 newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
-  deriving (Functor, Applicative, Monad, MonadReader MockEnv, MonadWriter [Text], MonadLogger)
+  deriving
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadReader MockEnv,
+      MonadWriter [Text],
+      MonadLogger
+    )
 
 instance MonadShell GoodMockShell where
   legendPathToMap :: Text -> GoodMockShell (Either LegendErr LegendMap)

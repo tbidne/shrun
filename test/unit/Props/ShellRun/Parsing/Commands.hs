@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Property tests for ShellRun.Parsing.Commands.
 module Props.ShellRun.Parsing.Commands
   ( props,
   )
@@ -21,6 +22,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
+-- | Entry point for ShellRun.Parsing.Commands property tests.
 props :: TestTree
 props = T.testGroup "ShellRun.Parsing.Commands" [translateProps]
 

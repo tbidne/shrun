@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Runs specs.
 module Specs (specs) where
 
 import Control.Monad qualified as M
@@ -10,6 +11,7 @@ import Specs.ShellRun.Utils.Text qualified as TextUtils
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 
+-- | Entry point for specs.
 specs :: IO TestTree
 specs = T.testGroup "HSpec Specs" <$> allSpecs
   where

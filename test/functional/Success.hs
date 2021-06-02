@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Functional test for a successful run.
 module Success (spec) where
 
 import Constants qualified
@@ -13,6 +14,7 @@ import System.IO.Silently qualified as Shh
 import Test.Hspec (Spec, shouldSatisfy)
 import Test.Hspec qualified as Hspec
 
+-- | Spec that should run commands successfully.
 spec :: Spec
 spec =
   Hspec.it "Should run commands successfully" $ do

@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Specs for ShellRun.Utils.Text.
 module Specs.ShellRun.Utils.Text (specs) where
 
 import ShellRun.Utils.Text qualified as TextUtils
@@ -8,6 +9,7 @@ import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
+-- | Entry point for ShellRun.Utils.Text specs.
 specs :: IO [TestTree]
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Utils.Text" $ do

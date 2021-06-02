@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Functional test for a run that should timeout.
 module Timeout (spec) where
 
 import Constants qualified
@@ -13,6 +14,7 @@ import System.IO.Silently qualified as Shh
 import Test.Hspec (Spec, shouldSatisfy)
 import Test.Hspec qualified as Hspec
 
+-- | Spec that should timeout.
 spec :: Spec
 spec = Hspec.it "Should time out" $ do
   env <- SysEnv.withArgs argList Env.runParser

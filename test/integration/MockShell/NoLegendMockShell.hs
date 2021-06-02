@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Provides the 'NoLegendMockShell' type.
 module MockShell.NoLegendMockShell (NoLegendMockShell (..)) where
 
 import Control.Monad.Reader (MonadReader)
@@ -13,8 +14,18 @@ import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Legend (LegendErr (..), LegendMap)
 
-newtype NoLegendMockShell a = MkNoLegendMockShell {runNoLegendMockShell :: MockShellBase a}
-  deriving (Functor, Applicative, Monad, MonadReader MockEnv, MonadWriter [Text], MonadLogger)
+-- | 'NoLegendMockShell' is intended to test a run of
+-- 'ShellRun.runShell' when the legend is not included.
+newtype NoLegendMockShell a = MkNoLegendMockShell
+  {runNoLegendMockShell :: MockShellBase a}
+  deriving
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadReader MockEnv,
+      MonadWriter [Text],
+      MonadLogger
+    )
 
 instance MonadShell NoLegendMockShell where
   -- Purposely giving a bad shell function here to prove that no legend skips
