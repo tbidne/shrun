@@ -158,10 +158,11 @@ Haddock docs can be built via cabal with `./scripts/haddock.sh`.
 
 # Testing
 
-There are three test suites, `unit`, `integration` and `functional`. These can be run via:
+There are four test suites, `doctest`, `unit`, `integration` and `functional`. These can be run via:
 
 ```sh
 # --test-show-details=direct gives nicer output
+cabal test doctest --test-show-details=direct
 cabal test unit --test-show-details=direct
 cabal test integration --test-show-details=direct
 cabal test functional --test-show-details=direct
