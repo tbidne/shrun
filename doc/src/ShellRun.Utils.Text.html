@@ -22,7 +22,7 @@
 </span><span id="line-22"></span><span>    </span><span id="unNonEmptyText"><span class="annot"><span class="annottext">NonEmptyText -&gt; Text
 </span><a href="ShellRun.Utils.Text.html#unNonEmptyText"><span class="hs-identifier hs-var hs-var">unNonEmptyText</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
 </span><span id="line-23"></span><span>  </span><span class="hs-special">}</span><span>
-</span><span id="line-24"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679067294"><span id="local-6989586621679067296"><span class="annot"><span class="annottext">NonEmptyText -&gt; NonEmptyText -&gt; Bool
+</span><span id="line-24"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679067235"><span id="local-6989586621679067237"><span class="annot"><span class="annottext">NonEmptyText -&gt; NonEmptyText -&gt; Bool
 (NonEmptyText -&gt; NonEmptyText -&gt; Bool)
 -&gt; (NonEmptyText -&gt; NonEmptyText -&gt; Bool) -&gt; Eq NonEmptyText
 forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
@@ -30,7 +30,7 @@ forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
 $c/= :: NonEmptyText -&gt; NonEmptyText -&gt; Bool
 == :: NonEmptyText -&gt; NonEmptyText -&gt; Bool
 $c== :: NonEmptyText -&gt; NonEmptyText -&gt; Bool
-</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067278"><span id="local-6989586621679067280"><span id="local-6989586621679067282"><span id="local-6989586621679067284"><span id="local-6989586621679067286"><span id="local-6989586621679067288"><span id="local-6989586621679067290"><span class="annot"><span class="annottext">Eq NonEmptyText
+</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067219"><span id="local-6989586621679067221"><span id="local-6989586621679067223"><span id="local-6989586621679067225"><span id="local-6989586621679067227"><span id="local-6989586621679067229"><span id="local-6989586621679067231"><span class="annot"><span class="annottext">Eq NonEmptyText
 Eq NonEmptyText
 -&gt; (NonEmptyText -&gt; NonEmptyText -&gt; Ordering)
 -&gt; (NonEmptyText -&gt; NonEmptyText -&gt; Bool)
@@ -68,7 +68,7 @@ $c&lt; :: NonEmptyText -&gt; NonEmptyText -&gt; Bool
 compare :: NonEmptyText -&gt; NonEmptyText -&gt; Ordering
 $ccompare :: NonEmptyText -&gt; NonEmptyText -&gt; Ordering
 $cp1Ord :: Eq NonEmptyText
-</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></a></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067271"><span id="local-6989586621679067273"><span id="local-6989586621679067275"><span class="annot"><span class="annottext">b -&gt; NonEmptyText -&gt; NonEmptyText
+</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></a></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067212"><span id="local-6989586621679067214"><span id="local-6989586621679067216"><span class="annot"><span class="annottext">b -&gt; NonEmptyText -&gt; NonEmptyText
 NonEmpty NonEmptyText -&gt; NonEmptyText
 NonEmptyText -&gt; NonEmptyText -&gt; NonEmptyText
 (NonEmptyText -&gt; NonEmptyText -&gt; NonEmptyText)
@@ -87,7 +87,7 @@ sconcat :: NonEmpty NonEmptyText -&gt; NonEmptyText
 $csconcat :: NonEmpty NonEmptyText -&gt; NonEmptyText
 &lt;&gt; :: NonEmptyText -&gt; NonEmptyText -&gt; NonEmptyText
 $c&lt;&gt; :: NonEmptyText -&gt; NonEmptyText -&gt; NonEmptyText
-</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Semigroup</span></a></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067264"><span id="local-6989586621679067266"><span id="local-6989586621679067268"><span class="annot"><span class="annottext">Int -&gt; NonEmptyText -&gt; ShowS
+</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Semigroup</span></a></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067205"><span id="local-6989586621679067207"><span id="local-6989586621679067209"><span class="annot"><span class="annottext">Int -&gt; NonEmptyText -&gt; ShowS
 [NonEmptyText] -&gt; ShowS
 NonEmptyText -&gt; String
 (Int -&gt; NonEmptyText -&gt; ShowS)
@@ -111,15 +111,15 @@ $cshowsPrec :: Int -&gt; NonEmptyText -&gt; ShowS
 </span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe NonEmptyText
 forall a. Maybe a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Nothing</span></a></span><span>
-</span><span id="line-29"></span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier hs-var">mkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067262"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067262"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonEmptyText -&gt; Maybe NonEmptyText
+</span><span id="line-29"></span><span class="annot"><a href="ShellRun.Utils.Text.html#mkNonEmptyText"><span class="hs-identifier hs-var">mkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067203"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067203"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonEmptyText -&gt; Maybe NonEmptyText
 forall a. a -&gt; Maybe a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Just</span></a></span><span> </span><span class="annot"><span class="annottext">(NonEmptyText -&gt; Maybe NonEmptyText)
 -&gt; NonEmptyText -&gt; Maybe NonEmptyText
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; NonEmptyText
 </span><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-var">MkNonEmptyText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067262"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><a href="#local-6989586621679067203"><span class="hs-identifier hs-var">t</span></a></span><span>
 </span><span id="line-30"></span><span>
 </span><span id="line-31"></span><span class="hs-comment">-- | Unsafe constructor for 'NonEmptyText', intended to be used with</span><span>
 </span><span id="line-32"></span><span class="hs-comment">-- know constants, e.g., @unsafeMkNonEmptyText &quot;hi&quot;@. Exercise restraint!</span><span>
@@ -130,10 +130,10 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 forall a. HasCallStack =&gt; String -&gt; a
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">error</span></a></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;Passed empty to unsafeMkNonEmptyText!&quot;</span></span><span>
-</span><span id="line-35"></span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-var">unsafeMkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067260"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067260"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; NonEmptyText
+</span><span id="line-35"></span><span class="annot"><a href="ShellRun.Utils.Text.html#unsafeMkNonEmptyText"><span class="hs-identifier hs-var">unsafeMkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067201"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067201"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; NonEmptyText
 </span><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-var">MkNonEmptyText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067260"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><a href="#local-6989586621679067201"><span class="hs-identifier hs-var">t</span></a></span><span>
 </span><span id="line-36"></span><span>
 </span><span id="line-37"></span><span class="hs-comment">-- | Wrapper for 'Text'\'s 'T.breakOn' that differs in two ways:</span><span>
 </span><span id="line-38"></span><span class="hs-comment">--</span><span>
@@ -164,20 +164,20 @@ forall a. HasCallStack =&gt; String -&gt; a
 </span><span id="line-63"></span><span class="hs-comment">-- (&quot;HEYLISTEN&quot;,&quot;&quot;)</span><span>
 </span><span id="line-64"></span><span class="annot"><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier hs-type">breakStripPoint</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html#NonEmptyText"><span class="hs-identifier hs-type">NonEmptyText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-65"></span><span id="breakStripPoint"><span class="annot"><span class="annottext">breakStripPoint :: NonEmptyText -&gt; Text -&gt; (Text, Text)
-</span><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier hs-var hs-var">breakStripPoint</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-type">MkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067259"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067259"><span class="hs-identifier hs-var">point</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679067258"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067258"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; (Text, Text)
+</span><a href="ShellRun.Utils.Text.html#breakStripPoint"><span class="hs-identifier hs-var hs-var">breakStripPoint</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Utils.Text.html#MkNonEmptyText"><span class="hs-identifier hs-type">MkNonEmptyText</span></a></span><span> </span><span id="local-6989586621679067200"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067200"><span class="hs-identifier hs-var">point</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679067199"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067199"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; (Text, Text)
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.breakOn</span></a></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067259"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067258"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-66"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679067256"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067256"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Maybe Text
+</span><a href="#local-6989586621679067200"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067199"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679067197"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067197"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Maybe Text
 </span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.stripPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067259"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679067254"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067254"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067256"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679067254"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-67"></span><span>  </span><span id="local-6989586621679067253"><span class="annot"><span class="annottext">(Text, Text)
-</span><a href="#local-6989586621679067253"><span class="hs-identifier hs-var">pair</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Text, Text)
-</span><a href="#local-6989586621679067253"><span class="hs-identifier hs-var">pair</span></a></span><span>
+</span><a href="#local-6989586621679067200"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679067195"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067195"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067197"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679067195"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>  </span><span id="local-6989586621679067194"><span class="annot"><span class="annottext">(Text, Text)
+</span><a href="#local-6989586621679067194"><span class="hs-identifier hs-var">pair</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Text, Text)
+</span><a href="#local-6989586621679067194"><span class="hs-identifier hs-var">pair</span></a></span><span>
 </span><span id="line-68"></span></pre></body></html>
