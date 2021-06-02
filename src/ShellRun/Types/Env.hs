@@ -16,7 +16,7 @@ import ShellRun.Class.Has
 import ShellRun.Math (NonNegative)
 import ShellRun.Types.Env.NativeLog (NativeLog (..))
 
--- | The main 'Env' type used by Shell Run. Intended to be used with
+-- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'MonadReader'.
 data Env = MkEnv
   { legend :: Maybe Text,

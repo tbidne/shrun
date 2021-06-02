@@ -10,14 +10,14 @@ import Data.Text (Text)
 
 -- | Various errors that can occur while processing the legend.
 data LegendErr
-  = FileErr Text
-  -- ^Errors relating to locating the legend file itself.
-  | EntryErr Text
-  -- ^Errors relating to legend key=val format.
-  | CyclicKeyErr Text
-  -- ^Errors relating to cyclic keys.
-  | DuplicateKeyErr Text
-  -- ^Errors relating to duplicate keys.
+  = -- | Errors relating to locating the legend file itself.
+    FileErr Text
+  | -- | Errors relating to legend key=val format.
+    EntryErr Text
+  | -- | Errors relating to cyclic keys.
+    CyclicKeyErr Text
+  | -- | Errors relating to duplicate keys.
+    DuplicateKeyErr Text
   deriving (Eq, Show)
 
 -- | Alias for our legend map.

@@ -27,9 +27,9 @@ import Data.Text (Text)
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
 import ShellRun.Utils.Internal qualified as UtilsI
+import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec)
 import System.Clock qualified as C
-import ShellRun.Utils.Text as TextUtils
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\).
 diffTime :: TimeSpec -> TimeSpec -> NonNegative
