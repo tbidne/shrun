@@ -1,4 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Property tests for ShellRun.Utils.Internal.
 module Props.ShellRun.Utils.Internal
@@ -25,9 +27,9 @@ props = T.testGroup "ShellRun.Utils.Internal" [secondsToTimeSummary]
 secondsToTimeSummary :: TestTree
 secondsToTimeSummary = TH.testProperty "secondsToTimeSummary transforms correctly" $
   H.property $ do
-    seconds <- H.forAll genTime
-    let secondsRaw = Math.getNonNegative seconds
-        ts@(MkTimeSummary d h m s) = UtilsI.secondsToTimeSummary seconds
+    totalSeconds <- H.forAll genTime
+    let secondsRaw = Math.getNonNegative totalSeconds
+        ts@(MkTimeSummary d h m s) = UtilsI.secondsToTimeSummary totalSeconds
     H.annotateShow ts
     H.cover 30 "1 day <= time" (secondsRaw >= 86_400)
     H.cover 20 "1 hour <= time < 1 day" (secondsRaw >= 3_600 && secondsRaw < 86_400)

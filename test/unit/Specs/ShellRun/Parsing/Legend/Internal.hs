@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Specs for ShellRun.Parsing.Legend.Internal.
 module Specs.ShellRun.Parsing.Legend.Internal (specs) where

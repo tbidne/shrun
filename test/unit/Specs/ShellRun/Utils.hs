@@ -1,4 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Specs for ShellRun.Utils.
 module Specs.ShellRun.Utils (specs) where

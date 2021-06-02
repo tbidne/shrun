@@ -1,4 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Property tests for ShellRun.Parsing.Legend.Internal.
 module Props.ShellRun.Parsing.Legend.Internal (props) where
@@ -119,7 +121,7 @@ genVal = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 10 1 30
 
-genBadLines :: forall m. MonadGen m => m [Text]
+genBadLines :: MonadGen m => m [Text]
 genBadLines = Gen.shuffle =<< (:) <$> genBadLine <*> genGoodLines
 
 -- Since we have the format 'key=val' where val can also include '=', the only

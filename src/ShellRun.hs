@@ -1,4 +1,7 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | This module is the entry point to the @ShellRun@ library used by
 -- the @ShellRun@ executable.
@@ -55,9 +58,9 @@ runShell ::
   ) =>
   m ()
 runShell = do
-  legend <- MTL.asks getLegend
-  commands <- MTL.asks getCommands
-  parsedCommands <- maybePathToCommands legend commands
+  legendMap <- MTL.asks getLegend
+  cmds <- MTL.asks getCommands
+  parsedCommands <- maybePathToCommands legendMap cmds
   runCommandsOrLogErr parsedCommands
 
 maybePathToCommands ::
@@ -65,10 +68,10 @@ maybePathToCommands ::
   Maybe Text ->
   [Text] ->
   m (Either LegendErr [Command])
-maybePathToCommands Nothing commands = pure $ Right $ fmap MkCommand commands
-maybePathToCommands (Just path) commands = do
+maybePathToCommands Nothing cmds = pure $ Right $ fmap MkCommand cmds
+maybePathToCommands (Just path) cmds = do
   lMap <- legendPathToMap path
-  pure $ lMap >>= (`ParseCommands.translateCommands` commands)
+  pure $ lMap >>= (`ParseCommands.translateCommands` cmds)
 
 runCommandsOrLogErr ::
   (MonadLogger m, MonadShell m) =>
