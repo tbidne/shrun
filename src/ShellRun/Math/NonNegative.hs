@@ -1,5 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 -- | Provides the 'NonNegative' type for safe mathematical
 -- operations.
 module ShellRun.Math.NonNegative
@@ -7,12 +5,8 @@ module ShellRun.Math.NonNegative
     getNonNegative,
     mkNonNegative,
     unsafeNonNegative,
-    prettyPrint,
   )
 where
-
-import Data.Text (Text)
-import Data.Text qualified as T
 
 -- | Newtype wrapper over 'Int'.
 newtype NonNegative = MkNonNegative
@@ -37,8 +31,3 @@ unsafeNonNegative n
       "Passed negative "
         <> show n
         <> " to unsafeNonNegative!"
-
--- | Convenience function for getting the 'Text' representation
--- of the underlying 'Int'.
-prettyPrint :: NonNegative -> Text
-prettyPrint = T.pack . show . getNonNegative
