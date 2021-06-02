@@ -1,6 +1,6 @@
 #!/bin/sh
 
-metrics_string=$(cabal haddock --haddock-all)
+metrics_string=$(cabal update && cabal haddock --haddock-all)
 readarray -t metrics <<<"$metrics_string"
 
 # This is extremely gross (thanks bash). Generally, lines look like:
