@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Property tests for ShellRun.Math.NonNegative.
 module Props.ShellRun.Math.NonNegative (props) where
 
 import Hedgehog ((===))
@@ -10,6 +11,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
+-- | Entry point for ShellRun.Math.NonNegative property tests.
 props :: TestTree
 props = T.testGroup "ShellRun.Math.NonNegative" [mkNonNegativeProps, unsafeNonNegative]
 

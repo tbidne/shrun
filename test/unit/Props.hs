@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Runs property tests.
 module Props (props) where
 
 import Props.ShellRun.Math.NonNegative qualified as NonNegative
@@ -12,6 +13,7 @@ import Props.ShellRun.Utils.Text qualified as UtilsText
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 
+-- | Entry point for props.
 props :: TestTree
 props =
   T.testGroup

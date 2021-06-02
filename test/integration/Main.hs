@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Runs integration tests.
 module Main (main) where
 
 import Control.Monad.Reader qualified as MTL
@@ -18,6 +19,7 @@ import Test.Hspec qualified as Hspec
 import Test.Tasty qualified as T
 import Test.Tasty.Hspec qualified as TH
 
+-- | Entry point for integration tests.
 main :: IO ()
 main = tastySpec >>= T.defaultMain
   where

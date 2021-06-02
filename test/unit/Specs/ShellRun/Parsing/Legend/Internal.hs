@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Specs for ShellRun.Parsing.Legend.Internal.
 module Specs.ShellRun.Parsing.Legend.Internal (specs) where
 
 import Data.Map.Strict qualified as Map
@@ -10,6 +11,7 @@ import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
+-- | Entry point for ShellRun.Parsing.Legend.Internal specs.
 specs :: IO [TestTree]
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Parsing.Legend.Internal" $ do

@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Property tests for ShellRun.Parsing.Legend.Internal.
 module Props.ShellRun.Parsing.Legend.Internal (props) where
 
 import Data.Map.Strict qualified as Map
@@ -16,6 +17,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
+-- | Entry point for ShellRun.Parsing.Legend.Internal property tests.
 props :: TestTree
 props =
   T.testGroup

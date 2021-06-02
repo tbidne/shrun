@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Specs for ShellRun.Parsing.Commands.
 module Specs.ShellRun.Parsing.Commands (specs) where
 
 import Data.Map.Strict qualified as Map
@@ -11,6 +12,7 @@ import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
+-- | Entry point for ShellRun.Parsing.Commands specs.
 specs :: IO [TestTree]
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Parsing.Commands" $ do

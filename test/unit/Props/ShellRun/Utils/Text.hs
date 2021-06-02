@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Property tests for ShellRun.Utils.Text.
 module Props.ShellRun.Utils.Text (props) where
 
 import Data.Text qualified as Txt
@@ -11,6 +12,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
+-- | Entry point for ShellRun.Utils.Text property tests.
 props :: TestTree
 props = T.testGroup "ShellRun.Utils.Text" [mkNonEmptyText, unsafeNonEmptyText]
 

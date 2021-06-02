@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Property tests for ShellRun.Utils.Internal.
 module Props.ShellRun.Utils.Internal
   ( props,
   )
@@ -17,6 +18,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
+-- | Entry point for ShellRun.Utils.Internal property tests.
 props :: TestTree
 props = T.testGroup "ShellRun.Utils.Internal" [secondsToTimeSummary]
 

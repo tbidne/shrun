@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
+-- | Specs for ShellRun.Utils.
 module Specs.ShellRun.Utils (specs) where
 
 import ShellRun.Math qualified as Math
@@ -9,6 +10,7 @@ import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
+-- | Entry point for ShellRun.Utils specs.
 specs :: IO [TestTree]
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Utils" $ do
