@@ -8,13 +8,20 @@ author:             Thomas Bidne
 maintainer:         tbidne@prontonmail.com
 homepage:           https://github.com/tbidne/shell-run/
 bug-reports:        https://github.com/tbidne/shell-run/issues
-synopsis:           A utility program for running shell commands asynchronously.
-description:        Please see the README at https://github.com/tbidne/shell-run/#readme
+synopsis:
+  A utility program for running shell commands asynchronously.
+
+description:
+  Please see the README at https://github.com/tbidne/shell-run/#readme
+
 category:           Shell scripting, Utils
-extra-source-files: CHANGELOG.md, README.md
-Source-Repository head
-    Type: git
-    Location: https://github.com/tbidne/shell-run
+extra-source-files:
+  CHANGELOG.md
+  README.md
+
+source-repository head
+  type:     git
+  location: https://github.com/tbidne/shell-run
 
 library
   exposed-modules:
@@ -29,21 +36,22 @@ library
     ShellRun.Math.Positive
     ShellRun.Math.RAdd
     ShellRun.Math.REquals
-    ShellRun.Parsing.Env
     ShellRun.Parsing.Commands
+    ShellRun.Parsing.Env
     ShellRun.Parsing.Legend
     ShellRun.Parsing.Legend.Internal
+    ShellRun.Types.Command
     ShellRun.Types.Env
     ShellRun.Types.Env.NativeLog
-    ShellRun.Types.Command
     ShellRun.Types.IO
     ShellRun.Types.Legend
     ShellRun.Utils
     ShellRun.Utils.Internal
     ShellRun.Utils.Text
+
   build-depends:
-      async
-    , base ^>=4.14.1.0
+    , async
+    , base                  ^>=4.14.1.0
     , clock
     , containers
     , monad-loops
@@ -55,54 +63,42 @@ library
     , text
     , unliftio
     , unliftio-core
-  hs-source-dirs: src
+
+  hs-source-dirs:   src
   ghc-options:
-    -haddock
-    -O2
-    -Wall
-    -Wcompat
-    -Widentities
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-home-modules
-    -Wmissing-export-lists
-    -Wpartial-fields
+    -haddock -O2 -Wall -Wcompat -Widentities
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
+
   default-language: Haskell2010
 
 executable shell-run
-  main-is: Main.hs
+  main-is:          Main.hs
   build-depends:
-      base ^>=4.14.1.0
+    , base       ^>=4.14.1.0
     , mtl
     , shell-run
-  hs-source-dirs: app
+
+  hs-source-dirs:   app
   ghc-options:
-    -haddock
-    -O2
-    -threaded
-    "-with-rtsopts=-N"
-    -Wall
-    -Wcompat
-    -Widentities
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-home-modules
-    -Wmissing-export-lists
-    -Wpartial-fields
+    -haddock -O2 -threaded -with-rtsopts=-N -Wall -Wcompat -Widentities
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
+
   default-language: Haskell2010
 
 test-suite unit
-  type: exitcode-stdio-1.0
-  main-is: Main.hs
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
   other-modules:
     Props
     Props.Generators
-    Props.ShellRun.Parsing.Commands
-    Props.ShellRun.Parsing.Legend.Internal
     Props.ShellRun.Math.NonNegative
     Props.ShellRun.Math.Positive
+    Props.ShellRun.Parsing.Commands
+    Props.ShellRun.Parsing.Legend.Internal
     Props.ShellRun.Utils
     Props.ShellRun.Utils.Internal
     Props.ShellRun.Utils.Text
@@ -111,8 +107,9 @@ test-suite unit
     Specs.ShellRun.Parsing.Legend.Internal
     Specs.ShellRun.Utils
     Specs.ShellRun.Utils.Text
+
   build-depends:
-      base ^>=4.14.1.0
+    , base            ^>=4.14.1.0
     , clock
     , containers
     , hedgehog
@@ -122,32 +119,28 @@ test-suite unit
     , tasty-hedgehog
     , tasty-hspec
     , text
-  hs-source-dirs: test/unit
+
+  hs-source-dirs:   test/unit
   ghc-options:
-    -haddock
-    -O2
-    -Wall
-    -Wcompat
-    -Widentities
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-home-modules
-    -Wmissing-export-lists
-    -Wpartial-fields
+    -haddock -O2 -Wall -Wcompat -Widentities
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
+
   default-language: Haskell2010
 
 test-suite integration
-  type: exitcode-stdio-1.0
-  main-is: Main.hs
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
   other-modules:
     MockEnv
     MockShell.BadLegendMockShell
     MockShell.GoodMockShell
     MockShell.MockShellBase
     MockShell.NoLegendMockShell
+
   build-depends:
-      base ^>=4.14.1.0
+    , base         ^>=4.14.1.0
     , containers
     , hspec
     , mtl
@@ -155,31 +148,27 @@ test-suite integration
     , tasty
     , tasty-hspec
     , text
-  hs-source-dirs: test/integration
+
+  hs-source-dirs:   test/integration
   ghc-options:
-    -haddock
-    -O2
-    -Wall
-    -Wcompat
-    -Widentities
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-home-modules
-    -Wmissing-export-lists
-    -Wpartial-fields
+    -haddock -O2 -Wall -Wcompat -Widentities
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
+
   default-language: Haskell2010
 
 test-suite functional
-  type: exitcode-stdio-1.0
-  main-is: Main.hs
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
   other-modules:
     Constants
     Success
     SuccessWithStdout
     Timeout
+
   build-depends:
-      base ^>=4.14.1.0
+    , base         ^>=4.14.1.0
     , hspec
     , mtl
     , process
@@ -188,39 +177,28 @@ test-suite functional
     , tasty
     , tasty-hspec
     , text
-  hs-source-dirs: test/functional
+
+  hs-source-dirs:   test/functional
   ghc-options:
-    -haddock
-    -O2
-    -Wall
-    -Wcompat
-    -Widentities
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-home-modules
-    -Wmissing-export-lists
-    -Wpartial-fields
+    -haddock -O2 -Wall -Wcompat -Widentities
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
+
   default-language: Haskell2010
 
 test-suite doctest
-  type: exitcode-stdio-1.0
-  main-is: Main.hs
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
   build-depends:
-      base ^>=4.14.1.0
+    , base     ^>=4.14.1.0
     , doctest
-  hs-source-dirs: test/doctest
+
+  hs-source-dirs:   test/doctest
   ghc-options:
-    -haddock
-    -O2
-    -threaded
-    -Wall
-    -Wcompat
-    -Widentities
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-home-modules
-    -Wmissing-export-lists
-    -Wpartial-fields
+    -haddock -O2 -threaded -Wall -Wcompat -Widentities
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
+
   default-language: Haskell2010
