@@ -4,6 +4,7 @@
 
 ![cabal](https://github.com/tbidne/shell-run/workflows/cabal/badge.svg?branch=main)
 ![stack](https://github.com/tbidne/shell-run/workflows/stack/badge.svg?branch=main)
+![nix](https://github.com/tbidne/shell-run/workflows/nix/badge.svg?branch=main)
 ![haddock](https://github.com/tbidne/shell-run/workflows/haddock/badge.svg?branch=main)
 ![hlint](https://github.com/tbidne/shell-run/workflows/hlint/badge.svg?branch=main)
 ![ormolu](https://github.com/tbidne/shell-run/workflows/ormolu/badge.svg?branch=main)
@@ -140,8 +141,6 @@ You will need one of:
 - [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
 - [nix](https://nixos.org/download.html)
 
-The app can be built via `cabal` or `stack`. If you are using `nix`, a `shell.nix` file exists that will provide the needed dependencies, including the right `ghc`. Otherwise, building is the same as `cabal`.
-
 ## Cabal
 
 You will need `ghc 8.10.4+` and `cabal-install 2.4+`. From there the app can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
@@ -151,6 +150,66 @@ The project is set to build with `-Werror` in `cabal.project`, so if for some re
 ## Stack
 
 Like `cabal`, the app can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
+
+## Nix
+
+### From source
+
+Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). The app can be built with `nix build`, which will compile and run the tests.
+
+To launch a shell with various tools (e.g. `cabal`, `hls`, formatters), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code (e.g. scripts in `ci_scripts/`).
+
+A `shell.nix` exists, though this is primarily used for providing the necessary dependencies on ci. Still, it can be used in conjunction with `nix-shell`, and from there building/tests/running can be done via `cabal`.
+
+### Via nix
+
+Because this is a flake, it be built as part of a nix expression. For instance, if you want to add `shell-run` to `NixOS`, your `flake.nix` might look something like:
+
+```nix
+{
+  description = "My flake";
+
+  inputs = {
+    nixpkgs.url = "nixpkgs/nixos-unstable";
+    shell-run-src.url= "github:tbidne/shell-run/flakify";
+    shell-run-src.inputs.nixpkgs.follows = "nixpkgs";
+    # If you already have a flake-utils dependency and don't want another one.
+    shell-run-src.inputs.flake-utils.follows = "flake-utils";
+  };
+
+  outputs = { self, nixpkgs, shell-run-src, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        system = system;
+      };
+      # Remove dontCheck if you want tests to run.
+      shell-run = pkgs.haskell.lib.dontCheck shell-run-src.defaultPackage.${system};
+    in
+    {
+      nixosConfigurations = {
+        nixos = nixpkgs.lib.nixosSystem {
+          system = system;
+          modules = [
+            (import ./configuration.nix { inherit pkgs shell-run; })
+          ];
+        };
+      };
+    }
+}
+```
+
+Then in `configuration.nix` you can simply have:
+
+```nix
+{ pkgs, shell-run, ... }:
+
+{
+  environment.systemPackages = [
+    shell-run
+  ];
+}
+```
 
 ## Haddock
 
