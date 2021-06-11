@@ -156,9 +156,7 @@ Like `cabal`, the app can be built locally or installed globally (e.g. `~/.local
 
 Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). The app can be built with `nix build`, which will compile and run the tests.
 
-To launch a shell with various tools (e.g. `cabal`, `hls`, formatters), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code (e.g. scripts in `ci_scripts/`).
-
-A `shell.nix` exists, though this is primarily used for providing the necessary dependencies on ci. Still, it can be used in conjunction with `nix-shell`, and from there building/tests/running can be done via `cabal`.
+To launch a shell with various tools (e.g. `cabal`, `hls`, formatters), run `nix develop` or `nix-shell`. After that we can launch a repl with `cabal repl` or run the various tools on our code (e.g. scripts in `ci_scripts/`). At this point you could also build via `cabal`, though you may have to first run `cabal update`.
 
 ### Via nix
 
