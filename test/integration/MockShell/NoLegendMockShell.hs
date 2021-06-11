@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -28,6 +28,7 @@ newtype NoLegendMockShell a = MkNoLegendMockShell
       MonadWriter [Text],
       MonadLogger
     )
+    via (MockShellBase)
 
 instance MonadShell NoLegendMockShell where
   -- Purposely giving a bad shell function here to prove that no legend skips

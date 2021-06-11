@@ -1,5 +1,5 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -36,9 +36,10 @@ newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}
       MonadReader e,
       MonadIO,
       MonadLogger,
-      MonadTrans,
       MonadUnliftIO
     )
+    via (ReaderT e m)
+  deriving (MonadTrans) via (ReaderT e)
 
 instance
   (MonadIO m, MonadLogger m, MonadUnliftIO m) =>

@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -21,7 +21,7 @@ newtype NonEmptyText = MkNonEmptyText
   { -- | Unwraps the 'NonEmptyText'
     unNonEmptyText :: Text
   }
-  deriving (Eq, Ord, Semigroup, Show)
+  deriving (Eq, Ord, Semigroup, Show) via Text
 
 -- | Smart constructor for 'NonEmptyText'.
 mkNonEmptyText :: Text -> Maybe NonEmptyText

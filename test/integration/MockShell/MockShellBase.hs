@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -25,9 +25,9 @@ newtype MockShellBase a = MkMockShellBase
       Applicative,
       Monad,
       MonadReader MockEnv,
-      MonadWriter
-        [Text]
+      MonadWriter [Text]
     )
+    via (ReaderT MockEnv (WriterT [Text] Identity))
 
 instance MonadLogger MockShellBase where
   logNoLine = MTL.tell . pure

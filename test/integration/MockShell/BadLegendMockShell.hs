@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides the 'GoodMockShell' type.
@@ -25,6 +25,7 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
       MonadWriter [Text],
       MonadLogger
     )
+    via (MockShellBase)
 
 instance MonadShell BadLegendMockShell where
   legendPathToMap _ = pure $ Left $ FileErr "File not found"
