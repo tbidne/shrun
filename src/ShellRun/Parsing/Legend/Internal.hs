@@ -42,6 +42,9 @@ import ShellRun.Utils.Text qualified as TextUtils
 --
 -- >>> linesToMap ["key=value"]
 -- Right (fromList [("key","value")])
+--
+-- >>> linesToMap ["key=value1","key=value2"]
+-- Left (DuplicateKeyErr "key")
 linesToMap :: [Text] -> Either LegendErr LegendMap
 linesToMap = foldr f (Right Map.empty)
   where

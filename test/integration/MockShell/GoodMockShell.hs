@@ -27,7 +27,7 @@ newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
       MonadWriter [Text],
       MonadLogger
     )
-    via (MockShellBase)
+    via MockShellBase
 
 instance MonadShell GoodMockShell where
   legendPathToMap _ = pure $ Right mp

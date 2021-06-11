@@ -25,7 +25,7 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
       MonadWriter [Text],
       MonadLogger
     )
-    via (MockShellBase)
+    via MockShellBase
 
 instance MonadShell BadLegendMockShell where
   legendPathToMap _ = pure $ Left $ FileErr "File not found"

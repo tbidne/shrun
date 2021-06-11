@@ -3,12 +3,12 @@
 </span><span id="line-3"></span><span class="hs-comment">-- | Provides the 'Command' wrapper for commands.</span><span>
 </span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ShellRun.Types.Command</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Types.Command.html#Command"><span class="hs-identifier">Command</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
 </span><span id="line-5"></span><span>
-</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-7"></span><span>
 </span><span id="line-8"></span><span class="hs-comment">-- | Newtype wrapper for shell commands.</span><span>
 </span><span id="line-9"></span><span class="hs-keyword">newtype</span><span> </span><span id="Command"><span class="annot"><a href="ShellRun.Types.Command.html#Command"><span class="hs-identifier hs-var">Command</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkCommand"><span class="annot"><a href="ShellRun.Types.Command.html#MkCommand"><span class="hs-identifier hs-var">MkCommand</span></a></span></span><span> </span><span class="hs-special">{</span><span id="getCommand"><span class="annot"><span class="annottext">Command -&gt; Text
-</span><a href="ShellRun.Types.Command.html#getCommand"><span class="hs-identifier hs-var hs-var">getCommand</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">}</span><span>
-</span><span id="line-10"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679066873"><span id="local-6989586621679066875"><span class="annot"><span class="annottext">Command -&gt; Command -&gt; Bool
+</span><a href="ShellRun.Types.Command.html#getCommand"><span class="hs-identifier hs-var hs-var">getCommand</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span class="hs-special">}</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679067346"><span id="local-6989586621679067348"><span class="annot"><span class="annottext">Command -&gt; Command -&gt; Bool
 (Command -&gt; Command -&gt; Bool)
 -&gt; (Command -&gt; Command -&gt; Bool) -&gt; Eq Command
 forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
@@ -16,7 +16,7 @@ forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
 $c/= :: Command -&gt; Command -&gt; Bool
 == :: Command -&gt; Command -&gt; Bool
 $c== :: Command -&gt; Command -&gt; Bool
-</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679066866"><span id="local-6989586621679066868"><span id="local-6989586621679066870"><span class="annot"><span class="annottext">Int -&gt; Command -&gt; ShowS
+</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067339"><span id="local-6989586621679067341"><span id="local-6989586621679067343"><span class="annot"><span class="annottext">Int -&gt; Command -&gt; ShowS
 [Command] -&gt; ShowS
 Command -&gt; String
 (Int -&gt; Command -&gt; ShowS)
@@ -29,8 +29,8 @@ show :: Command -&gt; String
 $cshow :: Command -&gt; String
 showsPrec :: Int -&gt; Command -&gt; ShowS
 $cshowsPrec :: Int -&gt; Command -&gt; ShowS
-</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
-</span><span id="line-11"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679066859"><span id="local-6989586621679066861"><span id="local-6989586621679066863"><span class="annot"><span class="annottext">b -&gt; Command -&gt; Command
+</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679067332"><span id="local-6989586621679067334"><span id="local-6989586621679067336"><span class="annot"><span class="annottext">b -&gt; Command -&gt; Command
 NonEmpty Command -&gt; Command
 Command -&gt; Command -&gt; Command
 (Command -&gt; Command -&gt; Command)
@@ -49,7 +49,7 @@ sconcat :: NonEmpty Command -&gt; Command
 $csconcat :: NonEmpty Command -&gt; Command
 &lt;&gt; :: Command -&gt; Command -&gt; Command
 $c&lt;&gt; :: Command -&gt; Command -&gt; Command
-</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Semigroup</span></a></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679066851"><span id="local-6989586621679066853"><span id="local-6989586621679066855"><span class="annot"><span class="annottext">Semigroup Command
+</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Semigroup</span></a></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679067324"><span id="local-6989586621679067326"><span id="local-6989586621679067328"><span class="annot"><span class="annottext">Semigroup Command
 Command
 Semigroup Command
 -&gt; Command
@@ -67,5 +67,5 @@ $cmappend :: Command -&gt; Command -&gt; Command
 mempty :: Command
 $cmempty :: Command
 $cp1Monoid :: Semigroup Command
-</span><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monoid</span></a></span></span></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="annot"><a href="../file:///nix/store/g0ng1b5s1vglwp1dqnbhv1c7pxrb0838-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monoid</span></a></span></span></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
 </span><span id="line-12"></span></pre></body></html>

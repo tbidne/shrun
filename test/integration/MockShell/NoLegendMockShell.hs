@@ -28,7 +28,7 @@ newtype NoLegendMockShell a = MkNoLegendMockShell
       MonadWriter [Text],
       MonadLogger
     )
-    via (MockShellBase)
+    via MockShellBase
 
 instance MonadShell NoLegendMockShell where
   -- Purposely giving a bad shell function here to prove that no legend skips
