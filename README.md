@@ -192,7 +192,7 @@ Because this is a flake, it be built as part of a nix expression. For instance, 
           ];
         };
       };
-    }
+    };
 }
 ```
 
