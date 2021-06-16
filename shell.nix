@@ -6,6 +6,7 @@ let
   haskellDeps = ps: with ps; [
     cabal-install
     cabal-fmt
+    cabal-plan
     hlint
     implicit-hie
   ];

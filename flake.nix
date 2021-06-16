@@ -15,6 +15,7 @@
               pkgs.haskell.lib.addBuildTools drv (with pkgs.haskellPackages; [
                 cabal-fmt
                 cabal-install
+                cabal-plan
                 haskell-language-server
                 hlint
                 implicit-hie
