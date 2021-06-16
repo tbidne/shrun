@@ -19,7 +19,7 @@ import ShellRun.Utils.Text qualified as TextUtils
 -- $ >>> :set -XOverloadedStrings
 
 -- | Attempts to parse the given ['Text'] into 'LegendMap'.
--- The text lines can either be comments (start with '#') or
+-- The text lines can either be comments (start with \'#\') or
 -- key value pairs. The pairs have the form:
 --
 -- @

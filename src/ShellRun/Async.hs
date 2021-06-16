@@ -38,7 +38,7 @@ import UnliftIO.Async qualified as UAsync
 
 -- | Runs all commands asynchronously while printing out a running counter.
 -- When a command finishes/crashes, stdout is updated with the result. If
--- a haskell exception is encountered in `ShellRun` /itself/, this is
+-- a haskell exception is encountered in @shell-run@ /itself/, this is
 -- considered a fatal error and all threads are killed.
 runCommands ::
   ( HasNativeLog env,
