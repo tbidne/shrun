@@ -8,7 +8,7 @@ import Data.Text (Text)
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Legend (LegendErr, LegendMap)
 
--- | The core typeclass for `ShellRun`.
+-- | The core typeclass for @shell-run@.
 class Monad m => MonadShell m where
   -- | Given a filepath, attempts to read and parse the file into
   -- a `LegendMap`.
