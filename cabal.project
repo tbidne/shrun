@@ -2,8 +2,9 @@ packages: .
 
 package shell-run
   ghc-options:
-    -O2 -threaded -with-rtsopts=-N -Wall -Wcompat -Werror -Widentities
+    -Wall -Wcompat -Werror -Widentities
     -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
-  optimization: 2
+
+optimization: 2
