@@ -14,7 +14,7 @@ synopsis:
 description:
   Please see the README at https://github.com/tbidne/shell-run/#readme
 
-category:           Shell scripting, Utils
+category:           Shell scripting, Utils, Concurrency
 extra-source-files:
   CHANGELOG.md
   README.md
