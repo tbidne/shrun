@@ -211,7 +211,7 @@ Then in `configuration.nix` you can simply have:
 
 ## Haddock
 
-Haddock docs can be built via cabal with `./scripts/haddock.sh`.
+Haddock docs can be built via cabal with `./scripts/gen_haddock.sh`.
 
 # Testing
 
