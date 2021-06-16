@@ -20,7 +20,7 @@
 
 # Motivation
 
-This app was borne out of frustration when running shell commands. Say, for instance, you run several commands on a regular basis, e.g., updates after pulling the latest code. You can run these manually like:
+`shell-run` was borne out of frustration when running shell commands. Say, for instance, you run several commands on a regular basis, e.g., updates after pulling the latest code. You can run these manually like:
 
 ```sh
 cmd1
@@ -51,11 +51,11 @@ All well and good, but this approach has several deficiencies:
 
     But this is messy and grows exponentially in the number of aliases for each variation.
 
-This application purports to overcome these limitations.
+`shell-run` purports to overcome these limitations.
 
 # Introduction
 
-The application has the following usage:
+`shell-run` has the following usage:
 ```text
 Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-n|--nativeLog]
                  Commands...
@@ -94,7 +94,6 @@ If a timeout is provided, it must be a non-negative integer. If the timeout is r
 ### Legend
 
 A legend file can be specified by `-l <path/to/legend>` or `--legend=<path/to/legend>`.
-
 
 Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
 
@@ -142,25 +141,27 @@ You will need one of:
 
 ## Cabal
 
-You will need `ghc 8.10.4+` and `cabal-install 2.4+`. From there the app can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
+You will need `ghc` and `cabal-install`. From there `shell-run` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
 The project is set to build with `-Werror` in `cabal.project`, so if for some reason that's a problem, you can disable this with `cabal build --ghc-options="-Wwarn"`.
 
 ## Stack
 
-Like `cabal`, the app can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
+Like `cabal`, `shell-run` can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
 
 ## Nix
 
 ### From source
 
-Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). The app can be built with `nix build`, which will compile and run the tests.
+Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shell-run` can be built with `nix build`, which will compile and run the tests.
 
-To launch a shell with various tools (e.g. `cabal`, `hls`, formatters), run `nix develop` or `nix-shell`. After that we can launch a repl with `cabal repl` or run the various tools on our code (e.g. scripts in `ci_scripts/`). At this point you could also build via `cabal`, though you may have to first run `cabal update`.
+To launch a shell with various tools (e.g. `cabal`, `hls`, formatters), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code (e.g. scripts in `ci_scripts/`). At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `nixpkgs`.
+
+A `shell.nix` exists primarily for CI, though it can also be used for building. To do so, run `nix-shell` then the subsequent `cabal` commands. Note: In contrast to the behavior of `nix develop`, this will instead pull in dependencies via `cabal`'s constraint solver (see: `cabal.project.freeze`).
 
 ### Via nix
 
-Because this is a flake, it be built as part of a nix expression. For instance, if you want to add `shell-run` to `NixOS`, your `flake.nix` might look something like:
+Because `shell-run` is a flake, it be built as part of a nix expression. For instance, if you want to add `shell-run` to `NixOS`, your `flake.nix` might look something like:
 
 ```nix
 {
