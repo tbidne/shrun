@@ -2,14 +2,14 @@
 module ShellRun.Class.Has
   ( HasLegend (..),
     HasTimeout (..),
-    HasNativeLog (..),
+    HasSubLogging (..),
     HasCommands (..),
   )
 where
 
 import Data.Text (Text)
 import ShellRun.Math (NonNegative)
-import ShellRun.Types.Env.NativeLog (NativeLog)
+import ShellRun.Types.Env.SubLogging (SubLogging)
 
 -- | Path to legend file.
 class HasLegend env where
@@ -20,8 +20,8 @@ class HasTimeout env where
   getTimeout :: env -> Maybe NonNegative
 
 -- | Determines if we should log commands' output.
-class HasNativeLog env where
-  getNativeLog :: env -> NativeLog
+class HasSubLogging env where
+  getSubLogging :: env -> SubLogging
 
 -- | The commands themselves.
 class HasCommands env where

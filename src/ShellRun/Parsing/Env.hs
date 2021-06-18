@@ -7,7 +7,7 @@ module ShellRun.Parsing.Env
   )
 where
 
-import Control.Applicative ((<**>))
+import Control.Applicative ((<**>), (<|>))
 import Control.Applicative qualified as App
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -17,7 +17,7 @@ import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
-import ShellRun.Types.Env (Env (..), NativeLog (..))
+import ShellRun.Types.Env (Env (..), SubLogging (..))
 
 -- | Runs the parser.
 runParser :: IO Env
@@ -40,7 +40,7 @@ envParser =
   MkEnv
     <$> legendParser
     <*> timeoutParser
-    <*> nativeLogParser
+    <*> subLoggingParser
     <*> commandsParser
       <**> OptApp.helper
 
@@ -84,18 +84,34 @@ timeoutParser =
                 <> show v
                 <> "!"
 
-nativeLogParser :: Parser NativeLog
-nativeLogParser =
-  OptApp.flag
-    None
-    Stdout
-    ( OptApp.long "nativeLog"
-        <> OptApp.short 'n'
-        <> OptApp.help
-          ( "If this is flag is on, we will log all commands' stdout. "
-              <> "The default behavior is to swallow stdout."
-          )
-    )
+subLoggingParser :: Parser SubLogging
+subLoggingParser = noneP <|> combineP <|> nativeP
+  where
+    noneP =
+      OptApp.flag
+        None
+        None
+        ( OptApp.long "no-sub-logs"
+            <> OptApp.help "Do not log sub-commands. This is the default"
+        )
+    combineP =
+      OptApp.flag'
+        Combine
+        ( OptApp.short 'c'
+            <> OptApp.long "combine-sub-logs"
+            <> OptApp.help "Combine sub-commands logging with main process."
+        )
+    nativeP =
+      OptApp.flag'
+        Native
+        ( OptApp.short 'n'
+            <> OptApp.long "native-sub-logs"
+            <> OptApp.help
+              ( "Allow sub-commands to log without any interference."
+                  <> " This can be useful with programs who have 'special' logging style"
+                  <> ", e.g., overwriting the same line rather than newlines."
+              )
+        )
 
 commandsParser :: Parser [Text]
 commandsParser =

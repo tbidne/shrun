@@ -32,6 +32,7 @@ newtype MockShellBase a = MkMockShellBase
 instance MonadLogger MockShellBase where
   logNoLine = MTL.tell . pure
   logLine = MTL.tell . pure . (<> "\n")
+  clear = pure ()
 
 instance Show a => Show (MockShellBase a) where
   show _ = "MkMockShellBase"

@@ -21,14 +21,14 @@ import Control.Monad.Reader qualified as MTL
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import ShellRun.Class.Has (HasNativeLog (..), HasTimeout (..))
+import ShellRun.Class.Has (HasSubLogging (..), HasTimeout (..))
 import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..), MonadLogger)
 import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.IO qualified as ShIO
 import ShellRun.Math (NonNegative, RAdd (..))
 import ShellRun.Math qualified as Math
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env (NativeLog (..))
+import ShellRun.Types.Env (SubLogging (..))
 import ShellRun.Types.IO (Stderr (..))
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
@@ -41,7 +41,7 @@ import UnliftIO.Async qualified as UAsync
 -- a haskell exception is encountered in @shell-run@ /itself/, this is
 -- considered a fatal error and all threads are killed.
 runCommands ::
-  ( HasNativeLog env,
+  ( HasSubLogging env,
     HasTimeout env,
     MonadIO m,
     MonadLogger m,
@@ -73,17 +73,18 @@ runCommands commands = do
   ML.logInfoBlue $ "Total time elapsed: " <> U.formatTime totalTime
 
 runCommand ::
-  ( HasNativeLog env,
+  ( HasSubLogging env,
     MonadReader env m,
     MonadIO m
   ) =>
   Command ->
   m ()
 runCommand command@(MkCommand cmd) = do
-  nativeLog <- MTL.asks getNativeLog
-  let shFn = case nativeLog of
+  subLogging <- MTL.asks getSubLogging
+  let shFn = case subLogging of
         None -> ShIO.tryTimeSh
-        Stdout -> ShIO.tryTimeShWithStdout
+        Combine -> ShIO.tryTimeShCombineStdout
+        Native -> ShIO.tryTimeShNativeStdout
 
   MTL.liftIO $ do
     res <- shFn command Nothing
@@ -94,22 +95,41 @@ runCommand command@(MkCommand cmd) = do
     logFn msg
     logFn $ "Time elapsed: " <> U.formatTime seconds <> "\n"
 
-counter :: (HasTimeout env, MonadReader env m, MonadIO m) => m ()
+counter :: (HasSubLogging env, HasTimeout env, MonadLogger m, MonadReader env m, MonadIO m) => m ()
 counter = do
   timeout <- MTL.asks getTimeout
-  MTL.liftIO $ do
-    timer <- IORef.newIORef $ Math.unsafeNonNegative 0
-    let inc = Math.unsafeNonNegative 1
-    Loops.whileM_ (keepRunning timer timeout) $ do
+  timer <- MTL.liftIO $ IORef.newIORef $ Math.unsafeNonNegative 0
+  let inc = Math.unsafeNonNegative 1
+  Loops.whileM_ (keepRunning timer timeout) $ do
+    elapsed <- MTL.liftIO $ do
       Concurrent.threadDelay 1_000_000
       IORef.modifyIORef' timer (+:+ inc)
-      elapsed <- IORef.readIORef timer
+      IORef.readIORef timer
+    logCounter elapsed
+
+logCounter ::
+  ( HasSubLogging env,
+    MonadReader env m,
+    MonadLogger m
+  ) =>
+  NonNegative ->
+  m ()
+logCounter elapsed = do
+  subLogging <- MTL.asks getSubLogging
+  case subLogging of
+    Native -> do
+      -- If we are logging subprocesses then everything gets a new line.
+      -- We are not going to bother with trying to make the counter "update",
+      -- i.e., overwrite via carriage returns.
+      ML.clear
+      ML.logLevelMode InfoCyan Line $ "Running time: " <> U.formatTime elapsed
+    _ -> do
       ML.resetCR
       ML.logLevelMode InfoCyan NoLine $ "Running time: " <> U.formatTime elapsed
 
-keepRunning :: IORef NonNegative -> Maybe NonNegative -> IO Bool
+keepRunning :: (MonadIO m, MonadLogger m) => IORef NonNegative -> Maybe NonNegative -> m Bool
 keepRunning timer to = do
-  elapsed <- IORef.readIORef timer
+  elapsed <- MTL.liftIO $ IORef.readIORef timer
   if timedOut elapsed to
     then do
       ML.clearLine

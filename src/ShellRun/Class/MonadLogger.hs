@@ -1,4 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides the `MonadLogger` class, used for having pretty logs in
@@ -25,31 +27,45 @@ module ShellRun.Class.MonadLogger
     -- * Functions for manipulating carriage returns
     resetCR,
     clearLine,
-    clearNoLine,
   )
 where
 
 import Control.Monad.Reader (ReaderT)
 import Control.Monad.Reader qualified as MTL
+import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as T
 import System.Console.Pretty (Color)
 import System.Console.Pretty qualified as P
+import System.Console.Terminal.Size (Window (..))
+import System.Console.Terminal.Size qualified as TermSz
 import System.IO qualified as IO
 
 -- | `MonadLogger` is a simple typeclass for abstracting logging functions.
 class Monad m => MonadLogger m where
   logNoLine :: Text -> m ()
   logLine :: Text -> m ()
+  clear :: m ()
 
 instance MonadLogger IO where
   -- NOTE: We want to force printing with flush.
   logNoLine txt = putStr (T.unpack txt) *> IO.hFlush IO.stdout
   logLine = putStrLn . T.unpack
+  clear = do
+    -- Clear the entire term, fallback to 80 if we cannot get the width.
+    spaces <-
+      TermSz.size <&> \case
+        Nothing -> T.pack $ replicate 80 ' '
+        Just Window {width} -> T.pack $ replicate width ' '
+
+    resetCR
+    logNoLine spaces
+    resetCR
 
 instance MonadLogger m => MonadLogger (ReaderT e m) where
   logNoLine = MTL.lift . logNoLine
   logLine = MTL.lift . logLine
+  clear = MTL.lift clear
 
 -- | Determines the logging newline behavior.
 data LogMode
@@ -103,22 +119,9 @@ logLevelMode l t = logFn . P.color color . (<>) prefix
 resetCR :: MonadLogger m => m ()
 resetCR = logNoLine "\r"
 
--- | Clears 80 characters on the given line, then prints a newline.
+-- | Clears the given line, then prints a newline.
 clearLine :: MonadLogger m => m ()
-clearLine = do
-  resetCR
-  logLine spaces
-  where
-    spaces = T.pack $ replicate 80 ' '
-
--- | Clears the current line without starting a new one.
-clearNoLine :: MonadLogger m => m ()
-clearNoLine = do
-  resetCR
-  logNoLine spaces
-  resetCR
-  where
-    spaces = T.pack $ replicate 80 ' '
+clearLine = clear *> logLine ""
 
 -- | Debug formatted 'logLine'.
 logDebug :: MonadLogger m => Text -> m ()
