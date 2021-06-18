@@ -57,8 +57,9 @@ All well and good, but this approach has several deficiencies:
 
 `shell-run` has the following usage:
 ```text
-Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-n|--nativeLog]
-                 Commands...
+Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] 
+                 [--no-sub-logs | (-c|--combine-sub-logs) | 
+                   (-n|--native-sub-logs)] Commands...
 
 Available options:
   -l,--legend ARG          Path to legend file, used for translating commands.
@@ -67,8 +68,12 @@ Available options:
                            to other keys recursively. Lines starting with `#`
                            are considered comments and ignored.
   -t,--timeout ARG         Non-negative integer setting a timeout
-  -n,--nativeLog           If this is flag is on, we will log all commands'
-                           stdout. The default behavior is to swallow stdout.
+  --no-sub-logs            Do not log sub-commands. This is the default
+  -c,--combine-sub-logs    Combine sub-commands logging with main process.
+  -n,--native-sub-logs     Allow sub-commands to log without any interference.
+                           This can be useful with programs who have 'special'
+                           logging style, e.g., overwriting the same line rather
+                           than newlines.
   -h,--help                Show this help text
 ```
 
@@ -120,14 +125,27 @@ shell-run --legend=path/to/legend all "echo cat"
 
 Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurrently.
 
-### Native Log
+### Sub logging
 
-If this flag is enabled, then the commands' output will be logged to `stdout`. The default behavior is to swallow `stdout`.
+This flag is for logging sub-commands' stdout. There are three options: `none`, `combine`, and `native`.
 
-There are a few caveats for enabling native logging:
+#### None
 
-- The utility of this flag is heavily dependent on how data is flushed in the sub processes. For instance, many programming languages will default to buffering data when printing, so if you want to have _some_ hope for streaming output, you will have to ensure your commands flush appropriately.
-- If the subprocess' logging is consistently very fast, it will make the running timer (updating once per second) difficult/impossible to read. Throttling the native logging was considered, but this added complexity and made the logging arguably misleading, as it can easily "fall behind" real-time.
+This is the default, where the sub-commands' `stdout` is swallowed.
+
+#### Combine
+
+If this option is given then an attempt to combine sub-commands' output with `shell-run`'s is made. This generally works pretty well assuming the sub-commands' output is:
+1. flushed at a reasonable rate.
+1. relatively simple (see below for details)
+
+Naturally, in order for us to display stdout, it must be flushed at some point. Otherwise we can get in a situation where we print out all logs at the end, which is not usually what we want.
+
+For 2, simplicity generally refers to a process printing out logs on newlines. If the logs are printed on a newline, this will be flushed, and we won't run into weird scenarios where the current output is interfering with other output / running timer.
+
+#### Native
+
+If sub-command logging is desired _and_ the logging is sufficiently complicated (e.g. flushing isn't consistent or previous lines are overwritten), then `native` may give better output. This makes no attempt to "combine" all logs in a consistent manner and instead allows each sub-command to log normally. Obviously this can be a bit of a free-for-all, but all logs should get printed in real-time.
 
 # Building
 

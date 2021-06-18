@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Functional test for a successful run with native logging.
-module SuccessWithStdout (spec) where
+module SuccessCombineStdout (spec) where
 
 import Control.Monad.Reader qualified as MTL
 import Data.Text (Text)
@@ -25,7 +25,7 @@ spec =
   where
     argList = [nativeLog] <> commands
     commands = ["echo hi"]
-    nativeLog = "--nativeLog"
+    nativeLog = "--combine-sub-logs"
 
 verified :: Verifier -> Bool
 verified (Verifier True) = True

@@ -11,7 +11,8 @@ module ShellRun.IO
     shExitCode,
     tryShExitCode,
     tryTimeSh,
-    tryTimeShWithStdout,
+    tryTimeShCombineStdout,
+    tryTimeShNativeStdout,
   )
 where
 
@@ -78,14 +79,14 @@ tryTimeSh cmd path = do
   let diff = Utils.diffTime start end
   pure $ Bifunctor.bimap (diff,) (const diff) res
 
--- | Version of 'tryTimeSh' that attempts to stream the command's
--- @stdout@ to its @stdout@. Naturally, this is heavily dependent on the
+-- | Version of 'tryTimeSh' that attempts to combine the command's
+-- @stdout@ with its @stdout@. Naturally, this is heavily dependent on the
 -- command's flushing behavior.
-tryTimeShWithStdout ::
+tryTimeShCombineStdout ::
   Command ->
   Maybe FilePath ->
   IO (Either (NonNegative, Stderr) NonNegative)
-tryTimeShWithStdout command@(MkCommand cmd) path = do
+tryTimeShCombineStdout command@(MkCommand cmd) path = do
   start <- C.getTime Monotonic
   result <- P.withCreateProcess pr $ \_ maybeHStdout maybeHStderr ph -> do
     exitCode <- Utils.whileNothing (P.getProcessExitCode ph) $ do
@@ -95,7 +96,7 @@ tryTimeShWithStdout command@(MkCommand cmd) path = do
           case out of
             Left _ -> pure ()
             Right x -> do
-              ML.clearNoLine
+              ML.clear
               ML.logLevelMode Info Line $ cmd <> ": " <> T.pack x
         _ -> pure ()
 
@@ -146,3 +147,34 @@ makeStdErr (MkCommand cmd) err =
       <> cmd
       <> "`: "
       <> err
+
+-- | Version of 'tryTimeSh' that attempts to stream the command's
+-- @stdout@.
+tryTimeShNativeStdout ::
+  Command ->
+  Maybe FilePath ->
+  IO (Either (NonNegative, Stderr) NonNegative)
+tryTimeShNativeStdout command@(MkCommand cmd) path = do
+  start <- C.getTime Monotonic
+  result <- P.withCreateProcess pr $ \_ _ maybeHStderr ph -> do
+    exitCode <- Utils.whileNothing (P.getProcessExitCode ph) (pure ())
+
+    case exitCode of
+      ExitSuccess -> pure $ Right ()
+      ExitFailure _ -> do
+        err <- handleToStderr command maybeHStderr
+        pure $ Left err
+
+  end <- C.getTime Monotonic
+  let diff = Utils.diffTime start end
+      finalResult = Bifunctor.bimap (diff,) (const diff) result
+
+  pure finalResult
+  where
+    pr =
+      (P.shell (T.unpack cmd))
+        { std_out = Inherit,
+          std_in = Inherit,
+          std_err = Inherit,
+          cwd = path
+        }

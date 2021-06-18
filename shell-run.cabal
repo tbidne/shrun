@@ -42,7 +42,7 @@ library
     ShellRun.Parsing.Legend.Internal
     ShellRun.Types.Command
     ShellRun.Types.Env
-    ShellRun.Types.Env.NativeLog
+    ShellRun.Types.Env.SubLogging
     ShellRun.Types.IO
     ShellRun.Types.Legend
     ShellRun.Utils
@@ -59,6 +59,7 @@ library
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
     , strict-io             ^>=0.2.2
+    , terminal-size         ^>=0.3.2.1
     , text                  ^>=1.2.3.2
     , unliftio              ^>=0.2.0.0
     , unliftio-core         ^>=0.2.0.1
@@ -140,7 +141,7 @@ test-suite functional
   other-modules:
     Constants
     Success
-    SuccessWithStdout
+    SuccessCombineStdout
     Timeout
 
   build-depends:

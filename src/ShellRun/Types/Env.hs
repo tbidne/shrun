@@ -1,7 +1,7 @@
 -- | Provides core 'Env' types.
 module ShellRun.Types.Env
   ( Env (..),
-    NativeLog (..),
+    SubLogging (..),
     defaultEnv,
   )
 where
@@ -10,18 +10,18 @@ import Data.Text (Text)
 import ShellRun.Class.Has
   ( HasCommands (..),
     HasLegend (..),
-    HasNativeLog (..),
+    HasSubLogging (..),
     HasTimeout (..),
   )
 import ShellRun.Math (NonNegative)
-import ShellRun.Types.Env.NativeLog (NativeLog (..))
+import ShellRun.Types.Env.SubLogging (SubLogging (..))
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
 data Env = MkEnv
   { legend :: Maybe Text,
     timeout :: Maybe NonNegative,
-    nativeLog :: NativeLog,
+    nativeLog :: SubLogging,
     commands :: [Text]
   }
   deriving (Show)
@@ -32,8 +32,8 @@ instance HasLegend Env where
 instance HasTimeout Env where
   getTimeout = timeout
 
-instance HasNativeLog Env where
-  getNativeLog = nativeLog
+instance HasSubLogging Env where
+  getSubLogging = nativeLog
 
 instance HasCommands Env where
   getCommands = commands
