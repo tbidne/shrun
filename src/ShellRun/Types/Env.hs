@@ -1,8 +1,9 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 -- | Provides core 'Env' types.
 module ShellRun.Types.Env
   ( Env (..),
     SubLogging (..),
-    defaultEnv,
   )
 where
 
@@ -10,9 +11,11 @@ import Data.Text (Text)
 import ShellRun.Class.Has
   ( HasCommands (..),
     HasLegend (..),
+    HasLogQueue (..),
     HasSubLogging (..),
     HasTimeout (..),
   )
+import ShellRun.Logging (LogQueue)
 import ShellRun.Math (NonNegative)
 import ShellRun.Types.Env.SubLogging (SubLogging (..))
 
@@ -22,9 +25,9 @@ data Env = MkEnv
   { legend :: Maybe Text,
     timeout :: Maybe NonNegative,
     nativeLog :: SubLogging,
+    logQueue :: LogQueue,
     commands :: [Text]
   }
-  deriving (Show)
 
 instance HasLegend Env where
   getLegend = legend
@@ -35,15 +38,8 @@ instance HasTimeout Env where
 instance HasSubLogging Env where
   getSubLogging = nativeLog
 
+instance HasLogQueue Env where
+  getLogQueue = logQueue
+
 instance HasCommands Env where
   getCommands = commands
-
--- | Constructs a default 'Env'.
-defaultEnv :: Env
-defaultEnv =
-  MkEnv
-    { legend = Nothing,
-      timeout = Nothing,
-      nativeLog = None,
-      commands = []
-    }

@@ -11,8 +11,8 @@ import Control.Monad.Writer qualified as MTL
 import Data.Text (Text)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
-import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
+import ShellRun.Logging (MonadLogger (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.Legend (LegendErr (..))
 

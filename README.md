@@ -57,9 +57,8 @@ All well and good, but this approach has several deficiencies:
 
 `shell-run` has the following usage:
 ```text
-Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] 
-                 [--no-sub-logs | (-c|--combine-sub-logs) | 
-                   (-n|--native-sub-logs)] Commands...
+Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-s|--sub-logging]
+                 Commands...
 
 Available options:
   -l,--legend ARG          Path to legend file, used for translating commands.
@@ -67,13 +66,8 @@ Available options:
                            i.e., keys can refer to multiple commands and refer
                            to other keys recursively. Lines starting with `#`
                            are considered comments and ignored.
-  -t,--timeout ARG         Non-negative integer setting a timeout
-  --no-sub-logs            Do not log sub-commands. This is the default
-  -c,--combine-sub-logs    Combine sub-commands logging with main process.
-  -n,--native-sub-logs     Allow sub-commands to log without any interference.
-                           This can be useful with programs who have 'special'
-                           logging style, e.g., overwriting the same line rather
-                           than newlines.
+  -t,--timeout ARG         Non-negative integer setting a timeout.
+  -s,--sub-logging         Adds Commands' logs (stdout+stderr) to output.
   -h,--help                Show this help text
 ```
 
@@ -127,25 +121,11 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 ### Sub logging
 
-This flag is for logging sub-commands' stdout. There are three options: `none`, `combine`, and `native`.
+The default behavior is to swallow logs for the commands themselves. The flag `-s` or `--sub-logging` enables command logging.
 
-#### None
+Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 
-This is the default, where the sub-commands' `stdout` is swallowed.
-
-#### Combine
-
-If this option is given then an attempt to combine sub-commands' output with `shell-run`'s is made. This generally works pretty well assuming the sub-commands' output is:
-1. flushed at a reasonable rate.
-1. relatively simple (see below for details)
-
-Naturally, in order for us to display stdout, it must be flushed at some point. Otherwise we can get in a situation where we print out all logs at the end, which is not usually what we want.
-
-For 2, simplicity generally refers to a process printing out logs on newlines. If the logs are printed on a newline, this will be flushed, and we won't run into weird scenarios where the current output is interfering with other output / running timer.
-
-#### Native
-
-If sub-command logging is desired _and_ the logging is sufficiently complicated (e.g. flushing isn't consistent or previous lines are overwritten), then `native` may give better output. This makes no attempt to "combine" all logs in a consistent manner and instead allows each sub-command to log normally. Obviously this can be a bit of a free-for-all, but all logs should get printed in real-time.
+Practically speaking, this does not have much effect, just that if a command dies while `--sub-logging` is enabled, then the final `[Error] ...` output may not have the most relevant information, and in fact the actual error may be in the final `[SubCommand]` log.
 
 # Building
 

@@ -28,9 +28,12 @@ library
     ShellRun
     ShellRun.Async
     ShellRun.Class.Has
-    ShellRun.Class.MonadLogger
     ShellRun.Class.MonadShell
     ShellRun.IO
+    ShellRun.Logging
+    ShellRun.Logging.Log
+    ShellRun.Logging.MonadLogger
+    ShellRun.Logging.Queue
     ShellRun.Math
     ShellRun.Math.NonNegative
     ShellRun.Math.Positive
@@ -51,6 +54,7 @@ library
 
   build-depends:
     , base                  ^>=4.14.1.0
+    , bytestring            ^>=0.10.12
     , clock                 >=0.7.2    && <0.9
     , containers            ^>=0.6.2.1
     , monad-loops           >=0.3      && <0.5
@@ -58,9 +62,11 @@ library
     , optparse-applicative  >=0.15     && <0.17
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
-    , strict-io             ^>=0.2.2
+    , stm                   ^>=2.5.0
     , terminal-size         ^>=0.3.2.1
     , text                  ^>=1.2.3.2
+    , text-conversions      >=0.2.0    && <0.4
+    , unix                  ^>=2.7.2
     , unliftio              ^>=0.2.0.0
     , unliftio-core         ^>=0.2.0.1
 
@@ -98,16 +104,16 @@ test-suite unit
     Specs.ShellRun.Utils.Text
 
   build-depends:
-    , base            ^>=4.14.1.0
-    , clock           >=0.7.2    && <0.9
-    , containers      ^>=0.6.2.1
+    , base
+    , clock
+    , containers
     , hedgehog        ^>=1.0.2
-    , hspec           >=2.7.1    && <2.9
+    , hspec           >=2.7.1   && <2.9
     , shell-run
-    , tasty           >=1.1.0.3  && <1.5
-    , tasty-hedgehog  >=1.0.1.0  && <1.2
-    , tasty-hspec     >=1.1.4    && <1.3
-    , text            ^>=1.2.3.2
+    , tasty           >=1.1.0.3 && <1.5
+    , tasty-hedgehog  >=1.0.1.0 && <1.2
+    , tasty-hspec     >=1.1.4   && <1.3
+    , text
 
   hs-source-dirs:   test/unit
   default-language: Haskell2010
@@ -123,14 +129,14 @@ test-suite integration
     MockShell.NoLegendMockShell
 
   build-depends:
-    , base         ^>=4.14.1.0
-    , containers   ^>=0.6.2.1
-    , hspec        >=2.7.1    && <2.9
-    , mtl          ^>=2.2.1
+    , base
+    , containers
+    , hspec
+    , mtl
     , shell-run
-    , tasty        >=1.1.0.3  && <1.5
-    , tasty-hspec  >=1.1.4    && <1.3
-    , text         ^>=1.2.3.2
+    , tasty
+    , tasty-hspec
+    , text
 
   hs-source-dirs:   test/integration
   default-language: Haskell2010
@@ -141,19 +147,21 @@ test-suite functional
   other-modules:
     Constants
     Success
-    SuccessCombineStdout
+    SuccessSubLogging
     Timeout
+    Verify
 
   build-depends:
-    , base         ^>=4.14.1.0
-    , hspec        >=2.7.1    && <2.9
-    , mtl          ^>=2.2.1
-    , process      ^>=1.6.9.0
+    , base
+    , hspec
+    , mtl
+    , pretty-terminal
+    , process
     , shell-run
-    , silently     ^>=1.2
-    , tasty        >=1.1.0.3  && <1.5
-    , tasty-hspec  >=1.1.4    && <1.3
-    , text         ^>=1.2.3.2
+    , silently         ^>=1.2
+    , tasty
+    , tasty-hspec
+    , text
 
   hs-source-dirs:   test/functional
   default-language: Haskell2010
@@ -162,8 +170,8 @@ test-suite doctest
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   build-depends:
-    , base     ^>=4.14.1.0
-    , doctest  >=0.16.3   && <0.19
+    , base
+    , doctest  >=0.16.3 && <0.19
 
   hs-source-dirs:   test/doctest
   default-language: Haskell2010

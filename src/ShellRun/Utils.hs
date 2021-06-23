@@ -15,9 +15,6 @@ module ShellRun.Utils
     -- * Functor Utils
     UtilsI.monoBimap,
 
-    -- * Monad Utils
-    whileNothing,
-
     -- * Math Utils
     UtilsI.divWithRem,
   )
@@ -61,14 +58,6 @@ diffTime t1 t2 =
 formatTime :: NonNegative -> Text
 formatTime = UtilsI.formatTimeSummary . UtilsI.secondsToTimeSummary
 
--- | For @m (Maybe b)@, @m a@, runs @m a@ until @m (Maybe b)@ is a
--- @Just x@. Returns @pure x@ once this is true.
-whileNothing :: Monad m => m (Maybe b) -> m a -> m b
-whileNothing mb ma = do
-  maybeB <- mb
-  case maybeB of
-    Nothing -> ma *> whileNothing mb ma
-    Just b -> pure b
 
 -- | Safe @head@.
 --

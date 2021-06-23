@@ -12,7 +12,7 @@ import Control.Monad.Writer qualified as MTL
 import Data.Functor.Identity (Identity)
 import Data.Text (Text)
 import MockEnv (MockEnv)
-import ShellRun.Class.MonadLogger (MonadLogger (..))
+import ShellRun.Logging (Log (..), MonadLogger (..))
 
 -- | 'MockShellBase' serves as a base type for our various integration tests.
 -- Its main purpose is convenience, so we do not have to re-derive various
@@ -30,8 +30,7 @@ newtype MockShellBase a = MkMockShellBase
     via (ReaderT MockEnv (WriterT [Text] Identity))
 
 instance MonadLogger MockShellBase where
-  logNoLine = MTL.tell . pure
-  logLine = MTL.tell . pure . (<> "\n")
+  putLog = MTL.tell . pure . msg
   clear = pure ()
 
 instance Show a => Show (MockShellBase a) where

@@ -1,5 +1,6 @@
 {-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
@@ -11,21 +12,25 @@ module ShellRun.IO
     shExitCode,
     tryShExitCode,
     tryTimeSh,
-    tryTimeShCombineStdout,
-    tryTimeShNativeStdout,
+    tryTimeShCommandOutput,
   )
 where
 
+import Control.Concurrent qualified as Concurrent
 import Control.Exception (IOException)
 import Control.Exception qualified as Except
+import Control.Monad.Loops qualified as Loops
 import Data.Bifunctor qualified as Bifunctor
+import Data.ByteString (ByteString)
+import Data.ByteString qualified as BS
 import Data.Functor (($>))
 import Data.Text (Text)
 import Data.Text qualified as T
-import GHC.IO.Handle (Handle)
+import Data.Text.Conversions qualified as TConvert
+import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
-import ShellRun.Class.MonadLogger (LogLevel (..), LogMode (..))
-import ShellRun.Class.MonadLogger qualified as ML
+import ShellRun.Logging (LogQueue (..))
+import ShellRun.Logging qualified as Logging
 import ShellRun.Math (NonNegative (..))
 import ShellRun.Types.Command (Command (..))
 import ShellRun.Types.IO (Stderr (..), Stdout (..))
@@ -33,7 +38,8 @@ import ShellRun.Utils qualified as Utils
 import System.Clock (Clock (..))
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))
-import System.IO.Strict qualified as StrictIO
+import System.Posix.IO.ByteString qualified as PBS
+import System.Posix.Terminal qualified as PTerm
 import System.Process (CreateProcess (..), StdStream (..))
 import System.Process qualified as P
 
@@ -79,66 +85,110 @@ tryTimeSh cmd path = do
   let diff = Utils.diffTime start end
   pure $ Bifunctor.bimap (diff,) (const diff) res
 
--- | Version of 'tryTimeSh' that attempts to combine the command's
--- @stdout@ with its @stdout@. Naturally, this is heavily dependent on the
--- command's flushing behavior.
-tryTimeShCombineStdout ::
+-- | Version of 'tryTimeSh' that attempts to read the command's
+-- @stdout@ + @stderr@.
+tryTimeShCommandOutput ::
+  LogQueue ->
   Command ->
   Maybe FilePath ->
   IO (Either (NonNegative, Stderr) NonNegative)
-tryTimeShCombineStdout command@(MkCommand cmd) path = do
-  start <- C.getTime Monotonic
-  result <- P.withCreateProcess pr $ \_ maybeHStdout maybeHStderr ph -> do
-    exitCode <- Utils.whileNothing (P.getProcessExitCode ph) $ do
-      case maybeHStdout of
-        Just hOut -> do
-          out :: Either IOException String <- Except.try $ Handle.hGetLine hOut
-          case out of
-            Left _ -> pure ()
-            Right x -> do
-              ML.clear
-              ML.logLevelMode Info Line $ cmd <> ": " <> T.pack x
-        _ -> pure ()
+tryTimeShCommandOutput logQueue command@(MkCommand cmd) path = do
+  -- Create pseudo terminal here because otherwise we have trouble streaming
+  -- input from child processes. Data gets buffered and trying to override the
+  -- buffering strategy (i.e. handles returned by CreatePipe) does not work.
+  (recvFD, sendFD) <- PTerm.openPseudoTerminal
+  recvH <- PBS.fdToHandle recvFD
+  sendH <- PBS.fdToHandle sendFD
+  Handle.hSetBuffering recvH NoBuffering
+  Handle.hSetBuffering sendH NoBuffering
 
-    case exitCode of
-      ExitSuccess -> pure $ Right ()
-      ExitFailure _ -> do
-        err <- handleToStderr command maybeHStderr
-        pure $ Left err
+  start <- C.getTime Monotonic
+
+  -- We use the same pipe for std_out and std_err. The reason is that many
+  -- programs will redirect stdout to stderr (e.g. echo ... >&2), and we
+  -- will miss this if we don't check both. Because this "collapses" stdout
+  -- and stderr to the same file descriptor, there isn't much of a reason to
+  -- use two different handles.
+  let pr =
+        (P.shell (T.unpack cmd))
+          { std_out = UseHandle sendH,
+            std_in = Inherit,
+            std_err = UseHandle sendH,
+            cwd = path,
+            close_fds = True
+          }
+  (_, _, _, ph) <- P.createProcess_ "createProcess_" pr
+  exitCode <- Loops.untilJust $ do
+    isOpen <- Handle.hIsOpen recvH
+    canRead <- Handle.hIsReadable recvH
+    maybeLog <-
+      if
+          | not isOpen -> do
+            let (MkStderr err) = makeStdErr command "Handle not open"
+            pure $ Just $ Logging.logError err
+          | not canRead -> do
+            let (MkStderr err) = makeStdErr command "Handle not readable"
+            pure $ Just $ Logging.logError err
+          | otherwise -> do
+            result <- readHandle command recvH
+            case result of
+              ReadErr err ->
+                pure $ Just $ Logging.logError err
+              ReadSuccess out ->
+                pure $ Just $ Logging.logSubCommand out
+              ReadNoData -> pure Nothing
+
+    case maybeLog of
+      Just l -> Logging.writeQueue logQueue l
+      Nothing -> pure ()
+
+    -- Sleep for a 0.1 seconds. This is helpful for avoiding spamming the logs
+    -- with duplicate errors. For instance, when a command finishes, there will
+    -- be a race between when the handle recvH can no longer be read (but still
+    -- reports that it can be i.e. hIsReadable), and when getProcessExitCode
+    -- returns (Just ExitCode). If we let the loop execute quickly, we can see
+    -- this error many times before exit. The delay is a bit of a hack, but it
+    -- mitigates seeing the same error many times, and additionally usually
+    -- prevents the aforementioned invalid read altogether.
+    Concurrent.threadDelay 100_000
+    P.getProcessExitCode ph
+
+  result <- case exitCode of
+    ExitSuccess -> pure $ Right ()
+    ExitFailure _ -> do
+      err <- readHandle command recvH
+      pure $ Left $ readResultToStdErr err
 
   end <- C.getTime Monotonic
   let diff = Utils.diffTime start end
       finalResult = Bifunctor.bimap (diff,) (const diff) result
 
   pure finalResult
-  where
-    pr =
-      (P.shell (T.unpack cmd))
-        { std_out = CreatePipe,
-          std_in = CreatePipe,
-          std_err = CreatePipe,
-          cwd = path
-        }
 
-handleToStderr :: Command -> Maybe Handle -> IO Stderr
-handleToStderr command = \case
-  Nothing -> pure $ makeStdErr command noHandle
-  Just hErr -> do
-    -- NOTE: Using `StrictIO` here as the one in base is lazy, which causes an
-    -- error where we end up reading after the FD is closed. This can be "fixed"
-    -- by printing the output first, but adding a superfluous print statement
-    -- to force the read is suboptimal. For now, StrictIO seems to solve this
-    -- problem, though we may be able to remove the dependency in favor
-    -- of Handle.hGetContents' once we can upgrade to base 4.15.0.0.
-    errStr :: Either IOException String <-
-      Except.try $
-        StrictIO.run $ StrictIO.hGetContents hErr
-    pure $ case errStr of
-      Left ex -> makeStdErr command $ readHErr ex
-      Right err -> makeStdErr command $ T.pack err
+data ReadHandleResult
+  = ReadErr Text
+  | ReadSuccess Text
+  | ReadNoData
+
+readResultToStdErr :: ReadHandleResult -> Stderr
+readResultToStdErr (ReadErr e) = MkStderr e
+readResultToStdErr (ReadSuccess o) = MkStderr o
+readResultToStdErr ReadNoData = MkStderr "(No data in handle, see above logs)"
+
+readHandle :: Command -> Handle -> IO ReadHandleResult
+readHandle command@(MkCommand cmd) handle = do
+  output :: Either IOException ByteString <-
+    Except.try $ BS.hGetNonBlocking handle blockSize
+  let outDecoded = fmap (TConvert.decodeConvertText . TConvert.UTF8) output
+  pure $ case outDecoded of
+    Left ex -> ReadErr $ readEx ex
+    Right Nothing -> ReadErr $ utf8Err outDecoded
+    Right (Just "") -> ReadNoData
+    Right (Just o) -> ReadSuccess $ cmd <> ": " <> stripChars (T.pack o)
   where
-    noHandle = "No handle from which to read stderr"
-    readHErr = (<>) "IOException reading stderr: " . T.pack . show
+    displayEx prefix = getStderr . makeStdErr command . (<>) prefix . T.pack . show
+    readEx = displayEx "IOException reading handle: "
+    utf8Err = displayEx "Could not decode UTF-8: "
 
 makeStdErr :: Command -> Text -> Stderr
 makeStdErr (MkCommand cmd) err =
@@ -146,35 +196,10 @@ makeStdErr (MkCommand cmd) err =
     "Error running `"
       <> cmd
       <> "`: "
-      <> err
+      <> stripChars err
 
--- | Version of 'tryTimeSh' that attempts to stream the command's
--- @stdout@.
-tryTimeShNativeStdout ::
-  Command ->
-  Maybe FilePath ->
-  IO (Either (NonNegative, Stderr) NonNegative)
-tryTimeShNativeStdout command@(MkCommand cmd) path = do
-  start <- C.getTime Monotonic
-  result <- P.withCreateProcess pr $ \_ _ maybeHStderr ph -> do
-    exitCode <- Utils.whileNothing (P.getProcessExitCode ph) (pure ())
+stripChars :: Text -> Text
+stripChars = T.stripEnd . T.replace "\r" ""
 
-    case exitCode of
-      ExitSuccess -> pure $ Right ()
-      ExitFailure _ -> do
-        err <- handleToStderr command maybeHStderr
-        pure $ Left err
-
-  end <- C.getTime Monotonic
-  let diff = Utils.diffTime start end
-      finalResult = Bifunctor.bimap (diff,) (const diff) result
-
-  pure finalResult
-  where
-    pr =
-      (P.shell (T.unpack cmd))
-        { std_out = Inherit,
-          std_in = Inherit,
-          std_err = Inherit,
-          cwd = path
-        }
+blockSize :: Int
+blockSize = 1024

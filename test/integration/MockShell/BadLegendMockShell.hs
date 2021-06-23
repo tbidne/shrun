@@ -9,8 +9,8 @@ import Control.Monad.Writer (MonadWriter)
 import Data.Text (Text)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
-import ShellRun.Class.MonadLogger (MonadLogger (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
+import ShellRun.Logging (MonadLogger (..))
 import ShellRun.Types.Legend (LegendErr (..))
 
 -- | 'BadLegendMockShell' is intended to test a run of

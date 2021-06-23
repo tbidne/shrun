@@ -18,9 +18,9 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Async qualified as ShAsync
 import ShellRun.Class.Has (HasCommands (..), HasLegend (..))
-import ShellRun.Class.MonadLogger (MonadLogger)
-import ShellRun.Class.MonadLogger qualified as ML
 import ShellRun.Class.MonadShell (MonadShell (..))
+import ShellRun.Logging (MonadLogger)
+import ShellRun.Logging qualified as Logging
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Parsing.Legend qualified as ParseLegend
 import ShellRun.Types.Command (Command (..))
@@ -79,6 +79,6 @@ runCommandsOrLogErr ::
   Either LegendErr [Command] ->
   m ()
 runCommandsOrLogErr (Right cmds) = runCommands cmds
-runCommandsOrLogErr (Left err) = ML.logFatal errTxt
+runCommandsOrLogErr (Left err) = Logging.putLogFatal errTxt
   where
     errTxt = "Error parsing legend file: " <> T.pack (show err)
