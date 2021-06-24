@@ -6,6 +6,7 @@ module Main (main) where
 import Constants qualified
 import Data.Functor (($>))
 import Success qualified
+import SuccessShowKey qualified
 import SuccessSubLogging qualified
 import System.IO qualified as IO
 import System.IO.Silently qualified as Shh
@@ -27,6 +28,7 @@ spec = Hspec.after_ tearDown $
   Hspec.before_ setup $
     Hspec.describe "Run scenarios" $ do
       Success.spec
+      SuccessShowKey.spec
       SuccessSubLogging.spec
       Timeout.spec
 

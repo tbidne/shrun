@@ -46,11 +46,11 @@ verifyExpectedUnexpected :: [ResultText] -> [ExpectedText] -> [UnexpectedText] -
 verifyExpectedUnexpected results allExpected allUnexpected = allExpectedFound *> allUnexpectedNotFound
   where
     findExpected :: ExpectedText -> Expectation -> Expectation
-    findExpected expected _ = findOneExpected results expected
+    findExpected expected acc = findOneExpected results expected *> acc
     allExpectedFound = foldr findExpected (pure ()) allExpected
 
     findUnexpected :: UnexpectedText -> Expectation -> Expectation
-    findUnexpected unexpected _ = findOneUnexpected results unexpected
+    findUnexpected unexpected acc = findOneUnexpected results unexpected *> acc
     allUnexpectedNotFound = foldr findUnexpected (pure ()) allUnexpected
 
 findOneExpected :: [ResultText] -> ExpectedText -> Expectation

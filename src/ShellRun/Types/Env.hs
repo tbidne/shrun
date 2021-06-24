@@ -16,7 +16,7 @@ module ShellRun.Types.Env
 where
 
 import Data.Text (Text)
-import ShellRun.Env (HasLegend(..), HasCommands(..))
+import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging (LogQueue)
 import ShellRun.Math (NonNegative)
 
@@ -64,7 +64,6 @@ class HasCommandDisplay env where
 -- | Retrieves the queue that logs are sent to
 class HasLogQueue env where
   getLogQueue :: env -> LogQueue
-
 
 instance HasLegend Env where
   getLegend = legend

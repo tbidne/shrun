@@ -6,13 +6,13 @@
 module Specs.ShellRun.Utils (specs) where
 
 import ShellRun.Math qualified as Math
+import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.Env (CommandDisplay (..))
 import ShellRun.Utils qualified as Utils
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
-import ShellRun.Types.Env (CommandDisplay (..))
-import ShellRun.Types.Command (Command (..))
 
 -- | Entry point for ShellRun.Utils specs.
 specs :: IO [TestTree]

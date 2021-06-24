@@ -5,13 +5,12 @@
 module Constants
   ( -- * Logging messages
     cancelled,
-    timeCmd,
-    totalTime,
 
     -- * Logging color prefixes
     subCommandPrefix,
     infoSuccessPrefix,
     infoBluePrefix,
+    totalTime,
     warnPrefix,
     errPrefix,
 
@@ -29,13 +28,9 @@ import System.Console.Pretty qualified as P
 cancelled :: Text
 cancelled = warnPrefix "Timed out, cancelling remaining tasks."
 
--- | Expected command \"Time elapsed\"" 'Text'.
-timeCmd :: Text
-timeCmd = infoSuccessPrefix "Time elapsed: "
-
 -- | Expected total \"Time elapsed\"" 'Text'.
-totalTime :: Text
-totalTime = infoBluePrefix "Finished! Total time elapsed: "
+totalTime :: Text -> Text
+totalTime = infoBluePrefix . (<>) "Finished! Total time elapsed: "
 
 -- | Expected success 'Text'.
 subCommandPrefix :: Text -> Text
