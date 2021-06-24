@@ -31,7 +31,9 @@ import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
 
--- $ >>> :set -XNumericUnderscores
+-- $setup
+-- >>> :set -XNumericUnderscores
+-- >>> :set -XOverloadedStrings
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.
@@ -72,6 +74,17 @@ headMaybe :: [a] -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
 
+-- | Returns the key is one exists and we pass in 'ShowKey', otherwise
+-- returns the command.
+--
+-- >>> displayCommand ShowKey (MkCommand Nothing "cmd")
+-- "cmd"
+--
+-- >>> displayCommand ShowCommand (MkCommand (Just "key") "cmd")
+-- "cmd"
+--
+-- >>> displayCommand ShowKey (MkCommand (Just "key") "cmd")
+-- "key"
 displayCommand :: CommandDisplay -> Command -> Text
 displayCommand ShowKey (MkCommand (Just key) _) = key
 displayCommand _ (MkCommand _ cmd) = cmd

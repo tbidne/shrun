@@ -11,6 +11,8 @@ import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
+import ShellRun.Types.Env (CommandDisplay (..))
+import ShellRun.Types.Command (Command (..))
 
 -- | Entry point for ShellRun.Utils specs.
 specs :: IO [TestTree]
@@ -29,3 +31,11 @@ specs = TH.testSpecs $ do
         Utils.formatTime (Math.unsafeNonNegative 4_000) `shouldBe` "1 hour, 6 minutes, 40 seconds"
       Hspec.it "100,000 should include days" $ do
         Utils.formatTime (Math.unsafeNonNegative 100_000) `shouldBe` "1 day, 3 hours, 46 minutes, 40 seconds"
+    Hspec.describe "displayCommand" $ do
+      Hspec.it "should use command when no key exists" $ do
+        Utils.displayCommand ShowCommand (MkCommand Nothing "cmd") `shouldBe` "cmd"
+        Utils.displayCommand ShowKey (MkCommand Nothing "cmd") `shouldBe` "cmd"
+      Hspec.it "should use command with ShowCommand" $ do
+        Utils.displayCommand ShowCommand (MkCommand (Just "key") "cmd") `shouldBe` "cmd"
+      Hspec.it "should use key with ShowKey when one exists" $ do
+        Utils.displayCommand ShowKey (MkCommand (Just "key") "cmd") `shouldBe` "key"
