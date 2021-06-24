@@ -10,6 +10,7 @@ module ShellRun.Utils
     formatTime,
 
     -- * Misc Utils
+    displayCommand,
     headMaybe,
 
     -- * Functor Utils
@@ -23,6 +24,8 @@ where
 import Data.Text (Text)
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
+import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.Env (CommandDisplay (..))
 import ShellRun.Utils.Internal qualified as UtilsI
 import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec (..))
@@ -68,3 +71,7 @@ formatTime = UtilsI.formatTimeSummary . UtilsI.secondsToTimeSummary
 headMaybe :: [a] -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
+
+displayCommand :: CommandDisplay -> Command -> Text
+displayCommand ShowKey (MkCommand (Just key) _) = key
+displayCommand _ (MkCommand _ cmd) = cmd

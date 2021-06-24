@@ -19,19 +19,28 @@ specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Parsing.Commands" $ do
     Hspec.it "Should translate one command" $ do
       ParseCommands.translateCommands legend ["one"]
-        `shouldBe` Right (fmap MkCommand ["cmd1"])
+        `shouldBe` Right [MkCommand (Just "one") "cmd1"]
     Hspec.it "Should return non-map command" $ do
       ParseCommands.translateCommands legend ["other"]
-        `shouldBe` Right (fmap MkCommand ["other"])
+        `shouldBe` Right [MkCommand Nothing "other"]
     Hspec.it "Should return recursive commands" $ do
       ParseCommands.translateCommands legend ["all"]
-        `shouldBe` Right (fmap MkCommand ["cmd1", "cmd2", "cmd3"])
+        `shouldBe` Right
+          [ MkCommand (Just "one") "cmd1",
+            MkCommand (Just "two") "cmd2",
+            MkCommand (Just "all") "cmd3"
+          ]
     Hspec.it "Should return recursive commands and other" $ do
       ParseCommands.translateCommands legend ["all", "other"]
-        `shouldBe` Right (fmap MkCommand ["cmd1", "cmd2", "cmd3", "other"])
+        `shouldBe` Right
+          [ MkCommand (Just "one") "cmd1",
+            MkCommand (Just "two") "cmd2",
+            MkCommand (Just "all") "cmd3",
+            MkCommand Nothing "other"
+          ]
     Hspec.it "Should not split non-key commands" $ do
       ParseCommands.translateCommands legend ["echo ,,"]
-        `shouldBe` Right (fmap MkCommand ["echo ,,"])
+        `shouldBe` Right [MkCommand Nothing "echo ,,"]
     Hspec.it "Should fail on cycle" $ do
       ParseCommands.translateCommands cyclicLegend ["a"]
         `shouldBe` Left (CyclicKeyErr "a -> b -> c -> a")

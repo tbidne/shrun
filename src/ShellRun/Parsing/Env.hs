@@ -22,12 +22,13 @@ import Options.Applicative.Types (ArgPolicy (..))
 import ShellRun.Logging (Log, LogQueue (..))
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
-import ShellRun.Types.Env (Env (..), SubLogging (..))
+import ShellRun.Types.Env (CommandDisplay (..), Env (..), SubLogging (..))
 
 data Args = MkArgs
   { aLegend :: Maybe Text,
     aTimeout :: Maybe NonNegative,
     aSubLogging :: SubLogging,
+    aCommandDisplay :: CommandDisplay,
     aCommands :: [Text]
   }
 
@@ -39,8 +40,8 @@ runParser = do
   pure $ toEnv queue args
 
 toEnv :: TBQueue Log -> Args -> Env
-toEnv queue MkArgs {aLegend, aTimeout, aSubLogging, aCommands} =
-  MkEnv aLegend aTimeout aSubLogging (MkLogQueue queue) aCommands
+toEnv queue MkArgs {aLegend, aTimeout, aSubLogging, aCommandDisplay, aCommands} =
+  MkEnv aLegend aTimeout aSubLogging aCommandDisplay (MkLogQueue queue) aCommands
 
 parserInfo :: ParserInfo Args
 parserInfo =
@@ -60,6 +61,7 @@ envParser =
     <$> legendParser
     <*> timeoutParser
     <*> subLoggingParser
+    <*> commandDisplayParser
     <*> commandsParser
       <**> OptApp.helper
 
@@ -111,6 +113,19 @@ subLoggingParser =
     ( OptApp.short 's'
         <> OptApp.long "sub-logging"
         <> OptApp.help "Adds Commands' logs (stdout+stderr) to output."
+    )
+
+commandDisplayParser :: Parser CommandDisplay
+commandDisplayParser =
+  OptApp.flag
+    ShowCommand
+    ShowKey
+    ( OptApp.short 'k'
+        <> OptApp.long "show-key"
+        <> OptApp.help
+          ( "In output, display key name over actual command if it"
+              <> " exists."
+          )
     )
 
 commandsParser :: Parser [Text]

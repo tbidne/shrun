@@ -23,14 +23,19 @@ import Data.Foldable qualified as Fold
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import ShellRun.Class.Has (HasLogQueue (..), HasSubLogging (..), HasTimeout (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging (Log (..), LogLevel (..), LogMode (..), MonadLogger (..))
 import ShellRun.Logging qualified as Logging
 import ShellRun.Math (NonNegative, RAdd (..))
 import ShellRun.Math qualified as Math
 import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env (SubLogging (..))
+import ShellRun.Types.Env
+  ( HasCommandDisplay (..),
+    HasLogQueue (..),
+    HasSubLogging (..),
+    HasTimeout (..),
+    SubLogging (..),
+  )
 import ShellRun.Types.IO (Stderr (..))
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
@@ -43,7 +48,8 @@ import UnliftIO.Async qualified as UAsync
 -- a haskell exception is encountered in @shell-run@ /itself/, this is
 -- considered a fatal error and all threads are killed.
 runCommands ::
-  ( HasLogQueue env,
+  ( HasCommandDisplay env,
+    HasLogQueue env,
     HasSubLogging env,
     HasTimeout env,
     MonadIO m,
@@ -83,22 +89,24 @@ runCommands commands = UAsync.withAsync printLogQueue $ \printer -> do
   Fold.traverse_ Logging.putLog remainingLogs
 
 runCommand ::
-  ( HasLogQueue env,
+  ( HasCommandDisplay env,
+    HasLogQueue env,
     HasSubLogging env,
     MonadReader env m,
     MonadIO m
   ) =>
   Command ->
   m ()
-runCommand command@(MkCommand cmd) = do
+runCommand cmd = do
+  commandDisplay <- MTL.asks getCommandDisplay
   logQueue <- MTL.asks getLogQueue
   subLogging <- MTL.asks getSubLogging
   let shFn = case subLogging of
-        Disabled -> ShIO.tryTimeSh
-        Enabled -> ShIO.tryTimeShCommandOutput logQueue
+        Disabled -> ShIO.tryTimeSh commandDisplay
+        Enabled -> ShIO.tryTimeShCommandOutput logQueue commandDisplay
 
   MTL.liftIO $ do
-    res <- shFn command Nothing
+    res <- shFn cmd Nothing
     let lg = case res of
           Left (t, MkStderr err) ->
             let logTxt =
@@ -107,9 +115,10 @@ runCommand command@(MkCommand cmd) = do
                     <> U.formatTime t
              in Logging.logError logTxt
           Right t ->
-            let logTxt =
+            let name = U.displayCommand commandDisplay cmd
+                logTxt =
                   "Successfully ran `"
-                    <> cmd
+                    <> name
                     <> "`. Time elapsed: "
                     <> U.formatTime t
              in Logging.logInfoSuccess logTxt

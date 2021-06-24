@@ -39,7 +39,7 @@ instance MonadShell GoodMockShell where
             ("both", "cmd1,,cmd2")
           ]
 
-  runCommands = MTL.tell . fmap getCommand
+  runCommands = MTL.tell . fmap command
 
 instance Show a => Show (GoodMockShell a) where
   show _ = "MkGoodMockShell"

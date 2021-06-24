@@ -17,8 +17,8 @@ import Control.Monad.Reader qualified as MTL
 import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Async qualified as ShAsync
-import ShellRun.Class.Has (HasCommands (..), HasLegend (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
+import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging (MonadLogger)
 import ShellRun.Logging qualified as Logging
 import ShellRun.Parsing.Commands qualified as ParseCommands
@@ -69,7 +69,7 @@ maybePathToCommands ::
   Maybe Text ->
   [Text] ->
   m (Either LegendErr [Command])
-maybePathToCommands Nothing cmds = pure $ Right $ fmap MkCommand cmds
+maybePathToCommands Nothing cmds = pure $ Right $ fmap (MkCommand Nothing) cmds
 maybePathToCommands (Just path) cmds = do
   lMap <- legendPathToMap path
   pure $ lMap >>= (`ParseCommands.translateCommands` cmds)

@@ -2,7 +2,7 @@
 module MockEnv (MockEnv (..), defaultEnv) where
 
 import Data.Text (Text)
-import ShellRun.Class.Has (HasCommands (..), HasLegend (..))
+import ShellRun.Env (HasCommands (..), HasLegend (..))
 
 -- | Includes the bare minimum fields necessary to run 'ShellRun.runShell'.
 data MockEnv = MkMockEnv

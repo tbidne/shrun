@@ -38,7 +38,7 @@ translateProps = TH.testProperty "translateCommands includes everything" $
         H.footnote $ "Received a LegendErr: " <> show err
         H.failure
       Right finalCmds -> do
-        let finalCmdsSet = Set.fromList $ fmap Command.getCommand finalCmds
+        let finalCmdsSet = Set.fromList $ fmap Command.command finalCmds
             combinedKeySet = Set.union legendKeySet finalCmdsSet
 
         H.footnote $ "Final commands: " <> show finalCmdsSet

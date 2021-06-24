@@ -33,6 +33,7 @@ import ShellRun.Logging (LogQueue (..))
 import ShellRun.Logging qualified as Logging
 import ShellRun.Math (NonNegative (..))
 import ShellRun.Types.Command (Command (..))
+import ShellRun.Types.Env (CommandDisplay (..))
 import ShellRun.Types.IO (Stderr (..), Stdout (..))
 import ShellRun.Utils qualified as Utils
 import System.Clock (Clock (..))
@@ -46,7 +47,7 @@ import System.Process qualified as P
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
 sh :: Command -> Maybe FilePath -> IO Text
-sh (MkCommand cmd) fp = T.pack <$> P.readCreateProcess proc ""
+sh (MkCommand _ cmd) fp = T.pack <$> P.readCreateProcess proc ""
   where
     proc = (P.shell (T.unpack cmd)) {P.cwd = fp}
 
@@ -56,7 +57,7 @@ sh_ cmd = ($> ()) . sh cmd
 
 -- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
 shExitCode :: Command -> Maybe FilePath -> IO (ExitCode, Stdout, Stderr)
-shExitCode (MkCommand cmd) path = do
+shExitCode (MkCommand _ cmd) path = do
   (exitCode, stdout, stderr) <- P.readCreateProcessWithExitCode proc ""
   pure (exitCode, wrap MkStdout stdout, wrap MkStderr stderr)
   where
@@ -65,22 +66,23 @@ shExitCode (MkCommand cmd) path = do
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
-tryShExitCode :: Command -> Maybe FilePath -> IO (Either Stderr Stdout)
-tryShExitCode command path = do
-  (code, stdout, MkStderr err) <- shExitCode command path
+tryShExitCode :: CommandDisplay -> Command -> Maybe FilePath -> IO (Either Stderr Stdout)
+tryShExitCode commandDisplay cmd path = do
+  (code, stdout, MkStderr err) <- shExitCode cmd path
   pure $ case code of
     ExitSuccess -> Right stdout
-    ExitFailure _ -> Left $ makeStdErr command err
+    ExitFailure _ -> Left $ makeStdErr commandDisplay cmd err
 
 -- | Version of 'tryShExitCode' that also returns the command's
 -- duration. 'Stdout' is not returned on success.
 tryTimeSh ::
+  CommandDisplay ->
   Command ->
   Maybe FilePath ->
   IO (Either (NonNegative, Stderr) NonNegative)
-tryTimeSh cmd path = do
+tryTimeSh commandDisplay cmd path = do
   start <- C.getTime Monotonic
-  res <- tryShExitCode cmd path
+  res <- tryShExitCode commandDisplay cmd path
   end <- C.getTime Monotonic
   let diff = Utils.diffTime start end
   pure $ Bifunctor.bimap (diff,) (const diff) res
@@ -89,10 +91,11 @@ tryTimeSh cmd path = do
 -- @stdout@ + @stderr@.
 tryTimeShCommandOutput ::
   LogQueue ->
+  CommandDisplay ->
   Command ->
   Maybe FilePath ->
   IO (Either (NonNegative, Stderr) NonNegative)
-tryTimeShCommandOutput logQueue command@(MkCommand cmd) path = do
+tryTimeShCommandOutput logQueue commandDisplay cmd@(MkCommand _ cmdTxt) path = do
   -- Create pseudo terminal here because otherwise we have trouble streaming
   -- input from child processes. Data gets buffered and trying to override the
   -- buffering strategy (i.e. handles returned by CreatePipe) does not work.
@@ -110,7 +113,7 @@ tryTimeShCommandOutput logQueue command@(MkCommand cmd) path = do
   -- and stderr to the same file descriptor, there isn't much of a reason to
   -- use two different handles.
   let pr =
-        (P.shell (T.unpack cmd))
+        (P.shell (T.unpack cmdTxt))
           { std_out = UseHandle sendH,
             std_in = Inherit,
             std_err = UseHandle sendH,
@@ -124,13 +127,13 @@ tryTimeShCommandOutput logQueue command@(MkCommand cmd) path = do
     maybeLog <-
       if
           | not isOpen -> do
-            let (MkStderr err) = makeStdErr command "Handle not open"
+            let (MkStderr err) = makeStdErr commandDisplay cmd "Handle not open"
             pure $ Just $ Logging.logError err
           | not canRead -> do
-            let (MkStderr err) = makeStdErr command "Handle not readable"
+            let (MkStderr err) = makeStdErr commandDisplay cmd "Handle not readable"
             pure $ Just $ Logging.logError err
           | otherwise -> do
-            result <- readHandle command recvH
+            result <- readHandle commandDisplay cmd recvH
             case result of
               ReadErr err ->
                 pure $ Just $ Logging.logError err
@@ -156,7 +159,7 @@ tryTimeShCommandOutput logQueue command@(MkCommand cmd) path = do
   result <- case exitCode of
     ExitSuccess -> pure $ Right ()
     ExitFailure _ -> do
-      err <- readHandle command recvH
+      err <- readHandle commandDisplay cmd recvH
       pure $ Left $ readResultToStdErr err
 
   end <- C.getTime Monotonic
@@ -175,8 +178,8 @@ readResultToStdErr (ReadErr e) = MkStderr e
 readResultToStdErr (ReadSuccess o) = MkStderr o
 readResultToStdErr ReadNoData = MkStderr "(No data in handle, see above logs)"
 
-readHandle :: Command -> Handle -> IO ReadHandleResult
-readHandle command@(MkCommand cmd) handle = do
+readHandle :: CommandDisplay -> Command -> Handle -> IO ReadHandleResult
+readHandle commandDisplay cmd handle = do
   output :: Either IOException ByteString <-
     Except.try $ BS.hGetNonBlocking handle blockSize
   let outDecoded = fmap (TConvert.decodeConvertText . TConvert.UTF8) output
@@ -184,19 +187,27 @@ readHandle command@(MkCommand cmd) handle = do
     Left ex -> ReadErr $ readEx ex
     Right Nothing -> ReadErr $ utf8Err outDecoded
     Right (Just "") -> ReadNoData
-    Right (Just o) -> ReadSuccess $ cmd <> ": " <> stripChars (T.pack o)
+    Right (Just o) -> ReadSuccess $ name <> ": " <> stripChars (T.pack o)
   where
-    displayEx prefix = getStderr . makeStdErr command . (<>) prefix . T.pack . show
+    name = Utils.displayCommand commandDisplay cmd
+    displayEx prefix =
+      getStderr
+        . makeStdErr commandDisplay cmd
+        . (<>) prefix
+        . T.pack
+        . show
     readEx = displayEx "IOException reading handle: "
     utf8Err = displayEx "Could not decode UTF-8: "
 
-makeStdErr :: Command -> Text -> Stderr
-makeStdErr (MkCommand cmd) err =
+makeStdErr :: CommandDisplay -> Command -> Text -> Stderr
+makeStdErr commandDisplay cmd err =
   MkStderr $
     "Error running `"
-      <> cmd
+      <> name
       <> "`: "
       <> stripChars err
+  where
+    name = Utils.displayCommand commandDisplay cmd
 
 stripChars :: Text -> Text
 stripChars = T.stripEnd . T.replace "\r" ""

@@ -43,7 +43,7 @@ import ShellRun.Utils qualified as Utils
 --           ("all", "cmd1,,cmd2,,other")
 --         ]
 --       cmds = translateCommands m ["all","blah"]
---   in (fmap . fmap) getCommand cmds
+--   in (fmap . fmap) command cmds
 -- :}
 -- Right ["one","two","other","blah"]
 --
@@ -63,20 +63,20 @@ translateCommands :: LegendMap -> [Text] -> Either LegendErr [Command]
 translateCommands mp = sequenceA . foldMap (lineToCommands mp)
 
 lineToCommands :: LegendMap -> Text -> [Either LegendErr Command]
-lineToCommands mp = go Set.empty (LTBuilder.fromText "")
+lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
     -- we have traversed so far, e.g., a -> b -> c
-    go foundKeys path line = case Map.lookup line mp of
+    go prevKey foundKeys path line = case Map.lookup line mp of
       -- The line isn't a key, return it.
-      Nothing -> [Right (MkCommand line)]
+      Nothing -> [Right (MkCommand prevKey line)]
       -- The line is a key, check for cycles and recursively
       -- call.
       Just val -> case maybeCyclicVal of
         Just cyclicVal ->
           let pathTxt = builderToPath path line cyclicVal
            in [Left (CyclicKeyErr pathTxt)]
-        Nothing -> cmds >>= go foundKeys' path'
+        Nothing -> cmds >>= go (Just line) foundKeys' path'
         where
           -- WARN: Using a double comma right now as a delimiter. Hoping
           -- this isn't a thing that appears in real bash commands...

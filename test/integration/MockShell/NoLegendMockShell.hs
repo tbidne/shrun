@@ -35,7 +35,7 @@ instance MonadShell NoLegendMockShell where
   -- this (otherwise would die here)
   legendPathToMap _ = pure $ Left $ EntryErr "Bad key"
 
-  runCommands = MTL.tell . fmap getCommand
+  runCommands = MTL.tell . fmap command
 
 instance Show a => Show (NoLegendMockShell a) where
   show _ = "MkNoLegendMockShell"

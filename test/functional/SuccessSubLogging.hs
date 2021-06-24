@@ -27,11 +27,11 @@ spec =
     let results = MkResultText <$> T.lines (T.pack result)
     V.verifyExpected results allExpected
   where
-    argList = [nativeLog] <> commands
+    argList = [subLogging] <> commands
     -- `sleep 1` is because commands that run too quickly will not have
     -- output logged
     commands = ["echo hi && sleep 1"]
-    nativeLog = "--sub-logging"
+    subLogging = "--sub-logging"
 
 allExpected :: [ExpectedText]
 allExpected =
