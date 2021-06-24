@@ -13,8 +13,8 @@ import Hedgehog (MonadGen, PropertyT, (===))
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import ShellRun.Parsing.Legend.Internal qualified as Internal
 import ShellRun.Data.Legend (LegendMap)
+import ShellRun.Parsing.Legend.Internal qualified as Internal
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH

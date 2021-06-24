@@ -19,10 +19,10 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
+import ShellRun.Data.Env (CommandDisplay (..), Env (..), SubLogging (..))
 import ShellRun.Logging (Log, LogQueue (..))
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
-import ShellRun.Data.Env (CommandDisplay (..), Env (..), SubLogging (..))
 
 data Args = MkArgs
   { aLegend :: Maybe Text,

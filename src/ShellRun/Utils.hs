@@ -22,10 +22,10 @@ module ShellRun.Utils
 where
 
 import Data.Text (Text)
-import ShellRun.Math (NonNegative)
-import ShellRun.Math qualified as Math
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
+import ShellRun.Math (NonNegative)
+import ShellRun.Math qualified as Math
 import ShellRun.Utils.Internal qualified as UtilsI
 import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec (..))

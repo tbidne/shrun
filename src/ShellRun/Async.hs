@@ -23,11 +23,6 @@ import Data.Foldable qualified as Fold
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import ShellRun.IO qualified as ShIO
-import ShellRun.Logging (Log (..), LogLevel (..), LogMode (..), MonadLogger (..))
-import ShellRun.Logging qualified as Logging
-import ShellRun.Math (NonNegative, RAdd (..))
-import ShellRun.Math qualified as Math
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env
   ( HasCommandDisplay (..),
@@ -37,6 +32,11 @@ import ShellRun.Data.Env
     SubLogging (..),
   )
 import ShellRun.Data.IO (Stderr (..))
+import ShellRun.IO qualified as ShIO
+import ShellRun.Logging (Log (..), LogLevel (..), LogMode (..), MonadLogger (..))
+import ShellRun.Logging qualified as Logging
+import ShellRun.Math (NonNegative, RAdd (..))
+import ShellRun.Math qualified as Math
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
 import System.Clock qualified as C

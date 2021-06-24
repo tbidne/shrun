@@ -12,9 +12,9 @@ import Data.Text (Text)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Logging (MonadLogger (..))
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..))
+import ShellRun.Logging (MonadLogger (..))
 
 -- | 'NoLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the legend is not included.

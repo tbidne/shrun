@@ -18,14 +18,14 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Async qualified as ShAsync
 import ShellRun.Class.MonadShell (MonadShell (..))
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Env (Env (..))
+import ShellRun.Data.Legend (LegendErr)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging (MonadLogger)
 import ShellRun.Logging qualified as Logging
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Parsing.Legend qualified as ParseLegend
-import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Env (Env (..))
-import ShellRun.Data.Legend (LegendErr)
 
 -- | `ShellT` is the main application type that runs shell commands.
 newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}

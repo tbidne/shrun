@@ -10,8 +10,8 @@ where
 import Control.Exception qualified as Ex
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRun.Parsing.Legend.Internal qualified as Internal
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
+import ShellRun.Parsing.Legend.Internal qualified as Internal
 
 -- | Given a filepath, attempts to parse the file's contents into
 -- a 'LegendMap'. If the file does not exist or the parsing fails

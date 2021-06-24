@@ -10,8 +10,8 @@ import Data.Text (Text)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Logging (MonadLogger (..))
 import ShellRun.Data.Legend (LegendErr (..))
+import ShellRun.Logging (MonadLogger (..))
 
 -- | 'BadLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the path to the legend file is bad.

@@ -13,8 +13,8 @@ import Data.Text (Text)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Logging (MonadLogger (..))
 import ShellRun.Data.Command (Command (..))
+import ShellRun.Logging (MonadLogger (..))
 
 -- | 'GoodMockShell' is intended to test a \"Happy path\" run of
 -- 'ShellRun.runShell'.
