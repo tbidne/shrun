@@ -57,7 +57,7 @@ All well and good, but this approach has several deficiencies:
 
 `shell-run` has the following usage:
 ```text
-Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-s|--sub-logging]
+Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-c|--command-logging]
                  [-k|--show-key] Commands...
 
 Available options:
@@ -67,7 +67,7 @@ Available options:
                            to other keys recursively. Lines starting with `#`
                            are considered comments and ignored.
   -t,--timeout ARG         Non-negative integer setting a timeout.
-  -s,--sub-logging         Adds Commands' logs (stdout+stderr) to output.
+  -c,--command-logging     Adds Commands' logs (stdout+stderr) to output.
   -k,--show-key            In output, display key name over actual command if it
                            exists.
   -h,--help                Show this help text

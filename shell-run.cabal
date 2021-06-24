@@ -146,8 +146,8 @@ test-suite functional
   other-modules:
     Constants
     Success
+    SuccessCommandLogging
     SuccessShowKey
-    SuccessSubLogging
     Timeout
     Verify
 

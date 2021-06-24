@@ -107,7 +107,7 @@ levelToColor Fatal = P.Red
 -- | Maps 'LogLevel' to \'Prefix\'.
 levelToPrefix :: LogLevel -> Text
 levelToPrefix None = ""
-levelToPrefix SubCommand = "[SubCommand] "
+levelToPrefix SubCommand = "[Command] "
 levelToPrefix Debug = "[Debug] "
 levelToPrefix Info = "[Info] "
 levelToPrefix InfoBlue = "[Info] "

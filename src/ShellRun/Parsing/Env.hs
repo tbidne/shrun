@@ -19,7 +19,7 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import ShellRun.Data.Env (CommandDisplay (..), Env (..), SubLogging (..))
+import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..), Env (..))
 import ShellRun.Logging (Log, LogQueue (..))
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
@@ -27,7 +27,7 @@ import ShellRun.Math qualified as Math
 data Args = MkArgs
   { aLegend :: Maybe Text,
     aTimeout :: Maybe NonNegative,
-    aSubLogging :: SubLogging,
+    aCommandLogging :: CommandLogging,
     aCommandDisplay :: CommandDisplay,
     aCommands :: [Text]
   }
@@ -40,8 +40,8 @@ runParser = do
   pure $ toEnv queue args
 
 toEnv :: TBQueue Log -> Args -> Env
-toEnv queue MkArgs {aLegend, aTimeout, aSubLogging, aCommandDisplay, aCommands} =
-  MkEnv aLegend aTimeout aSubLogging aCommandDisplay (MkLogQueue queue) aCommands
+toEnv queue MkArgs {aLegend, aTimeout, aCommandLogging, aCommandDisplay, aCommands} =
+  MkEnv aLegend aTimeout aCommandLogging aCommandDisplay (MkLogQueue queue) aCommands
 
 parserInfo :: ParserInfo Args
 parserInfo =
@@ -105,13 +105,13 @@ timeoutParser =
                 <> show v
                 <> "!"
 
-subLoggingParser :: Parser SubLogging
+subLoggingParser :: Parser CommandLogging
 subLoggingParser =
   OptApp.flag
     Disabled
     Enabled
-    ( OptApp.short 's'
-        <> OptApp.long "sub-logging"
+    ( OptApp.short 'c'
+        <> OptApp.long "command-logging"
         <> OptApp.help "Adds Commands' logs (stdout+stderr) to output."
     )
 

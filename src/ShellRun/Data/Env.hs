@@ -5,13 +5,13 @@ module ShellRun.Data.Env
   ( -- * \"HasX\" style typeclasses required for our concrete Env type.
     HasCommandDisplay (..),
     HasLogQueue (..),
-    HasSubLogging (..),
+    HasCommandLogging (..),
     HasTimeout (..),
 
     -- * Types
     Env (..),
     CommandDisplay (..),
-    SubLogging (..),
+    CommandLogging (..),
   )
 where
 
@@ -25,14 +25,14 @@ import ShellRun.Math (NonNegative)
 data Env = MkEnv
   { legend :: Maybe Text,
     timeout :: Maybe NonNegative,
-    subLogging :: SubLogging,
+    commandLogging :: CommandLogging,
     commandDisplay :: CommandDisplay,
     logQueue :: LogQueue,
     commands :: [Text]
   }
 
 -- | Type for determining if we stream commands' logs.
-data SubLogging
+data CommandLogging
   = -- | No logging of sub-commands
     Disabled
   | -- | Logging of sub-commands
@@ -54,8 +54,8 @@ class HasTimeout env where
   getTimeout :: env -> Maybe NonNegative
 
 -- | Determines if we should log commands' output.
-class HasSubLogging env where
-  getSubLogging :: env -> SubLogging
+class HasCommandLogging env where
+  getCommandLogging :: env -> CommandLogging
 
 -- | Retrieves the queue that logs are sent to
 class HasCommandDisplay env where
@@ -71,8 +71,8 @@ instance HasLegend Env where
 instance HasTimeout Env where
   getTimeout = timeout
 
-instance HasSubLogging Env where
-  getSubLogging = subLogging
+instance HasCommandLogging Env where
+  getCommandLogging = commandLogging
 
 instance HasCommandDisplay Env where
   getCommandDisplay = commandDisplay

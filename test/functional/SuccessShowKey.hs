@@ -28,11 +28,11 @@ spec =
     let results = MkResultText <$> T.lines (T.pack result)
     V.verifyExpected results allExpected
   where
-    argList = [legendPath, showKey, subLogging] <> commands
+    argList = [legendPath, showKey, commandLogging] <> commands
     commands = ["short", "bad"]
     legendPath = "--legend=" <> Constants.workingDirectory <> "/output/legend.txt"
     showKey = "--show-key"
-    subLogging = "--sub-logging"
+    commandLogging = "--command-logging"
 
 allExpected :: [ExpectedText]
 allExpected =

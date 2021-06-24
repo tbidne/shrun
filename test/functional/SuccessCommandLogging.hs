@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Functional test for a successful run with native logging.
-module SuccessSubLogging (spec) where
+module SuccessCommandLogging (spec) where
 
 import Control.Monad.Reader qualified as MTL
 import Data.Text qualified as T
@@ -25,11 +25,11 @@ spec =
     let results = MkResultText <$> T.lines (T.pack result)
     V.verifyExpected results allExpected
   where
-    argList = [subLogging] <> commands
+    argList = [commandLogging] <> commands
     -- `sleep 1` is because commands that run too quickly will not have
     -- output logged
     commands = ["echo hi && sleep 1"]
-    subLogging = "--sub-logging"
+    commandLogging = "--command-logging"
 
 allExpected :: [ExpectedText]
 allExpected =

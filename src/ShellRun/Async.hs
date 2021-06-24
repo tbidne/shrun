@@ -25,11 +25,11 @@ import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env
-  ( HasCommandDisplay (..),
+  ( CommandLogging (..),
+    HasCommandDisplay (..),
+    HasCommandLogging (..),
     HasLogQueue (..),
-    HasSubLogging (..),
     HasTimeout (..),
-    SubLogging (..),
   )
 import ShellRun.Data.IO (Stderr (..))
 import ShellRun.IO qualified as ShIO
@@ -50,7 +50,7 @@ import UnliftIO.Async qualified as UAsync
 runCommands ::
   ( HasCommandDisplay env,
     HasLogQueue env,
-    HasSubLogging env,
+    HasCommandLogging env,
     HasTimeout env,
     MonadIO m,
     MonadLogger m,
@@ -91,7 +91,7 @@ runCommands commands = UAsync.withAsync printLogQueue $ \printer -> do
 runCommand ::
   ( HasCommandDisplay env,
     HasLogQueue env,
-    HasSubLogging env,
+    HasCommandLogging env,
     MonadReader env m,
     MonadIO m
   ) =>
@@ -100,8 +100,8 @@ runCommand ::
 runCommand cmd = do
   commandDisplay <- MTL.asks getCommandDisplay
   logQueue <- MTL.asks getLogQueue
-  subLogging <- MTL.asks getSubLogging
-  let shFn = case subLogging of
+  commandLogging <- MTL.asks getCommandLogging
+  let shFn = case commandLogging of
         Disabled -> ShIO.tryTimeSh commandDisplay
         Enabled -> ShIO.tryTimeShCommandOutput logQueue commandDisplay
 

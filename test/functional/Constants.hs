@@ -29,7 +29,7 @@ totalTime = "Finished! Total time elapsed: "
 
 -- | Expected success 'Text'.
 subCommandPrefix :: Text -> Text
-subCommandPrefix txt = "[SubCommand] " <> txt
+subCommandPrefix txt = "[Command] " <> txt
 
 -- | Expected success 'Text'.
 infoSuccessPrefix :: Text -> Text
