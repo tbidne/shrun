@@ -1,6 +1,10 @@
 -- | Module defining \"HasX\" style typeclasses for the environment
 -- needed by ShellRun.
-module ShellRun.Env where
+module ShellRun.Env
+  ( HasCommands (..),
+    HasLegend (..),
+  )
+where
 
 import Data.Text (Text)
 

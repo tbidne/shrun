@@ -28,6 +28,10 @@ library
     ShellRun
     ShellRun.Async
     ShellRun.Class.MonadShell
+    ShellRun.Data.Command
+    ShellRun.Data.Env
+    ShellRun.Data.IO
+    ShellRun.Data.Legend
     ShellRun.Env
     ShellRun.IO
     ShellRun.Logging
@@ -43,10 +47,6 @@ library
     ShellRun.Parsing.Env
     ShellRun.Parsing.Legend
     ShellRun.Parsing.Legend.Internal
-    ShellRun.Types.Command
-    ShellRun.Types.Env
-    ShellRun.Types.IO
-    ShellRun.Types.Legend
     ShellRun.Utils
     ShellRun.Utils.Internal
     ShellRun.Utils.Text

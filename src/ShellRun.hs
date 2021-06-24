@@ -23,9 +23,9 @@ import ShellRun.Logging (MonadLogger)
 import ShellRun.Logging qualified as Logging
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Parsing.Legend qualified as ParseLegend
-import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env (Env (..))
-import ShellRun.Types.Legend (LegendErr)
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Env (Env (..))
+import ShellRun.Data.Legend (LegendErr)
 
 -- | `ShellT` is the main application type that runs shell commands.
 newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}

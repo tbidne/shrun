@@ -13,7 +13,7 @@ import Control.Monad qualified as M
 import Data.Map.Strict qualified as Map
 import Data.Text (Text)
 import Data.Text qualified as T
-import ShellRun.Types.Legend (LegendErr (..), LegendMap)
+import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Utils.Text qualified as TextUtils
 
 -- $ >>> :set -XOverloadedStrings

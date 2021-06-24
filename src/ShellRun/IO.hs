@@ -32,9 +32,9 @@ import GHC.IO.Handle qualified as Handle
 import ShellRun.Logging (LogQueue (..))
 import ShellRun.Logging qualified as Logging
 import ShellRun.Math (NonNegative (..))
-import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env (CommandDisplay (..))
-import ShellRun.Types.IO (Stderr (..), Stdout (..))
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Env (CommandDisplay (..))
+import ShellRun.Data.IO (Stderr (..), Stdout (..))
 import ShellRun.Utils qualified as Utils
 import System.Clock (Clock (..))
 import System.Clock qualified as C

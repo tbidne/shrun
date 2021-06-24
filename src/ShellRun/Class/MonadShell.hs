@@ -5,8 +5,8 @@ module ShellRun.Class.MonadShell
 where
 
 import Data.Text (Text)
-import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Legend (LegendErr, LegendMap)
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Legend (LegendErr, LegendMap)
 
 -- | The core typeclass for @shell-run@.
 class Monad m => MonadShell m where

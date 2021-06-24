@@ -14,7 +14,7 @@ import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Logging (MonadLogger (..))
-import ShellRun.Types.Command (Command (..))
+import ShellRun.Data.Command (Command (..))
 
 -- | 'GoodMockShell' is intended to test a \"Happy path\" run of
 -- 'ShellRun.runShell'.

@@ -1,5 +1,5 @@
 -- | Provides types for the legend functionality.
-module ShellRun.Types.Legend
+module ShellRun.Data.Legend
   ( LegendErr (..),
     LegendMap,
   )

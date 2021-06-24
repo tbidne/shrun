@@ -28,15 +28,15 @@ import ShellRun.Logging (Log (..), LogLevel (..), LogMode (..), MonadLogger (..)
 import ShellRun.Logging qualified as Logging
 import ShellRun.Math (NonNegative, RAdd (..))
 import ShellRun.Math qualified as Math
-import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Env
   ( HasCommandDisplay (..),
     HasLogQueue (..),
     HasSubLogging (..),
     HasTimeout (..),
     SubLogging (..),
   )
-import ShellRun.Types.IO (Stderr (..))
+import ShellRun.Data.IO (Stderr (..))
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
 import System.Clock qualified as C

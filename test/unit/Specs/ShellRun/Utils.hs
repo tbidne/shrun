@@ -6,8 +6,8 @@
 module Specs.ShellRun.Utils (specs) where
 
 import ShellRun.Math qualified as Math
-import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Env (CommandDisplay (..))
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Utils qualified as Utils
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec

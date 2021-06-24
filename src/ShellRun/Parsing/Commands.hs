@@ -15,8 +15,8 @@ import Data.Text qualified as T
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
-import ShellRun.Types.Command (Command (..))
-import ShellRun.Types.Legend (LegendErr (..), LegendMap)
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Utils qualified as Utils
 
 -- | Returns a list of 'Text' commands, potentially transforming a

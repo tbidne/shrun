@@ -22,7 +22,7 @@ import Options.Applicative.Types (ArgPolicy (..))
 import ShellRun.Logging (Log, LogQueue (..))
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
-import ShellRun.Types.Env (CommandDisplay (..), Env (..), SubLogging (..))
+import ShellRun.Data.Env (CommandDisplay (..), Env (..), SubLogging (..))
 
 data Args = MkArgs
   { aLegend :: Maybe Text,

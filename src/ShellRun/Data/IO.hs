@@ -1,5 +1,5 @@
 -- | Provides convenience wrappers over 'Text'.
-module ShellRun.Types.IO
+module ShellRun.Data.IO
   ( Stdout (..),
     Stderr (..),
   )
