@@ -13,5 +13,3 @@ data Command = MkCommand
     command :: Text
   }
   deriving (Eq, Show)
-
---deriving (Semigroup, Monoid) via Text
