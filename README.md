@@ -58,7 +58,7 @@ All well and good, but this approach has several deficiencies:
 `shell-run` has the following usage:
 ```text
 Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-s|--sub-logging]
-                 Commands...
+                 [-k|--show-key] Commands...
 
 Available options:
   -l,--legend ARG          Path to legend file, used for translating commands.
@@ -68,6 +68,8 @@ Available options:
                            are considered comments and ignored.
   -t,--timeout ARG         Non-negative integer setting a timeout.
   -s,--sub-logging         Adds Commands' logs (stdout+stderr) to output.
+  -k,--show-key            In output, display key name over actual command if it
+                           exists.
   -h,--help                Show this help text
 ```
 
@@ -126,6 +128,22 @@ The default behavior is to swallow logs for the commands themselves. The flag `-
 Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 
 Practically speaking, this does not have much effect, just that if a command dies while `--sub-logging` is enabled, then the final `[Error] ...` output may not have the most relevant information, and in fact the actual error may be in the final `[SubCommand]` log.
+
+### Show key
+
+When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. The flag `-k` or `--show-key` instead uses the key name for display, if one exists. For instance, for legend entry `key=some command`, logs will looks like
+
+```
+Successfully ran `key`
+```
+
+rather than the usual
+
+```
+Successfully ran `some command`
+```
+
+Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file).
 
 # Building
 
