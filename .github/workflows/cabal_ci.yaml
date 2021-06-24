@@ -26,7 +26,7 @@ jobs:
         run: nix-shell shell.nix --command "cabal update && cabal v2-build"
 
       - name: Doc Test
-        run: nix-shell shell.nix --command "cabal update && cabal v2-test doctest --test-show-details=direct"
+        run: nix-shell shell.nix --command "cabal update && cabal v2-test doctest --write-ghc-environment-files=always --test-show-details=direct"
 
       - name: Unit Test
         run: nix-shell shell.nix --command "cabal update && cabal v2-test unit --test-show-details=direct"
