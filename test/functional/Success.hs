@@ -39,7 +39,7 @@ allExpected =
           cmdEcho1,
           cmdEchoLong,
           cmdBad,
-          totalTime
+          Constants.totalTime
         ]
 
 allUnexpected :: [UnexpectedText]
@@ -49,19 +49,16 @@ allUnexpected =
         ]
 
 cmdBad :: Text
-cmdBad = Constants.errPrefix "Error running `some nonsense`: /bin/sh: some: command not found. Time elapsed: "
+cmdBad = Constants.errPrefix "some nonsense"
 
 cmdEchoHi :: Text
-cmdEchoHi = Constants.infoSuccessPrefix "Successfully ran `echo hi`. Time elapsed: "
+cmdEchoHi = Constants.infoSuccessPrefix "echo hi"
 
 cmdEcho1 :: Text
-cmdEcho1 = Constants.infoSuccessPrefix "Successfully ran `sleep 1 && echo 1`. Time elapsed: 1 second"
+cmdEcho1 = Constants.infoSuccessPrefix "sleep 1 && echo 1"
 
 cmdEchoLong :: Text
-cmdEchoLong = Constants.infoSuccessPrefix "Successfully ran `sleep 2 && echo long`. Time elapsed: 2 seconds"
+cmdEchoLong = Constants.infoSuccessPrefix "sleep 2 && echo long"
 
 cmdEchoHiStdout :: Text
 cmdEchoHiStdout = "echo hi: hi"
-
-totalTime :: Text
-totalTime = Constants.totalTime "2 seconds"

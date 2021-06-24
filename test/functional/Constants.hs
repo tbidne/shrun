@@ -1,4 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides useful constants.
@@ -9,9 +8,7 @@ module Constants
     -- * Logging color prefixes
     subCommandPrefix,
     infoSuccessPrefix,
-    infoBluePrefix,
     totalTime,
-    warnPrefix,
     errPrefix,
 
     -- * Miscellaneous
@@ -21,42 +18,26 @@ where
 
 import Data.String (IsString)
 import Data.Text (Text)
-import ShellRun.Logging (LogLevel (..), levelToColor, levelToPrefix)
-import System.Console.Pretty qualified as P
 
 -- | Expected timeout 'Text'.
 cancelled :: Text
-cancelled = warnPrefix "Timed out, cancelling remaining tasks."
+cancelled = "Timed out, cancelling remaining tasks."
 
 -- | Expected total \"Time elapsed\"" 'Text'.
-totalTime :: Text -> Text
-totalTime = infoBluePrefix . (<>) "Finished! Total time elapsed: "
+totalTime :: Text
+totalTime = "Finished! Total time elapsed: "
 
 -- | Expected success 'Text'.
 subCommandPrefix :: Text -> Text
-subCommandPrefix = withFormatting SubCommand
+subCommandPrefix txt = "[SubCommand] " <> txt
 
 -- | Expected success 'Text'.
 infoSuccessPrefix :: Text -> Text
-infoSuccessPrefix = withFormatting InfoSuccess
-
--- | Expected blue info 'Text'.
-infoBluePrefix :: Text -> Text
-infoBluePrefix = withFormatting InfoBlue
-
--- | Expected warning 'Text'.
-warnPrefix :: Text -> Text
-warnPrefix = withFormatting Warn
+infoSuccessPrefix txt = "[Info] Successfully ran `" <> txt <> "`. Time elapsed:"
 
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text
-errPrefix = withFormatting Error
-
-withFormatting :: LogLevel -> Text -> Text
-withFormatting lvl = P.color color . (<>) prefix
-  where
-    color = levelToColor lvl
-    prefix = levelToPrefix lvl
+errPrefix txt = "[Error] Error running `" <> txt <> "`:"
 
 -- | Functional test working directory.
 workingDirectory :: IsString a => a

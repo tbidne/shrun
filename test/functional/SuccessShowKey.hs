@@ -43,10 +43,10 @@ allExpected =
         ]
 
 showKeySuccess :: Text
-showKeySuccess = Constants.infoSuccessPrefix "Successfully ran `short`. Time elapsed: 1 second"
+showKeySuccess = Constants.infoSuccessPrefix "short"
 
 showKeySublogging :: Text
 showKeySublogging = Constants.subCommandPrefix "short: short"
 
 showKeyError :: Text
-showKeyError = Constants.errPrefix "bad: /bin/sh: some: command not found. Time elapsed: "
+showKeyError = "[Error] bad:"

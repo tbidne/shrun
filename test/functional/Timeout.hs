@@ -6,7 +6,6 @@ module Timeout (spec) where
 
 import Constants qualified
 import Control.Monad.Reader qualified as MTL
-import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun qualified as SR
 import ShellRun.Parsing.Env qualified as Env
@@ -34,8 +33,5 @@ allExpected :: [ExpectedText]
 allExpected =
   MkExpectedText
     <$> [ Constants.cancelled,
-          totalTime
+          Constants.totalTime
         ]
-
-totalTime :: Text
-totalTime = Constants.totalTime "6 seconds"

@@ -4,9 +4,7 @@
 -- | Functional test for a successful run with native logging.
 module SuccessSubLogging (spec) where
 
-import Constants qualified
 import Control.Monad.Reader qualified as MTL
-import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun qualified as SR
 import ShellRun.Parsing.Env qualified as Env
@@ -36,8 +34,5 @@ spec =
 allExpected :: [ExpectedText]
 allExpected =
   MkExpectedText
-    <$> [ cmdEchoHiStdout
+    <$> [ "echo hi && sleep 1: hi"
         ]
-
-cmdEchoHiStdout :: Text
-cmdEchoHiStdout = Constants.subCommandPrefix "echo hi && sleep 1: hi"
