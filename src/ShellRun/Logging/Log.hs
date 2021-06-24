@@ -104,7 +104,7 @@ levelToColor Warn = P.Magenta
 levelToColor Error = P.Red
 levelToColor Fatal = P.Red
 
--- | Maps 'LogLevel' to 'Prefix'.
+-- | Maps 'LogLevel' to \'Prefix\'.
 levelToPrefix :: LogLevel -> Text
 levelToPrefix None = ""
 levelToPrefix SubCommand = "[SubCommand] "

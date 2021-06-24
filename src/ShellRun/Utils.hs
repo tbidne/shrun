@@ -58,7 +58,6 @@ diffTime t1 t2 =
 formatTime :: NonNegative -> Text
 formatTime = UtilsI.formatTimeSummary . UtilsI.secondsToTimeSummary
 
-
 -- | Safe @head@.
 --
 -- >>> headMaybe [1,2,3]
