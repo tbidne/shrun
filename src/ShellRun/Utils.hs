@@ -74,7 +74,7 @@ headMaybe :: [a] -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
 
--- | Returns the key is one exists and we pass in 'ShowKey', otherwise
+-- | Returns the key if one exists and we pass in 'ShowKey', otherwise
 -- returns the command.
 --
 -- >>> displayCommand ShowKey (MkCommand Nothing "cmd")

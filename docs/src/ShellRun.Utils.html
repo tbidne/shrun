@@ -10,43 +10,48 @@
 </span><span id="line-10"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.html#formatTime"><span class="hs-identifier">formatTime</span></a></span><span class="hs-special">,</span><span>
 </span><span id="line-11"></span><span>
 </span><span id="line-12"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Misc Utils</span></span><span>
-</span><span id="line-13"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.html#headMaybe"><span class="hs-identifier">headMaybe</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-14"></span><span>
-</span><span id="line-15"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Functor Utils</span></span><span>
-</span><span id="line-16"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier">UtilsI.monoBimap</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-17"></span><span>
-</span><span id="line-18"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Math Utils</span></span><span>
-</span><span id="line-19"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier">UtilsI.divWithRem</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
-</span><span id="line-21"></span><span class="hs-keyword">where</span><span>
-</span><span id="line-22"></span><span>
-</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier">NonNegative</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Math</span></span><span>
-</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html"><span class="hs-identifier">ShellRun.Utils.Internal</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">UtilsI</span></span><span>
-</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html"><span class="hs-identifier">ShellRun.Utils.Text</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TextUtils</span></span><span>
-</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Clock</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">TimeSpec</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Clock</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">C</span></span><span>
-</span><span id="line-30"></span><span>
-</span><span id="line-31"></span><span class="hs-comment">-- $ &gt;&gt;&gt; :set -XNumericUnderscores</span><span>
-</span><span id="line-32"></span><span>
-</span><span id="line-33"></span><span class="hs-comment">-- | For given \(x, y\), returns the absolute difference \(|x - y|\)</span><span>
-</span><span id="line-34"></span><span class="hs-comment">-- in seconds.</span><span>
-</span><span id="line-35"></span><span class="hs-comment">--</span><span>
-</span><span id="line-36"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
-</span><span id="line-37"></span><span class="hs-comment">--   let t1 = TimeSpec 5 0</span><span>
-</span><span id="line-38"></span><span class="hs-comment">--       -- 20 s + 1 billion ns = 21 s</span><span>
-</span><span id="line-39"></span><span class="hs-comment">--       t2 = TimeSpec 20 1_000_000_000</span><span>
-</span><span id="line-40"></span><span class="hs-comment">--   in diffTime t1 t2</span><span>
-</span><span id="line-41"></span><span class="hs-comment">-- :}</span><span>
-</span><span id="line-42"></span><span class="hs-comment">-- MkNonNegative {getNonNegative = 16}</span><span>
-</span><span id="line-43"></span><span class="annot"><a href="ShellRun.Utils.html#diffTime"><span class="hs-identifier hs-type">diffTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeSpec</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeSpec</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span>
-</span><span id="line-44"></span><span id="diffTime"><span class="annot"><span class="annottext">diffTime :: TimeSpec -&gt; TimeSpec -&gt; NonNegative
-</span><a href="ShellRun.Utils.html#diffTime"><span class="hs-identifier hs-var hs-var">diffTime</span></a></span></span><span> </span><span id="local-6989586621679070317"><span class="annot"><span class="annottext">TimeSpec
-</span><a href="#local-6989586621679070317"><span class="hs-identifier hs-var">t1</span></a></span></span><span> </span><span id="local-6989586621679070316"><span class="annot"><span class="annottext">TimeSpec
-</span><a href="#local-6989586621679070316"><span class="hs-identifier hs-var">t2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-45"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679070315"><span class="annot"><span class="annottext">diff :: Int
-</span><a href="#local-6989586621679070315"><span class="hs-identifier hs-var hs-var">diff</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.html#displayCommand"><span class="hs-identifier">displayCommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.html#headMaybe"><span class="hs-identifier">headMaybe</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Functor Utils</span></span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier">UtilsI.monoBimap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Math Utils</span></span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier">UtilsI.divWithRem</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier">NonNegative</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Math</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Data.Command.html"><span class="hs-identifier">ShellRun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Data.Command.html#Command"><span class="hs-identifier">Command</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Data.Env.html"><span class="hs-identifier">ShellRun.Data.Env</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Data.Env.html#CommandDisplay"><span class="hs-identifier">CommandDisplay</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html"><span class="hs-identifier">ShellRun.Utils.Internal</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">UtilsI</span></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Utils.Text.html"><span class="hs-identifier">ShellRun.Utils.Text</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TextUtils</span></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Clock</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">TimeSpec</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Clock</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">C</span></span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- $setup</span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XNumericUnderscores</span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XOverloadedStrings</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- | For given \(x, y\), returns the absolute difference \(|x - y|\)</span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- in seconds.</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--   let t1 = TimeSpec 5 0</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--       -- 20 s + 1 billion ns = 21 s</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--       t2 = TimeSpec 20 1_000_000_000</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   in diffTime t1 t2</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- MkNonNegative {getNonNegative = 16}</span><span>
+</span><span id="line-48"></span><span class="annot"><a href="ShellRun.Utils.html#diffTime"><span class="hs-identifier hs-type">diffTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeSpec</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TimeSpec</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span>
+</span><span id="line-49"></span><span id="diffTime"><span class="annot"><span class="annottext">diffTime :: TimeSpec -&gt; TimeSpec -&gt; NonNegative
+</span><a href="ShellRun.Utils.html#diffTime"><span class="hs-identifier hs-var hs-var">diffTime</span></a></span></span><span> </span><span id="local-6989586621679070258"><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679070258"><span class="hs-identifier hs-var">t1</span></a></span></span><span> </span><span id="local-6989586621679070257"><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679070257"><span class="hs-identifier hs-var">t2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679070256"><span class="annot"><span class="annottext">diff :: Int
+</span><a href="#local-6989586621679070256"><span class="hs-identifier hs-var hs-var">diff</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int
 forall a b. (Integral a, Num b) =&gt; a -&gt; b
 </span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">fromIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">(Int64 -&gt; Int) -&gt; Int64 -&gt; Int
 forall a b. (a -&gt; b) -&gt; a -&gt; b
@@ -55,48 +60,71 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">TimeSpec -&gt; TimeSpec -&gt; TimeSpec
 </span><span class="hs-identifier hs-var">C.diffTimeSpec</span></span><span> </span><span class="annot"><span class="annottext">TimeSpec
-</span><a href="#local-6989586621679070317"><span class="hs-identifier hs-var">t1</span></a></span><span> </span><span class="annot"><span class="annottext">TimeSpec
-</span><a href="#local-6989586621679070316"><span class="hs-identifier hs-var">t2</span></a></span><span>
-</span><span id="line-46"></span><span>   </span><span class="hs-keyword">in</span><span> </span><span class="hs-comment">-- Safe because 'C.diffTimeSpec' guaranteed to be non-negative.</span><span>
-</span><span id="line-47"></span><span>      </span><span class="annot"><span class="annottext">Int -&gt; NonNegative
+</span><a href="#local-6989586621679070258"><span class="hs-identifier hs-var">t1</span></a></span><span> </span><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679070257"><span class="hs-identifier hs-var">t2</span></a></span><span>
+</span><span id="line-51"></span><span>   </span><span class="hs-keyword">in</span><span> </span><span class="hs-comment">-- Safe because 'C.diffTimeSpec' guaranteed to be non-negative.</span><span>
+</span><span id="line-52"></span><span>      </span><span class="annot"><span class="annottext">Int -&gt; NonNegative
 </span><a href="ShellRun.Math.NonNegative.html#unsafeNonNegative"><span class="hs-identifier hs-var">Math.unsafeNonNegative</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679070315"><span class="hs-identifier hs-var">diff</span></a></span><span>
-</span><span id="line-48"></span><span>
-</span><span id="line-49"></span><span class="hs-comment">-- | For \(n \ge 0\) seconds, returns a 'Text' description of the days, hours,</span><span>
-</span><span id="line-50"></span><span class="hs-comment">-- minutes and seconds.</span><span>
-</span><span id="line-51"></span><span class="hs-comment">--</span><span>
-</span><span id="line-52"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
-</span><span id="line-53"></span><span class="hs-comment">--   -- 2 days, 7 hours, 33 minutes, 20 seconds</span><span>
-</span><span id="line-54"></span><span class="hs-comment">--   let totalSeconds = Math.unsafeNonNegative 200_000</span><span>
-</span><span id="line-55"></span><span class="hs-comment">--   in formatTime totalSeconds</span><span>
-</span><span id="line-56"></span><span class="hs-comment">-- :}</span><span>
-</span><span id="line-57"></span><span class="hs-comment">-- &quot;2 days, 7 hours, 33 minutes, 20 seconds&quot;</span><span>
-</span><span id="line-58"></span><span class="annot"><a href="ShellRun.Utils.html#formatTime"><span class="hs-identifier hs-type">formatTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
-</span><span id="line-59"></span><span id="formatTime"><span class="annot"><span class="annottext">formatTime :: NonNegative -&gt; Text
+</span><a href="#local-6989586621679070256"><span class="hs-identifier hs-var">diff</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | For \(n \ge 0\) seconds, returns a 'Text' description of the days, hours,</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- minutes and seconds.</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-58"></span><span class="hs-comment">--   -- 2 days, 7 hours, 33 minutes, 20 seconds</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--   let totalSeconds = Math.unsafeNonNegative 200_000</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--   in formatTime totalSeconds</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- &quot;2 days, 7 hours, 33 minutes, 20 seconds&quot;</span><span>
+</span><span id="line-63"></span><span class="annot"><a href="ShellRun.Utils.html#formatTime"><span class="hs-identifier hs-type">formatTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><span id="line-64"></span><span id="formatTime"><span class="annot"><span class="annottext">formatTime :: NonNegative -&gt; Text
 </span><a href="ShellRun.Utils.html#formatTime"><span class="hs-identifier hs-var hs-var">formatTime</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimeSummary -&gt; Text
 </span><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier hs-var">UtilsI.formatTimeSummary</span></a></span><span> </span><span class="annot"><span class="annottext">(TimeSummary -&gt; Text)
 -&gt; (NonNegative -&gt; TimeSummary) -&gt; NonNegative -&gt; Text
 forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
 </span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; TimeSummary
 </span><a href="ShellRun.Utils.Internal.html#secondsToTimeSummary"><span class="hs-identifier hs-var">UtilsI.secondsToTimeSummary</span></a></span><span>
-</span><span id="line-60"></span><span>
-</span><span id="line-61"></span><span>
-</span><span id="line-62"></span><span class="hs-comment">-- | Safe @head@.</span><span>
-</span><span id="line-63"></span><span class="hs-comment">--</span><span>
-</span><span id="line-64"></span><span class="hs-comment">-- &gt;&gt;&gt; headMaybe [1,2,3]</span><span>
-</span><span id="line-65"></span><span class="hs-comment">-- Just 1</span><span>
-</span><span id="line-66"></span><span class="hs-comment">--</span><span>
-</span><span id="line-67"></span><span class="hs-comment">-- &gt;&gt;&gt; headMaybe []</span><span>
-</span><span id="line-68"></span><span class="hs-comment">-- Nothing</span><span>
-</span><span id="line-69"></span><span id="local-6989586621679070308"><span class="annot"><a href="ShellRun.Utils.html#headMaybe"><span class="hs-identifier hs-type">headMaybe</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679070308"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679070308"><span class="hs-identifier hs-type">a</span></a></span></span><span>
-</span><span id="line-70"></span><span id="headMaybe"><span class="annot"><span class="annottext">headMaybe :: [a] -&gt; Maybe a
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- | Safe @head@.</span><span>
+</span><span id="line-67"></span><span class="hs-comment">--</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- &gt;&gt;&gt; headMaybe [1,2,3]</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- Just 1</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--</span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- &gt;&gt;&gt; headMaybe []</span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- Nothing</span><span>
+</span><span id="line-73"></span><span id="local-6989586621679070249"><span class="annot"><a href="ShellRun.Utils.html#headMaybe"><span class="hs-identifier hs-type">headMaybe</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679070249"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Maybe</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679070249"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-74"></span><span id="headMaybe"><span class="annot"><span class="annottext">headMaybe :: [a] -&gt; Maybe a
 </span><a href="ShellRun.Utils.html#headMaybe"><span class="hs-identifier hs-var hs-var">headMaybe</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe a
 forall a. Maybe a
 </span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Nothing</span></a></span><span>
-</span><span id="line-71"></span><span class="annot"><a href="ShellRun.Utils.html#headMaybe"><span class="hs-identifier hs-var">headMaybe</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679070307"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679070307"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-glyph hs-type">:</span></a></span><span> </span><span class="annot"><span class="annottext">[a]
+</span><span id="line-75"></span><span class="annot"><a href="ShellRun.Utils.html#headMaybe"><span class="hs-identifier hs-var">headMaybe</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679070248"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679070248"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-glyph hs-type">:</span></a></span><span> </span><span class="annot"><span class="annottext">[a]
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Maybe a
 forall a. a -&gt; Maybe a
 </span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Just</span></a></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679070307"><span class="hs-identifier hs-var">x</span></a></span><span>
-</span><span id="line-72"></span></pre></body></html>
+</span><a href="#local-6989586621679070248"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- | Returns the key if one exists and we pass in 'ShowKey', otherwise</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- returns the command.</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- &gt;&gt;&gt; displayCommand ShowKey (MkCommand Nothing &quot;cmd&quot;)</span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- &quot;cmd&quot;</span><span>
+</span><span id="line-82"></span><span class="hs-comment">--</span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- &gt;&gt;&gt; displayCommand ShowCommand (MkCommand (Just &quot;key&quot;) &quot;cmd&quot;)</span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- &quot;cmd&quot;</span><span>
+</span><span id="line-85"></span><span class="hs-comment">--</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- &gt;&gt;&gt; displayCommand ShowKey (MkCommand (Just &quot;key&quot;) &quot;cmd&quot;)</span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- &quot;key&quot;</span><span>
+</span><span id="line-88"></span><span class="annot"><a href="ShellRun.Utils.html#displayCommand"><span class="hs-identifier hs-type">displayCommand</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Data.Env.html#CommandDisplay"><span class="hs-identifier hs-type">CommandDisplay</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Data.Command.html#Command"><span class="hs-identifier hs-type">Command</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><span id="line-89"></span><span id="displayCommand"><span class="annot"><span class="annottext">displayCommand :: CommandDisplay -&gt; Command -&gt; Text
+</span><a href="ShellRun.Utils.html#displayCommand"><span class="hs-identifier hs-var hs-var">displayCommand</span></a></span></span><span> </span><span class="annot"><span class="annottext">CommandDisplay
+</span><a href="ShellRun.Data.Env.html#ShowKey"><span class="hs-identifier hs-var">ShowKey</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Data.Command.html#MkCommand"><span class="hs-identifier hs-type">MkCommand</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Just</span></a></span><span> </span><span id="local-6989586621679070245"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679070245"><span class="hs-identifier hs-var">key</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679070245"><span class="hs-identifier hs-var">key</span></a></span><span>
+</span><span id="line-90"></span><span class="annot"><a href="ShellRun.Utils.html#displayCommand"><span class="hs-identifier hs-var">displayCommand</span></a></span><span> </span><span class="annot"><span class="annottext">CommandDisplay
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Data.Command.html#MkCommand"><span class="hs-identifier hs-type">MkCommand</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679070244"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679070244"><span class="hs-identifier hs-var">cmd</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679070244"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-91"></span></pre></body></html>
