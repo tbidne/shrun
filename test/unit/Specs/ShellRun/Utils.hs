@@ -19,8 +19,8 @@ specs :: IO [TestTree]
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Utils" $ do
     Hspec.describe "formatTime" $ do
-      Hspec.it "0 should be empty" $ do
-        Utils.formatTime (Math.unsafeNonNegative 0) `shouldBe` ""
+      Hspec.it "0 should 0 seconds" $ do
+        Utils.formatTime (Math.unsafeNonNegative 0) `shouldBe` "0 seconds"
       Hspec.it "61 should be singular minute and seconds" $ do
         Utils.formatTime (Math.unsafeNonNegative 61) `shouldBe` "1 minute, 1 second"
       Hspec.it "180 should be plural minutes" $ do

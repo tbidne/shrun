@@ -1,6 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for utilities.
 module ShellRun.Utils.Internal
@@ -88,12 +89,21 @@ secondsToTimeSummary nn = MkTimeSummary d h m s
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
 formatTimeSummary :: TimeSummary -> Text
+formatTimeSummary (isZero -> True) = "0 seconds"
 formatTimeSummary (MkTimeSummary d h m s) =
   let f acc (n, units)
         | n =:= (0 :: Int) = acc
         | otherwise = pluralize n units : acc
       vals = Fold.foldl' f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
    in T.intercalate ", " vals
+
+isZero :: TimeSummary -> Bool
+isZero (MkTimeSummary d h m s)
+  | timeSum == 0 = True
+  | otherwise = False
+  where
+    timeSum = Fold.foldl sumUp 0 [d, h, m, s]
+    sumUp acc = (+) acc . Math.getNonNegative
 
 pluralize :: NonNegative -> Text -> Text
 pluralize val txt
