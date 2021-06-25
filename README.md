@@ -1,12 +1,14 @@
 <div align="center">
 
-# Shell Run
+# Shell-Run
 
 ![cabal](https://github.com/tbidne/shell-run/workflows/cabal/badge.svg?branch=main)
 ![stack](https://github.com/tbidne/shell-run/workflows/stack/badge.svg?branch=main)
 ![nix](https://github.com/tbidne/shell-run/workflows/nix/badge.svg?branch=main)
 ![haddock](https://github.com/tbidne/shell-run/workflows/haddock/badge.svg?branch=main)
 ![style](https://github.com/tbidne/shell-run/workflows/style/badge.svg?branch=main)
+
+![example](./screens/example.png)
 
 </div>
 
@@ -15,7 +17,15 @@
 ### Table of Contents
 - [Motivation](#motivation)
 - [Introduction](#introduction)
+- [Options](#options)
+  - [Timeout](#timeout)
+  - [Legend](#legend)
+  - [Command-Logging](#command-logging)
+  - [Show-Key](#show-key)
 - [Building](#building)
+  - [Cabal](#cabal)
+  - [Stack](#stack)
+  - [Nix](#nix)
 - [Tests](#tests)
 
 # Motivation
@@ -83,22 +93,24 @@ Will run `some long command` and `another command` concurrently.
 
 A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively.
 
-## Options
+# Options
 
-### Timeout
+## Timeout
 
 A timeout can be provided via `-t <integer>` or `--timeout=<integer>`.
 
 
 If a timeout is provided, it must be a non-negative integer. If the timeout is reached, then all remaining commands will be cancelled.
 
-### Legend
+![timeout](./screens/timeout.png)
+
+## Legend
 
 A legend file can be specified by `-l <path/to/legend>` or `--legend=<path/to/legend>`.
 
 Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
 
-Each line can be separated by as many new lines as desired, and comment lines start with a #. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands. For instance, given a legend file:
+Each line can be separated by as many new lines as desired, and comments start with a #. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands. For instance, given a legend file:
 
 ```text
 cmd1=echo "command one"
@@ -119,31 +131,35 @@ Then the command
 shell-run --legend=path/to/legend all "echo cat"
 ```
 
-Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurrently.
+Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurrently. A picture is worth a thousand words:
 
-### Sub logging
+![legend](./screens/legend.png)
 
-The default behavior is to swallow logs for the commands themselves. The flag `-s` or `--sub-logging` enables command logging.
+## Command-Logging
+
+The default behavior is to swallow logs for the commands themselves. The flag `-c` or `--command-logging` enables command logging.
+
+![command_logging_on](./screens/cmd_logging_on.png)
+
+vs.
+
+![command_logging_off](./screens/cmd_logging_off.png)
 
 Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 
-Practically speaking, this does not have much effect, just that if a command dies while `--sub-logging` is enabled, then the final `[Error] ...` output may not have the most relevant information, and in fact the actual error may be in the final `[SubCommand]` log.
+Practically speaking, this does not have much effect, just that if a command dies while `--command-logging` is enabled, then the final `[Error] ...` output may not have the most relevant information, and in fact the actual error may be in the final `[Command]` log.
 
-### Show key
+## Show-Key
 
-When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. The flag `-k` or `--show-key` instead uses the key name for display, if one exists. For instance, for legend entry `key=some command`, logs will looks like
+When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. The flag `-k` or `--show-key` instead uses the key name for display, if one exists. For instance, for legend entry `ui=./update_ui.sh --flag --option=val`, logs will looks like
 
-```
-Successfully ran `key`
-```
+![show_key_on](./screens/show_key_on.png)
 
 rather than the usual
 
-```
-Successfully ran `some command`
-```
+![show_key_off](./screens/show_key_off.png)
 
-Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file).
+Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key. That is, if the previous `ui` was instead run as, e.g., `all` with `all=ui,,...` in the legend file, the display would still show `ui`.
 
 # Building
 
@@ -154,6 +170,8 @@ You will need one of:
 - [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 8.10.4+](https://www.haskell.org/ghc/download.html)
 - [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
 - [nix](https://nixos.org/download.html)
+
+If you have never built a haskell program before, `stack` is probably the best choice.
 
 ## Cabal
 
