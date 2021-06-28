@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 -- | Provides core 'Env' types.
@@ -18,7 +19,7 @@ where
 import Data.Text (Text)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging (LogQueue)
-import ShellRun.Math (NonNegative)
+import ShellRun.Math (NonNegative, Supremum (..))
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
@@ -37,17 +38,19 @@ data CommandLogging
     Disabled
   | -- | Logging of sub-commands
     Enabled
-  deriving (Show)
+  deriving stock (Bounded, Eq, Ord, Show)
+  deriving (Semigroup, Monoid) via Supremum CommandLogging
 
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
 data CommandDisplay
-  = -- | Display the command's key, if it exists, rather
+  = -- | Display the command itself, not the key.
+    ShowCommand
+  | -- | Display the command's key, if it exists, rather
     -- than the key itself.
     ShowKey
-  | -- | Display the command itself, not the key.
-    ShowCommand
-  deriving (Show)
+  deriving stock (Bounded, Eq, Ord, Show)
+  deriving (Semigroup, Monoid) via Supremum CommandDisplay
 
 -- | Timeout, if any.
 class HasTimeout env where

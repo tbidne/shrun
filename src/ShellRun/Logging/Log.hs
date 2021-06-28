@@ -30,17 +30,9 @@ module ShellRun.Logging.Log
 where
 
 import Data.Text (Text)
+import ShellRun.Math (Supremum (..))
 import System.Console.Pretty (Color)
 import System.Console.Pretty qualified as P
-
-newtype Supremum a = MkSupremum a
-  deriving stock (Bounded, Eq, Ord)
-
-instance Ord a => Semigroup (Supremum a) where
-  (<>) = max
-
-instance (Bounded a, Ord a) => Monoid (Supremum a) where
-  mempty = minBound
 
 -- | Determines the logging newline/carriage return behavior.
 data LogMode

@@ -8,3 +8,4 @@ import ShellRun.Math.NonNegative as Math
 import ShellRun.Math.Positive as Math
 import ShellRun.Math.RAdd as Math
 import ShellRun.Math.REquals as Math
+import ShellRun.Math.Supremum as Math

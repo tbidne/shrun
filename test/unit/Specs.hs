@@ -4,6 +4,7 @@
 module Specs (specs) where
 
 import Control.Monad qualified as M
+import Specs.ShellRun.Parsing.Args qualified as ParseArgs
 import Specs.ShellRun.Parsing.Commands qualified as ParseCommands
 import Specs.ShellRun.Parsing.Legend.Internal qualified as LegendI
 import Specs.ShellRun.Utils qualified as Utils
@@ -19,6 +20,7 @@ specs = T.testGroup "HSpec Specs" <$> allSpecs
       M.join
         <$> sequenceA
           [ LegendI.specs,
+            ParseArgs.specs,
             ParseCommands.specs,
             TextUtils.specs,
             Utils.specs

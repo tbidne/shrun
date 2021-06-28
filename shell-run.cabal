@@ -43,6 +43,8 @@ library
     ShellRun.Math.Positive
     ShellRun.Math.RAdd
     ShellRun.Math.REquals
+    ShellRun.Math.Supremum
+    ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Env
     ShellRun.Parsing.Legend
@@ -97,6 +99,7 @@ test-suite unit
     Props.ShellRun.Utils.Internal
     Props.ShellRun.Utils.Text
     Specs
+    Specs.ShellRun.Parsing.Args
     Specs.ShellRun.Parsing.Commands
     Specs.ShellRun.Parsing.Legend.Internal
     Specs.ShellRun.Utils
@@ -106,12 +109,13 @@ test-suite unit
     , base
     , clock
     , containers
-    , hedgehog        ^>=1.0.2
-    , hspec           >=2.7.1   && <2.9
+    , hedgehog              ^>=1.0.2
+    , hspec                 >=2.7.1   && <2.9
+    , optparse-applicative
     , shell-run
-    , tasty           >=1.1.0.3 && <1.5
-    , tasty-hedgehog  >=1.0.1.0 && <1.2
-    , tasty-hspec     >=1.1.4   && <1.3
+    , tasty                 >=1.1.0.3 && <1.5
+    , tasty-hedgehog        >=1.0.1.0 && <1.2
+    , tasty-hspec           >=1.1.4   && <1.3
     , text
 
   hs-source-dirs:   test/unit
