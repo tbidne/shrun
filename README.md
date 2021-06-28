@@ -67,16 +67,18 @@ All well and good, but this approach has several deficiencies:
 
 `shell-run` has the following usage:
 ```text
-Usage: shell-run [-l|--legend ARG] [-t|--timeout ARG] [-c|--command-logging]
+Usage: shell-run [-l|--legend PATH] [-t|--timeout VAL] [-c|--command-logging]
                  [-k|--show-key] Commands...
 
 Available options:
-  -l,--legend ARG          Path to legend file, used for translating commands.
+  -l,--legend PATH         Path to legend file, used for translating commands.
                            Key/value pairs have the form `key=cmd1,,cmd2,,...`,
                            i.e., keys can refer to multiple commands and refer
                            to other keys recursively. Lines starting with `#`
                            are considered comments and ignored.
-  -t,--timeout ARG         Non-negative integer setting a timeout.
+  -t,--timeout VAL         Non-negative integer setting a timeout.Can either be
+                           a raw number (interpreted as seconds), or a "time
+                           string", e.g., 1d2h3m4s, 2h3s.
   -c,--command-logging     Adds Commands' logs (stdout+stderr) to output.
   -k,--show-key            In output, display key name over actual command if it
                            exists.
@@ -97,10 +99,9 @@ A running timer is provided, and stdout/stderr will be updated when a command fi
 
 ## Timeout
 
-A timeout can be provided via `-t <integer>` or `--timeout=<integer>`.
+A timeout can be provided via `-t <value>` or `--timeout=<value>`. The argument must be either a raw integer (interpreted as seconds), or a "time string", e.g., `1d2m3h4s`, `3h20s`.
 
-
-If a timeout is provided, it must be a non-negative integer. If the timeout is reached, then all remaining commands will be cancelled.
+If a timeout is provided, all integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
 
 ![timeout](./screens/timeout.png)
 
