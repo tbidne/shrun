@@ -43,6 +43,7 @@ library
     ShellRun.Math.Positive
     ShellRun.Math.RAdd
     ShellRun.Math.REquals
+    ShellRun.Math.RMult
     ShellRun.Math.Supremum
     ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
@@ -56,17 +57,18 @@ library
   build-depends:
     , base                  ^>=4.14.1.0
     , bytestring            ^>=0.10.12
-    , clock                 >=0.7.2    && <0.9
+    , clock                 >=0.7.2         && <0.9
     , containers            ^>=0.6.2.1
-    , monad-loops           >=0.3      && <0.5
+    , monad-loops           >=0.3           && <0.5
     , mtl                   ^>=2.2.1
-    , optparse-applicative  >=0.15     && <0.17
+    , optparse-applicative  >=0.15          && <0.17
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
+    , regex-pcre-builtin    ^>=0.95.1.1.8.44
     , stm                   ^>=2.5.0
     , terminal-size         ^>=0.3.2.1
     , text                  ^>=1.2.3.2
-    , text-conversions      >=0.2.0    && <0.4
+    , text-conversions      >=0.2.0         && <0.4
     , unix                  ^>=2.7.2
     , unliftio              ^>=0.2.0.0
     , unliftio-core         ^>=0.2.0.1

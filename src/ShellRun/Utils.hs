@@ -12,6 +12,7 @@ module ShellRun.Utils
     -- * Misc Utils
     displayCommand,
     headMaybe,
+    maybeToEither,
 
     -- * Functor Utils
     UtilsI.monoBimap,
@@ -73,6 +74,17 @@ formatTime = UtilsI.formatTimeSummary . UtilsI.secondsToTimeSummary
 headMaybe :: [a] -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
+
+-- | Transforms 'Maybe' to 'Either'.
+--
+-- >>> maybeToEither () (Nothing :: Maybe String)
+-- Left ()
+--
+-- >>> maybeToEither () (Just "success" :: Maybe String)
+-- Right "success"
+maybeToEither :: e -> Maybe a -> Either e a
+maybeToEither e Nothing = Left e
+maybeToEither _ (Just x) = Right x
 
 -- | Returns the key if one exists and we pass in 'ShowKey', otherwise
 -- returns the command.

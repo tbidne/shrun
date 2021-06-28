@@ -54,13 +54,21 @@ legendSpecs = Hspec.describe "Legend arg parsing" $ do
 
 timeoutSpecs :: SpecWith ()
 timeoutSpecs = Hspec.describe "Timeout arg parsing" $ do
-  Hspec.it "Should parse short legend" $ do
+  Hspec.it "Should parse short legend seconds" $ do
     let argList = ["-t7", "command"]
         expected = Just $ mempty {aTimeout = Math.mkNonNegative 7, aCommands = ["command"]}
     verifyResult argList expected
-  Hspec.it "Should parse long legend" $ do
+  Hspec.it "Should parse long legend seconds" $ do
     let argList = ["--timeout=7", "command"]
         expected = Just $ mempty {aTimeout = Math.mkNonNegative 7, aCommands = ["command"]}
+    verifyResult argList expected
+  Hspec.it "Should parse time string" $ do
+    let argList = ["--timeout=2h4s", "command"]
+        expected = Just $ mempty {aTimeout = Math.mkNonNegative 7204, aCommands = ["command"]}
+    verifyResult argList expected
+  Hspec.it "Should parse full time string" $ do
+    let argList = ["--timeout=1d2h3m4s", "command"]
+        expected = Just $ mempty {aTimeout = Math.mkNonNegative 93784, aCommands = ["command"]}
     verifyResult argList expected
   Hspec.it "Word should fail" $ do
     let argList = ["--timeout=cat", "command"]

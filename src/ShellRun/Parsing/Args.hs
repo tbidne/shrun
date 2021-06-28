@@ -1,4 +1,7 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- | Provides functionality for parsing command line arguments.
 module ShellRun.Parsing.Args
@@ -9,15 +12,22 @@ where
 
 import Control.Applicative ((<**>), (<|>))
 import Control.Applicative qualified as App
+import Control.Monad ((>=>))
+import Data.Bifunctor qualified as Bifunctor
+import Data.Foldable qualified as Fold
 import Data.Text (Text)
 import Data.Text qualified as T
-import Options.Applicative (ParseError (..), Parser, ParserInfo (..))
+import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
-import ShellRun.Math (NonNegative)
+import ShellRun.Math (NonNegative, Positive, (*:*), (+:+))
 import ShellRun.Math qualified as Math
+import ShellRun.Utils (NonEmptyText)
+import ShellRun.Utils qualified as Utils
+import Text.Read qualified as Read
+import Text.Regex.PCRE ((=~))
 
 -- | Type for parsing command line args.
 data Args = MkArgs
@@ -67,6 +77,7 @@ legendParser =
           ( OptApp.long "legend"
               <> OptApp.short 'l'
               <> OptApp.help legendHelp
+              <> OptApp.metavar "PATH"
           )
     )
   where
@@ -81,23 +92,75 @@ timeoutParser :: Parser (Maybe NonNegative)
 timeoutParser =
   let intParser =
         OptApp.option
-          readNN
+          (readTimeSeconds <|> readTimeStr)
           ( OptApp.long "timeout"
               <> OptApp.short 't'
-              <> OptApp.help "Non-negative integer setting a timeout."
+              <> OptApp.help
+                ( "Non-negative integer setting a timeout."
+                    <> "Can either be a raw number (interpreted as seconds)"
+                    <> ", or a \"time string\", e.g., 1d2h3m4s, 2h3s."
+                )
+              <> OptApp.metavar "VAL"
           )
    in App.optional intParser
+
+readTimeSeconds :: ReadM NonNegative
+readTimeSeconds = do
+  v <- OptApp.auto
+  case Math.mkNonNegative v of
+    Just n -> pure n
+    Nothing ->
+      OptApp.readerAbort $
+        ErrorMsg $
+          "Timeout must be non-negative, received: "
+            <> show v
+            <> "!"
+
+-- Parses e.g. 1d2h3m4s
+regex :: String
+regex = "^(?:([0-9])+d)?(?:([0-9])+h)?(?:([0-9])+m)?(?:([0-9])+s)?$"
+
+readTimeStr :: ReadM NonNegative
+readTimeStr = do
+  v :: String <- OptApp.str
+  let (_, _, _, matches) = v =~ regex :: (String, String, String, [String])
+  case matches of
+    [d, h, m, s] ->
+      let txtMultipliers =
+            Bifunctor.bimap T.pack Math.unsafePositive
+              <$> [ (d, 86_400),
+                    (h, 3_600),
+                    (m, 60),
+                    (s, 1)
+                  ]
+          results = traverse parseTextAndMultiply txtMultipliers
+          summed = Fold.foldl (+:+) (Math.unsafeNonNegative 0) <$> results
+       in case summed of
+            Left err -> OptApp.readerAbort err
+            Right nn -> pure nn
+    _ ->
+      OptApp.readerAbort $
+        ErrorMsg
+          "Could not parse text as time string. Wanted e.g. 1d2h3m4s"
+
+parseTextAndMultiply :: (Text, Positive) -> Either ParseError NonNegative
+parseTextAndMultiply ("", _) = Right $ Math.unsafeNonNegative 0
+parseTextAndMultiply (txt, multiplier) =
+  let txt' = Utils.unsafeMkNonEmptyText txt
+      result = textToNonNegative txt'
+   in fmap (*:* multiplier) result
+
+textToNonNegative :: NonEmptyText -> Either ParseError NonNegative
+textToNonNegative = textToInt >=> intToNN
   where
-    readNN = do
-      v <- OptApp.auto
-      case Math.mkNonNegative v of
-        Just n -> pure n
-        Nothing ->
-          OptApp.readerAbort $
-            ErrorMsg $
-              "Timeout must be non-negative, received: "
-                <> show v
-                <> "!"
+    textToInt txt = case Read.readMaybe unpacked of
+      Nothing -> Left $ ErrorMsg $ "Could not parse <" <> unpacked <> "> as number"
+      Just n -> Right n
+      where
+        unpacked = T.unpack $ Utils.unNonEmptyText txt
+    intToNN n = Utils.maybeToEither err $ Math.mkNonNegative n
+      where
+        err = ErrorMsg $ "Wanted non-negative, found: " <> show n
 
 commandLoggingParser :: Parser CommandLogging
 commandLoggingParser =
