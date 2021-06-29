@@ -24,7 +24,6 @@ import Options.Applicative.Types (ArgPolicy (..))
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
 import ShellRun.Math (NonNegative, Positive, (*:*), (+:+))
 import ShellRun.Math qualified as Math
-import ShellRun.Utils (NonEmptyText)
 import ShellRun.Utils qualified as Utils
 import Text.Read qualified as Read
 import Text.Regex.PCRE ((=~))
@@ -146,18 +145,17 @@ readTimeStr = do
 parseTextAndMultiply :: (Text, Positive) -> Either ParseError NonNegative
 parseTextAndMultiply ("", _) = Right $ Math.unsafeNonNegative 0
 parseTextAndMultiply (txt, multiplier) =
-  let txt' = Utils.unsafeMkNonEmptyText txt
-      result = textToNonNegative txt'
+  let result = textToNonNegative txt
    in fmap (*:* multiplier) result
 
-textToNonNegative :: NonEmptyText -> Either ParseError NonNegative
+textToNonNegative :: Text -> Either ParseError NonNegative
 textToNonNegative = textToInt >=> intToNN
   where
     textToInt txt = case Read.readMaybe unpacked of
       Nothing -> Left $ ErrorMsg $ "Could not parse <" <> unpacked <> "> as number"
       Just n -> Right n
       where
-        unpacked = T.unpack $ Utils.unNonEmptyText txt
+        unpacked = T.unpack txt
     intToNN n = Utils.maybeToEither err $ Math.mkNonNegative n
       where
         err = ErrorMsg $ "Wanted non-negative, found: " <> show n
