@@ -1,93 +1,94 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE ImportQualifiedPost #-}</span><span>
 </span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE NumericUnderscores #-}</span><span>
 </span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
-</span><span id="line-4"></span><span>
-</span><span id="line-5"></span><span class="hs-comment">-- | Internal module for utilities.</span><span>
-</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ShellRun.Utils.Internal</span><span>
-</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier">divWithRem</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-8"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier">monoBimap</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-9"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier">TimeSummary</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
-</span><span id="line-10"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#secondsToTimeSummary"><span class="hs-identifier">secondsToTimeSummary</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-11"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier">formatTimeSummary</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-12"></span><span>  </span><span class="hs-special">)</span><span>
-</span><span id="line-13"></span><span class="hs-keyword">where</span><span>
-</span><span id="line-14"></span><span>
-</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Data.Bifunctor</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Bifunctor</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Data.Bifunctor</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Bifunctor</span></span><span>
-</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Data.Foldable</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Fold</span></span><span>
-</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
-</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier">NonNegative</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Math.Positive.html#Positive"><span class="hs-identifier">Positive</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Math.REquals.html#REquals"><span class="hs-identifier">REquals</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Math</span></span><span>
-</span><span id="line-22"></span><span>
-</span><span id="line-23"></span><span class="hs-comment">-- $ &gt;&gt;&gt; :set -XNumericUnderscores</span><span>
-</span><span id="line-24"></span><span>
-</span><span id="line-25"></span><span class="hs-comment">-- | For \(n \ge 0, d &gt; 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that</span><span>
-</span><span id="line-26"></span><span class="hs-comment">--</span><span>
-</span><span id="line-27"></span><span class="hs-comment">-- \[</span><span>
-</span><span id="line-28"></span><span class="hs-comment">--    \begin{align}</span><span>
-</span><span id="line-29"></span><span class="hs-comment">--      de + r = n \\</span><span>
-</span><span id="line-30"></span><span class="hs-comment">--      r \le n \\</span><span>
-</span><span id="line-31"></span><span class="hs-comment">--    \end{align}</span><span>
-</span><span id="line-32"></span><span class="hs-comment">-- \]</span><span>
-</span><span id="line-33"></span><span class="hs-comment">--</span><span>
-</span><span id="line-34"></span><span class="hs-comment">-- Examples:</span><span>
-</span><span id="line-35"></span><span class="hs-comment">--</span><span>
-</span><span id="line-36"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
-</span><span id="line-37"></span><span class="hs-comment">--   let n = Math.unsafeNonNegative 34</span><span>
-</span><span id="line-38"></span><span class="hs-comment">--       d = Math.unsafePositive 5</span><span>
-</span><span id="line-39"></span><span class="hs-comment">--       result = divWithRem n d</span><span>
-</span><span id="line-40"></span><span class="hs-comment">--   in monoBimap Math.getNonNegative result</span><span>
-</span><span id="line-41"></span><span class="hs-comment">-- :}</span><span>
-</span><span id="line-42"></span><span class="hs-comment">-- (6,4)</span><span>
-</span><span id="line-43"></span><span class="hs-comment">--</span><span>
-</span><span id="line-44"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
-</span><span id="line-45"></span><span class="hs-comment">--   let n = Math.unsafeNonNegative 12</span><span>
-</span><span id="line-46"></span><span class="hs-comment">--       d = Math.unsafePositive 18</span><span>
-</span><span id="line-47"></span><span class="hs-comment">--       result = divWithRem n d</span><span>
-</span><span id="line-48"></span><span class="hs-comment">--   in monoBimap Math.getNonNegative result</span><span>
-</span><span id="line-49"></span><span class="hs-comment">-- :}</span><span>
-</span><span id="line-50"></span><span class="hs-comment">-- (0,12)</span><span>
-</span><span id="line-51"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier hs-type">divWithRem</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Math.Positive.html#Positive"><span class="hs-identifier hs-type">Positive</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-52"></span><span id="divWithRem"><span class="annot"><span class="annottext">divWithRem :: NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
-</span><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier hs-var hs-var">divWithRem</span></a></span></span><span> </span><span id="local-6989586621679070134"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070134"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679070133"><span class="annot"><span class="annottext">Positive
-</span><a href="#local-6989586621679070133"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; NonNegative) -&gt; (Int, Int) -&gt; (NonNegative, NonNegative)
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE ViewPatterns #-}</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- | Internal module for utilities.</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ShellRun.Utils.Internal</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier">divWithRem</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier">monoBimap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier">TimeSummary</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#secondsToTimeSummary"><span class="hs-identifier">secondsToTimeSummary</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier">formatTimeSummary</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Data.Bifunctor</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Bifunctor</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Data.Bifunctor</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Bifunctor</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier">Data.Foldable</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Fold</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier">NonNegative</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Math.Positive.html#Positive"><span class="hs-identifier">Positive</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Math.REquals.html#REquals"><span class="hs-identifier">REquals</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Math.html"><span class="hs-identifier">ShellRun.Math</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Math</span></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- $ &gt;&gt;&gt; :set -XNumericUnderscores</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- | For \(n \ge 0, d &gt; 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that</span><span>
+</span><span id="line-27"></span><span class="hs-comment">--</span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- \[</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--    \begin{align}</span><span>
+</span><span id="line-30"></span><span class="hs-comment">--      de + r = n \\</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--      r \le n \\</span><span>
+</span><span id="line-32"></span><span class="hs-comment">--    \end{align}</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- \]</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--</span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- Examples:</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-38"></span><span class="hs-comment">--   let n = Math.unsafeNonNegative 34</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--       d = Math.unsafePositive 5</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--       result = divWithRem n d</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--   in monoBimap Math.getNonNegative result</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- (6,4)</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--   let n = Math.unsafeNonNegative 12</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--       d = Math.unsafePositive 18</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--       result = divWithRem n d</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--   in monoBimap Math.getNonNegative result</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- (0,12)</span><span>
+</span><span id="line-52"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier hs-type">divWithRem</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Math.Positive.html#Positive"><span class="hs-identifier hs-type">Positive</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span id="divWithRem"><span class="annot"><span class="annottext">divWithRem :: NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
+</span><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier hs-var hs-var">divWithRem</span></a></span></span><span> </span><span id="local-6989586621679073154"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073154"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679073153"><span class="annot"><span class="annottext">Positive
+</span><a href="#local-6989586621679073153"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; NonNegative) -&gt; (Int, Int) -&gt; (NonNegative, NonNegative)
 forall (p :: * -&gt; * -&gt; *) a b.
 Bifunctor p =&gt;
 (a -&gt; b) -&gt; p a a -&gt; p b b
 </span><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier hs-var">monoBimap</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; NonNegative
 </span><a href="ShellRun.Math.NonNegative.html#unsafeNonNegative"><span class="hs-identifier hs-var">Math.unsafeNonNegative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679070131"><span class="hs-identifier hs-var">n'</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+</span><a href="#local-6989586621679073151"><span class="hs-identifier hs-var">n'</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
 forall a. Integral a =&gt; a -&gt; a -&gt; a
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">`div`</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679070129"><span class="hs-identifier hs-var">d'</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679070131"><span class="hs-identifier hs-var">n'</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">`div`</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073149"><span class="hs-identifier hs-var">d'</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073151"><span class="hs-identifier hs-var">n'</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
 forall a. Integral a =&gt; a -&gt; a -&gt; a
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">`rem`</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679070129"><span class="hs-identifier hs-var">d'</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-53"></span><span>  </span><span class="hs-keyword">where</span><span>
-</span><span id="line-54"></span><span>    </span><span id="local-6989586621679070131"><span class="annot"><span class="annottext">n' :: Int
-</span><a href="#local-6989586621679070131"><span class="hs-identifier hs-var hs-var">n'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Int
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">`rem`</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073149"><span class="hs-identifier hs-var">d'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-55"></span><span>    </span><span id="local-6989586621679073151"><span class="annot"><span class="annottext">n' :: Int
+</span><a href="#local-6989586621679073151"><span class="hs-identifier hs-var hs-var">n'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Int
 </span><a href="ShellRun.Math.NonNegative.html#getNonNegative"><span class="hs-identifier hs-var hs-var">Math.getNonNegative</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070134"><span class="hs-identifier hs-var">n</span></a></span><span>
-</span><span id="line-55"></span><span>    </span><span id="local-6989586621679070129"><span class="annot"><span class="annottext">d' :: Int
-</span><a href="#local-6989586621679070129"><span class="hs-identifier hs-var hs-var">d'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Positive -&gt; Int
+</span><a href="#local-6989586621679073154"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-56"></span><span>    </span><span id="local-6989586621679073149"><span class="annot"><span class="annottext">d' :: Int
+</span><a href="#local-6989586621679073149"><span class="hs-identifier hs-var hs-var">d'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Positive -&gt; Int
 </span><a href="ShellRun.Math.Positive.html#getPositive"><span class="hs-identifier hs-var hs-var">Math.getPositive</span></a></span><span> </span><span class="annot"><span class="annottext">Positive
-</span><a href="#local-6989586621679070133"><span class="hs-identifier hs-var">d</span></a></span><span>
-</span><span id="line-56"></span><span>
-</span><span id="line-57"></span><span class="hs-comment">-- | Represents a relative time.</span><span>
-</span><span id="line-58"></span><span class="hs-keyword">data</span><span> </span><span id="TimeSummary"><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier hs-var">TimeSummary</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkTimeSummary"><span class="annot"><a href="ShellRun.Utils.Internal.html#MkTimeSummary"><span class="hs-identifier hs-var">MkTimeSummary</span></a></span></span><span>
-</span><span id="line-59"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="days"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
+</span><a href="#local-6989586621679073153"><span class="hs-identifier hs-var">d</span></a></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- | Represents a relative time.</span><span>
+</span><span id="line-59"></span><span class="hs-keyword">data</span><span> </span><span id="TimeSummary"><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier hs-var">TimeSummary</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkTimeSummary"><span class="annot"><a href="ShellRun.Utils.Internal.html#MkTimeSummary"><span class="hs-identifier hs-var">MkTimeSummary</span></a></span></span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="days"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
 </span><a href="ShellRun.Utils.Internal.html#days"><span class="hs-identifier hs-var hs-var">days</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-60"></span><span>    </span><span id="hours"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
+</span><span id="line-61"></span><span>    </span><span id="hours"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
 </span><a href="ShellRun.Utils.Internal.html#hours"><span class="hs-identifier hs-var hs-var">hours</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-61"></span><span>    </span><span id="minutes"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
+</span><span id="line-62"></span><span>    </span><span id="minutes"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
 </span><a href="ShellRun.Utils.Internal.html#minutes"><span class="hs-identifier hs-var hs-var">minutes</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span class="hs-special">,</span><span>
-</span><span id="line-62"></span><span>    </span><span id="seconds"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
+</span><span id="line-63"></span><span>    </span><span id="seconds"><span class="annot"><span class="annottext">TimeSummary -&gt; NonNegative
 </span><a href="ShellRun.Utils.Internal.html#seconds"><span class="hs-identifier hs-var hs-var">seconds</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span>
-</span><span id="line-63"></span><span>  </span><span class="hs-special">}</span><span>
-</span><span id="line-64"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679070115"><span id="local-6989586621679070117"><span id="local-6989586621679070119"><span class="annot"><span class="annottext">Int -&gt; TimeSummary -&gt; ShowS
+</span><span id="line-64"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679073135"><span id="local-6989586621679073137"><span id="local-6989586621679073139"><span class="annot"><span class="annottext">Int -&gt; TimeSummary -&gt; ShowS
 [TimeSummary] -&gt; ShowS
 TimeSummary -&gt; String
 (Int -&gt; TimeSummary -&gt; ShowS)
@@ -102,159 +103,203 @@ show :: TimeSummary -&gt; String
 $cshow :: TimeSummary -&gt; String
 showsPrec :: Int -&gt; TimeSummary -&gt; ShowS
 $cshowsPrec :: Int -&gt; TimeSummary -&gt; ShowS
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
-</span><span id="line-65"></span><span>
-</span><span id="line-66"></span><span class="hs-comment">-- | Transforms 'NonNegative' @seconds@ into a 'TimeSummary'.</span><span>
-</span><span id="line-67"></span><span class="hs-comment">--</span><span>
-</span><span id="line-68"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
-</span><span id="line-69"></span><span class="hs-comment">--   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds</span><span>
-</span><span id="line-70"></span><span class="hs-comment">--       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)</span><span>
-</span><span id="line-71"></span><span class="hs-comment">--       showSummary (MkTimeSummary d h m s) = fmap Math.getNonNegative [d, h, m, s]</span><span>
-</span><span id="line-72"></span><span class="hs-comment">--   in showSummary summary</span><span>
-</span><span id="line-73"></span><span class="hs-comment">-- :}</span><span>
-</span><span id="line-74"></span><span class="hs-comment">-- [2,7,33,20]</span><span>
-</span><span id="line-75"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#secondsToTimeSummary"><span class="hs-identifier hs-type">secondsToTimeSummary</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier hs-type">TimeSummary</span></a></span><span>
-</span><span id="line-76"></span><span id="secondsToTimeSummary"><span class="annot"><span class="annottext">secondsToTimeSummary :: NonNegative -&gt; TimeSummary
-</span><a href="ShellRun.Utils.Internal.html#secondsToTimeSummary"><span class="hs-identifier hs-var hs-var">secondsToTimeSummary</span></a></span></span><span> </span><span id="local-6989586621679070113"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070113"><span class="hs-identifier hs-var">nn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- | Transforms 'NonNegative' @seconds@ into a 'TimeSummary'.</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--       showSummary (MkTimeSummary d h m s) = fmap Math.getNonNegative [d, h, m, s]</span><span>
+</span><span id="line-73"></span><span class="hs-comment">--   in showSummary summary</span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- [2,7,33,20]</span><span>
+</span><span id="line-76"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#secondsToTimeSummary"><span class="hs-identifier hs-type">secondsToTimeSummary</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier hs-type">TimeSummary</span></a></span><span>
+</span><span id="line-77"></span><span id="secondsToTimeSummary"><span class="annot"><span class="annottext">secondsToTimeSummary :: NonNegative -&gt; TimeSummary
+</span><a href="ShellRun.Utils.Internal.html#secondsToTimeSummary"><span class="hs-identifier hs-var hs-var">secondsToTimeSummary</span></a></span></span><span> </span><span id="local-6989586621679073133"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073133"><span class="hs-identifier hs-var">nn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative
 -&gt; NonNegative -&gt; NonNegative -&gt; NonNegative -&gt; TimeSummary
 </span><a href="ShellRun.Utils.Internal.html#MkTimeSummary"><span class="hs-identifier hs-var">MkTimeSummary</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070112"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070111"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070110"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070109"><span class="hs-identifier hs-var">s</span></a></span><span>
-</span><span id="line-77"></span><span>  </span><span class="hs-keyword">where</span><span>
-</span><span id="line-78"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679070112"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070112"><span class="hs-identifier hs-var">d</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679070108"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070108"><span class="hs-identifier hs-var">daysRem</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
+</span><a href="#local-6989586621679073132"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073131"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073130"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073129"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679073132"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073132"><span class="hs-identifier hs-var">d</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679073128"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073128"><span class="hs-identifier hs-var">daysRem</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
 </span><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier hs-var">divWithRem</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070113"><span class="hs-identifier hs-var">nn</span></a></span><span> </span><span class="annot"><span class="annottext">(Positive -&gt; (NonNegative, NonNegative))
+</span><a href="#local-6989586621679073133"><span class="hs-identifier hs-var">nn</span></a></span><span> </span><span class="annot"><span class="annottext">(Positive -&gt; (NonNegative, NonNegative))
 -&gt; Positive -&gt; (NonNegative, NonNegative)
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive
 </span><a href="ShellRun.Math.Positive.html#unsafePositive"><span class="hs-identifier hs-var">Math.unsafePositive</span></a></span><span> </span><span class="annot"><span class="annottext">Int
 </span><span class="hs-number">86_400</span></span><span>
-</span><span id="line-79"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679070111"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070111"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679070106"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070106"><span class="hs-identifier hs-var">hoursRem</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
+</span><span id="line-80"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679073131"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073131"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679073126"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073126"><span class="hs-identifier hs-var">hoursRem</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
 </span><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier hs-var">divWithRem</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070108"><span class="hs-identifier hs-var">daysRem</span></a></span><span> </span><span class="annot"><span class="annottext">(Positive -&gt; (NonNegative, NonNegative))
+</span><a href="#local-6989586621679073128"><span class="hs-identifier hs-var">daysRem</span></a></span><span> </span><span class="annot"><span class="annottext">(Positive -&gt; (NonNegative, NonNegative))
 -&gt; Positive -&gt; (NonNegative, NonNegative)
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive
 </span><a href="ShellRun.Math.Positive.html#unsafePositive"><span class="hs-identifier hs-var">Math.unsafePositive</span></a></span><span> </span><span class="annot"><span class="annottext">Int
 </span><span class="hs-number">3_600</span></span><span>
-</span><span id="line-80"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679070110"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070110"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679070109"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070109"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
+</span><span id="line-81"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679073130"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073130"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679073129"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073129"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Positive -&gt; (NonNegative, NonNegative)
 </span><a href="ShellRun.Utils.Internal.html#divWithRem"><span class="hs-identifier hs-var">divWithRem</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070106"><span class="hs-identifier hs-var">hoursRem</span></a></span><span> </span><span class="annot"><span class="annottext">(Positive -&gt; (NonNegative, NonNegative))
+</span><a href="#local-6989586621679073126"><span class="hs-identifier hs-var">hoursRem</span></a></span><span> </span><span class="annot"><span class="annottext">(Positive -&gt; (NonNegative, NonNegative))
 -&gt; Positive -&gt; (NonNegative, NonNegative)
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">$</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive
 </span><a href="ShellRun.Math.Positive.html#unsafePositive"><span class="hs-identifier hs-var">Math.unsafePositive</span></a></span><span> </span><span class="annot"><span class="annottext">Int
 </span><span class="hs-number">60</span></span><span>
-</span><span id="line-81"></span><span>
-</span><span id="line-82"></span><span class="hs-comment">-- | Formats a 'TimeSummary' to 'Text'.</span><span>
-</span><span id="line-83"></span><span class="hs-comment">--</span><span>
-</span><span id="line-84"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
-</span><span id="line-85"></span><span class="hs-comment">--   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds</span><span>
-</span><span id="line-86"></span><span class="hs-comment">--       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)</span><span>
-</span><span id="line-87"></span><span class="hs-comment">--   in formatTimeSummary summary</span><span>
-</span><span id="line-88"></span><span class="hs-comment">-- :}</span><span>
-</span><span id="line-89"></span><span class="hs-comment">-- &quot;2 days, 7 hours, 33 minutes, 20 seconds&quot;</span><span>
-</span><span id="line-90"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier hs-type">formatTimeSummary</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier hs-type">TimeSummary</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
-</span><span id="line-91"></span><span id="formatTimeSummary"><span class="annot"><span class="annottext">formatTimeSummary :: TimeSummary -&gt; Text
-</span><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier hs-var hs-var">formatTimeSummary</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Utils.Internal.html#MkTimeSummary"><span class="hs-identifier hs-type">MkTimeSummary</span></a></span><span> </span><span id="local-6989586621679070105"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070105"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span id="local-6989586621679070104"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070104"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679070103"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070103"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679070102"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070102"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-92"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679070101"><span class="annot"><span class="annottext">f :: [Text] -&gt; (NonNegative, Text) -&gt; [Text]
-</span><a href="#local-6989586621679070101"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679070100"><span class="annot"><span class="annottext">[Text]
-</span><a href="#local-6989586621679070100"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679070099"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070099"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679070098"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679070098"><span class="hs-identifier hs-var">units</span></a></span></span><span class="hs-special">)</span><span>
-</span><span id="line-93"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070099"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Int -&gt; Bool
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- | Formats a 'TimeSummary' to 'Text'.</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--   in formatTimeSummary summary</span><span>
+</span><span id="line-89"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- &quot;2 days, 7 hours, 33 minutes, 20 seconds&quot;</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier hs-type">formatTimeSummary</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier hs-type">TimeSummary</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><span id="line-92"></span><span id="formatTimeSummary"><span class="annot"><span class="annottext">formatTimeSummary :: TimeSummary -&gt; Text
+</span><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier hs-var hs-var">formatTimeSummary</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TimeSummary -&gt; Bool
+</span><a href="ShellRun.Utils.Internal.html#isZero"><span class="hs-identifier hs-var">isZero</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var">True</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;0 seconds&quot;</span></span><span>
+</span><span id="line-93"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#formatTimeSummary"><span class="hs-identifier hs-var">formatTimeSummary</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Utils.Internal.html#MkTimeSummary"><span class="hs-identifier hs-type">MkTimeSummary</span></a></span><span> </span><span id="local-6989586621679073124"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073124"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span id="local-6989586621679073123"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073123"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679073122"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073122"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679073121"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073121"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679073120"><span class="annot"><span class="annottext">f :: [Text] -&gt; (NonNegative, Text) -&gt; [Text]
+</span><a href="#local-6989586621679073120"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679073119"><span class="annot"><span class="annottext">[Text]
+</span><a href="#local-6989586621679073119"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679073118"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073118"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679073117"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073117"><span class="hs-identifier hs-var">units</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073118"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Int -&gt; Bool
 forall a b. REquals a b =&gt; a -&gt; b -&gt; Bool
 </span><a href="ShellRun.Math.REquals.html#%3D%3A%3D"><span class="hs-operator hs-var">=:=</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-type">Int</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text]
-</span><a href="#local-6989586621679070100"><span class="hs-identifier hs-var">acc</span></a></span><span>
-</span><span id="line-94"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Text -&gt; Text
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-type">Int</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text]
+</span><a href="#local-6989586621679073119"><span class="hs-identifier hs-var">acc</span></a></span><span>
+</span><span id="line-96"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Text -&gt; Text
 </span><a href="ShellRun.Utils.Internal.html#pluralize"><span class="hs-identifier hs-var">pluralize</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070099"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679070098"><span class="hs-identifier hs-var">units</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text] -&gt; [Text]
+</span><a href="#local-6989586621679073118"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073117"><span class="hs-identifier hs-var">units</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text] -&gt; [Text]
 forall a. a -&gt; [a] -&gt; [a]
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-glyph hs-var">:</span></a></span><span> </span><span class="annot"><span class="annottext">[Text]
-</span><a href="#local-6989586621679070100"><span class="hs-identifier hs-var">acc</span></a></span><span>
-</span><span id="line-95"></span><span>      </span><span id="local-6989586621679070095"><span class="annot"><span class="annottext">vals :: [Text]
-</span><a href="#local-6989586621679070095"><span class="hs-identifier hs-var hs-var">vals</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([Text] -&gt; (NonNegative, Text) -&gt; [Text])
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-glyph hs-var">:</span></a></span><span> </span><span class="annot"><span class="annottext">[Text]
+</span><a href="#local-6989586621679073119"><span class="hs-identifier hs-var">acc</span></a></span><span>
+</span><span id="line-97"></span><span>      </span><span id="local-6989586621679073114"><span class="annot"><span class="annottext">vals :: [Text]
+</span><a href="#local-6989586621679073114"><span class="hs-identifier hs-var hs-var">vals</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([Text] -&gt; (NonNegative, Text) -&gt; [Text])
 -&gt; [Text] -&gt; [(NonNegative, Text)] -&gt; [Text]
 forall (t :: * -&gt; *) b a.
 Foldable t =&gt;
 (b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Fold.foldl'</span></a></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; (NonNegative, Text) -&gt; [Text]
-</span><a href="#local-6989586621679070101"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070102"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Fold.foldl'</span></a></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; (NonNegative, Text) -&gt; [Text]
+</span><a href="#local-6989586621679073120"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073121"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot; second&quot;</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070103"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073122"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot; minute&quot;</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070104"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073123"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot; hour&quot;</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070105"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073124"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot; day&quot;</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
-</span><span id="line-96"></span><span>   </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text] -&gt; Text
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.intercalate</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span id="line-98"></span><span>   </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text] -&gt; Text
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.intercalate</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;, &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Text]
-</span><a href="#local-6989586621679070095"><span class="hs-identifier hs-var">vals</span></a></span><span>
-</span><span id="line-97"></span><span>
-</span><span id="line-98"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#pluralize"><span class="hs-identifier hs-type">pluralize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
-</span><span id="line-99"></span><span id="pluralize"><span class="annot"><span class="annottext">pluralize :: NonNegative -&gt; Text -&gt; Text
-</span><a href="ShellRun.Utils.Internal.html#pluralize"><span class="hs-identifier hs-var hs-var">pluralize</span></a></span></span><span> </span><span id="local-6989586621679070092"><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070092"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span id="local-6989586621679070091"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679070091"><span class="hs-identifier hs-var">txt</span></a></span></span><span>
-</span><span id="line-100"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679070090"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+</span><a href="#local-6989586621679073114"><span class="hs-identifier hs-var">vals</span></a></span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#isZero"><span class="hs-identifier hs-type">isZero</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Utils.Internal.html#TimeSummary"><span class="hs-identifier hs-type">TimeSummary</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-type">Bool</span></a></span><span>
+</span><span id="line-101"></span><span id="isZero"><span class="annot"><span class="annottext">isZero :: TimeSummary -&gt; Bool
+</span><a href="ShellRun.Utils.Internal.html#isZero"><span class="hs-identifier hs-var hs-var">isZero</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="ShellRun.Utils.Internal.html#MkTimeSummary"><span class="hs-identifier hs-type">MkTimeSummary</span></a></span><span> </span><span id="local-6989586621679073111"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073111"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span id="local-6989586621679073110"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073110"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679073109"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073109"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679073108"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073108"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073107"><span class="hs-identifier hs-var">timeSum</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
 forall a. Eq a =&gt; a -&gt; a -&gt; Bool
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-operator hs-var">==</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-operator hs-var">==</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var">True</span></a></span><span>
+</span><span id="line-103"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var">False</span></a></span><span>
+</span><span id="line-104"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-105"></span><span>    </span><span id="local-6989586621679073107"><span class="annot"><span class="annottext">timeSum :: Int
+</span><a href="#local-6989586621679073107"><span class="hs-identifier hs-var hs-var">timeSum</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; NonNegative -&gt; Int) -&gt; Int -&gt; [NonNegative] -&gt; Int
+forall (t :: * -&gt; *) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Fold.foldl</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; NonNegative -&gt; Int
+</span><a href="#local-6989586621679073105"><span class="hs-identifier hs-var">sumUp</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073111"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073110"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073109"><span class="hs-identifier hs-var">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073108"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-106"></span><span>    </span><span id="local-6989586621679073105"><span class="annot"><span class="annottext">sumUp :: Int -&gt; NonNegative -&gt; Int
+</span><a href="#local-6989586621679073105"><span class="hs-identifier hs-var hs-var">sumUp</span></a></span></span><span> </span><span id="local-6989586621679073104"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073104"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">(+)</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073104"><span class="hs-identifier hs-var">acc</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int) -&gt; (NonNegative -&gt; Int) -&gt; NonNegative -&gt; Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">.</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Int
+</span><a href="ShellRun.Math.NonNegative.html#getNonNegative"><span class="hs-identifier hs-var hs-var">Math.getNonNegative</span></a></span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="annot"><a href="ShellRun.Utils.Internal.html#pluralize"><span class="hs-identifier hs-type">pluralize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ShellRun.Math.NonNegative.html#NonNegative"><span class="hs-identifier hs-type">NonNegative</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
+</span><span id="line-109"></span><span id="pluralize"><span class="annot"><span class="annottext">pluralize :: NonNegative -&gt; Text -&gt; Text
+</span><a href="ShellRun.Utils.Internal.html#pluralize"><span class="hs-identifier hs-var hs-var">pluralize</span></a></span></span><span> </span><span id="local-6989586621679073101"><span class="annot"><span class="annottext">NonNegative
+</span><a href="#local-6989586621679073101"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span id="local-6989586621679073100"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073100"><span class="hs-identifier hs-var">txt</span></a></span></span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073099"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-operator hs-var">==</span></a></span><span> </span><span class="annot"><span class="annottext">Int
 </span><span class="hs-number">1</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679070089"><span class="hs-identifier hs-var">valUnit</span></a></span><span>
-</span><span id="line-101"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679070089"><span class="hs-identifier hs-var">valUnit</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+</span><a href="#local-6989586621679073098"><span class="hs-identifier hs-var">valUnit</span></a></span><span>
+</span><span id="line-111"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">otherwise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073098"><span class="hs-identifier hs-var">valUnit</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Text
 </span><span class="hs-string">&quot;s&quot;</span></span><span>
-</span><span id="line-102"></span><span>  </span><span class="hs-keyword">where</span><span>
-</span><span id="line-103"></span><span>    </span><span id="local-6989586621679070090"><span class="annot"><span class="annottext">n :: Int
-</span><a href="#local-6989586621679070090"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Int
+</span><span id="line-112"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-113"></span><span>    </span><span id="local-6989586621679073099"><span class="annot"><span class="annottext">n :: Int
+</span><a href="#local-6989586621679073099"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonNegative -&gt; Int
 </span><a href="ShellRun.Math.NonNegative.html#getNonNegative"><span class="hs-identifier hs-var hs-var">Math.getNonNegative</span></a></span><span> </span><span class="annot"><span class="annottext">NonNegative
-</span><a href="#local-6989586621679070092"><span class="hs-identifier hs-var">val</span></a></span><span>
-</span><span id="line-104"></span><span>    </span><span id="local-6989586621679070089"><span class="annot"><span class="annottext">valUnit :: Text
-</span><a href="#local-6989586621679070089"><span class="hs-identifier hs-var hs-var">valUnit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.pack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; String
+</span><a href="#local-6989586621679073101"><span class="hs-identifier hs-var">val</span></a></span><span>
+</span><span id="line-114"></span><span>    </span><span id="local-6989586621679073098"><span class="annot"><span class="annottext">valUnit :: Text
+</span><a href="#local-6989586621679073098"><span class="hs-identifier hs-var hs-var">valUnit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-var">T.pack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; String
 forall a. Show a =&gt; a -&gt; String
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">show</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679070090"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">show</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679073099"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679070091"><span class="hs-identifier hs-var">txt</span></a></span><span>
-</span><span id="line-105"></span><span>
-</span><span id="line-106"></span><span class="hs-comment">-- | Convenience function for mapping @(a -&gt; b)@ over a monomorphic bifunctor.</span><span>
-</span><span id="line-107"></span><span class="hs-comment">--</span><span>
-</span><span id="line-108"></span><span class="hs-comment">-- Example:</span><span>
-</span><span id="line-109"></span><span class="hs-comment">--</span><span>
-</span><span id="line-110"></span><span class="hs-comment">-- &gt;&gt;&gt; monoBimap length (&quot;hey&quot;,&quot;listen&quot;)</span><span>
-</span><span id="line-111"></span><span class="hs-comment">-- (3,6)</span><span>
-</span><span id="line-112"></span><span id="local-6989586621679070165"><span id="local-6989586621679070166"><span id="local-6989586621679070168"><span class="annot"><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier hs-type">monoBimap</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Bifunctor</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679070168"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679070166"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679070165"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679070168"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679070166"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679070166"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679070168"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679070165"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679070165"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
-</span><span id="line-113"></span><span id="monoBimap"><span class="annot"><span class="annottext">monoBimap :: (a -&gt; b) -&gt; p a a -&gt; p b b
-</span><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier hs-var hs-var">monoBimap</span></a></span></span><span> </span><span id="local-6989586621679070086"><span class="annot"><span class="annottext">a -&gt; b
-</span><a href="#local-6989586621679070086"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a -&gt; b) -&gt; (a -&gt; b) -&gt; p a a -&gt; p b b
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-operator hs-var">&lt;&gt;</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679073100"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span class="hs-comment">-- | Convenience function for mapping @(a -&gt; b)@ over a monomorphic bifunctor.</span><span>
+</span><span id="line-117"></span><span class="hs-comment">--</span><span>
+</span><span id="line-118"></span><span class="hs-comment">-- Example:</span><span>
+</span><span id="line-119"></span><span class="hs-comment">--</span><span>
+</span><span id="line-120"></span><span class="hs-comment">-- &gt;&gt;&gt; monoBimap length (&quot;hey&quot;,&quot;listen&quot;)</span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- (3,6)</span><span>
+</span><span id="line-122"></span><span id="local-6989586621679073189"><span id="local-6989586621679073190"><span id="local-6989586621679073192"><span class="annot"><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier hs-type">monoBimap</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-type">Bifunctor</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679073192"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679073190"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679073189"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679073192"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679073190"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679073190"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679073192"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679073189"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679073189"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-123"></span><span id="monoBimap"><span class="annot"><span class="annottext">monoBimap :: (a -&gt; b) -&gt; p a a -&gt; p b b
+</span><a href="ShellRun.Utils.Internal.html#monoBimap"><span class="hs-identifier hs-var hs-var">monoBimap</span></a></span></span><span> </span><span id="local-6989586621679073095"><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679073095"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a -&gt; b) -&gt; (a -&gt; b) -&gt; p a a -&gt; p b b
 forall (p :: * -&gt; * -&gt; *) a b c d.
 Bifunctor p =&gt;
 (a -&gt; b) -&gt; (c -&gt; d) -&gt; p a c -&gt; p b d
-</span><a href="../file:///nix/store/4l5b66ldx9lhqairv5ahc11kcmbp9904-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Bifunctor.bimap</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; b
-</span><a href="#local-6989586621679070086"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; b
-</span><a href="#local-6989586621679070086"><span class="hs-identifier hs-var">f</span></a></span></pre></body></html>
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/base-4.14.1.0/src"><span class="hs-identifier hs-var">Bifunctor.bimap</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679073095"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679073095"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-124"></span></pre></body></html>
