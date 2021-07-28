@@ -1,7 +1,6 @@
 -- | Provides the 'MockShellBase' type.
 module MockShell.MockShellBase (MockShellBase (..)) where
 
-import Control.Monad.Writer qualified as MTL
 import Data.Functor.Identity (Identity)
 import Data.String (String)
 import MockEnv (MockEnv)
@@ -26,7 +25,7 @@ newtype MockShellBase a = MkMockShellBase
 
 instance MonadLogger MockShellBase where
   putLog :: Log -> MockShellBase ()
-  putLog = MTL.tell . pure . msg
+  putLog = tell . pure . msg
 
   clear :: MockShellBase ()
   clear = pure ()

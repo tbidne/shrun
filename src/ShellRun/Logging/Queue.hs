@@ -14,7 +14,6 @@ where
 import Control.Concurrent.STM qualified as STM
 import Control.Concurrent.STM.TBQueue (TBQueue)
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
-import Control.Monad.IO.Class qualified as MIO
 import ShellRun.Logging.Log (Log)
 import ShellRun.Prelude
 
@@ -23,12 +22,12 @@ newtype LogQueue = MkLogQueue {getLogQueue :: TBQueue Log}
 
 -- | Atomically writes to the queue.
 writeQueue :: MonadIO m => LogQueue -> Log -> m ()
-writeQueue queue = MIO.liftIO . STM.atomically . TBQueue.writeTBQueue (getLogQueue queue)
+writeQueue queue = liftIO . STM.atomically . TBQueue.writeTBQueue (getLogQueue queue)
 
 -- | Atomically reads from the queue. Does not retry.
 readQueue :: MonadIO m => LogQueue -> m (Maybe Log)
-readQueue = MIO.liftIO . STM.atomically . TBQueue.tryReadTBQueue . getLogQueue
+readQueue = liftIO . STM.atomically . TBQueue.tryReadTBQueue . getLogQueue
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 flushQueue :: MonadIO m => LogQueue -> m [Log]
-flushQueue = MIO.liftIO . STM.atomically . STM.flushTBQueue . getLogQueue
+flushQueue = liftIO . STM.atomically . STM.flushTBQueue . getLogQueue

@@ -1,8 +1,6 @@
 -- | Runs integration tests.
 module Main (main) where
 
-import Control.Monad.Reader qualified as MTL
-import Control.Monad.Writer qualified as MTL
 import Data.Functor.Identity (Identity (..))
 import MockEnv (MockEnv (..))
 import MockEnv qualified
@@ -83,6 +81,6 @@ getLogs :: (t -> MockShellBase a) -> t -> MockEnv -> [Text]
 getLogs runMock mock env =
   let base = runMock mock
       rdr = runMockShellBase base
-      wtr = MTL.runReaderT rdr env
-      (Identity (_, logs)) = MTL.runWriterT wtr
+      wtr = runReaderT rdr env
+      (Identity (_, logs)) = runWriterT wtr
    in logs

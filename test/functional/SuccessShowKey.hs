@@ -3,7 +3,6 @@
 module SuccessShowKey (spec) where
 
 import Constants qualified
-import Control.Monad.Reader qualified as MTL
 import Data.Text qualified as T
 import ShellRun qualified as SR
 import ShellRun.Parsing.Env qualified as Env
@@ -20,7 +19,7 @@ spec :: Spec
 spec =
   Hspec.it "Should show key rather than command" $ do
     env <- SysEnv.withArgs argList Env.runParser
-    let action = MTL.runReaderT (SR.runShellT SR.runShell) env
+    let action = runReaderT (SR.runShellT SR.runShell) env
     result <- Shh.capture_ action
     let results = MkResultText <$> T.lines (T.pack result)
     V.verifyExpected results allExpected

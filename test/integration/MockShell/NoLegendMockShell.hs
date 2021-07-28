@@ -1,7 +1,6 @@
 -- | Provides the 'NoLegendMockShell' type.
 module MockShell.NoLegendMockShell (NoLegendMockShell (..)) where
 
-import Control.Monad.Writer qualified as MTL
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
@@ -9,6 +8,7 @@ import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Logging (MonadLogger (..))
 import ShellRun.Prelude
+import Data.String (String)
 
 -- | 'NoLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the legend is not included.
@@ -32,7 +32,8 @@ instance MonadShell NoLegendMockShell where
   legendPathToMap _ = pure $ Left $ EntryErr "Bad key"
 
   runCommands :: [Command] -> NoLegendMockShell ()
-  runCommands = MTL.tell . fmap command
+  runCommands = tell . fmap command
 
 instance Show a => Show (NoLegendMockShell a) where
-  show _ = "MkNoLegendMockShell"
+  show :: NoLegendMockShell a -> String
+  show x = "MkNoLegendMockShell " <> show x

@@ -4,7 +4,6 @@ module Props.ShellRun.Parsing.Commands
   )
 where
 
-import Control.Monad qualified as M
 import Data.Map.Strict qualified as Map
 import Data.Set (Set)
 import Data.Set qualified as Set
@@ -46,7 +45,7 @@ translateProps = TH.testProperty "translateCommands includes everything" $
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands
 noCommandsMissing :: Set Text -> [Text] -> PropertyT IO ()
-noCommandsMissing allKeys = M.void . traverse failIfMissing
+noCommandsMissing allKeys = void . traverse failIfMissing
   where
     failIfMissing cmd
       | Set.member cmd allKeys = pure ()

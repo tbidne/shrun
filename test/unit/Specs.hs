@@ -1,7 +1,6 @@
 -- | Runs specs.
 module Specs (specs) where
 
-import Control.Monad qualified as M
 import ShellRun.Prelude
 import Specs.ShellRun.Parsing.Args qualified as ParseArgs
 import Specs.ShellRun.Parsing.Commands qualified as ParseCommands
@@ -16,7 +15,7 @@ specs :: IO TestTree
 specs = T.testGroup "HSpec Specs" <$> allSpecs
   where
     allSpecs =
-      M.join
+      join
         <$> sequenceA
           [ LegendI.specs,
             ParseArgs.specs,

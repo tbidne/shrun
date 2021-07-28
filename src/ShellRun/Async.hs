@@ -11,7 +11,6 @@ import Control.Exception qualified as Except
 import Control.Monad qualified as M
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Loops qualified as Loops
-import Control.Monad.Reader qualified as MTL
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
@@ -53,8 +52,8 @@ runCommands ::
   [Command] ->
   m ()
 runCommands commands = UAsync.withAsync printLogQueue $ \printer -> do
-  logQueue <- MTL.asks getLogQueue
-  start <- MTL.liftIO $ C.getTime Monotonic
+  logQueue <- asks getLogQueue
+  start <- liftIO $ C.getTime Monotonic
   let actions = UAsync.mapConcurrently_ runCommand commands
       actionsWithTimer = UAsync.race_ actions counter
 
@@ -72,7 +71,7 @@ runCommands commands = UAsync.withAsync printLogQueue $ \printer -> do
       Logging.writeQueue logQueue $ Logging.logFatal errMsg
     Right _ -> pure ()
 
-  end <- MTL.liftIO $ C.getTime Monotonic
+  end <- liftIO $ C.getTime Monotonic
   let totalTime = U.diffTime start end
       totalTimeTxt = "Finished! Total time elapsed: " <> U.formatTime totalTime
 
@@ -91,14 +90,14 @@ runCommand ::
   Command ->
   m ()
 runCommand cmd = do
-  commandDisplay <- MTL.asks getCommandDisplay
-  logQueue <- MTL.asks getLogQueue
-  commandLogging <- MTL.asks getCommandLogging
+  commandDisplay <- asks getCommandDisplay
+  logQueue <- asks getLogQueue
+  commandLogging <- asks getCommandLogging
   let shFn = case commandLogging of
         Disabled -> ShIO.tryTimeSh commandDisplay
         Enabled -> ShIO.tryTimeShCommandOutput logQueue commandDisplay
 
-  MTL.liftIO $ do
+  liftIO $ do
     res <- shFn cmd Nothing
     let lg = case res of
           Left (t, MkStderr err) ->
@@ -126,11 +125,11 @@ counter ::
   ) =>
   m ()
 counter = do
-  timeout <- MTL.asks getTimeout
-  timer <- MTL.liftIO $ IORef.newIORef $ Math.unsafeNonNegative 0
+  timeout <- asks getTimeout
+  timer <- liftIO $ IORef.newIORef $ Math.unsafeNonNegative 0
   let inc = Math.unsafeNonNegative 1
   Loops.whileM_ (keepRunning timer timeout) $ do
-    elapsed <- MTL.liftIO $ do
+    elapsed <- liftIO $ do
       Concurrent.threadDelay 1_000_000
       IORef.modifyIORef' timer (+:+ inc)
       IORef.readIORef timer
@@ -144,7 +143,7 @@ logCounter ::
   NonNegative ->
   m ()
 logCounter elapsed = do
-  logQueue <- MTL.asks getLogQueue
+  logQueue <- asks getLogQueue
   let lg =
         MkLog
           { msg = "Running time: " <> U.formatTime elapsed,
@@ -162,10 +161,10 @@ keepRunning ::
   Maybe NonNegative ->
   m Bool
 keepRunning timer to = do
-  elapsed <- MTL.liftIO $ IORef.readIORef timer
+  elapsed <- liftIO $ IORef.readIORef timer
   if timedOut elapsed to
     then do
-      logQueue <- MTL.asks getLogQueue
+      logQueue <- asks getLogQueue
       Logging.writeQueue logQueue $
         Logging.logWarn "Timed out, cancelling remaining tasks."
       pure False
@@ -185,5 +184,5 @@ printLogQueue ::
   ) =>
   m ()
 printLogQueue = do
-  logQueue <- MTL.asks getLogQueue
+  logQueue <- asks getLogQueue
   M.forever $ Logging.readQueue logQueue >>= traverse_ Logging.putLog
