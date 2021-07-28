@@ -2,7 +2,6 @@
 module Main (main) where
 
 import Constants qualified
-import Data.Functor (($>))
 import ShellRun.Prelude
 import Success qualified
 import SuccessCommandLogging qualified
@@ -39,4 +38,4 @@ setup =
 tearDown :: IO ()
 tearDown =
   let proc = (P.shell "./teardown_legend.sh") {P.cwd = Just Constants.workingDirectory}
-   in P.readCreateProcess proc "" Data.Functor.$> ()
+   in P.readCreateProcess proc "" $> ()

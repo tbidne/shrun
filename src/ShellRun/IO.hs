@@ -13,7 +13,6 @@ import Control.Concurrent qualified as Concurrent
 import Control.Exception (IOException)
 import Control.Exception qualified as Except
 import Control.Monad.Loops qualified as Loops
-import Data.Bifunctor qualified as Bifunctor
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
@@ -78,7 +77,7 @@ tryTimeSh commandDisplay cmd path = do
   res <- tryShExitCode commandDisplay cmd path
   end <- C.getTime Monotonic
   let diff = Utils.diffTime start end
-  pure $ Bifunctor.bimap (diff,) (const diff) res
+  pure $ bimap (diff,) (const diff) res
 
 -- | Version of 'tryTimeSh' that attempts to read the command's
 -- @stdout@ + @stderr@.
@@ -157,7 +156,7 @@ tryTimeShCommandOutput logQueue commandDisplay cmd@(MkCommand _ cmdTxt) path = d
 
   end <- C.getTime Monotonic
   let diff = Utils.diffTime start end
-      finalResult = Bifunctor.bimap (diff,) (const diff) result
+      finalResult = bimap (diff,) (const diff) result
 
   pure finalResult
 
