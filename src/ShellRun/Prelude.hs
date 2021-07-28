@@ -33,12 +33,13 @@ import Control.Applicative as X
 import Control.Monad as X
   ( Monad (..),
     join,
+    void,
     (<=<),
     (=<<),
     (>=>),
   )
 import Control.Monad.IO.Class as X
-import Control.Monad.Reader as X (MonadReader (..), ReaderT (..))
+import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.Trans as X (MonadTrans (..))
 import Control.Monad.Writer as X (MonadWriter (..), WriterT (..))
 import Data.Bifunctor as X (Bifunctor (..))

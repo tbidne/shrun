@@ -20,7 +20,6 @@ module ShellRun.Logging.MonadLogger
   )
 where
 
-import Control.Monad.Reader qualified as MTL
 import Data.Text qualified as T
 import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log
@@ -64,10 +63,10 @@ instance MonadLogger IO where
 
 instance MonadLogger m => MonadLogger (ReaderT e m) where
   putLog :: Log -> ReaderT e m ()
-  putLog = MTL.lift . putLog
+  putLog = lift . putLog
 
   clear :: ReaderT e m ()
-  clear = MTL.lift clear
+  clear = lift clear
 
 -- | 'putLog' with 'Log.logNone'.
 putLogNone :: MonadLogger m => Text -> m ()

@@ -1,7 +1,6 @@
 -- | Provides the 'GoodMockShell' type.
 module MockShell.GoodMockShell (GoodMockShell (..)) where
 
-import Control.Monad.Writer qualified as MTL
 import Data.Map.Strict qualified as Map
 import Data.String (String)
 import MockEnv (MockEnv)
@@ -38,7 +37,7 @@ instance MonadShell GoodMockShell where
           ]
 
   runCommands :: [Command] -> GoodMockShell ()
-  runCommands = MTL.tell . fmap command
+  runCommands = tell . fmap command
 
 instance Show a => Show (GoodMockShell a) where
   show :: GoodMockShell a -> String

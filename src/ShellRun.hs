@@ -7,7 +7,6 @@ module ShellRun
 where
 
 import Control.Monad.IO.Unlift (MonadUnliftIO (..))
-import Control.Monad.Reader qualified as MTL
 import ShellRun.Async qualified as ShAsync
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
@@ -40,7 +39,7 @@ instance
   MonadShell (ShellT Env m)
   where
   legendPathToMap :: Text -> ShellT Env m (Either LegendErr LegendMap)
-  legendPathToMap = MTL.liftIO . ParseLegend.legendPathToMap
+  legendPathToMap = liftIO . ParseLegend.legendPathToMap
 
   runCommands :: [Command] -> ShellT Env m ()
   runCommands = ShAsync.runCommands
@@ -56,8 +55,8 @@ runShell ::
   ) =>
   m ()
 runShell = do
-  legendMap <- MTL.asks getLegend
-  cmds <- MTL.asks getCommands
+  legendMap <- asks getLegend
+  cmds <- asks getCommands
   parsedCommands <- maybePathToCommands legendMap cmds
   runCommandsOrLogErr parsedCommands
 
