@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Functional test for a successful run with native logging.
 module SuccessCommandLogging (spec) where
 

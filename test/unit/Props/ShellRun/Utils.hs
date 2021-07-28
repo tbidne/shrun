@@ -1,5 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 -- | Property tests for ShellRun.Utils.
 module Props.ShellRun.Utils
   ( props,

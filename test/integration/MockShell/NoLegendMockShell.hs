@@ -1,7 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Provides the 'NoLegendMockShell' type.
 module MockShell.NoLegendMockShell (NoLegendMockShell (..)) where
 

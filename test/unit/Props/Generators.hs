@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE NumericUnderscores #-}
-
 -- | Provides various generators for property tests.
 module Props.Generators
   ( genNonNegative,

@@ -1,8 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | This module is the entry point to the @ShellRun@ library used by
 -- the @ShellRun@ executable.
 module ShellRun

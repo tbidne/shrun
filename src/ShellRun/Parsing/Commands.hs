@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Provides functionality for translating 'Text' commands
 -- via a 'LegendMap'.
 module ShellRun.Parsing.Commands
@@ -18,6 +15,7 @@ import Data.Text.Lazy.Builder qualified as LTBuilder
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Utils qualified as Utils
+
 
 -- | Returns a list of 'Text' commands, potentially transforming a
 -- given string via the `LegendMap` @legend@.

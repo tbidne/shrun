@@ -1,6 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 -- | Provides core 'Env' types.
 module ShellRun.Data.Env
   ( -- * \"HasX\" style typeclasses required for our concrete Env type.

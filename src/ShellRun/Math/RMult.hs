@@ -1,7 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-
 -- | Provides the 'RMult' typeclass for safe multiplication.
 module ShellRun.Math.RMult
   ( RMult (..),

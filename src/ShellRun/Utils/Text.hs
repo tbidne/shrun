@@ -1,6 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Provides 'Text' utils.

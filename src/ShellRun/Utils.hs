@@ -1,5 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 -- | Provides utilities.
 module ShellRun.Utils
   ( -- * Text Utils
@@ -31,10 +29,6 @@ import ShellRun.Utils.Internal qualified as UtilsI
 import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
-
--- $setup
--- >>> :set -XNumericUnderscores
--- >>> :set -XOverloadedStrings
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.

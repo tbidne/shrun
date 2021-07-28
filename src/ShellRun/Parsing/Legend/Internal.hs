@@ -1,5 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for parsing 'Text' lines into a 'LegendMap'.
@@ -15,8 +13,6 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Utils.Text qualified as TextUtils
-
--- $ >>> :set -XOverloadedStrings
 
 -- | Attempts to parse the given ['Text'] into 'LegendMap'.
 -- The text lines can either be comments (start with \'#\') or

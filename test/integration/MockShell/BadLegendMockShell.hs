@@ -1,6 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Provides the 'GoodMockShell' type.
 module MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
 
