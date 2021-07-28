@@ -2,9 +2,12 @@
 --
 -- * Re-export useful prelude functions/types
 -- * Export various functions/types from base
--- * Export new functions meant to address prelude limitations (e.g. total replacements for partial functions).
+-- * Export new functions meant to address prelude limitations
+--   (e.g. total replacements for partial functions).
 --
--- This is not a comprehensive replacement for Prelude, just the functionality needed for this application. Thus it is natural to add new functionality/exports here over time.
+-- This is not a comprehensive replacement for Prelude, just the
+-- functionality needed for this application. Thus it is natural to
+-- add new functionality/exports here over time.
 module ShellRun.Prelude
   ( -- * Total versions of partial functions
     NE.head,
