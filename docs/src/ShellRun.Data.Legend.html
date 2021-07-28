@@ -6,7 +6,7 @@
 </span><span id="line-6"></span><span class="hs-keyword">where</span><span>
 </span><span id="line-7"></span><span>
 </span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/containers-0.6.2.1/src"><span class="hs-identifier">Data.Map.Strict</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/containers-0.6.2.1/src"><span class="hs-identifier">Map</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier">Text</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ShellRun.Prelude.html"><span class="hs-identifier">ShellRun.Prelude</span></a></span><span>
 </span><span id="line-10"></span><span>
 </span><span id="line-11"></span><span class="hs-comment">-- | Various errors that can occur while processing the legend.</span><span>
 </span><span id="line-12"></span><span class="hs-keyword">data</span><span> </span><span id="LegendErr"><span class="annot"><a href="ShellRun.Data.Legend.html#LegendErr"><span class="hs-identifier hs-var">LegendErr</span></a></span></span><span>
@@ -18,7 +18,7 @@
 </span><span id="line-18"></span><span>    </span><span id="CyclicKeyErr"><span class="annot"><a href="ShellRun.Data.Legend.html#CyclicKeyErr"><span class="hs-identifier hs-var">CyclicKeyErr</span></a></span></span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
 </span><span id="line-19"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Errors relating to duplicate keys.</span><span>
 </span><span id="line-20"></span><span>    </span><span id="DuplicateKeyErr"><span class="annot"><a href="ShellRun.Data.Legend.html#DuplicateKeyErr"><span class="hs-identifier hs-var">DuplicateKeyErr</span></a></span></span><span> </span><span class="annot"><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/text-1.2.4.1/src"><span class="hs-identifier hs-type">Text</span></a></span><span>
-</span><span id="line-21"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679072276"><span id="local-6989586621679072278"><span class="annot"><span class="annottext">LegendErr -&gt; LegendErr -&gt; Bool
+</span><span id="line-21"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679073763"><span id="local-6989586621679073765"><span class="annot"><span class="annottext">LegendErr -&gt; LegendErr -&gt; Bool
 (LegendErr -&gt; LegendErr -&gt; Bool)
 -&gt; (LegendErr -&gt; LegendErr -&gt; Bool) -&gt; Eq LegendErr
 forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
@@ -26,7 +26,7 @@ forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
 $c/= :: LegendErr -&gt; LegendErr -&gt; Bool
 == :: LegendErr -&gt; LegendErr -&gt; Bool
 $c== :: LegendErr -&gt; LegendErr -&gt; Bool
-</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679072269"><span id="local-6989586621679072271"><span id="local-6989586621679072273"><span class="annot"><span class="annottext">Int -&gt; LegendErr -&gt; ShowS
+</span><a href="../file:///nix/store/zg9f7fb4s1gr7r8daya15i8iq1p1w9ki-ghc-8.10.4-doc/share/doc/ghc/html/libraries/ghc-prim-0.6.1/src"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679073756"><span id="local-6989586621679073758"><span id="local-6989586621679073760"><span class="annot"><span class="annottext">Int -&gt; LegendErr -&gt; ShowS
 [LegendErr] -&gt; ShowS
 LegendErr -&gt; String
 (Int -&gt; LegendErr -&gt; ShowS)
