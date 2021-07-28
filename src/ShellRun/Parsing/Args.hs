@@ -6,8 +6,6 @@ module ShellRun.Parsing.Args
 where
 
 import Control.Applicative qualified as App
-import Data.Bifunctor qualified as Bifunctor
-import Data.Foldable qualified as Fold
 import Data.String (String)
 import Data.Text qualified as T
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
@@ -119,14 +117,14 @@ readTimeStr = do
   case matches of
     [d, h, m, s] ->
       let txtMultipliers =
-            Bifunctor.bimap T.pack Math.unsafePositive
+            bimap T.pack Math.unsafePositive
               <$> [ (d, 86_400),
                     (h, 3_600),
                     (m, 60),
                     (s, 1)
                   ]
           results = traverse parseTextAndMultiply txtMultipliers
-          summed = Fold.foldl (+:+) (Math.unsafeNonNegative 0) <$> results
+          summed = foldl' (+:+) (Math.unsafeNonNegative 0) <$> results
        in case summed of
             Left err -> OptApp.readerAbort err
             Right nn -> pure nn

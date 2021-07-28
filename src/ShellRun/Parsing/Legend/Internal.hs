@@ -6,8 +6,6 @@ module ShellRun.Parsing.Legend.Internal
   )
 where
 
-import Control.Applicative qualified as A
-import Control.Monad qualified as M
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
@@ -46,7 +44,7 @@ linesToMap = foldr f (Right Map.empty)
   where
     f "" mp = mp
     f (T.stripPrefix "#" -> Just _) mp = mp
-    f line mp = M.join $ A.liftA2 insertPair (parseLine line) mp
+    f line mp = join $ liftA2 insertPair (parseLine line) mp
     insertPair (key, cmd) mp =
       case Map.lookup key mp of
         Just _ -> Left $ DuplicateKeyErr key

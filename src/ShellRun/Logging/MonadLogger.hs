@@ -21,7 +21,6 @@ module ShellRun.Logging.MonadLogger
 where
 
 import Control.Monad.Reader qualified as MTL
-import Data.Functor ((<&>))
 import Data.Text qualified as T
 import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log

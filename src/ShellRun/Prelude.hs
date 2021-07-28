@@ -26,11 +26,13 @@ where
 
 import Control.Applicative as X
   ( Applicative (..),
+    liftA2,
     (<**>),
     (<|>),
   )
 import Control.Monad as X
   ( Monad (..),
+    join,
     (<=<),
     (=<<),
     (>=>),
@@ -50,8 +52,14 @@ import Data.Foldable as X
         foldr
       ),
     length,
+    traverse_,
   )
-import Data.Functor as X (Functor (..), ($>), (<$>))
+import Data.Functor as X
+  ( Functor (..),
+    ($>),
+    (<$>),
+    (<&>),
+  )
 import Data.List as X (filter)
 import Data.List.NonEmpty as X (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE
