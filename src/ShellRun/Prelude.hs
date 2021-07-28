@@ -17,7 +17,7 @@ module ShellRun.Prelude
     maybeToEither,
     monoBimap,
 
-    -- * 'Text' replacements for 'String' functions.
+    -- * 'Text' replacements for 'P.String' functions.
     error,
     readFile,
     showt,
@@ -104,12 +104,15 @@ import Prelude qualified as P
 -- $setup
 -- >>> import Data.String (String)
 
+-- | 'Text' version of 'P.readFile'.
 readFile :: Text -> IO Text
 readFile = fmap T.pack . P.readFile . T.unpack
 
+-- | 'Text' version of 'P.show'.
 showt :: P.Show a => a -> Text
 showt = T.pack . P.show
 
+-- | 'Text' version of 'error'.
 error :: Text -> a
 error = P.error . T.unpack
 

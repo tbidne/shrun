@@ -14,7 +14,15 @@ for m in "${metrics[@]}"; do
     if [[ $m =~ $regex ]]; then
       val="${BASH_REMATCH[1]}"
       fn="${BASH_REMATCH[2]}"
-      if [[ $val -lt 100 ]]; then
+
+      # ShellRun.Prelude will be < 100 because it re-exports
+      # prelude functions that are missing documentation.
+      threshold=100
+      if [[ $fn == "ShellRun.Prelude" ]]; then
+        threshold=90
+      fi
+
+      if [[ $val -lt $threshold ]]; then
         echo "Haddock missing for $fn: $val"
         any_failed=1
       fi
