@@ -60,6 +60,7 @@ import Data.Functor as X
     (<$>),
     (<&>),
   )
+import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter)
 import Data.List.NonEmpty as X (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE

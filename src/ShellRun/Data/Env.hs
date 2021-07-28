@@ -66,19 +66,25 @@ class HasLogQueue env where
   getLogQueue :: env -> LogQueue
 
 instance HasLegend Env where
+  getLegend :: Env -> Maybe Text
   getLegend = legend
 
 instance HasTimeout Env where
+  getTimeout :: Env -> Maybe NonNegative
   getTimeout = timeout
 
 instance HasCommandLogging Env where
+  getCommandLogging :: Env -> CommandLogging
   getCommandLogging = commandLogging
 
 instance HasCommandDisplay Env where
+  getCommandDisplay :: Env -> CommandDisplay
   getCommandDisplay = commandDisplay
 
 instance HasLogQueue Env where
+  getLogQueue :: Env -> LogQueue
   getLogQueue = logQueue
 
 instance HasCommands Env where
+  getCommands :: Env -> [Text]
   getCommands = commands

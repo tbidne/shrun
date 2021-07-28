@@ -31,11 +31,13 @@ import System.Console.Terminal.Size qualified as TermSz
 import System.IO qualified as IO
 
 -- | `MonadLogger` is a simple typeclass for abstracting logging functions.
+type MonadLogger :: (Type -> Type) -> Constraint
 class Monad m => MonadLogger m where
   putLog :: Log -> m ()
   clear :: m ()
 
 instance MonadLogger IO where
+  putLog :: Log -> IO ()
   putLog lg@MkLog {msg, mode} = do
     let color = Log.logToColor lg
         prefix = Log.logToPrefix lg
@@ -50,6 +52,7 @@ instance MonadLogger IO where
       logLine = putStrLn
       logNoLine txt = putStr txt *> IO.hFlush IO.stdout
 
+  clear :: IO ()
   clear = do
     -- Clear the entire term, fallback to 80 if we cannot get the width.
     spaces <-
@@ -60,7 +63,10 @@ instance MonadLogger IO where
     putStr $ "\r" <> spaces <> "\r"
 
 instance MonadLogger m => MonadLogger (ReaderT e m) where
+  putLog :: Log -> ReaderT e m ()
   putLog = MTL.lift . putLog
+
+  clear :: ReaderT e m ()
   clear = MTL.lift clear
 
 -- | 'putLog' with 'Log.logNone'.

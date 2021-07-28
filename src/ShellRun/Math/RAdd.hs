@@ -23,6 +23,8 @@ infixl 6 +:+
 -- | 'NonNegative' + 'NonNegative' = 'NonNegative'
 instance RAdd NonNegative NonNegative where
   type Sum NonNegative NonNegative = NonNegative
+
+  (+:+) :: NonNegative -> NonNegative -> NonNegative
   x +:+ y = NN.unsafeNonNegative $ x' + y'
     where
       x' = NN.getNonNegative x
@@ -31,6 +33,8 @@ instance RAdd NonNegative NonNegative where
 -- | 'NonNegative' + 'Positive' = 'Positive'
 instance RAdd NonNegative Positive where
   type Sum NonNegative Positive = Positive
+
+  (+:+) :: NonNegative -> Positive -> Positive
   x +:+ y = P.unsafePositive $ x' + y'
     where
       x' = NN.getNonNegative x
@@ -39,6 +43,8 @@ instance RAdd NonNegative Positive where
 -- | 'Positive' + 'NonNegative' = 'Positive'
 instance RAdd Positive NonNegative where
   type Sum Positive NonNegative = Positive
+
+  (+:+) :: Positive -> NonNegative -> Positive
   x +:+ y = P.unsafePositive $ x' + y'
     where
       x' = P.getPositive x
@@ -47,6 +53,8 @@ instance RAdd Positive NonNegative where
 -- | 'Positive' + 'Positive' = 'Positive'
 instance RAdd Positive Positive where
   type Sum Positive Positive = Positive
+
+  (+:+) :: Positive -> Positive -> Positive
   x +:+ y = P.unsafePositive $ x' + y'
     where
       x' = P.getPositive x

@@ -66,9 +66,11 @@ data Log = MkLog
   deriving stock (Show)
 
 instance Semigroup Log where
+  (<>) :: Log -> Log -> Log
   (MkLog t l m) <> (MkLog t' l' m') = MkLog (t <> t') (l <> l') (m <> m')
 
 instance Monoid Log where
+  mempty :: Log
   mempty = MkLog mempty mempty mempty
 
 -- | Transforms log to a color based on its 'LogLevel'.
