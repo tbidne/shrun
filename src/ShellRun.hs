@@ -7,10 +7,7 @@ module ShellRun
 where
 
 import Control.Monad.IO.Unlift (MonadUnliftIO (..))
-import Control.Monad.Reader (MonadIO, MonadReader, MonadTrans, ReaderT)
 import Control.Monad.Reader qualified as MTL
-import Data.Text (Text)
-import Data.Text qualified as T
 import ShellRun.Async qualified as ShAsync
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
@@ -21,6 +18,7 @@ import ShellRun.Logging (MonadLogger)
 import ShellRun.Logging qualified as Logging
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Parsing.Legend qualified as ParseLegend
+import ShellRun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.
 newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}
@@ -76,4 +74,4 @@ runCommandsOrLogErr ::
 runCommandsOrLogErr (Right cmds) = runCommands cmds
 runCommandsOrLogErr (Left err) = Logging.putLogFatal errTxt
   where
-    errTxt = "Error parsing legend file: " <> T.pack (show err)
+    errTxt = "Error parsing legend file: " <> showt err

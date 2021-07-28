@@ -1,12 +1,14 @@
 -- | Specs for ShellRun.Parsing.Args.
 module Specs.ShellRun.Parsing.Args (specs) where
 
+import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
 import ShellRun.Math qualified as Math
 import ShellRun.Parsing.Args (Args (..))
 import ShellRun.Parsing.Args qualified as Args
+import ShellRun.Prelude
 import Test.Hspec (Expectation, SpecWith, shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)

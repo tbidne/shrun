@@ -9,22 +9,17 @@ module ShellRun.Utils
 
     -- * Misc Utils
     displayCommand,
-    headMaybe,
-    maybeToEither,
-
-    -- * Functor Utils
-    UtilsI.monoBimap,
 
     -- * Math Utils
     UtilsI.divWithRem,
   )
 where
 
-import Data.Text (Text)
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Math (NonNegative)
 import ShellRun.Math qualified as Math
+import ShellRun.Prelude
 import ShellRun.Utils.Internal qualified as UtilsI
 import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec (..))
@@ -57,28 +52,6 @@ diffTime t1 t2 =
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
 formatTime :: NonNegative -> Text
 formatTime = UtilsI.formatTimeSummary . UtilsI.secondsToTimeSummary
-
--- | Safe @head@.
---
--- >>> headMaybe [1,2,3]
--- Just 1
---
--- >>> headMaybe []
--- Nothing
-headMaybe :: [a] -> Maybe a
-headMaybe [] = Nothing
-headMaybe (x : _) = Just x
-
--- | Transforms 'Maybe' to 'Either'.
---
--- >>> maybeToEither () (Nothing :: Maybe String)
--- Left ()
---
--- >>> maybeToEither () (Just "success" :: Maybe String)
--- Right "success"
-maybeToEither :: e -> Maybe a -> Either e a
-maybeToEither e Nothing = Left e
-maybeToEither _ (Just x) = Right x
 
 -- | Returns the key if one exists and we pass in 'ShowKey', otherwise
 -- returns the command.

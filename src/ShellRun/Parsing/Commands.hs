@@ -7,15 +7,13 @@ where
 
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
-import ShellRun.Utils qualified as Utils
-
+import ShellRun.Prelude
 
 -- | Returns a list of 'Text' commands, potentially transforming a
 -- given string via the `LegendMap` @legend@.
@@ -88,7 +86,7 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           -- If there are cycles then this should be `Just cyclicVal`
           -- (this list should have at most one since we are detecting
           -- the first cycle)
-          maybeCyclicVal = Utils.headMaybe $ Set.toList intersect
+          maybeCyclicVal = headMaybe $ Set.toList intersect
           path' = path <> LTBuilder.fromText line <> " -> "
 
 builderToPath :: Builder -> Text -> Text -> Text

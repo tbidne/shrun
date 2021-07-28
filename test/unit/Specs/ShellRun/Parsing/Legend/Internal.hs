@@ -4,6 +4,7 @@ module Specs.ShellRun.Parsing.Legend.Internal (specs) where
 import Data.Map.Strict qualified as Map
 import ShellRun.Data.Legend (LegendErr (..))
 import ShellRun.Parsing.Legend.Internal qualified as Internal
+import ShellRun.Prelude
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)

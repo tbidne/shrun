@@ -10,6 +10,7 @@ import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import ShellRun.Math (NonNegative, REquals (..))
 import ShellRun.Math qualified as Math
+import ShellRun.Prelude
 import ShellRun.Utils.Internal (TimeSummary (..))
 import ShellRun.Utils.Internal qualified as UtilsI
 import Test.Tasty (TestTree)

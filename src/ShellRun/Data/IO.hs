@@ -5,7 +5,7 @@ module ShellRun.Data.IO
   )
 where
 
-import Data.Text (Text)
+import ShellRun.Prelude
 
 -- | Newtype wrapper for stdout.
 newtype Stdout = MkStdout {getStdout :: Text}

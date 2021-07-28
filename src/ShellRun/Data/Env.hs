@@ -13,10 +13,10 @@ module ShellRun.Data.Env
   )
 where
 
-import Data.Text (Text)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging (LogQueue)
 import ShellRun.Math (NonNegative, Supremum (..))
+import ShellRun.Prelude
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.

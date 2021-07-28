@@ -5,12 +5,10 @@ module ShellRun.Parsing.Args
   )
 where
 
-import Control.Applicative ((<**>), (<|>))
 import Control.Applicative qualified as App
-import Control.Monad ((>=>))
 import Data.Bifunctor qualified as Bifunctor
 import Data.Foldable qualified as Fold
-import Data.Text (Text)
+import Data.String (String)
 import Data.Text qualified as T
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OptApp
@@ -19,7 +17,7 @@ import Options.Applicative.Types (ArgPolicy (..))
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
 import ShellRun.Math (NonNegative, Positive, (*:*), (+:+))
 import ShellRun.Math qualified as Math
-import ShellRun.Utils qualified as Utils
+import ShellRun.Prelude
 import Text.Read qualified as Read
 import Text.Regex.PCRE ((=~))
 
@@ -151,7 +149,7 @@ textToNonNegative = textToInt >=> intToNN
       Just n -> Right n
       where
         unpacked = T.unpack txt
-    intToNN n = Utils.maybeToEither err $ Math.mkNonNegative n
+    intToNN n = maybeToEither err $ Math.mkNonNegative n
       where
         err = ErrorMsg $ "Wanted non-negative, found: " <> show n
 

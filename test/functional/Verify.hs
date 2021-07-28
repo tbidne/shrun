@@ -12,8 +12,9 @@ module Verify
   )
 where
 
-import Data.Text (Text)
+import Data.String (String)
 import Data.Text qualified as T
+import ShellRun.Prelude
 import Test.Hspec (Expectation)
 import Test.Hspec qualified as Hspec
 

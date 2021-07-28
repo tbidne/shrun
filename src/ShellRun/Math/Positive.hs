@@ -8,6 +8,8 @@ module ShellRun.Math.Positive
   )
 where
 
+import ShellRun.Prelude
+
 -- | Newtype wrapper over 'Int'.
 newtype Positive = MkPositive
   { -- | Unwraps the 'Positive'
@@ -37,5 +39,5 @@ unsafePositive n
   | otherwise =
     error $
       "Passed non-positive "
-        <> show n
+        <> showt n
         <> " to unsafePositive!"

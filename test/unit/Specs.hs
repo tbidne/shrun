@@ -2,6 +2,7 @@
 module Specs (specs) where
 
 import Control.Monad qualified as M
+import ShellRun.Prelude
 import Specs.ShellRun.Parsing.Args qualified as ParseArgs
 import Specs.ShellRun.Parsing.Commands qualified as ParseCommands
 import Specs.ShellRun.Parsing.Legend.Internal qualified as LegendI

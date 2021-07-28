@@ -8,6 +8,7 @@ import ShellRun.Math.NonNegative (NonNegative)
 import ShellRun.Math.NonNegative qualified as NN
 import ShellRun.Math.Positive (Positive)
 import ShellRun.Math.Positive qualified as P
+import ShellRun.Prelude
 
 -- | 'REquals' is used for convenience when we would like to compare
 -- different types for equality. This makes sense when both types

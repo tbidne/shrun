@@ -11,7 +11,6 @@ import Control.Exception qualified as Except
 import Control.Monad qualified as M
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Loops qualified as Loops
-import Control.Monad.Reader (MonadIO, MonadReader)
 import Control.Monad.Reader qualified as MTL
 import Data.Foldable qualified as Fold
 import Data.IORef (IORef)
@@ -31,6 +30,7 @@ import ShellRun.Logging (Log (..), LogLevel (..), LogMode (..), MonadLogger (..)
 import ShellRun.Logging qualified as Logging
 import ShellRun.Math (NonNegative, RAdd (..))
 import ShellRun.Math qualified as Math
+import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
 import System.Clock qualified as C

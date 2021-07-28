@@ -1,5 +1,7 @@
 module Main (main) where
 
+import Data.String (String)
+import ShellRun.Prelude
 import Test.DocTest qualified as DocTest
 
 main :: IO ()
@@ -13,8 +15,11 @@ main =
       "src/ShellRun/Utils/Internal.hs",
       "src/ShellRun/Utils.hs",
       "src/ShellRun/Utils/Text.hs"
-    ] <> exts
+    ]
+      <> exts
 
+-- This is needed because DocTest does not read the cabal
+-- file's default-extensions
 exts :: [String]
 exts =
   [ "-XDerivingVia",
@@ -25,6 +30,7 @@ exts =
     "-XMultiParamTypeClasses",
     "-XMultiWayIf",
     "-XNamedFieldPuns",
+    "-XNoImplicitPrelude",
     "-XNumericUnderscores",
     "-XOverloadedStrings",
     "-XScopedTypeVariables",

@@ -4,6 +4,8 @@ module ShellRun.Math.Supremum
   )
 where
 
+import ShellRun.Prelude
+
 -- | Newtype wrapper for easily deriving 'Semigroup' and 'Monoid' instances.
 newtype Supremum a = MkSupremum a
   deriving stock (Bounded, Eq, Ord)

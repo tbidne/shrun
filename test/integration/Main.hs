@@ -4,7 +4,6 @@ module Main (main) where
 import Control.Monad.Reader qualified as MTL
 import Control.Monad.Writer qualified as MTL
 import Data.Functor.Identity (Identity (..))
-import Data.Text (Text)
 import MockEnv (MockEnv (..))
 import MockEnv qualified
 import MockShell.BadLegendMockShell (BadLegendMockShell (..))
@@ -12,6 +11,7 @@ import MockShell.GoodMockShell (GoodMockShell (..))
 import MockShell.MockShellBase (MockShellBase (..))
 import MockShell.NoLegendMockShell (NoLegendMockShell (..))
 import ShellRun qualified
+import ShellRun.Prelude
 import Test.Hspec (Spec, shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty qualified as T

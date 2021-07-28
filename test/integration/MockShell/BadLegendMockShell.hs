@@ -1,14 +1,12 @@
 -- | Provides the 'GoodMockShell' type.
 module MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
 
-import Control.Monad.Reader (MonadReader)
-import Control.Monad.Writer (MonadWriter)
-import Data.Text (Text)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Legend (LegendErr (..))
 import ShellRun.Logging (MonadLogger (..))
+import ShellRun.Prelude
 
 -- | 'BadLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the path to the legend file is bad.

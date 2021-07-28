@@ -3,6 +3,7 @@ module Main (main) where
 
 import Constants qualified
 import Data.Functor (($>))
+import ShellRun.Prelude
 import Success qualified
 import SuccessCommandLogging qualified
 import SuccessShowKey qualified

@@ -10,12 +10,12 @@ module Props.Generators
 where
 
 import Data.Int (Int64)
-import Data.Text (Text)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import ShellRun.Math (NonNegative (..), Positive (..))
 import ShellRun.Math qualified as Math
+import ShellRun.Prelude
 import ShellRun.Utils.Text (NonEmptyText)
 import ShellRun.Utils.Text qualified as TextUtils
 import System.Clock (TimeSpec (..))

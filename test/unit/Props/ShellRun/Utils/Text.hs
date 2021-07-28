@@ -5,6 +5,7 @@ import Data.Text qualified as Txt
 import Hedgehog ((===))
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
+import ShellRun.Prelude
 import ShellRun.Utils.Text qualified as TextUtils
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T

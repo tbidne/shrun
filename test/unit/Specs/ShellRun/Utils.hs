@@ -4,6 +4,7 @@ module Specs.ShellRun.Utils (specs) where
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Math qualified as Math
+import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec

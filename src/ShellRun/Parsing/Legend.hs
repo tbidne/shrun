@@ -5,17 +5,17 @@ module ShellRun.Parsing.Legend
 where
 
 import Control.Exception qualified as Ex
-import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Parsing.Legend.Internal qualified as Internal
+import ShellRun.Prelude
 
 -- | Given a filepath, attempts to parse the file's contents into
 -- a 'LegendMap'. If the file does not exist or the parsing fails
 -- (see 'Internal.linesToMap'), an error will be returned.
 legendPathToMap :: Text -> IO (Either LegendErr LegendMap)
 legendPathToMap legendPath = do
-  res <- Ex.try (readFile strPath) :: IO (Either Ex.SomeException String)
+  res <- Ex.try (readFile legendPath) :: IO (Either Ex.SomeException Text)
   pure $ case res of
     Left err ->
       Left $
@@ -23,7 +23,5 @@ legendPathToMap legendPath = do
           "Error reading legend file `"
             <> legendPath
             <> "`: "
-            <> T.pack (show err)
-    Right contents -> Internal.linesToMap $ T.lines $ T.pack contents
-  where
-    strPath = T.unpack legendPath
+            <> showt err
+    Right contents -> Internal.linesToMap $ T.lines contents

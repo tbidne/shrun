@@ -9,6 +9,7 @@ import Hedgehog qualified as H
 import Props.Generators qualified as PGens
 import ShellRun.Math (NonNegative, Positive)
 import ShellRun.Math qualified as Math
+import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (TimeSpec)
 import Test.Tasty (TestTree)

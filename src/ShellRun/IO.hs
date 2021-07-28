@@ -16,8 +16,6 @@ import Control.Monad.Loops qualified as Loops
 import Data.Bifunctor qualified as Bifunctor
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
-import Data.Functor (($>))
-import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Conversions qualified as TConvert
 import GHC.IO.Handle (BufferMode (..), Handle)
@@ -28,10 +26,12 @@ import ShellRun.Data.IO (Stderr (..), Stdout (..))
 import ShellRun.Logging (LogQueue (..))
 import ShellRun.Logging qualified as Logging
 import ShellRun.Math (NonNegative (..))
+import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import System.Clock (Clock (..))
 import System.Clock qualified as C
 import System.Exit (ExitCode (..))
+import System.IO (FilePath)
 import System.Posix.IO.ByteString qualified as PBS
 import System.Posix.Terminal qualified as PTerm
 import System.Process (CreateProcess (..), StdStream (..))
@@ -188,8 +188,7 @@ readHandle commandDisplay cmd handle = do
       getStderr
         . makeStdErr commandDisplay cmd
         . (<>) prefix
-        . T.pack
-        . show
+        . showt
     readEx = displayEx "IOException reading handle: "
     utf8Err = displayEx "Could not decode UTF-8: "
 

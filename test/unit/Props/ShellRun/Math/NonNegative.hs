@@ -5,6 +5,7 @@ import Hedgehog ((===))
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
 import ShellRun.Math.NonNegative qualified as NN
+import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH

@@ -1,16 +1,14 @@
 -- | Provides the 'GoodMockShell' type.
 module MockShell.GoodMockShell (GoodMockShell (..)) where
 
-import Control.Monad.Reader (MonadReader)
-import Control.Monad.Writer (MonadWriter)
 import Control.Monad.Writer qualified as MTL
 import Data.Map.Strict qualified as Map
-import Data.Text (Text)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Logging (MonadLogger (..))
+import ShellRun.Prelude
 
 -- | 'GoodMockShell' is intended to test a \"Happy path\" run of
 -- 'ShellRun.runShell'.

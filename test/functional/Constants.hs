@@ -15,7 +15,7 @@ module Constants
 where
 
 import Data.String (IsString)
-import Data.Text (Text)
+import ShellRun.Prelude
 
 -- | Expected timeout 'Text'.
 cancelled :: Text

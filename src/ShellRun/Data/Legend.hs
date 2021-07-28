@@ -6,7 +6,7 @@ module ShellRun.Data.Legend
 where
 
 import Data.Map.Strict (Map)
-import Data.Text (Text)
+import ShellRun.Prelude
 
 -- | Various errors that can occur while processing the legend.
 data LegendErr
