@@ -12,7 +12,6 @@ import Control.Monad qualified as M
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Loops qualified as Loops
 import Control.Monad.Reader qualified as MTL
-import Data.Foldable qualified as Fold
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
@@ -80,7 +79,7 @@ runCommands commands = UAsync.withAsync printLogQueue $ \printer -> do
   Logging.writeQueue logQueue $ Logging.logInfoBlue totalTimeTxt
 
   remainingLogs <- Logging.flushQueue logQueue
-  Fold.traverse_ Logging.putLog remainingLogs
+  traverse_ Logging.putLog remainingLogs
 
 runCommand ::
   ( HasCommandDisplay env,
@@ -187,4 +186,4 @@ printLogQueue ::
   m ()
 printLogQueue = do
   logQueue <- MTL.asks getLogQueue
-  M.forever $ Logging.readQueue logQueue >>= Fold.traverse_ Logging.putLog
+  M.forever $ Logging.readQueue logQueue >>= traverse_ Logging.putLog
