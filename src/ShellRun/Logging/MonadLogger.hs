@@ -20,13 +20,12 @@ module ShellRun.Logging.MonadLogger
   )
 where
 
-import Control.Monad.Reader (ReaderT)
 import Control.Monad.Reader qualified as MTL
 import Data.Functor ((<&>))
-import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log
+import ShellRun.Prelude
 import System.Console.Pretty qualified as P
 import System.Console.Terminal.Size (Window (..))
 import System.Console.Terminal.Size qualified as TermSz
@@ -49,8 +48,8 @@ instance MonadLogger IO where
     clear
     logFn $ P.color color $ prefix <> msg'
     where
-      logLine = putStrLn . T.unpack
-      logNoLine txt = putStr (T.unpack txt) *> IO.hFlush IO.stdout
+      logLine = putStrLn
+      logNoLine txt = putStr txt *> IO.hFlush IO.stdout
 
   clear = do
     -- Clear the entire term, fallback to 80 if we cannot get the width.
@@ -59,7 +58,7 @@ instance MonadLogger IO where
         Nothing -> T.pack $ replicate 80 ' '
         Just Window {width} -> T.pack $ replicate width ' '
 
-    putStr $ T.unpack $ "\r" <> spaces <> "\r"
+    putStr $ "\r" <> spaces <> "\r"
 
 instance MonadLogger m => MonadLogger (ReaderT e m) where
   putLog = MTL.lift . putLog

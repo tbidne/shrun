@@ -8,7 +8,6 @@ import Control.Monad qualified as M
 import Data.Map.Strict qualified as Map
 import Data.Set (Set)
 import Data.Set qualified as Set
-import Data.Text (Text)
 import Hedgehog (MonadGen, PropertyT)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
@@ -16,6 +15,7 @@ import Hedgehog.Range qualified as Range
 import ShellRun.Data.Command qualified as Command
 import ShellRun.Data.Legend (LegendMap)
 import ShellRun.Parsing.Commands qualified as ParseCommands
+import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH

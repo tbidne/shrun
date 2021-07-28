@@ -3,7 +3,6 @@ module Props.ShellRun.Parsing.Legend.Internal (props) where
 
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
-import Data.Text (Text)
 import Data.Text qualified as Txt
 import Hedgehog (MonadGen, PropertyT, (===))
 import Hedgehog qualified as H
@@ -11,6 +10,7 @@ import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import ShellRun.Data.Legend (LegendMap)
 import ShellRun.Parsing.Legend.Internal qualified as Internal
+import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH

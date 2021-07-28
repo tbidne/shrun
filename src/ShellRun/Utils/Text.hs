@@ -10,8 +10,8 @@ module ShellRun.Utils.Text
   )
 where
 
-import Data.Text (Text)
 import Data.Text qualified as T
+import ShellRun.Prelude
 
 -- | Newtype wrapper for non-empty 'Text'.
 newtype NonEmptyText = MkNonEmptyText

@@ -5,6 +5,7 @@ import Control.Monad.Reader qualified as MTL
 import Data.Text qualified as T
 import ShellRun qualified as SR
 import ShellRun.Parsing.Env qualified as Env
+import ShellRun.Prelude
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
 import Test.Hspec (Spec)

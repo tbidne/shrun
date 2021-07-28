@@ -5,6 +5,7 @@ import Data.Map.Strict qualified as Map
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Parsing.Commands qualified as ParseCommands
+import ShellRun.Prelude
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)

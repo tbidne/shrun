@@ -25,6 +25,7 @@ source-repository head
 
 common common-exts
   default-extensions:
+    NoImplicitPrelude
     DerivingVia
     FlexibleInstances
     ImportQualifiedPost
@@ -68,6 +69,7 @@ library
     ShellRun.Parsing.Env
     ShellRun.Parsing.Legend
     ShellRun.Parsing.Legend.Internal
+    ShellRun.Prelude
     ShellRun.Utils
     ShellRun.Utils.Internal
     ShellRun.Utils.Text
@@ -200,7 +202,8 @@ test-suite doctest
   main-is:          Main.hs
   build-depends:
     , base
-    , doctest  >=0.16.3 && <0.19
+    , doctest    >=0.16.3 && <0.19
+    , shell-run
 
   hs-source-dirs:   test/doctest
   default-language: Haskell2010

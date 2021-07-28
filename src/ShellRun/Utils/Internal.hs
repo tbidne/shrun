@@ -3,20 +3,17 @@
 -- | Internal module for utilities.
 module ShellRun.Utils.Internal
   ( divWithRem,
-    monoBimap,
     TimeSummary (..),
     secondsToTimeSummary,
     formatTimeSummary,
   )
 where
 
-import Data.Bifunctor (Bifunctor)
-import Data.Bifunctor qualified as Bifunctor
 import Data.Foldable qualified as Fold
-import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Math (NonNegative, Positive, REquals (..))
 import ShellRun.Math qualified as Math
+import ShellRun.Prelude
 
 -- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
 --
@@ -106,13 +103,4 @@ pluralize val txt
   | otherwise = valUnit <> "s"
   where
     n = Math.getNonNegative val
-    valUnit = T.pack (show n) <> txt
-
--- | Convenience function for mapping @(a -> b)@ over a monomorphic bifunctor.
---
--- Example:
---
--- >>> monoBimap length ("hey","listen")
--- (3,6)
-monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
-monoBimap f = Bifunctor.bimap f f
+    valUnit = showt n <> txt

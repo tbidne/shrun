@@ -1,6 +1,7 @@
 -- | Specs for ShellRun.Utils.Text.
 module Specs.ShellRun.Utils.Text (specs) where
 
+import ShellRun.Prelude
 import ShellRun.Utils.Text qualified as TextUtils
 import Test.Hspec (shouldBe)
 import Test.Hspec qualified as Hspec

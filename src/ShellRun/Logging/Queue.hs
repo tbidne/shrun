@@ -14,9 +14,9 @@ where
 import Control.Concurrent.STM qualified as STM
 import Control.Concurrent.STM.TBQueue (TBQueue)
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
-import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.IO.Class qualified as MIO
 import ShellRun.Logging.Log (Log)
+import ShellRun.Prelude
 
 -- | Newtype wrapper over a 'TBQueue'.
 newtype LogQueue = MkLogQueue {getLogQueue :: TBQueue Log}

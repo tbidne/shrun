@@ -15,6 +15,7 @@ import ShellRun.Data.Env (Env (..))
 import ShellRun.Logging (Log, LogQueue (..))
 import ShellRun.Parsing.Args (Args (..))
 import ShellRun.Parsing.Args qualified as Args
+import ShellRun.Prelude
 
 -- | Runs the parser.
 runParser :: IO Env

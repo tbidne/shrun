@@ -2,6 +2,7 @@
 module Main (main) where
 
 import Props qualified
+import ShellRun.Prelude
 import Specs qualified
 import Test.Tasty qualified as T
 

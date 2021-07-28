@@ -6,7 +6,7 @@ module ShellRun.Env
   )
 where
 
-import Data.Text (Text)
+import ShellRun.Prelude
 
 -- | Path to legend file.
 class HasLegend env where

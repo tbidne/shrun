@@ -8,6 +8,7 @@ import ShellRun.Math.NonNegative (NonNegative)
 import ShellRun.Math.NonNegative qualified as NN
 import ShellRun.Math.Positive (Positive)
 import ShellRun.Math.Positive qualified as P
+import ShellRun.Prelude
 
 -- | The 'RAdd' typeclass provides addition. The intention is to be used
 -- with newtype'd numbers that carry some sort of invariant, e.g.,

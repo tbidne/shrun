@@ -9,9 +9,9 @@ where
 import Control.Applicative qualified as A
 import Control.Monad qualified as M
 import Data.Map.Strict qualified as Map
-import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
+import ShellRun.Prelude
 import ShellRun.Utils.Text qualified as TextUtils
 
 -- | Attempts to parse the given ['Text'] into 'LegendMap'.
