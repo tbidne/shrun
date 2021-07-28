@@ -12,7 +12,7 @@ import ShellRun.Async qualified as ShAsync
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (Env (..))
-import ShellRun.Data.Legend (LegendErr)
+import ShellRun.Data.Legend (LegendErr, LegendMap)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging (MonadLogger)
 import ShellRun.Logging qualified as Logging
@@ -21,6 +21,7 @@ import ShellRun.Parsing.Legend qualified as ParseLegend
 import ShellRun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.
+type ShellT :: Type -> (Type -> Type) -> Type -> Type
 newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}
   deriving
     ( Functor,
@@ -38,7 +39,10 @@ instance
   (MonadIO m, MonadLogger m, MonadUnliftIO m) =>
   MonadShell (ShellT Env m)
   where
+  legendPathToMap :: Text -> ShellT Env m (Either LegendErr LegendMap)
   legendPathToMap = MTL.liftIO . ParseLegend.legendPathToMap
+
+  runCommands :: [Command] -> ShellT Env m ()
   runCommands = ShAsync.runCommands
 
 -- | `runShell` is the entry point for running shell commands, i.e.,

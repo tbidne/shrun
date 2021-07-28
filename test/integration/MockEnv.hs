@@ -11,9 +11,11 @@ data MockEnv = MkMockEnv
   }
 
 instance HasLegend MockEnv where
+  getLegend :: MockEnv -> Maybe Text
   getLegend = legend
 
 instance HasCommands MockEnv where
+  getCommands :: MockEnv -> [Text]
   getCommands = commands
 
 -- | Constructs a default 'MockEnv'.

@@ -9,6 +9,7 @@ import ShellRun.Data.Legend (LegendErr, LegendMap)
 import ShellRun.Prelude
 
 -- | The core typeclass for @shell-run@.
+type MonadShell :: (Type -> Type) -> Constraint
 class Monad m => MonadShell m where
   -- | Given a filepath, attempts to read and parse the file into
   -- a `LegendMap`.

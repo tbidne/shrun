@@ -23,6 +23,8 @@ infixl 7 *:*
 -- | 'NonNegative' * 'NonNegative' = 'NonNegative'
 instance RMult NonNegative NonNegative where
   type Prod NonNegative NonNegative = NonNegative
+
+  (*:*) :: NonNegative -> NonNegative -> NonNegative
   x *:* y = NN.unsafeNonNegative $ x' * y'
     where
       x' = NN.getNonNegative x
@@ -31,6 +33,8 @@ instance RMult NonNegative NonNegative where
 -- | 'NonNegative' * 'Positive' = 'NonNegative'
 instance RMult NonNegative Positive where
   type Prod NonNegative Positive = NonNegative
+
+  (*:*) :: NonNegative -> Positive -> NonNegative
   x *:* y = NN.unsafeNonNegative $ x' * y'
     where
       x' = NN.getNonNegative x
@@ -39,6 +43,8 @@ instance RMult NonNegative Positive where
 -- | 'Positive' * 'NonNegative' = 'NonNegative'
 instance RMult Positive NonNegative where
   type Prod Positive NonNegative = NonNegative
+
+  (*:*) :: Positive -> NonNegative -> NonNegative
   x *:* y = NN.unsafeNonNegative $ x' * y'
     where
       x' = P.getPositive x
@@ -47,6 +53,8 @@ instance RMult Positive NonNegative where
 -- | 'Positive' * 'Positive' = 'Positive'
 instance RMult Positive Positive where
   type Prod Positive Positive = Positive
+
+  (*:*) :: Positive -> Positive -> Positive
   x *:* y = P.unsafePositive $ x' * y'
     where
       x' = P.getPositive x

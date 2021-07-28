@@ -30,10 +30,12 @@ data Args = MkArgs
   deriving (Eq, Show)
 
 instance Semigroup Args where
+  (<>) :: Args -> Args -> Args
   (MkArgs l t cl cd c) <> (MkArgs l' t' cl' cd' c') =
     MkArgs (l <> l') (t <|> t') (cl <> cl') (cd <> cd') (c <> c')
 
 instance Monoid Args where
+  mempty :: Args
   mempty = MkArgs mempty Nothing mempty mempty mempty
 
 -- | 'ParserInfo' type for parsing 'Args'.
