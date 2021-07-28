@@ -1,7 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | This module provides the `Log` type and associated functions.
 module ShellRun.Logging.Log
   ( -- * Types for logging

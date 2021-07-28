@@ -1,8 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Provides the `MonadLogger` class, used for having pretty logs in
 -- a monadic setting. Logging via this class includes both textual
 -- prefixes (e.g. @[INFO]@, @[ERROR]@) and also common terminal control

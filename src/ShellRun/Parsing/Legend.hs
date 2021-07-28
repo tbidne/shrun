@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Provides parsing a legend file into a 'LegendMap'.
 module ShellRun.Parsing.Legend
   ( legendPathToMap,

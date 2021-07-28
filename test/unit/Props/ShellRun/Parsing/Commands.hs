@@ -1,5 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 -- | Property tests for ShellRun.Parsing.Commands.
 module Props.ShellRun.Parsing.Commands
   ( props,

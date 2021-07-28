@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Functional test for a successful run that displays the key rather
 -- than the command.
 module SuccessShowKey (spec) where

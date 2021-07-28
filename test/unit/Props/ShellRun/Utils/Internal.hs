@@ -1,7 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE NumericUnderscores #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Property tests for ShellRun.Utils.Internal.
 module Props.ShellRun.Utils.Internal
   ( props,

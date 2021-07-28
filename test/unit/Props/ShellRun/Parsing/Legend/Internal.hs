@@ -1,7 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE NumericUnderscores #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Property tests for ShellRun.Parsing.Legend.Internal.
 module Props.ShellRun.Parsing.Legend.Internal (props) where
 

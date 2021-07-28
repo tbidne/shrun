@@ -1,12 +1,10 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 module Main (main) where
 
 import Test.DocTest qualified as DocTest
 
 main :: IO ()
 main =
-  DocTest.doctest
+  DocTest.doctest $
     [ "-isrc",
       "src/ShellRun/Math/NonNegative.hs",
       "src/ShellRun/Math/Positive.hs",
@@ -15,4 +13,22 @@ main =
       "src/ShellRun/Utils/Internal.hs",
       "src/ShellRun/Utils.hs",
       "src/ShellRun/Utils/Text.hs"
-    ]
+    ] <> exts
+
+exts :: [String]
+exts =
+  [ "-XDerivingVia",
+    "-XFlexibleInstances",
+    "-XImportQualifiedPost",
+    "-XInstanceSigs",
+    "-XLambdaCase",
+    "-XMultiParamTypeClasses",
+    "-XMultiWayIf",
+    "-XNamedFieldPuns",
+    "-XNumericUnderscores",
+    "-XOverloadedStrings",
+    "-XScopedTypeVariables",
+    "-XStandaloneKindSignatures",
+    "-XTupleSections",
+    "-XTypeFamilies"
+  ]

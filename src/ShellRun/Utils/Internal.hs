@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE NumericUnderscores #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for utilities.
@@ -20,8 +17,6 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import ShellRun.Math (NonNegative, Positive, REquals (..))
 import ShellRun.Math qualified as Math
-
--- $ >>> :set -XNumericUnderscores
 
 -- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
 --

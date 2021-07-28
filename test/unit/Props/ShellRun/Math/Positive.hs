@@ -1,5 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 -- | Property tests for ShellRun.Math.Positive.
 module Props.ShellRun.Math.Positive (props) where
 

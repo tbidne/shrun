@@ -1,10 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE NumericUnderscores #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections #-}
-
 -- | Provides the low-level `IO` functions for running shell commands.
 module ShellRun.IO
   ( sh,
@@ -190,6 +183,7 @@ readHandle commandDisplay cmd handle = do
     Right (Just o) -> ReadSuccess $ name <> ": " <> stripChars (T.pack o)
   where
     name = Utils.displayCommand commandDisplay cmd
+    displayEx :: Show a => Text -> a -> Text
     displayEx prefix =
       getStderr
         . makeStdErr commandDisplay cmd

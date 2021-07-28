@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Specs for ShellRun.Utils.Text.
 module Specs.ShellRun.Utils.Text (specs) where
 

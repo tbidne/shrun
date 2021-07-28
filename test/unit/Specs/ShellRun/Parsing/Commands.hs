@@ -1,6 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 -- | Specs for ShellRun.Parsing.Commands.
 module Specs.ShellRun.Parsing.Commands (specs) where
 

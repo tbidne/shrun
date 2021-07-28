@@ -1,5 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-
 -- | Provides the 'Supremum' type.
 module ShellRun.Math.Supremum
   ( Supremum (..),

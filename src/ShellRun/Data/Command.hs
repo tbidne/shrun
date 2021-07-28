@@ -1,5 +1,3 @@
-{-# LANGUAGE DerivingVia #-}
-
 -- | Provides the 'Command' wrapper for commands.
 module ShellRun.Data.Command (Command (..)) where
 
