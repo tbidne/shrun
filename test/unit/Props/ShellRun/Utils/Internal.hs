@@ -28,9 +28,9 @@ secondsToTimeSummary = TH.testProperty "secondsToTimeSummary transforms correctl
     let secondsRaw = Math.getNonNegative totalSeconds
         ts@(MkTimeSummary d h m s) = UtilsI.secondsToTimeSummary totalSeconds
     H.annotateShow ts
-    H.cover 20 "1 day <= time" (secondsRaw >= 86_400)
-    H.cover 15 "1 hour <= time < 1 day" (secondsRaw >= 3_600 && secondsRaw < 86_400)
-    H.cover 10 "1 minute <= time < 1 hour" (secondsRaw >= 60 && secondsRaw < 3_600)
+    H.cover 15 "1 day <= time" (secondsRaw >= 86_400)
+    H.cover 10 "1 hour <= time < 1 day" (secondsRaw >= 3_600 && secondsRaw < 86_400)
+    H.cover 5 "1 minute <= time < 1 hour" (secondsRaw >= 60 && secondsRaw < 3_600)
     H.cover 2 "time < 1 minute" (secondsRaw < 60)
     -- days = totalSeconds / 86,400
     H.assert $ d =:= (secondsRaw `div` 86_400)
