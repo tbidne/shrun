@@ -33,15 +33,12 @@
             root = ./.;
             modifier = drv:
               pkgs.haskell.lib.addBuildTools drv (with pkgs.haskellPackages; [
-                cabal-fmt
                 cabal-install
                 cabal-plan
                 haskell-language-server
                 hlint
                 ghcid
-                implicit-hie
                 ormolu
-                pkgs.nixpkgs-fmt
               ]);
             overrides = final: prev: with pkgs.haskellPackages; {
               algebra-simple =

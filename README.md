@@ -5,7 +5,6 @@
 ![cabal](https://github.com/tbidne/shell-run/workflows/cabal/badge.svg?branch=main)
 ![stack](https://github.com/tbidne/shell-run/workflows/stack/badge.svg?branch=main)
 ![nix](https://github.com/tbidne/shell-run/workflows/nix/badge.svg?branch=main)
-![haddock](https://github.com/tbidne/shell-run/workflows/haddock/badge.svg?branch=main)
 ![style](https://github.com/tbidne/shell-run/workflows/style/badge.svg?branch=main)
 
 ![example](./screens/example.png)

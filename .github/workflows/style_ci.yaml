@@ -18,18 +18,27 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Setup nix
-        uses: cachix/install-nix-action@v12
+        uses: cachix/install-nix-action@v13
         with:
-          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/d3ba49889a76539ea0f7d7285b203e7f81326ded.tar.gz:nixos-config=configuration.nix
+          # Got hash from https://github.com/cachix/install-nix-action/issues/83
+          install_url: https://nixos-nix-install-tests.cachix.org/serve/pqndq1i9g5agiyr5iwwyl061s1c71kl6/install
+          install_options: '--tarball-url-prefix https://nixos-nix-install-tests.cachix.org/serve'
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            substituters = https://cache.nixos.org/ https://hydra.iohk.io
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
 
       - name: cabal-fmt
-        run: nix-shell shell.nix --command "bash ./ci_scripts/cabal-fmt.sh"
+        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#cabal-fmt -- --check
 
       - name: hlint
-        run: nix-shell shell.nix --command "bash ./ci_scripts/hlint.sh"
+        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#hlint
 
       - name: ormolu
-        run: nix-shell shell.nix --command "bash ./ci_scripts/ormolu.sh"
+        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#ormolu -- --mode check
 
       - name: nixpkgs-fmt
-        run: nix-shell shell.nix --command "bash ./ci_scripts/nixpkgs-fmt.sh"
+        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#nixpkgs-fmt -- --check
+
+      - name: haddock
+        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#haddock_8-10-7 -- --exclude ShellRun.Prelude
