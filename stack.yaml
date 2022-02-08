@@ -8,6 +8,10 @@ extra-deps:
   commit: 0830f170d42abaea0ebb2c3007ddc865b1aa8fd3
 - git: https://github.com/tbidne/refined-extras.git
   commit: 31992227bdc3b193c32dfa97a8ca6a4af0c4a45b
+flags:
+  refined:
+    aeson: false
+    quickcheck: false
 
 nix:
   shell-file: shell.nix

@@ -7,6 +7,9 @@ package shell-run
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
 
+package refined
+  flags: -aeson -quickcheck
+
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
