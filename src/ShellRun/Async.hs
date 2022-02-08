@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | This module provides the `runCommands` function used for running a list
 --   of commands asynchronously.
 module ShellRun.Async
@@ -14,6 +16,9 @@ import Control.Monad.Loops qualified as Loops
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
+import Numeric.Algebra (ASemigroup (..))
+import Refined (NonNegative, Refined)
+import Refined qualified as R
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env
   ( CommandLogging (..),
@@ -23,11 +28,10 @@ import ShellRun.Data.Env
     HasTimeout (..),
   )
 import ShellRun.Data.IO (Stderr (..))
+import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging (Log (..), LogLevel (..), LogMode (..), MonadLogger (..))
 import ShellRun.Logging qualified as Logging
-import ShellRun.Math (NonNegative, RAdd (..))
-import ShellRun.Math qualified as Math
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
@@ -126,12 +130,12 @@ counter ::
   m ()
 counter = do
   timeout <- asks getTimeout
-  timer <- liftIO $ IORef.newIORef $ Math.unsafeNonNegative 0
-  let inc = Math.unsafeNonNegative 1
+  timer <- liftIO $ IORef.newIORef $$(R.refineTH @NonNegative @Int 0)
+  let inc = $$(R.refineTH @NonNegative @Int 1)
   Loops.whileM_ (keepRunning timer timeout) $ do
     elapsed <- liftIO $ do
       Concurrent.threadDelay 1_000_000
-      IORef.modifyIORef' timer (+:+ inc)
+      IORef.modifyIORef' timer (.+. inc)
       IORef.readIORef timer
     logCounter elapsed
 
@@ -140,7 +144,7 @@ logCounter ::
     MonadIO m,
     MonadReader env m
   ) =>
-  NonNegative ->
+  Refined NonNegative Int ->
   m ()
 logCounter elapsed = do
   logQueue <- asks getLogQueue
@@ -157,12 +161,12 @@ keepRunning ::
     MonadIO m,
     MonadReader env m
   ) =>
-  IORef NonNegative ->
-  Maybe NonNegative ->
+  IORef (Refined NonNegative Int) ->
+  Maybe Timeout ->
   m Bool
-keepRunning timer to = do
+keepRunning timer mto = do
   elapsed <- liftIO $ IORef.readIORef timer
-  if timedOut elapsed to
+  if timedOut elapsed mto
     then do
       logQueue <- asks getLogQueue
       Logging.writeQueue logQueue $
@@ -170,11 +174,11 @@ keepRunning timer to = do
       pure False
     else pure True
 
-timedOut :: NonNegative -> Maybe NonNegative -> Bool
+timedOut :: Refined NonNegative Int -> Maybe Timeout -> Bool
 timedOut timer =
   \case
     Nothing -> False
-    Just t -> timer > t
+    Just (MkTimeout t) -> timer > t
 
 printLogQueue ::
   ( HasLogQueue env,

@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Provides functionality for parsing command line arguments.
 module ShellRun.Parsing.Args
   ( Args (..),
@@ -8,13 +10,15 @@ where
 import Control.Applicative qualified as App
 import Data.String (String)
 import Data.Text qualified as T
+import Numeric.Algebra (ASemigroup (..), MSemigroup (..))
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OptApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
+import Refined (NonNegative, Refined)
+import Refined qualified as R
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
-import ShellRun.Math (NonNegative, Positive, (*:*), (+:+))
-import ShellRun.Math qualified as Math
+import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Prelude
 import Text.Read qualified as Read
 import Text.Regex.PCRE ((=~))
@@ -22,7 +26,7 @@ import Text.Regex.PCRE ((=~))
 -- | Type for parsing command line args.
 data Args = MkArgs
   { aLegend :: Maybe Text,
-    aTimeout :: Maybe NonNegative,
+    aTimeout :: Maybe Timeout,
     aCommandLogging :: CommandLogging,
     aCommandDisplay :: CommandDisplay,
     aCommands :: [Text]
@@ -80,7 +84,7 @@ legendParser =
         <> " other keys recursively. Lines starting with `#` are"
         <> " considered comments and ignored."
 
-timeoutParser :: Parser (Maybe NonNegative)
+timeoutParser :: Parser (Maybe Timeout)
 timeoutParser =
   let intParser =
         OptApp.option
@@ -96,12 +100,12 @@ timeoutParser =
           )
    in App.optional intParser
 
-readTimeSeconds :: ReadM NonNegative
+readTimeSeconds :: ReadM Timeout
 readTimeSeconds = do
   v <- OptApp.auto
-  case Math.mkNonNegative v of
-    Just n -> pure n
-    Nothing ->
+  case R.refine v of
+    Right n -> pure $ MkTimeout n
+    Left _ ->
       OptApp.readerAbort $
         ErrorMsg $
           "Timeout must be non-negative, received: "
@@ -112,36 +116,38 @@ readTimeSeconds = do
 regex :: String
 regex = "^(?:([0-9])+d)?(?:([0-9])+h)?(?:([0-9])+m)?(?:([0-9])+s)?$"
 
-readTimeStr :: ReadM NonNegative
+readTimeStr :: ReadM Timeout
 readTimeStr = do
   v :: String <- OptApp.str
   let (_, _, _, matches) = v =~ regex :: (String, String, String, [String])
   case matches of
-    [d, h, m, s] ->
-      let txtMultipliers =
-            bimap T.pack Math.unsafePositive
-              <$> [ (d, 86_400),
-                    (h, 3_600),
-                    (m, 60),
-                    (s, 1)
-                  ]
+    ms@[d, h, m, s] ->
+      let zero = $$(R.refineTH @NonNegative @Int 0)
+          multipliers :: [Refined NonNegative Int]
+          multipliers =
+            [ $$(R.refineTH 86_400),
+              $$(R.refineTH 3_600),
+              $$(R.refineTH 60),
+              $$(R.refineTH 1)
+            ]
+          txtMultipliers = zip (fmap T.pack ms) multipliers
           results = traverse parseTextAndMultiply txtMultipliers
-          summed = foldl' (+:+) (Math.unsafeNonNegative 0) <$> results
+          summed = foldl' (.+.) zero <$> results
        in case summed of
             Left err -> OptApp.readerAbort err
-            Right nn -> pure nn
+            Right nn -> pure $ MkTimeout nn
     _ ->
       OptApp.readerAbort $
         ErrorMsg
           "Could not parse text as time string. Wanted e.g. 1d2h3m4s"
 
-parseTextAndMultiply :: (Text, Positive) -> Either ParseError NonNegative
-parseTextAndMultiply ("", _) = Right $ Math.unsafeNonNegative 0
+parseTextAndMultiply :: (Text, Refined NonNegative Int) -> Either ParseError (Refined NonNegative Int)
+parseTextAndMultiply ("", _) = Right $$(R.refineTH @NonNegative @Int 0)
 parseTextAndMultiply (txt, multiplier) =
   let result = textToNonNegative txt
-   in fmap (*:* multiplier) result
+   in fmap (.*. multiplier) result
 
-textToNonNegative :: Text -> Either ParseError NonNegative
+textToNonNegative :: Text -> Either ParseError (Refined NonNegative Int)
 textToNonNegative = textToInt >=> intToNN
   where
     textToInt txt = case Read.readMaybe unpacked of
@@ -149,7 +155,7 @@ textToNonNegative = textToInt >=> intToNN
       Just n -> Right n
       where
         unpacked = T.unpack txt
-    intToNN n = maybeToEither err $ Math.mkNonNegative n
+    intToNN n = first (const err) $ R.refine n
       where
         err = ErrorMsg $ "Wanted non-negative, found: " <> show n
 

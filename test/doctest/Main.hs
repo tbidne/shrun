@@ -8,8 +8,6 @@ main :: IO ()
 main =
   DocTest.doctest $
     [ "-isrc",
-      "src/ShellRun/Math/NonNegative.hs",
-      "src/ShellRun/Math/Positive.hs",
       "src/ShellRun/Parsing/Commands.hs",
       "src/ShellRun/Parsing/Legend/Internal.hs",
       "src/ShellRun/Utils/Internal.hs",
@@ -36,5 +34,6 @@ exts =
     "-XScopedTypeVariables",
     "-XStandaloneKindSignatures",
     "-XTupleSections",
+    "-XTypeApplications",
     "-XTypeFamilies"
   ]

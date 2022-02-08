@@ -39,6 +39,7 @@ common common-exts
     ScopedTypeVariables
     StandaloneKindSignatures
     TupleSections
+    TypeApplications
     TypeFamilies
 
 library
@@ -51,19 +52,14 @@ library
     ShellRun.Data.Env
     ShellRun.Data.IO
     ShellRun.Data.Legend
+    ShellRun.Data.Supremum
+    ShellRun.Data.Timeout
     ShellRun.Env
     ShellRun.IO
     ShellRun.Logging
     ShellRun.Logging.Log
     ShellRun.Logging.MonadLogger
     ShellRun.Logging.Queue
-    ShellRun.Math
-    ShellRun.Math.NonNegative
-    ShellRun.Math.Positive
-    ShellRun.Math.RAdd
-    ShellRun.Math.REquals
-    ShellRun.Math.RMult
-    ShellRun.Math.Supremum
     ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Env
@@ -75,6 +71,7 @@ library
     ShellRun.Utils.Text
 
   build-depends:
+    , algebra-simple        ^>=0.1.0.0
     , base                  ^>=4.14.1.0
     , bytestring            ^>=0.10.12
     , clock                 >=0.7.2         && <0.9
@@ -84,6 +81,7 @@ library
     , optparse-applicative  >=0.15          && <0.17
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
+    , refined               ^>=0.6
     , regex-pcre-builtin    ^>=0.95.1.1.8.44
     , stm                   ^>=2.5.0
     , terminal-size         ^>=0.3.2.1
@@ -115,8 +113,6 @@ test-suite unit
   other-modules:
     Props
     Props.Generators
-    Props.ShellRun.Math.NonNegative
-    Props.ShellRun.Math.Positive
     Props.ShellRun.Parsing.Commands
     Props.ShellRun.Parsing.Legend.Internal
     Props.ShellRun.Utils
@@ -136,6 +132,7 @@ test-suite unit
     , hedgehog              ^>=1.0.2
     , hspec                 >=2.7.1   && <2.9
     , optparse-applicative
+    , refined
     , shell-run
     , tasty                 >=1.1.0.3 && <1.5
     , tasty-hedgehog        >=1.0.1.0 && <1.2

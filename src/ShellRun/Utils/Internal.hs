@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for utilities.
@@ -10,9 +11,13 @@ module ShellRun.Utils.Internal
 where
 
 import Data.Text qualified as T
-import ShellRun.Math (NonNegative, Positive, REquals (..))
-import ShellRun.Math qualified as Math
+import Refined (NonNegative, Positive, Refined)
+import Refined qualified as R
+import Refined.Unsafe qualified as R
 import ShellRun.Prelude
+
+-- $setup
+-- >>> :set -XTemplateHaskell
 
 -- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
 --
@@ -26,64 +31,68 @@ import ShellRun.Prelude
 -- Examples:
 --
 -- >>> :{
---   let n = Math.unsafeNonNegative 34
---       d = Math.unsafePositive 5
+--   let n = $$(R.refineTH @NonNegative @Int 34)
+--       d = $$(R.refineTH @Positive @Int 5)
 --       result = divWithRem n d
---   in monoBimap Math.getNonNegative result
+--   in monoBimap R.unrefine result
 -- :}
 -- (6,4)
 --
 -- >>> :{
---   let n = Math.unsafeNonNegative 12
---       d = Math.unsafePositive 18
+--   let n = $$(R.refineTH @NonNegative @Int 12)
+--       d = $$(R.refineTH @Positive @Int 18)
 --       result = divWithRem n d
---   in monoBimap Math.getNonNegative result
+--   in monoBimap R.unrefine result
 -- :}
 -- (0,12)
-divWithRem :: NonNegative -> Positive -> (NonNegative, NonNegative)
-divWithRem n d = monoBimap Math.unsafeNonNegative (n' `div` d', n' `rem` d')
+divWithRem ::
+  Refined NonNegative Int ->
+  Refined Positive Int ->
+  (Refined NonNegative Int, Refined NonNegative Int)
+divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
   where
-    n' = Math.getNonNegative n
-    d' = Math.getPositive d
+    n' = R.unrefine n
+    d' = R.unrefine d
 
 -- | Represents a relative time.
 data TimeSummary = MkTimeSummary
-  { days :: NonNegative,
-    hours :: NonNegative,
-    minutes :: NonNegative,
-    seconds :: NonNegative
+  { days :: Refined NonNegative Int,
+    hours :: Refined NonNegative Int,
+    minutes :: Refined NonNegative Int,
+    seconds :: Refined NonNegative Int
   }
   deriving (Show)
 
 -- | Transforms 'NonNegative' @seconds@ into a 'TimeSummary'.
 --
 -- >>> :{
---   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds
---       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)
---       showSummary (MkTimeSummary d h m s) = fmap Math.getNonNegative [d, h, m, s]
+--   let -- 2 days, 7 hours, 33 minutes, 20 seconds
+--       summary = secondsToTimeSummary $$(R.refineTH @NonNegative @Int 200_000)
+--       showSummary (MkTimeSummary d h m s) = fmap R.unrefine [d, h, m, s]
 --   in showSummary summary
 -- :}
 -- [2,7,33,20]
-secondsToTimeSummary :: NonNegative -> TimeSummary
+secondsToTimeSummary :: Refined NonNegative Int -> TimeSummary
 secondsToTimeSummary nn = MkTimeSummary d h m s
   where
-    (d, daysRem) = divWithRem nn $ Math.unsafePositive 86_400
-    (h, hoursRem) = divWithRem daysRem $ Math.unsafePositive 3_600
-    (m, s) = divWithRem hoursRem $ Math.unsafePositive 60
+    (d, daysRem) = divWithRem nn $$(R.refineTH 86_400)
+    (h, hoursRem) = divWithRem daysRem $$(R.refineTH 3_600)
+    (m, s) = divWithRem hoursRem $$(R.refineTH 60)
 
 -- | Formats a 'TimeSummary' to 'Text'.
 --
 -- >>> :{
---   let totalSeconds = 200_000 -- 2 days, 7 hours, 33 minutes, 20 seconds
---       summary = secondsToTimeSummary (Math.unsafeNonNegative totalSeconds)
+--   let -- 2 days, 7 hours, 33 minutes, 20 seconds
+--       summary = secondsToTimeSummary $$(R.refineTH 200_000)
 --   in formatTimeSummary summary
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
 formatTimeSummary :: TimeSummary -> Text
 formatTimeSummary (isZero -> True) = "0 seconds"
 formatTimeSummary (MkTimeSummary d h m s) =
-  let f acc (n, units)
-        | n =:= (0 :: Int) = acc
+  let f :: [Text] -> (Refined NonNegative Int, Text) -> [Text]
+      f acc (n, units)
+        | n == $$(R.refineTH 0) = acc
         | otherwise = pluralize n units : acc
       vals = foldl' f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
    in T.intercalate ", " vals
@@ -94,12 +103,12 @@ isZero (MkTimeSummary d h m s)
   | otherwise = False
   where
     timeSum = foldl' sumUp 0 [d, h, m, s]
-    sumUp acc = (+) acc . Math.getNonNegative
+    sumUp acc = (+) acc . R.unrefine
 
-pluralize :: NonNegative -> Text -> Text
+pluralize :: Refined NonNegative Int -> Text -> Text
 pluralize val txt
   | n == 1 = valUnit
   | otherwise = valUnit <> "s"
   where
-    n = Math.getNonNegative val
+    n = R.unrefine val
     valUnit = showt n <> txt

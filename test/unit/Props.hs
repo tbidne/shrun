@@ -1,8 +1,6 @@
 -- | Runs property tests.
 module Props (props) where
 
-import Props.ShellRun.Math.NonNegative qualified as NonNegative
-import Props.ShellRun.Math.Positive qualified as Positive
 import Props.ShellRun.Parsing.Commands qualified as Commands
 import Props.ShellRun.Parsing.Legend.Internal qualified as LegendI
 import Props.ShellRun.Utils qualified as Utils
@@ -18,8 +16,6 @@ props =
     "Hedgehog Properties"
     [ Commands.props,
       LegendI.props,
-      NonNegative.props,
-      Positive.props,
       Utils.props,
       UtilsI.props,
       UtilsText.props

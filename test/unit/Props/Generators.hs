@@ -13,20 +13,20 @@ import Data.Int (Int64)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import ShellRun.Math (NonNegative (..), Positive (..))
-import ShellRun.Math qualified as Math
+import Refined (NonNegative, Positive, Refined)
+import Refined.Unsafe qualified as R
 import ShellRun.Prelude
 import ShellRun.Utils.Text (NonEmptyText)
 import ShellRun.Utils.Text qualified as TextUtils
 import System.Clock (TimeSpec (..))
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
-genNonNegative :: Gen NonNegative
-genNonNegative = Math.unsafeNonNegative <$> Gen.integral (Range.constant 0 1_000_000)
+genNonNegative :: Gen (Refined NonNegative Int)
+genNonNegative = R.unsafeRefine <$> Gen.integral (Range.constant 0 1_000_000)
 
 -- | Generates 'Positive' in [1, 1_000_000].
-genPositive :: Gen Positive
-genPositive = Math.unsafePositive <$> Gen.integral (Range.constant 1 1_000_000)
+genPositive :: Gen (Refined Positive Int)
+genPositive = R.unsafeRefine <$> Gen.integral (Range.constant 1 1_000_000)
 
 -- | Generates 'TimeSpec' where 'sec' and 'nsec' are random 'Int64'.
 genTimeSpec :: Gen TimeSpec

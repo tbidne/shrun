@@ -1,5 +1,5 @@
 -- | Provides the 'Supremum' type.
-module ShellRun.Math.Supremum
+module ShellRun.Data.Supremum
   ( Supremum (..),
   )
 where

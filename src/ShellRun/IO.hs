@@ -19,12 +19,12 @@ import Data.Text qualified as T
 import Data.Text.Conversions qualified as TConvert
 import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
+import Refined (NonNegative, Refined)
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Data.IO (Stderr (..), Stdout (..))
 import ShellRun.Logging (LogQueue (..))
 import ShellRun.Logging qualified as Logging
-import ShellRun.Math (NonNegative (..))
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import System.Clock (Clock (..))
@@ -71,7 +71,7 @@ tryTimeSh ::
   CommandDisplay ->
   Command ->
   Maybe FilePath ->
-  IO (Either (NonNegative, Stderr) NonNegative)
+  IO (Either (Refined NonNegative Int, Stderr) (Refined NonNegative Int))
 tryTimeSh commandDisplay cmd path = do
   start <- C.getTime Monotonic
   res <- tryShExitCode commandDisplay cmd path
@@ -86,7 +86,7 @@ tryTimeShCommandOutput ::
   CommandDisplay ->
   Command ->
   Maybe FilePath ->
-  IO (Either (NonNegative, Stderr) NonNegative)
+  IO (Either (Refined NonNegative Int, Stderr) (Refined NonNegative Int))
 tryTimeShCommandOutput logQueue commandDisplay cmd@(MkCommand _ cmdTxt) path = do
   -- Create pseudo terminal here because otherwise we have trouble streaming
   -- input from child processes. Data gets buffered and trying to override the

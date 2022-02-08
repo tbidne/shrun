@@ -5,7 +5,7 @@ import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
-import ShellRun.Math qualified as Math
+import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Parsing.Args (Args (..))
 import ShellRun.Parsing.Args qualified as Args
 import ShellRun.Prelude
@@ -13,6 +13,7 @@ import Test.Hspec (Expectation, SpecWith, shouldBe)
 import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
+import Unsafe.Coerce qualified as UC
 
 -- | Entry point for ShellRun.Parsing.Args specs.
 specs :: IO [TestTree]
@@ -55,19 +56,19 @@ timeoutSpecs :: SpecWith ()
 timeoutSpecs = Hspec.describe "Timeout arg parsing" $ do
   Hspec.it "Should parse short legend seconds" $ do
     let argList = ["-t7", "command"]
-        expected = Just $ mempty {aTimeout = Math.mkNonNegative 7, aCommands = ["command"]}
+        expected = Just $ mempty {aTimeout = toTO 7, aCommands = ["command"]}
     verifyResult argList expected
   Hspec.it "Should parse long legend seconds" $ do
     let argList = ["--timeout=7", "command"]
-        expected = Just $ mempty {aTimeout = Math.mkNonNegative 7, aCommands = ["command"]}
+        expected = Just $ mempty {aTimeout = toTO 7, aCommands = ["command"]}
     verifyResult argList expected
   Hspec.it "Should parse time string" $ do
     let argList = ["--timeout=2h4s", "command"]
-        expected = Just $ mempty {aTimeout = Math.mkNonNegative 7204, aCommands = ["command"]}
+        expected = Just $ mempty {aTimeout = toTO 7204, aCommands = ["command"]}
     verifyResult argList expected
   Hspec.it "Should parse full time string" $ do
     let argList = ["--timeout=1d2h3m4s", "command"]
-        expected = Just $ mempty {aTimeout = Math.mkNonNegative 93784, aCommands = ["command"]}
+        expected = Just $ mempty {aTimeout = toTO 93784, aCommands = ["command"]}
     verifyResult argList expected
   Hspec.it "Word should fail" $ do
     let argList = ["--timeout=cat", "command"]
@@ -77,6 +78,9 @@ timeoutSpecs = Hspec.describe "Timeout arg parsing" $ do
     let argList = ["--timeout=-7", "command"]
         expected = Nothing
     verifyResult argList expected
+  where
+    toTO :: Int -> Maybe Timeout
+    toTO n = Just (UC.unsafeCoerce n)
 
 commandLoggingSpecs :: SpecWith ()
 commandLoggingSpecs = Hspec.describe "CommandLogging arg parsing" $ do

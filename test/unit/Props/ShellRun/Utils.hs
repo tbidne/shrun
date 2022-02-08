@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Property tests for ShellRun.Utils.
 module Props.ShellRun.Utils
   ( props,
@@ -7,8 +9,8 @@ where
 import Hedgehog (Gen, PropertyT)
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
-import ShellRun.Math (NonNegative, Positive)
-import ShellRun.Math qualified as Math
+import Refined (NonNegative, Positive, Refined)
+import Refined qualified as R
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (TimeSpec)
@@ -23,18 +25,20 @@ props = T.testGroup "ShellRun.Utils" [diffTimeProps, divWithRemProps]
 diffTimeProps :: TestTree
 diffTimeProps = TH.testProperty "diffTime" $
   H.property $ do
-    (t1, t2) <- H.forAll genTimeSpecs
+    t1 <- H.forAll PGens.genTimeSpec
+    t2 <- H.forAll PGens.genTimeSpec
     let result = U.diffTime t1 t2
-    H.assert $ result >= Math.unsafeNonNegative 0
+    H.assert $ result >= $$(R.refineTH 0)
 
 divWithRemProps :: TestTree
 divWithRemProps = TH.testProperty "divWithRem" $
   H.property $ do
-    input@(nn, pos) <- H.forAll genNNAndPos
+    nn <- H.forAll PGens.genNonNegative
+    pos <- H.forAll PGens.genPositive
     let result = U.divWithRem nn pos
-    vDivWithRem input result
+    vDivWithRem (nn, pos) result
 
-vDivWithRem :: (NonNegative, Positive) -> (NonNegative, NonNegative) -> PropertyT IO ()
+vDivWithRem :: (Refined NonNegative Int, Refined Positive Int) -> (Refined NonNegative Int, Refined NonNegative Int) -> PropertyT IO ()
 vDivWithRem (n, divisor) (e, remainder) = do
   H.assert $ (divisorRaw * eRaw) + remainderRaw == nRaw
   H.footnote $
@@ -49,13 +53,10 @@ vDivWithRem (n, divisor) (e, remainder) = do
   H.assert $ remainderRaw <= nRaw
   H.footnote $ show remainderRaw <> " <= " <> show nRaw
   where
-    nRaw = Math.getNonNegative n
-    divisorRaw = Math.getPositive divisor
-    eRaw = Math.getNonNegative e
-    remainderRaw = Math.getNonNegative remainder
+    nRaw = R.unrefine n
+    divisorRaw = R.unrefine divisor
+    eRaw = R.unrefine e
+    remainderRaw = R.unrefine remainder
 
 genTimeSpecs :: Gen (TimeSpec, TimeSpec)
 genTimeSpecs = (,) <$> PGens.genTimeSpec <*> PGens.genTimeSpec
-
-genNNAndPos :: Gen (NonNegative, Positive)
-genNNAndPos = (,) <$> PGens.genNonNegative <*> PGens.genPositive

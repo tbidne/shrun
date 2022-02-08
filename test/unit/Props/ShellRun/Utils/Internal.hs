@@ -8,8 +8,9 @@ import Hedgehog (Gen)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import ShellRun.Math (NonNegative, REquals (..))
-import ShellRun.Math qualified as Math
+import Refined (NonNegative, Refined)
+import Refined qualified as R
+import Refined.Unsafe qualified as R
 import ShellRun.Prelude
 import ShellRun.Utils.Internal (TimeSummary (..))
 import ShellRun.Utils.Internal qualified as UtilsI
@@ -25,7 +26,7 @@ secondsToTimeSummary :: TestTree
 secondsToTimeSummary = TH.testProperty "secondsToTimeSummary transforms correctly" $
   H.property $ do
     totalSeconds <- H.forAll genTime
-    let secondsRaw = Math.getNonNegative totalSeconds
+    let secondsRaw = R.unrefine totalSeconds
         ts@(MkTimeSummary d h m s) = UtilsI.secondsToTimeSummary totalSeconds
     H.annotateShow ts
     H.cover 15 "1 day <= time" (secondsRaw >= 86_400)
@@ -33,15 +34,15 @@ secondsToTimeSummary = TH.testProperty "secondsToTimeSummary transforms correctl
     H.cover 5 "1 minute <= time < 1 hour" (secondsRaw >= 60 && secondsRaw < 3_600)
     H.cover 2 "time < 1 minute" (secondsRaw < 60)
     -- days = totalSeconds / 86,400
-    H.assert $ d =:= (secondsRaw `div` 86_400)
+    H.assert $ R.unrefine d == (secondsRaw `div` 86_400)
     -- hours = totalSeconds / 3,600 (mod 86,400)
-    H.assert $ h =:= (secondsRaw `mod` 86_400 `div` 3_600)
+    H.assert $ R.unrefine h == (secondsRaw `mod` 86_400 `div` 3_600)
     -- minutes = totalSeconds / 60 (mod 3,600)
-    H.assert $ m =:= (secondsRaw `mod` 3_600 `div` 60)
+    H.assert $ R.unrefine m == (secondsRaw `mod` 3_600 `div` 60)
     -- seconds = totalSeconds (mod 60)
-    H.assert $ s =:= (secondsRaw `mod` 60)
+    H.assert $ R.unrefine s == (secondsRaw `mod` 60)
 
-genTime :: Gen NonNegative
+genTime :: Gen (Refined NonNegative Int)
 genTime = do
   Gen.frequency
     [ (1, genSeconds),
@@ -50,14 +51,14 @@ genTime = do
       (4, genDays)
     ]
 
-genSeconds :: Gen NonNegative
-genSeconds = Math.unsafeNonNegative <$> Gen.integral (Range.constantFrom 0 0 59)
+genSeconds :: Gen (Refined NonNegative Int)
+genSeconds = R.unsafeRefine <$> Gen.integral (Range.constantFrom 0 0 59)
 
-genMinutes :: Gen NonNegative
-genMinutes = Math.unsafeNonNegative <$> Gen.integral (Range.constantFrom 60 60 3_599)
+genMinutes :: Gen (Refined NonNegative Int)
+genMinutes = R.unsafeRefine <$> Gen.integral (Range.constantFrom 60 60 3_599)
 
-genHours :: Gen NonNegative
-genHours = Math.unsafeNonNegative <$> Gen.integral (Range.constantFrom 3_600 3_600 86_399)
+genHours :: Gen (Refined NonNegative Int)
+genHours = R.unsafeRefine <$> Gen.integral (Range.constantFrom 3_600 3_600 86_399)
 
-genDays :: Gen NonNegative
-genDays = Math.unsafeNonNegative <$> Gen.integral (Range.constantFrom 86_400 86_400 1_000_000)
+genDays :: Gen (Refined NonNegative Int)
+genDays = R.unsafeRefine <$> Gen.integral (Range.constantFrom 86_400 86_400 1_000_000)

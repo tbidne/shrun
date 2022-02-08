@@ -7,22 +7,24 @@ module ShellRun.Data.Env
     HasTimeout (..),
 
     -- * Types
+    Timeout,
     Env (..),
     CommandDisplay (..),
     CommandLogging (..),
   )
 where
 
+import ShellRun.Data.Supremum (Supremum (..))
+import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging (LogQueue)
-import ShellRun.Math (NonNegative, Supremum (..))
 import ShellRun.Prelude
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
 data Env = MkEnv
   { legend :: Maybe Text,
-    timeout :: Maybe NonNegative,
+    timeout :: Maybe Timeout,
     commandLogging :: CommandLogging,
     commandDisplay :: CommandDisplay,
     logQueue :: LogQueue,
@@ -51,7 +53,7 @@ data CommandDisplay
 
 -- | Timeout, if any.
 class HasTimeout env where
-  getTimeout :: env -> Maybe NonNegative
+  getTimeout :: env -> Maybe Timeout
 
 -- | Determines if we should log commands' output.
 class HasCommandLogging env where
@@ -70,7 +72,7 @@ instance HasLegend Env where
   getLegend = legend
 
 instance HasTimeout Env where
-  getTimeout :: Env -> Maybe NonNegative
+  getTimeout :: Env -> Maybe Timeout
   getTimeout = timeout
 
 instance HasCommandLogging Env where

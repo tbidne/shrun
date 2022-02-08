@@ -7,4 +7,14 @@ package shell-run
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints
 
+source-repository-package
+    type: git
+    location: https://github.com/tbidne/algebra-simple.git
+    tag: 0830f170d42abaea0ebb2c3007ddc865b1aa8fd3
+
+source-repository-package
+    type: git
+    location: https://github.com/tbidne/refined-extras.git
+    tag: 31992227bdc3b193c32dfa97a8ca6a4af0c4a45b
+
 optimization: 2

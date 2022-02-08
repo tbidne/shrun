@@ -25,7 +25,7 @@ module ShellRun.Logging.Log
   )
 where
 
-import ShellRun.Math (Supremum (..))
+import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Prelude
 import System.Console.Pretty (Color)
 import System.Console.Pretty qualified as P
