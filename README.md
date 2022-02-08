@@ -191,8 +191,6 @@ Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shell-run` c
 
 To launch a shell with various tools (e.g. `cabal`, `hls`, formatters), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code (e.g. scripts in `ci_scripts/`). At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `nixpkgs`.
 
-A `shell.nix` exists primarily for CI, though it can also be used for building. To do so, run `nix-shell` then the subsequent `cabal` commands. Note: In contrast to the behavior of `nix develop`, this will instead pull in dependencies via `cabal`'s constraint solver (see: `cabal.project.freeze`).
-
 ### Via nix
 
 Because `shell-run` is a flake, it be built as part of a nix expression. For instance, if you want to add `shell-run` to `NixOS`, your `flake.nix` might look something like:
@@ -242,10 +240,6 @@ Then in `configuration.nix` you can simply have:
   ];
 }
 ```
-
-## Haddock
-
-Haddock docs can be built via cabal with `./scripts/gen_haddock.sh`.
 
 # Testing
 

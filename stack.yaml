@@ -12,6 +12,3 @@ flags:
   refined:
     aeson: false
     quickcheck: false
-
-nix:
-  shell-file: shell.nix
