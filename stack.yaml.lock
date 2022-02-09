@@ -11,10 +11,31 @@ packages:
       sha256: 2fd47d6f9374805075d176012d95d8ea28e643639b8d028f35f732618b5d1683
   original:
     hackage: strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
+- completed:
+    name: algebra-simple
+    version: 0.1.0.0
+    git: https://github.com/tbidne/algebra-simple.git
+    pantry-tree:
+      size: 3348
+      sha256: ebab9acabcaba9bd41d7a1d1059cd32c0400a4fdfea44b9a3671738b2073b0be
+    commit: ac29d518f4cb30207e9d8a3c2be843f06db56980
+  original:
+    git: https://github.com/tbidne/algebra-simple.git
+    commit: ac29d518f4cb30207e9d8a3c2be843f06db56980
+- completed:
+    name: refined-extras
+    version: 0.1.0.0
+    git: https://github.com/tbidne/refined-extras.git
+    pantry-tree:
+      size: 2761
+      sha256: c40676456a20075f88a80fe4809410547935c38cd12885ae24ba1719b6d517ab
+    commit: 4ea2733c40085529daeb1a6e7af9cab1d5c222d9
+  original:
+    git: https://github.com/tbidne/refined-extras.git
+    commit: 4ea2733c40085529daeb1a6e7af9cab1d5c222d9
 snapshots:
 - completed:
-    size: 567669
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/12.yaml
-    sha256: facf6cac73b22a83ca955b580a98a7a09ed71f8f974c7a55d28e608c23e689a9
-  original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/12.yaml
+    size: 587821
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/24.yaml
+    sha256: 06d844ba51e49907bd29cb58b4a5f86ee7587a4cd7e6cf395eeec16cba619ce8
+  original: lts-18.24

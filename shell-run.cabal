@@ -3,6 +3,7 @@ name:               shell-run
 version:            0.1.0.0
 license:            BSD-3-Clause
 license-file:       LICENSE
+tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.1
 copyright:          2021 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@prontonmail.com
@@ -72,8 +73,8 @@ library
 
   build-depends:
     , algebra-simple        ^>=0.1.0.0
-    , base                  ^>=4.14.1.0
-    , bytestring            ^>=0.10.12
+    , base                  >=4.14.1.0      && <4.17
+    , bytestring            >=0.10.12       && <0.12
     , clock                 >=0.7.2         && <0.9
     , containers            ^>=0.6.2.1
     , monad-loops           >=0.3           && <0.5
@@ -98,8 +99,8 @@ executable shell-run
   import:           common-exts
   main-is:          Main.hs
   build-depends:
-    , base       ^>=4.14.1.0
-    , mtl        ^>=2.2.1
+    , base
+    , mtl
     , shell-run
 
   hs-source-dirs:   app
@@ -129,7 +130,7 @@ test-suite unit
     , base
     , clock
     , containers
-    , hedgehog              ^>=1.0.2
+    , hedgehog              >=1.0.2   && <1.2
     , hspec                 >=2.7.1   && <2.9
     , optparse-applicative
     , refined

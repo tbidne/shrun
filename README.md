@@ -2,9 +2,11 @@
 
 # Shell-Run
 
-![cabal](https://github.com/tbidne/shell-run/workflows/cabal/badge.svg?branch=main)
-![stack](https://github.com/tbidne/shell-run/workflows/stack/badge.svg?branch=main)
 ![nix](https://github.com/tbidne/shell-run/workflows/nix/badge.svg?branch=main)
+![cabal 8.10.7](https://github.com/tbidne/shell-run/workflows/8.10.7/badge.svg?branch=main)
+![cabal 9.0.2](https://github.com/tbidne/shell-run/workflows/9.0.2/badge.svg?branch=main)
+![cabal 9.2.1](https://github.com/tbidne/shell-run/workflows/9.2.1/badge.svg?branch=main)
+![stack lts 18.24](https://github.com/tbidne/shell-run/workflows/stack/badge.svg?branch=main)
 ![style](https://github.com/tbidne/shell-run/workflows/style/badge.svg?branch=main)
 
 ![example](./screens/example.png)
@@ -167,9 +169,12 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 You will need one of:
 
-- [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 8.10.4+](https://www.haskell.org/ghc/download.html)
-- [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
-- [nix](https://nixos.org/download.html)
+* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and one of:
+  * [ghc 8.10.7](https://www.haskell.org/ghc/download_ghc_8_10_7.html)
+  * [ghc 9.0.2](https://www.haskell.org/ghc/download_ghc_9_0_2.html)
+  * [ghc 9.2.1](https://www.haskell.org/ghc/download_ghc_9_2_1.html)
+* [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
+* [nix](https://nixos.org/download.html)
 
 If you have never built a haskell program before, `stack` is probably the best choice.
 

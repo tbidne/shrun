@@ -50,8 +50,8 @@ noCommandsMissing allKeys = void . traverse failIfMissing
     failIfMissing cmd
       | Set.member cmd allKeys = pure ()
       | otherwise = do
-        H.footnote $ "Missing command: " <> show cmd
-        H.failure
+          H.footnote $ "Missing command: " <> show cmd
+          H.failure
 
 genLegendCommands :: MonadGen m => m (LegendMap, [Text])
 genLegendCommands = (,) <$> genLegend <*> genCommands

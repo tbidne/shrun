@@ -11,11 +11,11 @@
         "refined-extras-src": "refined-extras-src"
       },
       "locked": {
-        "lastModified": 1644248788,
-        "narHash": "sha256-DozQ1VopV57wokPrCOXAnP+zOaQLj7EkQxkfnzSleJU=",
+        "lastModified": 1644364617,
+        "narHash": "sha256-hN61htkhD0r08M3gIpF2MwCja/I7HheFwq2jvBP4ZxU=",
         "owner": "tbidne",
         "repo": "algebra-simple",
-        "rev": "0830f170d42abaea0ebb2c3007ddc865b1aa8fd3",
+        "rev": "ac29d518f4cb30207e9d8a3c2be843f06db56980",
         "type": "github"
       },
       "original": {
@@ -68,11 +68,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1641712218,
-        "narHash": "sha256-qKR2AMq4teRi+HjjoveencIyYHeYww7P8rpRf34wHdk=",
+        "lastModified": 1644363746,
+        "narHash": "sha256-D2Ko5WV00rcy4ElF+deWV0KFRU+lvRwB4l8PKlwIRrY=",
         "owner": "tbidne",
         "repo": "refined-extras",
-        "rev": "31992227bdc3b193c32dfa97a8ca6a4af0c4a45b",
+        "rev": "4ea2733c40085529daeb1a6e7af9cab1d5c222d9",
         "type": "github"
       },
       "original": {

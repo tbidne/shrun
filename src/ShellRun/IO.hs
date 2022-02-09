@@ -119,19 +119,19 @@ tryTimeShCommandOutput logQueue commandDisplay cmd@(MkCommand _ cmdTxt) path = d
     maybeLog <-
       if
           | not isOpen -> do
-            let (MkStderr err) = makeStdErr commandDisplay cmd "Handle not open"
-            pure $ Just $ Logging.logError err
+              let (MkStderr err) = makeStdErr commandDisplay cmd "Handle not open"
+              pure $ Just $ Logging.logError err
           | not canRead -> do
-            let (MkStderr err) = makeStdErr commandDisplay cmd "Handle not readable"
-            pure $ Just $ Logging.logError err
+              let (MkStderr err) = makeStdErr commandDisplay cmd "Handle not readable"
+              pure $ Just $ Logging.logError err
           | otherwise -> do
-            result <- readHandle commandDisplay cmd recvH
-            case result of
-              ReadErr err ->
-                pure $ Just $ Logging.logError err
-              ReadSuccess out ->
-                pure $ Just $ Logging.logSubCommand out
-              ReadNoData -> pure Nothing
+              result <- readHandle commandDisplay cmd recvH
+              case result of
+                ReadErr err ->
+                  pure $ Just $ Logging.logError err
+                ReadSuccess out ->
+                  pure $ Just $ Logging.logSubCommand out
+                ReadNoData -> pure Nothing
 
     case maybeLog of
       Just l -> Logging.writeQueue logQueue l

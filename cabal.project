@@ -1,6 +1,7 @@
 packages: .
 
 package shell-run
+  tests: True
   ghc-options:
     -Wall -Wcompat -Werror -Widentities
     -Wincomplete-record-updates -Wincomplete-uni-patterns
@@ -13,11 +14,11 @@ package refined
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: 0830f170d42abaea0ebb2c3007ddc865b1aa8fd3
+    tag: ac29d518f4cb30207e9d8a3c2be843f06db56980
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/refined-extras.git
-    tag: 31992227bdc3b193c32dfa97a8ca6a4af0c4a45b
+    tag: 4ea2733c40085529daeb1a6e7af9cab1d5c222d9
 
 optimization: 2

@@ -1,13 +1,12 @@
-resolver:
-  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/12.yaml
+resolver: lts-18.24
 packages:
 - .
 extra-deps:
 - strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
 - git: https://github.com/tbidne/algebra-simple.git
-  commit: 0830f170d42abaea0ebb2c3007ddc865b1aa8fd3
+  commit: ac29d518f4cb30207e9d8a3c2be843f06db56980
 - git: https://github.com/tbidne/refined-extras.git
-  commit: 31992227bdc3b193c32dfa97a8ca6a4af0c4a45b
+  commit: 4ea2733c40085529daeb1a6e7af9cab1d5c222d9
 flags:
   refined:
     aeson: false
