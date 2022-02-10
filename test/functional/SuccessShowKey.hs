@@ -34,15 +34,11 @@ allExpected :: [ExpectedText]
 allExpected =
   MkExpectedText
     <$> [ showKeySuccess,
-          showKeySublogging,
           showKeyError
         ]
 
 showKeySuccess :: Text
 showKeySuccess = Constants.infoSuccessPrefix "short"
-
-showKeySublogging :: Text
-showKeySublogging = Constants.subCommandPrefix "short: short"
 
 showKeyError :: Text
 showKeyError = "[Error] bad:"

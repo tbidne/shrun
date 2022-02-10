@@ -31,5 +31,5 @@ spec =
 allExpected :: [ExpectedText]
 allExpected =
   MkExpectedText
-    <$> [ "echo hi && sleep 1: hi"
+    <$> [ "echo hi && sleep 1"
         ]

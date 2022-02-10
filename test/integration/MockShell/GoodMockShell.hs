@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'GoodMockShell' type.
 module MockShell.GoodMockShell (GoodMockShell (..)) where
 
@@ -8,7 +10,7 @@ import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr, LegendMap)
-import ShellRun.Logging (MonadLogger (..))
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 
 -- | 'GoodMockShell' is intended to test a \"Happy path\" run of
@@ -21,7 +23,7 @@ newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
       Monad,
       MonadReader MockEnv,
       MonadWriter [Text],
-      MonadLogger
+      RegionLogger
     )
     via MockShellBase
 

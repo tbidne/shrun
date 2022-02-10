@@ -4,7 +4,8 @@ module MockShell.MockShellBase (MockShellBase (..)) where
 import Data.Functor.Identity (Identity)
 import Data.String (String)
 import MockEnv (MockEnv)
-import ShellRun.Logging (Log (..), MonadLogger (..))
+import ShellRun.Logging.Log (Log (..))
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 
 -- | 'MockShellBase' serves as a base type for our various integration tests.
@@ -23,12 +24,12 @@ newtype MockShellBase a = MkMockShellBase
     )
     via (ReaderT MockEnv (WriterT [Text] Identity))
 
-instance MonadLogger MockShellBase where
+instance RegionLogger MockShellBase where
+  type Region MockShellBase = ()
   putLog :: Log -> MockShellBase ()
   putLog = tell . pure . msg
 
-  clear :: MockShellBase ()
-  clear = pure ()
+  putRegionLog _ = putLog
 
 instance Show a => Show (MockShellBase a) where
   show :: MockShellBase a -> String

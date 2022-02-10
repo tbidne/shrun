@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'GoodMockShell' type.
 module MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
 
@@ -7,7 +9,7 @@ import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command)
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
-import ShellRun.Logging (MonadLogger (..))
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 
 -- | 'BadLegendMockShell' is intended to test a run of
@@ -21,7 +23,7 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
       Monad,
       MonadReader MockEnv,
       MonadWriter [Text],
-      MonadLogger
+      RegionLogger
     )
     via MockShellBase
 

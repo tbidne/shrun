@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'NoLegendMockShell' type.
 module MockShell.NoLegendMockShell (NoLegendMockShell (..)) where
 
@@ -7,7 +9,7 @@ import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
-import ShellRun.Logging (MonadLogger (..))
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 
 -- | 'NoLegendMockShell' is intended to test a run of
@@ -21,7 +23,7 @@ newtype NoLegendMockShell a = MkNoLegendMockShell
       Monad,
       MonadReader MockEnv,
       MonadWriter [Text],
-      MonadLogger
+      RegionLogger
     )
     via MockShellBase
 
