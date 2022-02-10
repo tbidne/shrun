@@ -8,9 +8,10 @@ module ShellRun.Async
 where
 
 import Control.Concurrent qualified as Concurrent
-import Control.Exception (IOException)
 import Control.Exception qualified as Except
-import Control.Monad qualified as M
+import Control.Exception.Safe (SomeException)
+import Control.Exception.Safe qualified as SafeEx
+import Control.Monad.Catch (MonadMask)
 import Control.Monad.IO.Unlift (MonadUnliftIO)
 import Control.Monad.Loops qualified as Loops
 import Data.IORef (IORef)
@@ -24,18 +25,19 @@ import ShellRun.Data.Env
   ( CommandLogging (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
-    HasLogQueue (..),
     HasTimeout (..),
   )
 import ShellRun.Data.IO (Stderr (..))
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.IO qualified as ShIO
-import ShellRun.Logging (Log (..), LogLevel (..), LogMode (..), MonadLogger (..))
-import ShellRun.Logging qualified as Logging
+import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
 import System.Clock qualified as C
+import System.Console.Regions (ConsoleRegion, RegionLayout (..))
+import System.Console.Regions qualified as Regions
 import UnliftIO qualified
 import UnliftIO.Async qualified as UAsync
 
@@ -45,71 +47,69 @@ import UnliftIO.Async qualified as UAsync
 -- considered a fatal error and all threads are killed.
 runCommands ::
   ( HasCommandDisplay env,
-    HasLogQueue env,
     HasCommandLogging env,
     HasTimeout env,
     MonadIO m,
-    MonadLogger m,
+    MonadMask m,
     MonadUnliftIO m,
-    MonadReader env m
+    MonadReader env m,
+    RegionLogger m,
+    Region m ~ ConsoleRegion
   ) =>
   [Command] ->
   m ()
-runCommands commands = UAsync.withAsync printLogQueue $ \printer -> do
-  logQueue <- asks getLogQueue
-  start <- liftIO $ C.getTime Monotonic
-  let actions = UAsync.mapConcurrently_ runCommand commands
-      actionsWithTimer = UAsync.race_ actions counter
+runCommands commands = Regions.displayConsoleRegions $
+  Regions.withConsoleRegion Linear $ \r -> do
+    start <- liftIO $ C.getTime Monotonic
+    let actions = UAsync.mapConcurrently_ runCommand commands
+        actionsWithTimer = UAsync.race_ actions counter
 
-  result :: Either IOException () <- UnliftIO.withRunInIO $ \runner -> Except.try $ runner actionsWithTimer
+    result :: Either SomeException () <- UnliftIO.withRunInIO $ \runner -> SafeEx.try $ runner actionsWithTimer
 
-  UAsync.cancel printer
+    case result of
+      Left ex -> do
+        let errMsg =
+              T.pack $
+                "Encountered an exception. This is likely not an error in any of the "
+                  <> "commands run but rather an error in ShellRun itself: "
+                  <> Except.displayException ex
+            fatalLog = MkLog errMsg Fatal Finish
+        putRegionLog r fatalLog
+      Right _ -> pure ()
 
-  case result of
-    Left ex -> do
-      let errMsg =
-            T.pack $
-              "Encountered an exception. This is likely not an error in any of the "
-                <> "commands run but rather an error in ShellRun itself: "
-                <> Except.displayException ex
-      Logging.writeQueue logQueue $ Logging.logFatal errMsg
-    Right _ -> pure ()
+    end <- liftIO $ C.getTime Monotonic
+    let totalTime = U.diffTime start end
+        totalTimeTxt = "Finished! Total time elapsed: " <> U.formatTime totalTime
+        finalLog = MkLog totalTimeTxt InfoBlue Finish
 
-  end <- liftIO $ C.getTime Monotonic
-  let totalTime = U.diffTime start end
-      totalTimeTxt = "Finished! Total time elapsed: " <> U.formatTime totalTime
-
-  Logging.writeQueue logQueue $ Logging.logInfoBlue totalTimeTxt
-
-  remainingLogs <- Logging.flushQueue logQueue
-  traverse_ Logging.putLog remainingLogs
+    putRegionLog r finalLog
 
 runCommand ::
   ( HasCommandDisplay env,
-    HasLogQueue env,
     HasCommandLogging env,
+    MonadMask m,
     MonadReader env m,
     MonadIO m
   ) =>
   Command ->
   m ()
-runCommand cmd = do
+runCommand cmd = Regions.withConsoleRegion Linear $ \r -> do
   commandDisplay <- asks getCommandDisplay
-  logQueue <- asks getLogQueue
   commandLogging <- asks getCommandLogging
+
   let shFn = case commandLogging of
         Disabled -> ShIO.tryTimeSh commandDisplay
-        Enabled -> ShIO.tryTimeShCommandOutput logQueue commandDisplay
+        Enabled -> ShIO.tryTimeShRegion commandDisplay
 
   liftIO $ do
-    res <- shFn cmd Nothing
+    res <- shFn cmd
     let lg = case res of
           Left (t, MkStderr err) ->
             let logTxt =
                   err
                     <> ". Time elapsed: "
                     <> U.formatTime t
-             in Logging.logError logTxt
+             in MkLog logTxt Error Finish
           Right t ->
             let name = U.displayCommand commandDisplay cmd
                 logTxt =
@@ -117,60 +117,59 @@ runCommand cmd = do
                     <> name
                     <> "`. Time elapsed: "
                     <> U.formatTime t
-             in Logging.logInfoSuccess logTxt
-    Logging.writeQueue logQueue lg
+             in MkLog logTxt InfoSuccess Finish
+    putRegionLog r lg
 
 counter ::
-  ( HasLogQueue env,
-    HasTimeout env,
-    MonadLogger m,
+  ( HasTimeout env,
+    MonadMask m,
     MonadReader env m,
-    MonadIO m
+    MonadIO m,
+    RegionLogger m,
+    Region m ~ ConsoleRegion
   ) =>
   m ()
-counter = do
+counter = Regions.withConsoleRegion Linear $ \r -> do
   timeout <- asks getTimeout
   timer <- liftIO $ IORef.newIORef $$(R.refineTH @NonNegative @Int 0)
   let inc = $$(R.refineTH @NonNegative @Int 1)
-  Loops.whileM_ (keepRunning timer timeout) $ do
+  Loops.whileM_ (keepRunning r timer timeout) $ do
     elapsed <- liftIO $ do
       Concurrent.threadDelay 1_000_000
       IORef.modifyIORef' timer (.+. inc)
       IORef.readIORef timer
-    logCounter elapsed
+    logCounter r elapsed
 
 logCounter ::
-  ( HasLogQueue env,
-    MonadIO m,
-    MonadReader env m
+  ( RegionLogger m,
+    Region m ~ ConsoleRegion
   ) =>
+  ConsoleRegion ->
   Refined NonNegative Int ->
   m ()
-logCounter elapsed = do
-  logQueue <- asks getLogQueue
+logCounter r elapsed = do
   let lg =
         MkLog
           { msg = "Running time: " <> U.formatTime elapsed,
             lvl = InfoCyan,
-            mode = CarriageReturn
+            mode = Set
           }
-  Logging.writeQueue logQueue lg
+  putRegionLog r lg
 
 keepRunning ::
-  ( HasLogQueue env,
-    MonadIO m,
-    MonadReader env m
+  ( MonadIO m,
+    RegionLogger m,
+    Region m ~ ConsoleRegion
   ) =>
+  ConsoleRegion ->
   IORef (Refined NonNegative Int) ->
   Maybe Timeout ->
   m Bool
-keepRunning timer mto = do
+keepRunning region timer mto = do
   elapsed <- liftIO $ IORef.readIORef timer
   if timedOut elapsed mto
     then do
-      logQueue <- asks getLogQueue
-      Logging.writeQueue logQueue $
-        Logging.logWarn "Timed out, cancelling remaining tasks."
+      putRegionLog region $ MkLog "Timed out, cancelling remaining tasks." Warn Finish
       pure False
     else pure True
 
@@ -179,14 +178,3 @@ timedOut timer =
   \case
     Nothing -> False
     Just (MkTimeout t) -> timer > t
-
-printLogQueue ::
-  ( HasLogQueue env,
-    MonadLogger m,
-    MonadReader env m,
-    MonadIO m
-  ) =>
-  m ()
-printLogQueue = do
-  logQueue <- asks getLogQueue
-  M.forever $ Logging.readQueue logQueue >>= traverse_ Logging.putLog

@@ -7,12 +7,8 @@ module ShellRun.Parsing.Env
   )
 where
 
-import Control.Concurrent.STM.TBQueue (TBQueue)
-import Control.Concurrent.STM.TBQueue qualified as TBQueue
-import Control.Monad.STM qualified as STM
 import Options.Applicative qualified as OptApp
 import ShellRun.Data.Env (Env (..))
-import ShellRun.Logging (Log, LogQueue (..))
 import ShellRun.Parsing.Args (Args (..))
 import ShellRun.Parsing.Args qualified as Args
 import ShellRun.Prelude
@@ -20,16 +16,14 @@ import ShellRun.Prelude
 -- | Runs the parser.
 runParser :: IO Env
 runParser = do
-  queue <- STM.atomically $ TBQueue.newTBQueue 1000
   args <- OptApp.execParser Args.parserInfoArgs
-  pure $ toEnv queue args
+  pure $ toEnv args
 
-toEnv :: TBQueue Log -> Args -> Env
-toEnv queue MkArgs {..} =
+toEnv :: Args -> Env
+toEnv MkArgs {..} =
   MkEnv
     aLegend
     aTimeout
     aCommandLogging
     aCommandDisplay
-    (MkLogQueue queue)
     aCommands

@@ -78,6 +78,7 @@ import Data.Traversable as X (Traversable (..))
 import Prelude as X
   ( Bool (..),
     Bounded (..),
+    Char,
     Eq (..),
     IO,
     Int,

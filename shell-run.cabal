@@ -27,6 +27,7 @@ source-repository head
 common common-exts
   default-extensions:
     NoImplicitPrelude
+    NoStarIsType
     DerivingVia
     FlexibleInstances
     ImportQualifiedPost
@@ -57,10 +58,8 @@ library
     ShellRun.Data.Timeout
     ShellRun.Env
     ShellRun.IO
-    ShellRun.Logging
     ShellRun.Logging.Log
-    ShellRun.Logging.MonadLogger
-    ShellRun.Logging.Queue
+    ShellRun.Logging.RegionLogger
     ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Env
@@ -76,7 +75,9 @@ library
     , base                  >=4.14.1.0      && <4.17
     , bytestring            >=0.10.12       && <0.12
     , clock                 >=0.7.2         && <0.9
+    , concurrent-output     ^>=1.10.7
     , containers            ^>=0.6.2.1
+    , exceptions            ^>=0.10.4
     , monad-loops           >=0.3           && <0.5
     , mtl                   ^>=2.2.1
     , optparse-applicative  >=0.15          && <0.17
@@ -84,8 +85,7 @@ library
     , process               ^>=1.6.9.0
     , refined               ^>=0.6
     , regex-pcre-builtin    ^>=0.95.1.1.8.44
-    , stm                   ^>=2.5.0
-    , terminal-size         ^>=0.3.2.1
+    , safe-exceptions       ^>=0.1.7.0
     , text                  ^>=1.2.3.2
     , text-conversions      >=0.2.0         && <0.4
     , unix                  ^>=2.7.2

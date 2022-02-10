@@ -2,7 +2,6 @@
 module ShellRun.Data.Env
   ( -- * \"HasX\" style typeclasses required for our concrete Env type.
     HasCommandDisplay (..),
-    HasLogQueue (..),
     HasCommandLogging (..),
     HasTimeout (..),
 
@@ -17,7 +16,6 @@ where
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
-import ShellRun.Logging (LogQueue)
 import ShellRun.Prelude
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
@@ -27,7 +25,6 @@ data Env = MkEnv
     timeout :: Maybe Timeout,
     commandLogging :: CommandLogging,
     commandDisplay :: CommandDisplay,
-    logQueue :: LogQueue,
     commands :: [Text]
   }
 
@@ -63,10 +60,6 @@ class HasCommandLogging env where
 class HasCommandDisplay env where
   getCommandDisplay :: env -> CommandDisplay
 
--- | Retrieves the queue that logs are sent to
-class HasLogQueue env where
-  getLogQueue :: env -> LogQueue
-
 instance HasLegend Env where
   getLegend :: Env -> Maybe Text
   getLegend = legend
@@ -82,10 +75,6 @@ instance HasCommandLogging Env where
 instance HasCommandDisplay Env where
   getCommandDisplay :: Env -> CommandDisplay
   getCommandDisplay = commandDisplay
-
-instance HasLogQueue Env where
-  getLogQueue :: Env -> LogQueue
-  getLogQueue = logQueue
 
 instance HasCommands Env where
   getCommands :: Env -> [Text]

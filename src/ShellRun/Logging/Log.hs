@@ -32,9 +32,9 @@ import System.Console.Pretty qualified as P
 
 -- | Determines the logging newline/carriage return behavior.
 data LogMode
-  = NewLine
-  | Plain
-  | CarriageReturn
+  = Set
+  | Append
+  | Finish
   deriving stock (Bounded, Eq, Ord, Show)
   deriving (Semigroup, Monoid) via (Supremum LogMode)
 
@@ -84,7 +84,7 @@ logToPrefix = levelToPrefix . lvl
 -- | Maps 'LogLevel' to 'Color'.
 levelToColor :: LogLevel -> Color
 levelToColor None = P.White
-levelToColor SubCommand = P.Yellow
+levelToColor SubCommand = P.White
 levelToColor Debug = P.White
 levelToColor Info = P.White
 levelToColor InfoBlue = P.Blue
