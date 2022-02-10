@@ -2,12 +2,13 @@
 
 # Shell-Run
 
-![nix](https://github.com/tbidne/shell-run/workflows/nix/badge.svg?branch=main)
-![cabal 8.10.7](https://github.com/tbidne/shell-run/workflows/8.10.7/badge.svg?branch=main)
-![cabal 9.0.2](https://github.com/tbidne/shell-run/workflows/9.0.2/badge.svg?branch=main)
-![cabal 9.2.1](https://github.com/tbidne/shell-run/workflows/9.2.1/badge.svg?branch=main)
-![stack lts 18.24](https://github.com/tbidne/shell-run/workflows/stack/badge.svg?branch=main)
-![style](https://github.com/tbidne/shell-run/workflows/style/badge.svg?branch=main)
+[![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c&color=31c854)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
+[![8.10.7](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10.7/main?label=8.10.7&logo=haskell&logoColor=904d8c&labelColor=2f353c&color=31c854)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10-7.yaml)
+[![9.0.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.0.2/main?label=9.0.2&logo=haskell&logoColor=904d8c&labelColor=2f353c&color=31c854)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.0.2.yaml)
+[![9.2.1](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.2.1/main?label=9.2.1&logo=haskell&logoColor=904d8c&labelColor=2f353c&color=31c854)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.2.1.yaml)
+[![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2018.24&logoColor=white&labelColor=2f353c&color=31c854)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
+[![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c&color=31c854)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
+
 
 ![example](./screens/example.png)
 
