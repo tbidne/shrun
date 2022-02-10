@@ -1,18 +1,10 @@
 {
   description = "shell-run flake";
   inputs = {
-    algebra-simple-src = {
-      url = "github:tbidne/algebra-simple/main";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    algebra-simple-src.url = "github:tbidne/algebra-simple/main";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    refined-extras-src = {
-      url = "github:tbidne/refined-extras/main";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    refined-extras-src.url = "github:tbidne/refined-extras/main";
   };
   outputs =
     { algebra-simple-src
