@@ -8,8 +8,11 @@ module ShellRun.Parsing.Args
 where
 
 import Control.Applicative qualified as App
+import Data.List qualified as L
 import Data.String (String)
 import Data.Text qualified as T
+import Data.Version.Package qualified as PV
+import Development.GitRev qualified as GitRev
 import Numeric.Algebra (ASemigroup (..), MSemigroup (..))
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OptApp
@@ -64,6 +67,19 @@ argsParser =
     <*> commandDisplayParser
     <*> commandsParser
       <**> OptApp.helper
+      <**> version
+
+version :: Parser (a -> a)
+version = OptApp.infoOption txt (OptApp.long "version" <> OptApp.short 'v')
+  where
+    txt =
+      L.intercalate
+        "\n"
+        [ "Shell-Run",
+          "Version: " <> $$(PV.packageVersionStringTH "shell-run.cabal"),
+          "Revision: " <> $(GitRev.gitHash),
+          "Date: " <> $(GitRev.gitCommitDate)
+        ]
 
 legendParser :: Parser (Maybe Text)
 legendParser =

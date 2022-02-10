@@ -78,9 +78,11 @@ library
     , concurrent-output     ^>=1.10.7
     , containers            ^>=0.6.2.1
     , exceptions            ^>=0.10.4
+    , gitrev                >=1.2.0         && <1.4
     , monad-loops           >=0.3           && <0.5
     , mtl                   ^>=2.2.1
     , optparse-applicative  >=0.15          && <0.17
+    , package-version       ^>=0.1.0.0
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
     , refined               ^>=0.6
