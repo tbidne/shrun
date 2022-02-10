@@ -15,7 +15,7 @@ import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
 import Numeric.Algebra (ASemigroup (..), MSemigroup (..))
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
-import Options.Applicative qualified as OptApp
+import Options.Applicative qualified as OApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
 import Refined (NonNegative, Refined)
@@ -66,11 +66,11 @@ argsParser =
     <*> commandLoggingParser
     <*> commandDisplayParser
     <*> commandsParser
-      <**> OptApp.helper
+      <**> OApp.helper
       <**> version
 
 version :: Parser (a -> a)
-version = OptApp.infoOption txt (OptApp.long "version" <> OptApp.short 'v')
+version = OApp.infoOption txt (OApp.long "version" <> OApp.short 'v')
   where
     txt =
       L.intercalate
@@ -85,11 +85,11 @@ legendParser :: Parser (Maybe Text)
 legendParser =
   App.optional
     ( T.pack
-        <$> OptApp.strOption
-          ( OptApp.long "legend"
-              <> OptApp.short 'l'
-              <> OptApp.help legendHelp
-              <> OptApp.metavar "PATH"
+        <$> OApp.strOption
+          ( OApp.long "legend"
+              <> OApp.short 'l'
+              <> OApp.help legendHelp
+              <> OApp.metavar "PATH"
           )
     )
   where
@@ -103,26 +103,26 @@ legendParser =
 timeoutParser :: Parser (Maybe Timeout)
 timeoutParser =
   let intParser =
-        OptApp.option
+        OApp.option
           (readTimeSeconds <|> readTimeStr)
-          ( OptApp.long "timeout"
-              <> OptApp.short 't'
-              <> OptApp.help
+          ( OApp.long "timeout"
+              <> OApp.short 't'
+              <> OApp.help
                 ( "Non-negative integer setting a timeout."
                     <> "Can either be a raw number (interpreted as seconds)"
                     <> ", or a \"time string\", e.g., 1d2h3m4s, 2h3s."
                 )
-              <> OptApp.metavar "VAL"
+              <> OApp.metavar "VAL"
           )
    in App.optional intParser
 
 readTimeSeconds :: ReadM Timeout
 readTimeSeconds = do
-  v <- OptApp.auto
+  v <- OApp.auto
   case R.refine v of
     Right n -> pure $ MkTimeout n
     Left _ ->
-      OptApp.readerAbort $
+      OApp.readerAbort $
         ErrorMsg $
           "Timeout must be non-negative, received: "
             <> show v
@@ -134,7 +134,7 @@ regex = "^(?:([0-9])+d)?(?:([0-9])+h)?(?:([0-9])+m)?(?:([0-9])+s)?$"
 
 readTimeStr :: ReadM Timeout
 readTimeStr = do
-  v :: String <- OptApp.str
+  v :: String <- OApp.str
   let (_, _, _, matches) = v =~ regex :: (String, String, String, [String])
   case matches of
     ms@[d, h, m, s] ->
@@ -150,10 +150,10 @@ readTimeStr = do
           results = traverse parseTextAndMultiply txtMultipliers
           summed = foldl' (.+.) zero <$> results
        in case summed of
-            Left err -> OptApp.readerAbort err
+            Left err -> OApp.readerAbort err
             Right nn -> pure $ MkTimeout nn
     _ ->
-      OptApp.readerAbort $
+      OApp.readerAbort $
         ErrorMsg
           "Could not parse text as time string. Wanted e.g. 1d2h3m4s"
 
@@ -177,22 +177,22 @@ textToNonNegative = textToInt >=> intToNN
 
 commandLoggingParser :: Parser CommandLogging
 commandLoggingParser =
-  OptApp.flag
+  OApp.flag
     Disabled
     Enabled
-    ( OptApp.short 'c'
-        <> OptApp.long "command-logging"
-        <> OptApp.help "Adds Commands' logs (stdout+stderr) to output."
+    ( OApp.short 'c'
+        <> OApp.long "command-logging"
+        <> OApp.help "Adds Commands' logs (stdout+stderr) to output."
     )
 
 commandDisplayParser :: Parser CommandDisplay
 commandDisplayParser =
-  OptApp.flag
+  OApp.flag
     ShowCommand
     ShowKey
-    ( OptApp.short 'k'
-        <> OptApp.long "show-key"
-        <> OptApp.help
+    ( OApp.short 'k'
+        <> OApp.long "show-key"
+        <> OApp.help
           ( "In output, display key name over actual command if it"
               <> " exists."
           )
@@ -202,5 +202,5 @@ commandsParser :: Parser [Text]
 commandsParser =
   App.some
     ( T.pack
-        <$> OptApp.argument OptApp.str (OptApp.metavar "Commands...")
+        <$> OApp.argument OApp.str (OApp.metavar "Commands...")
     )
