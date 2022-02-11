@@ -5,22 +5,21 @@ module ShellRun.Utils
 
     -- * Timing Utils
     diffTime,
-    formatTime,
 
     -- * Misc Utils
     displayCommand,
 
     -- * Math Utils
-    UtilsI.divWithRem,
+    divWithRem,
   )
 where
 
-import Refined (NonNegative, Refined)
+import Refined (NonNegative, Positive, Refined)
+import Refined qualified as R
 import Refined.Unsafe qualified as R
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Prelude
-import ShellRun.Utils.Internal qualified as UtilsI
 import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
@@ -28,6 +27,41 @@ import System.Clock qualified as C
 -- $setup
 -- >>> :set -XTemplateHaskell
 -- >>> import Refined qualified as R
+
+-- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
+--
+-- \[
+--    \begin{align}
+--      de + r = n \\
+--      r \le n \\
+--    \end{align}
+-- \]
+--
+-- Examples:
+--
+-- >>> :{
+--   let n = $$(R.refineTH @NonNegative @Int 34)
+--       d = $$(R.refineTH @Positive @Int 5)
+--       result = divWithRem n d
+--   in monoBimap R.unrefine result
+-- :}
+-- (6,4)
+--
+-- >>> :{
+--   let n = $$(R.refineTH @NonNegative @Int 12)
+--       d = $$(R.refineTH @Positive @Int 18)
+--       result = divWithRem n d
+--   in monoBimap R.unrefine result
+-- :}
+-- (0,12)
+divWithRem ::
+  Refined NonNegative Int ->
+  Refined Positive Int ->
+  (Refined NonNegative Int, Refined NonNegative Int)
+divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
+  where
+    n' = R.unrefine n
+    d' = R.unrefine d
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.
@@ -44,18 +78,6 @@ diffTime t1 t2 =
   let diff = fromIntegral $ C.sec $ C.diffTimeSpec t1 t2
    in -- Safe because 'C.diffTimeSpec' guaranteed to be non-negative.
       R.unsafeRefine diff
-
--- | For \(n \ge 0\) seconds, returns a 'Text' description of the days, hours,
--- minutes and seconds.
---
--- >>> :{
---   -- 2 days, 7 hours, 33 minutes, 20 seconds
---   let totalSeconds = $$(R.refineTH @NonNegative @Int 200_000)
---   in formatTime totalSeconds
--- :}
--- "2 days, 7 hours, 33 minutes, 20 seconds"
-formatTime :: Refined NonNegative Int -> Text
-formatTime = UtilsI.formatTimeSummary . UtilsI.secondsToTimeSummary
 
 -- | Returns the key if one exists and we pass in 'ShowKey', otherwise
 -- returns the command.

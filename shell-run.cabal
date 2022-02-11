@@ -28,6 +28,7 @@ common common-exts
   default-extensions:
     NoImplicitPrelude
     NoStarIsType
+    DataKinds
     DerivingVia
     FlexibleInstances
     ImportQualifiedPost
@@ -56,6 +57,7 @@ library
     ShellRun.Data.Legend
     ShellRun.Data.Supremum
     ShellRun.Data.Timeout
+    ShellRun.Data.TimeRep
     ShellRun.Env
     ShellRun.IO
     ShellRun.Logging.Log
@@ -67,29 +69,28 @@ library
     ShellRun.Parsing.Legend.Internal
     ShellRun.Prelude
     ShellRun.Utils
-    ShellRun.Utils.Internal
     ShellRun.Utils.Text
 
   build-depends:
     , algebra-simple        ^>=0.1.0.0
-    , base                  >=4.14.1.0      && <4.17
-    , bytestring            >=0.10.12       && <0.12
-    , clock                 >=0.7.2         && <0.9
+    , base                  >=4.14.1.0 && <4.17
+    , bytestring            >=0.10.12  && <0.12
+    , clock                 >=0.7.2    && <0.9
     , concurrent-output     ^>=1.10.7
     , containers            ^>=0.6.2.1
     , exceptions            ^>=0.10.4
-    , gitrev                >=1.2.0         && <1.4
-    , monad-loops           >=0.3           && <0.5
+    , gitrev                >=1.2.0    && <1.4
+    , megaparsec            >=7.0.5    && <9.3
+    , monad-loops           >=0.3      && <0.5
     , mtl                   ^>=2.2.1
-    , optparse-applicative  >=0.15          && <0.17
+    , optparse-applicative  >=0.15     && <0.17
     , package-version       ^>=0.1.0.0
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
     , refined               ^>=0.6
-    , regex-pcre-builtin    ^>=0.95.1.1.8.44
     , safe-exceptions       ^>=0.1.7.0
     , text                  ^>=1.2.3.2
-    , text-conversions      >=0.2.0         && <0.4
+    , text-conversions      >=0.2.0    && <0.4
     , unix                  ^>=2.7.2
     , unliftio              ^>=0.2.0.0
     , unliftio-core         ^>=0.2.0.1
@@ -116,12 +117,13 @@ test-suite unit
   other-modules:
     Props
     Props.Generators
+    Props.ShellRun.Data.TimeRep
     Props.ShellRun.Parsing.Commands
     Props.ShellRun.Parsing.Legend.Internal
     Props.ShellRun.Utils
-    Props.ShellRun.Utils.Internal
     Props.ShellRun.Utils.Text
     Specs
+    Specs.ShellRun.Data.TimeRep
     Specs.ShellRun.Parsing.Args
     Specs.ShellRun.Parsing.Commands
     Specs.ShellRun.Parsing.Legend.Internal

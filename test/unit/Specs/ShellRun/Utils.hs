@@ -1,9 +1,6 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Specs for ShellRun.Utils.
 module Specs.ShellRun.Utils (specs) where
 
-import Refined qualified as R
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Prelude
@@ -17,19 +14,6 @@ import Test.Tasty.Hspec qualified as TH
 specs :: IO [TestTree]
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Utils" $ do
-    Hspec.describe "formatTime" $ do
-      Hspec.it "0 should 0 seconds" $ do
-        Utils.formatTime $$(R.refineTH 0) `shouldBe` "0 seconds"
-      Hspec.it "61 should be singular minute and seconds" $ do
-        Utils.formatTime $$(R.refineTH 61) `shouldBe` "1 minute, 1 second"
-      Hspec.it "180 should be plural minutes" $ do
-        Utils.formatTime $$(R.refineTH 180) `shouldBe` "3 minutes"
-      Hspec.it "200 should pluralize minutes and seconds" $ do
-        Utils.formatTime $$(R.refineTH 200) `shouldBe` "3 minutes, 20 seconds"
-      Hspec.it "4000 should include hours" $ do
-        Utils.formatTime $$(R.refineTH 4_000) `shouldBe` "1 hour, 6 minutes, 40 seconds"
-      Hspec.it "100,000 should include days" $ do
-        Utils.formatTime $$(R.refineTH 100_000) `shouldBe` "1 day, 3 hours, 46 minutes, 40 seconds"
     Hspec.describe "displayCommand" $ do
       Hspec.it "should use command when no key exists" $ do
         Utils.displayCommand ShowCommand (MkCommand Nothing "cmd") `shouldBe` "cmd"

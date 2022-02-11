@@ -17,9 +17,9 @@ main = do
 files :: [String]
 files =
   [ "-isrc",
+    "src/ShellRun/Data/TimeRep.hs",
     "src/ShellRun/Parsing/Commands.hs",
     "src/ShellRun/Parsing/Legend/Internal.hs",
-    "src/ShellRun/Utils/Internal.hs",
     "src/ShellRun/Utils.hs",
     "src/ShellRun/Utils/Text.hs"
   ]

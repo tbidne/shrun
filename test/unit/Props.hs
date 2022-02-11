@@ -1,10 +1,10 @@
 -- | Runs property tests.
 module Props (props) where
 
+import Props.ShellRun.Data.TimeRep qualified as TimeRep
 import Props.ShellRun.Parsing.Commands qualified as Commands
 import Props.ShellRun.Parsing.Legend.Internal qualified as LegendI
 import Props.ShellRun.Utils qualified as Utils
-import Props.ShellRun.Utils.Internal qualified as UtilsI
 import Props.ShellRun.Utils.Text qualified as UtilsText
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
@@ -16,7 +16,7 @@ props =
     "Hedgehog Properties"
     [ Commands.props,
       LegendI.props,
+      TimeRep.props,
       Utils.props,
-      UtilsI.props,
       UtilsText.props
     ]

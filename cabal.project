@@ -3,7 +3,7 @@ packages: .
 package shell-run
   tests: True
   ghc-options:
-    -Wall -Wcompat -Werror -Widentities
+    -Wall -Wcompat -Werror -Widentities -Wunused-binds
     -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints

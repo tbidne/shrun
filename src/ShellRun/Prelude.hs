@@ -68,7 +68,7 @@ import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter, zip)
 import Data.List.NonEmpty as X (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE
-import Data.Maybe as X (Maybe (..))
+import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
 import Data.Monoid as X (Monoid (..))
 import Data.Semigroup as X (Semigroup (..))
 import Data.Text as X (Text)
@@ -93,6 +93,7 @@ import Prelude as X
     fst,
     not,
     otherwise,
+    print,
     replicate,
     snd,
     ($),

@@ -1,5 +1,5 @@
--- | Property tests for ShellRun.Utils.Internal.
-module Props.ShellRun.Utils.Internal
+-- | Property tests for ShellRun.Data.TimeRep
+module Props.ShellRun.Data.TimeRep
   ( props,
   )
 where
@@ -11,23 +11,23 @@ import Hedgehog.Range qualified as Range
 import Refined (NonNegative, Refined)
 import Refined qualified as R
 import Refined.Unsafe qualified as R
+import ShellRun.Data.TimeRep (TimeRep (..))
+import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Prelude
-import ShellRun.Utils.Internal (TimeSummary (..))
-import ShellRun.Utils.Internal qualified as UtilsI
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
--- | Entry point for ShellRun.Utils.Internal property tests.
+-- | Entry point for ShellRun.Data.TimeRep property tests.
 props :: TestTree
-props = T.testGroup "ShellRun.Utils.Internal" [secondsToTimeSummary]
+props = T.testGroup "ShellRun.Data.TimeRep" [fromSeconds]
 
-secondsToTimeSummary :: TestTree
-secondsToTimeSummary = TH.testProperty "secondsToTimeSummary transforms correctly" $
+fromSeconds :: TestTree
+fromSeconds = TH.testProperty "fromSeconds transforms correctly" $
   H.property $ do
     totalSeconds <- H.forAll genTime
     let secondsRaw = R.unrefine totalSeconds
-        ts@(MkTimeSummary d h m s) = UtilsI.secondsToTimeSummary totalSeconds
+        ts@(MkTimeRep d h m s) = TimeRep.fromSeconds totalSeconds
     H.annotateShow ts
     H.cover 15 "1 day <= time" (secondsRaw >= 86_400)
     H.cover 10 "1 hour <= time < 1 day" (secondsRaw >= 3_600 && secondsRaw < 86_400)

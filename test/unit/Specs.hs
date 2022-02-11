@@ -2,6 +2,7 @@
 module Specs (specs) where
 
 import ShellRun.Prelude
+import Specs.ShellRun.Data.TimeRep qualified as TimeRep
 import Specs.ShellRun.Parsing.Args qualified as ParseArgs
 import Specs.ShellRun.Parsing.Commands qualified as ParseCommands
 import Specs.ShellRun.Parsing.Legend.Internal qualified as LegendI
@@ -21,5 +22,6 @@ specs = T.testGroup "HSpec Specs" <$> allSpecs
             ParseArgs.specs,
             ParseCommands.specs,
             TextUtils.specs,
+            TimeRep.specs,
             Utils.specs
           ]

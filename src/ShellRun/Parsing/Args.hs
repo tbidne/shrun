@@ -13,7 +13,6 @@ import Data.String (String)
 import Data.Text qualified as T
 import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
-import Numeric.Algebra (ASemigroup (..), MSemigroup (..))
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OApp
 import Options.Applicative.Help.Chunk (Chunk (..))
@@ -21,10 +20,14 @@ import Options.Applicative.Types (ArgPolicy (..))
 import Refined (NonNegative, Refined)
 import Refined qualified as R
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
+import ShellRun.Data.TimeRep (TimeRep (..))
+import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Prelude
-import Text.Read qualified as Read
-import Text.Regex.PCRE ((=~))
+import Text.Megaparsec (Parsec)
+import Text.Megaparsec qualified as MP
+import Text.Megaparsec.Char qualified as MPC
+import Text.Read qualified as TR
 
 -- | Type for parsing command line args.
 data Args = MkArgs
@@ -108,9 +111,9 @@ timeoutParser =
           ( OApp.long "timeout"
               <> OApp.short 't'
               <> OApp.help
-                ( "Non-negative integer setting a timeout."
+                ( "Non-negative integer setting a timeout. "
                     <> "Can either be a raw number (interpreted as seconds)"
-                    <> ", or a \"time string\", e.g., 1d2h3m4s, 2h3s."
+                    <> ", or a \"time string\" e.g. 1d2h3m4s, 2h3s."
                 )
               <> OApp.metavar "VAL"
           )
@@ -128,52 +131,17 @@ readTimeSeconds = do
             <> show v
             <> "!"
 
--- Parses e.g. 1d2h3m4s
-regex :: String
-regex = "^(?:([0-9])+d)?(?:([0-9])+h)?(?:([0-9])+m)?(?:([0-9])+s)?$"
-
 readTimeStr :: ReadM Timeout
 readTimeStr = do
   v :: String <- OApp.str
-  let (_, _, _, matches) = v =~ regex :: (String, String, String, [String])
-  case matches of
-    ms@[d, h, m, s] ->
-      let zero = $$(R.refineTH @NonNegative @Int 0)
-          multipliers :: [Refined NonNegative Int]
-          multipliers =
-            [ $$(R.refineTH 86_400),
-              $$(R.refineTH 3_600),
-              $$(R.refineTH 60),
-              $$(R.refineTH 1)
-            ]
-          txtMultipliers = zip (fmap T.pack ms) multipliers
-          results = traverse parseTextAndMultiply txtMultipliers
-          summed = foldl' (.+.) zero <$> results
-       in case summed of
-            Left err -> OApp.readerAbort err
-            Right nn -> pure $ MkTimeout nn
-    _ ->
+  case MP.parse parseTimeRep "ShellRun.Parsing.Args" v of
+    Left _ ->
       OApp.readerAbort $
-        ErrorMsg
-          "Could not parse text as time string. Wanted e.g. 1d2h3m4s"
-
-parseTextAndMultiply :: (Text, Refined NonNegative Int) -> Either ParseError (Refined NonNegative Int)
-parseTextAndMultiply ("", _) = Right $$(R.refineTH @NonNegative @Int 0)
-parseTextAndMultiply (txt, multiplier) =
-  let result = textToNonNegative txt
-   in fmap (.*. multiplier) result
-
-textToNonNegative :: Text -> Either ParseError (Refined NonNegative Int)
-textToNonNegative = textToInt >=> intToNN
-  where
-    textToInt txt = case Read.readMaybe unpacked of
-      Nothing -> Left $ ErrorMsg $ "Could not parse <" <> unpacked <> "> as number"
-      Just n -> Right n
-      where
-        unpacked = T.unpack txt
-    intToNN n = first (const err) $ R.refine n
-      where
-        err = ErrorMsg $ "Wanted non-negative, found: " <> show n
+        ErrorMsg $
+          "Wanted time string e.g. 1d2h3m4s. Received: " <> v
+    Right timeRep ->
+      let timeout = MkTimeout $ TimeRep.toSeconds timeRep
+       in pure timeout
 
 commandLoggingParser :: Parser CommandLogging
 commandLoggingParser =
@@ -204,3 +172,35 @@ commandsParser =
     ( T.pack
         <$> OApp.argument OApp.str (OApp.metavar "Commands...")
     )
+
+type MParser = Parsec Text [Char]
+
+parseTimeRep :: MParser TimeRep
+parseTimeRep =
+  MkTimeRep
+    <$> parseTimeOrZero 'd'
+    <*> parseTimeOrZero 'h'
+    <*> parseTimeOrZero 'm'
+    <*> parseTimeOrZero 's'
+    <* MP.eof
+
+parseTimeOrZero :: Char -> MParser (Refined NonNegative Int)
+parseTimeOrZero c =
+  -- Backtrack if we don't match
+  MP.try (parseNNWithUnit c)
+    <|> pure zero
+
+parseNNWithUnit :: Char -> MParser (Refined NonNegative Int)
+parseNNWithUnit c = parseNonNegative <* MPC.char' c
+
+parseNonNegative :: MParser (Refined NonNegative Int)
+parseNonNegative = do
+  ds <- MP.some MPC.digitChar
+  case TR.readMaybe ds of
+    Nothing -> MP.customFailure $ "Could not parse natural: " <> showt ds
+    Just n -> case R.refine @NonNegative @Int n of
+      Left ex -> MP.customFailure $ "Refinment failed: " <> showt ex
+      Right n' -> pure n'
+
+zero :: Refined NonNegative Int
+zero = $$(R.refineTH 0)

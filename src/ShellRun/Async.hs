@@ -28,6 +28,7 @@ import ShellRun.Data.Env
     HasTimeout (..),
   )
 import ShellRun.Data.IO (Stderr (..))
+import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
@@ -79,7 +80,7 @@ runCommands commands = Regions.displayConsoleRegions $ do
 
     end <- liftIO $ C.getTime Monotonic
     let totalTime = U.diffTime start end
-        totalTimeTxt = "Finished! Total time elapsed: " <> U.formatTime totalTime
+        totalTimeTxt = "Finished! Total time elapsed: " <> TimeRep.formatTime totalTime
         finalLog = MkLog totalTimeTxt InfoBlue Finish
 
     putRegionLog r finalLog
@@ -110,7 +111,7 @@ runCommand cmd = do
               let logTxt =
                     err
                       <> ". Time elapsed: "
-                      <> U.formatTime t
+                      <> TimeRep.formatTime t
                in MkLog logTxt Error Finish
             Right t ->
               let name = U.displayCommand commandDisplay cmd
@@ -118,7 +119,7 @@ runCommand cmd = do
                     "Successfully ran `"
                       <> name
                       <> "`. Time elapsed: "
-                      <> U.formatTime t
+                      <> TimeRep.formatTime t
                in MkLog logTxt InfoSuccess Finish
       putRegionLog r lg
 
@@ -157,7 +158,7 @@ logCounter ::
 logCounter region elapsed = do
   let lg =
         MkLog
-          { msg = "Running time: " <> U.formatTime elapsed,
+          { msg = "Running time: " <> TimeRep.formatTime elapsed,
             lvl = InfoCyan,
             mode = Set
           }
