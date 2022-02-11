@@ -22,6 +22,11 @@ module ShellRun.Prelude
     readFile,
     showt,
 
+    -- * Anti-punning aliases
+    List,
+    Tuple2,
+    Tuple3,
+
     -- * Prelude exports
     module X,
   )
@@ -125,7 +130,7 @@ error = P.error . T.unpack
 --
 -- >>> headMaybe []
 -- Nothing
-headMaybe :: [a] -> Maybe a
+headMaybe :: List a -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
 
@@ -148,3 +153,12 @@ maybeToEither _ (Just x) = Right x
 -- (3,6)
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
+
+-- | Alias for '[]'.
+type List = []
+
+-- | Alias for '(,)'.
+type Tuple2 = (,)
+
+-- | Alias for '(,,)'.
+type Tuple3 = (,,)

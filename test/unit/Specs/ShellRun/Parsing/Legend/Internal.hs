@@ -11,7 +11,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
 -- | Entry point for ShellRun.Parsing.Legend.Internal specs.
-specs :: IO [TestTree]
+specs :: IO (List TestTree)
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Parsing.Legend.Internal" $ do
     Hspec.it "Should parse to map and skip comments" $ do

@@ -55,7 +55,7 @@ import ShellRun.Prelude
 --   in translateCommands m ["a"]
 -- :}
 -- Left (CyclicKeyErr "a -> b -> c -> a")
-translateCommands :: LegendMap -> [Text] -> Either LegendErr [Command]
+translateCommands :: LegendMap -> List Text -> Either LegendErr (List Command)
 translateCommands mp = sequenceA . foldMap (lineToCommands mp)
 
 lineToCommands :: LegendMap -> Text -> [Either LegendErr Command]

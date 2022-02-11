@@ -50,7 +50,7 @@ failureProps = TH.testProperty "linesToMap failure props" $
       Left _ -> H.success
       Right _ -> H.failure
 
-verifySize :: [Text] -> LegendMap -> PropertyT IO ()
+verifySize :: List Text -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do
   H.annotateShow commands
   let noComments = filter (not . Txt.isPrefixOf "#") commands
@@ -66,7 +66,7 @@ verifySize commands legend = do
   where
     getKey = fst . Txt.break (== '=')
 
-genGoodLines :: MonadGen m => m [Text]
+genGoodLines :: MonadGen m => m (List Text)
 genGoodLines = do
   keyVals <- Gen.list range genGoodLine
   comments <- Gen.list range genComment
@@ -106,7 +106,7 @@ genVal = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 10 1 30
 
-genBadLines :: MonadGen m => m [Text]
+genBadLines :: MonadGen m => m (List Text)
 genBadLines = Gen.shuffle =<< (:) <$> genBadLine <*> genGoodLines
 
 -- Since we have the format 'key=val' where val can also include '=', the only

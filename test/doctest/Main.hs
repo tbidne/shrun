@@ -14,7 +14,7 @@ main = do
   where
     args = files <> exts
 
-files :: [String]
+files :: List String
 files =
   [ "-isrc",
     "src/ShellRun/Data/TimeRep.hs",
@@ -26,7 +26,7 @@ files =
 
 -- This is needed because DocTest does not read the cabal
 -- file's default-extensions
-exts :: [String]
+exts :: List String
 exts =
   [ "-XDerivingVia",
     "-XFlexibleInstances",

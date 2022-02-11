@@ -28,7 +28,7 @@ spec =
     commands = ["bad", "both", "echo hi"]
     timeout = "--timeout=5"
 
-allExpected :: [ExpectedText]
+allExpected :: List ExpectedText
 allExpected =
   MkExpectedText
     <$> [ cmdEchoHi,
@@ -38,7 +38,7 @@ allExpected =
           Constants.totalTime
         ]
 
-allUnexpected :: [UnexpectedText]
+allUnexpected :: List UnexpectedText
 allUnexpected =
   MkUnexpectedText
     <$> [ cmdEchoHiStdout

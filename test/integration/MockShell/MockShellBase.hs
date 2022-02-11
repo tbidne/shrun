@@ -13,16 +13,16 @@ import ShellRun.Prelude
 -- typeclasses (e.g. MonadLogger).
 type MockShellBase :: Type -> Type
 newtype MockShellBase a = MkMockShellBase
-  { runMockShellBase :: ReaderT MockEnv (WriterT [Text] Identity) a
+  { runMockShellBase :: ReaderT MockEnv (WriterT (List Text) Identity) a
   }
   deriving
     ( Functor,
       Applicative,
       Monad,
       MonadReader MockEnv,
-      MonadWriter [Text]
+      MonadWriter (List Text)
     )
-    via (ReaderT MockEnv (WriterT [Text] Identity))
+    via (ReaderT MockEnv (WriterT (List Text) Identity))
 
 instance RegionLogger MockShellBase where
   type Region MockShellBase = ()

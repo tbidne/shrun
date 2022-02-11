@@ -25,7 +25,7 @@ data Env = MkEnv
     timeout :: Maybe Timeout,
     commandLogging :: CommandLogging,
     commandDisplay :: CommandDisplay,
-    commands :: [Text]
+    commands :: List Text
   }
   deriving (Show)
 
@@ -78,5 +78,5 @@ instance HasCommandDisplay Env where
   getCommandDisplay = commandDisplay
 
 instance HasCommands Env where
-  getCommands :: Env -> [Text]
+  getCommands :: Env -> List Text
   getCommands = commands

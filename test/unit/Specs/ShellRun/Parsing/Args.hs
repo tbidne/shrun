@@ -16,7 +16,7 @@ import Test.Tasty.Hspec qualified as TH
 import Unsafe.Coerce qualified as UC
 
 -- | Entry point for ShellRun.Parsing.Args specs.
-specs :: IO [TestTree]
+specs :: IO (List TestTree)
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Parsing.Args" $ do
     defaultSpec
@@ -115,7 +115,7 @@ commandSpecs = Hspec.describe "CommandDisplay arg parsing" $ do
         expected = Just $ mempty {aCommands = ["one", "two", "three"]}
     verifyResult argList expected
 
-verifyResult :: [String] -> Maybe Args -> Expectation
+verifyResult :: List String -> Maybe Args -> Expectation
 verifyResult argList expected = do
   let result = OptApp.execParserPure prefs Args.parserInfoArgs argList
   OptApp.getParseResult result `shouldBe` expected

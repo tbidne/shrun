@@ -30,7 +30,7 @@ spec =
     showKey = "--show-key"
     commandLogging = "--command-logging"
 
-allExpected :: [ExpectedText]
+allExpected :: List ExpectedText
 allExpected =
   MkExpectedText
     <$> [ showKeySuccess,

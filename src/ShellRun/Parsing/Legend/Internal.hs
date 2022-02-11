@@ -39,7 +39,7 @@ import ShellRun.Utils.Text qualified as TextUtils
 --
 -- >>> linesToMap ["key=value1","key=value2"]
 -- Left (DuplicateKeyErr "key")
-linesToMap :: [Text] -> Either LegendErr LegendMap
+linesToMap :: List Text -> Either LegendErr LegendMap
 linesToMap = foldr f (Right Map.empty)
   where
     f "" mp = mp
@@ -50,7 +50,7 @@ linesToMap = foldr f (Right Map.empty)
         Just _ -> Left $ DuplicateKeyErr key
         Nothing -> Right $ Map.insert key cmd mp
 
-parseLine :: Text -> Either LegendErr (Text, Text)
+parseLine :: Text -> Either LegendErr (Tuple2 Text Text)
 parseLine l =
   case TextUtils.breakStripPoint breakPoint l of
     ("", _) -> Left $ EntryErr $ "Key cannot be empty: " <> l

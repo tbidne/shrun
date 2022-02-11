@@ -35,7 +35,7 @@ data Args = MkArgs
     aTimeout :: Maybe Timeout,
     aCommandLogging :: CommandLogging,
     aCommandDisplay :: CommandDisplay,
-    aCommands :: [Text]
+    aCommands :: List Text
   }
   deriving (Eq, Show)
 
@@ -166,14 +166,14 @@ commandDisplayParser =
           )
     )
 
-commandsParser :: Parser [Text]
+commandsParser :: Parser (List Text)
 commandsParser =
   App.some
     ( T.pack
         <$> OApp.argument OApp.str (OApp.metavar "Commands...")
     )
 
-type MParser = Parsec Text [Char]
+type MParser = Parsec Text (List Char)
 
 parseTimeRep :: MParser TimeRep
 parseTimeRep =

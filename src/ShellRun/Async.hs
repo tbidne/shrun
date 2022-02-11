@@ -57,7 +57,7 @@ runCommands ::
     RegionLogger m,
     Region m ~ ConsoleRegion
   ) =>
-  [Command] ->
+  List Command ->
   m ()
 runCommands commands = Regions.displayConsoleRegions $ do
   start <- liftIO $ C.getTime Monotonic

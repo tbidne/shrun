@@ -28,7 +28,7 @@ spec =
     commands = ["echo hi && sleep 1"]
     commandLogging = "--command-logging"
 
-allExpected :: [ExpectedText]
+allExpected :: List ExpectedText
 allExpected =
   MkExpectedText
     <$> [ "echo hi && sleep 1"

@@ -22,7 +22,7 @@ newtype NoLegendMockShell a = MkNoLegendMockShell
       Applicative,
       Monad,
       MonadReader MockEnv,
-      MonadWriter [Text],
+      MonadWriter (List Text),
       RegionLogger
     )
     via MockShellBase
@@ -33,7 +33,7 @@ instance MonadShell NoLegendMockShell where
   legendPathToMap :: Text -> NoLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ EntryErr "Bad key"
 
-  runCommands :: [Command] -> NoLegendMockShell ()
+  runCommands :: List Command -> NoLegendMockShell ()
   runCommands = tell . fmap command
 
 instance Show a => Show (NoLegendMockShell a) where

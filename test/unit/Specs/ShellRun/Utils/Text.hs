@@ -9,7 +9,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
 -- | Entry point for ShellRun.Utils.Text specs.
-specs :: IO [TestTree]
+specs :: IO (List TestTree)
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Utils.Text" $ do
     Hspec.describe "breakStripPoint" $ do

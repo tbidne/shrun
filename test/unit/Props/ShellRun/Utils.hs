@@ -57,6 +57,3 @@ vDivWithRem (n, divisor) (e, remainder) = do
     divisorRaw = R.unrefine divisor
     eRaw = R.unrefine e
     remainderRaw = R.unrefine remainder
-
-genTimeSpecs :: Gen (TimeSpec, TimeSpec)
-genTimeSpecs = (,) <$> PGens.genTimeSpec <*> PGens.genTimeSpec

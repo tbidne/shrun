@@ -22,7 +22,7 @@ newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
       Applicative,
       Monad,
       MonadReader MockEnv,
-      MonadWriter [Text],
+      MonadWriter (List Text),
       RegionLogger
     )
     via MockShellBase
@@ -38,7 +38,7 @@ instance MonadShell GoodMockShell where
             ("both", "cmd1,,cmd2")
           ]
 
-  runCommands :: [Command] -> GoodMockShell ()
+  runCommands :: List Command -> GoodMockShell ()
   runCommands = tell . fmap command
 
 instance Show a => Show (GoodMockShell a) where

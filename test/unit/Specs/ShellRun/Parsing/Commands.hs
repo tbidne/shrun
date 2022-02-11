@@ -12,7 +12,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
 -- | Entry point for ShellRun.Parsing.Commands specs.
-specs :: IO [TestTree]
+specs :: IO (List TestTree)
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Parsing.Commands" $ do
     Hspec.it "Should translate one command" $ do

@@ -158,9 +158,9 @@ readHandle commandDisplay cmd handle = do
   canRead <- Handle.hIsReadable handle
   if
       | isClosed ->
-          pure $ ReadErr $ displayEx @[Char] "Handle closed" ""
+          pure $ ReadErr $ displayEx @(List Char) "Handle closed" ""
       | not canRead ->
-          pure $ ReadErr $ displayEx @[Char] "Cannot read from handle" ""
+          pure $ ReadErr $ displayEx @(List Char) "Cannot read from handle" ""
       | otherwise -> do
           output :: Either SomeException ByteString <-
             SafeEx.try $ BS.hGetNonBlocking handle blockSize

@@ -61,7 +61,7 @@ unsafeMkNonEmptyText t = MkNonEmptyText t
 --
 -- >>> breakStripPoint (unsafeMkNonEmptyText "=") "HEY==LISTEN"
 -- ("HEY","=LISTEN")
-breakStripPoint :: NonEmptyText -> Text -> (Text, Text)
+breakStripPoint :: NonEmptyText -> Text -> Tuple2 Text Text
 breakStripPoint (MkNonEmptyText point) txt = case T.breakOn point txt of
   (x, T.stripPrefix point -> Just y) -> (x, y)
   pair -> pair

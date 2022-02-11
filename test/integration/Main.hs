@@ -43,7 +43,7 @@ spec =
 goodMockShell :: GoodMockShell ()
 goodMockShell = ShellRun.runShell
 
-verifyGoodShell :: GoodMockShell () -> ([Text], Bool)
+verifyGoodShell :: GoodMockShell () -> (List Text, Bool)
 verifyGoodShell gms =
   let env =
         MockEnv.defaultEnv
@@ -56,7 +56,7 @@ verifyGoodShell gms =
 badLegendMockShell :: BadLegendMockShell ()
 badLegendMockShell = ShellRun.runShell
 
-verifyBadLegendShell :: BadLegendMockShell () -> ([Text], Bool)
+verifyBadLegendShell :: BadLegendMockShell () -> (List Text, Bool)
 verifyBadLegendShell blms =
   let env =
         MockEnv.defaultEnv
@@ -68,7 +68,7 @@ verifyBadLegendShell blms =
 noLegendMockShell :: NoLegendMockShell ()
 noLegendMockShell = ShellRun.runShell
 
-verifyNoLegendShell :: NoLegendMockShell () -> ([Text], Bool)
+verifyNoLegendShell :: NoLegendMockShell () -> (List Text, Bool)
 verifyNoLegendShell nlms =
   let env =
         MockEnv.defaultEnv
@@ -77,7 +77,7 @@ verifyNoLegendShell nlms =
       logs = getLogs runNoLegendMockShell nlms env
    in (logs, logs == ["cmd1", "cmd2"])
 
-getLogs :: (t -> MockShellBase a) -> t -> MockEnv -> [Text]
+getLogs :: (t -> MockShellBase a) -> t -> MockEnv -> List Text
 getLogs runMock mock env =
   let base = runMock mock
       rdr = runMockShellBase base

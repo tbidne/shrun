@@ -44,7 +44,7 @@ translateProps = TH.testProperty "translateCommands includes everything" $
 
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands
-noCommandsMissing :: HashSet Text -> [Text] -> PropertyT IO ()
+noCommandsMissing :: HashSet Text -> List Text -> PropertyT IO ()
 noCommandsMissing allKeys = void . traverse failIfMissing
   where
     failIfMissing cmd
@@ -53,7 +53,7 @@ noCommandsMissing allKeys = void . traverse failIfMissing
           H.footnote $ "Missing command: " <> show cmd
           H.failure
 
-genLegendCommands :: MonadGen m => m (LegendMap, [Text])
+genLegendCommands :: MonadGen m => m (LegendMap, List Text)
 genLegendCommands = (,) <$> genLegend <*> genCommands
 
 -- WARN: This can technically generate a map that has cycles in it,
@@ -65,7 +65,7 @@ genLegend = Map.fromList <$> Gen.list range genKeyVal
   where
     range = Range.linearFrom 0 0 80
 
-genKeyVal :: MonadGen m => m (Text, Text)
+genKeyVal :: MonadGen m => m (Tuple2 Text Text)
 genKeyVal = (,) <$> genKey <*> genVal
 
 genKey :: MonadGen m => m Text
@@ -78,7 +78,7 @@ genVal = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 1 1 50
 
-genCommands :: MonadGen m => m [Text]
+genCommands :: MonadGen m => m (List Text)
 genCommands = Gen.list range genCommand
   where
     range = Range.linearFrom 1 1 50

@@ -11,7 +11,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
 -- | Entry point for ShellRun.Utils specs.
-specs :: IO [TestTree]
+specs :: IO (List TestTree)
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Utils" $ do
     Hspec.describe "displayCommand" $ do

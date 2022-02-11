@@ -22,11 +22,11 @@ spec = Hspec.it "Should time out" $ do
   let results = MkResultText <$> T.lines (T.pack result)
   V.verifyExpected results allExpected
   where
-    argList = [timeout] <> commands
+    argList = timeout : commands
     commands = ["sleep 10"]
     timeout = "--timeout=5"
 
-allExpected :: [ExpectedText]
+allExpected :: List ExpectedText
 allExpected =
   MkExpectedText
     <$> [ Constants.cancelled,

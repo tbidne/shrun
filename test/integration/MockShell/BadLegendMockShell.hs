@@ -22,7 +22,7 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
       Applicative,
       Monad,
       MonadReader MockEnv,
-      MonadWriter [Text],
+      MonadWriter (List Text),
       RegionLogger
     )
     via MockShellBase
@@ -31,7 +31,7 @@ instance MonadShell BadLegendMockShell where
   legendPathToMap :: Text -> BadLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ FileErr "File not found"
 
-  runCommands :: [Command] -> BadLegendMockShell ()
+  runCommands :: List Command -> BadLegendMockShell ()
   runCommands _ = pure ()
 
 instance Show a => Show (BadLegendMockShell a) where

@@ -53,7 +53,7 @@ instance
   legendPathToMap :: Text -> ShellT Env m (Either LegendErr LegendMap)
   legendPathToMap = liftIO . ParseLegend.legendPathToMap
 
-  runCommands :: [Command] -> ShellT Env m ()
+  runCommands :: List Command -> ShellT Env m ()
   runCommands = ShAsync.runCommands
 
 -- | `runShell` is the entry point for running shell commands, i.e.,
@@ -75,8 +75,8 @@ runShell = do
 maybePathToCommands ::
   MonadShell m =>
   Maybe Text ->
-  [Text] ->
-  m (Either LegendErr [Command])
+  List Text ->
+  m (Either LegendErr (List Command))
 maybePathToCommands Nothing cmds = pure $ Right $ fmap (MkCommand Nothing) cmds
 maybePathToCommands (Just path) cmds = do
   lMap <- legendPathToMap path
@@ -84,7 +84,7 @@ maybePathToCommands (Just path) cmds = do
 
 runCommandsOrLogErr ::
   (MonadShell m, RegionLogger m) =>
-  Either LegendErr [Command] ->
+  Either LegendErr (List Command) ->
   m ()
 runCommandsOrLogErr (Right cmds) = runCommands cmds
 runCommandsOrLogErr (Left err) = putLog $ MkLog errTxt Fatal Finish

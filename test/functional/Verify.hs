@@ -31,15 +31,15 @@ newtype UnexpectedText = MkUnexpectedText {getUnexpectedText :: Text}
   deriving (Show) via Text
 
 -- | Verifies expected text is found.
-verifyExpected :: [ResultText] -> [ExpectedText] -> Expectation
+verifyExpected :: List ResultText -> List ExpectedText -> Expectation
 verifyExpected results = flip (verifyExpectedUnexpected results) []
 
 -- | Verifies unexpected text is not found.
-verifyUnexpected :: [ResultText] -> [UnexpectedText] -> Expectation
+verifyUnexpected :: List ResultText -> List UnexpectedText -> Expectation
 verifyUnexpected results = verifyExpectedUnexpected results []
 
 -- | Verifies expected text is found and unexpected text is not found.
-verifyExpectedUnexpected :: [ResultText] -> [ExpectedText] -> [UnexpectedText] -> Expectation
+verifyExpectedUnexpected :: List ResultText -> List ExpectedText -> List UnexpectedText -> Expectation
 verifyExpectedUnexpected results allExpected allUnexpected = allExpectedFound *> allUnexpectedNotFound
   where
     findExpected :: ExpectedText -> Expectation -> Expectation
@@ -50,7 +50,7 @@ verifyExpectedUnexpected results allExpected allUnexpected = allExpectedFound *>
     findUnexpected unexpected acc = findOneUnexpected results unexpected *> acc
     allUnexpectedNotFound = foldr findUnexpected (pure ()) allUnexpected
 
-findOneExpected :: [ResultText] -> ExpectedText -> Expectation
+findOneExpected :: List ResultText -> ExpectedText -> Expectation
 findOneExpected results (MkExpectedText expected) = do
   let found = foldr searchT False results
   if not found
@@ -66,7 +66,7 @@ findOneExpected results (MkExpectedText expected) = do
     searchT :: ResultText -> Bool -> Bool
     searchT (MkResultText result) acc = expected `T.isInfixOf` result || acc
 
-findOneUnexpected :: [ResultText] -> UnexpectedText -> Expectation
+findOneUnexpected :: List ResultText -> UnexpectedText -> Expectation
 findOneUnexpected results (MkUnexpectedText unexpected) = do
   let found = foldr searchT False results
   if found
@@ -82,7 +82,7 @@ findOneUnexpected results (MkUnexpectedText unexpected) = do
     searchT :: ResultText -> Bool -> Bool
     searchT (MkResultText result) acc = unexpected `T.isInfixOf` result || acc
 
-formatResults :: [ResultText] -> String
+formatResults :: List ResultText -> String
 formatResults results = T.unpack lineSep
   where
     results' = fmap getResultText results

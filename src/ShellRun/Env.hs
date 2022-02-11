@@ -14,4 +14,4 @@ class HasLegend env where
 
 -- | The commands themselves.
 class HasCommands env where
-  getCommands :: env -> [Text]
+  getCommands :: env -> List Text

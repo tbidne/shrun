@@ -12,7 +12,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty.Hspec qualified as TH
 
 -- | Entry point for ShellRun.TimeRep specs.
-specs :: IO [TestTree]
+specs :: IO (List TestTree)
 specs = TH.testSpecs $ do
   Hspec.describe "ShellRun.Data.TimeRep" $ do
     Hspec.describe "formatTime" $ do

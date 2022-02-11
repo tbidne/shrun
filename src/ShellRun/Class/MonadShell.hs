@@ -16,4 +16,4 @@ class Monad m => MonadShell m where
   legendPathToMap :: Text -> m (Either LegendErr LegendMap)
 
   -- | Runs commands.
-  runCommands :: [Command] -> m ()
+  runCommands :: List Command -> m ()
