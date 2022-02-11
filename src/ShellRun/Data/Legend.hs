@@ -5,7 +5,7 @@ module ShellRun.Data.Legend
   )
 where
 
-import Data.Map.Strict (Map)
+import Data.HashMap.Strict (HashMap)
 import ShellRun.Prelude
 
 -- | Various errors that can occur while processing the legend.
@@ -21,4 +21,4 @@ data LegendErr
   deriving (Eq, Show)
 
 -- | Alias for our legend map.
-type LegendMap = Map Text Text
+type LegendMap = HashMap Text Text

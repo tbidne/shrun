@@ -1,8 +1,8 @@
 -- | Property tests for ShellRun.Parsing.Legend.Internal.
 module Props.ShellRun.Parsing.Legend.Internal (props) where
 
-import Data.Map.Strict qualified as Map
-import Data.Set qualified as Set
+import Data.HashMap.Strict qualified as Map
+import Data.HashSet qualified as Set
 import Data.Text qualified as Txt
 import Hedgehog (MonadGen, PropertyT, (===))
 import Hedgehog qualified as H
@@ -70,11 +70,14 @@ genGoodLines :: MonadGen m => m [Text]
 genGoodLines = do
   keyVals <- Gen.list range genGoodLine
   comments <- Gen.list range genComment
-  let uniqueKeys = Set.toList $ Set.fromList keyVals
-      textKeyVals = fmap unGoodLine uniqueKeys
-  Gen.shuffle (textKeyVals <> comments)
+  let (_, unique) = foldl' takeUnique (Set.empty, []) keyVals
+
+  Gen.shuffle (unique <> comments)
   where
     range = Range.linearFrom 20 1 80
+    takeUnique (foundKeys, newList) (MkGoodLine k v)
+      | Set.member k foundKeys = (foundKeys, newList)
+      | otherwise = (Set.insert k foundKeys, k <> "=" <> v : newList)
 
 genComment :: MonadGen m => m Text
 genComment = do
@@ -83,28 +86,14 @@ genComment = do
   where
     range = Range.linearFrom 20 1 80
 
--- This newtype is used to provide a custom equals/ord that
--- relies on the key part of `key=val`, so that we can
--- eliminate duplicate keys
-newtype GoodLine = MkGoodLine {unGoodLine :: Text}
-
-instance Eq GoodLine where
-  (MkGoodLine lhs) == (MkGoodLine rhs) = lKey == rKey
-    where
-      (lKey, _) = Txt.breakOn "=" lhs
-      (rKey, _) = Txt.breakOn "=" rhs
-
-instance Ord GoodLine where
-  (MkGoodLine lhs) <= (MkGoodLine rhs) = lKey <= rKey
-    where
-      (lKey, _) = Txt.breakOn "=" lhs
-      (rKey, _) = Txt.breakOn "=" rhs
+data GoodLine = MkGoodLine
+  { gkey :: Text,
+    gvalue :: Text
+  }
+  deriving (Show)
 
 genGoodLine :: MonadGen m => m GoodLine
-genGoodLine = do
-  key <- genKey
-  value <- genVal
-  pure $ MkGoodLine $ key <> "=" <> value
+genGoodLine = MkGoodLine <$> genKey <*> genVal
 
 genKey :: MonadGen m => m Text
 genKey = Gen.filterT noSpaceOrEquals $ Gen.text range Gen.latin1

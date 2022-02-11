@@ -5,8 +5,8 @@ module ShellRun.Parsing.Commands
   )
 where
 
-import Data.Map.Strict qualified as Map
-import Data.Set qualified as Set
+import Data.HashMap.Strict qualified as Map
+import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)

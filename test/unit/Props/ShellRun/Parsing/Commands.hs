@@ -4,9 +4,9 @@ module Props.ShellRun.Parsing.Commands
   )
 where
 
-import Data.Map.Strict qualified as Map
-import Data.Set (Set)
-import Data.Set qualified as Set
+import Data.HashMap.Strict qualified as Map
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as Set
 import Hedgehog (MonadGen, PropertyT)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
@@ -44,7 +44,7 @@ translateProps = TH.testProperty "translateCommands includes everything" $
 
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands
-noCommandsMissing :: Set Text -> [Text] -> PropertyT IO ()
+noCommandsMissing :: HashSet Text -> [Text] -> PropertyT IO ()
 noCommandsMissing allKeys = void . traverse failIfMissing
   where
     failIfMissing cmd

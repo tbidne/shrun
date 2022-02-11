@@ -6,7 +6,7 @@ module ShellRun.Parsing.Legend.Internal
   )
 where
 
-import Data.Map.Strict qualified as Map
+import Data.HashMap.Strict qualified as Map
 import Data.Text qualified as T
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Prelude

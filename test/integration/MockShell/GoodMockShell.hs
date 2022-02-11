@@ -3,7 +3,7 @@
 -- | Provides the 'GoodMockShell' type.
 module MockShell.GoodMockShell (GoodMockShell (..)) where
 
-import Data.Map.Strict qualified as Map
+import Data.HashMap.Strict qualified as Map
 import Data.String (String)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
