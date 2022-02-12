@@ -30,7 +30,7 @@ newtype NoLegendMockShell a = MkNoLegendMockShell
 instance MonadShell NoLegendMockShell where
   -- Purposely giving a bad shell function here to prove that no legend skips
   -- this (otherwise would die here)
-  legendPathToMap :: Text -> NoLegendMockShell (Either LegendErr LegendMap)
+  legendPathToMap :: FilePath -> NoLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ EntryErr "Bad key"
 
   runCommands :: List Command -> NoLegendMockShell ()

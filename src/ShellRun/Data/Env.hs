@@ -3,6 +3,7 @@ module ShellRun.Data.Env
   ( -- * \"HasX\" style typeclasses required for our concrete Env type.
     HasCommandDisplay (..),
     HasCommandLogging (..),
+    HasFileLogging (..),
     HasTimeout (..),
 
     -- * Types
@@ -16,18 +17,19 @@ where
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
+import ShellRun.Logging.Queue (LogTextQueue)
 import ShellRun.Prelude
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
 data Env = MkEnv
-  { legend :: Maybe Text,
+  { legend :: Maybe FilePath,
     timeout :: Maybe Timeout,
+    fileLogging :: Maybe (FilePath, LogTextQueue),
     commandLogging :: CommandLogging,
     commandDisplay :: CommandDisplay,
     commands :: List Text
   }
-  deriving (Show)
 
 -- | Type for determining if we stream commands' logs.
 data CommandLogging
@@ -53,21 +55,29 @@ data CommandDisplay
 class HasTimeout env where
   getTimeout :: env -> Maybe Timeout
 
+-- | FileLogging, if any.
+class HasFileLogging env where
+  getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
+
 -- | Determines if we should log commands' output.
 class HasCommandLogging env where
   getCommandLogging :: env -> CommandLogging
 
--- | Retrieves the queue that logs are sent to
+-- | Determines how to display command names.
 class HasCommandDisplay env where
   getCommandDisplay :: env -> CommandDisplay
 
 instance HasLegend Env where
-  getLegend :: Env -> Maybe Text
+  getLegend :: Env -> Maybe FilePath
   getLegend = legend
 
 instance HasTimeout Env where
   getTimeout :: Env -> Maybe Timeout
   getTimeout = timeout
+
+instance HasFileLogging Env where
+  getFileLogging :: Env -> Maybe (FilePath, LogTextQueue)
+  getFileLogging = fileLogging
 
 instance HasCommandLogging Env where
   getCommandLogging :: Env -> CommandLogging

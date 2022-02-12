@@ -19,8 +19,10 @@ module ShellRun.Prelude
 
     -- * 'Text' replacements for 'P.String' functions.
     error,
-    readFile,
     showt,
+    readFileUtf8Lenient,
+    writeFileUtf8,
+    appendFileUtf8,
 
     -- * Anti-punning aliases
     List,
@@ -51,6 +53,7 @@ import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.Trans as X (MonadTrans (..))
 import Control.Monad.Writer as X (MonadWriter (..), WriterT (..))
 import Data.Bifunctor as X (Bifunctor (..))
+import Data.ByteString qualified as BS
 import Data.Either as X (Either (..))
 import Data.Foldable as X
   ( Foldable
@@ -75,9 +78,12 @@ import Data.List.NonEmpty as X (NonEmpty (..))
 import Data.List.NonEmpty qualified as NE
 import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
 import Data.Monoid as X (Monoid (..))
+import Data.Ord as X (Ordering (..))
 import Data.Semigroup as X (Semigroup (..))
 import Data.Text as X (Text)
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as TextEnc
+import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..))
 import Prelude as X
@@ -85,6 +91,7 @@ import Prelude as X
     Bounded (..),
     Char,
     Eq (..),
+    FilePath,
     IO,
     Int,
     Integer,
@@ -111,9 +118,19 @@ import Prelude qualified as P
 -- $setup
 -- >>> import Data.String (String)
 
--- | 'Text' version of 'P.readFile'.
-readFile :: Text -> IO Text
-readFile = fmap T.pack . P.readFile . T.unpack
+-- | Strictly reads a file and leniently converts the contents to UTF8.
+readFileUtf8Lenient :: FilePath -> IO Text
+readFileUtf8Lenient =
+  fmap (TextEnc.decodeUtf8With TextEncErr.lenientDecode)
+    . BS.readFile
+
+-- | Writes the text contents to the file.
+appendFileUtf8 :: FilePath -> Text -> IO ()
+appendFileUtf8 fp = BS.appendFile fp . TextEnc.encodeUtf8
+
+-- | Writes the text contents to the file.
+writeFileUtf8 :: FilePath -> Text -> IO ()
+writeFileUtf8 fp = BS.writeFile fp . TextEnc.encodeUtf8
 
 -- | 'Text' version of 'P.show'.
 showt :: P.Show a => a -> Text

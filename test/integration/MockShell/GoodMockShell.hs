@@ -28,7 +28,7 @@ newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
     via MockShellBase
 
 instance MonadShell GoodMockShell where
-  legendPathToMap :: Text -> GoodMockShell (Either LegendErr LegendMap)
+  legendPathToMap :: FilePath -> GoodMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Right mp
     where
       mp =

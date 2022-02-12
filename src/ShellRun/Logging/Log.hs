@@ -18,6 +18,8 @@ module ShellRun.Logging.Log
     logFatal,
 
     -- * Utility functions for associate levels to colors/prefixes.
+    formatLog,
+    formatLogNoColor,
     logToColor,
     logToPrefix,
     levelToColor,
@@ -146,3 +148,18 @@ logError txt = mempty {msg = txt, lvl = Error}
 -- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'Fatal', 'mode' = 'NewLine'.
 logFatal :: Text -> Log
 logFatal txt = mempty {msg = txt, lvl = Fatal}
+
+-- | Helper for turning a 'Log' into its own formatting 'Text', i.e., adding
+-- a prefix and color.
+formatLog :: Log -> Text
+formatLog log@MkLog {msg} = P.color color $ prefix <> msg
+  where
+    color = logToColor log
+    prefix = logToPrefix log
+
+-- | Helper for turning a 'Log' into its own formatting 'Text', i.e., adding
+-- a prefix.
+formatLogNoColor :: Log -> Text
+formatLogNoColor log@MkLog {msg} = prefix <> msg
+  where
+    prefix = logToPrefix log

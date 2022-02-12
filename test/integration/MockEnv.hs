@@ -6,12 +6,12 @@ import ShellRun.Prelude
 
 -- | Includes the bare minimum fields necessary to run 'ShellRun.runShell'.
 data MockEnv = MkMockEnv
-  { legend :: Maybe Text,
+  { legend :: Maybe FilePath,
     commands :: List Text
   }
 
 instance HasLegend MockEnv where
-  getLegend :: MockEnv -> Maybe Text
+  getLegend :: MockEnv -> Maybe FilePath
   getLegend = legend
 
 instance HasCommands MockEnv where

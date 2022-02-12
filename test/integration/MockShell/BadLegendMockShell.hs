@@ -28,7 +28,7 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
     via MockShellBase
 
 instance MonadShell BadLegendMockShell where
-  legendPathToMap :: Text -> BadLegendMockShell (Either LegendErr LegendMap)
+  legendPathToMap :: FilePath -> BadLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ FileErr "File not found"
 
   runCommands :: List Command -> BadLegendMockShell ()

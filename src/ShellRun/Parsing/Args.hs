@@ -31,8 +31,9 @@ import Text.Read qualified as TR
 
 -- | Type for parsing command line args.
 data Args = MkArgs
-  { aLegend :: Maybe Text,
+  { aLegend :: Maybe FilePath,
     aTimeout :: Maybe Timeout,
+    aFileLogging :: Maybe FilePath,
     aCommandLogging :: CommandLogging,
     aCommandDisplay :: CommandDisplay,
     aCommands :: List Text
@@ -41,12 +42,12 @@ data Args = MkArgs
 
 instance Semigroup Args where
   (<>) :: Args -> Args -> Args
-  (MkArgs l t cl cd c) <> (MkArgs l' t' cl' cd' c') =
-    MkArgs (l <> l') (t <|> t') (cl <> cl') (cd <> cd') (c <> c')
+  (MkArgs l t fp cl cd c) <> (MkArgs l' t' fp' cl' cd' c') =
+    MkArgs (l <> l') (t <|> t') (fp <|> fp') (cl <> cl') (cd <> cd') (c <> c')
 
 instance Monoid Args where
   mempty :: Args
-  mempty = MkArgs mempty Nothing mempty mempty mempty
+  mempty = MkArgs mempty Nothing mempty mempty mempty mempty
 
 -- | 'ParserInfo' type for parsing 'Args'.
 parserInfoArgs :: ParserInfo Args
@@ -66,6 +67,7 @@ argsParser =
   MkArgs
     <$> legendParser
     <*> timeoutParser
+    <*> fileLoggingParser
     <*> commandLoggingParser
     <*> commandDisplayParser
     <*> commandsParser
@@ -84,16 +86,15 @@ version = OApp.infoOption txt (OApp.long "version" <> OApp.short 'v')
           "Date: " <> $(GitRev.gitCommitDate)
         ]
 
-legendParser :: Parser (Maybe Text)
+legendParser :: Parser (Maybe FilePath)
 legendParser =
   App.optional
-    ( T.pack
-        <$> OApp.strOption
-          ( OApp.long "legend"
-              <> OApp.short 'l'
-              <> OApp.help legendHelp
-              <> OApp.metavar "PATH"
-          )
+    ( OApp.strOption
+        ( OApp.long "legend"
+            <> OApp.short 'l'
+            <> OApp.help legendHelp
+            <> OApp.metavar "PATH"
+        )
     )
   where
     legendHelp =
@@ -142,6 +143,22 @@ readTimeStr = do
     Right timeRep ->
       let timeout = MkTimeout $ TimeRep.toSeconds timeRep
        in pure timeout
+
+fileLoggingParser :: Parser (Maybe FilePath)
+fileLoggingParser =
+  App.optional
+    ( OApp.strOption
+        ( OApp.long "file-logging"
+            <> OApp.short 'f'
+            <> OApp.help help
+            <> OApp.metavar "PATH"
+        )
+    )
+  where
+    help =
+      "If a path is supplied, all logs will additionally be written to the "
+        <> "supplied file. Normal logging (i.e. stdout) is unaffected. This "
+        <> "can be useful for investigating subcommand failure."
 
 commandLoggingParser :: Parser CommandLogging
 commandLoggingParser =

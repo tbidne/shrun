@@ -20,8 +20,7 @@ files =
     "src/ShellRun/Data/TimeRep.hs",
     "src/ShellRun/Parsing/Commands.hs",
     "src/ShellRun/Parsing/Legend/Internal.hs",
-    "src/ShellRun/Utils.hs",
-    "src/ShellRun/Utils/Text.hs"
+    "src/ShellRun/Utils.hs"
   ]
 
 -- This is needed because DocTest does not read the cabal

@@ -10,7 +10,7 @@ import ShellRun.Prelude
 
 -- | Path to legend file.
 class HasLegend env where
-  getLegend :: env -> Maybe Text
+  getLegend :: env -> Maybe FilePath
 
 -- | The commands themselves.
 class HasCommands env where

@@ -104,7 +104,7 @@ displayCommand _ (MkCommand _ cmd) = cmd
 --
 -- For instance:
 --
--- >>> let equals = $$(R.refine @R.NonEmpty Text "=")
+-- >>> let equals = $$(R.refineTH @R.NonEmpty @Text "=")
 --
 -- >>> -- Data.Text
 -- >>> T.breakOn "=" "HEY=LISTEN"
