@@ -14,10 +14,9 @@ import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Refined (NonNegative, Positive, Refined)
+import Refined qualified as R
 import Refined.Unsafe qualified as R
 import ShellRun.Prelude
-import ShellRun.Utils.Text (NonEmptyText)
-import ShellRun.Utils.Text qualified as TextUtils
 import System.Clock (TimeSpec (..))
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
@@ -53,7 +52,7 @@ genText = Gen.text range Gen.latin1
     range = Range.linearFrom 0 0 30
 
 -- | Generates latin1 'NonEmptyText' with 1-30 characters.
-getNonEmptyText :: Gen NonEmptyText
-getNonEmptyText = TextUtils.unsafeMkNonEmptyText <$> Gen.text range Gen.latin1
+getNonEmptyText :: Gen (Refined R.NonEmpty Text)
+getNonEmptyText = R.unsafeRefine <$> Gen.text range Gen.latin1
   where
     range = Range.linearFrom 1 1 30

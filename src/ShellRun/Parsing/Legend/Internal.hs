@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for parsing 'Text' lines into a 'LegendMap'.
@@ -8,9 +9,10 @@ where
 
 import Data.HashMap.Strict qualified as Map
 import Data.Text qualified as T
+import Refined qualified as R
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Prelude
-import ShellRun.Utils.Text qualified as TextUtils
+import ShellRun.Utils qualified as U
 
 -- | Attempts to parse the given ['Text'] into 'LegendMap'.
 -- The text lines can either be comments (start with \'#\') or
@@ -52,9 +54,9 @@ linesToMap = foldr f (Right Map.empty)
 
 parseLine :: Text -> Either LegendErr (Tuple2 Text Text)
 parseLine l =
-  case TextUtils.breakStripPoint breakPoint l of
+  case U.breakStripPoint breakPoint l of
     ("", _) -> Left $ EntryErr $ "Key cannot be empty: " <> l
     (_, "") -> Left $ EntryErr $ "Value cannot be empty: " <> l
     (k, v) -> Right (k, v)
   where
-    breakPoint = TextUtils.unsafeMkNonEmptyText "="
+    breakPoint = $$(R.refineTH @R.NonEmpty @Text "=")

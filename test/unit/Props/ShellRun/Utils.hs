@@ -6,14 +6,13 @@ module Props.ShellRun.Utils
   )
 where
 
-import Hedgehog (Gen, PropertyT)
+import Hedgehog (PropertyT)
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
 import Refined (NonNegative, Positive, Refined)
 import Refined qualified as R
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
-import System.Clock (TimeSpec)
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH

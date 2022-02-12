@@ -1,6 +1,9 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Specs for ShellRun.Utils.
 module Specs.ShellRun.Utils (specs) where
 
+import Refined qualified as R
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Prelude
@@ -22,3 +25,17 @@ specs = TH.testSpecs $ do
         Utils.displayCommand ShowCommand (MkCommand (Just "key") "cmd") `shouldBe` "cmd"
       Hspec.it "should use key with ShowKey when one exists" $ do
         Utils.displayCommand ShowKey (MkCommand (Just "key") "cmd") `shouldBe` "key"
+  Hspec.describe "ShellRun.Utils.Text" $ do
+    Hspec.describe "breakStripPoint" $ do
+      Hspec.it "Missing key should return (str, \"\")" $ do
+        Utils.breakStripPoint point "ab" `shouldBe` ("ab", "")
+      Hspec.it "Normal case should strip out key" $ do
+        Utils.breakStripPoint point "abc=def" `shouldBe` ("abc", "def")
+      Hspec.it "Multiple keys should only break on first)" $ do
+        Utils.breakStripPoint point "ab=cd=ef" `shouldBe` ("ab", "cd=ef")
+      Hspec.it "Leading key should return (\"\", str)" $ do
+        Utils.breakStripPoint point "=ab" `shouldBe` ("", "ab")
+      Hspec.it "Trailing key should return (str, \"\")" $ do
+        Utils.breakStripPoint point "ab=" `shouldBe` ("ab", "")
+  where
+    point = $$(R.refineTH @R.NonEmpty @Text "=")

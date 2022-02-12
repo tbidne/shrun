@@ -1,7 +1,9 @@
+{-# LANGUAGE ViewPatterns #-}
+
 -- | Provides utilities.
 module ShellRun.Utils
   ( -- * Text Utils
-    module TextUtils,
+    breakStripPoint,
 
     -- * Timing Utils
     diffTime,
@@ -14,19 +16,18 @@ module ShellRun.Utils
   )
 where
 
+import Data.Text qualified as T
 import Refined (NonNegative, Positive, Refined)
 import Refined qualified as R
 import Refined.Unsafe qualified as R
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Prelude
-import ShellRun.Utils.Text as TextUtils
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
 
 -- $setup
 -- >>> :set -XTemplateHaskell
--- >>> import Refined qualified as R
 
 -- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
 --
@@ -93,3 +94,42 @@ diffTime t1 t2 =
 displayCommand :: CommandDisplay -> Command -> Text
 displayCommand ShowKey (MkCommand (Just key) _) = key
 displayCommand _ (MkCommand _ cmd) = cmd
+
+-- | Wrapper for 'Text'\'s 'T.breakOn' that differs in two ways:
+--
+-- 1. Total, since we restrict the @needle@ to 'R.NonEmpty'
+-- ('Text' throws a pure exception here).
+-- 2. If the @needle@ is found within the @haystack@, we do not include it
+-- in the second part of the pair.
+--
+-- For instance:
+--
+-- >>> let equals = $$(R.refine @R.NonEmpty Text "=")
+--
+-- >>> -- Data.Text
+-- >>> T.breakOn "=" "HEY=LISTEN"
+-- ("HEY","=LISTEN")
+--
+-- >>> -- ShellRun.Utils.Text
+-- >>> breakStripPoint equals "HEY=LISTEN"
+-- ("HEY","LISTEN")
+--
+-- Other examples:
+--
+-- >>> breakStripPoint equals "HEYLISTEN"
+-- ("HEYLISTEN","")
+--
+-- >>> breakStripPoint equals "=HEYLISTEN"
+-- ("","HEYLISTEN")
+--
+-- >>> breakStripPoint equals "HEYLISTEN="
+-- ("HEYLISTEN","")
+--
+-- >>> breakStripPoint equals "HEY==LISTEN"
+-- ("HEY","=LISTEN")
+breakStripPoint :: Refined R.NonEmpty Text -> Text -> Tuple2 Text Text
+breakStripPoint rpoint txt = case T.breakOn point txt of
+  (x, T.stripPrefix point -> Just y) -> (x, y)
+  pair -> pair
+  where
+    point = R.unrefine rpoint

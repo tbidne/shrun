@@ -70,7 +70,6 @@ library
     ShellRun.Parsing.Legend.Internal
     ShellRun.Prelude
     ShellRun.Utils
-    ShellRun.Utils.Text
 
   build-depends:
     , algebra-simple        ^>=0.1.0.0
@@ -122,14 +121,12 @@ test-suite unit
     Props.ShellRun.Parsing.Commands
     Props.ShellRun.Parsing.Legend.Internal
     Props.ShellRun.Utils
-    Props.ShellRun.Utils.Text
     Specs
     Specs.ShellRun.Data.TimeRep
     Specs.ShellRun.Parsing.Args
     Specs.ShellRun.Parsing.Commands
     Specs.ShellRun.Parsing.Legend.Internal
     Specs.ShellRun.Utils
-    Specs.ShellRun.Utils.Text
 
   build-depends:
     , base
