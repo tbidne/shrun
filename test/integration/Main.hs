@@ -10,35 +10,35 @@ import MockShell.MockShellBase (MockShellBase (..))
 import MockShell.NoLegendMockShell (NoLegendMockShell (..))
 import ShellRun qualified
 import ShellRun.Prelude
-import Test.Hspec (Spec, shouldBe)
-import Test.Hspec qualified as Hspec
-import Test.Tasty qualified as T
-import Test.Tasty.Hspec qualified as TH
+import Test.Tasty (TestTree)
+import Test.Tasty qualified as Tasty
+import Test.Tasty.HUnit qualified as THU
 
 -- | Entry point for integration tests.
 main :: IO ()
-main = tastySpec >>= T.defaultMain
-  where
-    tastySpec = T.testGroup "Integration Tests" <$> TH.testSpecs spec
+main =
+  Tasty.defaultMain $
+    Tasty.testGroup
+      "Integration Tests"
+      [ goodShell,
+        badLegendShell,
+        noLegendShell
+      ]
 
-spec :: Spec
-spec =
-  Hspec.describe "Run mock shells" $ do
-    Hspec.it "Should run successfully" $ do
-      let (logs, b) = verifyGoodShell goodMockShell
-      if not b
-        then Hspec.expectationFailure $ show logs
-        else True `shouldBe` True
-    Hspec.it "Should die on legend error" $ do
-      let (logs, b) = verifyBadLegendShell badLegendMockShell
-      if not b
-        then Hspec.expectationFailure $ show logs
-        else True `shouldBe` True
-    Hspec.it "Should continue with no legend" $ do
-      let (logs, b) = verifyNoLegendShell noLegendMockShell
-      if not b
-        then Hspec.expectationFailure $ show logs
-        else True `shouldBe` True
+goodShell :: TestTree
+goodShell = THU.testCase "Should run successfully" $ do
+  let (logs, b) = verifyGoodShell goodMockShell
+  THU.assertBool (show logs) b
+
+badLegendShell :: TestTree
+badLegendShell = THU.testCase "Should die on legend error" $ do
+  let (logs, b) = verifyBadLegendShell badLegendMockShell
+  THU.assertBool (show logs) b
+
+noLegendShell :: TestTree
+noLegendShell = THU.testCase "Should continue with no legend" $ do
+  let (logs, b) = verifyNoLegendShell noLegendMockShell
+  THU.assertBool (show logs) b
 
 goodMockShell :: GoodMockShell ()
 goodMockShell = ShellRun.runShell

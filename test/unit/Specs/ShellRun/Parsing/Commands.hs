@@ -6,42 +6,66 @@ import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
-import Test.Hspec (shouldBe)
-import Test.Hspec qualified as Hspec
 import Test.Tasty (TestTree)
-import Test.Tasty.Hspec qualified as TH
+import Test.Tasty qualified as Tasty
+import Test.Tasty.HUnit ((@=?))
+import Test.Tasty.HUnit qualified as THU
 
 -- | Entry point for ShellRun.Parsing.Commands specs.
-specs :: IO (List TestTree)
-specs = TH.testSpecs $ do
-  Hspec.describe "ShellRun.Parsing.Commands" $ do
-    Hspec.it "Should translate one command" $ do
-      ParseCommands.translateCommands legend ["one"]
-        `shouldBe` Right [MkCommand (Just "one") "cmd1"]
-    Hspec.it "Should return non-map command" $ do
-      ParseCommands.translateCommands legend ["other"]
-        `shouldBe` Right [MkCommand Nothing "other"]
-    Hspec.it "Should return recursive commands" $ do
-      ParseCommands.translateCommands legend ["all"]
-        `shouldBe` Right
+specs :: TestTree
+specs =
+  Tasty.testGroup
+    "ShellRun.Parsing.Commands"
+    [ translateOneCmd,
+      returnsNonMapCmd,
+      returnsRecursiveCmds,
+      returnsRecursiveAndOtherCmds,
+      noSplitNonKeyCmd,
+      cycleCmdFail
+    ]
+
+translateOneCmd :: TestTree
+translateOneCmd = THU.testCase "Should translate one command" $ do
+  let result = ParseCommands.translateCommands legend ["one"]
+  Right [MkCommand (Just "one") "cmd1"] @=? result
+
+returnsNonMapCmd :: TestTree
+returnsNonMapCmd = THU.testCase "Should return non-map command" $ do
+  let result = ParseCommands.translateCommands legend ["other"]
+  Right [MkCommand Nothing "other"] @=? result
+
+returnsRecursiveCmds :: TestTree
+returnsRecursiveCmds = THU.testCase "Should return recursive commands" $ do
+  let result = ParseCommands.translateCommands legend ["all"]
+      expected =
+        Right
           [ MkCommand (Just "one") "cmd1",
             MkCommand (Just "two") "cmd2",
             MkCommand (Just "all") "cmd3"
           ]
-    Hspec.it "Should return recursive commands and other" $ do
-      ParseCommands.translateCommands legend ["all", "other"]
-        `shouldBe` Right
+  expected @=? result
+
+returnsRecursiveAndOtherCmds :: TestTree
+returnsRecursiveAndOtherCmds = THU.testCase "Should return recursive commands and other" $ do
+  let result = ParseCommands.translateCommands legend ["all", "other"]
+      expected =
+        Right
           [ MkCommand (Just "one") "cmd1",
             MkCommand (Just "two") "cmd2",
             MkCommand (Just "all") "cmd3",
             MkCommand Nothing "other"
           ]
-    Hspec.it "Should not split non-key commands" $ do
-      ParseCommands.translateCommands legend ["echo ,,"]
-        `shouldBe` Right [MkCommand Nothing "echo ,,"]
-    Hspec.it "Should fail on cycle" $ do
-      ParseCommands.translateCommands cyclicLegend ["a"]
-        `shouldBe` Left (CyclicKeyErr "a -> b -> c -> a")
+  expected @=? result
+
+noSplitNonKeyCmd :: TestTree
+noSplitNonKeyCmd = THU.testCase "Should not split non-key commands" $ do
+  let result = ParseCommands.translateCommands legend ["echo ,,"]
+  Right [MkCommand Nothing "echo ,,"] @=? result
+
+cycleCmdFail :: TestTree
+cycleCmdFail = THU.testCase "Should fail on cycle" $ do
+  let result = ParseCommands.translateCommands cyclicLegend ["a"]
+  Left (CyclicKeyErr "a -> b -> c -> a") @=? result
 
 legend :: LegendMap
 legend =

@@ -9,5 +9,4 @@ import Test.Tasty qualified as T
 -- | Entry point for unit tests.
 main :: IO ()
 main =
-  Specs.specs >>= \specs ->
-    T.defaultMain $ T.testGroup "Tests" [specs, Props.props]
+  T.defaultMain $ T.testGroup "Tests" [Specs.specs, Props.props]

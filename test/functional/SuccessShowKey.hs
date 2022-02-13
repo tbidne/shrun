@@ -9,15 +9,15 @@ import ShellRun.Parsing.Env qualified as Env
 import ShellRun.Prelude
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
-import Test.Hspec (Spec)
-import Test.Hspec qualified as Hspec
+import Test.Tasty (TestTree)
+import Test.Tasty.HUnit qualified as THU
 import Verify (ExpectedText (..), ResultText (..))
 import Verify qualified as V
 
 -- | Spec that should run commands displaying the key in the logs.
-spec :: Spec
+spec :: TestTree
 spec =
-  Hspec.it "Should show key rather than command" $ do
+  THU.testCase "Should show key rather than command" $ do
     env <- SysEnv.withArgs argList Env.runParser
     let action = runReaderT (SR.runShellT SR.runShell) env
     result <- Shh.capture_ action
