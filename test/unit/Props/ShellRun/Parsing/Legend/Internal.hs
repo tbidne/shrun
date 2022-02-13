@@ -8,6 +8,7 @@ import Hedgehog (MonadGen, PropertyT, (===))
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import MaxRuns (MaxRuns (..))
 import ShellRun.Data.Legend (LegendMap)
 import ShellRun.Parsing.Legend.Internal qualified as Internal
 import ShellRun.Prelude
@@ -25,30 +26,35 @@ props =
     ]
 
 successProps :: TestTree
-successProps = TH.testProperty "linesToMap success props" $
-  -- NOTE: This set to 1,000 as we have had test errors before that got
-  -- through (i.e. duplicate keys) because 100 was not enough, and
-  -- it's still fast.
-  H.withTests 1_000 $
-    H.property $ do
-      commands <- H.forAll genGoodLines
-      let result = Internal.linesToMap commands
-      case result of
-        Left err -> do
-          H.footnoteShow err
-          H.failure
-        Right legend -> do
-          H.annotate "Unique keys in original list should match legend"
-          verifySize commands legend
+successProps =
+  T.askOption $ \(MkMaxRuns limit) ->
+    TH.testProperty "linesToMap success props" $
+      -- NOTE: This set to at least 1,000 as we have had test errors before
+      -- that got through (i.e. duplicate keys) because 100 was not enough,
+      -- and it's still fast.
+      let limit' = max 1_000 limit
+       in H.withTests limit' $
+            H.property $ do
+              commands <- H.forAll genGoodLines
+              let result = Internal.linesToMap commands
+              case result of
+                Left err -> do
+                  H.footnoteShow err
+                  H.failure
+                Right legend -> do
+                  H.annotate "Unique keys in original list should match legend"
+                  verifySize commands legend
 
 failureProps :: TestTree
-failureProps = TH.testProperty "linesToMap failure props" $
-  H.property $ do
-    commands <- H.forAll genBadLines
-    let result = Internal.linesToMap commands
-    case result of
-      Left _ -> H.success
-      Right _ -> H.failure
+failureProps = T.askOption $ \(MkMaxRuns limit) ->
+  TH.testProperty "linesToMap failure props" $
+    H.withTests limit $
+      H.property $ do
+        commands <- H.forAll genBadLines
+        let result = Internal.linesToMap commands
+        case result of
+          Left _ -> H.success
+          Right _ -> H.failure
 
 verifySize :: List Text -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do

@@ -40,7 +40,7 @@ jobs:
           nix-shell nix/ghc_9-2-1.nix --command \
             "cabal update && \
              cabal build --write-ghc-environment-files=always && \
-             cabal test unit --test-show-details=direct"
+             MAX_RUNS=10000 cabal test unit --test-show-details=direct"
 
       - name: Integration Tests
         run: |

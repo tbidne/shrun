@@ -11,6 +11,7 @@ import Hedgehog (MonadGen, PropertyT)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import MaxRuns (MaxRuns (..))
 import ShellRun.Data.Command qualified as Command
 import ShellRun.Data.Legend (LegendMap)
 import ShellRun.Parsing.Commands qualified as ParseCommands
@@ -24,23 +25,25 @@ props :: TestTree
 props = T.testGroup "ShellRun.Parsing.Commands" [translateProps]
 
 translateProps :: TestTree
-translateProps = TH.testProperty "translateCommands includes everything" $
-  H.property $ do
-    (legend, origCmds) <- H.forAll genLegendCommands
-    let legendKeySet = Set.fromList $ Map.keys legend
-        maybeFinalCmds = ParseCommands.translateCommands legend origCmds
+translateProps = T.askOption $ \(MkMaxRuns limit) ->
+  TH.testProperty "translateCommands includes everything" $
+    H.withTests limit $
+      H.property $ do
+        (legend, origCmds) <- H.forAll genLegendCommands
+        let legendKeySet = Set.fromList $ Map.keys legend
+            maybeFinalCmds = ParseCommands.translateCommands legend origCmds
 
-    case maybeFinalCmds of
-      Left err -> do
-        H.footnote $ "Received a LegendErr: " <> show err
-        H.failure
-      Right finalCmds -> do
-        let finalCmdsSet = Set.fromList $ fmap Command.command finalCmds
-            combinedKeySet = Set.union legendKeySet finalCmdsSet
+        case maybeFinalCmds of
+          Left err -> do
+            H.footnote $ "Received a LegendErr: " <> show err
+            H.failure
+          Right finalCmds -> do
+            let finalCmdsSet = Set.fromList $ fmap Command.command finalCmds
+                combinedKeySet = Set.union legendKeySet finalCmdsSet
 
-        H.footnote $ "Final commands: " <> show finalCmdsSet
-        H.footnote $ "Legend: " <> show legendKeySet
-        noCommandsMissing combinedKeySet origCmds
+            H.footnote $ "Final commands: " <> show finalCmdsSet
+            H.footnote $ "Legend: " <> show legendKeySet
+            noCommandsMissing combinedKeySet origCmds
 
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands

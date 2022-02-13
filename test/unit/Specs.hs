@@ -13,7 +13,7 @@ import Test.Tasty qualified as T
 specs :: TestTree
 specs =
   T.testGroup
-    "HUnit specs"
+    "HUnit tests"
     [ LegendI.specs,
       ParseArgs.specs,
       ParseCommands.specs,

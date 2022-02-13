@@ -120,6 +120,7 @@ test-suite unit
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
+    MaxRuns
     Props
     Props.Generators
     Props.ShellRun.Data.TimeRep
@@ -140,6 +141,7 @@ test-suite unit
     , optparse-applicative
     , refined
     , shell-run
+    , tagged                ^>=0.8.6
     , tasty                 >=1.1.0.3 && <1.5
     , tasty-hedgehog        >=1.0.1.0 && <1.2
     , tasty-hunit           >=0.9     && <0.11
