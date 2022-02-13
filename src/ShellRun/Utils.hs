@@ -4,6 +4,7 @@
 module ShellRun.Utils
   ( -- * Text Utils
     breakStripPoint,
+    decodeUtf8Lenient,
 
     -- * Timing Utils
     diffTime,
@@ -16,7 +17,10 @@ module ShellRun.Utils
   )
 where
 
+import Data.ByteString (ByteString)
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as TEnc
+import Data.Text.Encoding.Error qualified as TEncErr
 import Refined (Refined)
 import Refined qualified as R
 import Refined.Unsafe qualified as R
@@ -131,3 +135,7 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
   pair -> pair
   where
     point = R.unrefine rpoint
+
+-- | Decodes a 'Bytestring' to UTF-8 in lenient mode.
+decodeUtf8Lenient :: ByteString -> Text
+decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode

@@ -18,7 +18,6 @@ import Control.Exception.Safe qualified as SafeEx
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Text qualified as T
-import Data.Text.Conversions qualified as TConvert
 import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Data.Command (Command (..))
@@ -109,12 +108,11 @@ readHandle commandDisplay cmd handle = do
       | otherwise -> do
           output :: Either SomeException ByteString <-
             SafeEx.try $ BS.hGetNonBlocking handle blockSize
-          let outDecoded = fmap (TConvert.decodeConvertText . TConvert.UTF8) output
+          let outDecoded = fmap Utils.decodeUtf8Lenient output
           pure $ case outDecoded of
             Left ex -> ReadErr $ readEx ex
-            Right Nothing -> ReadErr $ utf8Err outDecoded
-            Right (Just "") -> ReadNoData
-            Right (Just o) -> ReadSuccess $ name <> ": " <> stripChars (T.pack o)
+            Right "" -> ReadNoData
+            Right o -> ReadSuccess $ name <> ": " <> stripChars o
   where
     name = Utils.displayCommand commandDisplay cmd
     displayEx :: Show a => Text -> a -> Text
@@ -124,7 +122,6 @@ readHandle commandDisplay cmd handle = do
         . (<>) prefix
         . showt
     readEx = displayEx "IOException reading handle: "
-    utf8Err = displayEx "Could not decode UTF-8: "
 
 makeStdErr :: CommandDisplay -> Command -> Text -> Stderr
 makeStdErr commandDisplay cmd err =
