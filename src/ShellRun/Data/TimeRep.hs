@@ -29,10 +29,10 @@ import ShellRun.Utils qualified as U
 
 -- | Represents a relative time.
 data TimeRep = MkTimeRep
-  { days :: Refined NonNegative Int,
-    hours :: Refined NonNegative Int,
-    minutes :: Refined NonNegative Int,
-    seconds :: Refined NonNegative Int
+  { days :: RNonNegative,
+    hours :: RNonNegative,
+    minutes :: RNonNegative,
+    seconds :: RNonNegative
   }
   deriving (Show)
 
@@ -49,7 +49,7 @@ data TimeRep = MkTimeRep
 --    in toSeconds timeRep
 -- :}
 -- Refined 200000
-toSeconds :: TimeRep -> Refined NonNegative Int
+toSeconds :: TimeRep -> RNonNegative
 toSeconds (MkTimeRep d h m s) =
   (d .*. dayNN)
     .+. (h .*. hourNN)
@@ -65,7 +65,7 @@ toSeconds (MkTimeRep d h m s) =
 --   in showRep timeRep
 -- :}
 -- [2,7,33,20]
-fromSeconds :: Refined NonNegative Int -> TimeRep
+fromSeconds :: RNonNegative -> TimeRep
 fromSeconds seconds = MkTimeRep d h m s
   where
     (d, daysRem) = U.divWithRem seconds dayPos
@@ -98,7 +98,7 @@ formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
 --   in formatTime totalSeconds
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
-formatTime :: Refined NonNegative Int -> Text
+formatTime :: RNonNegative -> Text
 formatTime = formatTimeRep . fromSeconds
 
 isZero :: TimeRep -> Bool
@@ -109,7 +109,7 @@ isZero (MkTimeRep d h m s)
     timeSum = foldl' sumUp 0 [d, h, m, s]
     sumUp acc = (+) acc . R.unrefine
 
-pluralize :: Refined NonNegative Int -> Text -> Text
+pluralize :: RNonNegative -> Text -> Text
 pluralize val txt
   | n == 1 = valUnit
   | otherwise = valUnit <> "s"
@@ -117,23 +117,23 @@ pluralize val txt
     n = R.unrefine val
     valUnit = showt n <> txt
 
-zero :: Refined NonNegative Int
+zero :: RNonNegative
 zero = $$(R.refineTH 0)
 
-dayNN :: Refined NonNegative Int
+dayNN :: RNonNegative
 dayNN = $$(R.refineTH 86_400)
 
-hourNN :: Refined NonNegative Int
+hourNN :: RNonNegative
 hourNN = $$(R.refineTH 3_600)
 
-minuteNN :: Refined NonNegative Int
+minuteNN :: RNonNegative
 minuteNN = $$(R.refineTH 60)
 
-dayPos :: Refined Positive Int
+dayPos :: RPositive
 dayPos = $$(R.refineTH 86_400)
 
-hourPos :: Refined Positive Int
+hourPos :: RPositive
 hourPos = $$(R.refineTH 3_600)
 
-minutePos :: Refined Positive Int
+minutePos :: RPositive
 minutePos = $$(R.refineTH 60)

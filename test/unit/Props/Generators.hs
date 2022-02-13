@@ -20,11 +20,11 @@ import ShellRun.Prelude
 import System.Clock (TimeSpec (..))
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
-genNonNegative :: Gen (Refined NonNegative Int)
+genNonNegative :: Gen RNonNegative
 genNonNegative = R.unsafeRefine <$> Gen.integral (Range.constant 0 1_000_000)
 
 -- | Generates 'Positive' in [1, 1_000_000].
-genPositive :: Gen (Refined Positive Int)
+genPositive :: Gen RPositive
 genPositive = R.unsafeRefine <$> Gen.integral (Range.constant 1 1_000_000)
 
 -- | Generates 'TimeSpec' where 'sec' and 'nsec' are random 'Int64'.

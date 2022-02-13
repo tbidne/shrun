@@ -25,7 +25,7 @@ import ShellRun.Prelude
 data Env = MkEnv
   { legend :: Maybe FilePath,
     timeout :: Maybe Timeout,
-    fileLogging :: Maybe (FilePath, LogTextQueue),
+    fileLogging :: Maybe (Tuple2 FilePath LogTextQueue),
     commandLogging :: CommandLogging,
     commandDisplay :: CommandDisplay,
     commands :: List Text

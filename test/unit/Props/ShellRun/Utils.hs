@@ -37,7 +37,7 @@ divWithRemProps = TH.testProperty "divWithRem" $
     let result = U.divWithRem nn pos
     vDivWithRem (nn, pos) result
 
-vDivWithRem :: (Refined NonNegative Int, Refined Positive Int) -> (Refined NonNegative Int, Refined NonNegative Int) -> PropertyT IO ()
+vDivWithRem :: (RNonNegative, RPositive) -> (RNonNegative, RNonNegative) -> PropertyT IO ()
 vDivWithRem (n, divisor) (e, remainder) = do
   H.assert $ (divisorRaw * eRaw) + remainderRaw == nRaw
   H.footnote $

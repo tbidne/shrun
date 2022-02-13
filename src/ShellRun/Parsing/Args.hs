@@ -201,16 +201,16 @@ parseTimeRep =
     <*> parseTimeOrZero 's'
     <* MP.eof
 
-parseTimeOrZero :: Char -> MParser (Refined NonNegative Int)
+parseTimeOrZero :: Char -> MParser RNonNegative
 parseTimeOrZero c =
   -- Backtrack if we don't match
   MP.try (parseNNWithUnit c)
     <|> pure zero
 
-parseNNWithUnit :: Char -> MParser (Refined NonNegative Int)
+parseNNWithUnit :: Char -> MParser RNonNegative
 parseNNWithUnit c = parseNonNegative <* MPC.char' c
 
-parseNonNegative :: MParser (Refined NonNegative Int)
+parseNonNegative :: MParser RNonNegative
 parseNonNegative = do
   ds <- MP.some MPC.digitChar
   case TR.readMaybe ds of
@@ -219,5 +219,5 @@ parseNonNegative = do
       Left ex -> MP.customFailure $ "Refinment failed: " <> showt ex
       Right n' -> pure n'
 
-zero :: Refined NonNegative Int
+zero :: RNonNegative
 zero = $$(R.refineTH 0)

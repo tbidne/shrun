@@ -27,7 +27,7 @@ runParser = do
       pure $ Just (fp, MkLogTextQueue queue)
   pure $ toEnv fl args
 
-toEnv :: Maybe (FilePath, LogTextQueue) -> Args -> Env
+toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Args -> Env
 toEnv fl MkArgs {..} =
   MkEnv
     aLegend

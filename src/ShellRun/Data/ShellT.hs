@@ -1,4 +1,3 @@
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 -- | Provides the 'ShellT' monad transformer.
@@ -18,7 +17,6 @@ import Control.Monad.IO.Unlift qualified as UAsync
 import Control.Monad.Loops qualified as Loops
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
-import Data.IORef qualified as Ref
 import Data.Text qualified as T
 import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
@@ -143,7 +141,7 @@ instance
         fileLogging <- asks getFileLogging
         case fileLogging of
           Nothing -> pure ()
-          Just (fp, queue) -> Queue.readQueue queue >>= traverse_ (logFile fp)
+          Just (fp, queue) -> Queue.flushQueue queue >>= traverse_ (logFile fp)
 
 runCommand ::
   ( HasCommandDisplay env,
@@ -160,7 +158,7 @@ runCommand cmd = do
   commandLogging <- asks getCommandLogging
 
   let shFn = case commandLogging of
-        Disabled -> tryTimeSh commandDisplay
+        Disabled -> tryTimeSh
         Enabled -> tryTimeShRegion
 
   res <- shFn cmd
@@ -213,7 +211,7 @@ logCounter ::
     Region m ~ ConsoleRegion
   ) =>
   ConsoleRegion ->
-  Refined NonNegative Int ->
+  RNonNegative ->
   m ()
 logCounter region elapsed = do
   let lg =
@@ -230,7 +228,7 @@ keepRunning ::
     Region m ~ ConsoleRegion
   ) =>
   ConsoleRegion ->
-  IORef (Refined NonNegative Int) ->
+  IORef RNonNegative ->
   Maybe Timeout ->
   m Bool
 keepRunning region timer mto = do
@@ -241,7 +239,7 @@ keepRunning region timer mto = do
       pure False
     else pure True
 
-timedOut :: Refined NonNegative Int -> Maybe Timeout -> Bool
+timedOut :: RNonNegative -> Maybe Timeout -> Bool
 timedOut timer =
   \case
     Nothing -> False
@@ -250,16 +248,19 @@ timedOut timer =
 -- | Version of 'tryShExitCode' that also returns the command's
 -- duration. 'Stdout' is not returned on success.
 tryTimeSh ::
-  MonadIO m =>
-  CommandDisplay ->
+  ( HasCommandDisplay env,
+    MonadIO m
+  ) =>
   Command ->
-  ShellT env m (Either (Refined NonNegative Int, Stderr) (Refined NonNegative Int))
-tryTimeSh commandDisplay cmd = liftIO $ do
-  start <- C.getTime Monotonic
-  res <- ShIO.tryShExitCode commandDisplay cmd Nothing
-  end <- C.getTime Monotonic
-  let diff = U.diffTime start end
-  pure $ bimap (diff,) (const diff) res
+  ShellT env m (Either (Tuple2 RNonNegative Stderr) RNonNegative)
+tryTimeSh cmd = do
+  commandDisplay <- asks getCommandDisplay
+  liftIO $ do
+    start <- C.getTime Monotonic
+    res <- ShIO.tryShExitCode commandDisplay cmd Nothing
+    end <- C.getTime Monotonic
+    let diff = U.diffTime start end
+    pure $ bimap (diff,) (const diff) res
 
 -- | Version of 'tryTimeSh' that attempts to read the command's
 -- @stdout@ + @stderr@.
@@ -271,7 +272,7 @@ tryTimeShRegion ::
     MonadUnliftIO m
   ) =>
   Command ->
-  ShellT env m (Either (Refined NonNegative Int, Stderr) (Refined NonNegative Int))
+  ShellT env m (Either (Tuple2 RNonNegative Stderr) RNonNegative)
 tryTimeShRegion cmd@(MkCommand _ cmdTxt) =
   Regions.withConsoleRegion Linear $ \region -> do
     commandDisplay <- asks getCommandDisplay
@@ -315,7 +316,7 @@ tryTimeShRegion cmd@(MkCommand _ cmdTxt) =
         remainingData <- liftIO $ ShIO.readHandle commandDisplay cmd recvH
         -- Take the most recent valid read of either the lastRead when running
         -- the process, or this final remainingData just attempted. The
-        -- semigroup instance favors a successful real, otherwise we take the
+        -- semigroup instance favors a successful read, otherwise we take the
         -- left.
         let lastData = case lastRead of
               Nothing -> remainingData
@@ -338,10 +339,10 @@ streamOutput ::
   Command ->
   Handle ->
   ProcessHandle ->
-  ShellT env m (ExitCode, Maybe ReadHandleResult)
+  ShellT env m (Tuple2 ExitCode (Maybe ReadHandleResult))
 streamOutput region cmd recvH ph = do
   commandDisplay <- asks getCommandDisplay
-  lastReadRef <- liftIO $ Ref.newIORef Nothing
+  lastReadRef <- liftIO $ IORef.newIORef Nothing
   exitCode <- Loops.untilJust $ do
     result <- liftIO $ ShIO.readHandle commandDisplay cmd recvH
     case result of
@@ -349,12 +350,12 @@ streamOutput region cmd recvH ph = do
         let log = MkLog err Error Set
         putRegionLog region log
       ReadSuccess out -> do
-        liftIO $ Ref.writeIORef lastReadRef (Just (ReadSuccess out))
+        liftIO $ IORef.writeIORef lastReadRef (Just (ReadSuccess out))
         let log = MkLog out SubCommand Set
         putRegionLog region log
       ReadNoData -> pure ()
     liftIO $ P.getProcessExitCode ph
-  lastRead <- liftIO $ Ref.readIORef lastReadRef
+  lastRead <- liftIO $ IORef.readIORef lastReadRef
   pure (exitCode, lastRead)
 
 maybeSendLogToQueue ::

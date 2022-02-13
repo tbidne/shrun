@@ -1,5 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
-
 -- | Provides the 'LogTextQueue' type and associated functions. This is intended
 -- to be used to provide a command "log queue", e.g., for concurrency.
 module ShellRun.Logging.Queue

@@ -29,6 +29,10 @@ module ShellRun.Prelude
     Tuple2,
     Tuple3,
 
+    -- * Refined Aliases
+    RNonNegative,
+    RPositive,
+
     -- * Prelude exports
     module X,
   )
@@ -86,6 +90,7 @@ import Data.Text.Encoding qualified as TextEnc
 import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..))
+import Refined (NonNegative, Positive, Refined)
 import Prelude as X
   ( Bool (..),
     Bounded (..),
@@ -179,3 +184,7 @@ type Tuple2 = (,)
 
 -- | Alias for '(,,)'.
 type Tuple3 = (,,)
+
+type RNonNegative = Refined NonNegative Int
+
+type RPositive = Refined Positive Int

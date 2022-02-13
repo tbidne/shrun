@@ -56,9 +56,9 @@ import System.Clock qualified as C
 -- :}
 -- (0,12)
 divWithRem ::
-  Refined NonNegative Int ->
-  Refined Positive Int ->
-  (Refined NonNegative Int, Refined NonNegative Int)
+  RNonNegative ->
+  RPositive ->
+  (RNonNegative, RNonNegative)
 divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
   where
     n' = R.unrefine n
@@ -74,7 +74,7 @@ divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
 --   in diffTime t1 t2
 -- :}
 -- Refined 16
-diffTime :: TimeSpec -> TimeSpec -> Refined NonNegative Int
+diffTime :: TimeSpec -> TimeSpec -> RNonNegative
 diffTime t1 t2 =
   let diff = fromIntegral $ C.sec $ C.diffTimeSpec t1 t2
    in -- Safe because 'C.diffTimeSpec' guaranteed to be non-negative.

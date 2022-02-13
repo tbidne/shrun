@@ -42,7 +42,7 @@ fromSeconds = TH.testProperty "fromSeconds transforms correctly" $
     -- seconds = totalSeconds (mod 60)
     H.assert $ R.unrefine s == (secondsRaw `mod` 60)
 
-genTime :: Gen (Refined NonNegative Int)
+genTime :: Gen RNonNegative
 genTime = do
   Gen.frequency
     [ (1, genSeconds),
@@ -51,14 +51,14 @@ genTime = do
       (4, genDays)
     ]
 
-genSeconds :: Gen (Refined NonNegative Int)
+genSeconds :: Gen RNonNegative
 genSeconds = R.unsafeRefine <$> Gen.integral (Range.constantFrom 0 0 59)
 
-genMinutes :: Gen (Refined NonNegative Int)
+genMinutes :: Gen RNonNegative
 genMinutes = R.unsafeRefine <$> Gen.integral (Range.constantFrom 60 60 3_599)
 
-genHours :: Gen (Refined NonNegative Int)
+genHours :: Gen RNonNegative
 genHours = R.unsafeRefine <$> Gen.integral (Range.constantFrom 3_600 3_600 86_399)
 
-genDays :: Gen (Refined NonNegative Int)
+genDays :: Gen RNonNegative
 genDays = R.unsafeRefine <$> Gen.integral (Range.constantFrom 86_400 86_400 1_000_000)

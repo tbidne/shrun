@@ -9,5 +9,5 @@ import ShellRun.Prelude
 
 -- | Represents a timeout, which is a non-negative integer.
 newtype Timeout = MkTimeout
-  {unTimeout :: Refined NonNegative Int}
+  {unTimeout :: RNonNegative}
   deriving (Eq, Ord, Show)

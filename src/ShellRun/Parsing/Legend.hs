@@ -4,7 +4,8 @@ module ShellRun.Parsing.Legend
   )
 where
 
-import Control.Exception qualified as Ex
+import Control.Exception.Safe (SomeException)
+import Control.Exception.Safe qualified as SafeEx
 import Data.Text qualified as T
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Parsing.Legend.Internal qualified as Internal
@@ -15,7 +16,7 @@ import ShellRun.Prelude
 -- (see 'Internal.linesToMap'), an error will be returned.
 legendPathToMap :: FilePath -> IO (Either LegendErr LegendMap)
 legendPathToMap legendPath = do
-  res <- Ex.try (readFileUtf8Lenient legendPath) :: IO (Either Ex.SomeException Text)
+  res <- SafeEx.try (readFileUtf8Lenient legendPath) :: IO (Either SomeException Text)
   pure $ case res of
     Left err ->
       Left $

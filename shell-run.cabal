@@ -41,6 +41,7 @@ common common-exts
     NamedFieldPuns
     NumericUnderscores
     OverloadedStrings
+    PatternSynonyms
     ScopedTypeVariables
     StandaloneKindSignatures
     TupleSections
