@@ -10,12 +10,13 @@ module Constants
     errPrefix,
 
     -- * Miscellaneous
-    workingDirectory,
+    legendPath,
   )
 where
 
-import Data.String (IsString)
 import ShellRun.Prelude
+import System.Directory qualified as Dir
+import System.FilePath ((</>))
 
 -- | Expected timeout 'Text'.
 cancelled :: Text
@@ -37,6 +38,8 @@ infoSuccessPrefix txt = "[Info] Successfully ran `" <> txt <> "`. Time elapsed:"
 errPrefix :: Text -> Text
 errPrefix txt = "[Error] Error running `" <> txt <> "`:"
 
--- | Functional test working directory.
-workingDirectory :: IsString a => a
-workingDirectory = "./test/functional/scripts"
+-- | Get test legend path
+legendPath :: IO [Char]
+legendPath = (</> lp) <$> Dir.getCurrentDirectory
+  where
+    lp = "test/functional/functional_legend.txt"

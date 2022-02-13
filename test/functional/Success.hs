@@ -17,14 +17,17 @@ import Verify qualified as V
 spec :: TestTree
 spec =
   THU.testCase "Should run commands successfully" $ do
+    legendPath <- Constants.legendPath
+    let legendArg = "--legend=" <> legendPath
+        argList = [legendArg, timeout] <> commands
+
     env <- SysEnv.withArgs argList Env.runParser
     let action = runReaderT (SR.runShellT SR.runShell) env
     result <- Shh.capture_ action
+
     let results = MkResultText <$> T.lines (T.pack result)
     V.verifyExpectedUnexpected results allExpected allUnexpected
   where
-    argList = [legendPath, timeout] <> commands
-    legendPath = "--legend=" <> Constants.workingDirectory <> "/output/legend.txt"
     commands = ["bad", "both", "echo hi"]
     timeout = "--timeout=5"
 

@@ -18,15 +18,18 @@ import Verify qualified as V
 spec :: TestTree
 spec =
   THU.testCase "Should show key rather than command" $ do
+    legendPath <- Constants.legendPath
+    let legendArg = "--legend=" <> legendPath
+        argList = [legendArg, showKey, commandLogging] <> commands
+
     env <- SysEnv.withArgs argList Env.runParser
     let action = runReaderT (SR.runShellT SR.runShell) env
     result <- Shh.capture_ action
+
     let results = MkResultText <$> T.lines (T.pack result)
     V.verifyExpected results allExpected
   where
-    argList = [legendPath, showKey, commandLogging] <> commands
     commands = ["short", "bad"]
-    legendPath = "--legend=" <> Constants.workingDirectory <> "/output/legend.txt"
     showKey = "--show-key"
     commandLogging = "--command-logging"
 

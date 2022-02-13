@@ -1,0 +1,5 @@
+short=echo short && sleep 1
+one=sleep 1 && echo 1
+long=sleep 2 && echo long
+bad=some nonsense
+both=one,,long
