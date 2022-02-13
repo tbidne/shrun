@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Provides the 'ShellT' monad transformer.
 module ShellRun.Data.ShellT
   ( ShellT (..),
@@ -21,13 +19,10 @@ import Data.Text qualified as T
 import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import Numeric.Algebra (ASemigroup (..))
-import Refined (NonNegative, Refined)
-import Refined qualified as R
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env
-  ( CommandDisplay,
-    CommandLogging (..),
+  ( CommandLogging (..),
     Env (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
@@ -36,6 +31,7 @@ import ShellRun.Data.Env
   )
 import ShellRun.Data.IO (Stderr (..))
 import ShellRun.Data.Legend (LegendErr, LegendMap)
+import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.IO (ReadHandleResult (..))
@@ -197,12 +193,11 @@ counter = do
   liftIO $ Concurrent.threadDelay 100_000
   Regions.withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
-    timer <- liftIO $ IORef.newIORef $$(R.refineTH @NonNegative @Int 0)
-    let inc = $$(R.refineTH @NonNegative @Int 1)
+    timer <- liftIO $ IORef.newIORef TH.zeroNN
     Loops.whileM_ (keepRunning r timer timeout) $ do
       elapsed <- liftIO $ do
         Concurrent.threadDelay 1_000_000
-        IORef.modifyIORef' timer (.+. inc)
+        IORef.modifyIORef' timer (.+. TH.oneNN)
         IORef.readIORef timer
       logCounter r elapsed
 

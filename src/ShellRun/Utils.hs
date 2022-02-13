@@ -17,7 +17,7 @@ module ShellRun.Utils
 where
 
 import Data.Text qualified as T
-import Refined (NonNegative, Positive, Refined)
+import Refined (Refined)
 import Refined qualified as R
 import Refined.Unsafe qualified as R
 import ShellRun.Data.Command (Command (..))
@@ -28,6 +28,7 @@ import System.Clock qualified as C
 
 -- $setup
 -- >>> :set -XTemplateHaskell
+-- >>> import Refined (NonNegative, Positive)
 
 -- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
 --
@@ -55,10 +56,7 @@ import System.Clock qualified as C
 --   in monoBimap R.unrefine result
 -- :}
 -- (0,12)
-divWithRem ::
-  RNonNegative ->
-  RPositive ->
-  (RNonNegative, RNonNegative)
+divWithRem :: RNonNegative -> RPositive -> Tuple2 RNonNegative RNonNegative
 divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
   where
     n' = R.unrefine n

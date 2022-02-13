@@ -17,9 +17,10 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import Refined (NonNegative, Refined)
+import Refined (NonNegative)
 import Refined qualified as R
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
+import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
@@ -205,7 +206,7 @@ parseTimeOrZero :: Char -> MParser RNonNegative
 parseTimeOrZero c =
   -- Backtrack if we don't match
   MP.try (parseNNWithUnit c)
-    <|> pure zero
+    <|> pure TH.zeroNN
 
 parseNNWithUnit :: Char -> MParser RNonNegative
 parseNNWithUnit c = parseNonNegative <* MPC.char' c
@@ -218,6 +219,3 @@ parseNonNegative = do
     Just n -> case R.refine @NonNegative @Int n of
       Left ex -> MP.customFailure $ "Refinment failed: " <> showt ex
       Right n' -> pure n'
-
-zero :: RNonNegative
-zero = $$(R.refineTH 0)

@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for parsing 'Text' lines into a 'LegendMap'.
@@ -9,8 +8,8 @@ where
 
 import Data.HashMap.Strict qualified as Map
 import Data.Text qualified as T
-import Refined qualified as R
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
+import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 
@@ -59,4 +58,4 @@ parseLine l =
     (_, "") -> Left $ EntryErr $ "Value cannot be empty: " <> l
     (k, v) -> Right (k, v)
   where
-    breakPoint = $$(R.refineTH @R.NonEmpty @Text "=")
+    breakPoint = TH.equalsNE

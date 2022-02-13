@@ -1,11 +1,9 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Specs for ShellRun.Utils.
 module Specs.ShellRun.Utils (specs) where
 
-import Refined qualified as R
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
+import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import Test.Hspec (shouldBe)
@@ -38,4 +36,4 @@ specs = TH.testSpecs $ do
       Hspec.it "Trailing key should return (str, \"\")" $ do
         Utils.breakStripPoint point "ab=" `shouldBe` ("ab", "")
   where
-    point = $$(R.refineTH @R.NonEmpty @Text "=")
+    point = TH.equalsNE

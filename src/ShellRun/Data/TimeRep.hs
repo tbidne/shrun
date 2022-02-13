@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Provides the 'TimeRep' type and related functions for representing
@@ -19,13 +18,14 @@ where
 
 import Data.Text qualified as T
 import Numeric.Algebra (ASemigroup (..), MSemigroup (..))
-import Refined (NonNegative, Positive, Refined)
 import Refined qualified as R
+import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 
 -- $setup
 -- >>> :set -XTemplateHaskell
+-- >>> import Refined (NonNegative)
 
 -- | Represents a relative time.
 data TimeRep = MkTimeRep
@@ -51,9 +51,9 @@ data TimeRep = MkTimeRep
 -- Refined 200000
 toSeconds :: TimeRep -> RNonNegative
 toSeconds (MkTimeRep d h m s) =
-  (d .*. dayNN)
-    .+. (h .*. hourNN)
-    .+. (m .*. minuteNN)
+  (d .*. TH.dayNN)
+    .+. (h .*. TH.hourNN)
+    .+. (m .*. TH.minuteNN)
     .+. s
 
 -- | Transforms 'NonNegative' @seconds@ into a 'TimeRep'.
@@ -68,9 +68,9 @@ toSeconds (MkTimeRep d h m s) =
 fromSeconds :: RNonNegative -> TimeRep
 fromSeconds seconds = MkTimeRep d h m s
   where
-    (d, daysRem) = U.divWithRem seconds dayPos
-    (h, hoursRem) = U.divWithRem daysRem hourPos
-    (m, s) = U.divWithRem hoursRem minutePos
+    (d, daysRem) = U.divWithRem seconds TH.dayPos
+    (h, hoursRem) = U.divWithRem daysRem TH.hourPos
+    (m, s) = U.divWithRem hoursRem TH.minutePos
 
 -- | Formats a 'TimeRep' to 'Text'.
 --
@@ -85,7 +85,7 @@ formatTimeRep (isZero -> True) = "0 seconds"
 formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
   where
     f acc (n, units)
-      | n == $$(R.refineTH @NonNegative @Int 0) = acc
+      | n == TH.zeroNN = acc
       | otherwise = pluralize n units : acc
     vals = foldl' f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
 
@@ -116,24 +116,3 @@ pluralize val txt
   where
     n = R.unrefine val
     valUnit = showt n <> txt
-
-zero :: RNonNegative
-zero = $$(R.refineTH 0)
-
-dayNN :: RNonNegative
-dayNN = $$(R.refineTH 86_400)
-
-hourNN :: RNonNegative
-hourNN = $$(R.refineTH 3_600)
-
-minuteNN :: RNonNegative
-minuteNN = $$(R.refineTH 60)
-
-dayPos :: RPositive
-dayPos = $$(R.refineTH 86_400)
-
-hourPos :: RPositive
-hourPos = $$(R.refineTH 3_600)
-
-minutePos :: RPositive
-minutePos = $$(R.refineTH 60)

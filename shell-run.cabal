@@ -59,6 +59,7 @@ library
     ShellRun.Data.Legend
     ShellRun.Data.ShellT
     ShellRun.Data.Supremum
+    ShellRun.Data.TH
     ShellRun.Data.Timeout
     ShellRun.Data.TimeRep
     ShellRun.Env

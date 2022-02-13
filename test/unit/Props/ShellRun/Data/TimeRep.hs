@@ -8,7 +8,6 @@ import Hedgehog (Gen)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import Refined (NonNegative, Refined)
 import Refined qualified as R
 import Refined.Unsafe qualified as R
 import ShellRun.Data.TimeRep (TimeRep (..))

@@ -13,7 +13,7 @@ import Data.Int (Int64)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import Refined (NonNegative, Positive, Refined)
+import Refined (Refined)
 import Refined qualified as R
 import Refined.Unsafe qualified as R
 import ShellRun.Prelude

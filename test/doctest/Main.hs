@@ -38,6 +38,7 @@ exts =
     "-XNoImplicitPrelude",
     "-XNumericUnderscores",
     "-XOverloadedStrings",
+    "-XPatternSynonyms",
     "-XScopedTypeVariables",
     "-XStandaloneKindSignatures",
     "-XTupleSections",

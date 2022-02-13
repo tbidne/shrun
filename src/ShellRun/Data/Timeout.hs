@@ -4,7 +4,6 @@ module ShellRun.Data.Timeout
   )
 where
 
-import Refined (NonNegative, Refined)
 import ShellRun.Prelude
 
 -- | Represents a timeout, which is a non-negative integer.

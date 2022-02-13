@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Property tests for ShellRun.Utils.
 module Props.ShellRun.Utils
   ( props,
@@ -9,8 +7,8 @@ where
 import Hedgehog (PropertyT)
 import Hedgehog qualified as H
 import Props.Generators qualified as PGens
-import Refined (NonNegative, Positive, Refined)
 import Refined qualified as R
+import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import Test.Tasty (TestTree)
@@ -27,7 +25,7 @@ diffTimeProps = TH.testProperty "diffTime" $
     t1 <- H.forAll PGens.genTimeSpec
     t2 <- H.forAll PGens.genTimeSpec
     let result = U.diffTime t1 t2
-    H.assert $ result >= $$(R.refineTH 0)
+    H.assert $ result >= TH.zeroNN
 
 divWithRemProps :: TestTree
 divWithRemProps = TH.testProperty "divWithRem" $
@@ -37,7 +35,7 @@ divWithRemProps = TH.testProperty "divWithRem" $
     let result = U.divWithRem nn pos
     vDivWithRem (nn, pos) result
 
-vDivWithRem :: (RNonNegative, RPositive) -> (RNonNegative, RNonNegative) -> PropertyT IO ()
+vDivWithRem :: Tuple2 RNonNegative RPositive -> Tuple2 RNonNegative RNonNegative -> PropertyT IO ()
 vDivWithRem (n, divisor) (e, remainder) = do
   H.assert $ (divisorRaw * eRaw) + remainderRaw == nRaw
   H.footnote $
