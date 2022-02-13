@@ -38,7 +38,7 @@ sh (MkCommand _ cmd) fp = T.pack <$> P.readCreateProcess proc ""
 
 -- | Version of 'sh' that ignores the return value.
 sh_ :: Command -> Maybe FilePath -> IO ()
-sh_ cmd = ($> ()) . sh cmd
+sh_ cmd = void . sh cmd
 
 -- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
 shExitCode :: Command -> Maybe FilePath -> IO (ExitCode, Stdout, Stderr)

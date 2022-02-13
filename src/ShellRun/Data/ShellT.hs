@@ -38,7 +38,7 @@ import ShellRun.IO (ReadHandleResult (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.Log qualified as Log
-import ShellRun.Logging.Queue (LogText (..))
+import ShellRun.Logging.Queue (LogText (..), LogTextQueue)
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Parsing.Legend qualified as ParseLegend
@@ -106,7 +106,7 @@ instance
 
   runCommands :: List Command -> ShellT Env m ()
   runCommands commands = Regions.displayConsoleRegions $
-    UAsync.withAsync writeQueueToFile $ \fileLogger -> do
+    UAsync.withAsync maybePollQueue $ \fileLogger -> do
       start <- liftIO $ C.getTime Monotonic
       let actions = UAsync.mapConcurrently_ runCommand commands
           actionsWithTimer = UAsync.race_ actions counter
@@ -366,12 +366,15 @@ maybeSendLogToQueue log = do
     Just (_, queue) -> do
       Queue.writeQueue queue log
 
-writeQueueToFile :: (HasFileLogging env, MonadIO m) => ShellT env m ()
-writeQueueToFile = do
+maybePollQueue :: (HasFileLogging env, MonadIO m) => ShellT env m ()
+maybePollQueue = do
   fileLogging <- asks getFileLogging
   case fileLogging of
     Nothing -> pure ()
-    Just (fp, queue) -> M.forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
+    Just (fp, queue) -> writeQueueToFile fp queue
+
+writeQueueToFile :: MonadIO m => FilePath -> LogTextQueue -> m void
+writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
 
 logFile :: MonadIO m => FilePath -> LogText -> m ()
 logFile fp = liftIO . appendFileUtf8 fp . unLogText
