@@ -4,10 +4,11 @@ module Props.ShellRun.Parsing.Commands
   )
 where
 
+import Data.Functor.Identity (Identity)
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
-import Hedgehog (MonadGen, PropertyT)
+import Hedgehog (GenBase, MonadGen, PropertyT)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
@@ -56,20 +57,43 @@ noCommandsMissing allKeys = void . traverse failIfMissing
           H.footnote $ "Missing command: " <> show cmd
           H.failure
 
-genLegendCommands :: MonadGen m => m (LegendMap, List Text)
+genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMap, List Text)
 genLegendCommands = (,) <$> genLegend <*> genCommands
 
 -- WARN: This can technically generate a map that has cycles in it,
 -- e.g., a -> b -> c -> a, which would cause an infinite loop if
 -- we also happen to generate a command in that cycle. The odds of this
 -- happening have to be really low, so not worrying about this for now...
-genLegend :: MonadGen m => m LegendMap
+--
+-- Update: Well, the "low probability event" happened (*gasp*). We generated
+-- a cycle, in particular, the cycle a -> a with command a. That is, we
+-- a map with key=key and command key. The good news is our cycle detection
+-- works! We did not cause an infinite loop, merely a test assertion failure
+-- (yay?).
+--
+-- We can also (weakly) justify the "low probability" as this is the first
+-- time this error has been seen despite this test running 1000s of times
+-- (indeed even running the test 100_000 times fails to reproduce it).
+-- Nevertheless, we have added mitigation logic that excludes a=a key/value
+-- mappings. Now the only possible cycles are non-trivial, surely an even
+-- Lower Probability Event TM.
+--
+-- This seems an acceptable stopgap until we implement a robust solution.
+-- It shouldn't actually be hard; just keep track of generated keys and
+-- prevent values from reusing a key.
+genLegend :: (GenBase m ~ Identity, MonadGen m) => m LegendMap
 genLegend = Map.fromList <$> Gen.list range genKeyVal
   where
     range = Range.linearFrom 0 0 80
 
-genKeyVal :: MonadGen m => m (Tuple2 Text Text)
-genKeyVal = (,) <$> genKey <*> genVal
+genKeyVal :: (GenBase m ~ Identity, MonadGen m) => m (Tuple2 Text Text)
+genKeyVal = do
+  k <- genKey
+  -- TODO: This mitigates cycles, but obviously we'd like to eliminate
+  -- the possibility. We should generate our list in the same function
+  -- and prevent values from matching keys.
+  v <- Gen.filter (/= k) genVal
+  pure (k, v)
 
 genKey :: MonadGen m => m Text
 genKey = Gen.text range Gen.latin1
