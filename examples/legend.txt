@@ -1,0 +1,44 @@
+######################
+# README SCREENSHOTS #
+######################
+
+# got'em
+sign-peace-treaty=sleep 1 && "lol psyche"
+
+# harmless commands, nothing to see here
+querying-targets=sleep 2
+skynet=echo "preparing nuclear missil-- i mean gift baskets"; sleep 10
+ui=echo "adding emojis. we like to have fun :-)"; sleep 10
+
+# alias for multiple commands because who likes typing
+takeover=querying-targets,,ui,,skynet
+
+#########################
+# README LEGEND EXAMPLE #
+#########################
+
+cmd1=echo "command one"
+
+# recursive references
+cmd2=cmd1
+cmd3=cmd2
+
+# this will error
+cmd4=command four
+
+# runs 3, 4, and echo
+all=cmd3,,cmd4,,echo hi
+
+################
+# BAD EXAMPLES #
+################
+
+# duplicates will cause an error when reading this file.
+#dup_key=echo duplicate
+#dup_key=echo duplicate
+
+# cyclic keys will cause an error when _actually used_ e.g. try running
+# shell-run -lexamples/legend.txt c
+a=c
+b=a
+c=b

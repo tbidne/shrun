@@ -9,7 +9,6 @@
 [![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2018.24&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
 
-
 ![example](./screens/example.png)
 
 </div>
@@ -20,10 +19,11 @@
 - [Motivation](#motivation)
 - [Introduction](#introduction)
 - [Options](#options)
-  - [Timeout](#timeout)
-  - [Legend](#legend)
   - [Command-Logging](#command-logging)
-  - [Show-Key](#show-key)
+  - [File-Logging](#file-logging)
+  - [Key-Show](#key-show)
+  - [Legend](#legend)
+  - [Timeout](#timeout)
 - [Building](#building)
   - [Cabal](#cabal)
   - [Stack](#stack)
@@ -32,7 +32,7 @@
 
 # Motivation
 
-`shell-run` was borne out of frustration when running shell commands. Say, for instance, you run several commands on a regular basis, e.g., updates after pulling the latest code. You can run these manually like:
+`shell-run` was borne of frustration. Suppose you run several shell commands on a regular basis e.g. updates after pulling the latest code. You can run these manually like:
 
 ```sh
 cmd1
@@ -49,9 +49,9 @@ alias run_commands="cmd1 && cmd2 && cmd3 ..."
 
 All well and good, but this approach has several deficiencies:
 
-1. You do not receive any information about how long your commands have been running. If any of the commands are long-lived, how do you know when it's been "too long" and you should cancel them? You can look at a clock or use a stopwatch, but that requires you to remember every time you run the command, which is certainly unsatisfying.
+1. You do not receive any information about how long your commands have been running. If any of the commands are long-lived, how do you know when it's been "too long" and you should cancel them? You can look at a clock or use a stopwatch, but that requires remembering every time you run the command, which is certainly unsatisfying.
 
-1. These commands are all run synchronously even though there may be no relation between them. E.g., if you have two commands that each take 5 minutes, the combination will take 10 minutes. This is usually unnecessary.
+1. These commands are all run synchronously even though there may be no relation between them. For example, if you have three commands that each take 5 minutes, the combination will take 15 minutes. This is usually unnecessary.
 
 1. Related to above, if any command fails then subsequent ones will not be run. This can be frustrating, as you may kick off a run and leave, only to return and find out that later, longer-running commands never ran because of some trivial error in the beginning.
 
@@ -67,26 +67,6 @@ All well and good, but this approach has several deficiencies:
 
 # Introduction
 
-`shell-run` has the following usage:
-```text
-Usage: shell-run [-l|--legend PATH] [-t|--timeout VAL] [-c|--command-logging]
-                 [-k|--show-key] Commands...
-
-Available options:
-  -l,--legend PATH         Path to legend file, used for translating commands.
-                           Key/value pairs have the form `key=cmd1,,cmd2,,...`,
-                           i.e., keys can refer to multiple commands and refer
-                           to other keys recursively. Lines starting with `#`
-                           are considered comments and ignored.
-  -t,--timeout VAL         Non-negative integer setting a timeout.Can either be
-                           a raw number (interpreted as seconds), or a "time
-                           string", e.g., 1d2h3m4s, 2h3s.
-  -c,--command-logging     Adds Commands' logs (stdout+stderr) to output.
-  -k,--show-key            In output, display key name over actual command if it
-                           exists.
-  -h,--help                Show this help text
-```
-
 In a nut-shell (😉), `shell-run` is a wrapper around running shell commands. For instance:
 
 ```sh
@@ -99,21 +79,62 @@ A running timer is provided, and stdout/stderr will be updated when a command fi
 
 # Options
 
-## Timeout
+## Command-Logging
 
-A timeout can be provided via `-t <value>` or `--timeout=<value>`. The argument must be either a raw integer (interpreted as seconds), or a "time string", e.g., `1d2m3h4s`, `3h20s`.
+**Arg:** `-c, --command-logging`
 
-If a timeout is provided, all integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
+**Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is show at a given time.
 
-![timeout](./screens/timeout.png)
+**Example:**
+
+![command_logging_on](./screens/cmd_logging_on.png)
+
+vs.
+
+![command_logging_off](./screens/cmd_logging_off.png)
+
+Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
+
+Practically speaking, this does not have much effect, just that if a command dies while `--command-logging` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File-Logging](#file-logging) for details on investigating command failure.
+
+## File Logging
+
+**Arg:** `-f, --file-logging PATH`
+
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Normal logging (i.e. stdout) is unaffected. In other words, the logs are duplicated. This can be useful for investigating command failures with the [Command-Logging](#command-logging) option, as those logs are not persisted in the console.
+
+**Example:**
+
+![file_logging](./screens/file_logging.png)
+![file_logging_cat](./screens/file_logging_cat.png)
+
+## Key-Show
+
+**Arg:** `-k, --key-show`
+
+**Description:** When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. The flag `-k` or `--key-show` instead uses the key name for display, if one exists.
+
+**Example:**
+
+![key_show_cmd_on](./screens/key_show_cmd_on.png)
+![key_show_on](./screens/key_show_on.png)
+
+rather than the usual
+
+![key_show_cmd_on](./screens/key_show_cmd_off.png)
+![key_show_on](./screens/key_show_off.png)
+
+Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
 
 ## Legend
 
-A legend file can be specified by `-l <path/to/legend>` or `--legend=<path/to/legend>`.
+**Arg:** `-l, --legend PATH`
 
-Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
+**Description**: A legend file can be provided that maps key names to commands. Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
 
-Each line can be separated by as many new lines as desired, and comments start with a #. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands. For instance, given a legend file:
+Each line can be separated by as many new lines as desired, and comments start with a `#`. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands.
+
+**Example:** For instance, given a legend file
 
 ```text
 cmd1=echo "command one"
@@ -138,31 +159,17 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 ![legend](./screens/legend.png)
 
-## Command-Logging
+Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend file will not throw an error).
 
-The default behavior is to swallow logs for the commands themselves. The flag `-c` or `--command-logging` enables command logging.
+## Timeout
 
-![command_logging_on](./screens/cmd_logging_on.png)
+**Arg:** `-t, --timeout VAL`
 
-vs.
+**Description:** The provided timeout must be either a raw integer (interpreted as seconds), or a "time string" e.g. `1d2m3h4s`, `3h20s`. All integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
 
-![command_logging_off](./screens/cmd_logging_off.png)
+**Example:**
 
-Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
-
-Practically speaking, this does not have much effect, just that if a command dies while `--command-logging` is enabled, then the final `[Error] ...` output may not have the most relevant information, and in fact the actual error may be in the final `[Command]` log.
-
-## Show-Key
-
-When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. The flag `-k` or `--show-key` instead uses the key name for display, if one exists. For instance, for legend entry `ui=./update_ui.sh --flag --option=val`, logs will looks like
-
-![show_key_on](./screens/show_key_on.png)
-
-rather than the usual
-
-![show_key_off](./screens/show_key_off.png)
-
-Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key. That is, if the previous `ui` was instead run as, e.g., `all` with `all=ui,,...` in the legend file, the display would still show `ui`.
+![timeout](./screens/timeout.png)
 
 # Building
 
@@ -183,8 +190,6 @@ If you have never built a haskell program before, `stack` is probably the best c
 
 You will need `ghc` and `cabal-install`. From there `shell-run` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
-The project is set to build with `-Werror` in `cabal.project`, so if for some reason that's a problem, you can disable this with `cabal build --ghc-options="-Wwarn"`.
-
 ## Stack
 
 Like `cabal`, `shell-run` can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
@@ -195,7 +200,7 @@ Like `cabal`, `shell-run` can be built locally or installed globally (e.g. `~/.l
 
 Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shell-run` can be built with `nix build`, which will compile and run the tests.
 
-To launch a shell with various tools (e.g. `cabal`, `hls`, formatters), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code (e.g. scripts in `ci_scripts/`). At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `nixpkgs`.
+To launch a shell with various tools (e.g. `cabal`, `hls`), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code. At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `nixpkgs`.
 
 ### Via nix
 
@@ -207,10 +212,7 @@ Because `shell-run` is a flake, it be built as part of a nix expression. For ins
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    shell-run-src.url= "github:tbidne/shell-run/flakify";
-    shell-run-src.inputs.nixpkgs.follows = "nixpkgs";
-    # If you already have a flake-utils dependency and don't want another one.
-    shell-run-src.inputs.flake-utils.follows = "flake-utils";
+    shell-run-src.url= "github:tbidne/shell-run/main";
   };
 
   outputs = { self, nixpkgs, shell-run-src, ... }:
@@ -219,8 +221,9 @@ Because `shell-run` is a flake, it be built as part of a nix expression. For ins
       pkgs = import nixpkgs {
         system = system;
       };
-      # Remove dontCheck if you want tests to run.
-      shell-run = pkgs.haskell.lib.dontCheck shell-run-src.defaultPackage.${system};
+      shell-run = shell-run-src.defaultPackage.${system};
+      # Alternative if you want tests disabled.
+      #shell-run = pkgs.haskell.lib.dontCheck shell-run-src.defaultPackage.${system};
     in
     {
       nixosConfigurations = {
