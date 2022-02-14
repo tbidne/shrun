@@ -179,11 +179,13 @@ test-suite functional
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    Constants
     Success
     SuccessCommandLogging
+    SuccessFileLogging
     SuccessShowKey
+    TestArgs
     Timeout
+    Utils
     Verify
 
   build-depends:

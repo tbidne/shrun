@@ -27,15 +27,5 @@ jobs:
       - name: Compile
         run: stack build --ghc-options="-Werror"
 
-      - name: DocTest
-        run: RUN_DOCTEST=true stack test doctest --ghc-options="-Werror"
-
-      - name: Unit Tests
-        run: MAX_RUNS=10000 stack test unit --ghc-options="-Werror"
-
-      - name: Integration Tests
-        run: stack test integration --ghc-options="-Werror"
-
-      - name: Functional Tests
-        run: stack test functional --ghc-options="-Werror"
-
+      - name: Test
+        run: stack test --ghc-options="-Werror"

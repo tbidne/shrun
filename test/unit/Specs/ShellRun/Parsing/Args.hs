@@ -23,6 +23,7 @@ specs =
     [ defaultSpec,
       legendSpecs,
       timeoutSpecs,
+      fileLoggingSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
       commandSpecs
@@ -116,6 +117,26 @@ parseNegativeTimeoutFail = THU.testCase "Negative should fail" $ do
       expected = Nothing
   verifyResult argList expected
 
+fileLoggingSpecs :: TestTree
+fileLoggingSpecs =
+  Tasty.testGroup
+    "FileLogging arg parsing"
+    [ parseShortFileLogging,
+      parseLongFileLogging
+    ]
+
+parseShortFileLogging :: TestTree
+parseShortFileLogging = THU.testCase "Should parse filepath with -f" $ do
+  let argList = ["-flogfile", "command"]
+      expected = Just $ mempty {aFileLogging = Just "logfile", aCommands = ["command"]}
+  verifyResult argList expected
+
+parseLongFileLogging :: TestTree
+parseLongFileLogging = THU.testCase "Should parse filepath with --file-logging" $ do
+  let argList = ["--file-logging=logfile", "command"]
+      expected = Just $ mempty {aFileLogging = Just "logfile", aCommands = ["command"]}
+  verifyResult argList expected
+
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =
   Tasty.testGroup
@@ -159,7 +180,7 @@ parseLongShowKey = THU.testCase "Should parse --show-key as ShowKey" $ do
 commandSpecs :: TestTree
 commandSpecs =
   Tasty.testGroup
-    "CommandDisplay arg parsing"
+    "Command arg parsing"
     [ emptyCommandsFail,
       parseCommands
     ]

@@ -1,7 +1,6 @@
 -- | Functional test for a successful run.
 module Success (spec) where
 
-import Constants qualified
 import Data.Text qualified as T
 import ShellRun qualified as SR
 import ShellRun.Parsing.Env qualified as Env
@@ -10,15 +9,17 @@ import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit qualified as THU
+import TestArgs (TestArgs (..))
+import Utils qualified as U
 import Verify (ExpectedText (..), ResultText (..), UnexpectedText (..))
 import Verify qualified as V
 
 -- | Spec that should run commands successfully.
-spec :: TestTree
-spec =
+spec :: IO TestArgs -> TestTree
+spec args =
   THU.testCase "Should run commands successfully" $ do
-    legendPath <- Constants.legendPath
-    let legendArg = "--legend=" <> legendPath
+    MkTestArgs {tLegendPath} <- args
+    let legendArg = "--legend=" <> tLegendPath
         argList = [legendArg, timeout] <> commands
 
     env <- SysEnv.withArgs argList Env.runParser
@@ -38,7 +39,7 @@ allExpected =
           cmdEcho1,
           cmdEchoLong,
           cmdBad,
-          Constants.totalTime
+          U.totalTime
         ]
 
 allUnexpected :: List UnexpectedText
@@ -48,16 +49,16 @@ allUnexpected =
         ]
 
 cmdBad :: Text
-cmdBad = Constants.errPrefix "some nonsense"
+cmdBad = U.errPrefix "some nonsense"
 
 cmdEchoHi :: Text
-cmdEchoHi = Constants.infoSuccessPrefix "echo hi"
+cmdEchoHi = U.infoSuccessPrefix "echo hi"
 
 cmdEcho1 :: Text
-cmdEcho1 = Constants.infoSuccessPrefix "sleep 1 && echo 1"
+cmdEcho1 = U.infoSuccessPrefix "sleep 1 && echo 1"
 
 cmdEchoLong :: Text
-cmdEchoLong = Constants.infoSuccessPrefix "sleep 2 && echo long"
+cmdEchoLong = U.infoSuccessPrefix "sleep 2 && echo long"
 
 cmdEchoHiStdout :: Text
 cmdEchoHiStdout = "echo hi: hi"

@@ -1,22 +1,17 @@
--- | Provides useful constants.
-module Constants
+-- | Provides utilities.
+module Utils
   ( -- * Logging messages
     cancelled,
+    totalTime,
 
     -- * Logging color prefixes
     subCommandPrefix,
     infoSuccessPrefix,
-    totalTime,
     errPrefix,
-
-    -- * Miscellaneous
-    legendPath,
   )
 where
 
 import ShellRun.Prelude
-import System.Directory qualified as Dir
-import System.FilePath ((</>))
 
 -- | Expected timeout 'Text'.
 cancelled :: Text
@@ -37,9 +32,3 @@ infoSuccessPrefix txt = "[Info] Successfully ran `" <> txt <> "`. Time elapsed:"
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text
 errPrefix txt = "[Error] Error running `" <> txt <> "`:"
-
--- | Get test legend path
-legendPath :: IO [Char]
-legendPath = (</> lp) <$> Dir.getCurrentDirectory
-  where
-    lp = "test/functional/functional_legend.txt"

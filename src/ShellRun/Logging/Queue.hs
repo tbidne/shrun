@@ -42,6 +42,9 @@ logToText log = do
 -- | Newtype wrapper over a 'TBQueue'.
 newtype LogTextQueue = MkLogTextQueue {getLogTextQueue :: TBQueue LogText}
 
+instance Show LogTextQueue where
+  show _ = "<MkLogTextQueue>"
+
 -- | Atomically writes to the queue.
 writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
 writeQueue queue = liftIO . (writeq <=< logToText)

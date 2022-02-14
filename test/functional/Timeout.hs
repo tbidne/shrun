@@ -1,7 +1,6 @@
 -- | Functional test for a run that should timeout.
 module Timeout (spec) where
 
-import Constants qualified
 import Data.Text qualified as T
 import ShellRun qualified as SR
 import ShellRun.Parsing.Env qualified as Env
@@ -10,6 +9,7 @@ import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit qualified as THU
+import Utils qualified as U
 import Verify (ExpectedText (..), ResultText (..))
 import Verify qualified as V
 
@@ -29,6 +29,6 @@ spec = THU.testCase "Should time out" $ do
 allExpected :: List ExpectedText
 allExpected =
   MkExpectedText
-    <$> [ Constants.cancelled,
-          Constants.totalTime
+    <$> [ U.cancelled,
+          U.totalTime
         ]

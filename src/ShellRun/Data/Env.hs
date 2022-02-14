@@ -30,6 +30,7 @@ data Env = MkEnv
     commandDisplay :: CommandDisplay,
     commands :: List Text
   }
+  deriving (Show)
 
 -- | Type for determining if we stream commands' logs.
 data CommandLogging
