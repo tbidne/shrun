@@ -58,7 +58,7 @@ import ShellRun.Prelude
 translateCommands :: LegendMap -> List Text -> Either LegendErr (List Command)
 translateCommands mp = sequenceA . foldMap (lineToCommands mp)
 
-lineToCommands :: LegendMap -> Text -> [Either LegendErr Command]
+lineToCommands :: LegendMap -> Text -> List (Either LegendErr Command)
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path

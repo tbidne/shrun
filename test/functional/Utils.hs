@@ -27,8 +27,8 @@ subCommandPrefix txt = "[Command] " <> txt
 
 -- | Expected success 'Text'.
 infoSuccessPrefix :: Text -> Text
-infoSuccessPrefix txt = "[Info] Successfully ran `" <> txt <> "`. Time elapsed:"
+infoSuccessPrefix txt = "[Info] Successfully ran '" <> txt <> "'. Time elapsed:"
 
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text
-errPrefix txt = "[Error] Error running `" <> txt <> "`:"
+errPrefix txt = "[Error] Error running '" <> txt <> "':"

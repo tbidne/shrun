@@ -39,10 +39,9 @@ module ShellRun.Prelude
 where
 
 import Control.Applicative as X
-  ( Applicative (..),
-    liftA2,
+  ( Alternative (..),
+    Applicative (..),
     (<**>),
-    (<|>),
   )
 import Control.Monad as X
   ( Monad (..),

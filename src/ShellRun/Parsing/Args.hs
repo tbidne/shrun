@@ -32,23 +32,23 @@ import Text.Read qualified as TR
 
 -- | Type for parsing command line args.
 data Args = MkArgs
-  { aLegend :: Maybe FilePath,
-    aTimeout :: Maybe Timeout,
+  { aCommandLogging :: CommandLogging,
     aFileLogging :: Maybe FilePath,
-    aCommandLogging :: CommandLogging,
     aCommandDisplay :: CommandDisplay,
+    aLegend :: Maybe FilePath,
+    aTimeout :: Maybe Timeout,
     aCommands :: List Text
   }
   deriving (Eq, Show)
 
 instance Semigroup Args where
   (<>) :: Args -> Args -> Args
-  (MkArgs l t fp cl cd c) <> (MkArgs l' t' fp' cl' cd' c') =
-    MkArgs (l <> l') (t <|> t') (fp <|> fp') (cl <> cl') (cd <> cd') (c <> c')
+  (MkArgs cl fp cd l t c) <> (MkArgs cl' fp' cd' l' t' c') =
+    MkArgs (cl <> cl') (fp <|> fp') (cd <> cd') (l <> l') (t <|> t') (c <> c')
 
 instance Monoid Args where
   mempty :: Args
-  mempty = MkArgs mempty Nothing mempty mempty mempty mempty
+  mempty = MkArgs mempty empty mempty empty empty mempty
 
 -- | 'ParserInfo' type for parsing 'Args'.
 parserInfoArgs :: ParserInfo Args
@@ -66,11 +66,11 @@ parserInfoArgs =
 argsParser :: Parser Args
 argsParser =
   MkArgs
-    <$> legendParser
-    <*> timeoutParser
+    <$> commandLoggingParser
     <*> fileLoggingParser
-    <*> commandLoggingParser
     <*> commandDisplayParser
+    <*> legendParser
+    <*> timeoutParser
     <*> commandsParser
       <**> OApp.helper
       <**> version
@@ -177,7 +177,7 @@ commandDisplayParser =
     ShowCommand
     ShowKey
     ( OApp.short 'k'
-        <> OApp.long "show-key"
+        <> OApp.long "key-show"
         <> OApp.help
           ( "In output, display key name over actual command if it"
               <> " exists."

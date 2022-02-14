@@ -5,7 +5,6 @@ module ShellRun.Data.ShellT
 where
 
 import Control.Concurrent qualified as Concurrent
-import Control.Exception qualified as Except
 import Control.Exception.Safe (SomeException)
 import Control.Exception.Safe qualified as SafeEx
 import Control.Monad qualified as M
@@ -122,7 +121,7 @@ instance
                   T.pack $
                     "Encountered an exception. This is likely not an error in any of the "
                       <> "commands run but rather an error in ShellRun itself: "
-                      <> Except.displayException ex
+                      <> SafeEx.displayException ex
                 fatalLog = MkLog errMsg Fatal Finish
             putRegionLog r fatalLog
           Right _ -> pure ()
@@ -170,9 +169,9 @@ runCommand cmd = do
           Right t ->
             let name = U.displayCommand commandDisplay cmd
                 logTxt =
-                  "Successfully ran `"
+                  "Successfully ran '"
                     <> name
-                    <> "`. Time elapsed: "
+                    <> "'. Time elapsed: "
                     <> TimeRep.formatTime t
              in MkLog logTxt InfoSuccess Finish
     putRegionLog r lg

@@ -172,8 +172,8 @@ parseShortShowKey = THU.testCase "Should parse -k as ShowKey" $ do
   verifyResult argList expected
 
 parseLongShowKey :: TestTree
-parseLongShowKey = THU.testCase "Should parse --show-key as ShowKey" $ do
-  let argList = ["--show-key", "command"]
+parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
+  let argList = ["--key-show", "command"]
       expected = Just $ mempty {aCommandDisplay = ShowKey, aCommands = ["command"]}
   verifyResult argList expected
 

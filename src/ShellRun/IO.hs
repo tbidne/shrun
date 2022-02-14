@@ -126,9 +126,9 @@ readHandle commandDisplay cmd handle = do
 makeStdErr :: CommandDisplay -> Command -> Text -> Stderr
 makeStdErr commandDisplay cmd err =
   MkStderr $
-    "Error running `"
+    "Error running '"
       <> name
-      <> "`: "
+      <> "': "
       <> stripChars err
   where
     name = Utils.displayCommand commandDisplay cmd

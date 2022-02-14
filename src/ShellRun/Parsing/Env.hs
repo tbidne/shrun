@@ -1,6 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
--- | Parses command line  into the core 'Env' type used by the main
+-- | Parses command line into the core 'Env' type used by the main
 -- application.
 module ShellRun.Parsing.Env
   ( runParser,
