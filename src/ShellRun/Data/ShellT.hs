@@ -340,9 +340,12 @@ streamOutput region cmd recvH ph = do
   exitCode <- Loops.untilJust $ do
     result <- liftIO $ ShIO.readHandle commandDisplay cmd recvH
     case result of
-      ReadErr err -> do
-        let log = MkLog err Error Set
-        putRegionLog region log
+      ReadErr _ -> do
+        -- We occasionally get invalid reads here -- usually when the command
+        -- exits -- likely due to a race condition. It would be nice to
+        -- prevent these entirely, but for now ignore them, as it does not
+        -- appear that we ever lose important messages.
+        pure ()
       ReadSuccess out -> do
         liftIO $ IORef.writeIORef lastReadRef (Just (ReadSuccess out))
         let log = MkLog out SubCommand Set
