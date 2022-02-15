@@ -1,5 +1,7 @@
 -- | Provides functionality for translating 'Text' commands
 -- via a 'LegendMap'.
+--
+-- @since 0.1.0.0
 module ShellRun.Parsing.Commands
   ( translateCommands,
   )
@@ -30,8 +32,7 @@ import ShellRun.Prelude
 -- \(v_i\). We stop and return \(v_i\) when it does not exist as a key in the
 -- map.
 --
--- Example:
---
+-- ==== __Examples__
 -- >>> :{
 --   let m = Map.fromList
 --         [ ("cmd1", "one"),
@@ -55,6 +56,8 @@ import ShellRun.Prelude
 --   in translateCommands m ["a"]
 -- :}
 -- Left (CyclicKeyErr "a -> b -> c -> a")
+--
+-- @since 0.1.0.0
 translateCommands :: LegendMap -> List Text -> Either LegendErr (List Command)
 translateCommands mp = sequenceA . foldMap (lineToCommands mp)
 

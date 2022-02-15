@@ -1,6 +1,8 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for parsing 'Text' lines into a 'LegendMap'.
+--
+-- @since 0.1.0.0
 module ShellRun.Parsing.Legend.Internal
   ( linesToMap,
   )
@@ -27,8 +29,7 @@ import ShellRun.Utils qualified as U
 -- - Value is empty.
 -- - There are duplicate keys.
 --
--- Examples:
---
+-- ==== __Examples__
 -- >>> linesToMap ["=val"]
 -- Left (EntryErr "Key cannot be empty: =val")
 --
@@ -40,6 +41,8 @@ import ShellRun.Utils qualified as U
 --
 -- >>> linesToMap ["key=value1","key=value2"]
 -- Left (DuplicateKeyErr "key")
+--
+-- @since 0.1.0.0
 linesToMap :: List Text -> Either LegendErr LegendMap
 linesToMap = foldr f (Right Map.empty)
   where
@@ -51,6 +54,7 @@ linesToMap = foldr f (Right Map.empty)
         Just _ -> Left $ DuplicateKeyErr key
         Nothing -> Right $ Map.insert key cmd mp
 
+-- | @since 0.1.0.0
 parseLine :: Text -> Either LegendErr (Tuple2 Text Text)
 parseLine l =
   case U.breakStripPoint breakPoint l of

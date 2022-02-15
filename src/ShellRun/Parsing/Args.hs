@@ -1,6 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 -- | Provides functionality for parsing command line arguments.
+--
+-- @since 0.1.0.0
 module ShellRun.Parsing.Args
   ( Args (..),
     parserInfoArgs,
@@ -31,26 +33,55 @@ import Text.Megaparsec.Char qualified as MPC
 import Text.Read qualified as TR
 
 -- | Type for parsing command line args.
+--
+-- @since 0.1.0.0
 data Args = MkArgs
-  { aCommandLogging :: CommandLogging,
+  { -- | Whether to log commands.
+    --
+    -- @since 0.1.0.0
+    aCommandLogging :: CommandLogging,
+    -- | Optional path to log file..
+    --
+    -- @since 0.1.0.0
     aFileLogging :: Maybe FilePath,
+    -- | Whether to display command by (key) name or command.
+    --
+    -- @since 0.1.0.0
     aCommandDisplay :: CommandDisplay,
+    -- | Optional legend file.
+    --
+    -- @since 0.1.0.0
     aLegend :: Maybe FilePath,
+    -- | Optional timeout.
+    --
+    -- @since 0.1.0.0
     aTimeout :: Maybe Timeout,
+    -- | List of commands.
+    --
+    -- @since 0.1.0.0
     aCommands :: List Text
   }
-  deriving (Eq, Show)
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
 
+-- | @since 0.1.0.0
 instance Semigroup Args where
   (<>) :: Args -> Args -> Args
   (MkArgs cl fp cd l t c) <> (MkArgs cl' fp' cd' l' t' c') =
     MkArgs (cl <> cl') (fp <|> fp') (cd <> cd') (l <> l') (t <|> t') (c <> c')
 
+-- | @since 0.1.0.0
 instance Monoid Args where
   mempty :: Args
   mempty = MkArgs mempty empty mempty empty empty mempty
 
 -- | 'ParserInfo' type for parsing 'Args'.
+--
+-- @since 0.1.0.0
 parserInfoArgs :: ParserInfo Args
 parserInfoArgs =
   ParserInfo

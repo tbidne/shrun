@@ -8,6 +8,8 @@
 -- This is not a comprehensive replacement for Prelude, just the
 -- functionality needed for this application. Thus it is natural to
 -- add new functionality/exports here over time.
+--
+-- @since 0.1.0.0
 module ShellRun.Prelude
   ( -- * Total versions of partial functions
     NE.head,
@@ -177,14 +179,26 @@ monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
 
 -- | Alias for '[]'.
+--
+-- @since 0.1.0.0
 type List = []
 
--- | Alias for '(,)'.
+-- | Alias for (,).
+--
+-- @since 0.1.0.0
 type Tuple2 = (,)
 
--- | Alias for '(,,)'.
+-- | Alias for (,,).
+--
+-- @since 0.1.0.0
 type Tuple3 = (,,)
 
+-- | Alias for 'Refined' 'NonNegative' 'Int'.
+--
+-- @since 0.1.0.0
 type RNonNegative = Refined NonNegative Int
 
+-- | Alias for 'Refined' 'Positive' Int'.
+--
+-- @since 0.1.0.0
 type RPositive = Refined Positive Int

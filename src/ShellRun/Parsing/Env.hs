@@ -2,6 +2,8 @@
 
 -- | Parses command line into the core 'Env' type used by the main
 -- application.
+--
+-- @since 0.1.0.0
 module ShellRun.Parsing.Env
   ( runParser,
   )
@@ -17,6 +19,8 @@ import ShellRun.Parsing.Args qualified as Args
 import ShellRun.Prelude
 
 -- | Runs the parser.
+--
+-- @since 0.1.0.0
 runParser :: IO Env
 runParser = do
   args <- OptApp.execParser Args.parserInfoArgs

@@ -2,6 +2,8 @@
 
 -- | Provides the 'TimeRep' type and related functions for representing
 -- time.
+--
+-- @since 0.1.0.0
 module ShellRun.Data.TimeRep
   ( -- * Type
     TimeRep (..),
@@ -28,16 +30,26 @@ import ShellRun.Utils qualified as U
 -- >>> import Refined (NonNegative)
 
 -- | Represents a relative time.
+--
+-- @since 0.1.0.0
 data TimeRep = MkTimeRep
-  { days :: RNonNegative,
+  { -- | @since 0.1.0.0
+    days :: RNonNegative,
+    -- | @since 0.1.0.0
     hours :: RNonNegative,
+    -- | @since 0.1.0.0
     minutes :: RNonNegative,
+    -- | @since 0.1.0.0
     seconds :: RNonNegative
   }
-  deriving (Show)
+  deriving
+    ( -- | @since 0.1.0.0
+      Show
+    )
 
--- | Transforms a 'TimeRep' into 'NonNegative' seconds.
+-- | Transforms a 'TimeRep' into 'Refined.NonNegative' seconds.
 --
+-- ==== __Examples__
 -- >>> :{
 --        -- 200,000 seconds
 --    let timeRep =
@@ -49,6 +61,8 @@ data TimeRep = MkTimeRep
 --    in toSeconds timeRep
 -- :}
 -- Refined 200000
+--
+-- @since 0.1.0.0
 toSeconds :: TimeRep -> RNonNegative
 toSeconds (MkTimeRep d h m s) =
   (d .*. TH.dayNN)
@@ -56,8 +70,9 @@ toSeconds (MkTimeRep d h m s) =
     .+. (m .*. TH.minuteNN)
     .+. s
 
--- | Transforms 'NonNegative' @seconds@ into a 'TimeRep'.
+-- | Transforms 'Refined.NonNegative' seconds into a 'TimeRep'.
 --
+-- ==== __Examples__
 -- >>> :{
 --   let -- 2 days, 7 hours, 33 minutes, 20 seconds
 --       timeRep = fromSeconds $$(R.refineTH @NonNegative @Int 200_000)
@@ -65,6 +80,8 @@ toSeconds (MkTimeRep d h m s) =
 --   in showRep timeRep
 -- :}
 -- [2,7,33,20]
+--
+-- @since 0.1.0.0
 fromSeconds :: RNonNegative -> TimeRep
 fromSeconds seconds = MkTimeRep d h m s
   where
@@ -74,12 +91,15 @@ fromSeconds seconds = MkTimeRep d h m s
 
 -- | Formats a 'TimeRep' to 'Text'.
 --
+-- ==== __Examples__
 -- >>> :{
 --   let -- 2 days, 7 hours, 33 minutes, 20 seconds
 --       timeRep = fromSeconds $$(R.refineTH @NonNegative 200_000)
 --   in formatTimeRep timeRep
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
+--
+-- @since 0.1.0.0
 formatTimeRep :: TimeRep -> Text
 formatTimeRep (isZero -> True) = "0 seconds"
 formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
@@ -92,12 +112,15 @@ formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
 -- | For \(n \ge 0\) seconds, returns a 'Text' description of the days, hours,
 -- minutes and seconds.
 --
+-- ==== __Examples__
 -- >>> :{
 --   -- 2 days, 7 hours, 33 minutes, 20 seconds
 --   let totalSeconds = $$(R.refineTH @NonNegative @Int 200_000)
 --   in formatTime totalSeconds
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
+--
+-- @since 0.1.0.0
 formatTime :: RNonNegative -> Text
 formatTime = formatTimeRep . fromSeconds
 

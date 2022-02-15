@@ -1,4 +1,6 @@
 -- | Provides the `MonadShell` typeclass.
+--
+-- @since 0.1.0.0
 module ShellRun.Class.MonadShell
   ( MonadShell (..),
     runShell,
@@ -14,17 +16,25 @@ import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
 
 -- | The core typeclass for @shell-run@.
+--
+-- @since 0.1.0.0
 type MonadShell :: (Type -> Type) -> Constraint
 class Monad m => MonadShell m where
   -- | Given a filepath, attempts to read and parse the file into
   -- a `LegendMap`.
+  --
+  -- @since 0.1.0.0
   legendPathToMap :: FilePath -> m (Either LegendErr LegendMap)
 
   -- | Runs commands.
+  --
+  -- @since 0.1.0.0
   runCommands :: List Command -> m ()
 
 -- | `runShell` is the entry point for running shell commands, i.e.,
 -- `MonadShell` instances.
+--
+-- @since 0.1.0.0
 runShell ::
   ( HasCommands env,
     HasLegend env,

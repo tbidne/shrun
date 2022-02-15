@@ -1,6 +1,8 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Provides utilities.
+--
+-- @since 0.1.0.0
 module ShellRun.Utils
   ( -- * Text Utils
     breakStripPoint,
@@ -43,8 +45,7 @@ import System.Clock qualified as C
 --    \end{align}
 -- \]
 --
--- Examples:
---
+-- ==== __Examples__
 -- >>> :{
 --   let n = $$(R.refineTH @NonNegative @Int 34)
 --       d = $$(R.refineTH @Positive @Int 5)
@@ -60,6 +61,8 @@ import System.Clock qualified as C
 --   in monoBimap R.unrefine result
 -- :}
 -- (0,12)
+--
+-- @since 0.1.0.0
 divWithRem :: RNonNegative -> RPositive -> Tuple2 RNonNegative RNonNegative
 divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
   where
@@ -69,6 +72,7 @@ divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.
 --
+-- ==== __Examples__
 -- >>> :{
 --   let t1 = TimeSpec 5 0
 --       -- 20 s + 1 billion ns = 21 s
@@ -76,6 +80,8 @@ divWithRem n d = monoBimap R.unsafeRefine (n' `div` d', n' `rem` d')
 --   in diffTime t1 t2
 -- :}
 -- Refined 16
+--
+-- @since 0.1.0.0
 diffTime :: TimeSpec -> TimeSpec -> RNonNegative
 diffTime t1 t2 =
   let diff = fromIntegral $ C.sec $ C.diffTimeSpec t1 t2
@@ -85,6 +91,7 @@ diffTime t1 t2 =
 -- | Returns the key if one exists and we pass in 'ShowKey', otherwise
 -- returns the command.
 --
+-- ==== __Examples__
 -- >>> displayCommand ShowKey (MkCommand Nothing "cmd")
 -- "cmd"
 --
@@ -93,6 +100,8 @@ diffTime t1 t2 =
 --
 -- >>> displayCommand ShowKey (MkCommand (Just "key") "cmd")
 -- "key"
+--
+-- @since 0.1.0.0
 displayCommand :: CommandDisplay -> Command -> Text
 displayCommand ShowKey (MkCommand (Just key) _) = key
 displayCommand _ (MkCommand _ cmd) = cmd
@@ -104,8 +113,7 @@ displayCommand _ (MkCommand _ cmd) = cmd
 -- 2. If the @needle@ is found within the @haystack@, we do not include it
 -- in the second part of the pair.
 --
--- For instance:
---
+-- ==== __Examples__
 -- >>> let equals = $$(R.refineTH @R.NonEmpty @Text "=")
 --
 -- >>> -- Data.Text
@@ -129,6 +137,8 @@ displayCommand _ (MkCommand _ cmd) = cmd
 --
 -- >>> breakStripPoint equals "HEY==LISTEN"
 -- ("HEY","=LISTEN")
+--
+-- @since 0.1.0.0
 breakStripPoint :: Refined R.NonEmpty Text -> Text -> Tuple2 Text Text
 breakStripPoint rpoint txt = case T.breakOn point txt of
   (x, T.stripPrefix point -> Just y) -> (x, y)
@@ -136,6 +146,8 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
   where
     point = R.unrefine rpoint
 
--- | Decodes a 'Bytestring' to UTF-8 in lenient mode.
+-- | Decodes a 'ByteString' to UTF-8 in lenient mode.
+--
+-- @since 0.1.0.0
 decodeUtf8Lenient :: ByteString -> Text
 decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode

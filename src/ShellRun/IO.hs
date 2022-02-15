@@ -1,4 +1,6 @@
 -- | Provides the low-level `IO` functions for running shell commands.
+--
+-- @since 0.1.0.0
 module ShellRun.IO
   ( -- * Running shell programs
     sh,
@@ -31,16 +33,22 @@ import System.Process qualified as P
 
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
+--
+-- @since 0.1.0.0
 sh :: Command -> Maybe FilePath -> IO Text
 sh (MkCommand _ cmd) fp = T.pack <$> P.readCreateProcess proc ""
   where
     proc = (P.shell (T.unpack cmd)) {P.cwd = fp}
 
 -- | Version of 'sh' that ignores the return value.
+--
+-- @since 0.1.0.0
 sh_ :: Command -> Maybe FilePath -> IO ()
 sh_ cmd = void . sh cmd
 
 -- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
+--
+-- @since 0.1.0.0
 shExitCode :: Command -> Maybe FilePath -> IO (ExitCode, Stdout, Stderr)
 shExitCode (MkCommand _ cmd) path = do
   (exitCode, stdout, stderr) <- P.readCreateProcessWithExitCode proc ""
@@ -51,6 +59,8 @@ shExitCode (MkCommand _ cmd) path = do
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
+--
+-- @since 0.1.0.0
 tryShExitCode :: CommandDisplay -> Command -> Maybe FilePath -> IO (Either Stderr Stdout)
 tryShExitCode commandDisplay cmd path = do
   (code, stdout, MkStderr err) <- shExitCode cmd path
@@ -66,20 +76,41 @@ tryShExitCode commandDisplay cmd path = do
 --
 -- The 'Semigroup' instance is based on this ordering, taking the greatest
 -- element. For identical constructors, the left argument is taken.
+--
+-- @since 0.1.0.0
 data ReadHandleResult
   = -- | Error encountered while trying to read a handle.
+    --
+    -- @since 0.1.0.0
     ReadErr Text
   | -- | Successfully read data from the handle.
+    --
+    -- @since 0.1.0.0
     ReadSuccess Text
   | -- | Successfully read no data from the handle.
+    --
+    -- @since 0.1.0.0
     ReadNoData
-  deriving (Eq, Show)
-  deriving (Semigroup, Monoid) via Supremum ReadHandleResult
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via Supremum ReadHandleResult
 
+-- | @since 0.1.0.0
 instance Bounded ReadHandleResult where
   minBound = ReadErr ""
   maxBound = ReadSuccess ""
 
+-- | @since 0.1.0.0
 instance Ord ReadHandleResult where
   compare x y | x == y = EQ
   compare (ReadSuccess _) _ = GT
@@ -89,6 +120,8 @@ instance Ord ReadHandleResult where
   compare (ReadErr _) _ = GT
 
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
+--
+-- @since 0.1.0.0
 readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
@@ -96,6 +129,8 @@ readHandleResultToStderr (ReadSuccess err) = MkStderr err
 
 -- | Attempts to read from the handle. The parameter 'CommandDisplay' and
 -- 'Command' are used in formatting.
+--
+-- @since 0.1.0.0
 readHandle :: CommandDisplay -> Command -> Handle -> IO ReadHandleResult
 readHandle commandDisplay cmd handle = do
   isClosed <- Handle.hIsClosed handle

@@ -1,4 +1,6 @@
 -- | Provides the 'ShellT' monad transformer.
+--
+-- @since 0.1.0.0
 module ShellRun.ShellT
   ( ShellT (..),
   )
@@ -56,22 +58,41 @@ import UnliftIO qualified
 import UnliftIO.Async qualified as UAsync
 
 -- | `ShellT` is the main application type that runs shell commands.
+--
+-- @since 0.1.0.0
 type ShellT :: Type -> (Type -> Type) -> Type -> Type
-newtype ShellT e m a = MkShellT {runShellT :: ReaderT e m a}
+newtype ShellT e m a = MkShellT
+  { -- | @since 0.1.0.0
+    runShellT :: ReaderT e m a
+  }
   deriving
-    ( Functor,
+    ( -- | @since 0.1.0.0
+      Functor,
+      -- | @since 0.1.0.0
       Applicative,
+      -- | @since 0.1.0.0
       Monad,
+      -- | @since 0.1.0.0
       MonadReader e,
+      -- | @since 0.1.0.0
       MonadCatch,
+      -- | @since 0.1.0.0
       MonadIO,
+      -- | @since 0.1.0.0
       MonadMask,
+      -- | @since 0.1.0.0
       MonadThrow,
+      -- | @since 0.1.0.0
       MonadUnliftIO
     )
     via (ReaderT e m)
-  deriving (MonadTrans) via (ReaderT e)
+  deriving
+    ( -- | @since 0.1.0.0
+      MonadTrans
+    )
+    via (ReaderT e)
 
+-- | @since 0.1.0.0
 instance (HasFileLogging env, MonadIO m) => RegionLogger (ShellT env m) where
   type Region (ShellT env m) = ConsoleRegion
 
@@ -93,6 +114,7 @@ instance (HasFileLogging env, MonadIO m) => RegionLogger (ShellT env m) where
 printLog :: (Text -> IO ()) -> Log -> IO ()
 printLog fn = fn . Log.formatLog
 
+-- | @since 0.1.0.0
 instance
   ( MonadIO m,
     MonadMask m,
@@ -237,8 +259,6 @@ timedOut timer =
     Nothing -> False
     Just (MkTimeout t) -> timer > t
 
--- | Version of 'tryShExitCode' that also returns the command's
--- duration. 'Stdout' is not returned on success.
 tryTimeSh ::
   ( HasCommandDisplay env,
     MonadIO m
@@ -254,8 +274,6 @@ tryTimeSh cmd = do
     let diff = U.diffTime start end
     pure $ bimap (diff,) (const diff) res
 
--- | Version of 'tryTimeSh' that attempts to read the command's
--- @stdout@ + @stderr@.
 tryTimeShRegion ::
   ( HasCommandDisplay env,
     HasFileLogging env,
