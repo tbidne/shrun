@@ -53,7 +53,7 @@ expected =
     <$> [ U.subCommandPrefix "echo hi && sleep 1: hi"
         ]
 
-outfile :: [Char]
+outfile :: List Char
 outfile = "cmd_logs.txt"
 
 teardown :: IO TestArgs -> () -> IO ()

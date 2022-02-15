@@ -9,7 +9,7 @@ where
 
 import Control.Applicative qualified as App
 import Data.List qualified as L
-import Data.String (String)
+import Data.String (IsString (..), String)
 import Data.Text qualified as T
 import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
@@ -56,12 +56,22 @@ parserInfoArgs =
   ParserInfo
     { infoParser = argsParser,
       infoFullDesc = True,
-      infoProgDesc = Chunk Nothing,
-      infoHeader = Chunk Nothing,
-      infoFooter = Chunk Nothing,
+      infoProgDesc = Chunk desc,
+      infoHeader = Chunk header,
+      infoFooter = Chunk footer,
       infoFailureCode = 1,
       infoPolicy = Intersperse
     }
+  where
+    header = Just "Shell-Run: A tool for running shell commands ergonomically"
+    footer = Just $ fromString versNum
+    desc =
+      Just $
+        "\nShell-Run runs shell commands concurrently. In addition to "
+          <> "providing basic timing and logging functionality, we also provide "
+          <> "the ability to pass in a legend file that can be used to define "
+          <> "aliases for commands. See github.com/tbidne/shell-run#README for "
+          <> "full documentation."
 
 argsParser :: Parser Args
 argsParser =
@@ -82,10 +92,13 @@ version = OApp.infoOption txt (OApp.long "version" <> OApp.short 'v')
       L.intercalate
         "\n"
         [ "Shell-Run",
-          "Version: " <> $$(PV.packageVersionStringTH "shell-run.cabal"),
+          versNum,
           "Revision: " <> $(GitRev.gitHash),
           "Date: " <> $(GitRev.gitCommitDate)
         ]
+
+versNum :: List Char
+versNum = "Version: " <> $$(PV.packageVersionStringTH "shell-run.cabal")
 
 legendParser :: Parser (Maybe FilePath)
 legendParser =
