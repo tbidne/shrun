@@ -4,7 +4,7 @@ module ShellRun.Data.ShellT
   )
 where
 
-import Control.Concurrent qualified as Concurrent
+import Control.Concurrent qualified as CC
 import Control.Exception.Safe (SomeException)
 import Control.Exception.Safe qualified as SafeEx
 import Control.Monad qualified as M
@@ -152,11 +152,9 @@ runCommand cmd = do
   commandDisplay <- asks getCommandDisplay
   commandLogging <- asks getCommandLogging
 
-  let shFn = case commandLogging of
-        Disabled -> tryTimeSh
-        Enabled -> tryTimeShRegion
-
-  res <- shFn cmd
+  res <- case commandLogging of
+    Disabled -> tryTimeSh cmd
+    Enabled -> tryTimeShRegion cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
     let lg = case res of
@@ -189,13 +187,13 @@ counter = do
   -- This brief delay is so that our timer starts "last" i.e. after each individual
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
-  liftIO $ Concurrent.threadDelay 100_000
+  liftIO $ CC.threadDelay 100_000
   Regions.withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
     timer <- liftIO $ IORef.newIORef TH.zeroNN
     Loops.whileM_ (keepRunning r timer timeout) $ do
       elapsed <- liftIO $ do
-        Concurrent.threadDelay 1_000_000
+        CC.threadDelay 1_000_000
         IORef.modifyIORef' timer (.+. TH.oneNN)
         IORef.readIORef timer
       logCounter r elapsed
