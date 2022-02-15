@@ -1,5 +1,5 @@
 -- | Provides the 'ShellT' monad transformer.
-module ShellRun.Data.ShellT
+module ShellRun.ShellT
   ( ShellT (..),
   )
 where

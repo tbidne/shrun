@@ -57,7 +57,6 @@ library
     ShellRun.Data.Env
     ShellRun.Data.IO
     ShellRun.Data.Legend
-    ShellRun.Data.ShellT
     ShellRun.Data.Supremum
     ShellRun.Data.TH
     ShellRun.Data.Timeout
@@ -73,6 +72,7 @@ library
     ShellRun.Parsing.Legend
     ShellRun.Parsing.Legend.Internal
     ShellRun.Prelude
+    ShellRun.ShellT
     ShellRun.Utils
 
   build-depends:

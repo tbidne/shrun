@@ -7,4 +7,4 @@ module ShellRun
 where
 
 import ShellRun.Class.MonadShell qualified as MonadShell
-import ShellRun.Data.ShellT (ShellT (..))
+import ShellRun.ShellT (ShellT (..))
