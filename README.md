@@ -2,14 +2,14 @@
 
 # Shell-Run
 
+## A tool for running shell commands ergonomically.
+
 [![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
 [![8.10.7](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10.7/main?label=8.10.7&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10-7.yaml)
 [![9.0.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.0.2/main?label=9.0.2&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.0.2.yaml)
 [![9.2.1](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.2.1/main?label=9.2.1&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.2.1.yaml)
 [![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2018.24&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
-
-![example](./screens/example.png)
 
 </div>
 
@@ -75,7 +75,9 @@ shell-run "some long command" "another command"
 
 Will run `some long command` and `another command` concurrently.
 
-A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively.
+A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively. Example of running two commands `sign-peace-treaty` and `takeover` defined in a custom legend file:
+
+![example](./screens/example.png)
 
 # Options
 
