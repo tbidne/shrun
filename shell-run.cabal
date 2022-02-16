@@ -54,7 +54,7 @@ library
   exposed-modules:
     ShellRun
     ShellRun.Class.MonadShell
-    ShellRun.Data.Command
+    ShellRun.Command
     ShellRun.Data.Env
     ShellRun.Data.IO
     ShellRun.Data.NonEmptySeq
@@ -70,7 +70,6 @@ library
     ShellRun.Logging.Queue
     ShellRun.Logging.RegionLogger
     ShellRun.Parsing.Args
-    ShellRun.Parsing.Commands
     ShellRun.Parsing.Env
     ShellRun.Prelude
     ShellRun.ShellT
@@ -126,15 +125,16 @@ test-suite unit
     MaxRuns
     Props
     Props.Generators
+    Props.ShellRun.Command
     Props.ShellRun.Data.TimeRep
     Props.ShellRun.Legend.Internal
-    Props.ShellRun.Parsing.Commands
     Props.ShellRun.Utils
     Specs
+    Specs.ShellRun.Command
+    Specs.ShellRun.Data.Env
     Specs.ShellRun.Data.TimeRep
     Specs.ShellRun.Legend.Internal
     Specs.ShellRun.Parsing.Args
-    Specs.ShellRun.Parsing.Commands
     Specs.ShellRun.Utils
 
   build-depends:

@@ -14,9 +14,6 @@ module ShellRun.Utils
     diffTime,
     foldMap1,
 
-    -- * Misc Utils
-    displayCommand,
-
     -- * Math Utils
     divWithRem,
   )
@@ -32,8 +29,6 @@ import Refined (Refined)
 import Refined qualified as R
 import Refined.Extras (pattern MkRefined)
 import Refined.Unsafe qualified as R
-import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
 import System.Clock (TimeSpec (..))
@@ -109,24 +104,6 @@ diffTime t1 t2 =
 -- @since 0.1.0.0
 foldMap1 :: (Foldable f, Semigroup s) => (a -> s) -> a -> f a -> s
 foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
-
--- | Returns the key if one exists and we pass in 'ShowKey', otherwise
--- returns the command.
---
--- ==== __Examples__
--- >>> displayCommand ShowKey (MkCommand Nothing "cmd")
--- "cmd"
---
--- >>> displayCommand ShowCommand (MkCommand (Just "key") "cmd")
--- "cmd"
---
--- >>> displayCommand ShowKey (MkCommand (Just "key") "cmd")
--- "key"
---
--- @since 0.1.0.0
-displayCommand :: CommandDisplay -> Command -> Text
-displayCommand ShowKey (MkCommand (Just key) _) = key
-displayCommand _ (MkCommand _ cmd) = cmd
 
 -- | Wrapper for 'Text'\'s 'T.breakOn' that differs in two ways:
 --

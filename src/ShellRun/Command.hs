@@ -1,11 +1,12 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
--- | Provides functionality for translating 'Text' commands
--- via a 'LegendMap'.
+-- | Provides the 'Command' wrapper for commands.
 --
 -- @since 0.1.0.0
-module ShellRun.Parsing.Commands
-  ( translateCommands,
+module ShellRun.Command
+  ( Command (..),
+    translateCommands,
   )
 where
 
@@ -15,15 +16,31 @@ import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
 import Refined qualified as R
-import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Legend (LegendErr (..), LegendMap)
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 
--- $setup
--- >>> :set -XOverloadedLists
+-- | Wrapper for shell commands.
+--
+-- @since 0.1.0.0
+data Command = MkCommand
+  { -- | The key name for the command, for display purposes.
+    --
+    -- @since 0.1.0.0
+    getKey :: Maybe Text,
+    -- | The shell command to run.
+    --
+    -- @since 0.1.0.0
+    command :: Text
+  }
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
 
 -- | Returns a list of 'Text' commands, potentially transforming a
 -- given string via the `LegendMap` @legend@.

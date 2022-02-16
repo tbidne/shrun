@@ -21,7 +21,7 @@ import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import Numeric.Algebra (ASemigroup (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Data.Command (Command (..))
+import ShellRun.Command (Command (..))
 import ShellRun.Data.Env
   ( CommandLogging (..),
     Env (..),
@@ -30,6 +30,7 @@ import ShellRun.Data.Env
     HasFileLogging (..),
     HasTimeout (..),
   )
+import ShellRun.Data.Env qualified as Env
 import ShellRun.Data.IO (Stderr (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TH qualified as TH
@@ -188,7 +189,7 @@ runCommand cmd = do
                     <> TimeRep.formatTime t
              in MkLog logTxt Error Finish
           Right t ->
-            let name = U.displayCommand commandDisplay cmd
+            let name = Env.displayCommand commandDisplay cmd
                 logTxt =
                   "Successfully ran '"
                     <> name

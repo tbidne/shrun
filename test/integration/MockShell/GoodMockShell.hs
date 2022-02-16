@@ -7,7 +7,7 @@ import Data.HashMap.Strict qualified as Map
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Data.Command (Command (..))
+import ShellRun.Command (Command (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude

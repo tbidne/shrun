@@ -13,9 +13,13 @@ module ShellRun.Data.Env
     Env (..),
     CommandDisplay (..),
     CommandLogging (..),
+
+    -- * Functions
+    displayCommand,
   )
 where
 
+import ShellRun.Command (Command (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
@@ -169,3 +173,21 @@ instance HasCommandDisplay Env where
 -- | @since 0.1.0.0
 instance HasCommands Env where
   getCommands = commands
+
+-- | Returns the key if one exists and we pass in 'ShowKey', otherwise
+-- returns the command.
+--
+-- ==== __Examples__
+-- >>> displayCommand ShowKey (MkCommand Nothing "cmd")
+-- "cmd"
+--
+-- >>> displayCommand ShowCommand (MkCommand (Just "key") "cmd")
+-- "cmd"
+--
+-- >>> displayCommand ShowKey (MkCommand (Just "key") "cmd")
+-- "key"
+--
+-- @since 0.1.0.0
+displayCommand :: CommandDisplay -> Command -> Text
+displayCommand ShowKey (MkCommand (Just key) _) = key
+displayCommand _ (MkCommand _ cmd) = cmd

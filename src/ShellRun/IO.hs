@@ -22,8 +22,9 @@ import Data.ByteString qualified as BS
 import Data.Text qualified as T
 import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
-import ShellRun.Data.Command (Command (..))
+import ShellRun.Command (Command (..))
 import ShellRun.Data.Env (CommandDisplay (..))
+import ShellRun.Data.Env qualified as Env
 import ShellRun.Data.IO (Stderr (..), Stdout (..))
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Prelude
@@ -149,7 +150,7 @@ readHandle commandDisplay cmd handle = do
             Right "" -> ReadNoData
             Right o -> ReadSuccess $ name <> ": " <> stripChars o
   where
-    name = Utils.displayCommand commandDisplay cmd
+    name = Env.displayCommand commandDisplay cmd
     displayEx :: Show a => Text -> a -> Text
     displayEx prefix =
       getStderr
@@ -166,7 +167,7 @@ makeStdErr commandDisplay cmd err =
       <> "': "
       <> stripChars err
   where
-    name = Utils.displayCommand commandDisplay cmd
+    name = Env.displayCommand commandDisplay cmd
 
 stripChars :: Text -> Text
 stripChars = T.stripEnd . T.replace "\r" ""

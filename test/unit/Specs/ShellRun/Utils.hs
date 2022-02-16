@@ -3,8 +3,6 @@ module Specs.ShellRun.Utils (specs) where
 
 import Refined (Refined)
 import Refined qualified as R
-import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Env (CommandDisplay (..))
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
@@ -18,33 +16,8 @@ specs :: TestTree
 specs =
   Tasty.testGroup
     "ShellRun.Utils"
-    [ displayCommandSpecs,
-      breakStripPointSpecs
+    [ breakStripPointSpecs
     ]
-
-displayCommandSpecs :: TestTree
-displayCommandSpecs =
-  Tasty.testGroup
-    "displayCommand"
-    [ noKeyShowsCommand,
-      showCommand,
-      showKey
-    ]
-
-noKeyShowsCommand :: TestTree
-noKeyShowsCommand = THU.testCase "should use command when no key exists" $ do
-  "cmd" @=? Utils.displayCommand ShowCommand (MkCommand Nothing "cmd")
-  "cmd" @=? Utils.displayCommand ShowKey (MkCommand Nothing "cmd")
-
-showCommand :: TestTree
-showCommand =
-  THU.testCase "should use command with ShowCommand" $
-    "cmd" @=? Utils.displayCommand ShowCommand (MkCommand (Just "key") "cmd")
-
-showKey :: TestTree
-showKey =
-  THU.testCase "should use key with ShowKey when one exists" $
-    "key" @=? Utils.displayCommand ShowKey (MkCommand (Just "key") "cmd")
 
 breakStripPointSpecs :: TestTree
 breakStripPointSpecs =

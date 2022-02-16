@@ -6,7 +6,7 @@ module MockShell.NoLegendMockShell (NoLegendMockShell (..)) where
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Data.Command (Command (..))
+import ShellRun.Command (Command (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Legend (LegendErr (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))

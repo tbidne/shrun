@@ -77,7 +77,7 @@ toSeconds (MkTimeRep d h m s) =
 -- >>> :{
 --   let -- 2 days, 7 hours, 33 minutes, 20 seconds
 --       timeRep = fromSeconds $$(R.refineTH @NonNegative @Int 200_000)
---       showRep (MkTimeRep d h m s) = fmap R.unrefine [d, h, m, s]
+--       showRep (MkTimeRep d h m s) = fmap @List R.unrefine [d, h, m, s]
 --   in showRep timeRep
 -- :}
 -- [2,7,33,20]

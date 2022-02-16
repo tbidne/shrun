@@ -1,5 +1,5 @@
--- | Property tests for ShellRun.Parsing.Commands.
-module Props.ShellRun.Parsing.Commands
+-- | Property tests for ShellRun.Command.
+module Props.ShellRun.Command
   ( props,
   )
 where
@@ -14,19 +14,18 @@ import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import MaxRuns (MaxRuns (..))
-import ShellRun.Data.Command qualified as Command
+import ShellRun.Command qualified as Command
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Legend (LegendMap)
-import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
--- | Entry point for ShellRun.Parsing.Commands property tests.
+-- | Entry point for ShellRun.Commands property tests.
 props :: TestTree
-props = T.testGroup "ShellRun.Parsing.Commands" [translateProps]
+props = T.testGroup "ShellRun.Command" [translateProps]
 
 translateProps :: TestTree
 translateProps = T.askOption $ \(MkMaxRuns limit) ->
@@ -35,7 +34,7 @@ translateProps = T.askOption $ \(MkMaxRuns limit) ->
       H.property $ do
         (legend, origCmds) <- H.forAll genLegendCommands
         let legendKeySet = Set.fromList $ Map.keys legend
-            maybeFinalCmds = ParseCommands.translateCommands legend origCmds
+            maybeFinalCmds = Command.translateCommands legend origCmds
 
         case maybeFinalCmds of
           Left err -> do

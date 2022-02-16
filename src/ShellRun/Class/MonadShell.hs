@@ -7,13 +7,13 @@ module ShellRun.Class.MonadShell
   )
 where
 
-import ShellRun.Data.Command (Command (..))
+import ShellRun.Command (Command (..))
+import ShellRun.Command qualified as Command
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Legend (LegendErr, LegendMap)
 import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
-import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
 
 -- | The core typeclass for @shell-run@.
@@ -58,7 +58,7 @@ maybePathToCommands ::
 maybePathToCommands Nothing cmds = pure $ Right $ fmap (MkCommand Nothing) cmds
 maybePathToCommands (Just path) cmds = do
   lMap <- legendPathToMap path
-  pure $ lMap >>= (`ParseCommands.translateCommands` cmds)
+  pure $ lMap >>= (`Command.translateCommands` cmds)
 
 runCommandsOrLogErr ::
   (MonadShell m, RegionLogger m) =>
