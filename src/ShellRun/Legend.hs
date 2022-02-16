@@ -1,16 +1,21 @@
--- | Provides parsing a legend file into a 'LegendMap'.
+-- | Provides types for the legend functionality.
 --
 -- @since 0.1.0.0
-module ShellRun.Parsing.Legend
-  ( legendPathToMap,
+module ShellRun.Legend
+  ( -- * Types
+    LegendErr (..),
+    LegendMap,
+
+    -- * Parsing
+    legendPathToMap,
   )
 where
 
 import Control.Exception.Safe (SomeException)
 import Control.Exception.Safe qualified as SafeEx
 import Data.Text qualified as T
-import ShellRun.Data.Legend (LegendErr (..), LegendMap)
-import ShellRun.Parsing.Legend.Internal qualified as Internal
+import ShellRun.Legend.Internal (LegendErr (..), LegendMap)
+import ShellRun.Legend.Internal qualified as Internal
 import ShellRun.Prelude
 
 -- | Given a filepath, attempts to parse the file's contents into

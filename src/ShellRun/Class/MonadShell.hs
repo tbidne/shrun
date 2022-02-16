@@ -8,9 +8,9 @@ module ShellRun.Class.MonadShell
 where
 
 import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Legend (LegendErr, LegendMap)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
+import ShellRun.Legend (LegendErr, LegendMap)
 import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Parsing.Commands qualified as ParseCommands

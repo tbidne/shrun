@@ -31,19 +31,19 @@ import ShellRun.Data.Env
     HasTimeout (..),
   )
 import ShellRun.Data.IO (Stderr (..))
-import ShellRun.Data.Legend (LegendErr, LegendMap)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.IO (ReadHandleResult (..))
 import ShellRun.IO qualified as ShIO
+import ShellRun.Legend (LegendErr, LegendMap)
+import ShellRun.Legend qualified as ParseLegend
 import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Logging.Queue (LogText (..), LogTextQueue)
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
-import ShellRun.Parsing.Legend qualified as ParseLegend
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))

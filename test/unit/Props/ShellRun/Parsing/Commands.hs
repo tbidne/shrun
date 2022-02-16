@@ -15,9 +15,9 @@ import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import MaxRuns (MaxRuns (..))
 import ShellRun.Data.Command qualified as Command
-import ShellRun.Data.Legend (LegendMap)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
+import ShellRun.Legend (LegendMap)
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
 import Test.Tasty (TestTree)

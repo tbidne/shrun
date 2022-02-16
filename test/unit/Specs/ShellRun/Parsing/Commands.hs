@@ -3,9 +3,9 @@ module Specs.ShellRun.Parsing.Commands (specs) where
 
 import Data.HashMap.Strict qualified as Map
 import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
+import ShellRun.Legend (LegendErr (..), LegendMap)
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
 import Test.Tasty (TestTree)

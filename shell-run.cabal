@@ -57,7 +57,6 @@ library
     ShellRun.Data.Command
     ShellRun.Data.Env
     ShellRun.Data.IO
-    ShellRun.Data.Legend
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
     ShellRun.Data.TH
@@ -65,14 +64,14 @@ library
     ShellRun.Data.TimeRep
     ShellRun.Env
     ShellRun.IO
+    ShellRun.Legend
+    ShellRun.Legend.Internal
     ShellRun.Logging.Log
     ShellRun.Logging.Queue
     ShellRun.Logging.RegionLogger
     ShellRun.Parsing.Args
     ShellRun.Parsing.Commands
     ShellRun.Parsing.Env
-    ShellRun.Parsing.Legend
-    ShellRun.Parsing.Legend.Internal
     ShellRun.Prelude
     ShellRun.ShellT
     ShellRun.Utils
@@ -128,14 +127,14 @@ test-suite unit
     Props
     Props.Generators
     Props.ShellRun.Data.TimeRep
+    Props.ShellRun.Legend.Internal
     Props.ShellRun.Parsing.Commands
-    Props.ShellRun.Parsing.Legend.Internal
     Props.ShellRun.Utils
     Specs
     Specs.ShellRun.Data.TimeRep
+    Specs.ShellRun.Legend.Internal
     Specs.ShellRun.Parsing.Args
     Specs.ShellRun.Parsing.Commands
-    Specs.ShellRun.Parsing.Legend.Internal
     Specs.ShellRun.Utils
 
   build-depends:

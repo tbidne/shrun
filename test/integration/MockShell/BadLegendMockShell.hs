@@ -6,7 +6,7 @@ module MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Data.Legend (LegendErr (..))
+import ShellRun.Legend (LegendErr (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 

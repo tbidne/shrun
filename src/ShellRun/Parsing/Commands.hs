@@ -16,9 +16,9 @@ import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
 import Refined qualified as R
 import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Legend (LegendErr (..), LegendMap)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
+import ShellRun.Legend (LegendErr (..), LegendMap)
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 

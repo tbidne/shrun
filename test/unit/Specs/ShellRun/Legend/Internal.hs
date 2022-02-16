@@ -1,20 +1,20 @@
--- | Specs for ShellRun.Parsing.Legend.Internal.
-module Specs.ShellRun.Parsing.Legend.Internal (specs) where
+-- | Specs for ShellRun.Legend.Internal.
+module Specs.ShellRun.Legend.Internal (specs) where
 
 import Data.HashMap.Strict qualified as Map
-import ShellRun.Data.Legend (LegendErr (..))
-import ShellRun.Parsing.Legend.Internal qualified as Internal
+import ShellRun.Legend (LegendErr (..))
+import ShellRun.Legend.Internal qualified as Internal
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit ((@=?))
 import Test.Tasty.HUnit qualified as THU
 
--- | Entry point for ShellRun.Parsing.Legend.Internal specs.
+-- | Entry point for ShellRun.Legend.Internal specs.
 specs :: TestTree
 specs =
   Tasty.testGroup
-    "ShellRun.Parsing.Legend.Internal"
+    "ShellRun.Legend.Internal"
     [ parseMapAndSkip,
       emptyKeyThrowErr,
       emptyValThrowErr,

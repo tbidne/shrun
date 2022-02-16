@@ -7,8 +7,8 @@ import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Legend (LegendErr (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
+import ShellRun.Legend (LegendErr (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 

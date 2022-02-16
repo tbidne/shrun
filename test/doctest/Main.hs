@@ -19,9 +19,9 @@ files =
   [ "-isrc",
     "src/ShellRun/Data/NonEmptySeq.hs",
     "src/ShellRun/Data/TimeRep.hs",
+    "src/ShellRun/Legend/Internal.hs",
     "src/ShellRun/Parsing/Args.hs",
     "src/ShellRun/Parsing/Commands.hs",
-    "src/ShellRun/Parsing/Legend/Internal.hs",
     "src/ShellRun/Utils.hs"
   ]
 

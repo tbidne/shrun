@@ -1,5 +1,5 @@
--- | Property tests for ShellRun.Parsing.Legend.Internal.
-module Props.ShellRun.Parsing.Legend.Internal (props) where
+-- | Property tests for ShellRun.Legend.Internal.
+module Props.ShellRun.Legend.Internal (props) where
 
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as Set
@@ -9,18 +9,18 @@ import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import MaxRuns (MaxRuns (..))
-import ShellRun.Data.Legend (LegendMap)
-import ShellRun.Parsing.Legend.Internal qualified as Internal
+import ShellRun.Legend (LegendMap)
+import ShellRun.Legend.Internal qualified as Internal
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Test.Tasty.Hedgehog qualified as TH
 
--- | Entry point for ShellRun.Parsing.Legend.Internal property tests.
+-- | Entry point for ShellRun.Legend.Internal property tests.
 props :: TestTree
 props =
   T.testGroup
-    "ShellRun.Parsing.Legend.Internal"
+    "ShellRun.Legend.Internal"
     [ successProps,
       failureProps
     ]
