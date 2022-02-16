@@ -3,7 +3,7 @@
 -- | Provides functionality for parsing command line arguments.
 --
 -- @since 0.1.0.0
-module ShellRun.Parsing.Args
+module ShellRun.Args
   ( Args (..),
     defaultArgs,
     parserInfoArgs,
@@ -197,7 +197,7 @@ readTimeSeconds = do
 readTimeStr :: ReadM Timeout
 readTimeStr = do
   v :: String <- OApp.str
-  case MP.parse parseTimeRep "ShellRun.Parsing.Args" v of
+  case MP.parse parseTimeRep "ShellRun.Args" v of
     Left _ ->
       OApp.readerAbort $
         ErrorMsg $

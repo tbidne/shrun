@@ -53,6 +53,7 @@ library
   import:           common-exts
   exposed-modules:
     ShellRun
+    ShellRun.Args
     ShellRun.Class.MonadShell
     ShellRun.Command
     ShellRun.Data.IO
@@ -69,7 +70,6 @@ library
     ShellRun.Logging.Log
     ShellRun.Logging.Queue
     ShellRun.Logging.RegionLogger
-    ShellRun.Parsing.Args
     ShellRun.Prelude
     ShellRun.ShellT
     ShellRun.Utils
@@ -129,11 +129,11 @@ test-suite unit
     Props.ShellRun.Legend.Internal
     Props.ShellRun.Utils
     Specs
+    Specs.ShellRun.Args
     Specs.ShellRun.Command
     Specs.ShellRun.Data.TimeRep
     Specs.ShellRun.Env
     Specs.ShellRun.Legend.Internal
-    Specs.ShellRun.Parsing.Args
     Specs.ShellRun.Utils
 
   build-depends:

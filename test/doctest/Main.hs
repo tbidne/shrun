@@ -17,11 +17,11 @@ main = do
 files :: List String
 files =
   [ "-isrc",
+    "src/ShellRun/Args.hs",
     "src/ShellRun/Command.hs",
     "src/ShellRun/Data/NonEmptySeq.hs",
     "src/ShellRun/Data/TimeRep.hs",
     "src/ShellRun/Legend/Internal.hs",
-    "src/ShellRun/Parsing/Args.hs",
     "src/ShellRun/Utils.hs"
   ]
 

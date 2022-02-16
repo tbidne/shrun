@@ -27,6 +27,8 @@ where
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Control.Monad.STM qualified as STM
 import Options.Applicative qualified as OApp
+import ShellRun.Args (Args (..))
+import ShellRun.Args qualified as Args
 import ShellRun.Command (Command (..))
 import ShellRun.Env.Types
   ( CommandDisplay (..),
@@ -40,8 +42,6 @@ import ShellRun.Env.Types
     HasTimeout (..),
   )
 import ShellRun.Logging.Queue (LogTextQueue (..))
-import ShellRun.Parsing.Args (Args (..))
-import ShellRun.Parsing.Args qualified as Args
 import ShellRun.Prelude
 
 -- | Runs the parser.

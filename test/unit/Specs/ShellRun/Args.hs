@@ -1,27 +1,27 @@
--- | Specs for ShellRun.Parsing.Args.
-module Specs.ShellRun.Parsing.Args (specs) where
+-- | Specs for ShellRun.Args.
+module Specs.ShellRun.Args (specs) where
 
 import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
 import Refined.Unsafe qualified as R
+import ShellRun.Args (Args (..))
+import ShellRun.Args qualified as Args
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env (CommandDisplay (..), CommandLogging (..))
-import ShellRun.Parsing.Args (Args (..))
-import ShellRun.Parsing.Args qualified as Args
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit (Assertion, (@=?))
 import Test.Tasty.HUnit qualified as THU
 
--- | Entry point for ShellRun.Parsing.Args specs.
+-- | Entry point for ShellRun.Args specs.
 specs :: TestTree
 specs =
   Tasty.testGroup
-    "ShellRun.Parsing.Args"
+    "ShellRun.Args"
     [ defaultSpec,
       legendSpecs,
       timeoutSpecs,
