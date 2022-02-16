@@ -8,7 +8,7 @@ import Hedgehog (PropertyT)
 import Hedgehog qualified as H
 import MaxRuns (MaxRuns (..))
 import Props.Generators qualified as PGens
-import Refined qualified as R
+import Refined.Extras (pattern MkRefined)
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
@@ -41,21 +41,16 @@ divWithRemProps = T.askOption $ \(MkMaxRuns limit) ->
         vDivWithRem (nn, pos) result
 
 vDivWithRem :: Tuple2 RNonNegative RPositive -> Tuple2 RNonNegative RNonNegative -> PropertyT IO ()
-vDivWithRem (n, divisor) (e, remainder) = do
-  H.assert $ (divisorRaw * eRaw) + remainderRaw == nRaw
+vDivWithRem (MkRefined n, MkRefined divisor) (MkRefined e, MkRefined remainder) = do
+  H.assert $ (divisor * e) + remainder == n
   H.footnote $
     "("
-      <> show divisorRaw
+      <> show divisor
       <> " * "
-      <> show eRaw
+      <> show e
       <> ") + "
-      <> show remainderRaw
+      <> show remainder
       <> " == "
-      <> show nRaw
-  H.assert $ remainderRaw <= nRaw
-  H.footnote $ show remainderRaw <> " <= " <> show nRaw
-  where
-    nRaw = R.unrefine n
-    divisorRaw = R.unrefine divisor
-    eRaw = R.unrefine e
-    remainderRaw = R.unrefine remainder
+      <> show n
+  H.assert $ remainder <= n
+  H.footnote $ show remainder <> " <= " <> show n

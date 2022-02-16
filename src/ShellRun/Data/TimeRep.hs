@@ -21,6 +21,7 @@ where
 import Data.Text qualified as T
 import Numeric.Algebra (ASemigroup (..), MSemigroup (..))
 import Refined qualified as R
+import Refined.Extras (pattern MkRefined)
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
@@ -107,7 +108,7 @@ formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
     f acc (n, units)
       | n == TH.zeroNN = acc
       | otherwise = pluralize n units : acc
-    vals = foldl' f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
+    vals = foldl' @List f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
 
 -- | For \(n \ge 0\) seconds, returns a 'Text' description of the days, hours,
 -- minutes and seconds.
@@ -129,13 +130,12 @@ isZero (MkTimeRep d h m s)
   | timeSum == 0 = True
   | otherwise = False
   where
-    timeSum = foldl' sumUp 0 [d, h, m, s]
+    timeSum = foldl' @List sumUp 0 [d, h, m, s]
     sumUp acc = (+) acc . R.unrefine
 
 pluralize :: RNonNegative -> Text -> Text
-pluralize val txt
+pluralize (MkRefined n) txt
   | n == 1 = valUnit
   | otherwise = valUnit <> "s"
   where
-    n = R.unrefine val
     valUnit = showt n <> txt

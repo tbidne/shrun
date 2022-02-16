@@ -16,6 +16,8 @@ import Hedgehog.Range qualified as Range
 import MaxRuns (MaxRuns (..))
 import ShellRun.Data.Command qualified as Command
 import ShellRun.Data.Legend (LegendMap)
+import ShellRun.Data.NonEmptySeq (NonEmptySeq)
+import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
@@ -40,7 +42,7 @@ translateProps = T.askOption $ \(MkMaxRuns limit) ->
             H.footnote $ "Received a LegendErr: " <> show err
             H.failure
           Right finalCmds -> do
-            let finalCmdsSet = Set.fromList $ fmap Command.command finalCmds
+            let finalCmdsSet = Set.fromList $ NESeq.toList $ fmap Command.command finalCmds
                 combinedKeySet = Set.union legendKeySet finalCmdsSet
 
             H.footnote $ "Final commands: " <> show finalCmdsSet
@@ -49,7 +51,7 @@ translateProps = T.askOption $ \(MkMaxRuns limit) ->
 
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands
-noCommandsMissing :: HashSet Text -> List Text -> PropertyT IO ()
+noCommandsMissing :: HashSet Text -> NonEmptySeq Text -> PropertyT IO ()
 noCommandsMissing allKeys = void . traverse failIfMissing
   where
     failIfMissing cmd
@@ -58,7 +60,7 @@ noCommandsMissing allKeys = void . traverse failIfMissing
           H.footnote $ "Missing command: " <> show cmd
           H.failure
 
-genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMap, List Text)
+genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMap, NonEmptySeq Text)
 genLegendCommands = (,) <$> genLegend <*> genCommands
 
 -- In order to avoid cycles -- e.g. a -> b -> a -- we disallow all recursive
@@ -106,8 +108,8 @@ genVal = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 1 1 50
 
-genCommands :: MonadGen m => m (List Text)
-genCommands = Gen.list range genCommand
+genCommands :: MonadGen m => m (NonEmptySeq Text)
+genCommands = NESeq.unsafeFromList <$> Gen.list range genCommand
   where
     range = Range.linearFrom 1 1 50
 

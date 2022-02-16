@@ -5,12 +5,14 @@
 -- @since 0.1.0.0
 module ShellRun.Parsing.Args
   ( Args (..),
+    defaultArgs,
     parserInfoArgs,
   )
 where
 
 import Control.Applicative qualified as App
 import Data.List qualified as L
+import Data.List.NonEmpty qualified as NE
 import Data.String (IsString (..), String)
 import Data.Text qualified as T
 import Data.Version.Package qualified as PV
@@ -22,6 +24,8 @@ import Options.Applicative.Types (ArgPolicy (..))
 import Refined (NonNegative)
 import Refined qualified as R
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
+import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
+import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
@@ -59,7 +63,7 @@ data Args = MkArgs
     -- | List of commands.
     --
     -- @since 0.1.0.0
-    aCommands :: List Text
+    aCommands :: NonEmptySeq Text
   }
   deriving
     ( -- | @since 0.1.0.0
@@ -68,16 +72,29 @@ data Args = MkArgs
       Show
     )
 
+-- | Default configuration.
+--
+-- ==== __Examples__
+-- >>> defaultArgs (NESeq.singleton "ls")
+-- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = Nothing, aCommands = "ls" :|^ fromList []}
+--
+-- @since 0.1.0.0
+defaultArgs :: NonEmptySeq Text -> Args
+defaultArgs cmds =
+  MkArgs
+    { aCommandLogging = mempty,
+      aFileLogging = empty,
+      aCommandDisplay = mempty,
+      aLegend = empty,
+      aTimeout = empty,
+      aCommands = cmds
+    }
+
 -- | @since 0.1.0.0
 instance Semigroup Args where
   (<>) :: Args -> Args -> Args
   (MkArgs cl fp cd l t c) <> (MkArgs cl' fp' cd' l' t' c') =
     MkArgs (cl <> cl') (fp <|> fp') (cd <> cd') (l <> l') (t <|> t') (c <> c')
-
--- | @since 0.1.0.0
-instance Monoid Args where
-  mempty :: Args
-  mempty = MkArgs mempty empty mempty empty empty mempty
 
 -- | 'ParserInfo' type for parsing 'Args'.
 --
@@ -228,12 +245,13 @@ commandDisplayParser =
           )
     )
 
-commandsParser :: Parser (List Text)
+commandsParser :: Parser (NonEmptySeq Text)
 commandsParser =
-  App.some
-    ( T.pack
-        <$> OApp.argument OApp.str (OApp.metavar "Commands...")
-    )
+  NESeq.unsafeFromNonEmpty
+    <$> NE.some1
+      ( T.pack
+          <$> OApp.argument OApp.str (OApp.metavar "Commands...")
+      )
 
 type MParser = Parsec Text (List Char)
 

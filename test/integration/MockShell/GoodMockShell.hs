@@ -4,12 +4,11 @@
 module MockShell.GoodMockShell (GoodMockShell (..)) where
 
 import Data.HashMap.Strict qualified as Map
-import Data.String (String)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.Legend (LegendErr, LegendMap)
+import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 
@@ -28,7 +27,6 @@ newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
     via MockShellBase
 
 instance MonadShell GoodMockShell where
-  legendPathToMap :: FilePath -> GoodMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Right mp
     where
       mp =
@@ -38,9 +36,7 @@ instance MonadShell GoodMockShell where
             ("both", "cmd1,,cmd2")
           ]
 
-  runCommands :: List Command -> GoodMockShell ()
-  runCommands = tell . fmap command
+  runCommands = tell . NESeq.toList . fmap command
 
 instance Show a => Show (GoodMockShell a) where
-  show :: GoodMockShell a -> String
   show x = "MkGoodMockShell " <> show x

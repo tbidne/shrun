@@ -3,12 +3,10 @@
 -- | Provides the 'GoodMockShell' type.
 module MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
 
-import Data.String (String)
 import MockEnv (MockEnv)
 import MockShell.MockShellBase (MockShellBase (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Data.Command (Command)
-import ShellRun.Data.Legend (LegendErr (..), LegendMap)
+import ShellRun.Data.Legend (LegendErr (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 
@@ -28,12 +26,8 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
     via MockShellBase
 
 instance MonadShell BadLegendMockShell where
-  legendPathToMap :: FilePath -> BadLegendMockShell (Either LegendErr LegendMap)
   legendPathToMap _ = pure $ Left $ FileErr "File not found"
-
-  runCommands :: List Command -> BadLegendMockShell ()
   runCommands _ = pure ()
 
 instance Show a => Show (BadLegendMockShell a) where
-  show :: BadLegendMockShell a -> String
   show _ = "MkBadLegendMockShell"

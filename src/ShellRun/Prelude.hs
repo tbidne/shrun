@@ -12,7 +12,6 @@
 -- @since 0.1.0.0
 module ShellRun.Prelude
   ( -- * Total versions of partial functions
-    NE.head,
     headMaybe,
 
     -- * Misc utilities
@@ -79,8 +78,6 @@ import Data.Functor as X
   )
 import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter, zip)
-import Data.List.NonEmpty as X (NonEmpty (..))
-import Data.List.NonEmpty qualified as NE
 import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
 import Data.Monoid as X (Monoid (..))
 import Data.Ord as X (Ordering (..))

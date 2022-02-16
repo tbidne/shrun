@@ -1,7 +1,12 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'Command' wrapper for commands.
 --
 -- @since 0.1.0.0
-module ShellRun.Data.Command (Command (..)) where
+module ShellRun.Data.Command
+  ( Command (..),
+  )
+where
 
 import ShellRun.Prelude
 

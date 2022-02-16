@@ -4,6 +4,8 @@ module Specs.ShellRun.Parsing.Commands (specs) where
 import Data.HashMap.Strict qualified as Map
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Legend (LegendErr (..), LegendMap)
+import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
+import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Parsing.Commands qualified as ParseCommands
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
@@ -26,45 +28,48 @@ specs =
 
 translateOneCmd :: TestTree
 translateOneCmd = THU.testCase "Should translate one command" $ do
-  let result = ParseCommands.translateCommands legend ["one"]
-  Right [MkCommand (Just "one") "cmd1"] @=? result
+  let result = ParseCommands.translateCommands legend (NESeq.singleton "one")
+      expected = Right $ NESeq.singleton $ MkCommand (Just "one") "cmd1"
+  expected @=? result
 
 returnsNonMapCmd :: TestTree
 returnsNonMapCmd = THU.testCase "Should return non-map command" $ do
-  let result = ParseCommands.translateCommands legend ["other"]
-  Right [MkCommand Nothing "other"] @=? result
+  let result = ParseCommands.translateCommands legend (NESeq.singleton "other")
+      expected = Right $ NESeq.singleton $ MkCommand Nothing "other"
+  expected @=? result
 
 returnsRecursiveCmds :: TestTree
 returnsRecursiveCmds = THU.testCase "Should return recursive commands" $ do
-  let result = ParseCommands.translateCommands legend ["all"]
+  let result = ParseCommands.translateCommands legend (NESeq.singleton "all")
       expected =
-        Right
-          [ MkCommand (Just "one") "cmd1",
-            MkCommand (Just "two") "cmd2",
-            MkCommand (Just "all") "cmd3"
-          ]
+        Right $
+          MkCommand (Just "one") "cmd1"
+            :|^ [ MkCommand (Just "two") "cmd2",
+                  MkCommand (Just "all") "cmd3"
+                ]
   expected @=? result
 
 returnsRecursiveAndOtherCmds :: TestTree
 returnsRecursiveAndOtherCmds = THU.testCase "Should return recursive commands and other" $ do
-  let result = ParseCommands.translateCommands legend ["all", "other"]
+  let result = ParseCommands.translateCommands legend ("all" :|^ ["other"])
       expected =
-        Right
-          [ MkCommand (Just "one") "cmd1",
-            MkCommand (Just "two") "cmd2",
-            MkCommand (Just "all") "cmd3",
-            MkCommand Nothing "other"
-          ]
+        Right $
+          MkCommand (Just "one") "cmd1"
+            :|^ [ MkCommand (Just "two") "cmd2",
+                  MkCommand (Just "all") "cmd3",
+                  MkCommand Nothing "other"
+                ]
   expected @=? result
 
 noSplitNonKeyCmd :: TestTree
 noSplitNonKeyCmd = THU.testCase "Should not split non-key commands" $ do
-  let result = ParseCommands.translateCommands legend ["echo ,,"]
-  Right [MkCommand Nothing "echo ,,"] @=? result
+  let result = ParseCommands.translateCommands legend (NESeq.singleton "echo ,,")
+      expected = Right $ NESeq.singleton $ MkCommand Nothing "echo ,,"
+  expected @=? result
 
 cycleCmdFail :: TestTree
 cycleCmdFail = THU.testCase "Should fail on cycle" $ do
-  let result = ParseCommands.translateCommands cyclicLegend ["a"]
+  let result = ParseCommands.translateCommands cyclicLegend (NESeq.singleton "a")
   Left (CyclicKeyErr "a -> b -> c -> a") @=? result
 
 legend :: LegendMap

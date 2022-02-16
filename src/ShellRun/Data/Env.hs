@@ -16,6 +16,7 @@ module ShellRun.Data.Env
   )
 where
 
+import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
@@ -52,7 +53,7 @@ data Env = MkEnv
     -- | The commands to run.
     --
     -- @since 0.1.0.0
-    commands :: List Text
+    commands :: NonEmptySeq Text
   }
   deriving
     ( -- | @since 0.1.0.0
@@ -147,30 +148,24 @@ class HasCommandDisplay env where
 
 -- | @since 0.1.0.0
 instance HasLegend Env where
-  getLegend :: Env -> Maybe FilePath
   getLegend = legend
 
 -- | @since 0.1.0.0
 instance HasTimeout Env where
-  getTimeout :: Env -> Maybe Timeout
   getTimeout = timeout
 
 -- | @since 0.1.0.0
 instance HasFileLogging Env where
-  getFileLogging :: Env -> Maybe (FilePath, LogTextQueue)
   getFileLogging = fileLogging
 
 -- | @since 0.1.0.0
 instance HasCommandLogging Env where
-  getCommandLogging :: Env -> CommandLogging
   getCommandLogging = commandLogging
 
 -- | @since 0.1.0.0
 instance HasCommandDisplay Env where
-  getCommandDisplay :: Env -> CommandDisplay
   getCommandDisplay = commandDisplay
 
 -- | @since 0.1.0.0
 instance HasCommands Env where
-  getCommands :: Env -> List Text
   getCommands = commands

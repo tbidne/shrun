@@ -40,6 +40,7 @@ common common-exts
     MultiWayIf
     NamedFieldPuns
     NumericUnderscores
+    OverloadedLists
     OverloadedStrings
     PatternSynonyms
     ScopedTypeVariables
@@ -57,6 +58,7 @@ library
     ShellRun.Data.Env
     ShellRun.Data.IO
     ShellRun.Data.Legend
+    ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
     ShellRun.Data.TH
     ShellRun.Data.Timeout
@@ -81,6 +83,7 @@ library
     , bytestring            >=0.10.12  && <0.12
     , clock                 >=0.7.2    && <0.9
     , concurrent-output     ^>=1.10.7
+    , containers            ^>=0.6.2.1
     , exceptions            ^>=0.10.4
     , gitrev                >=1.2.0    && <1.4
     , megaparsec            >=7.0.5    && <9.3
@@ -91,6 +94,7 @@ library
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
     , refined               ^>=0.6
+    , refined-extras        ^>=0.1.0.0
     , safe-exceptions       ^>=0.1.7.0
     , stm                   ^>=2.5.0
     , text                  ^>=1.2.3.2
@@ -135,11 +139,13 @@ test-suite unit
     Specs.ShellRun.Utils
 
   build-depends:
+    , algebra-simple
     , base
     , clock
     , hedgehog              >=1.0.2   && <1.2
     , optparse-applicative
     , refined
+    , refined-extras
     , shell-run
     , tagged                ^>=0.8.6
     , tasty                 >=1.1.0.3 && <1.5

@@ -6,6 +6,8 @@ import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
 import Refined.Unsafe qualified as R
 import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
+import ShellRun.Data.NonEmptySeq (NonEmptySeq)
+import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Parsing.Args (Args (..))
 import ShellRun.Parsing.Args qualified as Args
@@ -40,12 +42,11 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
   let argList = ["command"]
       expected =
         Just $
-          mempty
+          (Args.defaultArgs defCommand)
             { aLegend = Nothing,
               aTimeout = Nothing,
               aCommandLogging = Disabled,
-              aCommandDisplay = ShowCommand,
-              aCommands = ["command"]
+              aCommandDisplay = ShowCommand
             }
   verifyResult argList expected
 
@@ -60,13 +61,13 @@ legendSpecs =
 parseShortLegend :: TestTree
 parseShortLegend = THU.testCase "Should parse short legend" $ do
   let argList = ["-l./path/legend.txt", "command"]
-      expected = Just $ mempty {aLegend = Just "./path/legend.txt", aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aLegend = Just "./path/legend.txt"}
   verifyResult argList expected
 
 parseLongLegend :: TestTree
 parseLongLegend = THU.testCase "Should parse long legend" $ do
   let argList = ["--legend=./path/legend.txt", "command"]
-      expected = Just $ mempty {aLegend = Just "./path/legend.txt", aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aLegend = Just "./path/legend.txt"}
   verifyResult argList expected
 
 timeoutSpecs :: TestTree
@@ -84,25 +85,25 @@ timeoutSpecs =
 parseShortTimeout :: TestTree
 parseShortTimeout = THU.testCase "Should parse short timeout" $ do
   let argList = ["-t7", "command"]
-      expected = Just $ mempty {aTimeout = toTO 7, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 7}
   verifyResult argList expected
 
 parseLongTimeout :: TestTree
 parseLongTimeout = THU.testCase "Should parse long timeout" $ do
   let argList = ["--timeout=7", "command"]
-      expected = Just $ mempty {aTimeout = toTO 7, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 7}
   verifyResult argList expected
 
 parseTimeString :: TestTree
 parseTimeString = THU.testCase "Should parse time string" $ do
   let argList = ["--timeout=2h4s", "command"]
-      expected = Just $ mempty {aTimeout = toTO 7204, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 7204}
   verifyResult argList expected
 
 parseLongTimeString :: TestTree
 parseLongTimeString = THU.testCase "Should parse full time string" $ do
   let argList = ["--timeout=1d2h3m4s", "command"]
-      expected = Just $ mempty {aTimeout = toTO 93784, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 93784}
   verifyResult argList expected
 
 parseTimeoutWordFail :: TestTree
@@ -128,13 +129,13 @@ fileLoggingSpecs =
 parseShortFileLogging :: TestTree
 parseShortFileLogging = THU.testCase "Should parse filepath with -f" $ do
   let argList = ["-flogfile", "command"]
-      expected = Just $ mempty {aFileLogging = Just "logfile", aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = Just "logfile"}
   verifyResult argList expected
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging = THU.testCase "Should parse filepath with --file-logging" $ do
   let argList = ["--file-logging=logfile", "command"]
-      expected = Just $ mempty {aFileLogging = Just "logfile", aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = Just "logfile"}
   verifyResult argList expected
 
 commandLoggingSpecs :: TestTree
@@ -148,13 +149,13 @@ commandLoggingSpecs =
 parseShortCommandLogging :: TestTree
 parseShortCommandLogging = THU.testCase "Should parse -c as CommandLogging" $ do
   let argList = ["-c", "command"]
-      expected = Just $ mempty {aCommandLogging = Enabled, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aCommandLogging = Enabled}
   verifyResult argList expected
 
 parseLongCommandLogging :: TestTree
 parseLongCommandLogging = THU.testCase "Should parse --command-logging as CommandLogging" $ do
   let argList = ["--command-logging", "command"]
-      expected = Just $ mempty {aCommandLogging = Enabled, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aCommandLogging = Enabled}
   verifyResult argList expected
 
 commandDisplaySpecs :: TestTree
@@ -168,13 +169,13 @@ commandDisplaySpecs =
 parseShortShowKey :: TestTree
 parseShortShowKey = THU.testCase "Should parse -k as ShowKey" $ do
   let argList = ["-k", "command"]
-      expected = Just $ mempty {aCommandDisplay = ShowKey, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aCommandDisplay = ShowKey}
   verifyResult argList expected
 
 parseLongShowKey :: TestTree
 parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
   let argList = ["--key-show", "command"]
-      expected = Just $ mempty {aCommandDisplay = ShowKey, aCommands = ["command"]}
+      expected = Just $ (Args.defaultArgs defCommand) {aCommandDisplay = ShowKey}
   verifyResult argList expected
 
 commandSpecs :: TestTree
@@ -196,7 +197,7 @@ parseCommands = THU.testCase
   "Bare strings parsed as commands"
   $ do
     let argList = ["one", "two", "three"]
-        expected = Just $ mempty {aCommands = ["one", "two", "three"]}
+        expected = Just $ (Args.defaultArgs defCommand) {aCommands = NESeq.unsafeFromList ["one", "two", "three"]}
     verifyResult argList expected
 
 verifyResult :: List String -> Maybe Args -> Assertion
@@ -209,3 +210,6 @@ prefs = OptApp.prefs mempty
 
 toTO :: Int -> Maybe Timeout
 toTO n = Just $ MkTimeout $ R.unsafeRefine n
+
+defCommand :: NonEmptySeq Text
+defCommand = NESeq.unsafeFromList ["command"]

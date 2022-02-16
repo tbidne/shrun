@@ -32,6 +32,7 @@ import ShellRun.Data.Env
   )
 import ShellRun.Data.IO (Stderr (..))
 import ShellRun.Data.Legend (LegendErr, LegendMap)
+import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
@@ -125,7 +126,7 @@ instance
   legendPathToMap :: FilePath -> ShellT Env m (Either LegendErr LegendMap)
   legendPathToMap = liftIO . ParseLegend.legendPathToMap
 
-  runCommands :: List Command -> ShellT Env m ()
+  runCommands :: NonEmptySeq Command -> ShellT Env m ()
   runCommands commands = Regions.displayConsoleRegions $
     UAsync.withAsync maybePollQueue $ \fileLogger -> do
       start <- liftIO $ C.getTime Monotonic

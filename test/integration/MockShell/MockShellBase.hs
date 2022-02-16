@@ -2,7 +2,6 @@
 module MockShell.MockShellBase (MockShellBase (..)) where
 
 import Data.Functor.Identity (Identity)
-import Data.String (String)
 import MockEnv (MockEnv)
 import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
@@ -26,11 +25,8 @@ newtype MockShellBase a = MkMockShellBase
 
 instance RegionLogger MockShellBase where
   type Region MockShellBase = ()
-  putLog :: Log -> MockShellBase ()
   putLog = tell . pure . msg
-
   putRegionLog _ = putLog
 
 instance Show a => Show (MockShellBase a) where
-  show :: MockShellBase a -> String
   show x = "MkMockShellBase" <> show x

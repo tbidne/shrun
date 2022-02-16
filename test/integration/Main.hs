@@ -9,6 +9,7 @@ import MockShell.GoodMockShell (GoodMockShell (..))
 import MockShell.MockShellBase (MockShellBase (..))
 import MockShell.NoLegendMockShell (NoLegendMockShell (..))
 import ShellRun qualified
+import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
@@ -46,9 +47,8 @@ goodMockShell = ShellRun.runShell
 verifyGoodShell :: GoodMockShell () -> (List Text, Bool)
 verifyGoodShell gms =
   let env =
-        MockEnv.defaultEnv
-          { commands = ["echo hi", "both"],
-            legend = Just "path"
+        (MockEnv.defaultEnv ("echo hi" :|^ ["both"]))
+          { legend = Just "path"
           }
       logs = getLogs runGoodMockShell gms env
    in (logs, logs == ["echo hi", "command 1", "command 2"])
@@ -59,7 +59,7 @@ badLegendMockShell = ShellRun.runShell
 verifyBadLegendShell :: BadLegendMockShell () -> (List Text, Bool)
 verifyBadLegendShell blms =
   let env =
-        MockEnv.defaultEnv
+        (MockEnv.defaultEnv ("mock-cmd" :|^ []))
           { legend = Just "bad/path"
           }
       logs = getLogs runBadLegendMockShell blms env
@@ -70,10 +70,7 @@ noLegendMockShell = ShellRun.runShell
 
 verifyNoLegendShell :: NoLegendMockShell () -> (List Text, Bool)
 verifyNoLegendShell nlms =
-  let env =
-        MockEnv.defaultEnv
-          { commands = ["cmd1", "cmd2"]
-          }
+  let env = MockEnv.defaultEnv ("cmd1" :|^ ["cmd2"])
       logs = getLogs runNoLegendMockShell nlms env
    in (logs, logs == ["cmd1", "cmd2"])
 

@@ -8,6 +8,7 @@ module ShellRun.Env
   )
 where
 
+import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Prelude
 
 -- | Path to legend file.
@@ -22,4 +23,4 @@ class HasLegend env where
 -- @since 0.1.0.0
 class HasCommands env where
   -- | @since 0.1.0.0
-  getCommands :: env -> List Text
+  getCommands :: env -> NonEmptySeq Text
