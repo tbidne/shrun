@@ -55,7 +55,6 @@ library
     ShellRun
     ShellRun.Class.MonadShell
     ShellRun.Command
-    ShellRun.Data.Env
     ShellRun.Data.IO
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
@@ -63,6 +62,7 @@ library
     ShellRun.Data.Timeout
     ShellRun.Data.TimeRep
     ShellRun.Env
+    ShellRun.Env.Types
     ShellRun.IO
     ShellRun.Legend
     ShellRun.Legend.Internal
@@ -70,7 +70,6 @@ library
     ShellRun.Logging.Queue
     ShellRun.Logging.RegionLogger
     ShellRun.Parsing.Args
-    ShellRun.Parsing.Env
     ShellRun.Prelude
     ShellRun.ShellT
     ShellRun.Utils
@@ -131,8 +130,8 @@ test-suite unit
     Props.ShellRun.Utils
     Specs
     Specs.ShellRun.Command
-    Specs.ShellRun.Data.Env
     Specs.ShellRun.Data.TimeRep
+    Specs.ShellRun.Env
     Specs.ShellRun.Legend.Internal
     Specs.ShellRun.Parsing.Args
     Specs.ShellRun.Utils

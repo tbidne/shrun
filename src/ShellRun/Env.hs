@@ -1,26 +1,86 @@
--- | Module defining \"HasX\" style typeclasses for the environment
--- needed by ShellRun.
+{-# LANGUAGE RecordWildCards #-}
+
+-- | Module that provides env types and requisite typeclasses, along with
+-- parsing functionality.
 --
 -- @since 0.1.0.0
 module ShellRun.Env
-  ( HasCommands (..),
+  ( -- * \"HasX\" style typeclasses
+    HasCommands (..),
+    HasCommandDisplay (..),
+    HasCommandLogging (..),
+    HasFileLogging (..),
     HasLegend (..),
+    HasTimeout (..),
+
+    -- * Types
+    Env (..),
+    CommandDisplay (..),
+    CommandLogging (..),
+
+    -- * Functions
+    runParser,
+    displayCommand,
   )
 where
 
-import ShellRun.Data.NonEmptySeq (NonEmptySeq)
+import Control.Concurrent.STM.TBQueue qualified as TBQueue
+import Control.Monad.STM qualified as STM
+import Options.Applicative qualified as OApp
+import ShellRun.Command (Command (..))
+import ShellRun.Env.Types
+  ( CommandDisplay (..),
+    CommandLogging (..),
+    Env (..),
+    HasCommandDisplay (..),
+    HasCommandLogging (..),
+    HasCommands (..),
+    HasFileLogging (..),
+    HasLegend (..),
+    HasTimeout (..),
+  )
+import ShellRun.Logging.Queue (LogTextQueue (..))
+import ShellRun.Parsing.Args (Args (..))
+import ShellRun.Parsing.Args qualified as Args
 import ShellRun.Prelude
 
--- | Path to legend file.
+-- | Runs the parser.
 --
 -- @since 0.1.0.0
-class HasLegend env where
-  -- | @since 0.1.0.0
-  getLegend :: env -> Maybe FilePath
+runParser :: IO Env
+runParser = do
+  args <- OApp.execParser Args.parserInfoArgs
+  fl <- case aFileLogging args of
+    Nothing -> pure Nothing
+    Just fp -> do
+      queue <- STM.atomically $ TBQueue.newTBQueue 1000
+      pure $ Just (fp, MkLogTextQueue queue)
+  pure $ toEnv fl args
 
--- | The commands themselves.
+toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Args -> Env
+toEnv fl MkArgs {..} =
+  MkEnv
+    aLegend
+    aTimeout
+    fl
+    aCommandLogging
+    aCommandDisplay
+    aCommands
+
+-- | Returns the key if one exists and we pass in 'ShowKey', otherwise
+-- returns the command.
+--
+-- ==== __Examples__
+-- >>> displayCommand ShowKey (MkCommand Nothing "cmd")
+-- "cmd"
+--
+-- >>> displayCommand ShowCommand (MkCommand (Just "key") "cmd")
+-- "cmd"
+--
+-- >>> displayCommand ShowKey (MkCommand (Just "key") "cmd")
+-- "key"
 --
 -- @since 0.1.0.0
-class HasCommands env where
-  -- | @since 0.1.0.0
-  getCommands :: env -> NonEmptySeq Text
+displayCommand :: CommandDisplay -> Command -> Text
+displayCommand ShowKey (MkCommand (Just key) _) = key
+displayCommand _ (MkCommand _ cmd) = cmd

@@ -5,10 +5,10 @@ import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
 import Refined.Unsafe qualified as R
-import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
+import ShellRun.Env (CommandDisplay (..), CommandLogging (..))
 import ShellRun.Parsing.Args (Args (..))
 import ShellRun.Parsing.Args qualified as Args
 import ShellRun.Prelude

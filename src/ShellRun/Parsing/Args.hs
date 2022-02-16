@@ -23,13 +23,13 @@ import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
 import Refined (NonNegative)
 import Refined qualified as R
-import ShellRun.Data.Env (CommandDisplay (..), CommandLogging (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
+import ShellRun.Env.Types (CommandDisplay (..), CommandLogging (..))
 import ShellRun.Prelude
 import Text.Megaparsec (Parsec)
 import Text.Megaparsec qualified as MP

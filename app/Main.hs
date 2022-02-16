@@ -1,7 +1,7 @@
 module Main (main) where
 
 import ShellRun qualified as SR
-import ShellRun.Parsing.Env qualified as Env
+import ShellRun.Env qualified as Env
 import ShellRun.Prelude
 
 main :: IO ()

@@ -1,31 +1,68 @@
--- | Provides core 'Env' types.
+-- | Provides types and typesclasses for our environment.
 --
 -- @since 0.1.0.0
-module ShellRun.Data.Env
-  ( -- * \"HasX\" style typeclasses required for our concrete Env type.
+module ShellRun.Env.Types
+  ( -- * \"HasX\" style typeclasses
+    HasCommands (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
     HasFileLogging (..),
+    HasLegend (..),
     HasTimeout (..),
 
     -- * Types
-    Timeout,
     Env (..),
     CommandDisplay (..),
     CommandLogging (..),
-
-    -- * Functions
-    displayCommand,
   )
 where
 
-import ShellRun.Command (Command (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
-import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Logging.Queue (LogTextQueue)
 import ShellRun.Prelude
+
+-- | Path to legend file.
+--
+-- @since 0.1.0.0
+class HasLegend env where
+  -- | @since 0.1.0.0
+  getLegend :: env -> Maybe FilePath
+
+-- | The commands themselves.
+--
+-- @since 0.1.0.0
+class HasCommands env where
+  -- | @since 0.1.0.0
+  getCommands :: env -> NonEmptySeq Text
+
+-- | Timeout, if any.
+--
+-- @since 0.1.0.0
+class HasTimeout env where
+  -- | @since 0.1.0.0
+  getTimeout :: env -> Maybe Timeout
+
+-- | FileLogging, if any.
+--
+-- @since 0.1.0.0
+class HasFileLogging env where
+  -- | @since 0.1.0.0
+  getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
+
+-- | Determines if we should log commands' output.
+--
+-- @since 0.1.0.0
+class HasCommandLogging env where
+  getCommandLogging :: env -> CommandLogging
+
+-- | Determines how to display command names.
+--
+-- @since 0.1.0.0
+class HasCommandDisplay env where
+  -- | @since 0.1.0.0
+  getCommandDisplay :: env -> CommandDisplay
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
@@ -63,6 +100,30 @@ data Env = MkEnv
     ( -- | @since 0.1.0.0
       Show
     )
+
+-- | @since 0.1.0.0
+instance HasLegend Env where
+  getLegend = legend
+
+-- | @since 0.1.0.0
+instance HasTimeout Env where
+  getTimeout = timeout
+
+-- | @since 0.1.0.0
+instance HasFileLogging Env where
+  getFileLogging = fileLogging
+
+-- | @since 0.1.0.0
+instance HasCommandLogging Env where
+  getCommandLogging = commandLogging
+
+-- | @since 0.1.0.0
+instance HasCommandDisplay Env where
+  getCommandDisplay = commandDisplay
+
+-- | @since 0.1.0.0
+instance HasCommands Env where
+  getCommands = commands
 
 -- | Type for determining if we stream commands' logs.
 --
@@ -122,72 +183,3 @@ data CommandDisplay
       Monoid
     )
     via Supremum CommandDisplay
-
--- | Timeout, if any.
---
--- @since 0.1.0.0
-class HasTimeout env where
-  -- | @since 0.1.0.0
-  getTimeout :: env -> Maybe Timeout
-
--- | FileLogging, if any.
---
--- @since 0.1.0.0
-class HasFileLogging env where
-  -- | @since 0.1.0.0
-  getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
-
--- | Determines if we should log commands' output.
---
--- @since 0.1.0.0
-class HasCommandLogging env where
-  getCommandLogging :: env -> CommandLogging
-
--- | Determines how to display command names.
---
--- @since 0.1.0.0
-class HasCommandDisplay env where
-  -- | @since 0.1.0.0
-  getCommandDisplay :: env -> CommandDisplay
-
--- | @since 0.1.0.0
-instance HasLegend Env where
-  getLegend = legend
-
--- | @since 0.1.0.0
-instance HasTimeout Env where
-  getTimeout = timeout
-
--- | @since 0.1.0.0
-instance HasFileLogging Env where
-  getFileLogging = fileLogging
-
--- | @since 0.1.0.0
-instance HasCommandLogging Env where
-  getCommandLogging = commandLogging
-
--- | @since 0.1.0.0
-instance HasCommandDisplay Env where
-  getCommandDisplay = commandDisplay
-
--- | @since 0.1.0.0
-instance HasCommands Env where
-  getCommands = commands
-
--- | Returns the key if one exists and we pass in 'ShowKey', otherwise
--- returns the command.
---
--- ==== __Examples__
--- >>> displayCommand ShowKey (MkCommand Nothing "cmd")
--- "cmd"
---
--- >>> displayCommand ShowCommand (MkCommand (Just "key") "cmd")
--- "cmd"
---
--- >>> displayCommand ShowKey (MkCommand (Just "key") "cmd")
--- "key"
---
--- @since 0.1.0.0
-displayCommand :: CommandDisplay -> Command -> Text
-displayCommand ShowKey (MkCommand (Just key) _) = key
-displayCommand _ (MkCommand _ cmd) = cmd

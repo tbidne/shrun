@@ -3,7 +3,7 @@ module Success (spec) where
 
 import Data.Text qualified as T
 import ShellRun qualified as SR
-import ShellRun.Parsing.Env qualified as Env
+import ShellRun.Env qualified as Env
 import ShellRun.Prelude
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh

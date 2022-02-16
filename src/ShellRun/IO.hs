@@ -23,10 +23,10 @@ import Data.Text qualified as T
 import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
-import ShellRun.Data.Env (CommandDisplay (..))
-import ShellRun.Data.Env qualified as Env
 import ShellRun.Data.IO (Stderr (..), Stdout (..))
 import ShellRun.Data.Supremum (Supremum (..))
+import ShellRun.Env (CommandDisplay (..))
+import ShellRun.Env qualified as Env
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import System.Exit (ExitCode (..))

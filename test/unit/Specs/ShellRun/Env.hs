@@ -1,9 +1,9 @@
--- | Specs for ShellRun.Data.Env.
-module Specs.ShellRun.Data.Env (specs) where
+-- | Specs for ShellRun.Env.
+module Specs.ShellRun.Env (specs) where
 
 import ShellRun.Command (Command (..))
-import ShellRun.Data.Env (CommandDisplay (..))
-import ShellRun.Data.Env qualified as Env
+import ShellRun.Env (CommandDisplay (..))
+import ShellRun.Env qualified as Env
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
@@ -14,7 +14,7 @@ import Test.Tasty.HUnit qualified as THU
 specs :: TestTree
 specs =
   Tasty.testGroup
-    "ShellRun.Data.Env"
+    "ShellRun.Env"
     [ displayCommandSpecs
     ]
 
