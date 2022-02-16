@@ -1,5 +1,5 @@
 {
-  description = "shell-run flake";
+  description = "Shell-Run is a tool for ergonomically running shell commands.";
   inputs = {
     algebra-simple-src.url = "github:tbidne/algebra-simple/main";
     flake-utils.url = "github:numtide/flake-utils";

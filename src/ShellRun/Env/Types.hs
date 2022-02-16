@@ -1,4 +1,4 @@
--- | Provides types and typesclasses for our environment.
+-- | Provides types and typeclasses for our environment.
 --
 -- @since 0.1.0.0
 module ShellRun.Env.Types

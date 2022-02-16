@@ -111,7 +111,7 @@ parserInfoArgs =
       infoPolicy = Intersperse
     }
   where
-    header = Just "Shell-Run: A tool for running shell commands ergonomically"
+    header = Just "Shell-Run: A tool for running shell commands ergonomically."
     footer = Just $ fromString versNum
     desc =
       Just $
@@ -178,7 +178,7 @@ timeoutParser =
                     <> "Can either be a raw number (interpreted as seconds)"
                     <> ", or a \"time string\" e.g. 1d2h3m4s, 2h3s."
                 )
-              <> OApp.metavar "VAL"
+              <> OApp.metavar "NATURAL"
           )
    in App.optional intParser
 

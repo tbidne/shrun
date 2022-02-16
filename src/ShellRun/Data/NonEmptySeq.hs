@@ -91,7 +91,7 @@ toSeq (x :|^ xs) = x :<| xs
 -- [1,2,3,4]
 --
 -- @since 0.1.0.0
-toList :: NonEmptySeq a -> [a]
+toList :: NonEmptySeq a -> List a
 toList (x :|^ xs) = Exts.toList (x :<| xs)
 
 -- | 'NonEmptySeq' from 'NonEmpty'. Unsafe in the sense that it does not

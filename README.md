@@ -2,7 +2,7 @@
 
 # Shell-Run
 
-## A tool for running shell commands ergonomically.
+## Ergonomically Run Shell Commands
 
 [![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
 [![8.10.7](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10.7/main?label=8.10.7&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10-7.yaml)
@@ -165,7 +165,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 ## Timeout
 
-**Arg:** `-t, --timeout VAL`
+**Arg:** `-t, --timeout NATURAL`
 
 **Description:** The provided timeout must be either a raw integer (interpreted as seconds), or a "time string" e.g. `1d2m3h4s`, `3h20s`. All integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
 

@@ -37,7 +37,12 @@ data LegendErr
     --
     -- @since 0.1.0.0
     DuplicateKeyErr Text
-  deriving (Eq, Show)
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
 
 -- | Alias for our legend map.
 --
@@ -83,7 +88,6 @@ linesToMap = foldr f (Right Map.empty)
         Just _ -> Left $ DuplicateKeyErr key
         Nothing -> Right $ Map.insert key cmd mp
 
--- | @since 0.1.0.0
 parseLine :: Text -> Either LegendErr (Tuple2 Text Text)
 parseLine l =
   case U.breakStripPoint breakPoint l of
