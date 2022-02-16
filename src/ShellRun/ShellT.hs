@@ -22,7 +22,6 @@ import GHC.IO.Handle qualified as Handle
 import Numeric.Algebra (ASemigroup (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Command (Command (..))
-import ShellRun.Data.IO (Stderr (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep qualified as TimeRep
@@ -36,7 +35,7 @@ import ShellRun.Env
     HasTimeout (..),
   )
 import ShellRun.Env qualified as Env
-import ShellRun.IO (ReadHandleResult (..))
+import ShellRun.IO (ReadHandleResult (..), Stderr (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr, LegendMap)
 import ShellRun.Legend qualified as ParseLegend

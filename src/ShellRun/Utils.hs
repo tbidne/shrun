@@ -97,7 +97,7 @@ diffTime t1 t2 =
 -- >>> foldMap1 @List Sum 0 [1..4]
 -- Sum {getSum = 10}
 --
--- -- Silly, but demonstrates usage i.e. with non-monoid 'NonEmpty'.
+-- -- Silly, but demonstrates usage i.e. with non-monoid NonEmpty.
 -- >>> foldMap1 @List (:| []) 1 [2,3,4]
 -- 1 :| [2,3,4]
 --
@@ -153,7 +153,7 @@ decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode
 -- partial exactly when the first parameter is empty, which we reject.
 -- Unfortunately we have to do perform a partial pattern match on the result
 -- since 'T.splitOn' returns a list, even though the result should always be
--- 'NonEmpty'. Hence 'HasCallStack'.
+-- 'NonEmptySeq'. Hence 'HasCallStack'.
 --
 -- ==== __Examples__
 -- >>> splitOn $$(R.refineTH ",,") "hey,,listen"

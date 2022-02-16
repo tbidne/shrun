@@ -56,7 +56,6 @@ library
     ShellRun.Args
     ShellRun.Class.MonadShell
     ShellRun.Command
-    ShellRun.Data.IO
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
     ShellRun.Data.TH

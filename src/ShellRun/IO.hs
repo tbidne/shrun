@@ -2,7 +2,11 @@
 --
 -- @since 0.1.0.0
 module ShellRun.IO
-  ( -- * Running shell programs
+  ( -- * Stdout/stderr newtypes
+    Stdout (..),
+    Stderr (..),
+
+    -- * Running shell programs
     sh,
     sh_,
     shExitCode,
@@ -23,7 +27,6 @@ import Data.Text qualified as T
 import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
-import ShellRun.Data.IO (Stderr (..), Stdout (..))
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Env (CommandDisplay (..))
 import ShellRun.Env qualified as Env
@@ -31,6 +34,22 @@ import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import System.Exit (ExitCode (..))
 import System.Process qualified as P
+
+-- | Newtype wrapper for stdout.
+--
+-- @since 0.1.0.0
+newtype Stdout = MkStdout
+  { -- | @since 0.1.0.0
+    getStdout :: Text
+  }
+
+-- | Newtype wrapper for stderr.
+--
+-- @since 0.1.0.0
+newtype Stderr = MkStderr
+  { -- | @since 0.1.0.0
+    getStderr :: Text
+  }
 
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
