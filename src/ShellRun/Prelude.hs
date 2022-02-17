@@ -112,6 +112,7 @@ import Prelude as X
     print,
     replicate,
     snd,
+    undefined,
     ($),
     (&&),
     (.),

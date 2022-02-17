@@ -28,7 +28,11 @@ import GHC.IO.Handle (Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
 import ShellRun.Data.Supremum (Supremum (..))
-import ShellRun.Env (CommandDisplay (..))
+import ShellRun.Env
+  ( CommandDisplay (..),
+    HasCommandDisplay (..),
+    HasCommandTruncation (..),
+  )
 import ShellRun.Env qualified as Env
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
@@ -151,10 +155,30 @@ readHandleResultToStderr (ReadSuccess err) = MkStderr err
 -- 'Command' are used in formatting.
 --
 -- @since 0.1.0.0
-readHandle :: CommandDisplay -> Command -> Handle -> IO ReadHandleResult
-readHandle commandDisplay cmd handle = do
-  isClosed <- Handle.hIsClosed handle
-  canRead <- Handle.hIsReadable handle
+readHandle ::
+  ( HasCommandDisplay env,
+    HasCommandTruncation env,
+    MonadIO m,
+    MonadReader env m
+  ) =>
+  Command ->
+  Handle ->
+  m ReadHandleResult
+readHandle cmd handle = do
+  commandTruncation <- asks getCommandTruncation
+  commandDisplay <- asks getCommandDisplay
+
+  let name = Env.displayCommandTruncation commandTruncation commandDisplay cmd
+      displayEx :: Show a => Text -> a -> Text
+      displayEx prefix =
+        getStderr
+          . makeStdErr commandDisplay cmd
+          . (<>) prefix
+          . showt
+      readEx = displayEx "IOException reading handle: "
+
+  isClosed <- liftIO $ Handle.hIsClosed handle
+  canRead <- liftIO $ Handle.hIsReadable handle
   if
       | isClosed ->
           pure $ ReadErr $ displayEx @(List Char) "Handle closed" ""
@@ -162,21 +186,12 @@ readHandle commandDisplay cmd handle = do
           pure $ ReadErr $ displayEx @(List Char) "Cannot read from handle" ""
       | otherwise -> do
           output :: Either SomeException ByteString <-
-            SafeEx.try $ BS.hGetNonBlocking handle blockSize
+            liftIO $ SafeEx.try $ BS.hGetNonBlocking handle blockSize
           let outDecoded = fmap Utils.decodeUtf8Lenient output
           pure $ case outDecoded of
             Left ex -> ReadErr $ readEx ex
             Right "" -> ReadNoData
             Right o -> ReadSuccess $ name <> ": " <> stripChars o
-  where
-    name = Env.displayCommand commandDisplay cmd
-    displayEx :: Show a => Text -> a -> Text
-    displayEx prefix =
-      getStderr
-        . makeStdErr commandDisplay cmd
-        . (<>) prefix
-        . showt
-    readEx = displayEx "IOException reading handle: "
 
 makeStdErr :: CommandDisplay -> Command -> Text -> Stderr
 makeStdErr commandDisplay cmd err =

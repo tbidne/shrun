@@ -6,6 +6,7 @@ module ShellRun.Env.Types
     HasCommands (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
+    HasCommandTruncation (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
@@ -14,9 +15,12 @@ module ShellRun.Env.Types
     Env (..),
     CommandDisplay (..),
     CommandLogging (..),
+    CommandTruncation (..),
   )
 where
 
+import Data.Word (Word16)
+import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
@@ -64,6 +68,13 @@ class HasCommandDisplay env where
   -- | @since 0.1.0.0
   getCommandDisplay :: env -> CommandDisplay
 
+-- | Determines command truncation behavior.
+--
+-- @since 0.1.0.0
+class HasCommandTruncation env where
+  -- | @since 0.1.0.0
+  getCommandTruncation :: env -> CommandTruncation
+
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
 --
@@ -91,6 +102,11 @@ data Env = MkEnv
     --
     -- @since 0.1.0.0
     commandDisplay :: CommandDisplay,
+    -- | The max number of command characters to display in
+    -- the logs.
+    --
+    -- @since 0.1.0.0
+    commandTruncation :: CommandTruncation,
     -- | The commands to run.
     --
     -- @since 0.1.0.0
@@ -120,6 +136,10 @@ instance HasCommandLogging Env where
 -- | @since 0.1.0.0
 instance HasCommandDisplay Env where
   getCommandDisplay = commandDisplay
+
+-- | @since 0.1.0.0
+instance HasCommandTruncation Env where
+  getCommandTruncation = commandTruncation
 
 -- | @since 0.1.0.0
 instance HasCommands Env where
@@ -183,3 +203,48 @@ data CommandDisplay
       Monoid
     )
     via Supremum CommandDisplay
+
+-- | The maximum number of command characters to display in the logs.
+-- The ordering is such that smaller numbers are greater, i.e., the
+-- minimum element is 'PPosInf' and the maximum is zero.
+--
+-- ==== __Examples__
+-- >>> max (MkCommandTruncation PPosInf) (MkCommandTruncation (PFin 7))
+-- MkCommandTruncation {unCommandTruncation = PFin 7}
+--
+-- >>> MkCommandTruncation (PFin 7) <> MkCommandTruncation (PFin 10)
+-- MkCommandTruncation {unCommandTruncation = PFin 7}
+--
+-- >>> mempty @CommandTruncation
+-- MkCommandTruncation {unCommandTruncation = PPosInf}
+--
+-- @since 0.1.0.0
+newtype CommandTruncation = MkCommandTruncation
+  { -- | @since 0.1.0.0
+    unCommandTruncation :: PosInfNum Word16
+  }
+  deriving stock
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via Supremum CommandTruncation
+
+-- | @since 0.1.0.0
+instance Ord CommandTruncation where
+  compare x y | x == y = EQ
+  compare (MkCommandTruncation PPosInf) _ = LT
+  compare _ (MkCommandTruncation PPosInf) = GT
+  compare (MkCommandTruncation (PFin x)) (MkCommandTruncation (PFin y)) = compare y x
+
+-- | @since 0.1.0.0
+instance Bounded CommandTruncation where
+  minBound = MkCommandTruncation PPosInf
+  maxBound = MkCommandTruncation (PFin 0)

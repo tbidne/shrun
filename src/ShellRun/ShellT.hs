@@ -31,6 +31,7 @@ import ShellRun.Env
     Env (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
+    HasCommandTruncation,
     HasFileLogging (..),
     HasTimeout (..),
   )
@@ -158,6 +159,7 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
 runCommand ::
   ( HasCommandDisplay env,
     HasCommandLogging env,
+    HasCommandTruncation env,
     HasFileLogging env,
     MonadIO m,
     MonadMask m,
@@ -271,6 +273,7 @@ tryTimeSh cmd = do
 
 tryTimeShRegion ::
   ( HasCommandDisplay env,
+    HasCommandTruncation env,
     HasFileLogging env,
     MonadIO m,
     MonadMask m,
@@ -280,7 +283,6 @@ tryTimeShRegion ::
   ShellT env m (Either (Tuple2 RNonNegative Stderr) RNonNegative)
 tryTimeShRegion cmd@(MkCommand _ cmdTxt) =
   Regions.withConsoleRegion Linear $ \region -> do
-    commandDisplay <- asks getCommandDisplay
     -- Create pseudo terminal here because otherwise we have trouble streaming
     -- input from child processes. Data gets buffered and trying to override the
     -- buffering strategy (i.e. handles returned by CreatePipe) does not work.
@@ -318,7 +320,7 @@ tryTimeShRegion cmd@(MkCommand _ cmdTxt) =
       ExitSuccess -> pure $ Right ()
       ExitFailure _ -> do
         -- Attempt a final read in case there is more data.
-        remainingData <- liftIO $ ShIO.readHandle commandDisplay cmd recvH
+        remainingData <- ShIO.readHandle cmd recvH
         -- Take the most recent valid read of either the lastRead when running
         -- the process, or this final remainingData just attempted. The
         -- semigroup instance favors a successful read, otherwise we take the
@@ -337,6 +339,7 @@ tryTimeShRegion cmd@(MkCommand _ cmdTxt) =
 
 streamOutput ::
   ( HasCommandDisplay env,
+    HasCommandTruncation env,
     HasFileLogging env,
     MonadIO m
   ) =>
@@ -346,10 +349,9 @@ streamOutput ::
   ProcessHandle ->
   ShellT env m (Tuple2 ExitCode (Maybe ReadHandleResult))
 streamOutput region cmd recvH ph = do
-  commandDisplay <- asks getCommandDisplay
   lastReadRef <- liftIO $ IORef.newIORef Nothing
   exitCode <- Loops.untilJust $ do
-    result <- liftIO $ ShIO.readHandle commandDisplay cmd recvH
+    result <- ShIO.readHandle cmd recvH
     case result of
       ReadErr _ -> do
         -- We occasionally get invalid reads here -- usually when the command

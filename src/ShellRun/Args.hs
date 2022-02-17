@@ -16,6 +16,7 @@ import Data.List.NonEmpty qualified as NE
 import Data.String (IsString (..), String)
 import Data.Text qualified as T
 import Data.Version.Package qualified as PV
+import Data.Word (Word16)
 import Development.GitRev qualified as GitRev
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OApp
@@ -23,13 +24,14 @@ import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
 import Refined (NonNegative)
 import Refined qualified as R
+import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
-import ShellRun.Env.Types (CommandDisplay (..), CommandLogging (..))
+import ShellRun.Env.Types (CommandDisplay (..), CommandLogging (..), CommandTruncation (..))
 import ShellRun.Prelude
 import Text.Megaparsec (Parsec)
 import Text.Megaparsec qualified as MP
@@ -60,6 +62,11 @@ data Args = MkArgs
     --
     -- @since 0.1.0.0
     aTimeout :: Maybe Timeout,
+    -- | The max number of command characters to display in
+    -- the logs.
+    --
+    -- @since 0.1.0.0
+    aCommandTruncation :: CommandTruncation,
     -- | List of commands.
     --
     -- @since 0.1.0.0
@@ -76,7 +83,7 @@ data Args = MkArgs
 --
 -- ==== __Examples__
 -- >>> defaultArgs (NESeq.singleton "ls")
--- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = Nothing, aCommands = "ls" :|^ fromList []}
+-- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = Nothing, aCommandTruncation = MkCommandTruncation {unCommandTruncation = PPosInf}, aCommands = "ls" :|^ fromList []}
 --
 -- @since 0.1.0.0
 defaultArgs :: NonEmptySeq Text -> Args
@@ -87,14 +94,9 @@ defaultArgs cmds =
       aCommandDisplay = mempty,
       aLegend = empty,
       aTimeout = empty,
+      aCommandTruncation = mempty,
       aCommands = cmds
     }
-
--- | @since 0.1.0.0
-instance Semigroup Args where
-  (<>) :: Args -> Args -> Args
-  (MkArgs cl fp cd l t c) <> (MkArgs cl' fp' cd' l' t' c') =
-    MkArgs (cl <> cl') (fp <|> fp') (cd <> cd') (l <> l') (t <|> t') (c <> c')
 
 -- | 'ParserInfo' type for parsing 'Args'.
 --
@@ -129,6 +131,7 @@ argsParser =
     <*> commandDisplayParser
     <*> legendParser
     <*> timeoutParser
+    <*> commandTruncationParser
     <*> commandsParser
       <**> OApp.helper
       <**> version
@@ -205,6 +208,39 @@ readTimeStr = do
     Right timeRep ->
       let timeout = MkTimeout $ TimeRep.toSeconds timeRep
        in pure timeout
+
+commandTruncationParser :: Parser CommandTruncation
+commandTruncationParser =
+  OApp.option
+    readCommandTruncation
+    ( OApp.value (MkCommandTruncation PPosInf)
+        <> OApp.long "command-truncation"
+        <> OApp.short 'x'
+        <> OApp.help help
+        <> OApp.metavar "NATURAL"
+    )
+  where
+    help =
+      "Non-negative integer that limits the length of the commands "
+        <> "in the logs. Defaults to infinity i.e. no truncation. This only "
+        <> "affects logs with the --cmd-logging option. Final success/error "
+        <> "log will print the full command regardless."
+
+readCommandTruncation :: ReadM CommandTruncation
+readCommandTruncation = do
+  n :: Int <- OApp.auto
+  if n >= 0 && n <= maxWord16
+    then pure $ MkCommandTruncation (PFin (fromIntegral n))
+    else
+      OApp.readerAbort $
+        ErrorMsg $
+          "Command Truncation must be between 0 and "
+            <> show maxWord16
+            <> ". Received: "
+            <> show n
+  where
+    maxWord16 :: Int
+    maxWord16 = fromIntegral $ (maxBound :: Word16)
 
 fileLoggingParser :: Parser (Maybe FilePath)
 fileLoggingParser =
