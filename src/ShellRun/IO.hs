@@ -6,7 +6,11 @@ module ShellRun.IO
     Stdout (..),
     Stderr (..),
 
-    -- * Running shell programs
+    -- * Timing shell programs
+    tryTimeSh,
+    tryTimeShRegion,
+
+    -- * Low level running shell programs
     sh,
     sh_,
     shExitCode,
@@ -21,10 +25,15 @@ where
 
 import Control.Exception.Safe (SomeException)
 import Control.Exception.Safe qualified as SafeEx
+import Control.Monad.Catch (MonadMask)
+import Control.Monad.IO.Unlift (MonadUnliftIO (..))
+import Control.Monad.IO.Unlift qualified as UAsync
+import Control.Monad.Loops qualified as Loops
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
+import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import GHC.IO.Handle (Handle)
+import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
 import ShellRun.Data.Supremum (Supremum (..))
@@ -34,9 +43,18 @@ import ShellRun.Env
     HasCommandTruncation (..),
   )
 import ShellRun.Env qualified as Env
+import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
+import System.Clock (Clock (..))
+import System.Clock qualified as C
+import System.Console.Regions (ConsoleRegion, RegionLayout (..))
+import System.Console.Regions qualified as Regions
 import System.Exit (ExitCode (..))
+import System.Posix.IO.ByteString qualified as PBS
+import System.Posix.Terminal qualified as PTerm
+import System.Process (CreateProcess (..), ProcessHandle, StdStream (..))
 import System.Process qualified as P
 
 -- | Newtype wrapper for stdout.
@@ -91,6 +109,123 @@ tryShExitCode commandDisplay cmd path = do
   pure $ case code of
     ExitSuccess -> Right stdout
     ExitFailure _ -> Left $ makeStdErr commandDisplay cmd err
+
+tryTimeSh ::
+  ( HasCommandDisplay env,
+    MonadIO m,
+    MonadReader env m
+  ) =>
+  Command ->
+  m (Either (Tuple2 RNonNegative Stderr) RNonNegative)
+tryTimeSh cmd = do
+  commandDisplay <- asks getCommandDisplay
+  liftIO $ do
+    start <- C.getTime Monotonic
+    res <- tryShExitCode commandDisplay cmd Nothing
+    end <- C.getTime Monotonic
+    let diff = Utils.diffTime start end
+    pure $ bimap (diff,) (const diff) res
+
+tryTimeShRegion ::
+  ( HasCommandDisplay env,
+    HasCommandTruncation env,
+    MonadIO m,
+    MonadMask m,
+    MonadReader env m,
+    MonadUnliftIO m,
+    RegionLogger m,
+    Region m ~ ConsoleRegion
+  ) =>
+  Command ->
+  m (Either (Tuple2 RNonNegative Stderr) RNonNegative)
+tryTimeShRegion cmd@(MkCommand _ cmdTxt) =
+  Regions.withConsoleRegion Linear $ \region -> do
+    -- Create pseudo terminal here because otherwise we have trouble streaming
+    -- input from child processes. Data gets buffered and trying to override the
+    -- buffering strategy (i.e. handles returned by CreatePipe) does not work.
+    (recvH, sendH) <- liftIO $ do
+      (recvFD, sendFD) <- PTerm.openPseudoTerminal
+      recvH <- PBS.fdToHandle recvFD
+      sendH <- PBS.fdToHandle sendFD
+      Handle.hSetBuffering recvH NoBuffering
+      Handle.hSetBuffering sendH NoBuffering
+      pure (recvH, sendH)
+
+    -- We use the same pipe for std_out and std_err. The reason is that many
+    -- programs will redirect stdout to stderr (e.g. echo ... >&2), and we
+    -- will miss this if we don't check both. Because this "collapses" stdout
+    -- and stderr to the same file descriptor, there isn't much of a reason to
+    -- use two different handles.
+    let pr =
+          (P.shell (T.unpack cmdTxt))
+            { std_out = UseHandle sendH,
+              std_in = Inherit,
+              std_err = UseHandle sendH,
+              cwd = Nothing,
+              -- We are possibly trying to read from these after the process
+              -- closes (e.g. an error), so it is important they are not
+              -- closed automatically!
+              close_fds = False
+            }
+
+    start <- liftIO $ C.getTime Monotonic
+    (exitCode, lastRead) <- UAsync.withRunInIO $ \runner ->
+      P.withCreateProcess pr $ \_ _ _ ph -> runner $ streamOutput region cmd recvH ph
+    end <- liftIO $ C.getTime Monotonic
+
+    result <- case exitCode of
+      ExitSuccess -> pure $ Right ()
+      ExitFailure _ -> do
+        -- Attempt a final read in case there is more data.
+        remainingData <- readHandle cmd recvH
+        -- Take the most recent valid read of either the lastRead when running
+        -- the process, or this final remainingData just attempted. The
+        -- semigroup instance favors a successful read, otherwise we take the
+        -- left.
+        let lastData = case lastRead of
+              Nothing -> remainingData
+              Just r -> remainingData <> r
+
+        pure $ Left $ readHandleResultToStderr lastData
+    liftIO $ do
+      Handle.hClose sendH
+      Handle.hClose recvH
+    let diff = Utils.diffTime start end
+        finalResult = bimap (diff,) (const diff) result
+    pure finalResult
+
+streamOutput ::
+  ( HasCommandDisplay env,
+    HasCommandTruncation env,
+    MonadIO m,
+    MonadReader env m,
+    RegionLogger m,
+    Region m ~ ConsoleRegion
+  ) =>
+  ConsoleRegion ->
+  Command ->
+  Handle ->
+  ProcessHandle ->
+  m (Tuple2 ExitCode (Maybe ReadHandleResult))
+streamOutput region cmd recvH ph = do
+  lastReadRef <- liftIO $ IORef.newIORef Nothing
+  exitCode <- Loops.untilJust $ do
+    result <- readHandle cmd recvH
+    case result of
+      ReadErr _ -> do
+        -- We occasionally get invalid reads here -- usually when the command
+        -- exits -- likely due to a race condition. It would be nice to
+        -- prevent these entirely, but for now ignore them, as it does not
+        -- appear that we ever lose important messages.
+        pure ()
+      ReadSuccess out -> do
+        liftIO $ IORef.writeIORef lastReadRef (Just (ReadSuccess out))
+        let log = MkLog out SubCommand Set
+        putRegionLog region log
+      ReadNoData -> pure ()
+    liftIO $ P.getProcessExitCode ph
+  lastRead <- liftIO $ IORef.readIORef lastReadRef
+  pure (exitCode, lastRead)
 
 -- | Result from reading a handle. The ordering is based on:
 --
