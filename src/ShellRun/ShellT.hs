@@ -116,7 +116,7 @@ printLog :: (Text -> IO ()) -> Log -> IO ()
 printLog fn = fn . Log.formatLog
 
 -- | @since 0.1.0.0
-instance ( MonadIO m, MonadMask m, MonadUnliftIO m ) => MonadShell (ShellT Env m) where
+instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) where
   legendPathToMap :: FilePath -> ShellT Env m (Either LegendErr LegendMap)
   legendPathToMap = liftIO . ParseLegend.legendPathToMap
 
