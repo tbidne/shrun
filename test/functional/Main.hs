@@ -12,6 +12,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
 import TestArgs
 import Timeout qualified
+import Truncation qualified
 
 -- | Entry point for functional tests.
 main :: IO ()
@@ -26,7 +27,8 @@ specs args = do
       SuccessShowKey.spec args,
       SuccessCommandLogging.spec args,
       SuccessFileLogging.spec args,
-      Timeout.spec
+      Timeout.spec,
+      Truncation.spec args
     ]
 
 setup :: IO TestArgs

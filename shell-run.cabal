@@ -124,6 +124,7 @@ test-suite unit
     Props.Generators
     Props.ShellRun.Command
     Props.ShellRun.Data.TimeRep
+    Props.ShellRun.Env
     Props.ShellRun.Legend.Internal
     Props.ShellRun.Utils
     Specs
@@ -187,6 +188,7 @@ test-suite functional
     SuccessShowKey
     TestArgs
     Timeout
+    Truncation
     Utils
     Verify
 
