@@ -46,7 +46,7 @@ class HasCommands env where
 -- @since 0.1.0.0
 class HasTimeout env where
   -- | @since 0.1.0.0
-  getTimeout :: env -> Maybe Timeout
+  getTimeout :: env -> Timeout
 
 -- | FileLogging, if any.
 --
@@ -84,10 +84,10 @@ data Env = MkEnv
     --
     -- @since 0.1.0.0
     legend :: Maybe FilePath,
-    -- | Optional timeout.
+    -- | Timeout.
     --
     -- @since 0.1.0.0
-    timeout :: Maybe Timeout,
+    timeout :: Timeout,
     -- | Optional file-logging. If enabled, holds the path toe fhe file
     -- and the log queue.
     --

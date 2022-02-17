@@ -50,7 +50,7 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
         Just $
           MkArgs
             { aLegend = Nothing,
-              aTimeout = Nothing,
+              aTimeout = MkTimeout PPosInf,
               aCommandLogging = Disabled,
               aCommandDisplay = ShowCommand,
               aCommandTruncation = MkCommandTruncation PPosInf,
@@ -247,8 +247,8 @@ verifyResult argList expected = do
 prefs :: ParserPrefs
 prefs = OptApp.prefs mempty
 
-toTO :: Int -> Maybe Timeout
-toTO n = Just $ MkTimeout $ R.unsafeRefine n
+toTO :: Int -> Timeout
+toTO n = MkTimeout $ PFin $ R.unsafeRefine n
 
 defCommand :: NonEmptySeq Text
 defCommand = NESeq.unsafeFromList ["command"]

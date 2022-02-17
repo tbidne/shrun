@@ -19,6 +19,7 @@ import Data.Text qualified as T
 import Numeric.Algebra (ASemigroup (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Command (Command (..))
+import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep qualified as TimeRep
@@ -232,7 +233,7 @@ keepRunning ::
   ) =>
   ConsoleRegion ->
   IORef RNonNegative ->
-  Maybe Timeout ->
+  Timeout ->
   m Bool
 keepRunning region timer mto = do
   elapsed <- liftIO $ IORef.readIORef timer
@@ -242,11 +243,9 @@ keepRunning region timer mto = do
       pure False
     else pure True
 
-timedOut :: RNonNegative -> Maybe Timeout -> Bool
-timedOut timer =
-  \case
-    Nothing -> False
-    Just (MkTimeout t) -> timer > t
+timedOut :: RNonNegative -> Timeout -> Bool
+timedOut _ (MkTimeout PPosInf) = False
+timedOut timer (MkTimeout (PFin t)) = timer > t
 
 maybeSendLogToQueue ::
   ( HasFileLogging env,

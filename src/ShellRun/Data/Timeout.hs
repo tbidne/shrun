@@ -6,6 +6,9 @@ module ShellRun.Data.Timeout
   )
 where
 
+import ShellRun.Data.InfNum (PosInfNum (..))
+import ShellRun.Data.Supremum (Supremum (..))
+import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 
 -- | Represents a timeout, which is a non-negative integer.
@@ -13,13 +16,30 @@ import ShellRun.Prelude
 -- @since 0.1.0.0
 newtype Timeout = MkTimeout
   { -- | @since 0.1.0.0
-    unTimeout :: RNonNegative
+    unTimeout :: PosInfNum RNonNegative
   }
   deriving
     ( -- | @since 0.1.0.0
       Eq,
       -- | @since 0.1.0.0
-      Ord,
-      -- | @since 0.1.0.0
       Show
     )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via Supremum Timeout
+
+-- | @since 0.1.0.0
+instance Ord Timeout where
+  compare x y | x == y = EQ
+  compare (MkTimeout PPosInf) _ = LT
+  compare _ (MkTimeout PPosInf) = GT
+  compare (MkTimeout (PFin x)) (MkTimeout (PFin y)) = compare y x
+
+-- | @since 0.1.0.0
+instance Bounded Timeout where
+  minBound = MkTimeout PPosInf
+  maxBound = MkTimeout (PFin TH.zeroNN)

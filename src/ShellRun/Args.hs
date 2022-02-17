@@ -58,10 +58,10 @@ data Args = MkArgs
     --
     -- @since 0.1.0.0
     aLegend :: Maybe FilePath,
-    -- | Optional timeout.
+    -- | Timeout.
     --
     -- @since 0.1.0.0
-    aTimeout :: Maybe Timeout,
+    aTimeout :: Timeout,
     -- | The max number of command characters to display in
     -- the logs.
     --
@@ -83,7 +83,7 @@ data Args = MkArgs
 --
 -- ==== __Examples__
 -- >>> defaultArgs (NESeq.singleton "ls")
--- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = Nothing, aCommandTruncation = MkCommandTruncation {unCommandTruncation = PPosInf}, aCommands = "ls" :|^ fromList []}
+-- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = MkTimeout {unTimeout = PPosInf}, aCommandTruncation = MkCommandTruncation {unCommandTruncation = PPosInf}, aCommands = "ls" :|^ fromList []}
 --
 -- @since 0.1.0.0
 defaultArgs :: NonEmptySeq Text -> Args
@@ -93,7 +93,7 @@ defaultArgs cmds =
       aFileLogging = empty,
       aCommandDisplay = mempty,
       aLegend = empty,
-      aTimeout = empty,
+      aTimeout = mempty,
       aCommandTruncation = mempty,
       aCommands = cmds
     }
@@ -169,27 +169,27 @@ legendParser =
         <> " other keys recursively. Lines starting with `#` are"
         <> " considered comments and ignored."
 
-timeoutParser :: Parser (Maybe Timeout)
+timeoutParser :: Parser Timeout
 timeoutParser =
-  let intParser =
-        OApp.option
-          (readTimeSeconds <|> readTimeStr)
-          ( OApp.long "timeout"
-              <> OApp.short 't'
-              <> OApp.help
-                ( "Non-negative integer setting a timeout. "
-                    <> "Can either be a raw number (interpreted as seconds)"
-                    <> ", or a \"time string\" e.g. 1d2h3m4s, 2h3s."
-                )
-              <> OApp.metavar "NATURAL"
-          )
-   in App.optional intParser
+  OApp.option
+    (readTimeSeconds <|> readTimeStr)
+    ( OApp.value (MkTimeout PPosInf)
+        <> OApp.long "timeout"
+        <> OApp.short 't'
+        <> OApp.help help
+        <> OApp.metavar "NATURAL"
+    )
+  where
+    help =
+      "Non-negative integer setting a timeout. Can either be a raw number "
+        <> "(interpreted as seconds), or a \"time string\" e.g. 1d2h3m4s or "
+        <> "2h3s. Defaults to no timeout."
 
 readTimeSeconds :: ReadM Timeout
 readTimeSeconds = do
   v <- OApp.auto
   case R.refine v of
-    Right n -> pure $ MkTimeout n
+    Right n -> pure $ MkTimeout $ PFin n
     Left _ ->
       OApp.readerAbort $
         ErrorMsg $
@@ -206,7 +206,7 @@ readTimeStr = do
         ErrorMsg $
           "Wanted time string e.g. 1d2h3m4s. Received: " <> v
     Right timeRep ->
-      let timeout = MkTimeout $ TimeRep.toSeconds timeRep
+      let timeout = MkTimeout $ PFin $ TimeRep.toSeconds timeRep
        in pure timeout
 
 commandTruncationParser :: Parser CommandTruncation
@@ -222,7 +222,7 @@ commandTruncationParser =
   where
     help =
       "Non-negative integer that limits the length of the commands "
-        <> "in the logs. Defaults to infinity i.e. no truncation. This only "
+        <> "in the logs. Defaults to no truncation. This only "
         <> "affects logs with the --cmd-logging option. Final success/error "
         <> "log will print the full command regardless."
 
