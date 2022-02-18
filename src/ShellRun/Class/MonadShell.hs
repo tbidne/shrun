@@ -12,7 +12,7 @@ import ShellRun.Command qualified as Command
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Legend (LegendErr, LegendMap)
-import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
+import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 
@@ -65,6 +65,6 @@ runCommandsOrLogErr ::
   Either LegendErr (NonEmptySeq Command) ->
   m ()
 runCommandsOrLogErr (Right cmds) = runCommands cmds
-runCommandsOrLogErr (Left err) = putLog $ MkLog errTxt Fatal Finish
+runCommandsOrLogErr (Left err) = putLog $ MkLog Nothing errTxt Fatal Finish LogBoth
   where
     errTxt = "Error parsing legend file: " <> showt err

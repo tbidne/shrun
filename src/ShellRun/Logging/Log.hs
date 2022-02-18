@@ -6,18 +6,7 @@ module ShellRun.Logging.Log
     Log (..),
     LogMode (..),
     LogLevel (..),
-
-    -- * Helpers for creating logs
-    logNone,
-    logSubCommand,
-    logDebug,
-    logInfo,
-    logInfoBlue,
-    logInfoCyan,
-    logInfoSuccess,
-    logWarn,
-    logError,
-    logFatal,
+    LogDest (..),
 
     -- * Utility functions for associate levels to colors/prefixes.
     formatLog,
@@ -29,6 +18,7 @@ module ShellRun.Logging.Log
   )
 where
 
+import ShellRun.Command (Command)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Prelude
 import System.Console.Pretty (Color)
@@ -110,12 +100,38 @@ data LogLevel
     )
     via (Supremum LogLevel)
 
+data LogDest
+  = LogConsole
+  | LogFile
+  | LogBoth
+  deriving stock
+    ( -- | @since 0.1.0.0
+      Bounded,
+      -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Ord,
+      -- | @since 0.1.0.0
+      Show
+    )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via (Supremum LogDest)
+
 -- | Captures the relevant information concerning a specific log
 -- (i.e. text, level, and mode).
 --
 -- @since 0.1.0.0
 data Log = MkLog
-  { -- | The 'Text' for a given log.
+  { -- | Optional command that produced this log.
+    --
+    -- @since 0.1.0.0
+    cmd :: Maybe Command,
+    -- | The 'Text' for a given log.
     --
     -- @since 0.1.0.0
     msg :: Text,
@@ -126,7 +142,14 @@ data Log = MkLog
     -- | The 'LogMode' for a given log.
     --
     -- @since 0.1.0.0
-    mode :: LogMode
+    mode :: LogMode,
+    -- | Where to send this log. Most logs should go to both the console and
+    -- the file. For a log to actually be written to a file, 'dest' must be
+    -- either 'LogFile' or 'LogBoth' /and/ file logging must be enabled
+    -- globally.
+    --
+    -- @since 0.1.0.0
+    dest :: LogDest
   }
   deriving stock
     ( -- | @since 0.1.0.0
@@ -134,14 +157,6 @@ data Log = MkLog
     )
 
 -- | @since 0.1.0.0
-instance Semigroup Log where
-  (<>) :: Log -> Log -> Log
-  (MkLog t l m) <> (MkLog t' l' m') = MkLog (t <> t') (l <> l') (m <> m')
-
--- | @since 0.1.0.0
-instance Monoid Log where
-  mempty :: Log
-  mempty = MkLog mempty mempty mempty
 
 -- | Transforms log to a color based on its 'LogLevel'.
 --
@@ -184,66 +199,6 @@ levelToPrefix InfoSuccess = "[Info] "
 levelToPrefix Warn = "[Warn] "
 levelToPrefix Error = "[Error] "
 levelToPrefix Fatal = "[Fatal Error] "
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'None', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logNone :: Text -> Log
-logNone txt = mempty {msg = txt, lvl = None}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'SubCommand', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logSubCommand :: Text -> Log
-logSubCommand txt = mempty {msg = txt, lvl = SubCommand}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'Debug', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logDebug :: Text -> Log
-logDebug txt = mempty {msg = txt, lvl = Debug}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'Info', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logInfo :: Text -> Log
-logInfo txt = mempty {msg = txt, lvl = Info}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'InfoBlue', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logInfoBlue :: Text -> Log
-logInfoBlue txt = mempty {msg = txt, lvl = InfoBlue}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'InfoCyan', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logInfoCyan :: Text -> Log
-logInfoCyan txt = mempty {msg = txt, lvl = InfoCyan}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'InfoSuccess', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logInfoSuccess :: Text -> Log
-logInfoSuccess txt = mempty {msg = txt, lvl = InfoSuccess}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'Warn', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logWarn :: Text -> Log
-logWarn txt = mempty {msg = txt, lvl = Warn}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'Error', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logError :: Text -> Log
-logError txt = mempty {msg = txt, lvl = Error}
-
--- | Returns 'Log' with 'msg' = @txt@, 'lvl' = 'Fatal', 'mode' = 'Set'.
---
--- @since 0.1.0.0
-logFatal :: Text -> Log
-logFatal txt = mempty {msg = txt, lvl = Fatal}
 
 -- | Helper for turning a 'Log' into its own formatting 'Text', i.e., adding
 -- a prefix and color.

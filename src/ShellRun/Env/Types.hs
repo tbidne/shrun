@@ -87,7 +87,7 @@ data Env = MkEnv
     --
     -- @since 0.1.0.0
     timeout :: Timeout,
-    -- | Optional file-logging. If enabled, holds the path toe fhe file
+    -- | Optional file logging. If enabled, holds the path to the file
     -- and the log queue.
     --
     -- @since 0.1.0.0
@@ -101,8 +101,7 @@ data Env = MkEnv
     --
     -- @since 0.1.0.0
     commandDisplay :: CommandDisplay,
-    -- | The max number of command characters to display in
-    -- the logs.
+    -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1.0.0
     commandTruncation :: CommandTruncation,

@@ -23,20 +23,21 @@ import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
-  ( CommandLogging (..),
+  ( CommandDisplay (..),
+    CommandLogging (..),
+    CommandTruncation (MkCommandTruncation),
     Env (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
-    HasCommandTruncation,
+    HasCommandTruncation (..),
     HasFileLogging (..),
     HasTimeout (..),
   )
-import ShellRun.Env qualified as Env
 import ShellRun.IO (Stderr (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr, LegendMap)
 import ShellRun.Legend qualified as ParseLegend
-import ShellRun.Logging.Log (Log (..), LogLevel (..), LogMode (..))
+import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Logging.Queue (LogText (..), LogTextQueue)
 import ShellRun.Logging.Queue qualified as Queue
@@ -45,6 +46,7 @@ import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
 import System.Clock qualified as C
+import System.Console.Pretty qualified as P
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import UnliftIO qualified
@@ -54,9 +56,9 @@ import UnliftIO.Async qualified as UAsync
 --
 -- @since 0.1.0.0
 type ShellT :: Type -> (Type -> Type) -> Type -> Type
-newtype ShellT e m a = MkShellT
+newtype ShellT env m a = MkShellT
   { -- | @since 0.1.0.0
-    runShellT :: ReaderT e m a
+    runShellT :: ReaderT env m a
   }
   deriving
     ( -- | @since 0.1.0.0
@@ -66,7 +68,7 @@ newtype ShellT e m a = MkShellT
       -- | @since 0.1.0.0
       Monad,
       -- | @since 0.1.0.0
-      MonadReader e,
+      MonadReader env,
       -- | @since 0.1.0.0
       MonadCatch,
       -- | @since 0.1.0.0
@@ -78,21 +80,28 @@ newtype ShellT e m a = MkShellT
       -- | @since 0.1.0.0
       MonadUnliftIO
     )
-    via (ReaderT e m)
+    via (ReaderT env m)
   deriving
     ( -- | @since 0.1.0.0
       MonadTrans
     )
-    via (ReaderT e)
+    via (ReaderT env)
 
 -- | @since 0.1.0.0
-instance (HasFileLogging env, MonadIO m) => RegionLogger (ShellT env m) where
+instance
+  ( HasCommandDisplay env,
+    HasCommandTruncation env,
+    HasFileLogging env,
+    MonadIO m
+  ) =>
+  RegionLogger (ShellT env m)
+  where
   type Region (ShellT env m) = ConsoleRegion
 
   putLog :: Log -> ShellT env m ()
   putLog log = do
     maybeSendLogToQueue log
-    liftIO $ printLog putStrLn log
+    maybePrintLog (liftIO . putStrLn) log
 
   putRegionLog :: ConsoleRegion -> Log -> ShellT env m ()
   putRegionLog region lg@MkLog {mode} = do
@@ -102,10 +111,20 @@ instance (HasFileLogging env, MonadIO m) => RegionLogger (ShellT env m) where
           Finish -> Regions.finishConsoleRegion
 
     maybeSendLogToQueue lg
-    liftIO $ printLog (logFn region) lg
+    maybePrintLog (liftIO . logFn region) lg
 
-printLog :: (Text -> IO ()) -> Log -> IO ()
-printLog fn = fn . Log.formatLog
+maybePrintLog ::
+  ( HasCommandDisplay env,
+    HasCommandTruncation env,
+    MonadReader env m
+  ) =>
+  (Text -> m ()) ->
+  Log ->
+  m ()
+maybePrintLog fn log@MkLog {dest} = do
+  case dest of
+    LogFile -> pure ()
+    _ -> formatConsoleLog log >>= fn
 
 -- | @since 0.1.0.0
 instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) where
@@ -131,14 +150,14 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
                     "Encountered an exception. This is likely not an error in any of the "
                       <> "commands run but rather an error in ShellRun itself: "
                       <> SafeEx.displayException ex
-                fatalLog = MkLog errMsg Fatal Finish
+                fatalLog = MkLog Nothing errMsg Fatal Finish LogBoth
             putRegionLog r fatalLog
           Right _ -> pure ()
 
         end <- liftIO $ C.getTime Monotonic
         let totalTime = U.diffTime start end
             totalTimeTxt = "Finished! Total time elapsed: " <> TimeRep.formatTime totalTime
-            finalLog = MkLog totalTimeTxt InfoBlue Finish
+            finalLog = MkLog Nothing totalTimeTxt InfoBlue Finish LogBoth
 
         putRegionLog r finalLog
 
@@ -159,12 +178,18 @@ runCommand ::
   Command ->
   ShellT env m ()
 runCommand cmd = do
-  commandDisplay <- asks getCommandDisplay
   commandLogging <- asks getCommandLogging
+  fileLogging <- asks getFileLogging
 
-  res <- case commandLogging of
-    Disabled -> ShIO.tryTimeSh cmd
-    Enabled -> ShIO.tryTimeShRegion cmd
+  -- 1.    No CommandLogging and no FileLogging: No streaming at all.
+  -- 2.    No CommandLogging and FileLogging: Stream (to file) but no console
+  --       region.
+  -- 3, 4. CommandLogging: Stream and create the region. FileLogging is globally
+  --       disabled, so no need for a separate function.
+  res <- case (commandLogging, fileLogging) of
+    (Disabled, Nothing) -> liftIO $ ShIO.tryTimeSh cmd
+    (Disabled, Just (_, _)) -> ShIO.tryTimeShStreamNoRegion cmd
+    _ -> ShIO.tryTimeShStreamRegion cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
     let lg = case res of
@@ -173,15 +198,10 @@ runCommand cmd = do
                   err
                     <> ". Time elapsed: "
                     <> TimeRep.formatTime t
-             in MkLog logTxt Error Finish
+             in MkLog (Just cmd) logTxt Error Finish LogBoth
           Right t ->
-            let name = Env.displayCommand commandDisplay cmd
-                logTxt =
-                  "Successfully ran '"
-                    <> name
-                    <> "'. Time elapsed: "
-                    <> TimeRep.formatTime t
-             in MkLog logTxt InfoSuccess Finish
+            let logTxt = "Success. Time elapsed: " <> TimeRep.formatTime t
+             in MkLog (Just cmd) logTxt InfoSuccess Finish LogBoth
     putRegionLog r lg
 
 counter ::
@@ -218,9 +238,11 @@ logCounter ::
 logCounter region elapsed = do
   let lg =
         MkLog
-          { msg = "Running time: " <> TimeRep.formatTime elapsed,
+          { cmd = Nothing,
+            msg = "Running time: " <> TimeRep.formatTime elapsed,
             lvl = InfoCyan,
-            mode = Set
+            mode = Set,
+            dest = LogConsole
           }
   putRegionLog region lg
 
@@ -237,7 +259,7 @@ keepRunning region timer mto = do
   elapsed <- liftIO $ IORef.readIORef timer
   if timedOut elapsed mto
     then do
-      putRegionLog region $ MkLog "Timed out, cancelling remaining tasks." Warn Finish
+      putRegionLog region $ MkLog Nothing "Timed out, cancelling remaining tasks." Warn Finish LogBoth
       pure False
     else pure True
 
@@ -251,12 +273,15 @@ maybeSendLogToQueue ::
   ) =>
   Log ->
   ShellT env m ()
-maybeSendLogToQueue log = do
-  fileLogging <- asks getFileLogging
-  case fileLogging of
-    Nothing -> pure ()
-    Just (_, queue) -> do
-      Queue.writeQueue queue log
+maybeSendLogToQueue log@MkLog {dest} =
+  case dest of
+    LogConsole -> pure ()
+    _ -> do
+      fileLogging <- asks getFileLogging
+      case fileLogging of
+        Nothing -> pure ()
+        Just (_, queue) -> do
+          Queue.writeQueue queue log
 
 maybePollQueue :: (HasFileLogging env, MonadIO m) => ShellT env m ()
 maybePollQueue = do
@@ -270,3 +295,42 @@ writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (log
 
 logFile :: MonadIO m => FilePath -> LogText -> m ()
 logFile fp = liftIO . appendFileUtf8 fp . unLogText
+
+-- | Formats a log to be printed to the console.
+--
+-- @since 0.1.0.0
+formatConsoleLog ::
+  ( HasCommandDisplay env,
+    HasCommandTruncation env,
+    MonadReader env m
+  ) =>
+  Log ->
+  m Text
+formatConsoleLog log@MkLog {cmd, msg} = do
+  commandDisplay <- asks getCommandDisplay
+  MkCommandTruncation truncation <- asks getCommandTruncation
+  case cmd of
+    Nothing -> pure $ colorize $ prefix <> msg
+    Just com ->
+      let -- get cmd name to display
+          name = case (getKey com, commandDisplay) of
+            (Just key, ShowKey) -> key
+            (_, _) -> command com
+          -- truncate if necessary
+          name' = case truncation of
+            PPosInf -> name
+            PFin n -> truncateIfNeeded (n2i n) name
+       in pure $ colorize $ prefix <> "[" <> name' <> "] " <> msg
+  where
+    colorize = P.color $ Log.logToColor log
+    prefix = Log.logToPrefix log
+
+truncateIfNeeded :: Int -> Text -> Text
+truncateIfNeeded n txt
+  | T.length txt <= n = txt
+  | otherwise = txt'
+  where
+    txt' = T.take (n - 3) txt <> "..."
+
+n2i :: Natural -> Int
+n2i = fromIntegral

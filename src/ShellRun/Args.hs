@@ -201,7 +201,7 @@ commandTruncationParser =
   OApp.option
     readCommandTruncation
     ( OApp.value (MkCommandTruncation PPosInf)
-        <> OApp.long "command-truncation"
+        <> OApp.long "cmd-truncate"
         <> OApp.short 'x'
         <> OApp.help help
         <> OApp.metavar "NATURAL"
@@ -209,9 +209,8 @@ commandTruncationParser =
   where
     help =
       "Non-negative integer that limits the length of the commands "
-        <> "in the logs. Defaults to no truncation. This only "
-        <> "affects logs with the --cmd-logging option. Final success/error "
-        <> "log will print the full command regardless."
+        <> "in the console logs. Defaults to no truncation. This does not "
+        <> "affect file logs with --file-log."
 
 readCommandTruncation :: ReadM CommandTruncation
 readCommandTruncation = MkCommandTruncation . PFin <$> OApp.auto
@@ -220,7 +219,7 @@ fileLoggingParser :: Parser (Maybe FilePath)
 fileLoggingParser =
   App.optional
     ( OApp.strOption
-        ( OApp.long "file-logging"
+        ( OApp.long "file-log"
             <> OApp.short 'f'
             <> OApp.help help
             <> OApp.metavar "PATH"
@@ -229,8 +228,9 @@ fileLoggingParser =
   where
     help =
       "If a path is supplied, all logs will additionally be written to the "
-        <> "supplied file. Normal logging (i.e. stdout) is unaffected. This "
-        <> "can be useful for investigating subcommand failure."
+        <> "supplied file. Furthermore, command logs will be written to the "
+        <> "file irrespective of --cmd-logging. Console logging is "
+        <> "unaffected. This can be useful for investigating command failures."
 
 commandLoggingParser :: Parser CommandLogging
 commandLoggingParser =
@@ -238,9 +238,11 @@ commandLoggingParser =
     Disabled
     Enabled
     ( OApp.short 'c'
-        <> OApp.long "command-logging"
-        <> OApp.help "Adds Commands' logs (stdout+stderr) to output."
+        <> OApp.long "cmd-log"
+        <> OApp.help help
     )
+  where
+    help = "Adds individual commands' logs (stdout+stderr) to console output."
 
 commandDisplayParser :: Parser CommandDisplay
 commandDisplayParser =
@@ -249,11 +251,12 @@ commandDisplayParser =
     ShowKey
     ( OApp.short 'k'
         <> OApp.long "key-show"
-        <> OApp.help
-          ( "In output, display key name over actual command if it"
-              <> " exists."
-          )
+        <> OApp.help help
     )
+  where
+    help =
+      "In console output, display key name over actual command if it "
+        <> "exists."
 
 commandsParser :: Parser (NonEmptySeq Text)
 commandsParser =

@@ -19,7 +19,8 @@ import Control.Concurrent.STM qualified as STM
 import Control.Concurrent.STM.TBQueue (TBQueue)
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Data.Time.Clock qualified as Clock
-import ShellRun.Logging.Log (Log)
+import ShellRun.Command (Command (..))
+import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Prelude
 
@@ -48,11 +49,15 @@ pattern MkLogText t <- UnsafeLogText t
 --
 -- @since 0.1.0.0
 logToText :: Log -> IO LogText
-logToText log = do
+logToText log@MkLog {cmd, msg} = do
   currTime <- Clock.getCurrentTime
-  let logFormatted = Log.formatLogNoColor log
-      formatted = "[" <> showt currTime <> "] " <> logFormatted <> "\n"
-  pure $ UnsafeLogText formatted
+  let formatted = case cmd of
+        Nothing -> prefix <> msg
+        Just com -> prefix <> "[" <> command com <> "] " <> msg
+      withTimestamp = "[" <> showt currTime <> "] " <> formatted <> "\n"
+  pure $ UnsafeLogText withTimestamp
+  where
+    prefix = Log.logToPrefix log
 
 -- | Newtype wrapper over a 'TBQueue'.
 --

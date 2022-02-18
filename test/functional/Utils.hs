@@ -22,13 +22,13 @@ totalTime :: Text
 totalTime = "Finished! Total time elapsed: "
 
 -- | Expected success 'Text'.
-subCommandPrefix :: Text -> Text
-subCommandPrefix txt = "[Command] " <> txt
+subCommandPrefix :: Text -> Text -> Text
+subCommandPrefix cmd txt = "[Command] [" <> cmd <> "] " <> txt
 
 -- | Expected success 'Text'.
 infoSuccessPrefix :: Text -> Text
-infoSuccessPrefix txt = "[Info] Successfully ran '" <> txt <> "'. Time elapsed:"
+infoSuccessPrefix txt = "[Info] [" <> txt <> "] Success. Time elapsed:"
 
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text
-errPrefix txt = "[Error] Error running '" <> txt <> "':"
+errPrefix txt = "[Error] [" <> txt <> "] Error:"

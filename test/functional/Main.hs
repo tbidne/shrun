@@ -28,7 +28,7 @@ specs args = do
       SuccessCommandLogging.spec args,
       SuccessFileLogging.spec args,
       Timeout.spec,
-      Truncation.spec args
+      Truncation.spec
     ]
 
 setup :: IO TestArgs

@@ -45,12 +45,12 @@ spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
     -- `sleep 1` is because commands that run too quickly will not have
     -- output logged
     commands = ["echo hi && sleep 1"]
-    commandLogging = "--command-logging"
+    commandLogging = "--cmd-log"
 
 expected :: List ExpectedText
 expected =
   MkExpectedText
-    <$> [ U.subCommandPrefix "echo hi && sleep 1: hi"
+    <$> [ U.subCommandPrefix "echo hi && sleep 1" "hi"
         ]
 
 outfile :: List Char

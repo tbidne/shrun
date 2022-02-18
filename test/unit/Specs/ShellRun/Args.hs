@@ -141,8 +141,8 @@ parseShortFileLogging = THU.testCase "Should parse filepath with -f" $ do
   verifyResult argList expected
 
 parseLongFileLogging :: TestTree
-parseLongFileLogging = THU.testCase "Should parse filepath with --file-logging" $ do
-  let argList = ["--file-logging=logfile", "command"]
+parseLongFileLogging = THU.testCase "Should parse filepath with --file-log" $ do
+  let argList = ["--file-log=logfile", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = Just "logfile"}
   verifyResult argList expected
 
@@ -161,8 +161,8 @@ parseShortCommandLogging = THU.testCase "Should parse -c as CommandLogging" $ do
   verifyResult argList expected
 
 parseLongCommandLogging :: TestTree
-parseLongCommandLogging = THU.testCase "Should parse --command-logging as CommandLogging" $ do
-  let argList = ["--command-logging", "command"]
+parseLongCommandLogging = THU.testCase "Should parse --cmd-log as CommandLogging" $ do
+  let argList = ["--cmd-log", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {aCommandLogging = Enabled}
   verifyResult argList expected
 
@@ -206,9 +206,9 @@ parseShortCommandTruncation = THU.testCase "Should parse -x as CommandTruncation
 
 parseLongCommandTruncation :: TestTree
 parseLongCommandTruncation = THU.testCase
-  "Should parse --command-truncation as CommandTruncation"
+  "Should parse --cmd-truncate as CommandTruncation"
   $ do
-    let argList = ["--command-truncation", "15", "command"]
+    let argList = ["--cmd-truncate", "15", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
