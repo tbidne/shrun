@@ -110,6 +110,10 @@ tryShExitCode commandDisplay cmd path = do
     ExitSuccess -> Right stdout
     ExitFailure _ -> Left $ makeStdErr commandDisplay cmd err
 
+-- | Version of 'tryShExitCode' with timing. On success, stdout is not
+-- returned.
+--
+-- @since 0.1.0.0
 tryTimeSh ::
   ( HasCommandDisplay env,
     MonadIO m,
@@ -126,6 +130,10 @@ tryTimeSh cmd = do
     let diff = Utils.diffTime start end
     pure $ bimap (diff,) (const diff) res
 
+-- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
+-- to a 'ConsoleRegion' instead of the usual swallowing.
+--
+-- @since 0.1.0.0
 tryTimeShRegion ::
   ( HasCommandDisplay env,
     HasCommandTruncation env,
