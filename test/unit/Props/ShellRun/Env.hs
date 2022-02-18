@@ -5,7 +5,6 @@ module Props.ShellRun.Env
 where
 
 import Data.Text qualified as T
-import Data.Word (Word16)
 import Hedgehog (MonadGen (..))
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as HGen
@@ -48,8 +47,8 @@ genCommand = MkCommand Nothing <$> genCmd
     range = HRange.linearFrom 1 1 50
     genCmd = HGen.text range HGen.latin1
 
-genTruncate :: MonadGen m => m Word16
-genTruncate = HGen.word16 (HRange.linearFrom 1 1 50)
+genTruncate :: MonadGen m => m Natural
+genTruncate = HGen.integral (HRange.linearFrom 1 1 50)
 
-w16ToInt :: Word16 -> Int
+w16ToInt :: Natural -> Int
 w16ToInt = fromIntegral

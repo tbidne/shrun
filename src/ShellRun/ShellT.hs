@@ -16,12 +16,10 @@ import Control.Monad.Loops qualified as Loops
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import Numeric.Algebra (ASemigroup (..))
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
-import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
@@ -202,11 +200,11 @@ counter = do
   liftIO $ CC.threadDelay 100_000
   Regions.withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
-    timer <- liftIO $ IORef.newIORef TH.zeroNN
+    timer <- liftIO $ IORef.newIORef 0
     Loops.whileM_ (keepRunning r timer timeout) $ do
       elapsed <- liftIO $ do
         CC.threadDelay 1_000_000
-        IORef.modifyIORef' timer (.+. TH.oneNN)
+        IORef.modifyIORef' timer (+ 1)
         IORef.readIORef timer
       logCounter r elapsed
 
@@ -215,7 +213,7 @@ logCounter ::
     Region m ~ ConsoleRegion
   ) =>
   ConsoleRegion ->
-  RNonNegative ->
+  Natural ->
   m ()
 logCounter region elapsed = do
   let lg =
@@ -232,7 +230,7 @@ keepRunning ::
     Region m ~ ConsoleRegion
   ) =>
   ConsoleRegion ->
-  IORef RNonNegative ->
+  IORef Natural ->
   Timeout ->
   m Bool
 keepRunning region timer mto = do
@@ -243,7 +241,7 @@ keepRunning region timer mto = do
       pure False
     else pure True
 
-timedOut :: RNonNegative -> Timeout -> Bool
+timedOut :: Natural -> Timeout -> Bool
 timedOut _ (MkTimeout PPosInf) = False
 timedOut timer (MkTimeout (PFin t)) = timer > t
 

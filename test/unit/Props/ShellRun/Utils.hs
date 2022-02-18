@@ -7,9 +7,8 @@ where
 import Hedgehog (PropertyT)
 import Hedgehog qualified as H
 import MaxRuns (MaxRuns (..))
+import Numeric.Algebra (NonZero (..))
 import Props.Generators qualified as PGens
-import Refined.Extras (pattern MkRefined)
-import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import Test.Tasty (TestTree)
@@ -28,7 +27,7 @@ diffTimeProps = T.askOption $ \(MkMaxRuns limit) ->
         t1 <- H.forAll PGens.genTimeSpec
         t2 <- H.forAll PGens.genTimeSpec
         let result = U.diffTime t1 t2
-        H.assert $ result >= TH.zeroNN
+        H.assert $ result >= 0
 
 divWithRemProps :: TestTree
 divWithRemProps = T.askOption $ \(MkMaxRuns limit) ->
@@ -40,8 +39,8 @@ divWithRemProps = T.askOption $ \(MkMaxRuns limit) ->
         let result = U.divWithRem nn pos
         vDivWithRem (nn, pos) result
 
-vDivWithRem :: Tuple2 RNonNegative RPositive -> Tuple2 RNonNegative RNonNegative -> PropertyT IO ()
-vDivWithRem (MkRefined n, MkRefined divisor) (MkRefined e, MkRefined remainder) = do
+vDivWithRem :: Tuple2 Natural (NonZero Natural) -> Tuple2 Natural Natural -> PropertyT IO ()
+vDivWithRem (n, MkNonZero divisor) (e, remainder) = do
   H.assert $ (divisor * e) + remainder == n
   H.footnote $
     "("

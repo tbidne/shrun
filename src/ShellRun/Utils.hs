@@ -24,11 +24,12 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
 import GHC.Exts (IsList (..))
+import GHC.Int (Int64)
 import GHC.Stack (HasCallStack)
+import Numeric.Algebra (NonZero (..))
 import Refined (Refined)
 import Refined qualified as R
 import Refined.Extras (pattern MkRefined)
-import Refined.Unsafe qualified as R
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
 import System.Clock (TimeSpec (..))
@@ -38,7 +39,7 @@ import System.Clock qualified as C
 -- >>> :set -XTemplateHaskell
 -- >>> import Data.List.NonEmpty (NonEmpty (..))
 -- >>> import Data.Semigroup (Sum (..))
--- >>> import Refined (NonNegative, Positive)
+-- >>> import Numeric.Algebra (mkAMonoidNonZeroTH)
 
 -- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
 --
@@ -51,24 +52,24 @@ import System.Clock qualified as C
 --
 -- ==== __Examples__
 -- >>> :{
---   let n = $$(R.refineTH @NonNegative @Int 34)
---       d = $$(R.refineTH @Positive @Int 5)
+--   let n = 34
+--       d = $$(mkAMonoidNonZeroTH @Int 5)
 --       result = divWithRem n d
---   in monoBimap R.unrefine result
+--   in result
 -- :}
 -- (6,4)
 --
 -- >>> :{
---   let n = $$(R.refineTH @NonNegative @Int 12)
---       d = $$(R.refineTH @Positive @Int 18)
+--   let n = 12
+--       d = $$(mkAMonoidNonZeroTH 18)
 --       result = divWithRem n d
---   in monoBimap R.unrefine result
+--   in result
 -- :}
 -- (0,12)
 --
 -- @since 0.1.0.0
-divWithRem :: RNonNegative -> RPositive -> Tuple2 RNonNegative RNonNegative
-divWithRem (MkRefined n) (MkRefined d) = monoBimap R.unsafeRefine (n `div` d, n `rem` d)
+divWithRem :: Integral a => a -> NonZero a -> Tuple2 a a
+divWithRem n (MkNonZero d) = (n `div` d, n `rem` d)
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.
@@ -80,14 +81,15 @@ divWithRem (MkRefined n) (MkRefined d) = monoBimap R.unsafeRefine (n `div` d, n 
 --       t2 = TimeSpec 20 1_000_000_000
 --   in diffTime t1 t2
 -- :}
--- Refined 16
+-- 16
 --
 -- @since 0.1.0.0
-diffTime :: TimeSpec -> TimeSpec -> RNonNegative
-diffTime t1 t2 =
-  let diff = fromIntegral $ C.sec $ C.diffTimeSpec t1 t2
-   in -- Safe because 'C.diffTimeSpec' guaranteed to be non-negative.
-      R.unsafeRefine diff
+diffTime :: TimeSpec -> TimeSpec -> Natural
+diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
+  where
+    -- Allegedly safe because 'C.diffTimeSpec' guaranteed to be non-negative.
+    i642n :: Int64 -> Natural
+    i642n = fromIntegral
 
 -- | Relaxes 'foldMap'\'s 'Monoid' constraint to 'Semigroup'. Requires a
 -- starting value. This will have to do until semigroupoids' Foldable1 is

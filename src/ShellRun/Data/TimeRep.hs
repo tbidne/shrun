@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Provides the 'TimeRep' type and related functions for representing
@@ -15,87 +16,90 @@ module ShellRun.Data.TimeRep
     -- * Formatting
     formatTimeRep,
     formatTime,
+
+    -- * Constants
+
+    -- ** Natural
+    secondsInDay,
+    secondsInHour,
+    secondsInMinute,
+
+    -- ** NonZero
+    secondsInDayNZ,
+    secondsInHourNZ,
+    secondsInMinuteNZ,
   )
 where
 
 import Data.Text qualified as T
-import Numeric.Algebra (ASemigroup (..), MSemigroup (..))
-import Refined qualified as R
-import Refined.Extras (pattern MkRefined)
-import ShellRun.Data.TH qualified as TH
+import Numeric.Algebra (NonZero (..))
+import Numeric.Algebra qualified as Alg
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 
 -- $setup
 -- >>> :set -XTemplateHaskell
--- >>> import Refined (NonNegative)
 
 -- | Represents a relative time.
 --
 -- @since 0.1.0.0
 data TimeRep = MkTimeRep
   { -- | @since 0.1.0.0
-    days :: RNonNegative,
+    days :: Natural,
     -- | @since 0.1.0.0
-    hours :: RNonNegative,
+    hours :: Natural,
     -- | @since 0.1.0.0
-    minutes :: RNonNegative,
+    minutes :: Natural,
     -- | @since 0.1.0.0
-    seconds :: RNonNegative
+    seconds :: Natural
   }
   deriving
     ( -- | @since 0.1.0.0
       Show
     )
 
--- | Transforms a 'TimeRep' into 'Refined.NonNegative' seconds.
+-- | Transforms a 'TimeRep' into 'Natural' seconds.
 --
 -- ==== __Examples__
 -- >>> :{
 --        -- 200,000 seconds
---    let timeRep =
---         MkTimeRep
---           $$(R.refineTH 2)
---           $$(R.refineTH 7)
---           $$(R.refineTH 33)
---           $$(R.refineTH 20)
+--    let timeRep = MkTimeRep 2 7 33 20
 --    in toSeconds timeRep
 -- :}
--- Refined 200000
+-- 200000
 --
 -- @since 0.1.0.0
-toSeconds :: TimeRep -> RNonNegative
+toSeconds :: TimeRep -> Natural
 toSeconds (MkTimeRep d h m s) =
-  (d .*. TH.dayNN)
-    .+. (h .*. TH.hourNN)
-    .+. (m .*. TH.minuteNN)
-    .+. s
+  d * secondsInDay
+    + h * secondsInHour
+    + m * secondsInMinute
+    + s
 
--- | Transforms 'Refined.NonNegative' seconds into a 'TimeRep'.
+-- | Transforms 'Natural' seconds into a 'TimeRep'.
 --
 -- ==== __Examples__
 -- >>> :{
 --   let -- 2 days, 7 hours, 33 minutes, 20 seconds
---       timeRep = fromSeconds $$(R.refineTH @NonNegative @Int 200_000)
---       showRep (MkTimeRep d h m s) = fmap @List R.unrefine [d, h, m, s]
---   in showRep timeRep
+--       timeRep = fromSeconds 200_000
+--   in timeRep
 -- :}
--- [2,7,33,20]
+-- MkTimeRep {days = 2, hours = 7, minutes = 33, seconds = 20}
 --
 -- @since 0.1.0.0
-fromSeconds :: RNonNegative -> TimeRep
+fromSeconds :: Natural -> TimeRep
 fromSeconds seconds = MkTimeRep d h m s
   where
-    (d, daysRem) = U.divWithRem seconds TH.dayPos
-    (h, hoursRem) = U.divWithRem daysRem TH.hourPos
-    (m, s) = U.divWithRem hoursRem TH.minutePos
+    (d, daysRem) = U.divWithRem seconds secondsInDayNZ
+    (h, hoursRem) = U.divWithRem daysRem secondsInHourNZ
+    (m, s) = U.divWithRem hoursRem secondsInMinuteNZ
 
 -- | Formats a 'TimeRep' to 'Text'.
 --
 -- ==== __Examples__
 -- >>> :{
 --   let -- 2 days, 7 hours, 33 minutes, 20 seconds
---       timeRep = fromSeconds $$(R.refineTH @NonNegative 200_000)
+--       timeRep = fromSeconds 200_000
 --   in formatTimeRep timeRep
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
@@ -106,7 +110,7 @@ formatTimeRep (isZero -> True) = "0 seconds"
 formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
   where
     f acc (n, units)
-      | n == TH.zeroNN = acc
+      | n == 0 = acc
       | otherwise = pluralize n units : acc
     vals = foldl' @List f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
 
@@ -116,13 +120,13 @@ formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
 -- ==== __Examples__
 -- >>> :{
 --   -- 2 days, 7 hours, 33 minutes, 20 seconds
---   let totalSeconds = $$(R.refineTH @NonNegative @Int 200_000)
+--   let totalSeconds = 200_000
 --   in formatTime totalSeconds
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
 --
 -- @since 0.1.0.0
-formatTime :: RNonNegative -> Text
+formatTime :: Natural -> Text
 formatTime = formatTimeRep . fromSeconds
 
 isZero :: TimeRep -> Bool
@@ -131,11 +135,47 @@ isZero (MkTimeRep d h m s)
   | otherwise = False
   where
     timeSum = foldl' @List sumUp 0 [d, h, m, s]
-    sumUp acc = (+) acc . R.unrefine
+    sumUp acc = (+) acc
 
-pluralize :: RNonNegative -> Text -> Text
-pluralize (MkRefined n) txt
+pluralize :: Natural -> Text -> Text
+pluralize n txt
   | n == 1 = valUnit
   | otherwise = valUnit <> "s"
   where
     valUnit = showt n <> txt
+
+-- | 'NonZero' seconds in a day: 86,400
+--
+-- @since 0.1.0.0
+secondsInDayNZ :: NonZero Natural
+secondsInDayNZ = $$(Alg.mkAMonoidNonZeroTH 86_400)
+
+-- | 'NonZero' seconds in an hour: 3,600
+--
+-- @since 0.1.0.0
+secondsInHourNZ :: NonZero Natural
+secondsInHourNZ = $$(Alg.mkAMonoidNonZeroTH 3_600)
+
+-- | 'NonZero' seconds in a minute: 60
+--
+-- @since 0.1.0.0
+secondsInMinuteNZ :: NonZero Natural
+secondsInMinuteNZ = $$(Alg.mkAMonoidNonZeroTH 60)
+
+-- | Seconds in a day: 86,400
+--
+-- @since 0.1.0.0
+secondsInDay :: Natural
+secondsInDay = 86_400
+
+-- | Seconds in an hour: 3,60
+--
+-- @since 0.1.0.0
+secondsInHour :: Natural
+secondsInHour = 3_600
+
+-- | Seconds in a minute: 60
+--
+-- @since 0.1.0.0
+secondsInMinute :: Natural
+secondsInMinute = 60

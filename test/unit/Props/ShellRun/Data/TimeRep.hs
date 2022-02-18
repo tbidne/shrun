@@ -9,8 +9,6 @@ import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import MaxRuns (MaxRuns (..))
-import Refined qualified as R
-import Refined.Unsafe qualified as R
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Prelude
@@ -28,23 +26,31 @@ fromSeconds = T.askOption $ \(MkMaxRuns limit) ->
     H.withTests limit $
       H.property $ do
         totalSeconds <- H.forAll genTime
-        let secondsRaw = R.unrefine totalSeconds
-            ts@(MkTimeRep d h m s) = TimeRep.fromSeconds totalSeconds
+        let ts@(MkTimeRep d h m s) = TimeRep.fromSeconds totalSeconds
         H.annotateShow ts
-        H.cover 15 "1 day <= time" (secondsRaw >= 86_400)
-        H.cover 10 "1 hour <= time < 1 day" (secondsRaw >= 3_600 && secondsRaw < 86_400)
-        H.cover 5 "1 minute <= time < 1 hour" (secondsRaw >= 60 && secondsRaw < 3_600)
-        H.cover 2 "time < 1 minute" (secondsRaw < 60)
+        H.cover
+          15
+          "1 day <= time"
+          (totalSeconds >= TimeRep.secondsInDay)
+        H.cover
+          10
+          "1 hour <= time < 1 day"
+          (totalSeconds >= TimeRep.secondsInHour && totalSeconds < TimeRep.secondsInDay)
+        H.cover
+          5
+          "1 minute <= time < 1 hour"
+          (totalSeconds >= TimeRep.secondsInMinute && totalSeconds < TimeRep.secondsInHour)
+        H.cover 2 "time < 1 minute" (totalSeconds < TimeRep.secondsInMinute)
         -- days = totalSeconds / 86,400
-        H.assert $ R.unrefine d == (secondsRaw `div` 86_400)
+        H.assert $ d == (totalSeconds `div` TimeRep.secondsInDay)
         -- hours = totalSeconds / 3,600 (mod 86,400)
-        H.assert $ R.unrefine h == (secondsRaw `mod` 86_400 `div` 3_600)
+        H.assert $ h == (totalSeconds `mod` TimeRep.secondsInDay `div` TimeRep.secondsInHour)
         -- minutes = totalSeconds / 60 (mod 3,600)
-        H.assert $ R.unrefine m == (secondsRaw `mod` 3_600 `div` 60)
+        H.assert $ m == (totalSeconds `mod` TimeRep.secondsInHour `div` TimeRep.secondsInMinute)
         -- seconds = totalSeconds (mod 60)
-        H.assert $ R.unrefine s == (secondsRaw `mod` 60)
+        H.assert $ s == (totalSeconds `mod` TimeRep.secondsInMinute)
 
-genTime :: Gen RNonNegative
+genTime :: Gen Natural
 genTime = do
   Gen.frequency
     [ (1, genSeconds),
@@ -53,14 +59,32 @@ genTime = do
       (4, genDays)
     ]
 
-genSeconds :: Gen RNonNegative
-genSeconds = R.unsafeRefine <$> Gen.integral (Range.constantFrom 0 0 59)
+genSeconds :: Gen Natural
+genSeconds = Gen.integral (Range.constantFrom 0 0 (TimeRep.secondsInMinute - 1))
 
-genMinutes :: Gen RNonNegative
-genMinutes = R.unsafeRefine <$> Gen.integral (Range.constantFrom 60 60 3_599)
+genMinutes :: Gen Natural
+genMinutes =
+  Gen.integral
+    ( Range.constantFrom
+        TimeRep.secondsInMinute
+        TimeRep.secondsInMinute
+        (TimeRep.secondsInHour - 1)
+    )
 
-genHours :: Gen RNonNegative
-genHours = R.unsafeRefine <$> Gen.integral (Range.constantFrom 3_600 3_600 86_399)
+genHours :: Gen Natural
+genHours =
+  Gen.integral
+    ( Range.constantFrom
+        TimeRep.secondsInHour
+        TimeRep.secondsInHour
+        (TimeRep.secondsInDay - 1)
+    )
 
-genDays :: Gen RNonNegative
-genDays = R.unsafeRefine <$> Gen.integral (Range.constantFrom 86_400 86_400 1_000_000)
+genDays :: Gen Natural
+genDays =
+  Gen.integral
+    ( Range.constantFrom
+        TimeRep.secondsInDay
+        TimeRep.secondsInDay
+        1_000_000
+    )

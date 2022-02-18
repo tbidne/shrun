@@ -4,7 +4,6 @@ module Specs.ShellRun.Args (specs) where
 import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import Refined.Unsafe qualified as R
 import ShellRun.Args (Args (..))
 import ShellRun.Args qualified as Args
 import ShellRun.Data.InfNum (PosInfNum (..))
@@ -247,8 +246,8 @@ verifyResult argList expected = do
 prefs :: ParserPrefs
 prefs = OptApp.prefs mempty
 
-toTO :: Int -> Timeout
-toTO n = MkTimeout $ PFin $ R.unsafeRefine n
+toTO :: Natural -> Timeout
+toTO n = MkTimeout $ PFin $ n
 
 defCommand :: NonEmptySeq Text
 defCommand = NESeq.unsafeFromList ["command"]

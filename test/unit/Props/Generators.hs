@@ -13,6 +13,8 @@ import Data.Int (Int64)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import Numeric.Algebra (NonZero)
+import Numeric.Algebra qualified as Alg
 import Refined (Refined)
 import Refined qualified as R
 import Refined.Unsafe qualified as R
@@ -20,12 +22,12 @@ import ShellRun.Prelude
 import System.Clock (TimeSpec (..))
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
-genNonNegative :: Gen RNonNegative
-genNonNegative = R.unsafeRefine <$> Gen.integral (Range.constant 0 1_000_000)
+genNonNegative :: Gen Natural
+genNonNegative = Gen.integral (Range.constant 0 1_000_000)
 
 -- | Generates 'Positive' in [1, 1_000_000].
-genPositive :: Gen RPositive
-genPositive = R.unsafeRefine <$> Gen.integral (Range.constant 1 1_000_000)
+genPositive :: Gen (NonZero Natural)
+genPositive = Alg.unsafeAMonoidNonZero <$> Gen.integral (Range.constant 1 1_000_000)
 
 -- | Generates 'TimeSpec' where 'sec' and 'nsec' are random 'Int64'.
 genTimeSpec :: Gen TimeSpec

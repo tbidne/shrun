@@ -57,7 +57,6 @@ library
     ShellRun.Data.InfNum
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
-    ShellRun.Data.TH
     ShellRun.Data.Timeout
     ShellRun.Data.TimeRep
     ShellRun.Env

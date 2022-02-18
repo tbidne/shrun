@@ -19,7 +19,6 @@ module ShellRun.Env.Types
   )
 where
 
-import Data.Word (Word16)
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Supremum (Supremum (..))
@@ -221,7 +220,7 @@ data CommandDisplay
 -- @since 0.1.0.0
 newtype CommandTruncation = MkCommandTruncation
   { -- | @since 0.1.0.0
-    unCommandTruncation :: PosInfNum Word16
+    unCommandTruncation :: PosInfNum Natural
   }
   deriving stock
     ( -- | @since 0.1.0.0

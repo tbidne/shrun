@@ -16,18 +16,14 @@ import Data.List.NonEmpty qualified as NE
 import Data.String (IsString (..), String)
 import Data.Text qualified as T
 import Data.Version.Package qualified as PV
-import Data.Word (Word16)
 import Development.GitRev qualified as GitRev
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
-import Refined (NonNegative)
-import Refined qualified as R
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
-import ShellRun.Data.TH qualified as TH
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
@@ -186,16 +182,7 @@ timeoutParser =
         <> "2h3s. Defaults to no timeout."
 
 readTimeSeconds :: ReadM Timeout
-readTimeSeconds = do
-  v <- OApp.auto
-  case R.refine v of
-    Right n -> pure $ MkTimeout $ PFin n
-    Left _ ->
-      OApp.readerAbort $
-        ErrorMsg $
-          "Timeout must be non-negative, received: "
-            <> show v
-            <> "!"
+readTimeSeconds = MkTimeout . PFin <$> OApp.auto
 
 readTimeStr :: ReadM Timeout
 readTimeStr = do
@@ -227,20 +214,7 @@ commandTruncationParser =
         <> "log will print the full command regardless."
 
 readCommandTruncation :: ReadM CommandTruncation
-readCommandTruncation = do
-  n :: Int <- OApp.auto
-  if n >= 0 && n <= maxWord16
-    then pure $ MkCommandTruncation (PFin (fromIntegral n))
-    else
-      OApp.readerAbort $
-        ErrorMsg $
-          "Command Truncation must be between 0 and "
-            <> show maxWord16
-            <> ". Received: "
-            <> show n
-  where
-    maxWord16 :: Int
-    maxWord16 = fromIntegral $ (maxBound :: Word16)
+readCommandTruncation = MkCommandTruncation . PFin <$> OApp.auto
 
 fileLoggingParser :: Parser (Maybe FilePath)
 fileLoggingParser =
@@ -300,20 +274,18 @@ parseTimeRep =
     <*> parseTimeOrZero 's'
     <* MP.eof
 
-parseTimeOrZero :: Char -> MParser RNonNegative
+parseTimeOrZero :: Char -> MParser Natural
 parseTimeOrZero c =
   -- Backtrack if we don't match
   MP.try (parseNNWithUnit c)
-    <|> pure TH.zeroNN
+    <|> pure 0
 
-parseNNWithUnit :: Char -> MParser RNonNegative
+parseNNWithUnit :: Char -> MParser Natural
 parseNNWithUnit c = parseNonNegative <* MPC.char' c
 
-parseNonNegative :: MParser RNonNegative
+parseNonNegative :: MParser Natural
 parseNonNegative = do
   ds <- MP.some MPC.digitChar
   case TR.readMaybe ds of
     Nothing -> MP.customFailure $ "Could not parse natural: " <> showt ds
-    Just n -> case R.refine @NonNegative @Int n of
-      Left ex -> MP.customFailure $ "Refinment failed: " <> showt ex
-      Right n' -> pure n'
+    Just n -> pure n

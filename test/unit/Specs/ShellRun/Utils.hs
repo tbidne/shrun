@@ -1,9 +1,10 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Specs for ShellRun.Utils.
 module Specs.ShellRun.Utils (specs) where
 
-import Refined (Refined)
+import Refined (NonEmpty, Refined)
 import Refined qualified as R
-import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import Test.Tasty (TestTree)
@@ -56,4 +57,4 @@ trailingKey =
     ("ab", "") @=? Utils.breakStripPoint point "ab="
 
 point :: Refined R.NonEmpty Text
-point = TH.equalsNE
+point = $$(R.refineTH @NonEmpty @Text "=")

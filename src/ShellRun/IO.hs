@@ -116,7 +116,7 @@ tryTimeSh ::
     MonadReader env m
   ) =>
   Command ->
-  m (Either (Tuple2 RNonNegative Stderr) RNonNegative)
+  m (Either (Tuple2 Natural Stderr) Natural)
 tryTimeSh cmd = do
   commandDisplay <- asks getCommandDisplay
   liftIO $ do
@@ -137,7 +137,7 @@ tryTimeShRegion ::
     Region m ~ ConsoleRegion
   ) =>
   Command ->
-  m (Either (Tuple2 RNonNegative Stderr) RNonNegative)
+  m (Either (Tuple2 Natural Stderr) Natural)
 tryTimeShRegion cmd@(MkCommand _ cmdTxt) =
   Regions.withConsoleRegion Linear $ \region -> do
     -- Create pseudo terminal here because otherwise we have trouble streaming

@@ -8,7 +8,6 @@ where
 
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.Supremum (Supremum (..))
-import ShellRun.Data.TH qualified as TH
 import ShellRun.Prelude
 
 -- | Represents a timeout, which is a non-negative integer.
@@ -16,7 +15,7 @@ import ShellRun.Prelude
 -- @since 0.1.0.0
 newtype Timeout = MkTimeout
   { -- | @since 0.1.0.0
-    unTimeout :: PosInfNum RNonNegative
+    unTimeout :: PosInfNum Natural
   }
   deriving
     ( -- | @since 0.1.0.0
@@ -42,4 +41,4 @@ instance Ord Timeout where
 -- | @since 0.1.0.0
 instance Bounded Timeout where
   minBound = MkTimeout PPosInf
-  maxBound = MkTimeout (PFin TH.zeroNN)
+  maxBound = MkTimeout (PFin 0)
