@@ -150,14 +150,28 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
                     "Encountered an exception. This is likely not an error in any of the "
                       <> "commands run but rather an error in ShellRun itself: "
                       <> SafeEx.displayException ex
-                fatalLog = MkLog Nothing errMsg Fatal Finish LogBoth
+                fatalLog =
+                  MkLog
+                    { cmd = Nothing,
+                      msg = errMsg,
+                      lvl = Fatal,
+                      mode = Finish,
+                      dest = LogBoth
+                    }
             putRegionLog r fatalLog
           Right _ -> pure ()
 
         end <- liftIO $ C.getTime Monotonic
         let totalTime = U.diffTime start end
             totalTimeTxt = "Finished! Total time elapsed: " <> TimeRep.formatTime totalTime
-            finalLog = MkLog Nothing totalTimeTxt InfoBlue Finish LogBoth
+            finalLog =
+              MkLog
+                { cmd = Nothing,
+                  msg = totalTimeTxt,
+                  lvl = InfoBlue,
+                  mode = Finish,
+                  dest = LogBoth
+                }
 
         putRegionLog r finalLog
 
@@ -192,17 +206,21 @@ runCommand cmd = do
     _ -> ShIO.tryTimeShStreamRegion cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
-    let lg = case res of
+    let (msg', lvl') = case res of
           Left (t, MkStderr err) ->
-            let logTxt =
-                  err
-                    <> ". Time elapsed: "
-                    <> TimeRep.formatTime t
-             in MkLog (Just cmd) logTxt Error Finish LogBoth
+            let logTxt = err <> ". Time elapsed: " <> TimeRep.formatTime t
+             in (logTxt, Error)
           Right t ->
             let logTxt = "Success. Time elapsed: " <> TimeRep.formatTime t
-             in MkLog (Just cmd) logTxt InfoSuccess Finish LogBoth
-    putRegionLog r lg
+             in (logTxt, InfoSuccess)
+    putRegionLog r $
+      MkLog
+        { cmd = Just cmd,
+          msg = msg',
+          lvl = lvl',
+          mode = Finish,
+          dest = LogBoth
+        }
 
 counter ::
   ( HasTimeout env,
@@ -259,7 +277,14 @@ keepRunning region timer mto = do
   elapsed <- liftIO $ IORef.readIORef timer
   if timedOut elapsed mto
     then do
-      putRegionLog region $ MkLog Nothing "Timed out, cancelling remaining tasks." Warn Finish LogBoth
+      putRegionLog region $
+        MkLog
+          { cmd = Nothing,
+            msg = "Timed out, cancelling remaining tasks.",
+            lvl = Warn,
+            mode = Finish,
+            dest = LogBoth
+          }
       pure False
     else pure True
 
@@ -296,9 +321,7 @@ writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (log
 logFile :: MonadIO m => FilePath -> LogText -> m ()
 logFile fp = liftIO . appendFileUtf8 fp . unLogText
 
--- | Formats a log to be printed to the console.
---
--- @since 0.1.0.0
+-- Formats a log to be printed to the console.
 formatConsoleLog ::
   ( HasCommandDisplay env,
     HasCommandTruncation env,
