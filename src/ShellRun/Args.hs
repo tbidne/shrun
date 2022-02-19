@@ -5,6 +5,7 @@
 -- @since 0.1.0.0
 module ShellRun.Args
   ( Args (..),
+    ALineTruncation (..),
     defaultArgs,
     parserInfoArgs,
   )
@@ -27,7 +28,12 @@ import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
-import ShellRun.Env.Types (CommandDisplay (..), CommandLogging (..), CommandTruncation (..))
+import ShellRun.Env.Types
+  ( CommandDisplay (..),
+    CommandLogging (..),
+    Truncation (..),
+    TruncationArea (..),
+  )
 import ShellRun.Prelude
 import Text.Megaparsec (Parsec)
 import Text.Megaparsec qualified as MP
@@ -58,11 +64,14 @@ data Args = MkArgs
     --
     -- @since 0.1.0.0
     aTimeout :: Timeout,
-    -- | The max number of command characters to display in
-    -- the logs.
+    -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1.0.0
-    aCommandTruncation :: CommandTruncation,
+    aCmdTruncation :: Truncation 'TCommand,
+    -- | The max number of line characters to display in the logs.
+    --
+    -- @since 0.1.0.0
+    aLineTruncation :: ALineTruncation,
     -- | List of commands.
     --
     -- @since 0.1.0.0
@@ -75,11 +84,37 @@ data Args = MkArgs
       Show
     )
 
+-- | Determines command log line truncation behavior. We need to separate
+-- type from 'Truncation' to add a third option, to detect the terminal size
+-- automatically.
+--
+-- @since 0.1.0.0
+data ALineTruncation
+  = -- | @since 0.1.0.0
+    Undetected (Truncation 'TLine)
+  | -- | @since 0.1.0.0
+    Detected
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+
+-- | @since 0.1.0.0
+instance Semigroup ALineTruncation where
+  Undetected x <> Undetected y = Undetected (x <> y)
+  _ <> _ = Detected
+
+-- | @since 0.1.0.0
+instance Monoid ALineTruncation where
+  mempty = Undetected mempty
+
 -- | Default configuration.
 --
 -- ==== __Examples__
 -- >>> defaultArgs (NESeq.singleton "ls")
--- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = MkTimeout {unTimeout = PPosInf}, aCommandTruncation = MkCommandTruncation {unCommandTruncation = PPosInf}, aCommands = "ls" :|^ fromList []}
+-- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = MkTimeout {unTimeout = PPosInf}, aCmdTruncation = MkTruncation {unTruncation = PPosInf}, aLineTruncation = Undetected (MkTruncation {unTruncation = PPosInf}), aCommands = "ls" :|^ fromList []}
 --
 -- @since 0.1.0.0
 defaultArgs :: NonEmptySeq Text -> Args
@@ -90,7 +125,8 @@ defaultArgs cmds =
       aCommandDisplay = mempty,
       aLegend = empty,
       aTimeout = mempty,
-      aCommandTruncation = mempty,
+      aCmdTruncation = mempty,
+      aLineTruncation = mempty,
       aCommands = cmds
     }
 
@@ -127,7 +163,8 @@ argsParser =
     <*> commandDisplayParser
     <*> legendParser
     <*> timeoutParser
-    <*> commandTruncationParser
+    <*> cmdTruncationParser
+    <*> lineTruncationParser
     <*> commandsParser
       <**> OApp.helper
       <**> version
@@ -196,24 +233,55 @@ readTimeStr = do
       let timeout = MkTimeout $ PFin $ TimeRep.toSeconds timeRep
        in pure timeout
 
-commandTruncationParser :: Parser CommandTruncation
-commandTruncationParser =
+cmdTruncationParser :: Parser (Truncation 'TCommand)
+cmdTruncationParser =
   OApp.option
-    readCommandTruncation
-    ( OApp.value (MkCommandTruncation PPosInf)
-        <> OApp.long "cmd-truncate"
+    readTruncation
+    ( OApp.value (MkTruncation PPosInf)
+        <> OApp.long "cmd-name-truncate"
         <> OApp.short 'x'
         <> OApp.help help
         <> OApp.metavar "NATURAL"
     )
   where
     help =
-      "Non-negative integer that limits the length of the commands "
-        <> "in the console logs. Defaults to no truncation. This does not "
+      "Non-negative integer that limits the length of commands/key-names "
+        <> "in the console logs. Defaults to no truncation. This affects "
+        <> "everywhere the command/key-name shows up (i.e. in command logs or "
+        <> "final success/error message), it does not affect file logs "
+        <> "created via --file-log."
+
+lineTruncationParser :: Parser ALineTruncation
+lineTruncationParser =
+  OApp.option
+    (defRead <|> readDetectTruncation)
+    ( OApp.value defValue
+        <> OApp.long "cmd-line-truncate"
+        <> OApp.short 'y'
+        <> OApp.help help
+        <> OApp.metavar "NATURAL or detect"
+    )
+  where
+    defValue = Undetected (MkTruncation PPosInf)
+    defRead = Undetected <$> readTruncation
+    help =
+      "Non-negative integer that limits the length of logs "
+        <> "produced via --cmd-log in the console logs. Can also be the "
+        <> "string literal 'detect' (no quotes), to detect the terminal "
+        <> "size automatically. Defaults to no truncation. This does not "
         <> "affect file logs with --file-log."
 
-readCommandTruncation :: ReadM CommandTruncation
-readCommandTruncation = MkCommandTruncation . PFin <$> OApp.auto
+readTruncation :: ReadM (Truncation a)
+readTruncation = MkTruncation . PFin <$> OApp.auto
+
+readDetectTruncation :: ReadM ALineTruncation
+readDetectTruncation = do
+  s <- OApp.str
+  if T.toCaseFold s == "detect"
+    then pure Detected
+    else
+      OApp.readerAbort $
+        ErrorMsg $ "Unrecognized truncation option:" <> T.unpack s
 
 fileLoggingParser :: Parser (Maybe FilePath)
 fileLoggingParser =

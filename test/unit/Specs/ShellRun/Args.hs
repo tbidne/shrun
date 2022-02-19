@@ -4,7 +4,7 @@ module Specs.ShellRun.Args (specs) where
 import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import ShellRun.Args (Args (..))
+import ShellRun.Args (ALineTruncation (..), Args (..))
 import ShellRun.Args qualified as Args
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
@@ -13,7 +13,7 @@ import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
   ( CommandDisplay (..),
     CommandLogging (..),
-    CommandTruncation (..),
+    Truncation (..),
   )
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
@@ -32,7 +32,7 @@ specs =
       fileLoggingSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
-      commandTruncationSpecs,
+      truncationSpecs,
       commandSpecs
     ]
 
@@ -52,7 +52,8 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
               aTimeout = MkTimeout PPosInf,
               aCommandLogging = Disabled,
               aCommandDisplay = ShowCommand,
-              aCommandTruncation = MkCommandTruncation PPosInf,
+              aCmdTruncation = MkTruncation PPosInf,
+              aLineTruncation = Undetected (MkTruncation PPosInf),
               aFileLogging = Nothing,
               aCommands = NESeq.singleton "command"
             }
@@ -186,33 +187,33 @@ parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
       expected = Just $ (Args.defaultArgs defCommand) {aCommandDisplay = ShowKey}
   verifyResult argList expected
 
-commandTruncationSpecs :: TestTree
-commandTruncationSpecs =
+truncationSpecs :: TestTree
+truncationSpecs =
   Tasty.testGroup
-    "CommandTruncation arg parsing"
-    [ parseShortCommandTruncation,
-      parseLongCommandTruncation
+    "Truncation arg parsing"
+    [ parseShortTruncation,
+      parseLongTruncation
     ]
 
-parseShortCommandTruncation :: TestTree
-parseShortCommandTruncation = THU.testCase "Should parse -x as CommandTruncation" $ do
+parseShortTruncation :: TestTree
+parseShortTruncation = THU.testCase "Should parse -x as Truncation" $ do
   let argList = ["-x", "15", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { aCommandTruncation = MkCommandTruncation (PFin 15)
+            { aCmdTruncation = MkTruncation (PFin 15)
             }
   verifyResult argList expected
 
-parseLongCommandTruncation :: TestTree
-parseLongCommandTruncation = THU.testCase
-  "Should parse --cmd-truncate as CommandTruncation"
+parseLongTruncation :: TestTree
+parseLongTruncation = THU.testCase
+  "Should parse --cmd-name-truncate as Truncation"
   $ do
-    let argList = ["--cmd-truncate", "15", "command"]
+    let argList = ["--cmd-name-truncate", "15", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aCommandTruncation = MkCommandTruncation (PFin 15)
+              { aCmdTruncation = MkTruncation (PFin 15)
               }
     verifyResult argList expected
 

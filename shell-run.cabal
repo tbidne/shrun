@@ -91,6 +91,7 @@ library
     , refined-extras        ^>=0.1.0.0
     , safe-exceptions       ^>=0.1.7.0
     , stm                   ^>=2.5.0
+    , terminal-size         ^>=0.3.0
     , text                  ^>=1.2.3.2
     , time                  >=1.9.3    && <=1.12
     , unix                  ^>=2.7.2
@@ -123,14 +124,12 @@ test-suite unit
     Props.Generators
     Props.ShellRun.Command
     Props.ShellRun.Data.TimeRep
-    Props.ShellRun.Env
     Props.ShellRun.Legend.Internal
     Props.ShellRun.Utils
     Specs
     Specs.ShellRun.Args
     Specs.ShellRun.Command
     Specs.ShellRun.Data.TimeRep
-    Specs.ShellRun.Env
     Specs.ShellRun.Legend.Internal
     Specs.ShellRun.Utils
 

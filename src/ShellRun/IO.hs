@@ -38,8 +38,7 @@ import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
 import ShellRun.Data.Supremum (Supremum (..))
-import ShellRun.Env (HasCommandLogging (..))
-import ShellRun.Env.Types (CommandLogging (..))
+import ShellRun.Env.Types (CommandLogging (..), HasCommandLogging (..))
 import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
@@ -252,7 +251,14 @@ streamOutput mRegion cmd recvH ph = do
         let logDest = case commandLogging of
               Disabled -> LogFile
               Enabled -> LogBoth
-        let log = MkLog (Just cmd) out SubCommand Set logDest
+            log =
+              MkLog
+                { cmd = Just cmd,
+                  msg = out,
+                  lvl = SubCommand,
+                  mode = Set,
+                  dest = logDest
+                }
         case mRegion of
           Nothing -> putLog log
           Just region -> putRegionLog region log

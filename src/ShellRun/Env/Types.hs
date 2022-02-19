@@ -6,7 +6,8 @@ module ShellRun.Env.Types
     HasCommands (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
-    HasCommandTruncation (..),
+    HasCmdTruncation (..),
+    HasLineTruncation (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
@@ -15,7 +16,8 @@ module ShellRun.Env.Types
     Env (..),
     CommandDisplay (..),
     CommandLogging (..),
-    CommandTruncation (..),
+    Truncation (..),
+    TruncationArea (..),
   )
 where
 
@@ -70,9 +72,16 @@ class HasCommandDisplay env where
 -- | Determines command truncation behavior.
 --
 -- @since 0.1.0.0
-class HasCommandTruncation env where
+class HasCmdTruncation env where
   -- | @since 0.1.0.0
-  getCommandTruncation :: env -> CommandTruncation
+  getCmdTruncation :: env -> Truncation 'TCommand
+
+-- | Determines line truncation behavior.
+--
+-- @since 0.1.0.0
+class HasLineTruncation env where
+  -- | @since 0.1.0.0
+  getLineTruncation :: env -> Truncation 'TLine
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
@@ -104,7 +113,11 @@ data Env = MkEnv
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1.0.0
-    commandTruncation :: CommandTruncation,
+    cmdTruncation :: Truncation 'TCommand,
+    -- | The max number of line characters to display in the logs.
+    --
+    -- @since 0.1.0.0
+    lineTruncation :: Truncation 'TLine,
     -- | The commands to run.
     --
     -- @since 0.1.0.0
@@ -136,8 +149,12 @@ instance HasCommandDisplay Env where
   getCommandDisplay = commandDisplay
 
 -- | @since 0.1.0.0
-instance HasCommandTruncation Env where
-  getCommandTruncation = commandTruncation
+instance HasCmdTruncation Env where
+  getCmdTruncation = cmdTruncation
+
+-- | @since 0.1.0.0
+instance HasLineTruncation Env where
+  getLineTruncation = lineTruncation
 
 -- | @since 0.1.0.0
 instance HasCommands Env where
@@ -202,24 +219,29 @@ data CommandDisplay
     )
     via Supremum CommandDisplay
 
+data TruncationArea
+  = TCommand
+  | TLine
+
 -- | The maximum number of command characters to display in the logs.
 -- The ordering is such that smaller numbers are greater, i.e., the
 -- minimum element is 'PPosInf' and the maximum is zero.
 --
 -- ==== __Examples__
--- >>> max (MkCommandTruncation PPosInf) (MkCommandTruncation (PFin 7))
--- MkCommandTruncation {unCommandTruncation = PFin 7}
+-- >>> max (MkTruncation PPosInf) (MkTruncation (PFin 7))
+-- MkTruncation {unTruncation = PFin 7}
 --
--- >>> MkCommandTruncation (PFin 7) <> MkCommandTruncation (PFin 10)
--- MkCommandTruncation {unCommandTruncation = PFin 7}
+-- >>> MkTruncation (PFin 7) <> MkTruncation (PFin 10)
+-- MkTruncation {unTruncation = PFin 7}
 --
--- >>> mempty @CommandTruncation
--- MkCommandTruncation {unCommandTruncation = PPosInf}
+-- >>> mempty @(Truncation TCommand)
+-- MkTruncation {unTruncation = PPosInf}
 --
 -- @since 0.1.0.0
-newtype CommandTruncation = MkCommandTruncation
+type Truncation :: TruncationArea -> Type
+newtype Truncation a = MkTruncation
   { -- | @since 0.1.0.0
-    unCommandTruncation :: PosInfNum Natural
+    unTruncation :: PosInfNum Natural
   }
   deriving stock
     ( -- | @since 0.1.0.0
@@ -233,16 +255,16 @@ newtype CommandTruncation = MkCommandTruncation
       -- | @since 0.1.0.0
       Monoid
     )
-    via Supremum CommandTruncation
+    via Supremum (Truncation a)
 
 -- | @since 0.1.0.0
-instance Ord CommandTruncation where
+instance Ord (Truncation a) where
   compare x y | x == y = EQ
-  compare (MkCommandTruncation PPosInf) _ = LT
-  compare _ (MkCommandTruncation PPosInf) = GT
-  compare (MkCommandTruncation (PFin x)) (MkCommandTruncation (PFin y)) = compare y x
+  compare (MkTruncation PPosInf) _ = LT
+  compare _ (MkTruncation PPosInf) = GT
+  compare (MkTruncation (PFin x)) (MkTruncation (PFin y)) = compare y x
 
 -- | @since 0.1.0.0
-instance Bounded CommandTruncation where
-  minBound = MkCommandTruncation PPosInf
-  maxBound = MkCommandTruncation (PFin 0)
+instance Bounded (Truncation a) where
+  minBound = MkTruncation PPosInf
+  maxBound = MkTruncation (PFin 0)

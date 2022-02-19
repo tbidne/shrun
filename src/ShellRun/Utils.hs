@@ -9,6 +9,7 @@ module ShellRun.Utils
     breakStripPoint,
     decodeUtf8Lenient,
     splitOn,
+    truncateIfNeeded,
 
     -- * Timing Utils
     diffTime,
@@ -178,3 +179,30 @@ splitOn (MkRefined s) txt = case T.splitOn s txt of
         <> s
         <> ", text: "
         <> txt
+
+-- | For 'Natural' \(n\) and 'Text' \(t = t_0 t_1 \ldots t_m\), truncates
+-- \(t|) if @m > n@. In this case, \(t\) is truncated to \(n - 3\), and an
+-- ellipsis is appended. We are left with
+--
+-- \[
+-- t_0 t_1 \ldots t_{n-3} ...
+-- \]
+--
+-- ==== __Examples__
+-- >>> truncateIfNeeded 7 "hi"
+-- "hi"
+--
+-- >>> truncateIfNeeded 10 "This is 21 chars long"
+-- "This is..."
+--
+-- @since 0.1.0.0
+truncateIfNeeded :: Natural -> Text -> Text
+truncateIfNeeded n txt
+  | T.length txt <= n' = txt
+  | otherwise = txt'
+  where
+    txt' = T.take (n' - 3) txt <> "..."
+    n' = n2i n
+
+n2i :: Natural -> Int
+n2i = fromIntegral

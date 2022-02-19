@@ -9,7 +9,7 @@ module ShellRun.Env
     HasCommands (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
-    HasCommandTruncation (..),
+    HasCmdTruncation (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
@@ -18,38 +18,39 @@ module ShellRun.Env
     Env (..),
     CommandDisplay (..),
     CommandLogging (..),
-    CommandTruncation (..),
+    Truncation (..),
+    TruncationArea (..),
 
     -- * Functions
     runParser,
-    displayCommand,
-    displayCommandTruncation,
   )
 where
 
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Control.Monad.STM qualified as STM
-import Data.Text qualified as T
 import Options.Applicative qualified as OApp
-import ShellRun.Args (Args (..))
+import ShellRun.Args (ALineTruncation (..), Args (..))
 import ShellRun.Args qualified as Args
-import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
   ( CommandDisplay (..),
     CommandLogging (..),
-    CommandTruncation (..),
     Env (..),
+    HasCmdTruncation (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
-    HasCommandTruncation (..),
     HasCommands (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
+    Truncation (..),
+    TruncationArea (..),
   )
 import ShellRun.Logging.Queue (LogTextQueue (..))
 import ShellRun.Prelude
+import System.Console.Terminal.Size (Window (..))
+import System.Console.Terminal.Size qualified as TSize
+import System.Exit qualified as SysExit
 
 -- | Runs the parser.
 --
@@ -62,56 +63,24 @@ runParser = do
     Just fp -> do
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
-  pure $ toEnv fl args
+  toEnv fl args
 
-toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Args -> Env
-toEnv fl MkArgs {..} =
-  MkEnv
-    { legend = aLegend,
-      timeout = aTimeout,
-      fileLogging = fl,
-      commandLogging = aCommandLogging,
-      commandDisplay = aCommandDisplay,
-      commandTruncation = aCommandTruncation,
-      commands = aCommands
-    }
-
--- | Returns the key if one exists and we pass in 'ShowKey', otherwise
--- returns the command.
---
--- ==== __Examples__
--- >>> displayCommand ShowKey (MkCommand Nothing "cmd")
--- "cmd"
---
--- >>> displayCommand ShowCommand (MkCommand (Just "key") "cmd")
--- "cmd"
---
--- >>> displayCommand ShowKey (MkCommand (Just "key") "cmd")
--- "key"
---
--- @since 0.1.0.0
-displayCommand :: CommandDisplay -> Command -> Text
-displayCommand ShowKey (MkCommand (Just key) _) = key
-displayCommand _ (MkCommand _ cmd) = cmd
-
--- | Displays a command, taking truncation into account.
---
--- ==== __Examples__
--- >>> displayCommandTruncation (MkCommandTruncation 10) ShowCommand (MkCommand Nothing "this is a long command")
---
--- @since 0.1.0.0
-displayCommandTruncation :: CommandTruncation -> CommandDisplay -> Command -> Text
-displayCommandTruncation (MkCommandTruncation PPosInf) disp cmd = displayCommand disp cmd
-displayCommandTruncation (MkCommandTruncation (PFin n)) disp (MkCommand mkey cmd) =
-  displayCommand disp (MkCommand key' cmd')
-  where
-    truncate = truncateText (fromIntegral n)
-    cmd' = truncate cmd
-    key' = fmap truncate mkey
-
-truncateText :: Int -> Text -> Text
-truncateText n txt
-  | T.length txt <= n = txt
-  | otherwise = txt'
-  where
-    txt' = T.take (n - 3) txt <> "..."
+toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Args -> IO Env
+toEnv fl MkArgs {..} = do
+  lineTruncation' <- case aLineTruncation of
+    Undetected x -> pure x
+    Detected ->
+      (width <<$>> TSize.size) >>= \case
+        Just h -> pure $ MkTruncation (PFin h)
+        Nothing -> SysExit.die "Failed trying to detect terminal size"
+  pure $
+    MkEnv
+      { legend = aLegend,
+        timeout = aTimeout,
+        fileLogging = fl,
+        commandLogging = aCommandLogging,
+        commandDisplay = aCommandDisplay,
+        cmdTruncation = aCmdTruncation,
+        lineTruncation = lineTruncation',
+        commands = aCommands
+      }

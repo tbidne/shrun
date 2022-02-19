@@ -25,14 +25,15 @@ import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
   ( CommandDisplay (..),
     CommandLogging (..),
-    CommandTruncation (MkCommandTruncation),
     Env (..),
+    HasCmdTruncation (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
-    HasCommandTruncation (..),
     HasFileLogging (..),
     HasTimeout (..),
+    Truncation (MkTruncation),
   )
+import ShellRun.Env.Types (HasLineTruncation (getLineTruncation))
 import ShellRun.IO (Stderr (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr, LegendMap)
@@ -90,7 +91,8 @@ newtype ShellT env m a = MkShellT
 -- | @since 0.1.0.0
 instance
   ( HasCommandDisplay env,
-    HasCommandTruncation env,
+    HasCmdTruncation env,
+    HasLineTruncation env,
     HasFileLogging env,
     MonadIO m
   ) =>
@@ -115,7 +117,8 @@ instance
 
 maybePrintLog ::
   ( HasCommandDisplay env,
-    HasCommandTruncation env,
+    HasCmdTruncation env,
+    HasLineTruncation env,
     MonadReader env m
   ) =>
   (Text -> m ()) ->
@@ -183,7 +186,8 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
 runCommand ::
   ( HasCommandDisplay env,
     HasCommandLogging env,
-    HasCommandTruncation env,
+    HasCmdTruncation env,
+    HasLineTruncation env,
     HasFileLogging env,
     MonadIO m,
     MonadMask m,
@@ -206,17 +210,13 @@ runCommand cmd = do
     _ -> ShIO.tryTimeShStreamRegion cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
-    let (msg', lvl') = case res of
-          Left (t, MkStderr err) ->
-            let logTxt = err <> ". Time elapsed: " <> TimeRep.formatTime t
-             in (logTxt, Error)
-          Right t ->
-            let logTxt = "Success. Time elapsed: " <> TimeRep.formatTime t
-             in (logTxt, InfoSuccess)
+    let (msg', lvl', t') = case res of
+          Left (t, MkStderr err) -> (err, Error, t)
+          Right t -> ("Success", InfoSuccess, t)
     putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = msg',
+          msg = msg' <> ". Time elapsed: " <> TimeRep.formatTime t',
           lvl = lvl',
           mode = Finish,
           dest = LogBoth
@@ -324,14 +324,16 @@ logFile fp = liftIO . appendFileUtf8 fp . unLogText
 -- Formats a log to be printed to the console.
 formatConsoleLog ::
   ( HasCommandDisplay env,
-    HasCommandTruncation env,
+    HasCmdTruncation env,
+    HasLineTruncation env,
     MonadReader env m
   ) =>
   Log ->
   m Text
-formatConsoleLog log@MkLog {cmd, msg} = do
+formatConsoleLog log@MkLog {cmd, msg, lvl} = do
   commandDisplay <- asks getCommandDisplay
-  MkCommandTruncation truncation <- asks getCommandTruncation
+  MkTruncation cmdTruncation <- asks getCmdTruncation
+  MkTruncation lineTruncation <- asks getLineTruncation
   case cmd of
     Nothing -> pure $ colorize $ prefix <> msg
     Just com ->
@@ -339,21 +341,16 @@ formatConsoleLog log@MkLog {cmd, msg} = do
           name = case (getKey com, commandDisplay) of
             (Just key, ShowKey) -> key
             (_, _) -> command com
-          -- truncate if necessary
-          name' = case truncation of
+          -- truncate cmd/name if necessary
+          name' = case cmdTruncation of
             PPosInf -> name
-            PFin n -> truncateIfNeeded (n2i n) name
-       in pure $ colorize $ prefix <> "[" <> name' <> "] " <> msg
+            PFin n -> U.truncateIfNeeded n name
+          -- truncate entire if necessary (flag on and command log only)
+          line = colorize $ prefix <> "[" <> name' <> "] " <> msg
+          line' = case (lvl, lineTruncation) of
+            (SubCommand, PFin m) -> U.truncateIfNeeded m line
+            _ -> line
+       in pure line'
   where
     colorize = P.color $ Log.logToColor log
     prefix = Log.logToPrefix log
-
-truncateIfNeeded :: Int -> Text -> Text
-truncateIfNeeded n txt
-  | T.length txt <= n = txt
-  | otherwise = txt'
-  where
-    txt' = T.take (n - 3) txt <> "..."
-
-n2i :: Natural -> Int
-n2i = fromIntegral

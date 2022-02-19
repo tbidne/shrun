@@ -65,6 +65,14 @@ runCommandsOrLogErr ::
   Either LegendErr (NonEmptySeq Command) ->
   m ()
 runCommandsOrLogErr (Right cmds) = runCommands cmds
-runCommandsOrLogErr (Left err) = putLog $ MkLog Nothing errTxt Fatal Finish LogBoth
+runCommandsOrLogErr (Left err) = putLog log
   where
     errTxt = "Error parsing legend file: " <> showt err
+    log =
+      MkLog
+        { cmd = Nothing,
+          msg = errTxt,
+          lvl = Fatal,
+          mode = Finish,
+          dest = LogBoth
+        }

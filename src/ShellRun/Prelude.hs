@@ -15,6 +15,7 @@ module ShellRun.Prelude
     headMaybe,
 
     -- * Misc utilities
+    (<<$>>),
     maybeToEither,
     monoBimap,
 
@@ -112,6 +113,7 @@ import Prelude as X
     otherwise,
     print,
     replicate,
+    seq,
     snd,
     undefined,
     ($),
@@ -176,6 +178,14 @@ maybeToEither _ (Just x) = Right x
 -- (3,6)
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
+
+-- | Lifted fmap.
+--
+-- @since 0.1.0.0
+(<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
+(<<$>>) = fmap . fmap
+
+infixl 4 <<$>>
 
 -- | Alias for '[]'.
 --

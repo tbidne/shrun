@@ -29,7 +29,8 @@ files =
 -- file's default-extensions
 exts :: List String
 exts =
-  [ "-XDerivingVia",
+  [ "-XDataKinds",
+    "-XDerivingVia",
     "-XFlexibleContexts",
     "-XFlexibleInstances",
     "-XImportQualifiedPost",
