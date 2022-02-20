@@ -53,6 +53,7 @@ library
     ShellRun
     ShellRun.Args
     ShellRun.Class.MonadShell
+    ShellRun.Class.MonadTime
     ShellRun.Command
     ShellRun.Data.InfNum
     ShellRun.Data.NonEmptySeq
@@ -64,6 +65,7 @@ library
     ShellRun.IO
     ShellRun.Legend
     ShellRun.Legend.Internal
+    ShellRun.Logging.Formatting
     ShellRun.Logging.Log
     ShellRun.Logging.Queue
     ShellRun.Logging.RegionLogger

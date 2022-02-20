@@ -152,11 +152,11 @@ breakStripPoint (MkRefined point) txt = case T.breakOn point txt of
 decodeUtf8Lenient :: ByteString -> Text
 decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode
 
--- | Wrapper around 'T.splitOn'. This /should/ be total, as 'T.splitOn' is
--- partial exactly when the first parameter is empty, which we reject.
--- Unfortunately we have to do perform a partial pattern match on the result
--- since 'T.splitOn' returns a list, even though the result should always be
--- 'NonEmptySeq'. Hence 'HasCallStack'.
+-- | Wrapper around "Text"\'s 'T.splitOn'. This /should/ be total, as
+-- 'T.splitOn' is partial exactly when the first parameter is empty, which we
+-- reject. Unfortunately we have to perform a partial pattern match on the
+-- result since 'T.splitOn' returns a list, even though the result should
+-- always be 'NonEmptySeq'. Hence 'HasCallStack'.
 --
 -- ==== __Examples__
 -- >>> splitOn $$(R.refineTH ",,") "hey,,listen"
@@ -181,11 +181,12 @@ splitOn (MkRefined s) txt = case T.splitOn s txt of
         <> txt
 
 -- | For 'Natural' \(n\) and 'Text' \(t = t_0 t_1 \ldots t_m\), truncates
--- \(t|) if @m > n@. In this case, \(t\) is truncated to \(n - 3\), and an
--- ellipsis is appended. We are left with
+-- \(t\) if @m > n@. In this case, \(t\) is truncated to \(n - 3\), and an
+-- ellipsis ( \(\ldots\) ) is appended. We are left with a string with
+-- length exactly \(n\):
 --
 -- \[
--- t_0 t_1 \ldots t_{n-3} ...
+-- t_0 t_1 \ldots t_{n-3} \text{...} \quad \text{-- 3 literal } `\text{.' chars appended}
 -- \]
 --
 -- ==== __Examples__

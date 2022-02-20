@@ -5,7 +5,7 @@
 module ShellRun.Logging.Queue
   ( -- * LogText
     LogText (MkLogText, unLogText),
-    logToText,
+    formatFileLog,
 
     -- * Queue
     LogTextQueue (..),
@@ -18,7 +18,7 @@ where
 import Control.Concurrent.STM qualified as STM
 import Control.Concurrent.STM.TBQueue (TBQueue)
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
-import Data.Time.Clock qualified as Clock
+import ShellRun.Class.MonadTime (MonadTime (..))
 import ShellRun.Command (Command (..))
 import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log
@@ -48,9 +48,9 @@ pattern MkLogText t <- UnsafeLogText t
 -- | Formats a 'Log' into a 'LogText'. Applies prefix and timestamp.
 --
 -- @since 0.1.0.0
-logToText :: Log -> IO LogText
-logToText log@MkLog {cmd, msg} = do
-  currTime <- Clock.getCurrentTime
+formatFileLog :: MonadTime m => Log -> m LogText
+formatFileLog log@MkLog {cmd, msg} = do
+  currTime <- getSystemTime
   let formatted = case cmd of
         Nothing -> prefix <> msg
         Just com -> prefix <> "[" <> command com <> "] " <> msg
@@ -75,7 +75,7 @@ instance Show LogTextQueue where
 --
 -- @since 0.1.0.0
 writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
-writeQueue queue = liftIO . (writeq <=< logToText)
+writeQueue queue = liftIO . (writeq <=< formatFileLog)
   where
     writeq = STM.atomically . TBQueue.writeTBQueue (getLogTextQueue queue)
 

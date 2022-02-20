@@ -17,29 +17,28 @@ import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import ShellRun.Class.MonadShell (MonadShell (..))
+import ShellRun.Class.MonadTime (MonadTime (..))
 import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
-  ( CommandDisplay (..),
-    CommandLogging (..),
+  ( CommandLogging (..),
     Env (..),
     HasCmdTruncation (..),
     HasCommandDisplay (..),
     HasCommandLogging (..),
     HasFileLogging (..),
     HasTimeout (..),
-    Truncation (MkTruncation),
   )
-import ShellRun.Env.Types (HasLineTruncation (getLineTruncation))
+import ShellRun.Env.Types (HasLineTruncation (..))
 import ShellRun.IO (Stderr (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr, LegendMap)
 import ShellRun.Legend qualified as ParseLegend
+import ShellRun.Logging.Formatting qualified as LFormat
 import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
-import ShellRun.Logging.Log qualified as Log
 import ShellRun.Logging.Queue (LogText (..), LogTextQueue)
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
@@ -47,7 +46,6 @@ import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (..))
 import System.Clock qualified as C
-import System.Console.Pretty qualified as P
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import UnliftIO qualified
@@ -76,6 +74,8 @@ newtype ShellT env m a = MkShellT
       MonadIO,
       -- | @since 0.1.0.0
       MonadMask,
+      -- | @since 0.1.0.0
+      MonadTime,
       -- | @since 0.1.0.0
       MonadThrow,
       -- | @since 0.1.0.0
@@ -127,7 +127,7 @@ maybePrintLog ::
 maybePrintLog fn log@MkLog {dest} = do
   case dest of
     LogFile -> pure ()
-    _ -> formatConsoleLog log >>= fn
+    _ -> LFormat.formatConsoleLog log >>= fn
 
 -- | @since 0.1.0.0
 instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) where
@@ -320,37 +320,3 @@ writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (log
 
 logFile :: MonadIO m => FilePath -> LogText -> m ()
 logFile fp = liftIO . appendFileUtf8 fp . unLogText
-
--- Formats a log to be printed to the console.
-formatConsoleLog ::
-  ( HasCommandDisplay env,
-    HasCmdTruncation env,
-    HasLineTruncation env,
-    MonadReader env m
-  ) =>
-  Log ->
-  m Text
-formatConsoleLog log@MkLog {cmd, msg, lvl} = do
-  commandDisplay <- asks getCommandDisplay
-  MkTruncation cmdTruncation <- asks getCmdTruncation
-  MkTruncation lineTruncation <- asks getLineTruncation
-  case cmd of
-    Nothing -> pure $ colorize $ prefix <> msg
-    Just com ->
-      let -- get cmd name to display
-          name = case (getKey com, commandDisplay) of
-            (Just key, ShowKey) -> key
-            (_, _) -> command com
-          -- truncate cmd/name if necessary
-          name' = case cmdTruncation of
-            PPosInf -> name
-            PFin n -> U.truncateIfNeeded n name
-          -- truncate entire if necessary (flag on and command log only)
-          line = colorize $ prefix <> "[" <> name' <> "] " <> msg
-          line' = case (lvl, lineTruncation) of
-            (SubCommand, PFin m) -> U.truncateIfNeeded m line
-            _ -> line
-       in pure line'
-  where
-    colorize = P.color $ Log.logToColor log
-    prefix = Log.logToPrefix log

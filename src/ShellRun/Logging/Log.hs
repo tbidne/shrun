@@ -9,8 +9,6 @@ module ShellRun.Logging.Log
     LogDest (..),
 
     -- * Utility functions for associate levels to colors/prefixes.
-    formatLog,
-    formatLogNoColor,
     logToColor,
     logToPrefix,
     levelToColor,
@@ -199,22 +197,3 @@ levelToPrefix InfoSuccess = "[Info] "
 levelToPrefix Warn = "[Warn] "
 levelToPrefix Error = "[Error] "
 levelToPrefix Fatal = "[Fatal Error] "
-
--- | Helper for turning a 'Log' into its own formatting 'Text', i.e., adding
--- a prefix and color.
---
--- @since 0.1.0.0
-formatLog :: Log -> Text
-formatLog log@MkLog {msg} = P.color color $ prefix <> msg
-  where
-    color = logToColor log
-    prefix = logToPrefix log
-
--- | Helper for turning a 'Log' into its own formatting 'Text', i.e., adding
--- a prefix.
---
--- @since 0.1.0.0
-formatLogNoColor :: Log -> Text
-formatLogNoColor log@MkLog {msg} = prefix <> msg
-  where
-    prefix = logToPrefix log
