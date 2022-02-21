@@ -29,7 +29,7 @@ where
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Control.Monad.STM qualified as STM
 import Options.Applicative qualified as OApp
-import ShellRun.Args (ALineTruncation (..), Args (..))
+import ShellRun.Args (ALineTruncation (..), Args (..), FilePathDefault (..))
 import ShellRun.Args qualified as Args
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
@@ -50,23 +50,50 @@ import ShellRun.Logging.Queue (LogTextQueue (..))
 import ShellRun.Prelude
 import System.Console.Terminal.Size (Window (..))
 import System.Console.Terminal.Size qualified as TSize
+import System.Directory (XdgDirectory (..))
+import System.Directory qualified as Dir
 import System.Exit qualified as SysExit
+import System.FilePath ((</>))
 
 -- | Runs the parser.
 --
 -- @since 0.1.0.0
 runParser :: IO Env
 runParser = do
-  args <- OApp.execParser Args.parserInfoArgs
-  fl <- case aFileLogging args of
-    Nothing -> pure Nothing
-    Just fp -> do
+  args@MkArgs {aFileLogging, aLegend} <- OApp.execParser Args.parserInfoArgs
+
+  print args
+
+  -- get configDir if we need it
+  configDir <- case (aFileLogging, aLegend) of
+    (FPDefault, _) -> Dir.getXdgDirectory XdgConfig "shell-run"
+    (_, FPDefault) -> Dir.getXdgDirectory XdgConfig "shell-run"
+    _ -> pure ""
+
+  fileLogging' <- case aFileLogging of
+    FPNone -> pure Nothing
+    FPDefault -> do
+      let fp = configDir </> "logs.txt"
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
-  toEnv fl args
+    FPPath fp -> do
+      queue <- STM.atomically $ TBQueue.newTBQueue 1000
+      pure $ Just (fp, MkLogTextQueue queue)
 
-toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Args -> IO Env
-toEnv fl MkArgs {..} = do
+  legend' <- case aLegend of
+    FPNone -> pure Nothing
+    FPDefault -> do
+      let fp = configDir </> "legend.txt"
+      pure $ Just fp
+    FPPath fp -> pure $ Just fp
+
+  e <- toEnv fileLogging' legend' args
+
+  print e
+  pure e
+
+toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Maybe FilePath -> Args -> IO Env
+toEnv fileLogging' legend' MkArgs {..} = do
   lineTruncation' <- case aLineTruncation of
     Undetected x -> pure x
     Detected ->
@@ -75,9 +102,9 @@ toEnv fl MkArgs {..} = do
         Nothing -> SysExit.die "Failed trying to detect terminal size"
   pure $
     MkEnv
-      { legend = aLegend,
+      { legend = legend',
         timeout = aTimeout,
-        fileLogging = fl,
+        fileLogging = fileLogging',
         commandLogging = aCommandLogging,
         commandDisplay = aCommandDisplay,
         cmdTruncation = aCmdTruncation,

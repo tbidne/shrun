@@ -4,7 +4,7 @@ module Specs.ShellRun.Args (specs) where
 import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import ShellRun.Args (ALineTruncation (..), Args (..))
+import ShellRun.Args (ALineTruncation (..), Args (..), FilePathDefault (..))
 import ShellRun.Args qualified as Args
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
@@ -32,7 +32,8 @@ specs =
       fileLoggingSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
-      truncationSpecs,
+      cmdTruncSpecs,
+      lineTruncSpecs,
       commandSpecs
     ]
 
@@ -48,13 +49,13 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
       expected =
         Just $
           MkArgs
-            { aLegend = Nothing,
+            { aLegend = FPDefault,
               aTimeout = MkTimeout PPosInf,
               aCommandLogging = Disabled,
               aCommandDisplay = ShowCommand,
               aCmdTruncation = MkTruncation PPosInf,
               aLineTruncation = Undetected (MkTruncation PPosInf),
-              aFileLogging = Nothing,
+              aFileLogging = FPNone,
               aCommands = NESeq.singleton "command"
             }
   verifyResult argList expected
@@ -64,19 +65,26 @@ legendSpecs =
   Tasty.testGroup
     "Legend arg parsing"
     [ parseShortLegend,
-      parseLongLegend
+      parseLongLegend,
+      parseDefaultLegend
     ]
 
 parseShortLegend :: TestTree
 parseShortLegend = THU.testCase "Should parse short legend" $ do
   let argList = ["-l./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aLegend = Just "./path/legend.txt"}
+      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPPath "./path/legend.txt"}
   verifyResult argList expected
 
 parseLongLegend :: TestTree
 parseLongLegend = THU.testCase "Should parse long legend" $ do
   let argList = ["--legend=./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aLegend = Just "./path/legend.txt"}
+      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPPath "./path/legend.txt"}
+  verifyResult argList expected
+
+parseDefaultLegend :: TestTree
+parseDefaultLegend = THU.testCase "Should parse default legend" $ do
+  let argList = ["--legend", "default", "command"]
+      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPDefault}
   verifyResult argList expected
 
 timeoutSpecs :: TestTree
@@ -132,19 +140,26 @@ fileLoggingSpecs =
   Tasty.testGroup
     "FileLogging arg parsing"
     [ parseShortFileLogging,
-      parseLongFileLogging
+      parseLongFileLogging,
+      parseDefaultFileLogging
     ]
 
 parseShortFileLogging :: TestTree
 parseShortFileLogging = THU.testCase "Should parse filepath with -f" $ do
   let argList = ["-flogfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = Just "logfile"}
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPPath "logfile"}
   verifyResult argList expected
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging = THU.testCase "Should parse filepath with --file-log" $ do
   let argList = ["--file-log=logfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = Just "logfile"}
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPPath "logfile"}
+  verifyResult argList expected
+
+parseDefaultFileLogging :: TestTree
+parseDefaultFileLogging = THU.testCase "Should parse default --file-log" $ do
+  let argList = ["--file-log", "default", "command"]
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPDefault}
   verifyResult argList expected
 
 commandLoggingSpecs :: TestTree
@@ -187,16 +202,16 @@ parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
       expected = Just $ (Args.defaultArgs defCommand) {aCommandDisplay = ShowKey}
   verifyResult argList expected
 
-truncationSpecs :: TestTree
-truncationSpecs =
+cmdTruncSpecs :: TestTree
+cmdTruncSpecs =
   Tasty.testGroup
-    "Truncation arg parsing"
-    [ parseShortTruncation,
-      parseLongTruncation
+    "Command name truncation arg parsing"
+    [ parseShortCmdTrunc,
+      parseLongCmdTrunc
     ]
 
-parseShortTruncation :: TestTree
-parseShortTruncation = THU.testCase "Should parse -x as Truncation" $ do
+parseShortCmdTrunc :: TestTree
+parseShortCmdTrunc = THU.testCase "Should parse -x as command name truncation" $ do
   let argList = ["-x", "15", "command"]
       expected =
         Just $
@@ -205,15 +220,58 @@ parseShortTruncation = THU.testCase "Should parse -x as Truncation" $ do
             }
   verifyResult argList expected
 
-parseLongTruncation :: TestTree
-parseLongTruncation = THU.testCase
-  "Should parse --cmd-name-truncate as Truncation"
+parseLongCmdTrunc :: TestTree
+parseLongCmdTrunc = THU.testCase
+  "Should parse --cmd-name-trunc as command name truncation"
   $ do
-    let argList = ["--cmd-name-truncate", "15", "command"]
+    let argList = ["--cmd-name-trunc", "15", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
               { aCmdTruncation = MkTruncation (PFin 15)
+              }
+    verifyResult argList expected
+
+lineTruncSpecs :: TestTree
+lineTruncSpecs =
+  Tasty.testGroup
+    "Command line truncation arg parsing"
+    [ parseShortCmdTrunc,
+      parseLongCmdTrunc,
+      parseDetectCmdLineTrunc
+    ]
+
+parseShortLineTrunc :: TestTree
+parseShortLineTrunc = THU.testCase "Should parse -y as command line truncation" $ do
+  let argList = ["-y", "15", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { aLineTruncation = Undetected $ MkTruncation (PFin 15)
+            }
+  verifyResult argList expected
+
+parseLongCmdLineTrunc :: TestTree
+parseLongCmdLineTrunc = THU.testCase
+  "Should parse --cmd-line-trunc as command line truncation"
+  $ do
+    let argList = ["--cmd-line-trunc", "15", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { aLineTruncation = Undetected $ MkTruncation (PFin 15)
+              }
+    verifyResult argList expected
+
+parseDetectCmdLineTrunc :: TestTree
+parseDetectCmdLineTrunc = THU.testCase
+  "Should parse --cmd-line-trunc detect as detect command line truncation"
+  $ do
+    let argList = ["--cmd-line-trunc", "detect", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { aLineTruncation = Detected
               }
     verifyResult argList expected
 

@@ -6,12 +6,12 @@
 module ShellRun.Args
   ( Args (..),
     ALineTruncation (..),
+    FilePathDefault (..),
     defaultArgs,
     parserInfoArgs,
   )
 where
 
-import Control.Applicative qualified as App
 import Data.List qualified as L
 import Data.List.NonEmpty qualified as NE
 import Data.String (IsString (..), String)
@@ -48,10 +48,10 @@ data Args = MkArgs
     --
     -- @since 0.1.0.0
     aCommandLogging :: CommandLogging,
-    -- | Optional path to log file..
+    -- | Optional path to log file.
     --
     -- @since 0.1.0.0
-    aFileLogging :: Maybe FilePath,
+    aFileLogging :: FilePathDefault,
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1.0.0
@@ -59,7 +59,7 @@ data Args = MkArgs
     -- | Optional legend file.
     --
     -- @since 0.1.0.0
-    aLegend :: Maybe FilePath,
+    aLegend :: FilePathDefault,
     -- | Timeout.
     --
     -- @since 0.1.0.0
@@ -110,20 +110,46 @@ instance Semigroup ALineTruncation where
 instance Monoid ALineTruncation where
   mempty = Undetected mempty
 
+-- | FilePath option that includes none and default possibilities.
+--
+-- @since 0.1.0.0
+data FilePathDefault
+  = -- | @since 0.1.0.0
+    FPNone
+  | -- | @since 0.1.0.0
+    FPDefault
+  | -- | @since 0.1.0.0
+    FPPath FilePath
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+
+instance Semigroup FilePathDefault where
+  FPPath f <> _ = FPPath f
+  _ <> FPPath f = FPPath f
+  FPDefault <> _ = FPDefault
+  FPNone <> r = r
+
+instance Monoid FilePathDefault where
+  mempty = FPNone
+
 -- | Default configuration.
 --
 -- ==== __Examples__
 -- >>> defaultArgs (NESeq.singleton "ls")
--- MkArgs {aCommandLogging = Disabled, aFileLogging = Nothing, aCommandDisplay = ShowCommand, aLegend = Nothing, aTimeout = MkTimeout {unTimeout = PPosInf}, aCmdTruncation = MkTruncation {unTruncation = PPosInf}, aLineTruncation = Undetected (MkTruncation {unTruncation = PPosInf}), aCommands = "ls" :|^ fromList []}
+-- MkArgs {aCommandLogging = Disabled, aFileLogging = FPNone, aCommandDisplay = ShowCommand, aLegend = FPDefault, aTimeout = MkTimeout {unTimeout = PPosInf}, aCmdTruncation = MkTruncation {unTruncation = PPosInf}, aLineTruncation = Undetected (MkTruncation {unTruncation = PPosInf}), aCommands = "ls" :|^ fromList []}
 --
 -- @since 0.1.0.0
 defaultArgs :: NonEmptySeq Text -> Args
 defaultArgs cmds =
   MkArgs
     { aCommandLogging = mempty,
-      aFileLogging = empty,
+      aFileLogging = mempty,
       aCommandDisplay = mempty,
-      aLegend = empty,
+      aLegend = FPDefault,
       aTimeout = mempty,
       aCmdTruncation = mempty,
       aLineTruncation = mempty,
@@ -184,23 +210,25 @@ version = OApp.infoOption txt (OApp.long "version" <> OApp.short 'v')
 versNum :: List Char
 versNum = "Version: " <> $$(PV.packageVersionStringTH "shell-run.cabal")
 
-legendParser :: Parser (Maybe FilePath)
+legendParser :: Parser FilePathDefault
 legendParser =
-  App.optional
-    ( OApp.strOption
-        ( OApp.long "legend"
-            <> OApp.short 'l'
-            <> OApp.help legendHelp
-            <> OApp.metavar "PATH"
-        )
+  OApp.option
+    readLogFile
+    ( OApp.value FPDefault
+        <> OApp.long "legend"
+        <> OApp.short 'l'
+        <> OApp.help legendHelp
+        <> OApp.metavar "PATH"
     )
   where
     legendHelp =
-      "Path to legend file, used for translating commands."
-        <> " Key/value pairs have the form `key=cmd1,,cmd2,,...`"
-        <> ", i.e., keys can refer to multiple commands and refer to"
-        <> " other keys recursively. Lines starting with `#` are"
-        <> " considered comments and ignored."
+      "Path to legend file, used for translating commands. "
+        <> "Key/value pairs have the form 'key=cmd1,,cmd2,,...' "
+        <> ", i.e., keys can refer to multiple commands and refer to "
+        <> "other keys recursively. Lines starting with '#' are "
+        <> "considered comments and ignored. If no path is given, we "
+        <> "automatically look in the Xdg config directory e.g. "
+        <> "~/.config/shell-run/legend.txt."
 
 timeoutParser :: Parser Timeout
 timeoutParser =
@@ -238,7 +266,7 @@ cmdTruncationParser =
   OApp.option
     readTruncation
     ( OApp.value (MkTruncation PPosInf)
-        <> OApp.long "cmd-name-truncate"
+        <> OApp.long "cmd-name-trunc"
         <> OApp.short 'x'
         <> OApp.help help
         <> OApp.metavar "NATURAL"
@@ -248,15 +276,15 @@ cmdTruncationParser =
       "Non-negative integer that limits the length of commands/key-names "
         <> "in the console logs. Defaults to no truncation. This affects "
         <> "everywhere the command/key-name shows up (i.e. in command logs or "
-        <> "final success/error message), it does not affect file logs "
-        <> "created via --file-log."
+        <> "final success/error message); File logs create via --file-log "
+        <> "are unaffected."
 
 lineTruncationParser :: Parser ALineTruncation
 lineTruncationParser =
   OApp.option
     (defRead <|> readDetectTruncation)
     ( OApp.value defValue
-        <> OApp.long "cmd-line-truncate"
+        <> OApp.long "cmd-line-trunc"
         <> OApp.short 'y'
         <> OApp.help help
         <> OApp.metavar "NATURAL or detect"
@@ -283,22 +311,31 @@ readDetectTruncation = do
       OApp.readerAbort $
         ErrorMsg $ "Unrecognized truncation option:" <> T.unpack s
 
-fileLoggingParser :: Parser (Maybe FilePath)
+fileLoggingParser :: Parser FilePathDefault
 fileLoggingParser =
-  App.optional
-    ( OApp.strOption
-        ( OApp.long "file-log"
-            <> OApp.short 'f'
-            <> OApp.help help
-            <> OApp.metavar "PATH"
-        )
+  OApp.option
+    readLogFile
+    ( OApp.value FPNone
+        <> OApp.long "file-log"
+        <> OApp.short 'f'
+        <> OApp.help help
+        <> OApp.metavar "PATH"
     )
   where
     help =
       "If a path is supplied, all logs will additionally be written to the "
         <> "supplied file. Furthermore, command logs will be written to the "
-        <> "file irrespective of --cmd-logging. Console logging is "
-        <> "unaffected. This can be useful for investigating command failures."
+        <> "file irrespective of --cmd-log. Console logging is "
+        <> "unaffected. This can be useful for investigating command "
+        <> "failures. If the string literal 'default' is given, we will write "
+        <> "to the Xdg config directory e.g. ~/.config/shell-run/logs.txt"
+
+readLogFile :: ReadM FilePathDefault
+readLogFile = do
+  f <- OApp.str
+  if f == "default"
+    then pure FPDefault
+    else pure (FPPath f)
 
 commandLoggingParser :: Parser CommandLogging
 commandLoggingParser =
@@ -323,8 +360,8 @@ commandDisplayParser =
     )
   where
     help =
-      "In console output, display key name over actual command if it "
-        <> "exists."
+      "In console output, display key name from legend file over actual "
+        <> "command if it exists."
 
 commandsParser :: Parser (NonEmptySeq Text)
 commandsParser =
