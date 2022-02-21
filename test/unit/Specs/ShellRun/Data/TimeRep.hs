@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Specs for ShellRun.Data.TimeRep.
 module Specs.ShellRun.Data.TimeRep (specs) where
 
