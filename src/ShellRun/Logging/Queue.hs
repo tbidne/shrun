@@ -1,5 +1,5 @@
 -- | Provides the 'LogTextQueue' type and associated functions. This is intended
--- to be used to provide a command "log queue", e.g., for concurrency.
+-- for concurrently writing logs to a file.
 --
 -- @since 0.1.0.0
 module ShellRun.Logging.Queue

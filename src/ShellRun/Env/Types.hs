@@ -194,6 +194,7 @@ data CmdLogging
 -- for display, rather than the key itself.
 data CmdDisplay
   = -- | Display the command itself, not the key.
+    --
     -- @since 0.1.0.0
     ShowCmd
   | -- | Display the command's key, if it exists, rather

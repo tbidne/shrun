@@ -1,4 +1,4 @@
--- | Provides numerical types for dealing with infinite.
+-- | Provides numerical types for dealing with infinity.
 --
 -- @since 0.1.0.0
 module ShellRun.Data.InfNum

@@ -30,7 +30,7 @@ import ShellRun.Prelude
 -- >>> import GHC.Exts (fromList)
 
 -- | Represents a non-empty sequence. This is useful for when we want a
--- non-empty and finite list.
+-- non-empty, finite list.
 --
 -- @since 0.1.0.0
 data NonEmptySeq a = a :|^ (Seq a)

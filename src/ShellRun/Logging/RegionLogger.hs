@@ -1,5 +1,5 @@
 -- | Provides functionality for logging to a specific region
--- (i.e. for concurrent logging).
+-- (i.e. for concurrent console logging).
 --
 -- @since 0.1.0.0
 module ShellRun.Logging.RegionLogger

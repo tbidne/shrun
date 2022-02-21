@@ -31,10 +31,6 @@ module ShellRun.Prelude
     Tuple2,
     Tuple3,
 
-    -- * Refined Aliases
-    RNonNegative,
-    RPositive,
-
     -- * Prelude exports
     module X,
   )
@@ -90,7 +86,6 @@ import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..))
 import GHC.Natural as X (Natural)
-import Refined (NonNegative, Positive, Refined)
 import Prelude as X
   ( Bool (..),
     Bounded (..),
@@ -188,7 +183,7 @@ monoBimap f = bimap f f
 
 infixl 4 <<$>>
 
--- | Alias for '[]'.
+-- | Alias for [].
 --
 -- @since 0.1.0.0
 type List = []
@@ -202,13 +197,3 @@ type Tuple2 = (,)
 --
 -- @since 0.1.0.0
 type Tuple3 = (,,)
-
--- | Alias for 'Refined' 'NonNegative' 'Int'.
---
--- @since 0.1.0.0
-type RNonNegative = Refined NonNegative Int
-
--- | Alias for 'Refined' 'Positive' Int'.
---
--- @since 0.1.0.0
-type RPositive = Refined Positive Int

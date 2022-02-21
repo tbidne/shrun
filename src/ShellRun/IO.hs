@@ -8,8 +8,8 @@ module ShellRun.IO
 
     -- * Timing shell programs
     tryTimeSh,
-    tryTimeShStreamNoRegion,
     tryTimeShStreamRegion,
+    tryTimeShStreamNoRegion,
 
     -- * Low level running shell programs
     sh,
@@ -326,8 +326,7 @@ readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess err) = MkStderr err
 
--- | Attempts to read from the handle. The parameter 'CmdDisplay' and
--- 'Command' are used in formatting.
+-- | Attempts to read from the handle.
 --
 -- @since 0.1.0.0
 readHandle :: Handle -> IO ReadHandleResult

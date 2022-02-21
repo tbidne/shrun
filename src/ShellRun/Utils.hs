@@ -101,7 +101,7 @@ diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
 -- >>> foldMap1 @List Sum 0 [1..4]
 -- Sum {getSum = 10}
 --
--- -- Silly, but demonstrates usage i.e. with non-monoid NonEmpty.
+-- >>> -- Silly, but demonstrates usage i.e. with non-monoid NonEmpty.
 -- >>> foldMap1 @List (:| []) 1 [2,3,4]
 -- 1 :| [2,3,4]
 --
@@ -182,7 +182,7 @@ splitOn (MkRefined s) txt = case T.splitOn s txt of
         <> txt
 
 -- | For 'Natural' \(n\) and 'Text' \(t = t_0 t_1 \ldots t_m\), truncates
--- \(t\) if @m > n@. In this case, \(t\) is truncated to \(n - 3\), and an
+-- \(t\) if \(m > n\). In this case, \(t\) is truncated to \(n - 3\), and an
 -- ellipsis ( \(\ldots\) ) is appended. We are left with a string with
 -- length exactly \(n\):
 --
