@@ -136,7 +136,20 @@ lineTruncProps = T.askOption $ \(MkMaxRuns limit) ->
 
         H.annotate $ "Result: " <> T.unpack result
         H.assert $ "..." `T.isSuffixOf` result
-        H.diff result (\t l -> T.length t < l) lineTruncLimit
+        H.diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
+
+-- Colorization adds chars that the shell interprets as color commands.
+-- This affects the length, so if we do anything that tests the length
+-- of a line, this needs to be taken into account.
+--
+-- The colorization looks like: \ESC[<digits>m ... \ESC[0m, where digit is up
+-- to 3 chars. Strictly speaking, System.Console.Pretty only appears to use
+-- two digit colors, i.e. 9 total, and in fact we passed 1,000,000 tests using
+-- 9. Still, the standard mentions up to 3 digits, so we will use that, giving
+-- a total of 10. More info:
+-- https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
+colorLen :: Int
+colorLen = 10
 
 data Env = MkEnv
   { cmdDisplay :: CommandDisplay,
