@@ -74,7 +74,7 @@ runParser = do
       let fp = configDir </> "logs.txt"
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
-    FPPath fp -> do
+    FPManual fp -> do
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
 
@@ -83,7 +83,7 @@ runParser = do
     FPDefault -> do
       let fp = configDir </> "legend.txt"
       pure $ Just fp
-    FPPath fp -> pure $ Just fp
+    FPManual fp -> pure $ Just fp
 
   toEnv fileLogging' legend' args
 

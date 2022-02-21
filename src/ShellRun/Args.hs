@@ -119,7 +119,7 @@ data FilePathDefault
   | -- | @since 0.1.0.0
     FPDefault
   | -- | @since 0.1.0.0
-    FPPath FilePath
+    FPManual FilePath
   deriving
     ( -- | @since 0.1.0.0
       Eq,
@@ -128,8 +128,8 @@ data FilePathDefault
     )
 
 instance Semigroup FilePathDefault where
-  FPPath f <> _ = FPPath f
-  _ <> FPPath f = FPPath f
+  FPManual f <> _ = FPManual f
+  _ <> FPManual f = FPManual f
   FPDefault <> _ = FPDefault
   FPNone <> r = r
 
@@ -335,7 +335,7 @@ readLogFile = do
   f <- OApp.str
   if f == "default"
     then pure FPDefault
-    else pure (FPPath f)
+    else pure (FPManual f)
 
 commandLoggingParser :: Parser CmdLogging
 commandLoggingParser =

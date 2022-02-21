@@ -68,13 +68,13 @@ legendSpecs =
 parseShortLegend :: TestTree
 parseShortLegend = THU.testCase "Should parse short legend" $ do
   let argList = ["-l./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPPath "./path/legend.txt"}
+      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPManual "./path/legend.txt"}
   verifyResult argList expected
 
 parseLongLegend :: TestTree
 parseLongLegend = THU.testCase "Should parse long legend" $ do
   let argList = ["--legend=./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPPath "./path/legend.txt"}
+      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPManual "./path/legend.txt"}
   verifyResult argList expected
 
 parseDefaultLegend :: TestTree
@@ -143,13 +143,13 @@ fileLoggingSpecs =
 parseShortFileLogging :: TestTree
 parseShortFileLogging = THU.testCase "Should parse filepath with -f" $ do
   let argList = ["-flogfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPPath "logfile"}
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPManual "logfile"}
   verifyResult argList expected
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging = THU.testCase "Should parse filepath with --file-log" $ do
   let argList = ["--file-log=logfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPPath "logfile"}
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPManual "logfile"}
   verifyResult argList expected
 
 parseDefaultFileLogging :: TestTree
