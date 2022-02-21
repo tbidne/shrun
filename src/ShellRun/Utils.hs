@@ -37,6 +37,7 @@ import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
 
 -- $setup
+-- >>> :set -XOverloadedLists
 -- >>> :set -XTemplateHaskell
 -- >>> import Data.List.NonEmpty (NonEmpty (..))
 -- >>> import Data.Semigroup (Sum (..))

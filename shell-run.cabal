@@ -26,6 +26,7 @@ common common-exts
   default-extensions:
     NoImplicitPrelude
     NoStarIsType
+    ApplicativeDo
     DataKinds
     DerivingVia
     FlexibleContexts
@@ -38,7 +39,6 @@ common common-exts
     MultiWayIf
     NamedFieldPuns
     NumericUnderscores
-    OverloadedLists
     OverloadedStrings
     PatternSynonyms
     ScopedTypeVariables
@@ -127,6 +127,9 @@ test-suite unit
     Props.ShellRun.Command
     Props.ShellRun.Data.TimeRep
     Props.ShellRun.Legend.Internal
+    Props.ShellRun.Logging.Formatting
+    Props.ShellRun.Logging.Generators
+    Props.ShellRun.Logging.Queue
     Props.ShellRun.Utils
     Specs
     Specs.ShellRun.Args
@@ -149,6 +152,7 @@ test-suite unit
     , tasty-hedgehog        >=1.0.1.0 && <1.2
     , tasty-hunit           >=0.9     && <0.11
     , text
+    , time
     , unordered-containers
 
   hs-source-dirs:   test/unit

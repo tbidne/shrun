@@ -22,6 +22,9 @@ import ShellRun.Legend (LegendErr (..), LegendMap)
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 
+-- $setup
+-- >>> :set -XOverloadedLists
+
 -- | Wrapper for shell commands.
 --
 -- @since 0.1.0.0

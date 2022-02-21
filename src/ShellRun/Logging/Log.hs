@@ -42,6 +42,8 @@ data LogMode
     ( -- | @since 0.1.0.0
       Bounded,
       -- | @since 0.1.0.0
+      Enum,
+      -- | @since 0.1.0.0
       Eq,
       -- | @since 0.1.0.0
       Ord,
@@ -84,6 +86,8 @@ data LogLevel
     ( -- | @since 0.1.0.0
       Bounded,
       -- | @since 0.1.0.0
+      Enum,
+      -- | @since 0.1.0.0
       Eq,
       -- | @since 0.1.0.0
       Ord,
@@ -98,13 +102,21 @@ data LogLevel
     )
     via (Supremum LogLevel)
 
+-- | Determines where the log is sent.
+--
+-- @since 0.1.0.0
 data LogDest
-  = LogConsole
-  | LogFile
-  | LogBoth
+  = -- | @since 0.1.0.0
+    LogConsole
+  | -- | @since 0.1.0.0
+    LogFile
+  | -- | @since 0.1.0.0
+    LogBoth
   deriving stock
     ( -- | @since 0.1.0.0
       Bounded,
+      -- | @since 0.1.0.0
+      Enum,
       -- | @since 0.1.0.0
       Eq,
       -- | @since 0.1.0.0

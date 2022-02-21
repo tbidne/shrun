@@ -95,6 +95,7 @@ import Prelude as X
   ( Bool (..),
     Bounded (..),
     Char,
+    Enum (..),
     Eq (..),
     FilePath,
     IO,

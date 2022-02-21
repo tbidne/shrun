@@ -205,6 +205,8 @@ data CommandDisplay
     ( -- | @since 0.1.0.0
       Bounded,
       -- | @since 0.1.0.0
+      Enum,
+      -- | @since 0.1.0.0
       Eq,
       -- | @since 0.1.0.0
       Ord,

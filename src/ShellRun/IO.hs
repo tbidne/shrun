@@ -344,9 +344,9 @@ readHandle handle = do
   canRead <- Handle.hIsReadable handle
   if
       | isClosed ->
-          pure $ ReadErr $ displayEx @(List Char) "Handle closed" ""
+          pure $ ReadErr $ displayEx "Handle closed" ("" :: List Char)
       | not canRead ->
-          pure $ ReadErr $ displayEx @(List Char) "Cannot read from handle" ""
+          pure $ ReadErr $ displayEx "Cannot read from handle" ("" :: List Char)
       | otherwise -> do
           output :: Either SomeException ByteString <-
             liftIO $ SafeEx.try $ BS.hGetNonBlocking handle blockSize

@@ -41,7 +41,6 @@ exts =
     "-XNamedFieldPuns",
     "-XNoImplicitPrelude",
     "-XNumericUnderscores",
-    "-XOverloadedLists",
     "-XOverloadedStrings",
     "-XPatternSynonyms",
     "-XScopedTypeVariables",

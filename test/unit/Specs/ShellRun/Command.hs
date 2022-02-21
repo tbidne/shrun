@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | Specs for ShellRun.Commands.
 module Specs.ShellRun.Command (specs) where
 

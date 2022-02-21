@@ -112,7 +112,7 @@ formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
     f acc (n, units)
       | n == 0 = acc
       | otherwise = pluralize n units : acc
-    vals = foldl' @List f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
+    vals = foldl' f [] [(s, " second"), (m, " minute"), (h, " hour"), (d, " day")]
 
 -- | For \(n \ge 0\) seconds, returns a 'Text' description of the days, hours,
 -- minutes and seconds.
@@ -134,7 +134,7 @@ isZero (MkTimeRep d h m s)
   | timeSum == 0 = True
   | otherwise = False
   where
-    timeSum = foldl' @List sumUp 0 [d, h, m, s]
+    timeSum = foldl' sumUp 0 [d, h, m, s]
     sumUp acc = (+) acc
 
 pluralize :: Natural -> Text -> Text
