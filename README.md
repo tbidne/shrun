@@ -19,11 +19,13 @@
 - [Motivation](#motivation)
 - [Introduction](#introduction)
 - [Options](#options)
-  - [Command-Logging](#command-logging)
-  - [File-Logging](#file-logging)
-  - [Key-Show](#key-show)
+  - [Command Logging](#command-logging)
+  - [File Logging](#file-logging)
+  - [Key Show](#key-show)
   - [Legend](#legend)
   - [Timeout](#timeout)
+  - [Command Name Truncation](#command-name-truncation)
+  - [Command Line Truncation](#command-line-truncation)
 - [Building](#building)
   - [Cabal](#cabal)
   - [Stack](#stack)
@@ -81,9 +83,9 @@ A running timer is provided, and stdout/stderr will be updated when a command fi
 
 # Options
 
-## Command-Logging
+## Command Logging
 
-**Arg:** `-c, --command-logging`
+**Arg:** `-c, --cmd-log`
 
 **Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is show at a given time.
 
@@ -97,11 +99,11 @@ vs.
 
 Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 
-Practically speaking, this does not have much effect, just that if a command dies while `--command-logging` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File-Logging](#file-logging) for details on investigating command failure.
+Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File-Logging](#file-logging) for details on investigating command failure.
 
 ## File Logging
 
-**Arg:** `-f, --file-logging PATH`
+**Arg:** `-f, --file-log PATH`
 
 **Description**: If a path is supplied, all logs will additionally be written to the supplied file. Normal logging (i.e. stdout) is unaffected. In other words, the logs are duplicated. This can be useful for investigating command failures with the [Command-Logging](#command-logging) option, as those logs are not persisted in the console.
 
@@ -110,7 +112,7 @@ Practically speaking, this does not have much effect, just that if a command die
 ![file_logging](./screens/file_logging.png)
 ![file_logging_cat](./screens/file_logging_cat.png)
 
-## Key-Show
+## Key Show
 
 **Arg:** `-k, --key-show`
 
@@ -135,6 +137,8 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 **Description**: A legend file can be provided that maps key names to commands. Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
 
 Each line can be separated by as many new lines as desired, and comments start with a `#`. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands.
+
+If this option is omitted, we search for a legend file in the Xdg config directory e.g. `~/.config/shell-run/legend.txt`. This will not cause an error if it is not found, though there will be a log message.
 
 **Example:** For instance, given a legend file
 
@@ -172,6 +176,22 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 **Example:**
 
 ![timeout](./screens/timeout.png)
+
+## Command Name Truncation
+
+**Arg:** `-x, --cmd-name-trunc NATURAL`
+
+**Description:** Non-negative integer that limits the length of commands/key-names in the console logs. Defaults to no truncation. This affects everywhere the command/key-name shows up (i.e. in command logs or final success/error message). File logs created via `--file-log` are unaffected.
+
+**Example:**
+
+## Command Line Truncation
+
+**Arg:** `-x, --cmd-line-trunc NATURAL or detect`
+
+**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect` (no quotes), to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
+
+**Example:**
 
 # Building
 

@@ -15,8 +15,6 @@ import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.Loops qualified as Loops
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
-import System.Directory (XdgDirectory (..))
-import System.Directory qualified as Dir
 import Data.Text qualified as T
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Class.MonadTime (MonadTime (..))
@@ -50,6 +48,8 @@ import System.Clock (Clock (..))
 import System.Clock qualified as C
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
+import System.Directory (XdgDirectory (..))
+import System.Directory qualified as Dir
 import UnliftIO qualified
 import UnliftIO.Async qualified as UAsync
 

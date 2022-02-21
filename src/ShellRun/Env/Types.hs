@@ -21,13 +21,13 @@ module ShellRun.Env.Types
   )
 where
 
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Logging.Queue (LogTextQueue)
 import ShellRun.Prelude
-import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 
 -- | Path to legend file.
 --
@@ -70,14 +70,14 @@ class HasCmdDisplay env where
   -- | @since 0.1.0.0
   getCmdDisplay :: env -> CmdDisplay
 
--- | Determines command truncation behavior.
+-- | Determines command name truncation behavior.
 --
 -- @since 0.1.0.0
 class HasCmdNameTrunc env where
   -- | @since 0.1.0.0
   getCmdNameTrunc :: env -> Truncation 'TCmdName
 
--- | Determines line truncation behavior.
+-- | Determines command line truncation behavior.
 --
 -- @since 0.1.0.0
 class HasCmdLineTrunc env where

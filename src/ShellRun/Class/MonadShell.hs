@@ -8,15 +8,15 @@ module ShellRun.Class.MonadShell
 where
 
 import ShellRun.Command (Command (..))
-import System.FilePath ((</>))
-import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Command qualified as Command
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Legend (LegendErr (..), LegendMap)
 import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
+import System.FilePath ((</>))
 
 -- | The core typeclass for @shell-run@.
 --
@@ -39,7 +39,7 @@ class Monad m => MonadShell m where
   -- @since 0.1.0.0
   runCommands :: NonEmptySeq Command -> m ()
 
--- | `runShell` is the entry point for running shell commands, i.e.,
+-- | `runShell` is the entry point for running shell commands i.e.
 -- `MonadShell` instances.
 --
 -- @since 0.1.0.0
@@ -73,13 +73,14 @@ maybePathToCommands FPDefault cmds = do
       -- want to error if we do not find it (user may not have created it).
       -- Other errors are reported.
       FileErr _ -> do
-        putLog $ MkLog
-          { cmd = Nothing,
-            msg = "No legend file found at: " <> showt defPath,
-            lvl = Warn,
-            mode = Append,
-            dest = LogBoth
-          }
+        putLog $
+          MkLog
+            { cmd = Nothing,
+              msg = "No legend file found at: " <> showt defPath,
+              lvl = Info,
+              mode = Append,
+              dest = LogBoth
+            }
         pure $ Right $ fmap (MkCommand Nothing) cmds
       other -> pure $ Left other
     Right lMap -> pure $ Command.translateCommands lMap cmds

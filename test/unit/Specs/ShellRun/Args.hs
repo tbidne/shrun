@@ -4,8 +4,9 @@ module Specs.ShellRun.Args (specs) where
 import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import ShellRun.Args (ALineTruncation (..), Args (..), FilePathDefault (..))
+import ShellRun.Args (ALineTruncation (..), Args (..))
 import ShellRun.Args qualified as Args
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq

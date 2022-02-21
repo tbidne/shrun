@@ -187,11 +187,11 @@ levelToColor :: LogLevel -> Color
 levelToColor None = P.White
 levelToColor SubCommand = P.White
 levelToColor Debug = P.White
-levelToColor Info = P.White
+levelToColor Info = P.Magenta
 levelToColor InfoBlue = P.Blue
 levelToColor InfoCyan = P.Cyan
 levelToColor InfoSuccess = P.Green
-levelToColor Warn = P.Magenta
+levelToColor Warn = P.Yellow
 levelToColor Error = P.Red
 levelToColor Fatal = P.Red
 

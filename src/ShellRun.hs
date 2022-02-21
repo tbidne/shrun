@@ -1,5 +1,5 @@
--- | This module is the entry point to the @ShellRun@ library used by
--- the @ShellRun@ executable.
+-- | This module is the entry point to the @Shell-Run@ library used by
+-- the @Shell-Run@ executable.
 --
 -- @since 0.1.0.0
 module ShellRun

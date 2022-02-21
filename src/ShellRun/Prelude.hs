@@ -85,6 +85,7 @@ import Data.Text.Encoding qualified as TextEnc
 import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..))
+import Data.Void as X (Void, absurd)
 import GHC.Natural as X (Natural)
 import Prelude as X
   ( Bool (..),

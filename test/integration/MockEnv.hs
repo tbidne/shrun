@@ -1,10 +1,10 @@
 -- | Provides 'MockEnv' type for running integration tests.
 module MockEnv (MockEnv (..), defaultEnv) where
 
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Env (HasCommands (..), HasLegend (..))
 import ShellRun.Prelude
-import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 
 -- | Includes the bare minimum fields necessary to run 'ShellRun.runShell'.
 data MockEnv = MkMockEnv

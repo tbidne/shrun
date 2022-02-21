@@ -10,6 +10,7 @@ module ShellRun.Env
     HasCmdDisplay (..),
     HasCmdLogging (..),
     HasCmdNameTrunc (..),
+    HasCmdLineTrunc (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
@@ -29,14 +30,16 @@ where
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Control.Monad.STM qualified as STM
 import Options.Applicative qualified as OApp
-import ShellRun.Args (ALineTruncation (..), Args (..), FilePathDefault (..))
+import ShellRun.Args (ALineTruncation (..), Args (..))
 import ShellRun.Args qualified as Args
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
     Env (..),
     HasCmdDisplay (..),
+    HasCmdLineTrunc (..),
     HasCmdLogging (..),
     HasCmdNameTrunc (..),
     HasCommands (..),

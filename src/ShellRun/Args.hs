@@ -6,7 +6,6 @@
 module ShellRun.Args
   ( Args (..),
     ALineTruncation (..),
-    FilePathDefault (..),
     defaultArgs,
     parserInfoArgs,
   )
@@ -22,6 +21,7 @@ import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
 import Options.Applicative qualified as OApp
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
@@ -39,7 +39,6 @@ import Text.Megaparsec (Parsec)
 import Text.Megaparsec qualified as MP
 import Text.Megaparsec.Char qualified as MPC
 import Text.Read qualified as TR
-import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 
 -- | Type for parsing command line args.
 --
@@ -85,7 +84,7 @@ data Args = MkArgs
       Show
     )
 
--- | Determines command log line truncation behavior. We need to separate
+-- | Determines command log line truncation behavior. We need a separate
 -- type from 'Truncation' to add a third option, to detect the terminal size
 -- automatically.
 --
@@ -251,7 +250,7 @@ cmdTruncationParser =
       "Non-negative integer that limits the length of commands/key-names "
         <> "in the console logs. Defaults to no truncation. This affects "
         <> "everywhere the command/key-name shows up (i.e. in command logs or "
-        <> "final success/error message); File logs create via --file-log "
+        <> "final success/error message); File logs created via --file-log "
         <> "are unaffected."
 
 lineTruncationParser :: Parser ALineTruncation

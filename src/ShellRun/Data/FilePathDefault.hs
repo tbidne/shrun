@@ -2,7 +2,7 @@
 --
 -- @since 0.1.0.0
 module ShellRun.Data.FilePathDefault
-  ( FilePathDefault (..)
+  ( FilePathDefault (..),
   )
 where
 
@@ -25,11 +25,13 @@ data FilePathDefault
       Show
     )
 
+-- | @since 0.1.0.0
 instance Semigroup FilePathDefault where
   FPManual f <> _ = FPManual f
   _ <> FPManual f = FPManual f
   FPDefault <> _ = FPDefault
   FPNone <> r = r
 
+-- | @since 0.1.0.0
 instance Monoid FilePathDefault where
   mempty = FPNone

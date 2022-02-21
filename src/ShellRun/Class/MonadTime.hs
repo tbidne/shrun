@@ -17,8 +17,10 @@ class Monad m => MonadTime m where
   -- | @since 0.1.0.0
   getSystemTime :: m UTCTime
 
+-- | @since 0.1.0.0
 instance MonadTime IO where
   getSystemTime = Clock.getCurrentTime
 
+-- | @since 0.1.0.0
 instance MonadTime m => MonadTime (ReaderT e m) where
   getSystemTime = lift getSystemTime
