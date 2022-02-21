@@ -27,13 +27,14 @@ import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Logging.Queue (LogTextQueue)
 import ShellRun.Prelude
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 
 -- | Path to legend file.
 --
 -- @since 0.1.0.0
 class HasLegend env where
   -- | @since 0.1.0.0
-  getLegend :: env -> Maybe FilePath
+  getLegend :: env -> FilePathDefault
 
 -- | The commands themselves.
 --
@@ -91,7 +92,7 @@ data Env = MkEnv
   { -- | Optional path to a legend file.
     --
     -- @since 0.1.0.0
-    legend :: Maybe FilePath,
+    legend :: FilePathDefault,
     -- | Timeout.
     --
     -- @since 0.1.0.0

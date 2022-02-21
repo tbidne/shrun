@@ -27,6 +27,8 @@ newtype GoodMockShell a = MkGoodMockShell {runGoodMockShell :: MockShellBase a}
     via MockShellBase
 
 instance MonadShell GoodMockShell where
+  getDefaultDir = pure "config"
+  legendPathToMap "config/legend.txt" = pure $ Right $ Map.singleton "def-key" "def-val"
   legendPathToMap _ = pure $ Right mp
     where
       mp =

@@ -55,6 +55,7 @@ library
     ShellRun.Class.MonadShell
     ShellRun.Class.MonadTime
     ShellRun.Command
+    ShellRun.Data.FilePathDefault
     ShellRun.Data.InfNum
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum

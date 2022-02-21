@@ -28,6 +28,9 @@ newtype NoLegendMockShell a = MkNoLegendMockShell
     via MockShellBase
 
 instance MonadShell NoLegendMockShell where
+  getDefaultDir = pure "config"
+  -- No legend exists at default dir
+  legendPathToMap "config/legend.txt" = pure $ Left $ FileErr "FileNotFound"
   -- Purposely giving a bad shell function here to prove that no legend skips
   -- this (otherwise would die here)
   legendPathToMap _ = pure $ Left $ EntryErr "Bad key"

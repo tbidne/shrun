@@ -26,6 +26,7 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
     via MockShellBase
 
 instance MonadShell BadLegendMockShell where
+  getDefaultDir = pure "config"
   legendPathToMap _ = pure $ Left $ FileErr "File not found"
   runCommands _ = pure ()
 

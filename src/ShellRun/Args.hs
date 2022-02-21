@@ -39,6 +39,7 @@ import Text.Megaparsec (Parsec)
 import Text.Megaparsec qualified as MP
 import Text.Megaparsec.Char qualified as MPC
 import Text.Read qualified as TR
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 
 -- | Type for parsing command line args.
 --
@@ -109,32 +110,6 @@ instance Semigroup ALineTruncation where
 -- | @since 0.1.0.0
 instance Monoid ALineTruncation where
   mempty = Undetected mempty
-
--- | FilePath option that includes none and default possibilities.
---
--- @since 0.1.0.0
-data FilePathDefault
-  = -- | @since 0.1.0.0
-    FPNone
-  | -- | @since 0.1.0.0
-    FPDefault
-  | -- | @since 0.1.0.0
-    FPManual FilePath
-  deriving
-    ( -- | @since 0.1.0.0
-      Eq,
-      -- | @since 0.1.0.0
-      Show
-    )
-
-instance Semigroup FilePathDefault where
-  FPManual f <> _ = FPManual f
-  _ <> FPManual f = FPManual f
-  FPDefault <> _ = FPDefault
-  FPNone <> r = r
-
-instance Monoid FilePathDefault where
-  mempty = FPNone
 
 -- | Default configuration.
 --

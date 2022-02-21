@@ -60,17 +60,12 @@ import System.FilePath ((</>))
 -- @since 0.1.0.0
 runParser :: IO Env
 runParser = do
-  args@MkArgs {aFileLogging, aLegend} <- OApp.execParser Args.parserInfoArgs
-
-  -- get configDir if we need it
-  configDir <- case (aFileLogging, aLegend) of
-    (FPDefault, _) -> Dir.getXdgDirectory XdgConfig "shell-run"
-    (_, FPDefault) -> Dir.getXdgDirectory XdgConfig "shell-run"
-    _ -> pure ""
+  args@MkArgs {aFileLogging} <- OApp.execParser Args.parserInfoArgs
 
   fileLogging' <- case aFileLogging of
     FPNone -> pure Nothing
     FPDefault -> do
+      configDir <- Dir.getXdgDirectory XdgConfig "shell-run"
       let fp = configDir </> "logs.txt"
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
@@ -78,17 +73,10 @@ runParser = do
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
 
-  legend' <- case aLegend of
-    FPNone -> pure Nothing
-    FPDefault -> do
-      let fp = configDir </> "legend.txt"
-      pure $ Just fp
-    FPManual fp -> pure $ Just fp
+  toEnv fileLogging' args
 
-  toEnv fileLogging' legend' args
-
-toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Maybe FilePath -> Args -> IO Env
-toEnv fileLogging' legend' MkArgs {..} = do
+toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Args -> IO Env
+toEnv fileLogging' MkArgs {..} = do
   lineNameTrunc' <- case aCmdLineTrunc of
     Undetected x -> pure x
     Detected ->
@@ -97,7 +85,7 @@ toEnv fileLogging' legend' MkArgs {..} = do
         Nothing -> SysExit.die "Failed trying to detect terminal size"
   pure $
     MkEnv
-      { legend = legend',
+      { legend = aLegend,
         timeout = aTimeout,
         fileLogging = fileLogging',
         cmdLogging = aCmdLogging,

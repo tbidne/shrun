@@ -15,6 +15,8 @@ import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.Loops qualified as Loops
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
+import System.Directory (XdgDirectory (..))
+import System.Directory qualified as Dir
 import Data.Text qualified as T
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Class.MonadTime (MonadTime (..))
@@ -36,7 +38,7 @@ import ShellRun.Env.Types (HasCmdLineTrunc (..))
 import ShellRun.IO (Stderr (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr, LegendMap)
-import ShellRun.Legend qualified as ParseLegend
+import ShellRun.Legend qualified as Legend
 import ShellRun.Logging.Formatting qualified as LFormat
 import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.Queue (LogText (..), LogTextQueue)
@@ -131,8 +133,11 @@ maybePrintLog fn log@MkLog {dest} = do
 
 -- | @since 0.1.0.0
 instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) where
+  getDefaultDir :: ShellT Env m FilePath
+  getDefaultDir = liftIO $ Dir.getXdgDirectory XdgConfig "shell-run"
+
   legendPathToMap :: FilePath -> ShellT Env m (Either LegendErr LegendMap)
-  legendPathToMap = liftIO . ParseLegend.legendPathToMap
+  legendPathToMap = liftIO . Legend.legendPathToMap
 
   runCommands :: NonEmptySeq Command -> ShellT Env m ()
   runCommands commands = Regions.displayConsoleRegions $
