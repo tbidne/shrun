@@ -29,7 +29,7 @@ spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
               [ -- Need file logging to read commands
                 "-f" <> outpath,
                 "sleep 2",
-                commandLogging
+                cmdLogging
               ]
                 <> commands
 
@@ -45,7 +45,7 @@ spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
     -- `sleep 1` is because commands that run too quickly will not have
     -- output logged
     commands = ["echo hi && sleep 1"]
-    commandLogging = "--cmd-log"
+    cmdLogging = "--cmd-log"
 
 expected :: List ExpectedText
 expected =

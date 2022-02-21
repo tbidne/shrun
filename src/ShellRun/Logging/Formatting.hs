@@ -9,10 +9,10 @@ where
 import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
-  ( CommandDisplay (..),
-    HasCmdTruncation (..),
-    HasCommandDisplay (..),
-    HasLineTruncation (..),
+  ( CmdDisplay (..),
+    HasCmdDisplay (..),
+    HasCmdLineTrunc (..),
+    HasCmdNameTrunc (..),
     Truncation (..),
   )
 import ShellRun.Logging.Log (Log (..), LogLevel (..))
@@ -35,31 +35,31 @@ import System.Console.Pretty qualified as P
 --
 -- @since 0.1.0.0
 formatConsoleLog ::
-  ( HasCommandDisplay env,
-    HasCmdTruncation env,
-    HasLineTruncation env,
+  ( HasCmdDisplay env,
+    HasCmdNameTrunc env,
+    HasCmdLineTrunc env,
     MonadReader env m
   ) =>
   Log ->
   m Text
 formatConsoleLog log@MkLog {cmd, msg, lvl} = do
-  commandDisplay <- asks getCommandDisplay
-  MkTruncation cmdTruncation <- asks getCmdTruncation
-  MkTruncation lineTruncation <- asks getLineTruncation
+  cmdDisplay <- asks getCmdDisplay
+  MkTruncation cmdNameTrunc <- asks getCmdNameTrunc
+  MkTruncation lineNameTrunc <- asks getCmdLineTrunc
   case cmd of
     Nothing -> pure $ colorize $ prefix <> msg
     Just com ->
       let -- get cmd name to display
-          name = case (getKey com, commandDisplay) of
+          name = case (getKey com, cmdDisplay) of
             (Just key, ShowKey) -> key
             (_, _) -> command com
           -- truncate cmd/name if necessary
-          name' = case cmdTruncation of
+          name' = case cmdNameTrunc of
             PPosInf -> name
             PFin n -> U.truncateIfNeeded n name
           -- truncate entire if necessary (flag on and command log only)
           line = colorize $ prefix <> "[" <> name' <> "] " <> msg
-          line' = case (lvl, lineTruncation) of
+          line' = case (lvl, lineNameTrunc) of
             (SubCommand, PFin m) -> U.truncateIfNeeded m line
             _ -> line
        in pure line'

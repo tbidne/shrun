@@ -10,11 +10,7 @@ import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
-import ShellRun.Env
-  ( CommandDisplay (..),
-    CommandLogging (..),
-    Truncation (..),
-  )
+import ShellRun.Env.Types (CmdDisplay (..), CmdLogging (..), Truncation (..))
 import ShellRun.Prelude
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
@@ -32,8 +28,8 @@ specs =
       fileLoggingSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
-      cmdTruncSpecs,
-      lineTruncSpecs,
+      cmdNameTruncSpecs,
+      cmdLineTruncSpecs,
       commandSpecs
     ]
 
@@ -51,10 +47,10 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
           MkArgs
             { aLegend = FPDefault,
               aTimeout = MkTimeout PPosInf,
-              aCommandLogging = Disabled,
-              aCommandDisplay = ShowCommand,
-              aCmdTruncation = MkTruncation PPosInf,
-              aLineTruncation = Undetected (MkTruncation PPosInf),
+              aCmdLogging = Disabled,
+              aCmdDisplay = ShowCmd,
+              aCmdNameTrunc = MkTruncation PPosInf,
+              aCmdLineTrunc = Undetected (MkTruncation PPosInf),
               aFileLogging = FPNone,
               aCommands = NESeq.singleton "command"
             }
@@ -165,27 +161,27 @@ parseDefaultFileLogging = THU.testCase "Should parse default --file-log" $ do
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =
   Tasty.testGroup
-    "CommandLogging arg parsing"
+    "CmdLogging arg parsing"
     [ parseShortCommandLogging,
       parseLongCommandLogging
     ]
 
 parseShortCommandLogging :: TestTree
-parseShortCommandLogging = THU.testCase "Should parse -c as CommandLogging" $ do
+parseShortCommandLogging = THU.testCase "Should parse -c as CmdLogging" $ do
   let argList = ["-c", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCommandLogging = Enabled}
+      expected = Just $ (Args.defaultArgs defCommand) {aCmdLogging = Enabled}
   verifyResult argList expected
 
 parseLongCommandLogging :: TestTree
-parseLongCommandLogging = THU.testCase "Should parse --cmd-log as CommandLogging" $ do
+parseLongCommandLogging = THU.testCase "Should parse --cmd-log as CmdLogging" $ do
   let argList = ["--cmd-log", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCommandLogging = Enabled}
+      expected = Just $ (Args.defaultArgs defCommand) {aCmdLogging = Enabled}
   verifyResult argList expected
 
 commandDisplaySpecs :: TestTree
 commandDisplaySpecs =
   Tasty.testGroup
-    "CommandDisplay arg parsing"
+    "CmdDisplay arg parsing"
     [ parseShortShowKey,
       parseLongShowKey
     ]
@@ -193,61 +189,61 @@ commandDisplaySpecs =
 parseShortShowKey :: TestTree
 parseShortShowKey = THU.testCase "Should parse -k as ShowKey" $ do
   let argList = ["-k", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCommandDisplay = ShowKey}
+      expected = Just $ (Args.defaultArgs defCommand) {aCmdDisplay = ShowKey}
   verifyResult argList expected
 
 parseLongShowKey :: TestTree
 parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
   let argList = ["--key-show", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCommandDisplay = ShowKey}
+      expected = Just $ (Args.defaultArgs defCommand) {aCmdDisplay = ShowKey}
   verifyResult argList expected
 
-cmdTruncSpecs :: TestTree
-cmdTruncSpecs =
+cmdNameTruncSpecs :: TestTree
+cmdNameTruncSpecs =
   Tasty.testGroup
     "Command name truncation arg parsing"
-    [ parseShortCmdTrunc,
-      parseLongCmdTrunc
+    [ parseShortCmdNameTrunc,
+      parseLongCmdNameTrunc
     ]
 
-parseShortCmdTrunc :: TestTree
-parseShortCmdTrunc = THU.testCase "Should parse -x as command name truncation" $ do
+parseShortCmdNameTrunc :: TestTree
+parseShortCmdNameTrunc = THU.testCase "Should parse -x as command name truncation" $ do
   let argList = ["-x", "15", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { aCmdTruncation = MkTruncation (PFin 15)
+            { aCmdNameTrunc = MkTruncation (PFin 15)
             }
   verifyResult argList expected
 
-parseLongCmdTrunc :: TestTree
-parseLongCmdTrunc = THU.testCase
+parseLongCmdNameTrunc :: TestTree
+parseLongCmdNameTrunc = THU.testCase
   "Should parse --cmd-name-trunc as command name truncation"
   $ do
     let argList = ["--cmd-name-trunc", "15", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aCmdTruncation = MkTruncation (PFin 15)
+              { aCmdNameTrunc = MkTruncation (PFin 15)
               }
     verifyResult argList expected
 
-lineTruncSpecs :: TestTree
-lineTruncSpecs =
+cmdLineTruncSpecs :: TestTree
+cmdLineTruncSpecs =
   Tasty.testGroup
     "Command line truncation arg parsing"
-    [ parseShortCmdTrunc,
-      parseLongCmdTrunc,
+    [ parseShortCmdLineTrunc,
+      parseLongCmdLineTrunc,
       parseDetectCmdLineTrunc
     ]
 
-parseShortLineTrunc :: TestTree
-parseShortLineTrunc = THU.testCase "Should parse -y as command line truncation" $ do
+parseShortCmdLineTrunc :: TestTree
+parseShortCmdLineTrunc = THU.testCase "Should parse -y as command line truncation" $ do
   let argList = ["-y", "15", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { aLineTruncation = Undetected $ MkTruncation (PFin 15)
+            { aCmdLineTrunc = Undetected $ MkTruncation (PFin 15)
             }
   verifyResult argList expected
 
@@ -259,7 +255,7 @@ parseLongCmdLineTrunc = THU.testCase
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aLineTruncation = Undetected $ MkTruncation (PFin 15)
+              { aCmdLineTrunc = Undetected $ MkTruncation (PFin 15)
               }
     verifyResult argList expected
 
@@ -271,7 +267,7 @@ parseDetectCmdLineTrunc = THU.testCase
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aLineTruncation = Detected
+              { aCmdLineTrunc = Detected
               }
     verifyResult argList expected
 

@@ -38,7 +38,7 @@ import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
 import ShellRun.Data.Supremum (Supremum (..))
-import ShellRun.Env.Types (CommandLogging (..), HasCommandLogging (..))
+import ShellRun.Env.Types (CmdLogging (..), HasCmdLogging (..))
 import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
@@ -123,7 +123,7 @@ tryTimeSh cmd = do
 --
 -- @since 0.1.0.0
 tryTimeShStreamRegion ::
-  ( HasCommandLogging env,
+  ( HasCmdLogging env,
     MonadMask m,
     MonadReader env m,
     MonadUnliftIO m,
@@ -142,7 +142,7 @@ tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 --
 -- @since 0.1.0.0
 tryTimeShStreamNoRegion ::
-  ( HasCommandLogging env,
+  ( HasCmdLogging env,
     MonadReader env m,
     MonadUnliftIO m,
     RegionLogger m,
@@ -157,7 +157,7 @@ tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 --
 -- @since 0.1.0.0
 tryTimeShAnyRegion ::
-  ( HasCommandLogging env,
+  ( HasCmdLogging env,
     MonadIO m,
     MonadReader env m,
     MonadUnliftIO m,
@@ -223,7 +223,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   pure finalResult
 
 streamOutput ::
-  ( HasCommandLogging env,
+  ( HasCmdLogging env,
     MonadIO m,
     MonadReader env m,
     RegionLogger m,
@@ -247,8 +247,8 @@ streamOutput mRegion cmd recvH ph = do
         pure ()
       ReadSuccess out -> do
         liftIO $ IORef.writeIORef lastReadRef (Just (ReadSuccess out))
-        commandLogging <- asks getCommandLogging
-        let logDest = case commandLogging of
+        cmdLogging <- asks getCmdLogging
+        let logDest = case cmdLogging of
               Disabled -> LogFile
               Enabled -> LogBoth
             log =
@@ -326,7 +326,7 @@ readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess err) = MkStderr err
 
--- | Attempts to read from the handle. The parameter 'CommandDisplay' and
+-- | Attempts to read from the handle. The parameter 'CmdDisplay' and
 -- 'Command' are used in formatting.
 --
 -- @since 0.1.0.0

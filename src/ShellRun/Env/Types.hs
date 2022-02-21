@@ -4,20 +4,20 @@
 module ShellRun.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    HasCommandDisplay (..),
-    HasCommandLogging (..),
-    HasCmdTruncation (..),
-    HasLineTruncation (..),
+    HasCmdDisplay (..),
+    HasCmdLogging (..),
+    HasCmdNameTrunc (..),
+    HasCmdLineTrunc (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
 
     -- * Types
     Env (..),
-    CommandDisplay (..),
-    CommandLogging (..),
+    CmdDisplay (..),
+    CmdLogging (..),
     Truncation (..),
-    TruncationArea (..),
+    TruncRegion (..),
   )
 where
 
@@ -56,32 +56,32 @@ class HasFileLogging env where
   -- | @since 0.1.0.0
   getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
 
--- | Determines if we should log commands' output.
+-- | Determines if we should log commands' output to the console.
 --
 -- @since 0.1.0.0
-class HasCommandLogging env where
-  getCommandLogging :: env -> CommandLogging
+class HasCmdLogging env where
+  getCmdLogging :: env -> CmdLogging
 
 -- | Determines how to display command names.
 --
 -- @since 0.1.0.0
-class HasCommandDisplay env where
+class HasCmdDisplay env where
   -- | @since 0.1.0.0
-  getCommandDisplay :: env -> CommandDisplay
+  getCmdDisplay :: env -> CmdDisplay
 
 -- | Determines command truncation behavior.
 --
 -- @since 0.1.0.0
-class HasCmdTruncation env where
+class HasCmdNameTrunc env where
   -- | @since 0.1.0.0
-  getCmdTruncation :: env -> Truncation 'TCommand
+  getCmdNameTrunc :: env -> Truncation 'TCmdName
 
 -- | Determines line truncation behavior.
 --
 -- @since 0.1.0.0
-class HasLineTruncation env where
+class HasCmdLineTrunc env where
   -- | @since 0.1.0.0
-  getLineTruncation :: env -> Truncation 'TLine
+  getCmdLineTrunc :: env -> Truncation 'TCmdLine
 
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
@@ -104,20 +104,20 @@ data Env = MkEnv
     -- | Whether to log commands.
     --
     -- @since 0.1.0.0
-    commandLogging :: CommandLogging,
+    cmdLogging :: CmdLogging,
     -- | Whether to display the command (key) names or the commands
     -- themselves.
     --
     -- @since 0.1.0.0
-    commandDisplay :: CommandDisplay,
+    cmdDisplay :: CmdDisplay,
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1.0.0
-    cmdTruncation :: Truncation 'TCommand,
+    cmdNameTrunc :: Truncation 'TCmdName,
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1.0.0
-    lineTruncation :: Truncation 'TLine,
+    lineNameTrunc :: Truncation 'TCmdLine,
     -- | The commands to run.
     --
     -- @since 0.1.0.0
@@ -141,20 +141,20 @@ instance HasFileLogging Env where
   getFileLogging = fileLogging
 
 -- | @since 0.1.0.0
-instance HasCommandLogging Env where
-  getCommandLogging = commandLogging
+instance HasCmdLogging Env where
+  getCmdLogging = cmdLogging
 
 -- | @since 0.1.0.0
-instance HasCommandDisplay Env where
-  getCommandDisplay = commandDisplay
+instance HasCmdDisplay Env where
+  getCmdDisplay = cmdDisplay
 
 -- | @since 0.1.0.0
-instance HasCmdTruncation Env where
-  getCmdTruncation = cmdTruncation
+instance HasCmdNameTrunc Env where
+  getCmdNameTrunc = cmdNameTrunc
 
 -- | @since 0.1.0.0
-instance HasLineTruncation Env where
-  getLineTruncation = lineTruncation
+instance HasCmdLineTrunc Env where
+  getCmdLineTrunc = lineNameTrunc
 
 -- | @since 0.1.0.0
 instance HasCommands Env where
@@ -163,7 +163,7 @@ instance HasCommands Env where
 -- | Type for determining if we stream commands' logs.
 --
 -- @since 0.1.0.0
-data CommandLogging
+data CmdLogging
   = -- | No logging of sub-commands.
     --
     -- @since 0.1.0.0
@@ -188,14 +188,14 @@ data CommandLogging
       -- | @since 0.1.0.0
       Monoid
     )
-    via Supremum CommandLogging
+    via Supremum CmdLogging
 
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
-data CommandDisplay
+data CmdDisplay
   = -- | Display the command itself, not the key.
     -- @since 0.1.0.0
-    ShowCommand
+    ShowCmd
   | -- | Display the command's key, if it exists, rather
     -- than the key itself.
     --
@@ -219,11 +219,26 @@ data CommandDisplay
       -- | @since 0.1.0.0
       Monoid
     )
-    via Supremum CommandDisplay
+    via Supremum CmdDisplay
 
-data TruncationArea
-  = TCommand
-  | TLine
+-- | The different regions to apply truncation rules.
+--
+-- @since 0.1.0.0
+data TruncRegion
+  = -- | Apply truncation rules to commands/key names.
+    --
+    -- @since 0.1.0.0
+    TCmdName
+  | -- | Apply truncation rules to command log entire lines.
+    --
+    -- @since 0.1.0.0
+    TCmdLine
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
 
 -- | The maximum number of command characters to display in the logs.
 -- The ordering is such that smaller numbers are greater, i.e., the
@@ -236,11 +251,11 @@ data TruncationArea
 -- >>> MkTruncation (PFin 7) <> MkTruncation (PFin 10)
 -- MkTruncation {unTruncation = PFin 7}
 --
--- >>> mempty @(Truncation TCommand)
+-- >>> mempty @(Truncation TCmdName)
 -- MkTruncation {unTruncation = PPosInf}
 --
 -- @since 0.1.0.0
-type Truncation :: TruncationArea -> Type
+type Truncation :: TruncRegion -> Type
 newtype Truncation a = MkTruncation
   { -- | @since 0.1.0.0
     unTruncation :: PosInfNum Natural

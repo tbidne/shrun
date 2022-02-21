@@ -24,15 +24,15 @@ import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
-  ( CommandLogging (..),
+  ( CmdLogging (..),
     Env (..),
-    HasCmdTruncation (..),
-    HasCommandDisplay (..),
-    HasCommandLogging (..),
+    HasCmdDisplay (..),
+    HasCmdLogging (..),
+    HasCmdNameTrunc (..),
     HasFileLogging (..),
     HasTimeout (..),
   )
-import ShellRun.Env.Types (HasLineTruncation (..))
+import ShellRun.Env.Types (HasCmdLineTrunc (..))
 import ShellRun.IO (Stderr (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr, LegendMap)
@@ -90,9 +90,9 @@ newtype ShellT env m a = MkShellT
 
 -- | @since 0.1.0.0
 instance
-  ( HasCommandDisplay env,
-    HasCmdTruncation env,
-    HasLineTruncation env,
+  ( HasCmdDisplay env,
+    HasCmdNameTrunc env,
+    HasCmdLineTrunc env,
     HasFileLogging env,
     MonadIO m
   ) =>
@@ -116,9 +116,9 @@ instance
     maybePrintLog (liftIO . logFn region) lg
 
 maybePrintLog ::
-  ( HasCommandDisplay env,
-    HasCmdTruncation env,
-    HasLineTruncation env,
+  ( HasCmdDisplay env,
+    HasCmdNameTrunc env,
+    HasCmdLineTrunc env,
     MonadReader env m
   ) =>
   (Text -> m ()) ->
@@ -184,10 +184,10 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
           Just (fp, queue) -> Queue.flushQueue queue >>= traverse_ (logFile fp)
 
 runCommand ::
-  ( HasCommandDisplay env,
-    HasCommandLogging env,
-    HasCmdTruncation env,
-    HasLineTruncation env,
+  ( HasCmdDisplay env,
+    HasCmdLogging env,
+    HasCmdNameTrunc env,
+    HasCmdLineTrunc env,
     HasFileLogging env,
     MonadIO m,
     MonadMask m,
@@ -196,15 +196,17 @@ runCommand ::
   Command ->
   ShellT env m ()
 runCommand cmd = do
-  commandLogging <- asks getCommandLogging
+  cmdLogging <- asks getCmdLogging
   fileLogging <- asks getFileLogging
 
-  -- 1.    No CommandLogging and no FileLogging: No streaming at all.
-  -- 2.    No CommandLogging and FileLogging: Stream (to file) but no console
+  -- 1.    No CmdLogging and no FileLogging: No streaming at all.
+  -- 2.    No CmdLogging and FileLogging: Stream (to file) but no console
   --       region.
-  -- 3, 4. CommandLogging: Stream and create the region. FileLogging is globally
-  --       disabled, so no need for a separate function.
-  res <- case (commandLogging, fileLogging) of
+  -- 3, 4. CmdLogging: Stream and create the region. FileLogging is globally
+  --       enabled/disabled, so no need for a separate function. That is,
+  --       tryTimeShStreamNoRegion and tryTimeShStreamRegion handle file
+  --       logging automatically.
+  res <- case (cmdLogging, fileLogging) of
     (Disabled, Nothing) -> liftIO $ ShIO.tryTimeSh cmd
     (Disabled, Just (_, _)) -> ShIO.tryTimeShStreamNoRegion cmd
     _ -> ShIO.tryTimeShStreamRegion cmd

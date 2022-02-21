@@ -7,19 +7,19 @@
 module ShellRun.Env
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    HasCommandDisplay (..),
-    HasCommandLogging (..),
-    HasCmdTruncation (..),
+    HasCmdDisplay (..),
+    HasCmdLogging (..),
+    HasCmdNameTrunc (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
 
     -- * Types
     Env (..),
-    CommandDisplay (..),
-    CommandLogging (..),
+    CmdDisplay (..),
+    CmdLogging (..),
     Truncation (..),
-    TruncationArea (..),
+    TruncRegion (..),
 
     -- * Functions
     runParser,
@@ -33,18 +33,18 @@ import ShellRun.Args (ALineTruncation (..), Args (..), FilePathDefault (..))
 import ShellRun.Args qualified as Args
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
-  ( CommandDisplay (..),
-    CommandLogging (..),
+  ( CmdDisplay (..),
+    CmdLogging (..),
     Env (..),
-    HasCmdTruncation (..),
-    HasCommandDisplay (..),
-    HasCommandLogging (..),
+    HasCmdDisplay (..),
+    HasCmdLogging (..),
+    HasCmdNameTrunc (..),
     HasCommands (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
+    TruncRegion (..),
     Truncation (..),
-    TruncationArea (..),
   )
 import ShellRun.Logging.Queue (LogTextQueue (..))
 import ShellRun.Prelude
@@ -61,8 +61,6 @@ import System.FilePath ((</>))
 runParser :: IO Env
 runParser = do
   args@MkArgs {aFileLogging, aLegend} <- OApp.execParser Args.parserInfoArgs
-
-  print args
 
   -- get configDir if we need it
   configDir <- case (aFileLogging, aLegend) of
@@ -87,14 +85,11 @@ runParser = do
       pure $ Just fp
     FPPath fp -> pure $ Just fp
 
-  e <- toEnv fileLogging' legend' args
-
-  print e
-  pure e
+  toEnv fileLogging' legend' args
 
 toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Maybe FilePath -> Args -> IO Env
 toEnv fileLogging' legend' MkArgs {..} = do
-  lineTruncation' <- case aLineTruncation of
+  lineNameTrunc' <- case aCmdLineTrunc of
     Undetected x -> pure x
     Detected ->
       (width <<$>> TSize.size) >>= \case
@@ -105,9 +100,9 @@ toEnv fileLogging' legend' MkArgs {..} = do
       { legend = legend',
         timeout = aTimeout,
         fileLogging = fileLogging',
-        commandLogging = aCommandLogging,
-        commandDisplay = aCommandDisplay,
-        cmdTruncation = aCmdTruncation,
-        lineTruncation = lineTruncation',
+        cmdLogging = aCmdLogging,
+        cmdDisplay = aCmdDisplay,
+        cmdNameTrunc = aCmdNameTrunc,
+        lineNameTrunc = lineNameTrunc',
         commands = aCommands
       }

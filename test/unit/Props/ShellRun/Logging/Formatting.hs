@@ -17,12 +17,12 @@ import Props.ShellRun.Logging.Generators qualified as LGens
 import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
-  ( CommandDisplay (..),
-    HasCmdTruncation (..),
-    HasCommandDisplay (..),
-    HasLineTruncation (..),
+  ( CmdDisplay (..),
+    HasCmdDisplay (..),
+    HasCmdLineTrunc (..),
+    HasCmdNameTrunc (..),
+    TruncRegion (..),
     Truncation (..),
-    TruncationArea (..),
   )
 import ShellRun.Logging.Formatting qualified as Formatting
 import ShellRun.Logging.Log
@@ -152,9 +152,9 @@ colorLen :: Int
 colorLen = 10
 
 data Env = MkEnv
-  { cmdDisplay :: CommandDisplay,
-    cmdTrunc :: Truncation 'TCommand,
-    lineTrunc :: Truncation 'TLine
+  { cmdDisplay :: CmdDisplay,
+    cmdTrunc :: Truncation 'TCmdName,
+    lineTrunc :: Truncation 'TCmdLine
   }
   deriving (Eq, Show)
 
@@ -203,7 +203,7 @@ genLongLineText = HGen.text range HGen.latin1
 
 genEnvDispCmd :: Gen Env
 genEnvDispCmd =
-  MkEnv ShowCommand
+  MkEnv ShowCmd
     <$> fmap MkTruncation genPPosInf
     <*> fmap MkTruncation genPPosInf
 
@@ -222,11 +222,11 @@ genPPosInf = HGen.choice [fmap PFin genNat, pure PPosInf]
 runMockApp :: ReaderT env Identity a -> env -> a
 runMockApp env = runIdentity . runReaderT env
 
-instance HasCommandDisplay Env where
-  getCommandDisplay = cmdDisplay
+instance HasCmdDisplay Env where
+  getCmdDisplay = cmdDisplay
 
-instance HasCmdTruncation Env where
-  getCmdTruncation = cmdTrunc
+instance HasCmdNameTrunc Env where
+  getCmdNameTrunc = cmdTrunc
 
-instance HasLineTruncation Env where
-  getLineTruncation = lineTrunc
+instance HasCmdLineTrunc Env where
+  getCmdLineTrunc = lineTrunc

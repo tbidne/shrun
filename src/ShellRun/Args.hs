@@ -29,10 +29,10 @@ import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env.Types
-  ( CommandDisplay (..),
-    CommandLogging (..),
+  ( CmdDisplay (..),
+    CmdLogging (..),
+    TruncRegion (..),
     Truncation (..),
-    TruncationArea (..),
   )
 import ShellRun.Prelude
 import Text.Megaparsec (Parsec)
@@ -47,7 +47,7 @@ data Args = MkArgs
   { -- | Whether to log commands.
     --
     -- @since 0.1.0.0
-    aCommandLogging :: CommandLogging,
+    aCmdLogging :: CmdLogging,
     -- | Optional path to log file.
     --
     -- @since 0.1.0.0
@@ -55,7 +55,7 @@ data Args = MkArgs
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1.0.0
-    aCommandDisplay :: CommandDisplay,
+    aCmdDisplay :: CmdDisplay,
     -- | Optional legend file.
     --
     -- @since 0.1.0.0
@@ -67,11 +67,11 @@ data Args = MkArgs
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1.0.0
-    aCmdTruncation :: Truncation 'TCommand,
+    aCmdNameTrunc :: Truncation 'TCmdName,
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1.0.0
-    aLineTruncation :: ALineTruncation,
+    aCmdLineTrunc :: ALineTruncation,
     -- | List of commands.
     --
     -- @since 0.1.0.0
@@ -91,7 +91,7 @@ data Args = MkArgs
 -- @since 0.1.0.0
 data ALineTruncation
   = -- | @since 0.1.0.0
-    Undetected (Truncation 'TLine)
+    Undetected (Truncation 'TCmdLine)
   | -- | @since 0.1.0.0
     Detected
   deriving
@@ -140,19 +140,19 @@ instance Monoid FilePathDefault where
 --
 -- ==== __Examples__
 -- >>> defaultArgs (NESeq.singleton "ls")
--- MkArgs {aCommandLogging = Disabled, aFileLogging = FPNone, aCommandDisplay = ShowCommand, aLegend = FPDefault, aTimeout = MkTimeout {unTimeout = PPosInf}, aCmdTruncation = MkTruncation {unTruncation = PPosInf}, aLineTruncation = Undetected (MkTruncation {unTruncation = PPosInf}), aCommands = "ls" :|^ fromList []}
+-- MkArgs {aCmdLogging = Disabled, aFileLogging = FPNone, aCmdDisplay = ShowCmd, aLegend = FPDefault, aTimeout = MkTimeout {unTimeout = PPosInf}, aCmdNameTrunc = MkTruncation {unTruncation = PPosInf}, aCmdLineTrunc = Undetected (MkTruncation {unTruncation = PPosInf}), aCommands = "ls" :|^ fromList []}
 --
 -- @since 0.1.0.0
 defaultArgs :: NonEmptySeq Text -> Args
 defaultArgs cmds =
   MkArgs
-    { aCommandLogging = mempty,
+    { aCmdLogging = mempty,
       aFileLogging = mempty,
-      aCommandDisplay = mempty,
+      aCmdDisplay = mempty,
       aLegend = FPDefault,
       aTimeout = mempty,
-      aCmdTruncation = mempty,
-      aLineTruncation = mempty,
+      aCmdNameTrunc = mempty,
+      aCmdLineTrunc = mempty,
       aCommands = cmds
     }
 
@@ -261,7 +261,7 @@ readTimeStr = do
       let timeout = MkTimeout $ PFin $ TimeRep.toSeconds timeRep
        in pure timeout
 
-cmdTruncationParser :: Parser (Truncation 'TCommand)
+cmdTruncationParser :: Parser (Truncation 'TCmdName)
 cmdTruncationParser =
   OApp.option
     readTruncation
@@ -337,7 +337,7 @@ readLogFile = do
     then pure FPDefault
     else pure (FPPath f)
 
-commandLoggingParser :: Parser CommandLogging
+commandLoggingParser :: Parser CmdLogging
 commandLoggingParser =
   OApp.flag
     Disabled
@@ -349,10 +349,10 @@ commandLoggingParser =
   where
     help = "Adds individual commands' logs (stdout+stderr) to console output."
 
-commandDisplayParser :: Parser CommandDisplay
+commandDisplayParser :: Parser CmdDisplay
 commandDisplayParser =
   OApp.flag
-    ShowCommand
+    ShowCmd
     ShowKey
     ( OApp.short 'k'
         <> OApp.long "key-show"
