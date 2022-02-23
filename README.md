@@ -105,7 +105,7 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Arg:** `-f, --file-log PATH`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Normal logging (i.e. stdout) is unaffected. In other words, the logs are duplicated. This can be useful for investigating command failures with the [Command-Logging](#command-logging) option, as those logs are not persisted in the console.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string literal `default` is given, we will write to the Xdg config directory e.g. `~/.config/shell-run/logs.txt`.
 
 **Example:**
 
@@ -185,13 +185,19 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Example:**
 
+![cmd_name_trunc_cmd](./screens/cmd_name_trunc_cmd.png)
+![cmd_name_trunc](./screens/cmd_name_trunc.png)
+
 ## Command Line Truncation
 
-**Arg:** `-x, --cmd-line-trunc NATURAL or detect`
+**Arg:** `-y, --cmd-line-trunc NATURAL or detect`
 
-**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect` (no quotes), to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
+**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
 
 **Example:**
+
+![cmd_line_trunc](./screens/cmd_line_trunc.png)
+![cmd_line_trunc_detect](./screens/cmd_line_trunc_detect.png)
 
 # Building
 

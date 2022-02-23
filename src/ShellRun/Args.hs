@@ -321,7 +321,11 @@ commandLoggingParser =
         <> OApp.help help
     )
   where
-    help = "Adds individual commands' logs (stdout+stderr) to console output."
+    help =
+      "The default behavior is to swallow logs for the commands "
+        <> "themselves. This flag gives each command a console region in "
+        <> "which its logs will be printed. Only the latest log per region "
+        <> "is show at a given time."
 
 commandDisplayParser :: Parser CmdDisplay
 commandDisplayParser =

@@ -303,7 +303,7 @@ prefs :: ParserPrefs
 prefs = OptApp.prefs mempty
 
 toTO :: Natural -> Timeout
-toTO n = MkTimeout $ PFin $ n
+toTO n = MkTimeout $ PFin n
 
 defCommand :: NonEmptySeq Text
 defCommand = NESeq.unsafeFromList ["command"]
