@@ -24,7 +24,7 @@ import Data.List.NonEmpty (NonEmpty (..))
 import Data.Sequence (Seq (..))
 import GHC.Exts qualified as Exts
 import GHC.Stack (HasCallStack)
-import ShellRun.Prelude
+import ShellRun.Prelude hiding (toList)
 
 -- $setup
 -- >>> import GHC.Exts (fromList)

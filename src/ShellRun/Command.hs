@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -12,6 +13,7 @@ where
 
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as Set
+import Data.Hashable (Hashable)
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
@@ -38,11 +40,17 @@ data Command = MkCommand
     -- @since 0.1.0.0
     command :: Text
   }
-  deriving
+  deriving stock
     ( -- | @since 0.1.0.0
       Eq,
       -- | @since 0.1.0.0
+      Generic,
+      -- | @since 0.1.0.0
       Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1.0.0
+      Hashable
     )
 
 -- | Returns a list of 'Text' commands, potentially transforming a

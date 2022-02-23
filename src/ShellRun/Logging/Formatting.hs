@@ -3,6 +3,7 @@
 -- @since 0.1.0.0
 module ShellRun.Logging.Formatting
   ( formatConsoleLog,
+    displayCmd,
   )
 where
 
@@ -50,9 +51,7 @@ formatConsoleLog log@MkLog {cmd, msg, lvl} = do
     Nothing -> pure $ colorize $ prefix <> msg
     Just com ->
       let -- get cmd name to display
-          name = case (getKey com, cmdDisplay) of
-            (Just key, ShowKey) -> key
-            (_, _) -> command com
+          name = displayCmd com cmdDisplay
           -- truncate cmd/name if necessary
           name' = case cmdNameTrunc of
             PPosInf -> name
@@ -66,3 +65,11 @@ formatConsoleLog log@MkLog {cmd, msg, lvl} = do
   where
     colorize = P.color $ Log.logToColor log
     prefix = Log.logToPrefix log
+
+-- | Pretty show for 'Command'. If the command has a key, and 'CmdDisplay' is
+-- 'ShowKey' then we return the key. Otherwise we return the command itself.
+--
+-- @since 0.1.0.0
+displayCmd :: Command -> CmdDisplay -> Text
+displayCmd (MkCommand (Just key) _) ShowKey = key
+displayCmd (MkCommand _ cmd) _ = cmd

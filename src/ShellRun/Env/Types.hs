@@ -8,6 +8,7 @@ module ShellRun.Env.Types
     HasCmdLogging (..),
     HasCmdNameTrunc (..),
     HasCmdLineTrunc (..),
+    HasCompletedCmds (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
@@ -21,6 +22,9 @@ module ShellRun.Env.Types
   )
 where
 
+import Control.Concurrent.STM.TVar (TVar)
+import Data.Sequence (Seq)
+import ShellRun.Command (Command)
 import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
@@ -84,6 +88,13 @@ class HasCmdLineTrunc env where
   -- | @since 0.1.0.0
   getCmdLineTrunc :: env -> Truncation 'TCmdLine
 
+-- | Determines command line truncation behavior.
+--
+-- @since 0.1.0.0
+class HasCompletedCmds env where
+  -- | @since 0.1.0.0
+  getCompletedCmds :: env -> TVar (Seq Command)
+
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
 --
@@ -119,15 +130,15 @@ data Env = MkEnv
     --
     -- @since 0.1.0.0
     lineNameTrunc :: Truncation 'TCmdLine,
+    -- | Holds the
+    --
+    -- @since 0.1.0.0
+    completedCmds :: TVar (Seq Command),
     -- | The commands to run.
     --
     -- @since 0.1.0.0
     commands :: NonEmptySeq Text
   }
-  deriving
-    ( -- | @since 0.1.0.0
-      Show
-    )
 
 -- | @since 0.1.0.0
 instance HasLegend Env where
@@ -156,6 +167,10 @@ instance HasCmdNameTrunc Env where
 -- | @since 0.1.0.0
 instance HasCmdLineTrunc Env where
   getCmdLineTrunc = lineNameTrunc
+
+-- | @since 0.1.0.0
+instance HasCompletedCmds Env where
+  getCompletedCmds = completedCmds
 
 -- | @since 0.1.0.0
 instance HasCommands Env where

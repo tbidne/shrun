@@ -11,6 +11,7 @@ module ShellRun.Env
     HasCmdLogging (..),
     HasCmdNameTrunc (..),
     HasCmdLineTrunc (..),
+    HasCompletedCmds (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
@@ -28,10 +29,15 @@ module ShellRun.Env
 where
 
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
+import Control.Concurrent.STM.TVar (TVar)
+import Control.Concurrent.STM.TVar qualified as TVar
 import Control.Monad.STM qualified as STM
+import Data.Sequence (Seq)
+import Data.Sequence qualified as Seq
 import Options.Applicative qualified as OApp
 import ShellRun.Args (ALineTruncation (..), Args (..))
 import ShellRun.Args qualified as Args
+import ShellRun.Command (Command)
 import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
@@ -43,6 +49,7 @@ import ShellRun.Env.Types
     HasCmdLogging (..),
     HasCmdNameTrunc (..),
     HasCommands (..),
+    HasCompletedCmds (..),
     HasFileLogging (..),
     HasLegend (..),
     HasTimeout (..),
@@ -76,10 +83,12 @@ runParser = do
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
 
-  toEnv fileLogging' args
+  completedCmds' <- TVar.newTVarIO Seq.empty
 
-toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> Args -> IO Env
-toEnv fileLogging' MkArgs {..} = do
+  toEnv fileLogging' completedCmds' args
+
+toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> TVar (Seq Command) -> Args -> IO Env
+toEnv fileLogging' completedCmds' MkArgs {..} = do
   lineNameTrunc' <- case aCmdLineTrunc of
     Undetected x -> pure x
     Detected ->
@@ -95,5 +104,6 @@ toEnv fileLogging' MkArgs {..} = do
         cmdDisplay = aCmdDisplay,
         cmdNameTrunc = aCmdNameTrunc,
         lineNameTrunc = lineNameTrunc',
+        completedCmds = completedCmds',
         commands = aCommands
       }

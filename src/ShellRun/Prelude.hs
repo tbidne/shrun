@@ -57,13 +57,7 @@ import Data.Bifunctor as X (Bifunctor (..))
 import Data.ByteString qualified as BS
 import Data.Either as X (Either (..))
 import Data.Foldable as X
-  ( Foldable
-      ( fold,
-        foldMap,
-        foldMap',
-        foldl',
-        foldr
-      ),
+  ( Foldable (..),
     length,
     traverse_,
   )
@@ -86,6 +80,7 @@ import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..))
 import Data.Void as X (Void, absurd)
+import GHC.Generics as X (Generic)
 import GHC.Natural as X (Natural)
 import Prelude as X
   ( Bool (..),

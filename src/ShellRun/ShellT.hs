@@ -7,12 +7,14 @@ module ShellRun.ShellT
 where
 
 import Control.Concurrent qualified as CC
+import Control.Concurrent.STM.TVar qualified as TVar
 import Control.Exception.Safe (SomeException)
 import Control.Exception.Safe qualified as SafeEx
 import Control.Monad qualified as M
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
 import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.Loops qualified as Loops
+import Data.HashSet qualified as Set
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
@@ -21,18 +23,20 @@ import ShellRun.Class.MonadTime (MonadTime (..))
 import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
+import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
   ( CmdLogging (..),
     Env (..),
     HasCmdDisplay (..),
+    HasCmdLineTrunc (..),
     HasCmdLogging (..),
     HasCmdNameTrunc (..),
+    HasCompletedCmds (..),
     HasFileLogging (..),
     HasTimeout (..),
   )
-import ShellRun.Env.Types (HasCmdLineTrunc (..))
 import ShellRun.IO (Stderr (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr, LegendMap)
@@ -144,7 +148,7 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
     UAsync.withAsync maybePollQueue $ \fileLogger -> do
       start <- liftIO $ C.getTime Monotonic
       let actions = UAsync.mapConcurrently_ runCommand commands
-          actionsWithTimer = UAsync.race_ actions counter
+          actionsWithTimer = UAsync.race_ actions (counter commands)
 
       result :: Either SomeException () <- UnliftIO.withRunInIO $ \runner -> SafeEx.try $ runner actionsWithTimer
 
@@ -193,6 +197,7 @@ runCommand ::
     HasCmdLogging env,
     HasCmdNameTrunc env,
     HasCmdLineTrunc env,
+    HasCompletedCmds env,
     HasFileLogging env,
     MonadIO m,
     MonadMask m,
@@ -212,7 +217,7 @@ runCommand cmd = do
   --       tryTimeShStreamNoRegion and tryTimeShStreamRegion handle file
   --       logging automatically.
   res <- case (cmdLogging, fileLogging) of
-    (Disabled, Nothing) -> liftIO $ ShIO.tryTimeSh cmd
+    (Disabled, Nothing) -> ShIO.tryTimeSh cmd
     (Disabled, Just (_, _)) -> ShIO.tryTimeShStreamNoRegion cmd
     _ -> ShIO.tryTimeShStreamRegion cmd
 
@@ -230,15 +235,18 @@ runCommand cmd = do
         }
 
 counter ::
-  ( HasTimeout env,
+  ( HasCmdDisplay env,
+    HasCompletedCmds env,
+    HasTimeout env,
     MonadMask m,
     MonadReader env m,
     MonadIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
   ) =>
+  NonEmptySeq Command ->
   m ()
-counter = do
+counter cmds = do
   -- This brief delay is so that our timer starts "last" i.e. after each individual
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
@@ -246,7 +254,7 @@ counter = do
   Regions.withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
     timer <- liftIO $ IORef.newIORef 0
-    Loops.whileM_ (keepRunning r timer timeout) $ do
+    Loops.whileM_ (keepRunning cmds r timer timeout) $ do
       elapsed <- liftIO $ do
         CC.threadDelay 1_000_000
         IORef.modifyIORef' timer (+ 1)
@@ -272,22 +280,38 @@ logCounter region elapsed = do
   putRegionLog region lg
 
 keepRunning ::
-  ( MonadIO m,
+  ( HasCmdDisplay env,
+    HasCompletedCmds env,
+    MonadIO m,
+    MonadReader env m,
     RegionLogger m,
     Region m ~ ConsoleRegion
   ) =>
+  NonEmptySeq Command ->
   ConsoleRegion ->
   IORef Natural ->
   Timeout ->
   m Bool
-keepRunning region timer mto = do
+keepRunning allCmds region timer mto = do
   elapsed <- liftIO $ IORef.readIORef timer
   if timedOut elapsed mto
     then do
+      cmdDisplay <- asks getCmdDisplay
+      completedCmdsTVar <- asks getCompletedCmds
+      completedCmds <- liftIO $ TVar.readTVarIO completedCmdsTVar
+
+      let completedCmdsSet = Set.fromList $ toList completedCmds
+          allCmdsSet = Set.fromList $ NESeq.toList allCmds
+          incompleteCmds = Set.difference allCmdsSet completedCmdsSet
+          foldCmds (False, acc) cmd = (False, LFormat.displayCmd cmd cmdDisplay <> ", " <> acc)
+          foldCmds (True, acc) cmd =
+            (False, LFormat.displayCmd cmd cmdDisplay <> acc)
+          unfinishedCmds = snd $ foldl' foldCmds (True, "") incompleteCmds
+
       putRegionLog region $
         MkLog
           { cmd = Nothing,
-            msg = "Timed out, cancelling remaining tasks.",
+            msg = "Timed out, cancelling remaining commands: " <> unfinishedCmds,
             lvl = Warn,
             mode = Finish,
             dest = LogBoth
