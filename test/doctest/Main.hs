@@ -30,6 +30,7 @@ files =
 exts :: List String
 exts =
   [ "-XDataKinds",
+    "-XDeriveGeneric",
     "-XDerivingVia",
     "-XFlexibleContexts",
     "-XFlexibleInstances",

@@ -15,7 +15,7 @@ import ShellRun.Prelude
 
 -- | Expected timeout 'Text'.
 cancelled :: Text
-cancelled = "Timed out, cancelling remaining tasks."
+cancelled = "Timed out, cancelling remaining commands:"
 
 -- | Expected total \"Time elapsed\"" 'Text'.
 totalTime :: Text

@@ -4,6 +4,7 @@
 
 ## Ergonomically Run Shell Commands
 
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shell-run?include_prereleases&sort=semver)](https://github.com/tbidne/shell-run/releases/)
 [![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
 [![8.10.7](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10.7/main?label=8.10.7&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10-7.yaml)
 [![9.0.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.0.2/main?label=9.0.2&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.0.2.yaml)
