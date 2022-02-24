@@ -22,6 +22,8 @@ files =
     "src/ShellRun/Data/NonEmptySeq.hs",
     "src/ShellRun/Data/TimeRep.hs",
     "src/ShellRun/Legend/Internal.hs",
+    "src/ShellRun/Logging/Formatting.hs",
+    "src/ShellRun/Logging/Queue.hs",
     "src/ShellRun/Utils.hs"
   ]
 

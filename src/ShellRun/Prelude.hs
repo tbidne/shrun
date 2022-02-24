@@ -16,7 +16,6 @@ module ShellRun.Prelude
 
     -- * Misc utilities
     (<<$>>),
-    maybeToEither,
     monoBimap,
 
     -- * 'Text' replacements for 'P.String' functions.
@@ -117,26 +116,37 @@ import Prelude qualified as P
 
 -- $setup
 -- >>> import Data.String (String)
+-- >>> :set -XNoOverloadedLists
 
 -- | Strictly reads a file and leniently converts the contents to UTF8.
+--
+-- @since 0.1.0.0
 readFileUtf8Lenient :: FilePath -> IO Text
 readFileUtf8Lenient =
   fmap (TextEnc.decodeUtf8With TextEncErr.lenientDecode)
     . BS.readFile
 
--- | Writes the text contents to the file.
+-- | Appends the text contents to the file.
+--
+-- @since 0.1.0.0
 appendFileUtf8 :: FilePath -> Text -> IO ()
 appendFileUtf8 fp = BS.appendFile fp . TextEnc.encodeUtf8
 
 -- | Writes the text contents to the file.
+--
+-- @since 0.1.0.0
 writeFileUtf8 :: FilePath -> Text -> IO ()
 writeFileUtf8 fp = BS.writeFile fp . TextEnc.encodeUtf8
 
 -- | 'Text' version of 'P.show'.
+--
+-- @since 0.1.0.0
 showt :: P.Show a => a -> Text
 showt = T.pack . P.show
 
 -- | 'Text' version of 'error'.
+--
+-- @since 0.1.0.0
 error :: Text -> a
 error = P.error . T.unpack
 
@@ -147,20 +157,11 @@ error = P.error . T.unpack
 --
 -- >>> headMaybe []
 -- Nothing
+--
+-- @since 0.1.0.0
 headMaybe :: List a -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
-
--- | Transforms 'Maybe' to 'Either'.
---
--- >>> maybeToEither () (Nothing :: Maybe String)
--- Left ()
---
--- >>> maybeToEither () (Just "success" :: Maybe String)
--- Right "success"
-maybeToEither :: e -> Maybe a -> Either e a
-maybeToEither e Nothing = Left e
-maybeToEither _ (Just x) = Right x
 
 -- | Convenience function for mapping @(a -> b)@ over a monomorphic bifunctor.
 --
@@ -168,10 +169,15 @@ maybeToEither _ (Just x) = Right x
 --
 -- >>> monoBimap length ("hey","listen")
 -- (3,6)
+--
+-- @since 0.1.0.0
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
 
 -- | Lifted fmap.
+--
+-- >>> not <<$>> [Just True, Nothing, Just False]
+-- [Just False,Nothing,Just True]
 --
 -- @since 0.1.0.0
 (<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)

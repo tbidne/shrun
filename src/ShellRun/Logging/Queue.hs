@@ -24,6 +24,29 @@ import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Prelude
 
+-- $setup
+-- >>> import ShellRun.Logging.Log (LogDest (..), LogLevel (..), LogMode (..))
+-- >>> import Text.Megaparsec (Parsec)
+-- >>> import Text.Megaparsec qualified as MP
+-- >>> import Text.Megaparsec.Char qualified as MPC
+-- >>> import Data.Text qualified as T
+-- >>> :{
+--  hardcodeTimestamp :: LogText -> Text
+--  hardcodeTimestamp (MkLogText txt) = case MP.parse parseLog "" txt of
+--    Left _ -> "<parse error>"
+--    Right txt' -> txt'
+--    where
+--      parseLog :: Parsec Void Text Text
+--      parseLog = do
+--        MPC.char '['
+--        MP.takeWhile1P Nothing (/= ']')
+--        MPC.string "] "
+--        rest <- MP.takeWhile1P Nothing (/= '\n')
+--        MPC.eol
+--        pure $ ts <> rest <> "\n"
+--      ts = "[2022-02-23 20:58:04.231933782 UTC] "
+-- :}
+
 -- | 'LogText' is a textual representation of a given 'Log'. No coloring
 -- is included, but we include the prefix (e.g. Warn) along with a timestamp.
 --
@@ -46,6 +69,21 @@ pattern MkLogText t <- UnsafeLogText t
 {-# COMPLETE MkLogText #-}
 
 -- | Formats a 'Log' into a 'LogText'. Applies prefix and timestamp.
+--
+-- ==== __Examples__
+--
+-- >>> :{
+--   let log = MkLog Nothing "Running time: 2 seconds" Info Set LogBoth
+--    -- timestamp hardcoded for testing
+--    in fmap hardcodeTimestamp (formatFileLog log)
+-- :}
+-- "[2022-02-23 20:58:04.231933782 UTC] [Info] Running time: 2 seconds\n"
+--
+-- >>> :{
+--   let log = MkLog (Just "cmd") "cmd: command not found" Error Set LogBoth
+--    in fmap hardcodeTimestamp (formatFileLog log)
+-- :}
+-- "[2022-02-23 20:58:04.231933782 UTC] [Error] [cmd] cmd: command not found\n"
 --
 -- @since 0.1.0.0
 formatFileLog :: MonadTime m => Log -> m LogText

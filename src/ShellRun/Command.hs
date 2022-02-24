@@ -14,6 +14,8 @@ where
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as Set
 import Data.Hashable (Hashable)
+import Data.String (IsString (..))
+import Data.Text qualified as T
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
@@ -52,6 +54,9 @@ data Command = MkCommand
     ( -- | @since 0.1.0.0
       Hashable
     )
+
+instance IsString Command where
+  fromString = MkCommand Nothing . T.pack
 
 -- | Returns a list of 'Text' commands, potentially transforming a
 -- given string via the `LegendMap` @legend@.

@@ -4,6 +4,7 @@
 module ShellRun.Logging.Formatting
   ( formatConsoleLog,
     displayCmd,
+    displayCmd',
   )
 where
 
@@ -44,15 +45,14 @@ formatConsoleLog ::
   Log ->
   m Text
 formatConsoleLog log@MkLog {cmd, msg, lvl} = do
-  cmdDisplay <- asks getCmdDisplay
   MkTruncation cmdNameTrunc <- asks getCmdNameTrunc
   MkTruncation lineNameTrunc <- asks getCmdLineTrunc
   case cmd of
     Nothing -> pure $ colorize $ prefix <> msg
-    Just com ->
-      let -- get cmd name to display
-          name = displayCmd com cmdDisplay
-          -- truncate cmd/name if necessary
+    Just com -> do
+      -- get cmd name to display
+      name <- displayCmd com
+      let -- truncate cmd/name if necessary
           name' = case cmdNameTrunc of
             PPosInf -> name
             PFin n -> U.truncateIfNeeded n name
@@ -66,10 +66,28 @@ formatConsoleLog log@MkLog {cmd, msg, lvl} = do
     colorize = P.color $ Log.logToColor log
     prefix = Log.logToPrefix log
 
+-- | Variant of 'displayCmd\'' using 'MonadReader'.
+--
+-- @since 0.1.0.0
+displayCmd :: (HasCmdDisplay env, MonadReader env m) => Command -> m Text
+displayCmd cmd = asks getCmdDisplay <&> displayCmd' cmd
+
 -- | Pretty show for 'Command'. If the command has a key, and 'CmdDisplay' is
 -- 'ShowKey' then we return the key. Otherwise we return the command itself.
 --
+-- >>> displayCmd' (MkCommand Nothing "some long command") ShowCmd
+-- "some long command"
+--
+-- >>> displayCmd' (MkCommand Nothing "some long command") ShowKey
+-- "some long command"
+--
+-- >>> displayCmd' (MkCommand (Just "long") "some long command") ShowCmd
+-- "some long command"
+--
+-- >>> displayCmd' (MkCommand (Just "long") "some long command") ShowKey
+-- "long"
+--
 -- @since 0.1.0.0
-displayCmd :: Command -> CmdDisplay -> Text
-displayCmd (MkCommand (Just key) _) ShowKey = key
-displayCmd (MkCommand _ cmd) _ = cmd
+displayCmd' :: Command -> CmdDisplay -> Text
+displayCmd' (MkCommand (Just key) _) ShowKey = key
+displayCmd' (MkCommand _ cmd) _ = cmd

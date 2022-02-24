@@ -303,9 +303,9 @@ keepRunning allCmds region timer mto = do
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ NESeq.toList allCmds
           incompleteCmds = Set.difference allCmdsSet completedCmdsSet
-          foldCmds (False, acc) cmd = (False, LFormat.displayCmd cmd cmdDisplay <> ", " <> acc)
+          foldCmds (False, acc) cmd = (False, LFormat.displayCmd' cmd cmdDisplay <> ", " <> acc)
           foldCmds (True, acc) cmd =
-            (False, LFormat.displayCmd cmd cmdDisplay <> acc)
+            (False, LFormat.displayCmd' cmd cmdDisplay <> acc)
           unfinishedCmds = snd $ foldl' foldCmds (True, "") incompleteCmds
 
       putRegionLog region $

@@ -146,11 +146,17 @@ pluralize n txt
 
 -- | 'NonZero' seconds in a day: 86,400
 --
+-- >>> secondsInDayNZ
+-- UnsafeNonZero {unNonZero = 86400}
+--
 -- @since 0.1.0.0
 secondsInDayNZ :: NonZero Natural
 secondsInDayNZ = $$(Alg.mkAMonoidNonZeroTH 86_400)
 
 -- | 'NonZero' seconds in an hour: 3,600
+--
+-- >>> secondsInHourNZ
+-- UnsafeNonZero {unNonZero = 3600}
 --
 -- @since 0.1.0.0
 secondsInHourNZ :: NonZero Natural
@@ -158,23 +164,35 @@ secondsInHourNZ = $$(Alg.mkAMonoidNonZeroTH 3_600)
 
 -- | 'NonZero' seconds in a minute: 60
 --
+-- >>> secondsInMinuteNZ
+-- UnsafeNonZero {unNonZero = 60}
+--
 -- @since 0.1.0.0
 secondsInMinuteNZ :: NonZero Natural
 secondsInMinuteNZ = $$(Alg.mkAMonoidNonZeroTH 60)
 
 -- | Seconds in a day: 86,400
 --
+-- >>> secondsInDay
+-- 86400
+--
 -- @since 0.1.0.0
 secondsInDay :: Natural
 secondsInDay = 86_400
 
--- | Seconds in an hour: 3,60
+-- | Seconds in an hour: 3,600
+--
+-- >>> secondsInHour
+-- 3600
 --
 -- @since 0.1.0.0
 secondsInHour :: Natural
 secondsInHour = 3_600
 
 -- | Seconds in a minute: 60
+--
+-- >>> secondsInMinute
+-- 60
 --
 -- @since 0.1.0.0
 secondsInMinute :: Natural

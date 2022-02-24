@@ -130,7 +130,8 @@ data Env = MkEnv
     --
     -- @since 0.1.0.0
     lineNameTrunc :: Truncation 'TCmdLine,
-    -- | Holds the
+    -- | Holds a sequence of commands that have completed. Used so we can
+    -- determine which commands have /not/ completed if we time out.
     --
     -- @since 0.1.0.0
     completedCmds :: TVar (Seq Command),

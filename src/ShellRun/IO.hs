@@ -117,7 +117,6 @@ tryShExitCode cmd path = do
 -- returned.
 --
 -- @since 0.1.0.0
--- tryTimeSh :: Command -> IO (Either (Tuple2 Natural Stderr) Natural)
 tryTimeSh ::
   ( HasCompletedCmds env,
     MonadIO m,
