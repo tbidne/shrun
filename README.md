@@ -106,7 +106,7 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Arg:** `-f, --file-log PATH`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string literal `default` is given, we will write to the Xdg config directory e.g. `~/.config/shell-run/logs.txt`.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string literal `default` or `d` is given, we will write to the Xdg config directory e.g. `~/.config/shell-run/logs.txt`.
 
 **Example:**
 
@@ -117,7 +117,7 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Arg:** `-k, --key-show`
 
-**Description:** When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. The flag `-k` or `--key-show` instead uses the key name for display, if one exists.
+**Description:** When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. This flag instead uses the key name for display, if one exists.
 
 **Example:**
 
@@ -191,9 +191,9 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 ## Command Line Truncation
 
-**Arg:** `-y, --cmd-line-trunc NATURAL or detect`
+**Arg:** `-y, --cmd-line-trunc NATURAL or detect/d`
 
-**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
+**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect` or `d`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
 
 **Example:**
 

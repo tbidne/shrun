@@ -269,9 +269,9 @@ lineTruncationParser =
     help =
       "Non-negative integer that limits the length of logs "
         <> "produced via --cmd-log in the console logs. Can also be the "
-        <> "string literal 'detect' (no quotes), to detect the terminal "
-        <> "size automatically. Defaults to no truncation. This does not "
-        <> "affect file logs with --file-log."
+        <> "string literal 'detect' or 'd' (no quotes), to detect the "
+        <> "terminal size automatically. Defaults to no truncation. This does "
+        <> "not affect file logs with --file-log."
 
 readTruncation :: ReadM (Truncation a)
 readTruncation = MkTruncation . PFin <$> OApp.auto
@@ -279,7 +279,8 @@ readTruncation = MkTruncation . PFin <$> OApp.auto
 readDetectTruncation :: ReadM ALineTruncation
 readDetectTruncation = do
   s <- OApp.str
-  if T.toCaseFold s == "detect"
+  let s' = T.toCaseFold s
+  if s' == "d" || s' == "detect"
     then pure Detected
     else
       OApp.readerAbort $
@@ -301,13 +302,14 @@ fileLoggingParser =
         <> "supplied file. Furthermore, command logs will be written to the "
         <> "file irrespective of --cmd-log. Console logging is "
         <> "unaffected. This can be useful for investigating command "
-        <> "failures. If the string literal 'default' is given, we will write "
-        <> "to the Xdg config directory e.g. ~/.config/shell-run/logs.txt"
+        <> "failures. If the string literal 'default' or 'd' is given, we "
+        <> "will write to the Xdg config directory e.g. "
+        <> "~/.config/shell-run/logs.txt"
 
 readLogFile :: ReadM FilePathDefault
 readLogFile = do
   f <- OApp.str
-  if f == "default"
+  if f == "d" || f == "default"
     then pure FPDefault
     else pure (FPManual f)
 

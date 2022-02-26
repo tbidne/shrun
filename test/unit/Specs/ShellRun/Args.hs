@@ -138,7 +138,8 @@ fileLoggingSpecs =
     "FileLogging arg parsing"
     [ parseShortFileLogging,
       parseLongFileLogging,
-      parseDefaultFileLogging
+      parseDefaultFileLogging,
+      parseDFileLogging
     ]
 
 parseShortFileLogging :: TestTree
@@ -156,6 +157,12 @@ parseLongFileLogging = THU.testCase "Should parse filepath with --file-log" $ do
 parseDefaultFileLogging :: TestTree
 parseDefaultFileLogging = THU.testCase "Should parse default --file-log" $ do
   let argList = ["--file-log", "default", "command"]
+      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPDefault}
+  verifyResult argList expected
+
+parseDFileLogging :: TestTree
+parseDFileLogging = THU.testCase "Should parse default -fd" $ do
+  let argList = ["-f", "d", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPDefault}
   verifyResult argList expected
 
@@ -235,7 +242,8 @@ cmdLineTruncSpecs =
     "Command line truncation arg parsing"
     [ parseShortCmdLineTrunc,
       parseLongCmdLineTrunc,
-      parseDetectCmdLineTrunc
+      parseDetectCmdLineTrunc,
+      parseDCmdLineTrunc
     ]
 
 parseShortCmdLineTrunc :: TestTree
@@ -265,6 +273,18 @@ parseDetectCmdLineTrunc = THU.testCase
   "Should parse --cmd-line-trunc detect as detect command line truncation"
   $ do
     let argList = ["--cmd-line-trunc", "detect", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { aCmdLineTrunc = Detected
+              }
+    verifyResult argList expected
+
+parseDCmdLineTrunc :: TestTree
+parseDCmdLineTrunc = THU.testCase
+  "Should parse -yd as detect command line truncation"
+  $ do
+    let argList = ["-y", "d", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
