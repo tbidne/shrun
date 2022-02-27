@@ -35,8 +35,14 @@ main =
 
 goodShell :: TestTree
 goodShell = THU.testCase "Should run successfully" $ do
-  let (logs, b) = verifyGoodShell goodMockShell
-  THU.assertBool (show logs) b
+  let env =
+        (MockEnv.defaultEnv ("echo hi" :|^ ["both"]))
+          { legend = FPManual "path"
+          }
+      expected = ["echo hi", "command 1", "command 2"]
+      result = getLogs runGoodMockShell ShellRun.runShell env
+
+  expected @=? result
 
 goodShellDefaultLegend :: TestTree
 goodShellDefaultLegend = THU.testCase "Should run with default legend" $ do
@@ -44,18 +50,27 @@ goodShellDefaultLegend = THU.testCase "Should run with default legend" $ do
         (MockEnv.defaultEnv (NESeq.singleton "def-key"))
           { legend = FPDefault
           }
-      logs = getLogs runGoodMockShell goodMockShell env
-  ["def-val"] @=? logs
+      expected = ["def-val"]
+      result = getLogs runGoodMockShell ShellRun.runShell env
+  expected @=? result
 
 badLegendShell :: TestTree
 badLegendShell = THU.testCase "Should die on legend error" $ do
-  let (logs, b) = verifyBadLegendShell badLegendMockShell
-  THU.assertBool (show logs) b
+  let env =
+        (MockEnv.defaultEnv ("mock-cmd" :|^ []))
+          { legend = FPManual "bad/path"
+          }
+      expected = ["Error parsing legend file: FileErr \"File not found\""]
+      result = getLogs runBadLegendMockShell ShellRun.runShell env
+  expected @=? result
 
 noLegendShell :: TestTree
 noLegendShell = THU.testCase "Should continue with no manual legend" $ do
-  let (logs, b) = verifyNoLegendShell noLegendMockShell
-  THU.assertBool (show logs) b
+  let env = MockEnv.defaultEnv ("cmd1" :|^ ["cmd2"])
+      expected = ["cmd1", "cmd2"]
+      result = getLogs runNoLegendMockShell ShellRun.runShell env
+
+  expected @=? result
 
 noDefaultLegendShell :: TestTree
 noDefaultLegendShell = THU.testCase "Should continue with no default legend" $ do
@@ -63,45 +78,12 @@ noDefaultLegendShell = THU.testCase "Should continue with no default legend" $ d
         (MockEnv.defaultEnv (NESeq.singleton "cmd"))
           { legend = FPDefault
           }
-      logs = getLogs runNoLegendMockShell noLegendMockShell env
+      logs = getLogs runNoLegendMockShell ShellRun.runShell env
       expected =
         [ "No legend file found at: \"config/legend.txt\"",
           "cmd"
         ]
   expected @=? logs
-
-goodMockShell :: GoodMockShell ()
-goodMockShell = ShellRun.runShell
-
-verifyGoodShell :: GoodMockShell () -> (List Text, Bool)
-verifyGoodShell gms =
-  let env =
-        (MockEnv.defaultEnv ("echo hi" :|^ ["both"]))
-          { legend = FPManual "path"
-          }
-      logs = getLogs runGoodMockShell gms env
-   in (logs, logs == ["echo hi", "command 1", "command 2"])
-
-badLegendMockShell :: BadLegendMockShell ()
-badLegendMockShell = ShellRun.runShell
-
-verifyBadLegendShell :: BadLegendMockShell () -> (List Text, Bool)
-verifyBadLegendShell blms =
-  let env =
-        (MockEnv.defaultEnv ("mock-cmd" :|^ []))
-          { legend = FPManual "bad/path"
-          }
-      logs = getLogs runBadLegendMockShell blms env
-   in (logs, logs == ["Error parsing legend file: FileErr \"File not found\""])
-
-noLegendMockShell :: NoLegendMockShell ()
-noLegendMockShell = ShellRun.runShell
-
-verifyNoLegendShell :: NoLegendMockShell () -> (List Text, Bool)
-verifyNoLegendShell nlms =
-  let env = MockEnv.defaultEnv ("cmd1" :|^ ["cmd2"])
-      logs = getLogs runNoLegendMockShell nlms env
-   in (logs, logs == ["cmd1", "cmd2"])
 
 getLogs :: (t -> MockShellBase a) -> t -> MockEnv -> List Text
 getLogs runMock mock env =

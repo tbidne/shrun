@@ -10,7 +10,7 @@ import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
-import TestArgs
+import TestArgs (TestArgs (..))
 import Timeout qualified
 import Truncation qualified
 
