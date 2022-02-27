@@ -11,6 +11,7 @@
 [![9.2.1](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.2.1/main?label=9.2.1&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.2.1.yaml)
 [![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2018.24&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
+[![BSD-3-Clause](https://img.shields.io/github/license/tbidne/shell-run?color=blue)](https://opensource.org/licenses/BSD-3-Clause)
 
 </div>
 
