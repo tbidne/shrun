@@ -27,14 +27,14 @@ spec args = do
 showKey :: IO TestArgs -> TestTree
 showKey args =
   THU.testCase "Should show key rather than command" $ do
-    MkTestArgs {tLegendPath} <- args
-    withShowKey tLegendPath True
+    MkTestArgs {legendPath} <- args
+    withShowKey legendPath True
 
 noShowKey :: IO TestArgs -> TestTree
 noShowKey args =
   THU.testCase "Should show command rather than key" $ do
-    MkTestArgs {tLegendPath} <- args
-    withShowKey tLegendPath False
+    MkTestArgs {legendPath} <- args
+    withShowKey legendPath False
 
 withShowKey :: FilePath -> Bool -> Assertion
 withShowKey legendPath addShowKey = do
@@ -42,7 +42,7 @@ withShowKey legendPath addShowKey = do
       argList = [legendArg, showKeyArg] <> commands
 
   env <- SysEnv.withArgs argList Env.runParser
-  let action = runReaderT (SR.runShellT SR.runShell) env
+  let action = SR.runShellT SR.runShell env
   result <- Shh.capture_ action
 
   let results = MkResultText <$> T.lines (T.pack result)

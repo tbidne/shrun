@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'FilePathDefault' type.
 --
 -- @since 0.1.0.0
@@ -35,3 +38,5 @@ instance Semigroup FilePathDefault where
 -- | @since 0.1.0.0
 instance Monoid FilePathDefault where
   mempty = FPNone
+
+makePrismLabels ''FilePathDefault

@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Internal module for parsing 'Text' lines into a 'LegendMap'.
@@ -98,3 +99,5 @@ parseLine l =
     (k, v) -> Right (k, v)
   where
     breakPoint = $$(R.refineTH @NonEmpty @Text "=")
+
+makePrismLabels ''LegendErr

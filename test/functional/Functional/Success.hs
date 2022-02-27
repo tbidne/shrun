@@ -17,12 +17,12 @@ import Test.Tasty.HUnit qualified as THU
 spec :: IO TestArgs -> TestTree
 spec args =
   THU.testCase "Should run commands successfully" $ do
-    MkTestArgs {tLegendPath} <- args
-    let legendArg = "--legend=" <> tLegendPath
+    MkTestArgs {legendPath} <- args
+    let legendArg = "--legend=" <> legendPath
         argList = [legendArg, timeout] <> commands
 
     env <- SysEnv.withArgs argList Env.runParser
-    let action = runReaderT (SR.runShellT SR.runShell) env
+    let action = SR.runShellT SR.runShell env
     result <- Shh.capture_ action
 
     let results = MkResultText <$> T.lines (T.pack result)

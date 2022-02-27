@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'Timeout' type.
 --
 -- @since 0.1.0.0
@@ -42,3 +45,5 @@ instance Ord Timeout where
 instance Bounded Timeout where
   minBound = MkTimeout PPosInf
   maxBound = MkTimeout (PFin 0)
+
+makeFieldLabelsNoPrefix ''Timeout

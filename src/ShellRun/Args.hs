@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides functionality for parsing command line arguments.
 --
@@ -47,35 +48,35 @@ data Args = MkArgs
   { -- | Whether to log commands.
     --
     -- @since 0.1.0.0
-    aCmdLogging :: CmdLogging,
+    cmdLogging :: CmdLogging,
     -- | Optional path to log file.
     --
     -- @since 0.1.0.0
-    aFileLogging :: FilePathDefault,
+    fileLogging :: FilePathDefault,
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1.0.0
-    aCmdDisplay :: CmdDisplay,
+    cmdDisplay :: CmdDisplay,
     -- | Optional legend file.
     --
     -- @since 0.1.0.0
-    aLegend :: FilePathDefault,
+    legend :: FilePathDefault,
     -- | Timeout.
     --
     -- @since 0.1.0.0
-    aTimeout :: Timeout,
+    timeout :: Timeout,
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1.0.0
-    aCmdNameTrunc :: Truncation 'TCmdName,
+    cmdNameTrunc :: Truncation 'TCmdName,
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1.0.0
-    aCmdLineTrunc :: ALineTruncation,
+    cmdLineTrunc :: ALineTruncation,
     -- | List of commands.
     --
     -- @since 0.1.0.0
-    aCommands :: NonEmptySeq Text
+    commands :: NonEmptySeq Text
   }
   deriving
     ( -- | @since 0.1.0.0
@@ -114,20 +115,20 @@ instance Monoid ALineTruncation where
 --
 -- ==== __Examples__
 -- >>> defaultArgs (NESeq.singleton "ls")
--- MkArgs {aCmdLogging = Disabled, aFileLogging = FPNone, aCmdDisplay = ShowCmd, aLegend = FPDefault, aTimeout = MkTimeout {unTimeout = PPosInf}, aCmdNameTrunc = MkTruncation {unTruncation = PPosInf}, aCmdLineTrunc = Undetected (MkTruncation {unTruncation = PPosInf}), aCommands = "ls" :|^ fromList []}
+-- MkArgs {cmdLogging = Disabled, fileLogging = FPNone, cmdDisplay = ShowCmd, legend = FPDefault, timeout = MkTimeout {unTimeout = PPosInf}, cmdNameTrunc = MkTruncation {unTruncation = PPosInf}, cmdLineTrunc = Undetected (MkTruncation {unTruncation = PPosInf}), commands = "ls" :|^ fromList []}
 --
 -- @since 0.1.0.0
 defaultArgs :: NonEmptySeq Text -> Args
 defaultArgs cmds =
   MkArgs
-    { aCmdLogging = mempty,
-      aFileLogging = mempty,
-      aCmdDisplay = mempty,
-      aLegend = FPDefault,
-      aTimeout = mempty,
-      aCmdNameTrunc = mempty,
-      aCmdLineTrunc = mempty,
-      aCommands = cmds
+    { cmdLogging = mempty,
+      fileLogging = mempty,
+      cmdDisplay = mempty,
+      legend = FPDefault,
+      timeout = mempty,
+      cmdNameTrunc = mempty,
+      cmdLineTrunc = mempty,
+      commands = cmds
     }
 
 -- | 'ParserInfo' type for parsing 'Args'.
@@ -377,3 +378,6 @@ parseNonNegative = do
   case TR.readMaybe ds of
     Nothing -> MP.customFailure $ "Could not parse natural: " <> showt ds
     Just n -> pure n
+
+makePrismLabels ''ALineTruncation
+makeFieldLabelsNoPrefix ''Args

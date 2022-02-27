@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides functionality for verifying output.
 module Functional.Verify
   ( -- * Types for verifying output
@@ -21,13 +24,19 @@ import Test.Tasty.HUnit qualified as THU
 newtype ResultText = MkResultText {getResultText :: Text}
   deriving (Show) via Text
 
+makeFieldLabelsNoPrefix ''ResultText
+
 -- | Newtype wrapper for expected 'Text' results.
 newtype ExpectedText = MkExpectedText {getExpectedText :: Text}
   deriving (Show) via Text
 
+makeFieldLabelsNoPrefix ''ExpectedText
+
 -- | Newtype wrapper for unexpected 'Text' results.
 newtype UnexpectedText = MkUnexpectedText {getUnexpectedText :: Text}
   deriving (Show) via Text
+
+makeFieldLabelsNoPrefix ''UnexpectedText
 
 -- | Verifies expected text is found.
 verifyExpected :: List ResultText -> List ExpectedText -> Assertion
@@ -80,5 +89,5 @@ findOneUnexpected results (MkUnexpectedText unexpected) = do
 formatResults :: List ResultText -> String
 formatResults results = T.unpack lineSep
   where
-    results' = fmap getResultText results
+    results' = fmap (view #getResultText) results
     lineSep = T.intercalate "\n" results'

@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Provides the 'TimeRep' type and related functions for representing
@@ -196,3 +197,5 @@ secondsInHour = 3_600
 -- @since 0.1.0.0
 secondsInMinute :: Natural
 secondsInMinute = 60
+
+makeFieldLabelsNoPrefix ''TimeRep

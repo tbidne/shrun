@@ -44,14 +44,14 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
       expected =
         Just $
           MkArgs
-            { aLegend = FPDefault,
-              aTimeout = MkTimeout PPosInf,
-              aCmdLogging = Disabled,
-              aCmdDisplay = ShowCmd,
-              aCmdNameTrunc = MkTruncation PPosInf,
-              aCmdLineTrunc = Undetected (MkTruncation PPosInf),
-              aFileLogging = FPNone,
-              aCommands = NESeq.singleton "command"
+            { legend = FPDefault,
+              timeout = MkTimeout PPosInf,
+              cmdLogging = Disabled,
+              cmdDisplay = ShowCmd,
+              cmdNameTrunc = MkTruncation PPosInf,
+              cmdLineTrunc = Undetected (MkTruncation PPosInf),
+              fileLogging = FPNone,
+              commands = NESeq.singleton "command"
             }
   verifyResult argList expected
 
@@ -67,19 +67,19 @@ legendSpecs =
 parseShortLegend :: TestTree
 parseShortLegend = THU.testCase "Should parse short legend" $ do
   let argList = ["-l./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPManual "./path/legend.txt"}
+      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/legend.txt"}
   verifyResult argList expected
 
 parseLongLegend :: TestTree
 parseLongLegend = THU.testCase "Should parse long legend" $ do
   let argList = ["--legend=./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPManual "./path/legend.txt"}
+      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/legend.txt"}
   verifyResult argList expected
 
 parseDefaultLegend :: TestTree
 parseDefaultLegend = THU.testCase "Should parse default legend" $ do
   let argList = ["--legend", "default", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aLegend = FPDefault}
+      expected = Just $ (Args.defaultArgs defCommand) {legend = FPDefault}
   verifyResult argList expected
 
 timeoutSpecs :: TestTree
@@ -97,25 +97,25 @@ timeoutSpecs =
 parseShortTimeout :: TestTree
 parseShortTimeout = THU.testCase "Should parse short timeout" $ do
   let argList = ["-t7", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 7}
+      expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 7}
   verifyResult argList expected
 
 parseLongTimeout :: TestTree
 parseLongTimeout = THU.testCase "Should parse long timeout" $ do
   let argList = ["--timeout=7", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 7}
+      expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 7}
   verifyResult argList expected
 
 parseTimeString :: TestTree
 parseTimeString = THU.testCase "Should parse time string" $ do
   let argList = ["--timeout=2h4s", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 7204}
+      expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 7204}
   verifyResult argList expected
 
 parseLongTimeString :: TestTree
 parseLongTimeString = THU.testCase "Should parse full time string" $ do
   let argList = ["--timeout=1d2h3m4s", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aTimeout = toTO 93784}
+      expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 93784}
   verifyResult argList expected
 
 parseTimeoutWordFail :: TestTree
@@ -143,25 +143,25 @@ fileLoggingSpecs =
 parseShortFileLogging :: TestTree
 parseShortFileLogging = THU.testCase "Should parse filepath with -f" $ do
   let argList = ["-flogfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPManual "logfile"}
+      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPManual "logfile"}
   verifyResult argList expected
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging = THU.testCase "Should parse filepath with --file-log" $ do
   let argList = ["--file-log=logfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPManual "logfile"}
+      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPManual "logfile"}
   verifyResult argList expected
 
 parseDefaultFileLogging :: TestTree
 parseDefaultFileLogging = THU.testCase "Should parse default --file-log" $ do
   let argList = ["--file-log", "default", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPDefault}
+      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPDefault}
   verifyResult argList expected
 
 parseDFileLogging :: TestTree
 parseDFileLogging = THU.testCase "Should parse default -fd" $ do
   let argList = ["-f", "d", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aFileLogging = FPDefault}
+      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPDefault}
   verifyResult argList expected
 
 commandLoggingSpecs :: TestTree
@@ -175,13 +175,13 @@ commandLoggingSpecs =
 parseShortCommandLogging :: TestTree
 parseShortCommandLogging = THU.testCase "Should parse -c as CmdLogging" $ do
   let argList = ["-c", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCmdLogging = Enabled}
+      expected = Just $ (Args.defaultArgs defCommand) {cmdLogging = Enabled}
   verifyResult argList expected
 
 parseLongCommandLogging :: TestTree
 parseLongCommandLogging = THU.testCase "Should parse --cmd-log as CmdLogging" $ do
   let argList = ["--cmd-log", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCmdLogging = Enabled}
+      expected = Just $ (Args.defaultArgs defCommand) {cmdLogging = Enabled}
   verifyResult argList expected
 
 commandDisplaySpecs :: TestTree
@@ -195,13 +195,13 @@ commandDisplaySpecs =
 parseShortShowKey :: TestTree
 parseShortShowKey = THU.testCase "Should parse -k as ShowKey" $ do
   let argList = ["-k", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCmdDisplay = ShowKey}
+      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = ShowKey}
   verifyResult argList expected
 
 parseLongShowKey :: TestTree
 parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
   let argList = ["--key-show", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {aCmdDisplay = ShowKey}
+      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = ShowKey}
   verifyResult argList expected
 
 cmdNameTruncSpecs :: TestTree
@@ -218,7 +218,7 @@ parseShortCmdNameTrunc = THU.testCase "Should parse -x as command name truncatio
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { aCmdNameTrunc = MkTruncation (PFin 15)
+            { cmdNameTrunc = MkTruncation (PFin 15)
             }
   verifyResult argList expected
 
@@ -230,7 +230,7 @@ parseLongCmdNameTrunc = THU.testCase
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aCmdNameTrunc = MkTruncation (PFin 15)
+              { cmdNameTrunc = MkTruncation (PFin 15)
               }
     verifyResult argList expected
 
@@ -250,7 +250,7 @@ parseShortCmdLineTrunc = THU.testCase "Should parse -y as command line truncatio
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { aCmdLineTrunc = Undetected $ MkTruncation (PFin 15)
+            { cmdLineTrunc = Undetected $ MkTruncation (PFin 15)
             }
   verifyResult argList expected
 
@@ -262,7 +262,7 @@ parseLongCmdLineTrunc = THU.testCase
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aCmdLineTrunc = Undetected $ MkTruncation (PFin 15)
+              { cmdLineTrunc = Undetected $ MkTruncation (PFin 15)
               }
     verifyResult argList expected
 
@@ -274,7 +274,7 @@ parseDetectCmdLineTrunc = THU.testCase
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aCmdLineTrunc = Detected
+              { cmdLineTrunc = Detected
               }
     verifyResult argList expected
 
@@ -286,7 +286,7 @@ parseDCmdLineTrunc = THU.testCase
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { aCmdLineTrunc = Detected
+              { cmdLineTrunc = Detected
               }
     verifyResult argList expected
 
@@ -309,7 +309,7 @@ parseCommands = THU.testCase
   "Bare strings parsed as commands"
   $ do
     let argList = ["one", "two", "three"]
-        expected = Just $ (Args.defaultArgs defCommand) {aCommands = NESeq.unsafeFromList ["one", "two", "three"]}
+        expected = Just $ (Args.defaultArgs defCommand) {commands = NESeq.unsafeFromList ["one", "two", "three"]}
     verifyResult argList expected
 
 verifyResult :: List String -> Maybe Args -> Assertion

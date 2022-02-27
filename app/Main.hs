@@ -7,4 +7,4 @@ import ShellRun.Prelude
 main :: IO ()
 main = do
   env <- Env.runParser
-  runReaderT (SR.runShellT SR.runShell) env
+  SR.runShellT SR.runShell env

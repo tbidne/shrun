@@ -22,8 +22,8 @@ spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
   Tasty.testGroup
     "Command logging tests"
     [ THU.testCase "Should print commands stdout" $ do
-        MkTestArgs {tTmpDir} <- args
-        let outpath = tTmpDir </> outfile
+        MkTestArgs {tmpDir} <- args
+        let outpath = tmpDir </> outfile
             argList =
               [ -- Need file logging to read commands
                 "-f" <> outpath,
@@ -33,7 +33,7 @@ spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
                 <> commands
 
         env <- SysEnv.withArgs argList Env.runParser
-        let action = runReaderT (SR.runShellT SR.runShell) env
+        let action = SR.runShellT SR.runShell env
         _ <- Shh.capture_ action
 
         fileResult <- readFileUtf8Lenient outpath
@@ -57,5 +57,5 @@ outfile = "cmd_logs.txt"
 
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do
-  MkTestArgs {tTmpDir} <- args
-  Dir.removeFile (tTmpDir </> outfile)
+  MkTestArgs {tmpDir} <- args
+  Dir.removeFile (tmpDir </> outfile)

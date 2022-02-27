@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 -- | Module that provides env types and requisite typeclasses, along with
 -- parsing functionality.
 --
@@ -70,9 +68,9 @@ import System.FilePath ((</>))
 -- @since 0.1.0.0
 runParser :: IO Env
 runParser = do
-  args@MkArgs {aFileLogging} <- OApp.execParser Args.parserInfoArgs
+  args <- OApp.execParser Args.parserInfoArgs
 
-  fileLogging' <- case aFileLogging of
+  fileLogging' <- case args ^. #fileLogging of
     FPNone -> pure Nothing
     FPDefault -> do
       configDir <- Dir.getXdgDirectory XdgConfig "shell-run"
@@ -88,8 +86,8 @@ runParser = do
   toEnv fileLogging' completedCmds' args
 
 toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> TVar (Seq Command) -> Args -> IO Env
-toEnv fileLogging' completedCmds' MkArgs {..} = do
-  lineNameTrunc' <- case aCmdLineTrunc of
+toEnv fileLogging' completedCmds' args = do
+  lineNameTrunc' <- case args ^. #cmdLineTrunc of
     Undetected x -> pure x
     Detected ->
       (width <<$>> TSize.size) >>= \case
@@ -97,13 +95,13 @@ toEnv fileLogging' completedCmds' MkArgs {..} = do
         Nothing -> SysExit.die "Failed trying to detect terminal size"
   pure $
     MkEnv
-      { legend = aLegend,
-        timeout = aTimeout,
+      { legend = args ^. #legend,
+        timeout = args ^. #timeout,
         fileLogging = fileLogging',
-        cmdLogging = aCmdLogging,
-        cmdDisplay = aCmdDisplay,
-        cmdNameTrunc = aCmdNameTrunc,
+        cmdLogging = args ^. #cmdLogging,
+        cmdDisplay = args ^. #cmdDisplay,
+        cmdNameTrunc = args ^. #cmdNameTrunc,
         lineNameTrunc = lineNameTrunc',
         completedCmds = completedCmds',
-        commands = aCommands
+        commands = args ^. #commands
       }

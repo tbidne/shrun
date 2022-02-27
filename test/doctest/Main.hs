@@ -31,9 +31,13 @@ files =
 -- file's default-extensions
 exts :: List String
 exts =
-  [ "-XDataKinds",
+  [ "-XNoImplicitPrelude",
+    "-XNoStarIsType",
+    "-XApplicativeDo",
+    "-XDataKinds",
     "-XDeriveGeneric",
     "-XDerivingVia",
+    "-XDuplicateRecordFields",
     "-XFlexibleContexts",
     "-XFlexibleInstances",
     "-XImportQualifiedPost",
@@ -42,8 +46,8 @@ exts =
     "-XMultiParamTypeClasses",
     "-XMultiWayIf",
     "-XNamedFieldPuns",
-    "-XNoImplicitPrelude",
     "-XNumericUnderscores",
+    "-XOverloadedLabels",
     "-XOverloadedStrings",
     "-XPatternSynonyms",
     "-XScopedTypeVariables",

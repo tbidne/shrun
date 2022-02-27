@@ -84,6 +84,8 @@ import GHC.Generics as X (Generic)
 import GHC.Natural as X (Natural)
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
+import Optics.Core as X (view, (.~), (^.))
+import Optics.TH as X (makeFieldLabelsNoPrefix, makePrismLabels)
 import Refined as X (Refined)
 import Prelude as X
   ( Bool (..),

@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'LogTextQueue' type and associated functions. This is intended
 -- for concurrently writing logs to a file.
 --
@@ -19,7 +22,6 @@ import Control.Concurrent.STM qualified as STM
 import Control.Concurrent.STM.TBQueue (TBQueue)
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import ShellRun.Class.MonadTime (MonadTime (..))
-import ShellRun.Command (Command (..))
 import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Prelude
@@ -62,6 +64,8 @@ newtype LogText = UnsafeLogText
       Show
     )
 
+makeFieldLabelsNoPrefix ''LogText
+
 -- | @since 0.1.0.0
 pattern MkLogText :: Text -> LogText
 pattern MkLogText t <- UnsafeLogText t
@@ -91,7 +95,7 @@ formatFileLog log@MkLog {cmd, msg} = do
   currTime <- getSystemTime
   let formatted = case cmd of
         Nothing -> prefix <> msg
-        Just com -> prefix <> "[" <> command com <> "] " <> msg
+        Just com -> prefix <> "[" <> (com ^. #command) <> "] " <> msg
       withTimestamp = "[" <> showt currTime <> "] " <> formatted <> "\n"
   pure $ UnsafeLogText withTimestamp
   where
@@ -105,6 +109,8 @@ newtype LogTextQueue = MkLogTextQueue
     getLogTextQueue :: TBQueue LogText
   }
 
+makeFieldLabelsNoPrefix ''LogTextQueue
+
 -- | @since 0.1.0.0
 instance Show LogTextQueue where
   show _ = "<MkLogTextQueue>"
@@ -115,16 +121,16 @@ instance Show LogTextQueue where
 writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
 writeQueue queue = liftIO . (writeq <=< formatFileLog)
   where
-    writeq = STM.atomically . TBQueue.writeTBQueue (getLogTextQueue queue)
+    writeq = STM.atomically . TBQueue.writeTBQueue (queue ^. #getLogTextQueue)
 
 -- | Atomically reads from the queue. Does not retry.
 --
 -- @since 0.1.0.0
 readQueue :: MonadIO m => LogTextQueue -> m (Maybe LogText)
-readQueue = liftIO . STM.atomically . TBQueue.tryReadTBQueue . getLogTextQueue
+readQueue = liftIO . STM.atomically . TBQueue.tryReadTBQueue . view #getLogTextQueue
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1.0.0
 flushQueue :: MonadIO m => LogTextQueue -> m [LogText]
-flushQueue = liftIO . STM.atomically . STM.flushTBQueue . getLogTextQueue
+flushQueue = liftIO . STM.atomically . STM.flushTBQueue . view #getLogTextQueue

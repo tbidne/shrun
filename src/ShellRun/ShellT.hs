@@ -2,7 +2,8 @@
 --
 -- @since 0.1.0.0
 module ShellRun.ShellT
-  ( ShellT (..),
+  ( ShellT,
+    runShellT,
   )
 where
 
@@ -61,10 +62,7 @@ import UnliftIO.Async qualified as UAsync
 --
 -- @since 0.1.0.0
 type ShellT :: Type -> (Type -> Type) -> Type -> Type
-newtype ShellT env m a = MkShellT
-  { -- | @since 0.1.0.0
-    runShellT :: ReaderT env m a
-  }
+newtype ShellT env m a = MkShellT (ReaderT env m a)
   deriving
     ( -- | @since 0.1.0.0
       Functor,
@@ -93,6 +91,9 @@ newtype ShellT env m a = MkShellT
       MonadTrans
     )
     via (ReaderT env)
+
+runShellT :: ShellT env m a -> env -> m a
+runShellT (MkShellT rdr) = runReaderT rdr
 
 -- | @since 0.1.0.0
 instance
@@ -350,4 +351,4 @@ writeQueueToFile :: MonadIO m => FilePath -> LogTextQueue -> m void
 writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
 
 logFile :: MonadIO m => FilePath -> LogText -> m ()
-logFile fp = liftIO . appendFileUtf8 fp . unLogText
+logFile fp = liftIO . appendFileUtf8 fp . view #unLogText

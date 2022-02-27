@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Property tests for ShellRun.Logging.Formatting.
 --
 -- @since 0.1.0.0
@@ -32,6 +35,88 @@ import Test.Tasty.Hedgehog qualified as TH
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.ShellRun.Logging.Generators qualified as LGens
+
+data Env = MkEnv
+  { cmdDisplay :: CmdDisplay,
+    cmdTrunc :: Truncation 'TCmdName,
+    lineTrunc :: Truncation 'TCmdLine
+  }
+  deriving (Eq, Show)
+
+makeFieldLabelsNoPrefix ''Env
+
+genEnv :: Gen Env
+genEnv =
+  MkEnv
+    <$> HGen.enumBounded
+    <*> fmap MkTruncation genPPosInf
+    <*> fmap MkTruncation genPPosInf
+
+cmdTruncLimit :: Integral a => a
+cmdTruncLimit = 30
+
+genEnvCmdTrunc :: Gen Env
+genEnvCmdTrunc =
+  MkEnv
+    <$> HGen.enumBounded
+    <*> fmap (MkTruncation . PFin) genNat
+    <*> pure (MkTruncation PPosInf)
+  where
+    genNat = HGen.integral range
+    range = HRange.linear 0 cmdTruncLimit
+
+genLongCmdText :: Gen Text
+genLongCmdText = HGen.text range HGen.latin1
+  where
+    range = HRange.linearFrom (cmdTruncLimit + 1) (cmdTruncLimit + 1) 100
+
+lineTruncLimit :: Integral a => a
+lineTruncLimit = 80
+
+genEnvLineTrunc :: Gen Env
+genEnvLineTrunc =
+  MkEnv
+    <$> HGen.enumBounded
+    <*> pure (MkTruncation PPosInf)
+    <*> fmap (MkTruncation . PFin) genNat
+  where
+    genNat = HGen.integral range
+    range = HRange.linear 0 lineTruncLimit
+
+genLongLineText :: Gen Text
+genLongLineText = HGen.text range HGen.latin1
+  where
+    range = HRange.linearFrom (lineTruncLimit + 1) (lineTruncLimit + 1) 120
+
+genEnvDispCmd :: Gen Env
+genEnvDispCmd =
+  MkEnv ShowCmd
+    <$> fmap MkTruncation genPPosInf
+    <*> fmap MkTruncation genPPosInf
+
+genEnvDispKey :: Gen Env
+genEnvDispKey =
+  MkEnv ShowKey
+    <$> fmap MkTruncation genPPosInf
+    <*> fmap MkTruncation genPPosInf
+
+genPPosInf :: Gen (PosInfNum Natural)
+genPPosInf = HGen.choice [fmap PFin genNat, pure PPosInf]
+  where
+    genNat = HGen.integral range
+    range = HRange.exponential 0 100
+
+runMockApp :: ReaderT env Identity a -> env -> a
+runMockApp env = runIdentity . runReaderT env
+
+instance HasCmdDisplay Env where
+  getCmdDisplay = view #cmdDisplay
+
+instance HasCmdNameTrunc Env where
+  getCmdNameTrunc = view #cmdTrunc
+
+instance HasCmdLineTrunc Env where
+  getCmdLineTrunc = view #lineTrunc
 
 -- | Entry point for ShellRun.Logging.Formatting property tests.
 props :: TestTree
@@ -148,83 +233,3 @@ lineTruncProps = T.askOption $ \(MkMaxRuns limit) ->
 -- https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 colorLen :: Int
 colorLen = 10
-
-data Env = MkEnv
-  { cmdDisplay :: CmdDisplay,
-    cmdTrunc :: Truncation 'TCmdName,
-    lineTrunc :: Truncation 'TCmdLine
-  }
-  deriving (Eq, Show)
-
-genEnv :: Gen Env
-genEnv =
-  MkEnv
-    <$> HGen.enumBounded
-    <*> fmap MkTruncation genPPosInf
-    <*> fmap MkTruncation genPPosInf
-
-cmdTruncLimit :: Integral a => a
-cmdTruncLimit = 30
-
-genEnvCmdTrunc :: Gen Env
-genEnvCmdTrunc =
-  MkEnv
-    <$> HGen.enumBounded
-    <*> fmap (MkTruncation . PFin) genNat
-    <*> pure (MkTruncation PPosInf)
-  where
-    genNat = HGen.integral range
-    range = HRange.linear 0 cmdTruncLimit
-
-genLongCmdText :: Gen Text
-genLongCmdText = HGen.text range HGen.latin1
-  where
-    range = HRange.linearFrom (cmdTruncLimit + 1) (cmdTruncLimit + 1) 100
-
-lineTruncLimit :: Integral a => a
-lineTruncLimit = 80
-
-genEnvLineTrunc :: Gen Env
-genEnvLineTrunc =
-  MkEnv
-    <$> HGen.enumBounded
-    <*> pure (MkTruncation PPosInf)
-    <*> fmap (MkTruncation . PFin) genNat
-  where
-    genNat = HGen.integral range
-    range = HRange.linear 0 lineTruncLimit
-
-genLongLineText :: Gen Text
-genLongLineText = HGen.text range HGen.latin1
-  where
-    range = HRange.linearFrom (lineTruncLimit + 1) (lineTruncLimit + 1) 120
-
-genEnvDispCmd :: Gen Env
-genEnvDispCmd =
-  MkEnv ShowCmd
-    <$> fmap MkTruncation genPPosInf
-    <*> fmap MkTruncation genPPosInf
-
-genEnvDispKey :: Gen Env
-genEnvDispKey =
-  MkEnv ShowKey
-    <$> fmap MkTruncation genPPosInf
-    <*> fmap MkTruncation genPPosInf
-
-genPPosInf :: Gen (PosInfNum Natural)
-genPPosInf = HGen.choice [fmap PFin genNat, pure PPosInf]
-  where
-    genNat = HGen.integral range
-    range = HRange.exponential 0 100
-
-runMockApp :: ReaderT env Identity a -> env -> a
-runMockApp env = runIdentity . runReaderT env
-
-instance HasCmdDisplay Env where
-  getCmdDisplay = cmdDisplay
-
-instance HasCmdNameTrunc Env where
-  getCmdNameTrunc = cmdTrunc
-
-instance HasCmdLineTrunc Env where
-  getCmdLineTrunc = lineTrunc

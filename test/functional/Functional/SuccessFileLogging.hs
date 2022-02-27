@@ -32,12 +32,12 @@ spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
 fileLogging :: IO TestArgs -> TestTree
 fileLogging args =
   THU.testCase "Should write logs to file" $ do
-    MkTestArgs {tTmpDir} <- args
-    let outpath = tTmpDir </> outfile
+    MkTestArgs {tmpDir} <- args
+    let outpath = tmpDir </> outfile
         argList = ["-f" <> outpath, "sleep 2"]
 
     env <- SysEnv.withArgs argList Env.runParser
-    let action = runReaderT (SR.runShellT SR.runShell) env
+    let action = SR.runShellT SR.runShell env
     _ <- Shh.capture_ action
     fileResult <- readFileUtf8Lenient outpath
 
@@ -55,5 +55,5 @@ outfile = "logs.txt"
 
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do
-  MkTestArgs {tTmpDir} <- args
-  Dir.removeFile (tTmpDir </> outfile)
+  MkTestArgs {tmpDir} <- args
+  Dir.removeFile (tmpDir </> outfile)

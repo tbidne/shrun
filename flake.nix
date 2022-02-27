@@ -24,7 +24,7 @@
           name = "shell-run";
           root = ./.;
           modifier = drv:
-            pkgs.haskell.lib.addBuildTools drv (with pkgs.haskellPackages; [
+            pkgs.haskell.lib.addBuildTools drv (with compiler; [
               cabal-install
               cabal-plan
               haskell-language-server
@@ -32,9 +32,11 @@
               ghcid
               ormolu
             ]);
-          overrides = final: prev: with pkgs.haskellPackages; {
+          overrides = final: prev: with compiler; {
             algebra-simple =
               final.callCabal2nix "algebra-simple" algebra-simple-src { };
+            optics-core = final.optics-core_0_4;
+            optics-th = final.optics-th_0_4;
             refined-extras =
               final.callCabal2nix "refined-extras" refined-extras-src { };
           };

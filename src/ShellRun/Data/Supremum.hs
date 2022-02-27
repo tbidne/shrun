@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'Supremum' type.
 --
 -- @since 0.1.0.0
@@ -30,3 +33,5 @@ instance Ord a => Semigroup (Supremum a) where
 instance (Bounded a, Ord a) => Monoid (Supremum a) where
   mempty :: Supremum a
   mempty = minBound
+
+makePrismLabels ''Supremum

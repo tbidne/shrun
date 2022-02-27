@@ -1,10 +1,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'GoodMockShell' type.
-module Integration.MockShell.BadLegendMockShell (BadLegendMockShell (..)) where
+module Integration.MockShell.BadLegendMockShell
+  ( BadLegendMockShell (..),
+    runBadLegendMockShell,
+  )
+where
 
 import Integration.MockEnv (MockEnv)
-import Integration.MockShell.MockShellBase (MockShellBase (..))
+import Integration.MockShell.MockShellBase (MockShellBase, runMockShellBase)
 import Integration.Prelude
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Legend (LegendErr (..))
@@ -13,8 +17,7 @@ import ShellRun.Logging.RegionLogger (RegionLogger (..))
 -- | 'BadLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the path to the legend file is bad.
 type BadLegendMockShell :: Type -> Type
-newtype BadLegendMockShell a = MkBadLegendMockShell
-  {runBadLegendMockShell :: MockShellBase a}
+newtype BadLegendMockShell a = MkBadLegendMockShell (MockShellBase a)
   deriving
     ( Functor,
       Applicative,
@@ -24,6 +27,9 @@ newtype BadLegendMockShell a = MkBadLegendMockShell
       RegionLogger
     )
     via MockShellBase
+
+runBadLegendMockShell :: BadLegendMockShell a -> MockEnv -> (a, List Text)
+runBadLegendMockShell (MkBadLegendMockShell rdr) = runMockShellBase rdr
 
 instance MonadShell BadLegendMockShell where
   getDefaultDir = pure "config"

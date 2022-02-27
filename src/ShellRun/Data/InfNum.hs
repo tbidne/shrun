@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides numerical types for dealing with infinity.
 --
 -- @since 0.1.0.0
@@ -24,3 +27,5 @@ data PosInfNum a
       -- | @since 0.1.0.0
       Show
     )
+
+makePrismLabels ''PosInfNum

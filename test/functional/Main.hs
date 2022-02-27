@@ -39,9 +39,9 @@ setup = do
   Dir.createDirectoryIfMissing False td
   pure $
     MkTestArgs
-      { tTmpDir = td,
-        tLegendPath = lp
+      { tmpDir = td,
+        legendPath = lp
       }
 
 teardown :: TestArgs -> IO ()
-teardown = Dir.removeDirectory . tTmpDir
+teardown = Dir.removeDirectory . view #tmpDir

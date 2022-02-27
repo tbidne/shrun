@@ -82,7 +82,7 @@ instance IsString Command where
 --         ]
 --       -- with -XOverloadedLists for Data.Seq literal
 --       cmds = translateCommands m ("all" :|^ ["blah"])
---   in (fmap . fmap) command cmds
+--   in (fmap . fmap) (view #command) cmds
 -- :}
 -- Right ("one" :|^ fromList ["two","other","blah"])
 --
@@ -140,3 +140,5 @@ builderToPath path l v =
   LazyT.toStrict $
     LTBuilder.toLazyText $
       path <> LTBuilder.fromText l <> " -> " <> LTBuilder.fromText v
+
+makeFieldLabelsNoPrefix ''Command

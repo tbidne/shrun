@@ -16,7 +16,7 @@ import Test.Tasty.HUnit qualified as THU
 spec :: TestTree
 spec = THU.testCase "Should time out" $ do
   env <- SysEnv.withArgs argList Env.runParser
-  let action = runReaderT (SR.runShellT SR.runShell) env
+  let action = SR.runShellT SR.runShell env
   result <- Shh.capture_ action
   let results = MkResultText <$> T.lines (T.pack result)
   V.verifyExpected results allExpected

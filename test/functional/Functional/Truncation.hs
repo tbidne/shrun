@@ -20,7 +20,7 @@ spec =
     "Truncation tests"
     [ THU.testCase "Should truncate command name" $ do
         env <- SysEnv.withArgs argList Env.runParser
-        let action = runReaderT (SR.runShellT SR.runShell) env
+        let action = SR.runShellT SR.runShell env
         result <- Shh.capture_ action
 
         let results = MkResultText <$> T.lines (T.pack result)

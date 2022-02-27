@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides types and typeclasses for our environment.
 --
 -- @since 0.1.0.0
@@ -32,6 +35,141 @@ import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Logging.Queue (LogTextQueue)
 import ShellRun.Prelude
+
+-- | Type for determining if we stream commands' logs.
+--
+-- @since 0.1.0.0
+data CmdLogging
+  = -- | No logging of sub-commands.
+    --
+    -- @since 0.1.0.0
+    Disabled
+  | -- | Logging of sub-commands
+    --
+    -- @since 0.1.0.0
+    Enabled
+  deriving stock
+    ( -- | @since 0.1.0.0
+      Bounded,
+      -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Ord,
+      -- | @since 0.1.0.0
+      Show
+    )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via Supremum CmdLogging
+
+makePrismLabels ''CmdLogging
+
+-- | Type for determining if we use the command's key
+-- for display, rather than the key itself.
+data CmdDisplay
+  = -- | Display the command itself, not the key.
+    --
+    -- @since 0.1.0.0
+    ShowCmd
+  | -- | Display the command's key, if it exists, rather
+    -- than the key itself.
+    --
+    -- @since 0.1.0.0
+    ShowKey
+  deriving stock
+    ( -- | @since 0.1.0.0
+      Bounded,
+      -- | @since 0.1.0.0
+      Enum,
+      -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Ord,
+      -- | @since 0.1.0.0
+      Show
+    )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via Supremum CmdDisplay
+
+makePrismLabels ''CmdDisplay
+
+-- | The different regions to apply truncation rules.
+--
+-- @since 0.1.0.0
+data TruncRegion
+  = -- | Apply truncation rules to commands/key names.
+    --
+    -- @since 0.1.0.0
+    TCmdName
+  | -- | Apply truncation rules to command log entire lines.
+    --
+    -- @since 0.1.0.0
+    TCmdLine
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+
+makePrismLabels ''TruncRegion
+
+-- | The maximum number of command characters to display in the logs.
+-- The ordering is such that smaller numbers are greater, i.e., the
+-- minimum element is 'PPosInf' and the maximum is zero.
+--
+-- ==== __Examples__
+-- >>> max (MkTruncation PPosInf) (MkTruncation (PFin 7))
+-- MkTruncation {unTruncation = PFin 7}
+--
+-- >>> MkTruncation (PFin 7) <> MkTruncation (PFin 10)
+-- MkTruncation {unTruncation = PFin 7}
+--
+-- >>> mempty @(Truncation TCmdName)
+-- MkTruncation {unTruncation = PPosInf}
+--
+-- @since 0.1.0.0
+type Truncation :: TruncRegion -> Type
+newtype Truncation a = MkTruncation
+  { -- | @since 0.1.0.0
+    unTruncation :: PosInfNum Natural
+  }
+  deriving stock
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via Supremum (Truncation a)
+
+-- | @since 0.1.0.0
+instance Ord (Truncation a) where
+  compare x y | x == y = EQ
+  compare (MkTruncation PPosInf) _ = LT
+  compare _ (MkTruncation PPosInf) = GT
+  compare (MkTruncation (PFin x)) (MkTruncation (PFin y)) = compare y x
+
+-- | @since 0.1.0.0
+instance Bounded (Truncation a) where
+  minBound = MkTruncation PPosInf
+  maxBound = MkTruncation (PFin 0)
+
+makeFieldLabelsNoPrefix ''Truncation
 
 -- | Path to legend file.
 --
@@ -141,165 +279,40 @@ data Env = MkEnv
     commands :: NonEmptySeq Text
   }
 
+makeFieldLabelsNoPrefix ''Env
+
 -- | @since 0.1.0.0
 instance HasLegend Env where
-  getLegend = legend
+  getLegend = view #legend
 
 -- | @since 0.1.0.0
 instance HasTimeout Env where
-  getTimeout = timeout
+  getTimeout = view #timeout
 
 -- | @since 0.1.0.0
 instance HasFileLogging Env where
-  getFileLogging = fileLogging
+  getFileLogging = view #fileLogging
 
 -- | @since 0.1.0.0
 instance HasCmdLogging Env where
-  getCmdLogging = cmdLogging
+  getCmdLogging = view #cmdLogging
 
 -- | @since 0.1.0.0
 instance HasCmdDisplay Env where
-  getCmdDisplay = cmdDisplay
+  getCmdDisplay = view #cmdDisplay
 
 -- | @since 0.1.0.0
 instance HasCmdNameTrunc Env where
-  getCmdNameTrunc = cmdNameTrunc
+  getCmdNameTrunc = view #cmdNameTrunc
 
 -- | @since 0.1.0.0
 instance HasCmdLineTrunc Env where
-  getCmdLineTrunc = lineNameTrunc
+  getCmdLineTrunc = view #lineNameTrunc
 
 -- | @since 0.1.0.0
 instance HasCompletedCmds Env where
-  getCompletedCmds = completedCmds
+  getCompletedCmds = view #completedCmds
 
 -- | @since 0.1.0.0
 instance HasCommands Env where
-  getCommands = commands
-
--- | Type for determining if we stream commands' logs.
---
--- @since 0.1.0.0
-data CmdLogging
-  = -- | No logging of sub-commands.
-    --
-    -- @since 0.1.0.0
-    Disabled
-  | -- | Logging of sub-commands
-    --
-    -- @since 0.1.0.0
-    Enabled
-  deriving stock
-    ( -- | @since 0.1.0.0
-      Bounded,
-      -- | @since 0.1.0.0
-      Eq,
-      -- | @since 0.1.0.0
-      Ord,
-      -- | @since 0.1.0.0
-      Show
-    )
-  deriving
-    ( -- | @since 0.1.0.0
-      Semigroup,
-      -- | @since 0.1.0.0
-      Monoid
-    )
-    via Supremum CmdLogging
-
--- | Type for determining if we use the command's key
--- for display, rather than the key itself.
-data CmdDisplay
-  = -- | Display the command itself, not the key.
-    --
-    -- @since 0.1.0.0
-    ShowCmd
-  | -- | Display the command's key, if it exists, rather
-    -- than the key itself.
-    --
-    -- @since 0.1.0.0
-    ShowKey
-  deriving stock
-    ( -- | @since 0.1.0.0
-      Bounded,
-      -- | @since 0.1.0.0
-      Enum,
-      -- | @since 0.1.0.0
-      Eq,
-      -- | @since 0.1.0.0
-      Ord,
-      -- | @since 0.1.0.0
-      Show
-    )
-  deriving
-    ( -- | @since 0.1.0.0
-      Semigroup,
-      -- | @since 0.1.0.0
-      Monoid
-    )
-    via Supremum CmdDisplay
-
--- | The different regions to apply truncation rules.
---
--- @since 0.1.0.0
-data TruncRegion
-  = -- | Apply truncation rules to commands/key names.
-    --
-    -- @since 0.1.0.0
-    TCmdName
-  | -- | Apply truncation rules to command log entire lines.
-    --
-    -- @since 0.1.0.0
-    TCmdLine
-  deriving
-    ( -- | @since 0.1.0.0
-      Eq,
-      -- | @since 0.1.0.0
-      Show
-    )
-
--- | The maximum number of command characters to display in the logs.
--- The ordering is such that smaller numbers are greater, i.e., the
--- minimum element is 'PPosInf' and the maximum is zero.
---
--- ==== __Examples__
--- >>> max (MkTruncation PPosInf) (MkTruncation (PFin 7))
--- MkTruncation {unTruncation = PFin 7}
---
--- >>> MkTruncation (PFin 7) <> MkTruncation (PFin 10)
--- MkTruncation {unTruncation = PFin 7}
---
--- >>> mempty @(Truncation TCmdName)
--- MkTruncation {unTruncation = PPosInf}
---
--- @since 0.1.0.0
-type Truncation :: TruncRegion -> Type
-newtype Truncation a = MkTruncation
-  { -- | @since 0.1.0.0
-    unTruncation :: PosInfNum Natural
-  }
-  deriving stock
-    ( -- | @since 0.1.0.0
-      Eq,
-      -- | @since 0.1.0.0
-      Show
-    )
-  deriving
-    ( -- | @since 0.1.0.0
-      Semigroup,
-      -- | @since 0.1.0.0
-      Monoid
-    )
-    via Supremum (Truncation a)
-
--- | @since 0.1.0.0
-instance Ord (Truncation a) where
-  compare x y | x == y = EQ
-  compare (MkTruncation PPosInf) _ = LT
-  compare _ (MkTruncation PPosInf) = GT
-  compare (MkTruncation (PFin x)) (MkTruncation (PFin y)) = compare y x
-
--- | @since 0.1.0.0
-instance Bounded (Truncation a) where
-  minBound = MkTruncation PPosInf
-  maxBound = MkTruncation (PFin 0)
+  getCommands = view #commands

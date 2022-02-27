@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | This module provides the `Log` type and associated functions.
 --
 -- @since 0.1.0.0
@@ -58,6 +61,8 @@ data LogMode
     )
     via (Supremum LogMode)
 
+makePrismLabels ''LogMode
+
 -- | Determines the logging level.
 --
 -- @since 0.1.0.0
@@ -102,6 +107,8 @@ data LogLevel
     )
     via (Supremum LogLevel)
 
+makePrismLabels ''LogLevel
+
 -- | Determines where the log is sent.
 --
 -- @since 0.1.0.0
@@ -131,6 +138,8 @@ data LogDest
       Monoid
     )
     via (Supremum LogDest)
+
+makePrismLabels ''LogDest
 
 -- | Captures the relevant information concerning a specific log
 -- (i.e. text, level, and mode).
@@ -166,19 +175,21 @@ data Log = MkLog
       Show
     )
 
+makeFieldLabelsNoPrefix ''Log
+
 -- | @since 0.1.0.0
 
 -- | Transforms log to a color based on its 'LogLevel'.
 --
 -- @since 0.1.0.0
 logToColor :: Log -> Color
-logToColor = levelToColor . lvl
+logToColor = levelToColor . view #lvl
 
 -- | Transforms log to a prefix based on its 'LogLevel'.
 --
 -- @since 0.1.0.0
 logToPrefix :: Log -> Text
-logToPrefix = levelToPrefix . lvl
+logToPrefix = levelToPrefix . view #lvl
 
 -- | Maps 'LogLevel' to 'Color'.
 --

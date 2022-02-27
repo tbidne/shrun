@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides 'MockEnv' type for running integration tests.
 module Integration.MockEnv (MockEnv (..), defaultEnv) where
 
@@ -12,11 +15,13 @@ data MockEnv = MkMockEnv
     commands :: NonEmptySeq Text
   }
 
+makeFieldLabelsNoPrefix ''MockEnv
+
 instance HasLegend MockEnv where
-  getLegend = legend
+  getLegend = view #legend
 
 instance HasCommands MockEnv where
-  getCommands = commands
+  getCommands = view #commands
 
 -- | Constructs a default 'MockEnv'.
 defaultEnv :: NonEmptySeq Text -> MockEnv

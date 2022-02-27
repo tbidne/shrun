@@ -1,3 +1,6 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the low-level `IO` functions for running shell commands.
 --
 -- @since 0.1.0.0
@@ -72,6 +75,8 @@ newtype Stdout = MkStdout
     getStdout :: Text
   }
 
+makeFieldLabelsNoPrefix ''Stdout
+
 -- | Newtype wrapper for stderr.
 --
 -- @since 0.1.0.0
@@ -79,6 +84,107 @@ newtype Stderr = MkStderr
   { -- | @since 0.1.0.0
     getStderr :: Text
   }
+
+makeFieldLabelsNoPrefix ''Stderr
+
+stripChars :: Text -> Text
+stripChars = T.stripEnd . T.replace "\r" ""
+
+makeStdErr :: Text -> Stderr
+makeStdErr err = MkStderr $ "Error: '" <> stripChars err
+
+-- | Result from reading a handle. The ordering is based on:
+--
+-- @
+-- 'ReadErr' _ < 'ReadNoData' < 'ReadSuccess'
+-- @
+--
+-- The 'Semigroup' instance is based on this ordering, taking the greatest
+-- element. For identical constructors, the left argument is taken.
+--
+-- @since 0.1.0.0
+data ReadHandleResult
+  = -- | Error encountered while trying to read a handle.
+    --
+    -- @since 0.1.0.0
+    ReadErr Text
+  | -- | Successfully read data from the handle.
+    --
+    -- @since 0.1.0.0
+    ReadSuccess Text
+  | -- | Successfully read no data from the handle.
+    --
+    -- @since 0.1.0.0
+    ReadNoData
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+  deriving
+    ( -- | @since 0.1.0.0
+      Semigroup,
+      -- | @since 0.1.0.0
+      Monoid
+    )
+    via Supremum ReadHandleResult
+
+-- | @since 0.1.0.0
+instance Bounded ReadHandleResult where
+  minBound = ReadErr ""
+  maxBound = ReadSuccess ""
+
+-- | @since 0.1.0.0
+instance Ord ReadHandleResult where
+  compare x y | x == y = EQ
+  compare (ReadSuccess _) _ = GT
+  compare _ (ReadSuccess _) = LT
+  compare ReadNoData _ = GT
+  compare _ ReadNoData = LT
+  compare (ReadErr _) _ = GT
+
+makePrismLabels ''ReadHandleResult
+
+-- | Turns a 'ReadHandleResult' into a 'Stderr'.
+--
+-- @since 0.1.0.0
+readHandleResultToStderr :: ReadHandleResult -> Stderr
+readHandleResultToStderr ReadNoData = MkStderr "<No data>"
+readHandleResultToStderr (ReadErr err) = MkStderr err
+readHandleResultToStderr (ReadSuccess err) = MkStderr err
+
+-- | Attempts to read from the handle.
+--
+-- @since 0.1.0.0
+readHandle :: Handle -> IO ReadHandleResult
+readHandle handle = do
+  let displayEx :: Show a => Text -> a -> Text
+      displayEx prefix =
+        view #getStderr
+          . makeStdErr
+          . (<>) prefix
+          . showt
+      readEx = displayEx "IOException reading handle: "
+
+  isClosed <- Handle.hIsClosed handle
+  canRead <- Handle.hIsReadable handle
+  if
+      | isClosed ->
+          pure $ ReadErr $ displayEx "Handle closed" ("" :: List Char)
+      | not canRead ->
+          pure $ ReadErr $ displayEx "Cannot read from handle" ("" :: List Char)
+      | otherwise -> do
+          output :: Either SomeException ByteString <-
+            liftIO $ SafeEx.try $ BS.hGetNonBlocking handle blockSize
+          let outDecoded = fmap Utils.decodeUtf8Lenient output
+          pure $ case outDecoded of
+            Left ex -> ReadErr $ readEx ex
+            Right "" -> ReadNoData
+            Right o -> ReadSuccess $ stripChars o
+
+blockSize :: Int
+blockSize = 1024
 
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
@@ -205,7 +311,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
 
   -- We use the same pipe for std_out and std_err. The reason is that many
   -- programs will redirect stdout to stderr (e.g. echo ... >&2), and we
-  -- will miss this if we don't check both. Because this "collapses" stdout
+  -- will miss this if we don't check b Because this "collapses" stdout
   -- and stderr to the same file descriptor, there isn't much of a reason to
   -- use two different handles.
   let pr =
@@ -293,100 +399,3 @@ streamOutput mRegion cmd recvH ph = do
     liftIO $ P.getProcessExitCode ph
   lastRead <- liftIO $ IORef.readIORef lastReadRef
   pure (exitCode, lastRead)
-
--- | Result from reading a handle. The ordering is based on:
---
--- @
--- 'ReadErr' _ < 'ReadNoData' < 'ReadSuccess'
--- @
---
--- The 'Semigroup' instance is based on this ordering, taking the greatest
--- element. For identical constructors, the left argument is taken.
---
--- @since 0.1.0.0
-data ReadHandleResult
-  = -- | Error encountered while trying to read a handle.
-    --
-    -- @since 0.1.0.0
-    ReadErr Text
-  | -- | Successfully read data from the handle.
-    --
-    -- @since 0.1.0.0
-    ReadSuccess Text
-  | -- | Successfully read no data from the handle.
-    --
-    -- @since 0.1.0.0
-    ReadNoData
-  deriving
-    ( -- | @since 0.1.0.0
-      Eq,
-      -- | @since 0.1.0.0
-      Show
-    )
-  deriving
-    ( -- | @since 0.1.0.0
-      Semigroup,
-      -- | @since 0.1.0.0
-      Monoid
-    )
-    via Supremum ReadHandleResult
-
--- | @since 0.1.0.0
-instance Bounded ReadHandleResult where
-  minBound = ReadErr ""
-  maxBound = ReadSuccess ""
-
--- | @since 0.1.0.0
-instance Ord ReadHandleResult where
-  compare x y | x == y = EQ
-  compare (ReadSuccess _) _ = GT
-  compare _ (ReadSuccess _) = LT
-  compare ReadNoData _ = GT
-  compare _ ReadNoData = LT
-  compare (ReadErr _) _ = GT
-
--- | Turns a 'ReadHandleResult' into a 'Stderr'.
---
--- @since 0.1.0.0
-readHandleResultToStderr :: ReadHandleResult -> Stderr
-readHandleResultToStderr ReadNoData = MkStderr "<No data>"
-readHandleResultToStderr (ReadErr err) = MkStderr err
-readHandleResultToStderr (ReadSuccess err) = MkStderr err
-
--- | Attempts to read from the handle.
---
--- @since 0.1.0.0
-readHandle :: Handle -> IO ReadHandleResult
-readHandle handle = do
-  let displayEx :: Show a => Text -> a -> Text
-      displayEx prefix =
-        getStderr
-          . makeStdErr
-          . (<>) prefix
-          . showt
-      readEx = displayEx "IOException reading handle: "
-
-  isClosed <- Handle.hIsClosed handle
-  canRead <- Handle.hIsReadable handle
-  if
-      | isClosed ->
-          pure $ ReadErr $ displayEx "Handle closed" ("" :: List Char)
-      | not canRead ->
-          pure $ ReadErr $ displayEx "Cannot read from handle" ("" :: List Char)
-      | otherwise -> do
-          output :: Either SomeException ByteString <-
-            liftIO $ SafeEx.try $ BS.hGetNonBlocking handle blockSize
-          let outDecoded = fmap Utils.decodeUtf8Lenient output
-          pure $ case outDecoded of
-            Left ex -> ReadErr $ readEx ex
-            Right "" -> ReadNoData
-            Right o -> ReadSuccess $ stripChars o
-
-makeStdErr :: Text -> Stderr
-makeStdErr err = MkStderr $ "Error: '" <> stripChars err
-
-stripChars :: Text -> Text
-stripChars = T.stripEnd . T.replace "\r" ""
-
-blockSize :: Int
-blockSize = 1024

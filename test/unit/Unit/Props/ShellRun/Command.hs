@@ -39,7 +39,7 @@ translateProps = T.askOption $ \(MkMaxRuns limit) ->
             H.footnote $ "Received a LegendErr: " <> show err
             H.failure
           Right finalCmds -> do
-            let finalCmdsSet = Set.fromList $ NESeq.toList $ fmap Command.command finalCmds
+            let finalCmdsSet = Set.fromList $ NESeq.toList $ fmap (view #command) finalCmds
                 combinedKeySet = Set.union legendKeySet finalCmdsSet
 
             H.footnote $ "Final commands: " <> show finalCmdsSet

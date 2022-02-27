@@ -30,6 +30,7 @@ common common-exts
     DataKinds
     DeriveGeneric
     DerivingVia
+    DuplicateRecordFields
     FlexibleContexts
     FlexibleInstances
     GeneralizedNewtypeDeriving
@@ -40,6 +41,7 @@ common common-exts
     MultiWayIf
     NamedFieldPuns
     NumericUnderscores
+    OverloadedLabels
     OverloadedStrings
     PatternSynonyms
     ScopedTypeVariables
@@ -90,6 +92,8 @@ library
     , megaparsec            >=7.0.5    && <9.3
     , monad-loops           >=0.3      && <0.5
     , mtl                   ^>=2.2.1
+    , optics-core           ^>=0.4
+    , optics-th             ^>=0.4
     , optparse-applicative  >=0.15     && <0.17
     , package-version       ^>=0.1.0.0
     , pretty-terminal       ^>=0.1
@@ -149,6 +153,8 @@ test-suite unit
     , base
     , clock
     , hedgehog              >=1.0.2   && <1.2
+    , optics-core
+    , optics-th
     , optparse-applicative
     , refined
     , refined-extras
@@ -179,6 +185,8 @@ test-suite integration
   build-depends:
     , base
     , mtl
+    , optics-core
+    , optics-th
     , shell-run
     , tasty
     , tasty-hunit
@@ -209,6 +217,8 @@ test-suite functional
     , directory
     , filepath
     , mtl
+    , optics-core
+    , optics-th
     , pretty-terminal
     , process
     , shell-run
