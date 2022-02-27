@@ -4,20 +4,18 @@
 module Main (main) where
 
 import Data.Functor.Identity (Identity (..))
-import MockEnv (MockEnv (..))
-import MockEnv qualified
-import MockShell.BadLegendMockShell (BadLegendMockShell (..))
-import MockShell.GoodMockShell (GoodMockShell (..))
-import MockShell.MockShellBase (MockShellBase (..))
-import MockShell.NoLegendMockShell (NoLegendMockShell (..))
+import Integration.MockEnv (MockEnv (..))
+import Integration.MockEnv qualified as MockEnv
+import Integration.MockShell.BadLegendMockShell (BadLegendMockShell (..))
+import Integration.MockShell.GoodMockShell (GoodMockShell (..))
+import Integration.MockShell.MockShellBase (MockShellBase (..))
+import Integration.MockShell.NoLegendMockShell (NoLegendMockShell (..))
+import Integration.Prelude
 import ShellRun qualified
 import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
-import ShellRun.Prelude
-import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
-import Test.Tasty.HUnit ((@=?))
 import Test.Tasty.HUnit qualified as THU
 
 -- | Entry point for integration tests.

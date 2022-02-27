@@ -1,0 +1,47 @@
+-- | Specs for ShellRun.Legend.Internal.
+module Unit.Specs.ShellRun.Legend.Internal (specs) where
+
+import Data.HashMap.Strict qualified as Map
+import ShellRun.Legend (LegendErr (..))
+import ShellRun.Legend.Internal qualified as Internal
+import Test.Tasty qualified as Tasty
+import Test.Tasty.HUnit qualified as THU
+import Unit.Prelude
+
+-- | Entry point for ShellRun.Legend.Internal specs.
+specs :: TestTree
+specs =
+  Tasty.testGroup
+    "ShellRun.Legend.Internal"
+    [ parseMapAndSkip,
+      emptyKeyThrowErr,
+      emptyValThrowErr,
+      duplicateKeysThrowErr
+    ]
+
+parseMapAndSkip :: TestTree
+parseMapAndSkip = THU.testCase "Should parse to map and skip comments" $ do
+  let result = Internal.linesToMap ["a=b,,k", "b=c", "#c=x"]
+      expected =
+        Right
+          ( Map.fromList
+              [ ("a", "b,,k"),
+                ("b", "c")
+              ]
+          )
+  expected @=? result
+
+emptyKeyThrowErr :: TestTree
+emptyKeyThrowErr =
+  THU.testCase "Empty key should throw error" $
+    Left (EntryErr "Key cannot be empty: =b") @=? Internal.linesToMap ["=b"]
+
+emptyValThrowErr :: TestTree
+emptyValThrowErr =
+  THU.testCase "Empty value should throw error" $
+    Left (EntryErr "Value cannot be empty: a=") @=? Internal.linesToMap ["a="]
+
+duplicateKeysThrowErr :: TestTree
+duplicateKeysThrowErr =
+  THU.testCase "Duplicate keys should throw error" $
+    Left (DuplicateKeyErr "a") @=? Internal.linesToMap ["a=b", "b=c", "a=d"]

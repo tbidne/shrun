@@ -1,18 +1,17 @@
 -- | Runs functional tests.
 module Main (main) where
 
-import ShellRun.Prelude
-import Success qualified
-import SuccessCommandLogging qualified
-import SuccessFileLogging qualified
-import SuccessShowKey qualified
+import Functional.Prelude
+import Functional.Success qualified as Success
+import Functional.SuccessCommandLogging qualified as SuccessCommandLogging
+import Functional.SuccessFileLogging qualified as SuccessFileLogging
+import Functional.SuccessShowKey qualified as SuccessShowKey
+import Functional.TestArgs (TestArgs (..))
+import Functional.Timeout qualified as Timeout
+import Functional.Truncation qualified as Truncation
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
-import Test.Tasty (TestTree)
 import Test.Tasty qualified as Tasty
-import TestArgs (TestArgs (..))
-import Timeout qualified
-import Truncation qualified
 
 -- | Entry point for functional tests.
 main :: IO ()

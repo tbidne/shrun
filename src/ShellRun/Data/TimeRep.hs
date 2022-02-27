@@ -32,7 +32,6 @@ module ShellRun.Data.TimeRep
 where
 
 import Data.Text qualified as T
-import Numeric.Algebra (NonZero (..))
 import Numeric.Algebra qualified as Alg
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U

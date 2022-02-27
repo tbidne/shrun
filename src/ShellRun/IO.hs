@@ -32,7 +32,6 @@ import Control.Monad.Catch (MonadMask)
 import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.IO.Unlift qualified as UAsync
 import Control.Monad.Loops qualified as Loops
-import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.IORef qualified as IORef
 import Data.Sequence ((<|))
@@ -46,7 +45,12 @@ import ShellRun.Env.Types
     HasCmdLogging (..),
     HasCompletedCmds (..),
   )
-import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
+import ShellRun.Logging.Log
+  ( Log (..),
+    LogDest (..),
+    LogLevel (..),
+    LogMode (..),
+  )
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils

@@ -20,15 +20,11 @@ module ShellRun.Utils
   )
 where
 
-import Data.ByteString (ByteString)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
 import GHC.Exts (IsList (..))
 import GHC.Int (Int64)
-import GHC.Stack (HasCallStack)
-import Numeric.Algebra (NonZero (..))
-import Refined (Refined)
 import Refined qualified as R
 import Refined.Extras (pattern MkRefined)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))

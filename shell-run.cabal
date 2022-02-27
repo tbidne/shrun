@@ -126,22 +126,23 @@ test-suite unit
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    MaxRuns
-    Props
-    Props.Generators
-    Props.ShellRun.Command
-    Props.ShellRun.Data.TimeRep
-    Props.ShellRun.Legend.Internal
-    Props.ShellRun.Logging.Formatting
-    Props.ShellRun.Logging.Generators
-    Props.ShellRun.Logging.Queue
-    Props.ShellRun.Utils
-    Specs
-    Specs.ShellRun.Args
-    Specs.ShellRun.Command
-    Specs.ShellRun.Data.TimeRep
-    Specs.ShellRun.Legend.Internal
-    Specs.ShellRun.Utils
+    Unit.MaxRuns
+    Unit.Prelude
+    Unit.Props
+    Unit.Props.Generators
+    Unit.Props.ShellRun.Command
+    Unit.Props.ShellRun.Data.TimeRep
+    Unit.Props.ShellRun.Legend.Internal
+    Unit.Props.ShellRun.Logging.Formatting
+    Unit.Props.ShellRun.Logging.Generators
+    Unit.Props.ShellRun.Logging.Queue
+    Unit.Props.ShellRun.Utils
+    Unit.Specs
+    Unit.Specs.ShellRun.Args
+    Unit.Specs.ShellRun.Command
+    Unit.Specs.ShellRun.Data.TimeRep
+    Unit.Specs.ShellRun.Legend.Internal
+    Unit.Specs.ShellRun.Utils
 
   build-depends:
     , algebra-simple
@@ -168,11 +169,12 @@ test-suite integration
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    MockEnv
-    MockShell.BadLegendMockShell
-    MockShell.GoodMockShell
-    MockShell.MockShellBase
-    MockShell.NoLegendMockShell
+    Integration.MockEnv
+    Integration.MockShell.BadLegendMockShell
+    Integration.MockShell.GoodMockShell
+    Integration.MockShell.MockShellBase
+    Integration.MockShell.NoLegendMockShell
+    Integration.Prelude
 
   build-depends:
     , base
@@ -191,15 +193,16 @@ test-suite functional
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    Success
-    SuccessCommandLogging
-    SuccessFileLogging
-    SuccessShowKey
-    TestArgs
-    Timeout
-    Truncation
-    Utils
-    Verify
+    Functional.Prelude
+    Functional.Success
+    Functional.SuccessCommandLogging
+    Functional.SuccessFileLogging
+    Functional.SuccessShowKey
+    Functional.TestArgs
+    Functional.Timeout
+    Functional.Truncation
+    Functional.Utils
+    Functional.Verify
 
   build-depends:
     , base
