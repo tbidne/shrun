@@ -1,7 +1,6 @@
 module Main (main) where
 
-import Data.String (String)
-import ShellRun.Prelude
+import Prelude
 import System.Environment qualified as Env
 import Test.DocTest qualified as DocTest
 
@@ -14,7 +13,7 @@ main = do
   where
     args = files <> exts
 
-files :: List String
+files :: [String]
 files =
   [ "-isrc",
     "src/ShellRun/Args.hs",
@@ -29,7 +28,7 @@ files =
 
 -- This is needed because DocTest does not read the cabal
 -- file's default-extensions
-exts :: List String
+exts :: [String]
 exts =
   [ "-XNoImplicitPrelude",
     "-XNoStarIsType",
