@@ -116,11 +116,7 @@ library
 executable shell-run
   import:           common-exts
   main-is:          Main.hs
-  build-depends:
-    , base
-    , mtl
-    , shell-run
-
+  build-depends:    shell-run
   hs-source-dirs:   app
   ghc-options:      -threaded -with-rtsopts=-N
   default-language: Haskell2010
@@ -201,6 +197,7 @@ test-suite functional
     Functional.Success
     Functional.SuccessCommandLogging
     Functional.SuccessFileLogging
+    Functional.SuccessNoLogging
     Functional.SuccessShowKey
     Functional.TestArgs
     Functional.Timeout
@@ -213,7 +210,7 @@ test-suite functional
     , directory
     , filepath
     , shell-run
-    , silently         ^>=1.2
+    , silently     ^>=1.2
     , tasty
     , tasty-hunit
     , text
@@ -227,7 +224,7 @@ test-suite doctest
   main-is:          Main.hs
   build-depends:
     , base
-    , doctest    >=0.16.3 && <0.19
+    , doctest  >=0.16.3 && <0.19
 
   hs-source-dirs:   test/doctest
   default-language: Haskell2010

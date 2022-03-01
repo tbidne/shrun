@@ -29,6 +29,7 @@ specs =
       commandDisplaySpecs,
       cmdNameTruncSpecs,
       cmdLineTruncSpecs,
+      globalLoggingSpecs,
       commandSpecs
     ]
 
@@ -51,6 +52,7 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
               cmdNameTrunc = MkTruncation PPosInf,
               cmdLineTrunc = Undetected (MkTruncation PPosInf),
               fileLogging = FPNone,
+              globalLogging = True,
               commands = NESeq.singleton "command"
             }
   verifyResult argList expected
@@ -289,6 +291,34 @@ parseDCmdLineTrunc = THU.testCase
               { cmdLineTrunc = Detected
               }
     verifyResult argList expected
+
+globalLoggingSpecs :: TestTree
+globalLoggingSpecs =
+  Tasty.testGroup
+    "Global logging arg parsing"
+    [ parseShortGlobalLogging,
+      parseLongGlobalLogging
+    ]
+
+parseShortGlobalLogging :: TestTree
+parseShortGlobalLogging = THU.testCase "Should parse -d as no global logging" $ do
+  let argList = ["-d", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { globalLogging = False
+            }
+  verifyResult argList expected
+
+parseLongGlobalLogging :: TestTree
+parseLongGlobalLogging = THU.testCase "Should parse --disable-log as no global logging" $ do
+  let argList = ["--disable-log", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { globalLogging = False
+            }
+  verifyResult argList expected
 
 commandSpecs :: TestTree
 commandSpecs =

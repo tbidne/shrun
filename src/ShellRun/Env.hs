@@ -11,6 +11,7 @@ module ShellRun.Env
     HasCmdLineTrunc (..),
     HasCompletedCmds (..),
     HasFileLogging (..),
+    HasGlobalLogging (..),
     HasLegend (..),
     HasTimeout (..),
 
@@ -49,6 +50,7 @@ import ShellRun.Env.Types
     HasCommands (..),
     HasCompletedCmds (..),
     HasFileLogging (..),
+    HasGlobalLogging (..),
     HasLegend (..),
     HasTimeout (..),
     TruncRegion (..),
@@ -103,5 +105,6 @@ toEnv fileLogging' completedCmds' args = do
         cmdNameTrunc = args ^. #cmdNameTrunc,
         lineNameTrunc = lineNameTrunc',
         completedCmds = completedCmds',
+        globalLogging = args ^. #globalLogging,
         commands = args ^. #commands
       }

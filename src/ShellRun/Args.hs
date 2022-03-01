@@ -41,6 +41,42 @@ import Text.Megaparsec qualified as MP
 import Text.Megaparsec.Char qualified as MPC
 import Text.Read qualified as TR
 
+-- $setup
+-- >>> :{
+--   prettyArgs :: Args -> Text
+--   prettyArgs args =
+--    "MkArgs"
+--      <> "\n  { cmdLogging = " <> showt (args ^. #cmdLogging)
+--      <> ",\n    fileLogging = " <> showt (args ^. #fileLogging)
+--      <> ",\n    cmdDisplay = " <> showt (args ^. #cmdDisplay)
+--      <> ",\n    legend = " <> showt (args ^. #legend)
+--      <> ",\n    timeout = " <> showt (args ^. #timeout)
+--      <> ",\n    cmdNameTrunc = " <> showt (args ^. #cmdNameTrunc)
+--      <> ",\n    cmdLineTrunc = " <> showt (args ^. #cmdLineTrunc)
+--      <> ",\n    globalLogging = " <> showt (args ^. #globalLogging)
+--      <> ",\n    commands = " <> showt (args ^. #commands)
+--      <> "\n  }"
+-- :}
+
+-- | Determines command log line truncation behavior. We need a separate
+-- type from 'Truncation' to add a third option, to detect the terminal size
+-- automatically.
+--
+-- @since 0.1.0.0
+data ALineTruncation
+  = -- | @since 0.1.0.0
+    Undetected (Truncation 'TCmdLine)
+  | -- | @since 0.1.0.0
+    Detected
+  deriving
+    ( -- | @since 0.1.0.0
+      Eq,
+      -- | @since 0.1.0.0
+      Show
+    )
+
+makePrismLabels ''ALineTruncation
+
 -- | Type for parsing command line args.
 --
 -- @since 0.1.0.0
@@ -49,6 +85,11 @@ data Args = MkArgs
     --
     -- @since 0.1.0.0
     cmdLogging :: CmdLogging,
+    -- | Overarching option for logging. If it is false then all logging is
+    -- disabled.
+    --
+    -- @since 0.1.0.0
+    globalLogging :: Bool,
     -- | Optional path to log file.
     --
     -- @since 0.1.0.0
@@ -85,22 +126,7 @@ data Args = MkArgs
       Show
     )
 
--- | Determines command log line truncation behavior. We need a separate
--- type from 'Truncation' to add a third option, to detect the terminal size
--- automatically.
---
--- @since 0.1.0.0
-data ALineTruncation
-  = -- | @since 0.1.0.0
-    Undetected (Truncation 'TCmdLine)
-  | -- | @since 0.1.0.0
-    Detected
-  deriving
-    ( -- | @since 0.1.0.0
-      Eq,
-      -- | @since 0.1.0.0
-      Show
-    )
+makeFieldLabelsNoPrefix ''Args
 
 -- | @since 0.1.0.0
 instance Semigroup ALineTruncation where
@@ -114,8 +140,18 @@ instance Monoid ALineTruncation where
 -- | Default configuration.
 --
 -- ==== __Examples__
--- >>> defaultArgs (NESeq.singleton "ls")
--- MkArgs {cmdLogging = Disabled, fileLogging = FPNone, cmdDisplay = ShowCmd, legend = FPDefault, timeout = MkTimeout {unTimeout = PPosInf}, cmdNameTrunc = MkTruncation {unTruncation = PPosInf}, cmdLineTrunc = Undetected (MkTruncation {unTruncation = PPosInf}), commands = "ls" :|^ fromList []}
+-- >>> putStrLn $ prettyArgs $ defaultArgs (NESeq.singleton "ls")
+-- MkArgs
+--   { cmdLogging = Disabled,
+--     fileLogging = FPNone,
+--     cmdDisplay = ShowCmd,
+--     legend = FPDefault,
+--     timeout = MkTimeout {unTimeout = PPosInf},
+--     cmdNameTrunc = MkTruncation {unTruncation = PPosInf},
+--     cmdLineTrunc = Undetected (MkTruncation {unTruncation = PPosInf}),
+--     globalLogging = True,
+--     commands = "ls" :|^ fromList []
+--   }
 --
 -- @since 0.1.0.0
 defaultArgs :: NonEmptySeq Text -> Args
@@ -128,6 +164,7 @@ defaultArgs cmds =
       timeout = mempty,
       cmdNameTrunc = mempty,
       cmdLineTrunc = mempty,
+      globalLogging = True,
       commands = cmds
     }
 
@@ -160,6 +197,7 @@ argsParser :: Parser Args
 argsParser =
   MkArgs
     <$> commandLoggingParser
+    <*> globalLoggingParser
     <*> fileLoggingParser
     <*> commandDisplayParser
     <*> legendParser
@@ -379,5 +417,16 @@ parseNonNegative = do
     Nothing -> MP.customFailure $ "Could not parse natural: " <> showt ds
     Just n -> pure n
 
-makePrismLabels ''ALineTruncation
-makeFieldLabelsNoPrefix ''Args
+globalLoggingParser :: Parser Bool
+globalLoggingParser =
+  OApp.flag
+    True
+    False
+    ( OApp.short 'd'
+        <> OApp.long "disable-log"
+        <> OApp.help help
+    )
+  where
+    help =
+      "The option disables _all_ logging. This is primarily useful for "
+        <> "debugging or testing where logging is undesirable."

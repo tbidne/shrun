@@ -80,6 +80,7 @@ import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..))
 import Data.Void as X (Void, absurd)
+import GHC.Float as X (Double (..), Float (..))
 import GHC.Generics as X (Generic)
 import GHC.Natural as X (Natural)
 import GHC.Stack as X (HasCallStack)

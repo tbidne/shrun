@@ -21,13 +21,17 @@
 - [Motivation](#motivation)
 - [Introduction](#introduction)
 - [Options](#options)
-  - [Command Logging](#command-logging)
-  - [File Logging](#file-logging)
-  - [Key Show](#key-show)
-  - [Legend](#legend)
-  - [Timeout](#timeout)
-  - [Command Name Truncation](#command-name-truncation)
-  - [Command Line Truncation](#command-line-truncation)
+  - [Core Functionality](#core-functionality)
+    - [Legend](#legend)
+    - [Timeout](#timeout)
+  - [Logging](#logging)
+    - [Command Log](#command-log)
+    - [File Log](#file-log)
+    - [Disable Log](#disable-log)
+  - [Log Formatting](#log-formatting)
+    - [Key Show](#key-show)
+    - [Command Name Truncation](#command-name-truncation)
+    - [Command Line Truncation](#command-line-truncation)
 - [Building](#building)
   - [Cabal](#cabal)
   - [Stack](#stack)
@@ -85,54 +89,9 @@ A running timer is provided, and stdout/stderr will be updated when a command fi
 
 # Options
 
-## Command Logging
+## Core Functionality
 
-**Arg:** `-c, --cmd-log`
-
-**Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is show at a given time.
-
-**Example:**
-
-![command_logging_on](./screens/cmd_logging_on.png)
-
-vs.
-
-![command_logging_off](./screens/cmd_logging_off.png)
-
-Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
-
-Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File-Logging](#file-logging) for details on investigating command failure.
-
-## File Logging
-
-**Arg:** `-f, --file-log PATH`
-
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string literal `default` or `d` is given, we will write to the Xdg config directory e.g. `~/.config/shell-run/logs.txt`.
-
-**Example:**
-
-![file_logging](./screens/file_logging.png)
-![file_logging_cat](./screens/file_logging_cat.png)
-
-## Key Show
-
-**Arg:** `-k, --key-show`
-
-**Description:** When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. This flag instead uses the key name for display, if one exists.
-
-**Example:**
-
-![key_show_cmd_on](./screens/key_show_cmd_on.png)
-![key_show_on](./screens/key_show_on.png)
-
-rather than the usual
-
-![key_show_cmd_on](./screens/key_show_cmd_off.png)
-![key_show_on](./screens/key_show_off.png)
-
-Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
-
-## Legend
+### Legend
 
 **Arg:** `-l, --legend PATH`
 
@@ -169,7 +128,7 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend file will not throw an error).
 
-## Timeout
+### Timeout
 
 **Arg:** `-t, --timeout NATURAL`
 
@@ -179,7 +138,64 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 ![timeout](./screens/timeout.png)
 
-## Command Name Truncation
+## Logging
+
+### Command Log
+
+**Arg:** `-c, --cmd-log`
+
+**Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is show at a given time.
+
+**Example:**
+
+![command_logging_on](./screens/cmd_logging_on.png)
+
+vs.
+
+![command_logging_off](./screens/cmd_logging_off.png)
+
+Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
+
+Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File-Logging](#file-logging) for details on investigating command failure.
+
+### File Log
+
+**Arg:** `-f, --file-log PATH`
+
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string literal `default` or `d` is given, we will write to the Xdg config directory e.g. `~/.config/shell-run/logs.txt`.
+
+**Example:**
+
+![file_logging](./screens/file_logging.png)
+![file_logging_cat](./screens/file_logging_cat.png)
+
+### Disable Log
+
+**Arg:** `-d, --disable-log`
+
+**Description**: This option globally disables all logging i.e. ordinary logs and those created via `--cmd-log` and `--file-log`. As most uses will want at the least the default success/error messages and timers, this option is primarily intended for debugging or testing where logging is undesirable.
+
+## Log Formatting
+
+### Key Show
+
+**Arg:** `-k, --key-show`
+
+**Description:** When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. This flag instead uses the key name for display, if one exists.
+
+**Example:**
+
+![key_show_cmd_on](./screens/key_show_cmd_on.png)
+![key_show_on](./screens/key_show_on.png)
+
+rather than the usual
+
+![key_show_cmd_on](./screens/key_show_cmd_off.png)
+![key_show_on](./screens/key_show_off.png)
+
+Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
+
+### Command Name Truncation
 
 **Arg:** `-x, --cmd-name-trunc NATURAL`
 
@@ -190,7 +206,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 ![cmd_name_trunc_cmd](./screens/cmd_name_trunc_cmd.png)
 ![cmd_name_trunc](./screens/cmd_name_trunc.png)
 
-## Command Line Truncation
+### Command Line Truncation
 
 **Arg:** `-y, --cmd-line-trunc NATURAL or detect/d`
 

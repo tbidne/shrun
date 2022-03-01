@@ -1,8 +1,8 @@
 module Main (main) where
 
-import Prelude
 import System.Environment qualified as Env
 import Test.DocTest qualified as DocTest
+import Prelude
 
 main :: IO ()
 main = do

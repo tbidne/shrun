@@ -13,6 +13,7 @@ module ShellRun.Env.Types
     HasCmdLineTrunc (..),
     HasCompletedCmds (..),
     HasFileLogging (..),
+    HasGlobalLogging (..),
     HasLegend (..),
     HasTimeout (..),
 
@@ -233,6 +234,13 @@ class HasCompletedCmds env where
   -- | @since 0.1.0.0
   getCompletedCmds :: env -> TVar (Seq Command)
 
+-- | Determines command line truncation behavior.
+--
+-- @since 0.1.0.0
+class HasGlobalLogging env where
+  -- | @since 0.1.0.0
+  getGlobalLogging :: env -> Bool
+
 -- | The main 'Env' type used by ShellRun. Intended to be used with
 -- 'ShellRun.Class.MonadReader'.
 --
@@ -273,6 +281,11 @@ data Env = MkEnv
     --
     -- @since 0.1.0.0
     completedCmds :: TVar (Seq Command),
+    -- | Overarching option for logging. If it is false then all logging is
+    -- disabled.
+    --
+    -- @since 0.1.0.0
+    globalLogging :: Bool,
     -- | The commands to run.
     --
     -- @since 0.1.0.0
@@ -316,3 +329,6 @@ instance HasCompletedCmds Env where
 -- | @since 0.1.0.0
 instance HasCommands Env where
   getCommands = view #commands
+
+instance HasGlobalLogging Env where
+  getGlobalLogging = view #globalLogging

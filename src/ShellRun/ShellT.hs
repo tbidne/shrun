@@ -36,6 +36,7 @@ import ShellRun.Env
     HasCmdNameTrunc (..),
     HasCompletedCmds (..),
     HasFileLogging (..),
+    HasGlobalLogging (..),
     HasTimeout (..),
   )
 import ShellRun.IO (Stderr (..))
@@ -101,6 +102,7 @@ instance
     HasCmdNameTrunc env,
     HasCmdLineTrunc env,
     HasFileLogging env,
+    HasGlobalLogging env,
     MonadIO m
   ) =>
   RegionLogger (ShellT env m)
@@ -109,18 +111,26 @@ instance
 
   putLog :: Log -> ShellT env m ()
   putLog log = do
-    maybeSendLogToQueue log
-    maybePrintLog (liftIO . putStrLn) log
+    b <- asks getGlobalLogging
+    if b
+      then do
+        maybeSendLogToQueue log
+        maybePrintLog (liftIO . putStrLn) log
+      else pure ()
 
   putRegionLog :: ConsoleRegion -> Log -> ShellT env m ()
   putRegionLog region lg@MkLog {mode} = do
-    let logFn = case mode of
-          Set -> Regions.setConsoleRegion
-          Append -> Regions.appendConsoleRegion
-          Finish -> Regions.finishConsoleRegion
+    b <- asks getGlobalLogging
+    if b
+      then do
+        let logFn = case mode of
+              Set -> Regions.setConsoleRegion
+              Append -> Regions.appendConsoleRegion
+              Finish -> Regions.finishConsoleRegion
 
-    maybeSendLogToQueue lg
-    maybePrintLog (liftIO . logFn region) lg
+        maybeSendLogToQueue lg
+        maybePrintLog (liftIO . logFn region) lg
+      else pure ()
 
 maybePrintLog ::
   ( HasCmdDisplay env,
@@ -200,6 +210,7 @@ runCommand ::
     HasCmdLineTrunc env,
     HasCompletedCmds env,
     HasFileLogging env,
+    HasGlobalLogging env,
     MonadIO m,
     MonadMask m,
     MonadUnliftIO m
@@ -207,19 +218,22 @@ runCommand ::
   Command ->
   ShellT env m ()
 runCommand cmd = do
+  globalLogging <- asks getGlobalLogging
   cmdLogging <- asks getCmdLogging
   fileLogging <- asks getFileLogging
 
-  -- 1.    No CmdLogging and no FileLogging: No streaming at all.
-  -- 2.    No CmdLogging and FileLogging: Stream (to file) but no console
+  -- 1.    Logging is disabled at the global level: No logging at all.
+  -- 2.    No CmdLogging and no FileLogging: No streaming at all.
+  -- 3.    No CmdLogging and FileLogging: Stream (to file) but no console
   --       region.
   -- 3, 4. CmdLogging: Stream and create the region. FileLogging is globally
   --       enabled/disabled, so no need for a separate function. That is,
   --       tryTimeShStreamNoRegion and tryTimeShStreamRegion handle file
   --       logging automatically.
-  res <- case (cmdLogging, fileLogging) of
-    (Disabled, Nothing) -> ShIO.tryTimeSh cmd
-    (Disabled, Just (_, _)) -> ShIO.tryTimeShStreamNoRegion cmd
+  res <- case (cmdLogging, fileLogging, globalLogging) of
+    (_, _, False) -> ShIO.tryTimeSh cmd
+    (Disabled, Nothing, _) -> ShIO.tryTimeSh cmd
+    (Disabled, Just (_, _), _) -> ShIO.tryTimeShStreamNoRegion cmd
     _ -> ShIO.tryTimeShStreamRegion cmd
 
   Regions.withConsoleRegion Linear $ \r -> do

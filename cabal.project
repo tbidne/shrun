@@ -1,7 +1,6 @@
 packages: .
 
 package shell-run
-  tests: True
   ghc-options:
     -Wall -Wcompat -Werror -Widentities -Wunused-binds
     -Wincomplete-record-updates -Wincomplete-uni-patterns
