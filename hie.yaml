@@ -17,3 +17,6 @@ cradle:
 
     - path: "./test/doctest"
       component: "shell-run:test:doctest"
+
+    - path: "./benchmarks/Main.hs"
+      component: "shell-run:bench:benchmarks"

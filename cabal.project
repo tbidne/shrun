@@ -7,6 +7,10 @@ package shell-run
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints -Wunused-packages
 
+  benchmark-options:
+    +RTS -T --nonmoving-gc -RTS
+
+
 package refined
   flags: -aeson -quickcheck
 

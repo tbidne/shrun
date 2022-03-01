@@ -107,6 +107,7 @@ import Prelude as X
     flip,
     fromIntegral,
     fst,
+    id,
     not,
     otherwise,
     print,

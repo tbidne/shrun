@@ -27,6 +27,7 @@ common common-exts
     NoImplicitPrelude
     NoStarIsType
     ApplicativeDo
+    BangPatterns
     DataKinds
     DeriveGeneric
     DerivingVia
@@ -227,4 +228,18 @@ test-suite doctest
     , doctest  >=0.16.3 && <0.19
 
   hs-source-dirs:   test/doctest
+  default-language: Haskell2010
+
+benchmark benchmarks
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:    Benchmark.Prelude
+  build-depends:
+    , base
+    , criterion  ^>=1.5.6.0
+    , deepseq    ^>=1.4.4.0
+    , shell-run
+
+  hs-source-dirs:   benchmarks
   default-language: Haskell2010
