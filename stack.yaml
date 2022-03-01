@@ -2,8 +2,10 @@ resolver: lts-18.24
 packages:
 - .
 extra-deps:
-- strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
+- optics-core-0.4@sha256:59e04aebca536bd011ae50c781937f45af4c1456af1eb9fb578f9a69eee293cd,4995
+- optics-th-0.4@sha256:8479f64f094346d31489221ad9742324fd6c5aed0722e58fc49f0a580ceb2a18,2045
 - package-version-0.1.0.0@sha256:bb9fc93e905540aa8e1b32f80c2dc82756a4481c63779bd92e3796ed8085ab98,2854
+- strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
 - git: https://github.com/tbidne/algebra-simple.git
   commit: 39d6ab72a4b97085b34a597aaf9ce3acb4d6edd7
 - git: https://github.com/tbidne/refined-extras.git
@@ -12,3 +14,5 @@ flags:
   refined:
     aeson: false
     quickcheck: false
+nix:
+  shell-file: nix/stack.nix

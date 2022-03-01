@@ -1,6 +1,5 @@
-{ compilerVersion }:
-
 let
+  compilerVersion = "ghc8107";
   lock = builtins.fromJSON (builtins.readFile ../flake.lock);
   pkgs = import
     (fetchTarball {
@@ -10,10 +9,15 @@ let
     { };
   compiler = pkgs.haskell.packages."${compilerVersion}";
 in
-pkgs.mkShell {
-  buildInputs =
-    [
-      pkgs.cabal-install
-      compiler.ghc
-    ];
+pkgs.haskell.lib.buildStackProject {
+  name = "shell-run";
+
+  buildInputs = with pkgs; [
+    git
+    stack
+    zlib.dev
+    zlib.out
+  ];
+
+  ghc = compiler.ghc;
 }

@@ -177,13 +177,9 @@ test-suite integration
 
   build-depends:
     , base
-    , mtl
-    , optics-core
-    , optics-th
     , shell-run
     , tasty
     , tasty-hunit
-    , text
     , unordered-containers
 
   hs-source-dirs:   test/integration

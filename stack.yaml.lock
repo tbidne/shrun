@@ -5,12 +5,19 @@
 
 packages:
 - completed:
-    hackage: strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
+    hackage: optics-core-0.4@sha256:59e04aebca536bd011ae50c781937f45af4c1456af1eb9fb578f9a69eee293cd,4995
     pantry-tree:
-      size: 345
-      sha256: 2fd47d6f9374805075d176012d95d8ea28e643639b8d028f35f732618b5d1683
+      size: 5315
+      sha256: 0b8b5824efec35faede5a4c5d7c6f47c6b4708885942f7a7f73c892a5c3c5738
   original:
-    hackage: strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
+    hackage: optics-core-0.4@sha256:59e04aebca536bd011ae50c781937f45af4c1456af1eb9fb578f9a69eee293cd,4995
+- completed:
+    hackage: optics-th-0.4@sha256:8479f64f094346d31489221ad9742324fd6c5aed0722e58fc49f0a580ceb2a18,2045
+    pantry-tree:
+      size: 741
+      sha256: 26025e3641cc09e3c8abd9cdf8278710ed79ed09953c0b6047279624620c21b3
+  original:
+    hackage: optics-th-0.4@sha256:8479f64f094346d31489221ad9742324fd6c5aed0722e58fc49f0a580ceb2a18,2045
 - completed:
     hackage: package-version-0.1.0.0@sha256:bb9fc93e905540aa8e1b32f80c2dc82756a4481c63779bd92e3796ed8085ab98,2854
     pantry-tree:
@@ -18,6 +25,13 @@ packages:
       sha256: 8e33ac2f8d2db754cf11d1439fa970dbf14c6756746426ba89f54a7183a9d2d7
   original:
     hackage: package-version-0.1.0.0@sha256:bb9fc93e905540aa8e1b32f80c2dc82756a4481c63779bd92e3796ed8085ab98,2854
+- completed:
+    hackage: strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
+    pantry-tree:
+      size: 345
+      sha256: 2fd47d6f9374805075d176012d95d8ea28e643639b8d028f35f732618b5d1683
+  original:
+    hackage: strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
 - completed:
     name: algebra-simple
     version: 0.1.0.0
