@@ -25,8 +25,8 @@ import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
 import GHC.Exts (IsList (..))
 import GHC.Int (Int64)
+import Numeric.Algebra.Multiplicative.MGroup (MGroup (..), MGroupIntegral (..))
 import Refined qualified as R
-import Refined.Extras (pattern MkRefined)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
 import System.Clock (TimeSpec (..))
@@ -50,7 +50,8 @@ import System.Clock qualified as C
 --
 -- ==== __Examples__
 -- >>> :{
---   let n = 34
+--   let n :: Int
+--       n = 34
 --       d = $$(mkAMonoidNonZeroTH @Int 5)
 --       result = divWithRem n d
 --   in result
@@ -66,8 +67,8 @@ import System.Clock qualified as C
 -- (0,12)
 --
 -- @since 0.1.0.0
-divWithRem :: Integral a => a -> NonZero a -> Tuple2 a a
-divWithRem n (MkNonZero d) = (n `div` d, n `rem` d)
+divWithRem :: MGroupIntegral a => a -> NZ a -> Tuple2 a a
+divWithRem n d = (n .%. d, n `grem` d)
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.
@@ -139,9 +140,11 @@ foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
 --
 -- @since 0.1.0.0
 breakStripPoint :: Refined R.NonEmpty Text -> Text -> Tuple2 Text Text
-breakStripPoint (MkRefined point) txt = case T.breakOn point txt of
+breakStripPoint rpoint txt = case T.breakOn point txt of
   (x, T.stripPrefix point -> Just y) -> (x, y)
   pair -> pair
+  where
+    point = R.unrefine rpoint
 
 -- | Decodes a 'ByteString' to UTF-8 in lenient mode.
 --
@@ -167,7 +170,7 @@ decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode
 --
 -- @since 0.1.0.0
 splitOn :: HasCallStack => Refined R.NonEmpty Text -> Text -> NonEmptySeq Text
-splitOn (MkRefined s) txt = case T.splitOn s txt of
+splitOn rs txt = case T.splitOn s txt of
   [] -> error err
   (t : ts) -> t :|^ fromList ts
   where
@@ -176,6 +179,7 @@ splitOn (MkRefined s) txt = case T.splitOn s txt of
         <> s
         <> ", text: "
         <> txt
+    s = R.unrefine rs
 
 -- | For 'Natural' \(n\) and 'Text' \(t = t_0 t_1 \ldots t_m\), truncates
 -- \(t\) if \(m > n\). In this case, \(t\) is truncated to \(n - 3\), and an

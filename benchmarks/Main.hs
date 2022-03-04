@@ -17,7 +17,7 @@ data Step
 data Range = MkRange
   { start :: {-# UNPACK #-} !Word32,
     end :: {-# UNPACK #-} !Word32,
-    step :: {-# UNPACK #-} !Step
+    step :: !Step
   }
   deriving (Eq, Show)
 

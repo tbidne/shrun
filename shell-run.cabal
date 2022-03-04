@@ -100,7 +100,6 @@ library
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
     , refined               ^>=0.6
-    , refined-extras        ^>=0.1.0.0
     , safe-exceptions       ^>=0.1.7.0
     , stm                   ^>=2.5.0
     , terminal-size         ^>=0.3.0
