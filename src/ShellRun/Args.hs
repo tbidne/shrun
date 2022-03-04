@@ -183,7 +183,7 @@ parserInfoArgs =
       infoPolicy = Intersperse
     }
   where
-    header = Just "Shell-Run: A tool for running shell commands ergonomically."
+    header = Just "Shell-Run: A tool for running shell commands concurrently."
     footer = Just $ fromString versNum
     desc =
       Just $

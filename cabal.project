@@ -17,6 +17,6 @@ package refined
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: 1743449ca26fec7e8b6ab5da9193436de745487d
+    tag: 9a88955441442307f9742ad405741f307ca00756
 
 optimization: 2
