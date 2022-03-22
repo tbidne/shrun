@@ -37,23 +37,12 @@ packages:
     version: 0.1.0.0
     git: https://github.com/tbidne/algebra-simple.git
     pantry-tree:
-      size: 3348
-      sha256: b1ea8a759b948fc599c132b78c1ebc586386ead9dd61569ff83cfa3f3b826537
-    commit: 39d6ab72a4b97085b34a597aaf9ce3acb4d6edd7
+      size: 4654
+      sha256: 4a9cca63c606715e398217a0f0c286c4b9fae8139fce5bbce4fd619ea2f2696f
+    commit: afebd245bc3b50eaea50c2c22625a42908b1bcb8
   original:
     git: https://github.com/tbidne/algebra-simple.git
-    commit: 39d6ab72a4b97085b34a597aaf9ce3acb4d6edd7
-- completed:
-    name: refined-extras
-    version: 0.1.0.0
-    git: https://github.com/tbidne/refined-extras.git
-    pantry-tree:
-      size: 2761
-      sha256: c40676456a20075f88a80fe4809410547935c38cd12885ae24ba1719b6d517ab
-    commit: 4ea2733c40085529daeb1a6e7af9cab1d5c222d9
-  original:
-    git: https://github.com/tbidne/refined-extras.git
-    commit: 4ea2733c40085529daeb1a6e7af9cab1d5c222d9
+    commit: afebd245bc3b50eaea50c2c22625a42908b1bcb8
 snapshots:
 - completed:
     size: 587821

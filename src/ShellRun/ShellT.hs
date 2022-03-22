@@ -93,6 +93,9 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
     )
     via (ReaderT env)
 
+-- | Runs a 'ShellT' with the given @env@.
+--
+-- @since 0.1.0.0
 runShellT :: ShellT env m a -> env -> m a
 runShellT (MkShellT rdr) = runReaderT rdr
 

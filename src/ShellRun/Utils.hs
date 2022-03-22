@@ -14,9 +14,6 @@ module ShellRun.Utils
     -- * Timing Utils
     diffTime,
     foldMap1,
-
-    -- * Math Utils
-    divWithRem,
   )
 where
 
@@ -25,7 +22,6 @@ import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
 import GHC.Exts (IsList (..))
 import GHC.Int (Int64)
-import Numeric.Algebra.Multiplicative.MGroup (MGroup (..), MGroupIntegral (..))
 import Refined qualified as R
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
@@ -37,38 +33,6 @@ import System.Clock qualified as C
 -- >>> :set -XTemplateHaskell
 -- >>> import Data.List.NonEmpty (NonEmpty (..))
 -- >>> import Data.Semigroup (Sum (..))
--- >>> import Numeric.Algebra (mkAMonoidNonZeroTH)
-
--- | For \(n \ge 0, d > 0\), @divWithRem n d@ returns non-negative \((e, r)\) such that
---
--- \[
---    \begin{align}
---      de + r = n \\
---      r \le n \\
---    \end{align}
--- \]
---
--- ==== __Examples__
--- >>> :{
---   let n :: Int
---       n = 34
---       d = $$(mkAMonoidNonZeroTH @Int 5)
---       result = divWithRem n d
---   in result
--- :}
--- (6,4)
---
--- >>> :{
---   let n = 12
---       d = $$(mkAMonoidNonZeroTH 18)
---       result = divWithRem n d
---   in result
--- :}
--- (0,12)
---
--- @since 0.1.0.0
-divWithRem :: MGroupIntegral a => a -> NZ a -> Tuple2 a a
-divWithRem n d = (n .%. d, n `grem` d)
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.

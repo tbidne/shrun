@@ -33,9 +33,9 @@ module ShellRun.Data.TimeRep
 where
 
 import Data.Text qualified as T
-import Numeric.Algebra qualified as Alg
+import Numeric.Algebra.Multiplicative.MGroup (MGroupIntegral (..))
+import Numeric.Data.NonZero qualified as NZ
 import ShellRun.Prelude
-import ShellRun.Utils qualified as U
 
 -- $setup
 -- >>> :set -XTemplateHaskell
@@ -90,9 +90,9 @@ toSeconds (MkTimeRep d h m s) =
 fromSeconds :: Natural -> TimeRep
 fromSeconds seconds = MkTimeRep d h m s
   where
-    (d, daysRem) = U.divWithRem seconds secondsInDayNZ
-    (h, hoursRem) = U.divWithRem daysRem secondsInHourNZ
-    (m, s) = U.divWithRem hoursRem secondsInMinuteNZ
+    (d, daysRem) = seconds `gdivMod` secondsInDayNZ
+    (h, hoursRem) = daysRem `gdivMod` secondsInHourNZ
+    (m, s) = hoursRem `gdivMod` secondsInMinuteNZ
 
 -- | Formats a 'TimeRep' to 'Text'.
 --
@@ -147,29 +147,29 @@ pluralize n txt
 -- | 'NonZero' seconds in a day: 86,400
 --
 -- >>> secondsInDayNZ
--- UnsafeNonZero {unNonZero = 86400}
+-- UnsafeNonZero 86400
 --
 -- @since 0.1.0.0
 secondsInDayNZ :: NonZero Natural
-secondsInDayNZ = $$(Alg.mkAMonoidNonZeroTH 86_400)
+secondsInDayNZ = $$(NZ.mkNonZeroTH 86_400)
 
 -- | 'NonZero' seconds in an hour: 3,600
 --
 -- >>> secondsInHourNZ
--- UnsafeNonZero {unNonZero = 3600}
+-- UnsafeNonZero 3600
 --
 -- @since 0.1.0.0
 secondsInHourNZ :: NonZero Natural
-secondsInHourNZ = $$(Alg.mkAMonoidNonZeroTH 3_600)
+secondsInHourNZ = $$(NZ.mkNonZeroTH 3_600)
 
 -- | 'NonZero' seconds in a minute: 60
 --
 -- >>> secondsInMinuteNZ
--- UnsafeNonZero {unNonZero = 60}
+-- UnsafeNonZero 60
 --
 -- @since 0.1.0.0
 secondsInMinuteNZ :: NonZero Natural
-secondsInMinuteNZ = $$(Alg.mkAMonoidNonZeroTH 60)
+secondsInMinuteNZ = $$(NZ.mkNonZeroTH 60)
 
 -- | Seconds in a day: 86,400
 --
