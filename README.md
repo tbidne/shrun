@@ -2,7 +2,7 @@
 
 # Shell-Run
 
-## Run Shell Command Concurrently
+## Run Shell Commands Concurrently
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shell-run?include_prereleases&sort=semver)](https://github.com/tbidne/shell-run/releases/)
 [![BSD-3-Clause](https://img.shields.io/github/license/tbidne/shell-run?color=blue)](https://opensource.org/licenses/BSD-3-Clause)
