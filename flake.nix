@@ -4,13 +4,11 @@
     algebra-simple-src.url = "github:tbidne/algebra-simple/main";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    refined-extras-src.url = "github:tbidne/refined-extras/main";
   };
   outputs =
     { algebra-simple-src
     , flake-utils
     , nixpkgs
-    , refined-extras-src
     , self
     }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -37,8 +35,6 @@
               final.callCabal2nix "algebra-simple" algebra-simple-src { };
             optics-core = final.optics-core_0_4;
             optics-th = final.optics-th_0_4;
-            refined-extras =
-              final.callCabal2nix "refined-extras" refined-extras-src { };
           };
         };
     in
