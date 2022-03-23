@@ -7,7 +7,6 @@ where
 import Hedgehog qualified as H
 import ShellRun.Utils qualified as U
 import Test.Tasty qualified as T
-import Test.Tasty.Hedgehog qualified as TH
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.Generators qualified as PGens
@@ -18,7 +17,7 @@ props = T.testGroup "ShellRun.Utils" [diffTimeProps]
 
 diffTimeProps :: TestTree
 diffTimeProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "diffTime" $
+  testPropertyCompat "diffTime" "diffTimeProps" $
     H.withTests limit $
       H.property $ do
         t1 <- H.forAll PGens.genTimeSpec

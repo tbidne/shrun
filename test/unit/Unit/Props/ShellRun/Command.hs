@@ -17,7 +17,6 @@ import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Legend (LegendMap)
 import Test.Tasty qualified as T
-import Test.Tasty.Hedgehog qualified as TH
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 
@@ -27,7 +26,7 @@ props = T.testGroup "ShellRun.Command" [translateProps]
 
 translateProps :: TestTree
 translateProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "translateCommands includes everything" $
+  testPropertyCompat "translateCommands includes everything" "translateProps" $
     H.withTests limit $
       H.property $ do
         (legend, origCmds) <- H.forAll genLegendCommands

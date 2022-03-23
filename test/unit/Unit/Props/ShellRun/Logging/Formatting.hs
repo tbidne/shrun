@@ -31,7 +31,6 @@ import ShellRun.Logging.Log
   )
 import ShellRun.Logging.Log qualified as Log
 import Test.Tasty qualified as T
-import Test.Tasty.Hedgehog qualified as TH
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.ShellRun.Logging.Generators qualified as LGens
@@ -133,7 +132,7 @@ props =
 
 messageProps :: TestTree
 messageProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Includes message" $
+  testPropertyCompat "Includes message" "messageProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnv
@@ -144,7 +143,7 @@ messageProps = T.askOption $ \(MkMaxRuns limit) ->
 
 prefixProps :: TestTree
 prefixProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Formats prefix" $
+  testPropertyCompat "Formats prefix" "prefixProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnv
@@ -171,7 +170,7 @@ prefixProps = T.askOption $ \(MkMaxRuns limit) ->
 
 displayCmdProps :: TestTree
 displayCmdProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Displays command literal" $
+  testPropertyCompat "Displays command literal" "displayCmdProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvDispCmd
@@ -182,7 +181,7 @@ displayCmdProps = T.askOption $ \(MkMaxRuns limit) ->
 
 displayKeyProps :: TestTree
 displayKeyProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Displays command lkey" $
+  testPropertyCompat "Displays command lkey" "displayKeyProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvDispKey
@@ -193,7 +192,7 @@ displayKeyProps = T.askOption $ \(MkMaxRuns limit) ->
 
 cmdTruncProps :: TestTree
 cmdTruncProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Truncates long command" $
+  testPropertyCompat "Truncates long command" "cmdTruncProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvCmdTrunc
@@ -206,7 +205,7 @@ cmdTruncProps = T.askOption $ \(MkMaxRuns limit) ->
 
 lineTruncProps :: TestTree
 lineTruncProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Truncates long line" $
+  testPropertyCompat "Truncates long line" "lineTruncProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvLineTrunc

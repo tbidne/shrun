@@ -10,7 +10,6 @@ import Hedgehog.Range qualified as Range
 import ShellRun.Legend (LegendMap)
 import ShellRun.Legend.Internal qualified as Internal
 import Test.Tasty qualified as T
-import Test.Tasty.Hedgehog qualified as TH
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 
@@ -26,7 +25,7 @@ props =
 successProps :: TestTree
 successProps =
   T.askOption $ \(MkMaxRuns limit) ->
-    TH.testProperty "linesToMap success props" $
+    testPropertyCompat "linesToMap success props" "successProps" $
       -- NOTE: This set to at least 1,000 as we have had test errors before
       -- that got through (i.e. duplicate keys) because 100 was not enough,
       -- and it's still fast.
@@ -45,7 +44,7 @@ successProps =
 
 failureProps :: TestTree
 failureProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "linesToMap failure props" $
+  testPropertyCompat "linesToMap failure props" "failureProps" $
     H.withTests limit $
       H.property $ do
         commands <- H.forAll genBadLines

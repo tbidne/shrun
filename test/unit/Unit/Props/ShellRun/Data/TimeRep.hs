@@ -10,7 +10,6 @@ import Hedgehog.Range qualified as Range
 import ShellRun.Data.TimeRep (TimeRep (..))
 import ShellRun.Data.TimeRep qualified as TimeRep
 import Test.Tasty qualified as T
-import Test.Tasty.Hedgehog qualified as TH
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 
@@ -20,7 +19,7 @@ props = T.testGroup "ShellRun.Data.TimeRep" [fromSeconds]
 
 fromSeconds :: TestTree
 fromSeconds = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "fromSeconds transforms correctly" $
+  testPropertyCompat "fromSeconds transforms correctly" "fromSeconds" $
     H.withTests limit $
       H.property $ do
         totalSeconds <- H.forAll genTime

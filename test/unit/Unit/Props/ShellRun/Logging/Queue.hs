@@ -25,7 +25,6 @@ import ShellRun.Logging.Queue (LogText (..))
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Utils qualified as Utils
 import Test.Tasty qualified as T
-import Test.Tasty.Hedgehog qualified as TH
 import Text.Read qualified as TR
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
@@ -73,7 +72,7 @@ formattingProps =
 
 timestampProps :: TestTree
 timestampProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Starts with timestamp" $
+  testPropertyCompat "Starts with timestamp" "timestampProps" $
     H.withTests limit $
       H.property $ do
         log <- H.forAll LGens.genLog
@@ -83,7 +82,7 @@ timestampProps = T.askOption $ \(MkMaxRuns limit) ->
 
 messageProps :: TestTree
 messageProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Includes message" $
+  testPropertyCompat "Includes message" "messageProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {msg} <- H.forAll LGens.genLog
@@ -93,7 +92,7 @@ messageProps = T.askOption $ \(MkMaxRuns limit) ->
 
 prefixProps :: TestTree
 prefixProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Formats prefix" $
+  testPropertyCompat "Formats prefix" "prefixProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {lvl} <- H.forAll LGens.genLog
@@ -118,7 +117,7 @@ prefixProps = T.askOption $ \(MkMaxRuns limit) ->
 
 commandProps :: TestTree
 commandProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Formats command" $
+  testPropertyCompat "Formats command" "commandProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
@@ -129,7 +128,7 @@ commandProps = T.askOption $ \(MkMaxRuns limit) ->
 
 shapeProps :: TestTree
 shapeProps = T.askOption $ \(MkMaxRuns limit) ->
-  TH.testProperty "Formats shape" $
+  testPropertyCompat "Formats shape" "shapeProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {cmd, msg} <- H.forAll LGens.genLogWithCmd

@@ -9,7 +9,7 @@
 
 
 [![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
-[![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2018.24&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
+[![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%20nightly-2022-03-23&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
 
 [![8.10.7](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10.7/main?label=8.10.7&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10-7.yaml)
