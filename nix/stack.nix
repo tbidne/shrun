@@ -1,5 +1,5 @@
 let
-  compilerVersion = "ghc8107";
+  compilerVersion = "ghc921";
   lock = builtins.fromJSON (builtins.readFile ../flake.lock);
   pkgs = import
     (fetchTarball {

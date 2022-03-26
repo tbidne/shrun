@@ -6,11 +6,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1647854594,
-        "narHash": "sha256-eUBOr7SxyAAyjMzNVhqeaou5+h1yWnj6HKsrLY93nyU=",
+        "lastModified": 1648351940,
+        "narHash": "sha256-NTSczefhICJHebPU9h47U7O+Qk+WVXNVC4UmMC1AGMg=",
         "owner": "tbidne",
         "repo": "algebra-simple",
-        "rev": "afebd245bc3b50eaea50c2c22625a42908b1bcb8",
+        "rev": "7189c69af86bc2d75758a13ae375841fc5084242",
         "type": "github"
       },
       "original": {
@@ -68,11 +68,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1647800324,
-        "narHash": "sha256-rjwoxrk16zfrcO5Torh6CbAd5GHsHrXw+EwxOvh9AUI=",
+        "lastModified": 1647893727,
+        "narHash": "sha256-pOi7VdCb+s5Cwh5CS7YEZVRgH9uCmE87J5W7iXv29Ck=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "9bc841fec1c0e8b9772afa29f934d2c7ce57da8e",
+        "rev": "1ec61dd4167f04be8d05c45780818826132eea0d",
         "type": "github"
       },
       "original": {
