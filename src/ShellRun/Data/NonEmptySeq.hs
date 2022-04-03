@@ -4,7 +4,7 @@
 
 -- | Provides the 'NonEmptySeq' type.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Data.NonEmptySeq
   ( -- * Type
     NonEmptySeq (..),
@@ -33,12 +33,12 @@ import ShellRun.Prelude hiding (toList)
 -- | Represents a non-empty sequence. This is useful for when we want a
 -- non-empty, finite list.
 --
--- @since 0.1.0.0
+-- @since 0.1
 data NonEmptySeq a = a :|^ (Seq a)
   deriving stock
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Show
     )
 
@@ -46,34 +46,34 @@ infixr 5 :|^
 
 makePrismLabels ''NonEmptySeq
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Semigroup (NonEmptySeq a) where
   xs <> ys = unsafeFromSeq $ toSeq xs <> toSeq ys
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Functor NonEmptySeq where
   fmap f = unsafeFromSeq . fmap f . toSeq
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Applicative NonEmptySeq where
   pure x = x :|^ Empty
   f <*> xs = unsafeFromSeq $ toSeq f <*> toSeq xs
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Monad NonEmptySeq where
   xs >>= f = unsafeFromSeq $ toSeq xs >>= (toSeq . f)
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Foldable NonEmptySeq where
   foldMap f = foldMap f . toSeq
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Traversable NonEmptySeq where
   traverse f = fmap unsafeFromSeq . traverse f . toSeq
 
 -- | Creates a singleton 'NonEmptySeq'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 singleton :: a -> NonEmptySeq a
 singleton x = x :|^ Empty
 
@@ -83,7 +83,7 @@ singleton x = x :|^ Empty
 -- >>> toSeq (1 :|^ fromList [2,3,4])
 -- fromList [1,2,3,4]
 --
--- @since 0.1.0.0
+-- @since 0.1
 toSeq :: NonEmptySeq a -> Seq a
 toSeq (x :|^ xs) = x :<| xs
 
@@ -93,7 +93,7 @@ toSeq (x :|^ xs) = x :<| xs
 -- >>> toList (1 :|^ fromList [2,3,4])
 -- [1,2,3,4]
 --
--- @since 0.1.0.0
+-- @since 0.1
 toList :: NonEmptySeq a -> List a
 toList (x :|^ xs) = Exts.toList (x :<| xs)
 
@@ -104,7 +104,7 @@ toList (x :|^ xs) = Exts.toList (x :<| xs)
 -- >>> unsafeFromNonEmpty ( 1 :| [3,4])
 -- 1 :|^ fromList [3,4]
 --
--- @since 0.1.0.0
+-- @since 0.1
 unsafeFromNonEmpty :: HasCallStack => NonEmpty a -> NonEmptySeq a
 unsafeFromNonEmpty (x :| xs) = x :|^ Exts.fromList xs
 
@@ -115,7 +115,7 @@ unsafeFromNonEmpty (x :| xs) = x :|^ Exts.fromList xs
 -- >>> unsafeFromList [1,2,3]
 -- 1 :|^ fromList [2,3]
 --
--- @since 0.1.0.0
+-- @since 0.1
 unsafeFromList :: HasCallStack => List a -> NonEmptySeq a
 unsafeFromList [] = error "[ShellRun.Data.NonEmptySeq] Empty list passed to unsafeFromList"
 unsafeFromList (x : xs) = x :|^ Exts.fromList xs

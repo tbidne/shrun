@@ -1,6 +1,6 @@
 -- | Provides 'Log' formatting functionality.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Logging.Formatting
   ( formatConsoleLog,
     displayCmd,
@@ -35,7 +35,7 @@ import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.
 --
--- @since 0.1.0.0
+-- @since 0.1
 formatConsoleLog ::
   ( HasCmdDisplay env,
     HasCmdNameTrunc env,
@@ -68,7 +68,7 @@ formatConsoleLog log@MkLog {cmd, msg, lvl} = do
 
 -- | Variant of 'displayCmd\'' using 'MonadReader'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 displayCmd :: (HasCmdDisplay env, MonadReader env m) => Command -> m Text
 displayCmd cmd = asks getCmdDisplay <&> displayCmd' cmd
 
@@ -87,7 +87,7 @@ displayCmd cmd = asks getCmdDisplay <&> displayCmd' cmd
 -- >>> displayCmd' (MkCommand (Just "long") "some long command") ShowKey
 -- "long"
 --
--- @since 0.1.0.0
+-- @since 0.1
 displayCmd' :: Command -> CmdDisplay -> Text
 displayCmd' (MkCommand (Just key) _) ShowKey = key
 displayCmd' (MkCommand _ cmd) _ = cmd

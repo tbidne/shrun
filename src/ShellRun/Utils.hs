@@ -3,7 +3,7 @@
 
 -- | Provides utilities.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Utils
   ( -- * Text Utils
     breakStripPoint,
@@ -46,7 +46,7 @@ import System.Clock qualified as C
 -- :}
 -- 16
 --
--- @since 0.1.0.0
+-- @since 0.1
 diffTime :: TimeSpec -> TimeSpec -> Natural
 diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
   where
@@ -66,7 +66,7 @@ diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
 -- >>> foldMap1 @List (:| []) 1 [2,3,4]
 -- 1 :| [2,3,4]
 --
--- @since 0.1.0.0
+-- @since 0.1
 foldMap1 :: (Foldable f, Semigroup s) => (a -> s) -> a -> f a -> s
 foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
 
@@ -102,7 +102,7 @@ foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
 -- >>> breakStripPoint equals "HEY==LISTEN"
 -- ("HEY","=LISTEN")
 --
--- @since 0.1.0.0
+-- @since 0.1
 breakStripPoint :: Refined R.NonEmpty Text -> Text -> Tuple2 Text Text
 breakStripPoint rpoint txt = case T.breakOn point txt of
   (x, T.stripPrefix point -> Just y) -> (x, y)
@@ -112,7 +112,7 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
 
 -- | Decodes a 'ByteString' to UTF-8 in lenient mode.
 --
--- @since 0.1.0.0
+-- @since 0.1
 decodeUtf8Lenient :: ByteString -> Text
 decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode
 
@@ -132,7 +132,7 @@ decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode
 -- >>> splitOn $$(R.refineTH ",") ""
 -- "" :|^ fromList []
 --
--- @since 0.1.0.0
+-- @since 0.1
 splitOn :: HasCallStack => Refined R.NonEmpty Text -> Text -> NonEmptySeq Text
 splitOn rs txt = case T.splitOn s txt of
   [] -> error err
@@ -161,7 +161,7 @@ splitOn rs txt = case T.splitOn s txt of
 -- >>> truncateIfNeeded 10 "This is 21 chars long"
 -- "This is..."
 --
--- @since 0.1.0.0
+-- @since 0.1
 truncateIfNeeded :: Natural -> Text -> Text
 truncateIfNeeded n txt
   | T.length txt <= n' = txt

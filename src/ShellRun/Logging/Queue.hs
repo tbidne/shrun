@@ -4,7 +4,7 @@
 -- | Provides the 'LogTextQueue' type and associated functions. This is intended
 -- for concurrently writing logs to a file.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Logging.Queue
   ( -- * LogText
     LogText (MkLogText, unLogText),
@@ -52,21 +52,21 @@ import ShellRun.Prelude
 -- | 'LogText' is a textual representation of a given 'Log'. No coloring
 -- is included, but we include the prefix (e.g. Warn) along with a timestamp.
 --
--- @since 0.1.0.0
+-- @since 0.1
 newtype LogText = UnsafeLogText
-  { -- | @since 0.1.0.0
+  { -- | @since 0.1
     unLogText :: Text
   }
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Show
     )
 
 makeFieldLabelsNoPrefix ''LogText
 
--- | @since 0.1.0.0
+-- | @since 0.1
 pattern MkLogText :: Text -> LogText
 pattern MkLogText t <- UnsafeLogText t
 
@@ -89,7 +89,7 @@ pattern MkLogText t <- UnsafeLogText t
 -- :}
 -- "[2022-02-23 20:58:04.231933782 UTC] [Error] [cmd] cmd: command not found\n"
 --
--- @since 0.1.0.0
+-- @since 0.1
 formatFileLog :: MonadTime m => Log -> m LogText
 formatFileLog log@MkLog {cmd, msg} = do
   currTime <- getSystemTime
@@ -103,21 +103,21 @@ formatFileLog log@MkLog {cmd, msg} = do
 
 -- | Newtype wrapper over a 'TBQueue'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 newtype LogTextQueue = MkLogTextQueue
-  { -- | @since 0.1.0.0
+  { -- | @since 0.1
     getLogTextQueue :: TBQueue LogText
   }
 
 makeFieldLabelsNoPrefix ''LogTextQueue
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Show LogTextQueue where
   show _ = "<MkLogTextQueue>"
 
 -- | Atomically writes to the queue.
 --
--- @since 0.1.0.0
+-- @since 0.1
 writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
 writeQueue queue = liftIO . (writeq <=< formatFileLog)
   where
@@ -125,12 +125,12 @@ writeQueue queue = liftIO . (writeq <=< formatFileLog)
 
 -- | Atomically reads from the queue. Does not retry.
 --
--- @since 0.1.0.0
+-- @since 0.1
 readQueue :: MonadIO m => LogTextQueue -> m (Maybe LogText)
 readQueue = liftIO . STM.atomically . TBQueue.tryReadTBQueue . view #getLogTextQueue
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
--- @since 0.1.0.0
+-- @since 0.1
 flushQueue :: MonadIO m => LogTextQueue -> m [LogText]
 flushQueue = liftIO . STM.atomically . STM.flushTBQueue . view #getLogTextQueue

@@ -1,6 +1,6 @@
 -- | Provides the 'MaxRuns' type.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module Unit.MaxRuns
   ( MaxRuns (..),
   )
@@ -14,12 +14,12 @@ import Unit.Prelude
 
 -- | Sets the maximum successful runs for each test.
 --
--- @since 0.1.0.0
+-- @since 0.1
 newtype MaxRuns = MkMaxRuns TestLimit
   deriving stock (Show)
   deriving (Num) via TestLimit
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance IsOption MaxRuns where
   defaultValue = MkMaxRuns 100
   parseValue = readLimit

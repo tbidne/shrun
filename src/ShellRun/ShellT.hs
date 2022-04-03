@@ -1,6 +1,6 @@
 -- | Provides the 'ShellT' monad transformer.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.ShellT
   ( ShellT,
     runShellT,
@@ -61,45 +61,45 @@ import UnliftIO.Async qualified as UAsync
 
 -- | `ShellT` is the main application type that runs shell commands.
 --
--- @since 0.1.0.0
+-- @since 0.1
 type ShellT :: Type -> (Type -> Type) -> Type -> Type
 newtype ShellT env m a = MkShellT (ReaderT env m a)
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Functor,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Applicative,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Monad,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       MonadReader env,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       MonadCatch,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       MonadIO,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       MonadMask,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       MonadTime,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       MonadThrow,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       MonadUnliftIO
     )
     via (ReaderT env m)
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       MonadTrans
     )
     via (ReaderT env)
 
 -- | Runs a 'ShellT' with the given @env@.
 --
--- @since 0.1.0.0
+-- @since 0.1
 runShellT :: ShellT env m a -> env -> m a
 runShellT (MkShellT rdr) = runReaderT rdr
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance
   ( HasCmdDisplay env,
     HasCmdNameTrunc env,
@@ -149,7 +149,7 @@ maybePrintLog fn log@MkLog {dest} = do
     LogFile -> pure ()
     _ -> LFormat.formatConsoleLog log >>= fn
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) where
   getDefaultDir :: ShellT Env m FilePath
   getDefaultDir = liftIO $ Dir.getXdgDirectory XdgConfig "shell-run"

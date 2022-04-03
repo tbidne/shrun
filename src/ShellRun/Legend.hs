@@ -1,6 +1,6 @@
 -- | Provides types for the legend functionality.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Legend
   ( -- * Types
     LegendErr (..),
@@ -22,7 +22,7 @@ import ShellRun.Prelude
 -- a 'LegendMap'. If the file does not exist or the parsing fails
 -- (see 'Internal.linesToMap'), an error will be returned.
 --
--- @since 0.1.0.0
+-- @since 0.1
 legendPathToMap :: FilePath -> IO (Either LegendErr LegendMap)
 legendPathToMap legendPath = do
   res <- SafeEx.try (readFileUtf8Lenient legendPath) :: IO (Either SomeException Text)

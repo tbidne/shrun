@@ -1,7 +1,7 @@
 -- | Module that provides env types and requisite typeclasses, along with
 -- parsing functionality.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Env
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
@@ -67,7 +67,7 @@ import System.FilePath ((</>))
 
 -- | Runs the parser.
 --
--- @since 0.1.0.0
+-- @since 0.1
 runParser :: IO Env
 runParser = do
   args <- OApp.execParser Args.parserInfoArgs

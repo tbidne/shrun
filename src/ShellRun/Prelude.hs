@@ -9,7 +9,7 @@
 -- functionality needed for this application. Thus it is natural to
 -- add new functionality/exports here over time.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Prelude
   ( -- * Total versions of partial functions
     headMaybe,
@@ -128,7 +128,7 @@ import Prelude qualified as P
 
 -- | Strictly reads a file and leniently converts the contents to UTF8.
 --
--- @since 0.1.0.0
+-- @since 0.1
 readFileUtf8Lenient :: FilePath -> IO Text
 readFileUtf8Lenient =
   fmap (TextEnc.decodeUtf8With TextEncErr.lenientDecode)
@@ -136,25 +136,25 @@ readFileUtf8Lenient =
 
 -- | Appends the text contents to the file.
 --
--- @since 0.1.0.0
+-- @since 0.1
 appendFileUtf8 :: FilePath -> Text -> IO ()
 appendFileUtf8 fp = BS.appendFile fp . TextEnc.encodeUtf8
 
 -- | Writes the text contents to the file.
 --
--- @since 0.1.0.0
+-- @since 0.1
 writeFileUtf8 :: FilePath -> Text -> IO ()
 writeFileUtf8 fp = BS.writeFile fp . TextEnc.encodeUtf8
 
 -- | 'Text' version of 'P.show'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 showt :: P.Show a => a -> Text
 showt = T.pack . P.show
 
 -- | 'Text' version of 'error'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 error :: Text -> a
 error = P.error . T.unpack
 
@@ -166,7 +166,7 @@ error = P.error . T.unpack
 -- >>> headMaybe []
 -- Nothing
 --
--- @since 0.1.0.0
+-- @since 0.1
 headMaybe :: List a -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
@@ -178,7 +178,7 @@ headMaybe (x : _) = Just x
 -- >>> monoBimap length ("hey","listen")
 -- (3,6)
 --
--- @since 0.1.0.0
+-- @since 0.1
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
 
@@ -187,7 +187,7 @@ monoBimap f = bimap f f
 -- >>> not <<$>> [Just True, Nothing, Just False]
 -- [Just False,Nothing,Just True]
 --
--- @since 0.1.0.0
+-- @since 0.1
 (<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 (<<$>>) = fmap . fmap
 
@@ -195,15 +195,15 @@ infixl 4 <<$>>
 
 -- | Alias for [].
 --
--- @since 0.1.0.0
+-- @since 0.1
 type List = []
 
 -- | Alias for (,).
 --
--- @since 0.1.0.0
+-- @since 0.1
 type Tuple2 = (,)
 
 -- | Alias for (,,).
 --
--- @since 0.1.0.0
+-- @since 0.1
 type Tuple3 = (,,)

@@ -4,7 +4,7 @@
 
 -- | Internal module for parsing 'Text' lines into a 'LegendMap'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Legend.Internal
   ( LegendErr (..),
     LegendMap,
@@ -22,34 +22,34 @@ import ShellRun.Utils qualified as U
 
 -- | Various errors that can occur while processing the legend.
 --
--- @since 0.1.0.0
+-- @since 0.1
 data LegendErr
   = -- | Errors relating to locating the legend file itself.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     FileErr Text
   | -- | Errors relating to legend key=val format.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     EntryErr Text
   | -- | Errors relating to cyclic keys.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     CyclicKeyErr Text
   | -- | Errors relating to duplicate keys.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     DuplicateKeyErr Text
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Show
     )
 
 -- | Alias for our legend map.
 --
--- @since 0.1.0.0
+-- @since 0.1
 type LegendMap = HashMap Text Text
 
 -- | Attempts to parse the given ['Text'] into 'LegendMap'.
@@ -79,7 +79,7 @@ type LegendMap = HashMap Text Text
 -- >>> linesToMap ["key=value1","key=value2"]
 -- Left (DuplicateKeyErr "key")
 --
--- @since 0.1.0.0
+-- @since 0.1
 linesToMap :: List Text -> Either LegendErr LegendMap
 linesToMap = foldr f (Right Map.empty)
   where

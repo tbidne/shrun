@@ -5,7 +5,7 @@
 -- | Provides the 'TimeRep' type and related functions for representing
 -- time.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Data.TimeRep
   ( -- * Type
     TimeRep (..),
@@ -42,19 +42,19 @@ import ShellRun.Prelude
 
 -- | Represents a relative time.
 --
--- @since 0.1.0.0
+-- @since 0.1
 data TimeRep = MkTimeRep
-  { -- | @since 0.1.0.0
+  { -- | @since 0.1
     days :: Natural,
-    -- | @since 0.1.0.0
+    -- | @since 0.1
     hours :: Natural,
-    -- | @since 0.1.0.0
+    -- | @since 0.1
     minutes :: Natural,
-    -- | @since 0.1.0.0
+    -- | @since 0.1
     seconds :: Natural
   }
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Show
     )
 
@@ -68,7 +68,7 @@ data TimeRep = MkTimeRep
 -- :}
 -- 200000
 --
--- @since 0.1.0.0
+-- @since 0.1
 toSeconds :: TimeRep -> Natural
 toSeconds (MkTimeRep d h m s) =
   d * secondsInDay
@@ -86,7 +86,7 @@ toSeconds (MkTimeRep d h m s) =
 -- :}
 -- MkTimeRep {days = 2, hours = 7, minutes = 33, seconds = 20}
 --
--- @since 0.1.0.0
+-- @since 0.1
 fromSeconds :: Natural -> TimeRep
 fromSeconds seconds = MkTimeRep d h m s
   where
@@ -104,7 +104,7 @@ fromSeconds seconds = MkTimeRep d h m s
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
 --
--- @since 0.1.0.0
+-- @since 0.1
 formatTimeRep :: TimeRep -> Text
 formatTimeRep (isZero -> True) = "0 seconds"
 formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
@@ -125,7 +125,7 @@ formatTimeRep (MkTimeRep d h m s) = T.intercalate ", " vals
 -- :}
 -- "2 days, 7 hours, 33 minutes, 20 seconds"
 --
--- @since 0.1.0.0
+-- @since 0.1
 formatTime :: Natural -> Text
 formatTime = formatTimeRep . fromSeconds
 
@@ -149,7 +149,7 @@ pluralize n txt
 -- >>> secondsInDayNZ
 -- UnsafeNonZero 86400
 --
--- @since 0.1.0.0
+-- @since 0.1
 secondsInDayNZ :: NonZero Natural
 secondsInDayNZ = $$(NZ.mkNonZeroTH 86_400)
 
@@ -158,7 +158,7 @@ secondsInDayNZ = $$(NZ.mkNonZeroTH 86_400)
 -- >>> secondsInHourNZ
 -- UnsafeNonZero 3600
 --
--- @since 0.1.0.0
+-- @since 0.1
 secondsInHourNZ :: NonZero Natural
 secondsInHourNZ = $$(NZ.mkNonZeroTH 3_600)
 
@@ -167,7 +167,7 @@ secondsInHourNZ = $$(NZ.mkNonZeroTH 3_600)
 -- >>> secondsInMinuteNZ
 -- UnsafeNonZero 60
 --
--- @since 0.1.0.0
+-- @since 0.1
 secondsInMinuteNZ :: NonZero Natural
 secondsInMinuteNZ = $$(NZ.mkNonZeroTH 60)
 
@@ -176,7 +176,7 @@ secondsInMinuteNZ = $$(NZ.mkNonZeroTH 60)
 -- >>> secondsInDay
 -- 86400
 --
--- @since 0.1.0.0
+-- @since 0.1
 secondsInDay :: Natural
 secondsInDay = 86_400
 
@@ -185,7 +185,7 @@ secondsInDay = 86_400
 -- >>> secondsInHour
 -- 3600
 --
--- @since 0.1.0.0
+-- @since 0.1
 secondsInHour :: Natural
 secondsInHour = 3_600
 
@@ -194,7 +194,7 @@ secondsInHour = 3_600
 -- >>> secondsInMinute
 -- 60
 --
--- @since 0.1.0.0
+-- @since 0.1
 secondsInMinute :: Natural
 secondsInMinute = 60
 

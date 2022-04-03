@@ -3,7 +3,7 @@
 
 -- | Provides functionality for parsing command line arguments.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Args
   ( Args (..),
     ALineTruncation (..),
@@ -62,16 +62,16 @@ import Text.Read qualified as TR
 -- type from 'Truncation' to add a third option, to detect the terminal size
 -- automatically.
 --
--- @since 0.1.0.0
+-- @since 0.1
 data ALineTruncation
-  = -- | @since 0.1.0.0
+  = -- | @since 0.1
     Undetected (Truncation 'TCmdLine)
-  | -- | @since 0.1.0.0
+  | -- | @since 0.1
     Detected
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Show
     )
 
@@ -79,61 +79,61 @@ makePrismLabels ''ALineTruncation
 
 -- | Type for parsing command line args.
 --
--- @since 0.1.0.0
+-- @since 0.1
 data Args = MkArgs
   { -- | Whether to log commands.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     cmdLogging :: CmdLogging,
     -- | Overarching option for logging. If it is false then all logging is
     -- disabled.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     globalLogging :: Bool,
     -- | Optional path to log file.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     fileLogging :: FilePathDefault,
     -- | Whether to display command by (key) name or command.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     cmdDisplay :: CmdDisplay,
     -- | Optional legend file.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     legend :: FilePathDefault,
     -- | Timeout.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     timeout :: Timeout,
     -- | The max number of command characters to display in the logs.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     cmdNameTrunc :: Truncation 'TCmdName,
     -- | The max number of line characters to display in the logs.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     cmdLineTrunc :: ALineTruncation,
     -- | List of commands.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     commands :: NonEmptySeq Text
   }
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Show
     )
 
 makeFieldLabelsNoPrefix ''Args
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Semigroup ALineTruncation where
   Undetected x <> Undetected y = Undetected (x <> y)
   _ <> _ = Detected
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Monoid ALineTruncation where
   mempty = Undetected mempty
 
@@ -153,7 +153,7 @@ instance Monoid ALineTruncation where
 --     commands = "ls" :|^ fromList []
 --   }
 --
--- @since 0.1.0.0
+-- @since 0.1
 defaultArgs :: NonEmptySeq Text -> Args
 defaultArgs cmds =
   MkArgs
@@ -170,7 +170,7 @@ defaultArgs cmds =
 
 -- | 'ParserInfo' type for parsing 'Args'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 parserInfoArgs :: ParserInfo Args
 parserInfoArgs =
   ParserInfo

@@ -3,7 +3,7 @@
 
 -- | Provides the low-level `IO` functions for running shell commands.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.IO
   ( -- * Stdout/stderr newtypes
     Stdout (..),
@@ -69,9 +69,9 @@ import System.Process qualified as P
 
 -- | Newtype wrapper for stdout.
 --
--- @since 0.1.0.0
+-- @since 0.1
 newtype Stdout = MkStdout
-  { -- | @since 0.1.0.0
+  { -- | @since 0.1
     getStdout :: Text
   }
 
@@ -79,9 +79,9 @@ makeFieldLabelsNoPrefix ''Stdout
 
 -- | Newtype wrapper for stderr.
 --
--- @since 0.1.0.0
+-- @since 0.1
 newtype Stderr = MkStderr
-  { -- | @since 0.1.0.0
+  { -- | @since 0.1
     getStderr :: Text
   }
 
@@ -102,40 +102,40 @@ makeStdErr err = MkStderr $ "Error: '" <> stripChars err
 -- The 'Semigroup' instance is based on this ordering, taking the greatest
 -- element. For identical constructors, the left argument is taken.
 --
--- @since 0.1.0.0
+-- @since 0.1
 data ReadHandleResult
   = -- | Error encountered while trying to read a handle.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     ReadErr Text
   | -- | Successfully read data from the handle.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     ReadSuccess Text
   | -- | Successfully read no data from the handle.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     ReadNoData
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Show
     )
   deriving
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Semigroup,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Monoid
     )
     via Supremum ReadHandleResult
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Bounded ReadHandleResult where
   minBound = ReadErr ""
   maxBound = ReadSuccess ""
 
--- | @since 0.1.0.0
+-- | @since 0.1
 instance Ord ReadHandleResult where
   compare x y | x == y = EQ
   compare (ReadSuccess _) _ = GT
@@ -148,7 +148,7 @@ makePrismLabels ''ReadHandleResult
 
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
@@ -156,7 +156,7 @@ readHandleResultToStderr (ReadSuccess err) = MkStderr err
 
 -- | Attempts to read from the handle.
 --
--- @since 0.1.0.0
+-- @since 0.1
 readHandle :: Handle -> IO ReadHandleResult
 readHandle handle = do
   let displayEx :: Show a => Text -> a -> Text
@@ -189,7 +189,7 @@ blockSize = 1024
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
 --
--- @since 0.1.0.0
+-- @since 0.1
 sh :: Command -> Maybe FilePath -> IO Text
 sh (MkCommand _ cmd) fp = T.pack <$> P.readCreateProcess proc ""
   where
@@ -197,13 +197,13 @@ sh (MkCommand _ cmd) fp = T.pack <$> P.readCreateProcess proc ""
 
 -- | Version of 'sh' that ignores the return value.
 --
--- @since 0.1.0.0
+-- @since 0.1
 sh_ :: Command -> Maybe FilePath -> IO ()
 sh_ cmd = void . sh cmd
 
 -- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
 --
--- @since 0.1.0.0
+-- @since 0.1
 shExitCode :: Command -> Maybe FilePath -> IO (ExitCode, Stdout, Stderr)
 shExitCode (MkCommand _ cmd) path = do
   (exitCode, stdout, stderr) <- P.readCreateProcessWithExitCode proc ""
@@ -215,7 +215,7 @@ shExitCode (MkCommand _ cmd) path = do
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
 --
--- @since 0.1.0.0
+-- @since 0.1
 tryShExitCode :: Command -> Maybe FilePath -> IO (Either Stderr Stdout)
 tryShExitCode cmd path = do
   (code, stdout, MkStderr err) <- shExitCode cmd path
@@ -226,7 +226,7 @@ tryShExitCode cmd path = do
 -- | Version of 'tryShExitCode' with timing. On success, stdout is not
 -- returned.
 --
--- @since 0.1.0.0
+-- @since 0.1
 tryTimeSh ::
   ( HasCompletedCmds env,
     MonadIO m,
@@ -248,7 +248,7 @@ tryTimeSh cmd = do
 -- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
 -- to a 'ConsoleRegion' instead of the usual swallowing.
 --
--- @since 0.1.0.0
+-- @since 0.1
 tryTimeShStreamRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
@@ -268,7 +268,7 @@ tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 -- to send command logs to a file, but do not want to stream them to the
 -- console.
 --
--- @since 0.1.0.0
+-- @since 0.1
 tryTimeShStreamNoRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
@@ -284,7 +284,7 @@ tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 -- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
 -- to a 'ConsoleRegion' instead of the usual swallowing.
 --
--- @since 0.1.0.0
+-- @since 0.1
 tryTimeShAnyRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,

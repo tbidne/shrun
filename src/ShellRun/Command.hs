@@ -4,7 +4,7 @@
 
 -- | Provides the 'Command' wrapper for commands.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Command
   ( Command (..),
     translateCommands,
@@ -31,27 +31,27 @@ import ShellRun.Utils qualified as U
 
 -- | Wrapper for shell commands.
 --
--- @since 0.1.0.0
+-- @since 0.1
 data Command = MkCommand
   { -- | The key name for the command, for display purposes.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     getKey :: Maybe Text,
     -- | The shell command to run.
     --
-    -- @since 0.1.0.0
+    -- @since 0.1
     command :: Text
   }
   deriving stock
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Eq,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Generic,
-      -- | @since 0.1.0.0
+      -- | @since 0.1
       Show
     )
   deriving anyclass
-    ( -- | @since 0.1.0.0
+    ( -- | @since 0.1
       Hashable
     )
 
@@ -99,7 +99,7 @@ instance IsString Command where
 -- :}
 -- Left (CyclicKeyErr "a -> b -> c -> a")
 --
--- @since 0.1.0.0
+-- @since 0.1
 translateCommands :: LegendMap -> NonEmptySeq Text -> Either LegendErr (NonEmptySeq Command)
 translateCommands mp (t :|^ ts) = sequenceA $ U.foldMap1 (lineToCommands mp) t ts
 

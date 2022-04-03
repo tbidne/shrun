@@ -1,7 +1,7 @@
 -- | This module is the entry point to the @Shell-Run@ library used by
 -- the @Shell-Run@ executable.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun
   ( ShellT,
     runShellT,

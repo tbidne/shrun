@@ -1,6 +1,6 @@
 -- | Provides the `MonadShell` typeclass.
 --
--- @since 0.1.0.0
+-- @since 0.1
 module ShellRun.Class.MonadShell
   ( MonadShell (..),
     runShell,
@@ -20,29 +20,29 @@ import System.FilePath ((</>))
 
 -- | The core typeclass for @shell-run@.
 --
--- @since 0.1.0.0
+-- @since 0.1
 type MonadShell :: (Type -> Type) -> Constraint
 class Monad m => MonadShell m where
   -- | Returns the default directory e.g. Xdg config dir.
   --
-  -- @since 0.1.0.0
+  -- @since 0.1
   getDefaultDir :: m FilePath
 
   -- | Given a filepath, attempts to read and parse the file into
   -- a `LegendMap`.
   --
-  -- @since 0.1.0.0
+  -- @since 0.1
   legendPathToMap :: FilePath -> m (Either LegendErr LegendMap)
 
   -- | Runs commands.
   --
-  -- @since 0.1.0.0
+  -- @since 0.1
   runCommands :: NonEmptySeq Command -> m ()
 
 -- | `runShell` is the entry point for running shell commands i.e.
 -- `MonadShell` instances.
 --
--- @since 0.1.0.0
+-- @since 0.1
 runShell ::
   ( HasCommands env,
     HasLegend env,
