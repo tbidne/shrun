@@ -29,16 +29,16 @@ jobs:
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
 
       - name: cabal-fmt
-        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#cabal-fmt -- --check
+        run: nix run github:tbidne/nix-hs-tools/0.1.0.0#cabal-fmt -- --check
 
       - name: hlint
-        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#hlint
+        run: nix run github:tbidne/nix-hs-tools/0.1.0.0#hlint
 
       - name: ormolu
-        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#ormolu -- --mode check
+        run: nix run github:tbidne/nix-hs-tools/0.1.0.0#ormolu -- --mode check
 
       - name: nixpkgs-fmt
-        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#nixpkgs-fmt -- --check
+        run: nix run github:tbidne/nix-hs-tools/0.1.0.0#nixpkgs-fmt -- --check
 
       - name: haddock
-        run: nix run github:tbidne/nix-hs-tools?rev=ba406f7a288dd936e08368868b7666a4829314cd#haddock_8-10-7 -- --exclude ShellRun.Prelude
+        run: nix run github:tbidne/nix-hs-tools/0.1.0.0#haddock_8-10-7 -- --exclude ShellRun.Prelude
