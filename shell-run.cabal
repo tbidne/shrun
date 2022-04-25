@@ -3,7 +3,7 @@ name:               shell-run
 version:            0.1
 license:            BSD-3-Clause
 license-file:       LICENSE
-tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.1
+tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.2
 copyright:          2021 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@prontonmail.com
@@ -79,7 +79,7 @@ library
     ShellRun.Utils
 
   build-depends:
-    , algebra-simple        ^>=0.1.0.0
+    , algebra-simple        ^>=0.1
     , base                  >=4.14.1.0 && <4.17
     , bytestring            >=0.10.12  && <0.12
     , clock                 >=0.7.2    && <0.9

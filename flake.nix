@@ -1,9 +1,9 @@
 {
   description = "Shell-Run is a tool for concurrently running shell commands.";
   inputs = {
-    algebra-simple-src.url = "github:tbidne/algebra-simple/main";
+    algebra-simple-src.url = "github:tbidne/algebra-simple?rev=1b2bd9fd21ecf5ed6635cc5c14d06ab533950df3";
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs?rev=1ffba9f2f683063c2b14c9f4d12c55ad5f4ed887";
   };
   outputs =
     { algebra-simple-src
@@ -14,7 +14,7 @@
     flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = import nixpkgs { inherit system; };
-      compilerVersion = "ghc921";
+      compilerVersion = "ghc922";
       compiler = pkgs.haskell.packages."${compilerVersion}";
       mkPkg = returnShellEnv:
         compiler.developPackage {
@@ -32,8 +32,6 @@
           overrides = final: prev: with compiler; {
             algebra-simple =
               final.callCabal2nix "algebra-simple" algebra-simple-src { };
-            optics-core = final.optics-core_0_4;
-            optics-th = final.optics-th_0_4;
           };
         };
     in
