@@ -29,8 +29,6 @@ where
 
 import Control.Concurrent.STM qualified as STM
 import Control.Concurrent.STM.TVar qualified as TVar
-import Control.Exception.Safe (SomeException)
-import Control.Exception.Safe qualified as SafeEx
 import Control.Monad.Catch (MonadMask)
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
@@ -64,8 +62,6 @@ import System.Posix.IO.ByteString qualified as PBS
 import System.Posix.Terminal qualified as PTerm
 import System.Process (CreateProcess (..), ProcessHandle, StdStream (..))
 import System.Process qualified as P
-import UnliftIO (MonadUnliftIO (..))
-import UnliftIO qualified
 
 -- | Newtype wrapper for stdout.
 --
@@ -176,7 +172,7 @@ readHandle handle = do
           pure $ ReadErr $ displayEx "Cannot read from handle" ("" :: List Char)
       | otherwise -> do
           output :: Either SomeException ByteString <-
-            liftIO $ SafeEx.try $ BS.hGetNonBlocking handle blockSize
+            liftIO $ try $ BS.hGetNonBlocking handle blockSize
           let outDecoded = fmap Utils.decodeUtf8Lenient output
           pure $ case outDecoded of
             Left ex -> ReadErr $ readEx ex
@@ -327,7 +323,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
           }
 
   start <- liftIO $ C.getTime Monotonic
-  (exitCode, lastRead) <- UnliftIO.withRunInIO $ \runner ->
+  (exitCode, lastRead) <- withRunInIO $ \runner ->
     P.withCreateProcess pr $ \_ _ _ ph -> runner $ streamOutput mRegion cmd recvH ph
   end <- liftIO $ C.getTime Monotonic
 

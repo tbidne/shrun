@@ -9,8 +9,6 @@ where
 
 import Control.Concurrent qualified as CC
 import Control.Concurrent.STM.TVar qualified as TVar
-import Control.Exception.Safe (SomeException)
-import Control.Exception.Safe qualified as SafeEx
 import Control.Monad qualified as M
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
 import Control.Monad.Loops qualified as Loops
@@ -55,8 +53,6 @@ import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.Directory (XdgDirectory (..))
 import System.Directory qualified as Dir
-import UnliftIO (MonadUnliftIO (..))
-import UnliftIO qualified
 import UnliftIO.Async qualified as UAsync
 
 -- | `ShellT` is the main application type that runs shell commands.
@@ -164,7 +160,7 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
       let actions = UAsync.mapConcurrently_ runCommand commands
           actionsWithTimer = UAsync.race_ actions (counter commands)
 
-      result :: Either SomeException () <- UnliftIO.withRunInIO $ \runner -> SafeEx.try $ runner actionsWithTimer
+      result :: Either SomeException () <- withRunInIO $ \runner -> try $ runner actionsWithTimer
 
       UAsync.cancel fileLogger
 
@@ -175,7 +171,7 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
                   T.pack $
                     "Encountered an exception. This is likely not an error in any of the "
                       <> "commands run but rather an error in ShellRun itself: "
-                      <> SafeEx.displayException ex
+                      <> displayException ex
                 fatalLog =
                   MkLog
                     { cmd = Nothing,

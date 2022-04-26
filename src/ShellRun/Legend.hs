@@ -11,8 +11,6 @@ module ShellRun.Legend
   )
 where
 
-import Control.Exception.Safe (SomeException)
-import Control.Exception.Safe qualified as SafeEx
 import Data.Text qualified as T
 import ShellRun.Legend.Internal (LegendErr (..), LegendMap)
 import ShellRun.Legend.Internal qualified as Internal
@@ -25,7 +23,7 @@ import ShellRun.Prelude
 -- @since 0.1
 legendPathToMap :: FilePath -> IO (Either LegendErr LegendMap)
 legendPathToMap legendPath = do
-  res <- SafeEx.try (readFileUtf8Lenient legendPath) :: IO (Either SomeException Text)
+  res <- try (readFileUtf8Lenient legendPath) :: IO (Either SomeException Text)
   pure $ case res of
     Left err ->
       Left $
