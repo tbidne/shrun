@@ -13,7 +13,6 @@ import Control.Exception.Safe (SomeException)
 import Control.Exception.Safe qualified as SafeEx
 import Control.Monad qualified as M
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
-import Control.Monad.IO.Unlift (MonadUnliftIO (..))
 import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.IORef (IORef)
@@ -56,6 +55,7 @@ import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.Directory (XdgDirectory (..))
 import System.Directory qualified as Dir
+import UnliftIO (MonadUnliftIO (..))
 import UnliftIO qualified
 import UnliftIO.Async qualified as UAsync
 

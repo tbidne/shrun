@@ -32,8 +32,6 @@ import Control.Concurrent.STM.TVar qualified as TVar
 import Control.Exception.Safe (SomeException)
 import Control.Exception.Safe qualified as SafeEx
 import Control.Monad.Catch (MonadMask)
-import Control.Monad.IO.Unlift (MonadUnliftIO (..))
-import Control.Monad.IO.Unlift qualified as UAsync
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
 import Data.IORef qualified as IORef
@@ -66,6 +64,8 @@ import System.Posix.IO.ByteString qualified as PBS
 import System.Posix.Terminal qualified as PTerm
 import System.Process (CreateProcess (..), ProcessHandle, StdStream (..))
 import System.Process qualified as P
+import UnliftIO (MonadUnliftIO (..))
+import UnliftIO qualified
 
 -- | Newtype wrapper for stdout.
 --
@@ -327,7 +327,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
           }
 
   start <- liftIO $ C.getTime Monotonic
-  (exitCode, lastRead) <- UAsync.withRunInIO $ \runner ->
+  (exitCode, lastRead) <- UnliftIO.withRunInIO $ \runner ->
     P.withCreateProcess pr $ \_ _ _ ph -> runner $ streamOutput mRegion cmd recvH ph
   end <- liftIO $ C.getTime Monotonic
 
