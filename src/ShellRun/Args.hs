@@ -241,7 +241,7 @@ legendParser =
         <> "other keys recursively. Lines starting with '#' are "
         <> "considered comments and ignored. If no path is given, we "
         <> "automatically look in the Xdg config directory e.g. "
-        <> "~/.config/shell-run/legend.txt."
+        <> "~/.config/shell-run/shell-run.legend."
 
 timeoutParser :: Parser Timeout
 timeoutParser =
@@ -343,7 +343,7 @@ fileLoggingParser =
         <> "unaffected. This can be useful for investigating command "
         <> "failures. If the string literal 'default' or 'd' is given, we "
         <> "will write to the Xdg config directory e.g. "
-        <> "~/.config/shell-run/logs.txt"
+        <> "~/.config/shell-run/shell-run.log"
 
 readLogFile :: ReadM FilePathDefault
 readLogFile = do

@@ -36,7 +36,7 @@ setup :: IO TestArgs
 setup = do
   cwd <- (</> "test/functional") <$> Dir.getCurrentDirectory
   let td = cwd </> "tmp"
-      lp = cwd </> "legend.txt"
+      lp = cwd </> "shell-run.legend"
 
   Dir.createDirectoryIfMissing False td
   pure $

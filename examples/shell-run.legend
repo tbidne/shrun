@@ -38,7 +38,7 @@ all=cmd3,,cmd4,,echo hi
 #dup_key=echo duplicate
 
 # cyclic keys will cause an error when _actually used_ e.g. try running
-# shell-run -lexamples/legend.txt c
+# shell-run -lexamples/shell-run.legend c
 a=c
 b=a
 c=b

@@ -76,7 +76,7 @@ runParser = do
     FPNone -> pure Nothing
     FPDefault -> do
       configDir <- Dir.getXdgDirectory XdgConfig "shell-run"
-      let fp = configDir </> "logs.txt"
+      let fp = configDir </> "shell-run.log"
       queue <- STM.atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
     FPManual fp -> do

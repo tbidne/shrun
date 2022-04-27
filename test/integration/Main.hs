@@ -76,7 +76,7 @@ noDefaultLegendShell = THU.testCase "Should continue with no default legend" $ d
           }
       (_, result) = runNoLegendMockShell ShellRun.runShell env
       expected =
-        [ "No legend file found at: \"config/legend.txt\"",
+        [ "No legend file found at: \"config/shell-run.legend\"",
           "cmd"
         ]
   expected @=? result

@@ -68,14 +68,14 @@ legendSpecs =
 
 parseShortLegend :: TestTree
 parseShortLegend = THU.testCase "Should parse short legend" $ do
-  let argList = ["-l./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/legend.txt"}
+  let argList = ["-l./path/shell-run.legend", "command"]
+      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/shell-run.legend"}
   verifyResult argList expected
 
 parseLongLegend :: TestTree
 parseLongLegend = THU.testCase "Should parse long legend" $ do
-  let argList = ["--legend=./path/legend.txt", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/legend.txt"}
+  let argList = ["--legend=./path/shell-run.legend", "command"]
+      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/shell-run.legend"}
   verifyResult argList expected
 
 parseDefaultLegend :: TestTree

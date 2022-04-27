@@ -51,7 +51,7 @@ expected =
         ]
 
 outfile :: List Char
-outfile = "logs.txt"
+outfile = "shell-run.log"
 
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do

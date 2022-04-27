@@ -65,7 +65,7 @@ maybePathToCommands ::
 maybePathToCommands FPNone cmds = pure $ Right $ fmap (MkCommand Nothing) cmds
 maybePathToCommands FPDefault cmds = do
   -- Search for the default legend
-  defPath <- (</> "legend.txt") <$> getDefaultDir
+  defPath <- (</> "shell-run.legend") <$> getDefaultDir
   eMap <- legendPathToMap defPath
   case eMap of
     Left le -> case le of

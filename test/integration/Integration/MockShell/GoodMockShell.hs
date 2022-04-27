@@ -37,7 +37,7 @@ runGoodMockShell (MkGoodMockShell rdr) = runMockShellBase rdr
 
 instance MonadShell GoodMockShell where
   getDefaultDir = pure "config"
-  legendPathToMap "config/legend.txt" = pure $ Right $ Map.singleton "def-key" "def-val"
+  legendPathToMap "config/shell-run.legend" = pure $ Right $ Map.singleton "def-key" "def-val"
   legendPathToMap _ = pure $ Right mp
     where
       mp =
