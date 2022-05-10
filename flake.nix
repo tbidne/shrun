@@ -1,9 +1,9 @@
 {
   description = "Shell-Run is a tool for concurrently running shell commands.";
   inputs = {
-    algebra-simple-src.url = "github:tbidne/algebra-simple?rev=1b2bd9fd21ecf5ed6635cc5c14d06ab533950df3";
+    algebra-simple-src.url = "github:tbidne/algebra-simple";
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:nixos/nixpkgs?rev=1ffba9f2f683063c2b14c9f4d12c55ad5f4ed887";
+    nixpkgs.url = "github:nixos/nixpkgs?rev=98000933d72a97632caf0db0027ea3eb2e5e7f29";
   };
   outputs =
     { algebra-simple-src
