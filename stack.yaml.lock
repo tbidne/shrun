@@ -29,6 +29,17 @@ packages:
   original:
     commit: 2a020dbe0290abe57af31c5011a3a18ff17dcec9
     git: https://github.com/tbidne/algebra-simple.git
+- completed:
+    name: relative-time
+    pantry-tree:
+      sha256: 895caa921eb243a8b3ee04e619485caca29a69c6a9848cafb32d854e64f13af8
+      size: 1591
+    commit: 3bf6f1d8bfad95919cbe9066ca9ffcea5359358e
+    git: https://github.com/tbidne/relative-time.git
+    version: '0.1'
+  original:
+    commit: 3bf6f1d8bfad95919cbe9066ca9ffcea5359358e
+    git: https://github.com/tbidne/relative-time.git
 snapshots:
 - completed:
     sha256: d4ee004c46ba878d2f304f5d748d493057be579192a8d148527f3ba55c9df57f

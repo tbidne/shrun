@@ -16,13 +16,13 @@ import Data.HashSet qualified as Set
 import Data.IORef (IORef)
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
+import Data.Time.Relative (formatSeconds)
 import ShellRun.Class.MonadShell (MonadShell (..))
 import ShellRun.Class.MonadTime (MonadTime (..))
 import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
-import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env
   ( CmdLogging (..),
@@ -185,11 +185,11 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
 
         end <- liftIO $ C.getTime Monotonic
         let totalTime = U.diffTime start end
-            totalTimeTxt = "Finished! Total time elapsed: " <> TimeRep.formatTime totalTime
+            totalTimeTxt = "Finished! Total time elapsed: " <> formatSeconds totalTime
             finalLog =
               MkLog
                 { cmd = Nothing,
-                  msg = totalTimeTxt,
+                  msg = T.pack totalTimeTxt,
                   lvl = InfoBlue,
                   mode = Finish,
                   dest = LogBoth
@@ -242,7 +242,7 @@ runCommand cmd = do
     putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = msg' <> ". Time elapsed: " <> TimeRep.formatTime t',
+          msg = msg' <> ". Time elapsed: " <> (T.pack $ formatSeconds t'),
           lvl = lvl',
           mode = Finish,
           dest = LogBoth
@@ -286,7 +286,7 @@ logCounter region elapsed = do
   let lg =
         MkLog
           { cmd = Nothing,
-            msg = "Running time: " <> TimeRep.formatTime elapsed,
+            msg = "Running time: " <> (T.pack $ formatSeconds elapsed),
             lvl = InfoCyan,
             mode = Set,
             dest = LogConsole

@@ -39,7 +39,6 @@
   - [Cabal](#cabal)
   - [Stack](#stack)
   - [Nix](#nix)
-- [Tests](#tests)
 
 # Motivation
 
@@ -298,20 +297,3 @@ Then in `configuration.nix` you can simply have:
   ];
 }
 ```
-
-# Testing
-
-There are four test suites, `doctest`, `unit`, `integration` and `functional`. These can be run via:
-
-```sh
-# --test-show-details=direct gives nicer output
-cabal test doctest --test-show-details=direct
-cabal test unit --test-show-details=direct
-cabal test integration --test-show-details=direct
-cabal test functional --test-show-details=direct
-
-# everything
-cabal test --test-show-details=direct
-```
-
-Because the functional tests run asynchronous actions, the test output when running all suites (e.g. `cabal test`) can be wonky (out of order, non-deterministic). A workaround is to explicitly run the tests synchronously a la `cabal test -j1`.

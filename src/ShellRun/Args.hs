@@ -14,8 +14,9 @@ where
 
 import Data.List qualified as L
 import Data.List.NonEmpty qualified as NE
-import Data.String (IsString (..), String)
+import Data.String (IsString (..))
 import Data.Text qualified as T
+import Data.Time.Relative qualified as RelativeTime
 import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
 import Options.Applicative (ParseError (..), Parser, ParserInfo (..), ReadM)
@@ -26,8 +27,6 @@ import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
-import ShellRun.Data.TimeRep (TimeRep (..))
-import ShellRun.Data.TimeRep qualified as TimeRep
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env.Types
   ( CmdDisplay (..),
@@ -36,10 +35,6 @@ import ShellRun.Env.Types
     Truncation (..),
   )
 import ShellRun.Prelude
-import Text.Megaparsec (Parsec)
-import Text.Megaparsec qualified as MP
-import Text.Megaparsec.Char qualified as MPC
-import Text.Read qualified as TR
 
 -- $setup
 -- >>> :{
@@ -246,7 +241,7 @@ legendParser =
 timeoutParser :: Parser Timeout
 timeoutParser =
   OApp.option
-    (readTimeSeconds <|> readTimeStr)
+    readTimeout
     ( OApp.value (MkTimeout PPosInf)
         <> OApp.long "timeout"
         <> OApp.short 't'
@@ -259,20 +254,14 @@ timeoutParser =
         <> "(interpreted as seconds), or a \"time string\" e.g. 1d2h3m4s or "
         <> "2h3s. Defaults to no timeout."
 
-readTimeSeconds :: ReadM Timeout
-readTimeSeconds = MkTimeout . PFin <$> OApp.auto
-
-readTimeStr :: ReadM Timeout
-readTimeStr = do
-  v :: String <- OApp.str
-  case MP.parse parseTimeRep "ShellRun.Args" v of
+readTimeout :: ReadM Timeout
+readTimeout = do
+  str <- OApp.str
+  case RelativeTime.fromString str of
     Left _ ->
       OApp.readerAbort $
-        ErrorMsg $
-          "Wanted time string e.g. 1d2h3m4s. Received: " <> v
-    Right timeRep ->
-      let timeout = MkTimeout $ PFin $ TimeRep.toSeconds timeRep
-       in pure timeout
+        ErrorMsg $ "Could not parse timeout: " <> str
+    Right t -> pure $ MkTimeout $ PFin $ RelativeTime.toSeconds t
 
 cmdTruncationParser :: Parser (Truncation 'TCmdName)
 cmdTruncationParser =
@@ -389,33 +378,6 @@ commandsParser =
       ( T.pack
           <$> OApp.argument OApp.str (OApp.metavar "Commands...")
       )
-
-type MParser = Parsec Text (List Char)
-
-parseTimeRep :: MParser TimeRep
-parseTimeRep =
-  MkTimeRep
-    <$> parseTimeOrZero 'd'
-    <*> parseTimeOrZero 'h'
-    <*> parseTimeOrZero 'm'
-    <*> parseTimeOrZero 's'
-    <* MP.eof
-
-parseTimeOrZero :: Char -> MParser Natural
-parseTimeOrZero c =
-  -- Backtrack if we don't match
-  MP.try (parseNNWithUnit c)
-    <|> pure 0
-
-parseNNWithUnit :: Char -> MParser Natural
-parseNNWithUnit c = parseNonNegative <* MPC.char' c
-
-parseNonNegative :: MParser Natural
-parseNonNegative = do
-  ds <- MP.some MPC.digitChar
-  case TR.readMaybe ds of
-    Nothing -> MP.customFailure $ "Could not parse natural: " <> showt ds
-    Just n -> pure n
 
 globalLoggingParser :: Parser Bool
 globalLoggingParser =

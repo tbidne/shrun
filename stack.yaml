@@ -6,6 +6,8 @@ extra-deps:
 - strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
 - git: https://github.com/tbidne/algebra-simple.git
   commit: 2a020dbe0290abe57af31c5011a3a18ff17dcec9
+- git: https://github.com/tbidne/relative-time.git
+  commit: 3bf6f1d8bfad95919cbe9066ca9ffcea5359358e
 flags:
   refined:
     aeson: false
