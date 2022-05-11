@@ -242,7 +242,7 @@ runCommand cmd = do
     putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = msg' <> ". Time elapsed: " <> (T.pack $ formatSeconds t'),
+          msg = msg' <> ". Time elapsed: " <> T.pack (formatSeconds t'),
           lvl = lvl',
           mode = Finish,
           dest = LogBoth
@@ -286,7 +286,7 @@ logCounter region elapsed = do
   let lg =
         MkLog
           { cmd = Nothing,
-            msg = "Running time: " <> (T.pack $ formatSeconds elapsed),
+            msg = "Running time: " <> T.pack (formatSeconds elapsed),
             lvl = InfoCyan,
             mode = Set,
             dest = LogConsole
