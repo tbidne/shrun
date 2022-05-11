@@ -7,7 +7,7 @@ extra-deps:
 - git: https://github.com/tbidne/algebra-simple.git
   commit: 2a020dbe0290abe57af31c5011a3a18ff17dcec9
 - git: https://github.com/tbidne/relative-time.git
-  commit: 3bf6f1d8bfad95919cbe9066ca9ffcea5359358e
+  commit: 1b0a14bee427e7401247fd3d8279a54e0b5bd5ea
 flags:
   refined:
     aeson: false

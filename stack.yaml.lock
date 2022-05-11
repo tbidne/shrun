@@ -32,13 +32,13 @@ packages:
 - completed:
     name: relative-time
     pantry-tree:
-      sha256: 895caa921eb243a8b3ee04e619485caca29a69c6a9848cafb32d854e64f13af8
+      sha256: 4d14ff9460f1efca9be76e83f3fd45c7f08a1cddb6f6d07cafa947d918bc7847
       size: 1591
-    commit: 3bf6f1d8bfad95919cbe9066ca9ffcea5359358e
+    commit: 1b0a14bee427e7401247fd3d8279a54e0b5bd5ea
     git: https://github.com/tbidne/relative-time.git
     version: '0.1'
   original:
-    commit: 3bf6f1d8bfad95919cbe9066ca9ffcea5359358e
+    commit: 1b0a14bee427e7401247fd3d8279a54e0b5bd5ea
     git: https://github.com/tbidne/relative-time.git
 snapshots:
 - completed:

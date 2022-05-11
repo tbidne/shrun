@@ -28,25 +28,13 @@ import ShellRun.Prelude
 
 -- $setup
 -- >>> import ShellRun.Logging.Log (LogDest (..), LogLevel (..), LogMode (..))
--- >>> import Text.Megaparsec (Parsec)
--- >>> import Text.Megaparsec qualified as MP
--- >>> import Text.Megaparsec.Char qualified as MPC
 -- >>> import Data.Text qualified as T
 -- >>> :{
 --  hardcodeTimestamp :: LogText -> Text
---  hardcodeTimestamp (MkLogText txt) = case MP.parse parseLog "" txt of
---    Left _ -> "<parse error>"
---    Right txt' -> txt'
+--  hardcodeTimestamp (MkLogText txt) = ts <> dropTimestamp txt
 --    where
---      parseLog :: Parsec Void Text Text
---      parseLog = do
---        MPC.char '['
---        MP.takeWhile1P Nothing (/= ']')
---        MPC.string "] "
---        rest <- MP.takeWhile1P Nothing (/= '\n')
---        MPC.eol
---        pure $ ts <> rest <> "\n"
---      ts = "[2022-02-23 20:58:04.231933782 UTC] "
+--      dropTimestamp = T.dropWhile (/= ']')
+--      ts = "[2022-02-23 20:58:04.231933782 UTC"
 -- :}
 
 -- | 'LogText' is a textual representation of a given 'Log'. No coloring

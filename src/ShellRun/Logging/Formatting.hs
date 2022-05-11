@@ -23,16 +23,6 @@ import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Console.Pretty qualified as P
 
--- TO TEST
---
--- 1. No cmd -> anything to test? Could use logToColor, logToPrefix, but eh...
--- 2. cmd ->
---    a. command display
---    b. cmd truncation
---    c. line truncation
-
--- Prob do different tests, otherwise pretty complicated
-
 -- | Formats a log to be printed to the console.
 --
 -- @since 0.1
