@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides the 'ShellT' monad transformer.
 --
 -- @since 0.1
@@ -8,9 +10,11 @@ module ShellRun.ShellT
 where
 
 import Control.Concurrent qualified as CC
+import Control.Concurrent.Async.Lifted.Safe (Forall, Pure)
+import Control.Concurrent.Async.Lifted.Safe qualified as Async
 import Control.Concurrent.STM.TVar qualified as TVar
 import Control.Monad qualified as M
-import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
+import Control.Monad.Catch (MonadMask)
 import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.IORef (IORef)
@@ -53,7 +57,6 @@ import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.Directory (XdgDirectory (..))
 import System.Directory qualified as Dir
-import UnliftIO.Async qualified as UAsync
 
 -- | `ShellT` is the main application type that runs shell commands.
 --
@@ -68,6 +71,10 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.1
       Monad,
       -- | @since 0.1
+      MonadBase b,
+      -- | @since 0.1
+      MonadBaseControl b,
+      -- | @since 0.1
       MonadReader env,
       -- | @since 0.1
       MonadCatch,
@@ -78,9 +85,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.1
       MonadTime,
       -- | @since 0.1
-      MonadThrow,
-      -- | @since 0.1
-      MonadUnliftIO
+      MonadThrow
     )
     via (ReaderT env m)
   deriving
@@ -146,7 +151,15 @@ maybePrintLog fn log@MkLog {dest} = do
     _ -> LFormat.formatConsoleLog log >>= fn
 
 -- | @since 0.1
-instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) where
+instance
+  ( Forall (Pure (ShellT Env m)),
+    MonadBaseControl IO m,
+    MonadCatch m,
+    MonadIO m,
+    MonadMask m
+  ) =>
+  MonadShell (ShellT Env m)
+  where
   getDefaultDir :: ShellT Env m FilePath
   getDefaultDir = liftIO $ Dir.getXdgDirectory XdgConfig "shell-run"
 
@@ -155,14 +168,15 @@ instance (MonadIO m, MonadMask m, MonadUnliftIO m) => MonadShell (ShellT Env m) 
 
   runCommands :: NonEmptySeq Command -> ShellT Env m ()
   runCommands commands = Regions.displayConsoleRegions $
-    UAsync.withAsync maybePollQueue $ \fileLogger -> do
+    Async.withAsync maybePollQueue $ \fileLogger -> do
       start <- liftIO $ C.getTime Monotonic
-      let actions = UAsync.mapConcurrently_ runCommand commands
-          actionsWithTimer = UAsync.race_ actions (counter commands)
+      let actions = Async.mapConcurrently_ runCommand commands
+          actionsWithTimer = Async.race_ actions (counter commands)
 
-      result :: Either SomeException () <- withRunInIO $ \runner -> try $ runner actionsWithTimer
+      result <- try @_ @SomeException @() $
+        control $ \runInIO -> runInIO actionsWithTimer
 
-      UAsync.cancel fileLogger
+      Async.cancel fileLogger
 
       Regions.withConsoleRegion Linear $ \r -> do
         case result of
@@ -210,9 +224,9 @@ runCommand ::
     HasCompletedCmds env,
     HasFileLogging env,
     HasGlobalLogging env,
+    MonadBaseControl IO m,
     MonadIO m,
-    MonadMask m,
-    MonadUnliftIO m
+    MonadMask m
   ) =>
   Command ->
   ShellT env m ()

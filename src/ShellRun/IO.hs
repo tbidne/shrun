@@ -248,9 +248,10 @@ tryTimeSh cmd = do
 tryTimeShStreamRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
+    MonadBaseControl IO m,
+    MonadIO m,
     MonadMask m,
     MonadReader env m,
-    MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
   ) =>
@@ -268,8 +269,9 @@ tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 tryTimeShStreamNoRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
+    MonadBaseControl IO m,
+    MonadIO m,
     MonadReader env m,
-    MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
   ) =>
@@ -284,9 +286,9 @@ tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 tryTimeShAnyRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
+    MonadBaseControl IO m,
     MonadIO m,
     MonadReader env m,
-    MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
   ) =>
@@ -323,8 +325,9 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
           }
 
   start <- liftIO $ C.getTime Monotonic
-  (exitCode, lastRead) <- withRunInIO $ \runner ->
-    P.withCreateProcess pr $ \_ _ _ ph -> runner $ streamOutput mRegion cmd recvH ph
+  (exitCode, lastRead) <- control $ \runInBase ->
+    P.withCreateProcess pr $ \_ _ _ ph ->
+      runInBase $ streamOutput mRegion cmd recvH ph
   end <- liftIO $ C.getTime Monotonic
 
   completedCmds <- asks getCompletedCmds
