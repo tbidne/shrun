@@ -6,8 +6,8 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1652008639,
-        "narHash": "sha256-qqI0nLXbisA6dkFqQRGM0gStuTc/hkxvpJkqbC9XEfs=",
+        "lastModified": 1652676157,
+        "narHash": "sha256-ASYEuoTVwD4KlpF8AweXlJactaD10z3yAhWq0It9bB4=",
         "owner": "tbidne",
         "repo": "algebra-simple",
         "rev": "be105b31e3bd2bc00c69cd5c1e869294b26fbb17",
