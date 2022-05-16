@@ -137,30 +137,35 @@ readFileUtf8Lenient :: FilePath -> IO Text
 readFileUtf8Lenient =
   fmap (TextEnc.decodeUtf8With TextEncErr.lenientDecode)
     . BS.readFile
+{-# INLINEABLE readFileUtf8Lenient #-}
 
 -- | Appends the text contents to the file.
 --
 -- @since 0.1
 appendFileUtf8 :: FilePath -> Text -> IO ()
 appendFileUtf8 fp = BS.appendFile fp . TextEnc.encodeUtf8
+{-# INLINEABLE appendFileUtf8 #-}
 
 -- | Writes the text contents to the file.
 --
 -- @since 0.1
 writeFileUtf8 :: FilePath -> Text -> IO ()
 writeFileUtf8 fp = BS.writeFile fp . TextEnc.encodeUtf8
+{-# INLINEABLE writeFileUtf8 #-}
 
 -- | 'Text' version of 'P.show'.
 --
 -- @since 0.1
 showt :: P.Show a => a -> Text
 showt = T.pack . P.show
+{-# INLINEABLE showt #-}
 
 -- | 'Text' version of 'error'.
 --
 -- @since 0.1
 error :: Text -> a
 error = P.error . T.unpack
+{-# INLINEABLE error #-}
 
 -- | Safe @head@.
 --
@@ -174,6 +179,7 @@ error = P.error . T.unpack
 headMaybe :: List a -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
+{-# INLINEABLE headMaybe #-}
 
 -- | Convenience function for mapping @(a -> b)@ over a monomorphic bifunctor.
 --
@@ -185,6 +191,7 @@ headMaybe (x : _) = Just x
 -- @since 0.1
 monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
+{-# INLINEABLE monoBimap #-}
 
 -- | Lifted fmap.
 --
@@ -194,6 +201,7 @@ monoBimap f = bimap f f
 -- @since 0.1
 (<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 (<<$>>) = fmap . fmap
+{-# INLINEABLE (<<$>>) #-}
 
 infixl 4 <<$>>
 

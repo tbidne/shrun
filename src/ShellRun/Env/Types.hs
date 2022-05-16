@@ -164,11 +164,14 @@ instance Ord (Truncation a) where
   compare (MkTruncation PPosInf) _ = LT
   compare _ (MkTruncation PPosInf) = GT
   compare (MkTruncation (PFin x)) (MkTruncation (PFin y)) = compare y x
+  {-# INLINEABLE compare #-}
 
 -- | @since 0.1
 instance Bounded (Truncation a) where
   minBound = MkTruncation PPosInf
+  {-# INLINEABLE minBound #-}
   maxBound = MkTruncation (PFin 0)
+  {-# INLINEABLE maxBound #-}
 
 makeFieldLabelsNoPrefix ''Truncation
 
@@ -297,38 +300,48 @@ makeFieldLabelsNoPrefix ''Env
 -- | @since 0.1
 instance HasLegend Env where
   getLegend = view #legend
+  {-# INLINEABLE getLegend #-}
 
 -- | @since 0.1
 instance HasTimeout Env where
   getTimeout = view #timeout
+  {-# INLINEABLE getTimeout #-}
 
 -- | @since 0.1
 instance HasFileLogging Env where
   getFileLogging = view #fileLogging
+  {-# INLINEABLE getFileLogging #-}
 
 -- | @since 0.1
 instance HasCmdLogging Env where
   getCmdLogging = view #cmdLogging
+  {-# INLINEABLE getCmdLogging #-}
 
 -- | @since 0.1
 instance HasCmdDisplay Env where
   getCmdDisplay = view #cmdDisplay
+  {-# INLINEABLE getCmdDisplay #-}
 
 -- | @since 0.1
 instance HasCmdNameTrunc Env where
   getCmdNameTrunc = view #cmdNameTrunc
+  {-# INLINEABLE getCmdNameTrunc #-}
 
 -- | @since 0.1
 instance HasCmdLineTrunc Env where
   getCmdLineTrunc = view #lineNameTrunc
+  {-# INLINEABLE getCmdLineTrunc #-}
 
 -- | @since 0.1
 instance HasCompletedCmds Env where
   getCompletedCmds = view #completedCmds
+  {-# INLINEABLE getCompletedCmds #-}
 
 -- | @since 0.1
 instance HasCommands Env where
   getCommands = view #commands
+  {-# INLINEABLE getCommands #-}
 
 instance HasGlobalLogging Env where
   getGlobalLogging = view #globalLogging
+  {-# INLINEABLE getGlobalLogging #-}

@@ -56,6 +56,7 @@ runShell = do
   cmds <- asks getCommands
   parsedCommands <- maybePathToCommands legendMap cmds
   runCommandsOrLogErr parsedCommands
+{-# INLINEABLE runShell #-}
 
 maybePathToCommands ::
   (MonadShell m, RegionLogger m) =>
@@ -88,6 +89,7 @@ maybePathToCommands (FPManual path) cmds = do
   -- Manually specified a legend file, all errors are fair game.
   lMap <- legendPathToMap path
   pure $ lMap >>= (`Command.translateCommands` cmds)
+{-# INLINEABLE maybePathToCommands #-}
 
 runCommandsOrLogErr ::
   (MonadShell m, RegionLogger m) =>
@@ -105,3 +107,4 @@ runCommandsOrLogErr (Left err) = putLog log
           mode = Append,
           dest = LogBoth
         }
+{-# INLINEABLE runCommandsOrLogErr #-}

@@ -28,10 +28,12 @@ newtype Supremum a = MkSupremum a
 instance Ord a => Semigroup (Supremum a) where
   (<>) :: Supremum a -> Supremum a -> Supremum a
   (<>) = max
+  {-# INLINEABLE (<>) #-}
 
 -- | @since 0.1
 instance (Bounded a, Ord a) => Monoid (Supremum a) where
   mempty :: Supremum a
   mempty = minBound
+  {-# INLINEABLE mempty #-}
 
 makePrismLabels ''Supremum

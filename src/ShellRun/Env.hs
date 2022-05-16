@@ -86,6 +86,7 @@ runParser = do
   completedCmds' <- TVar.newTVarIO Seq.empty
 
   toEnv fileLogging' completedCmds' args
+{-# INLINEABLE runParser #-}
 
 toEnv :: Maybe (Tuple2 FilePath LogTextQueue) -> TVar (Seq Command) -> Args -> IO Env
 toEnv fileLogging' completedCmds' args = do
@@ -108,3 +109,4 @@ toEnv fileLogging' completedCmds' args = do
         globalLogging = args ^. #globalLogging,
         commands = args ^. #commands
       }
+{-# INLINEABLE toEnv #-}

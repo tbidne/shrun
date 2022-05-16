@@ -127,10 +127,12 @@ makeFieldLabelsNoPrefix ''Args
 instance Semigroup ALineTruncation where
   Undetected x <> Undetected y = Undetected (x <> y)
   _ <> _ = Detected
+  {-# INLINEABLE (<>) #-}
 
 -- | @since 0.1
 instance Monoid ALineTruncation where
   mempty = Undetected mempty
+  {-# INLINEABLE mempty #-}
 
 -- | Default configuration.
 --
@@ -162,6 +164,7 @@ defaultArgs cmds =
       globalLogging = True,
       commands = cmds
     }
+{-# INLINEABLE defaultArgs #-}
 
 -- | 'ParserInfo' type for parsing 'Args'.
 --
@@ -187,6 +190,7 @@ parserInfoArgs =
           <> "the ability to pass in a legend file that can be used to define "
           <> "aliases for commands. See github.com/tbidne/shell-run#README for "
           <> "full documentation."
+{-# INLINEABLE parserInfoArgs #-}
 
 argsParser :: Parser Args
 argsParser =
@@ -202,6 +206,7 @@ argsParser =
     <*> commandsParser
       <**> OApp.helper
       <**> version
+{-# INLINEABLE argsParser #-}
 
 version :: Parser (a -> a)
 version = OApp.infoOption txt (OApp.long "version" <> OApp.short 'v')
@@ -214,9 +219,11 @@ version = OApp.infoOption txt (OApp.long "version" <> OApp.short 'v')
           "Revision: " <> $(GitRev.gitHash),
           "Date: " <> $(GitRev.gitCommitDate)
         ]
+{-# INLINEABLE version #-}
 
 versNum :: List Char
 versNum = "Version: " <> $$(PV.packageVersionStringTH "shell-run.cabal")
+{-# INLINEABLE versNum #-}
 
 legendParser :: Parser FilePathDefault
 legendParser =
@@ -237,6 +244,7 @@ legendParser =
         <> "considered comments and ignored. If no path is given, we "
         <> "automatically look in the Xdg config directory e.g. "
         <> "~/.config/shell-run/shell-run.legend."
+{-# INLINEABLE legendParser #-}
 
 timeoutParser :: Parser Timeout
 timeoutParser =
@@ -253,6 +261,7 @@ timeoutParser =
       "Non-negative integer setting a timeout. Can either be a raw number "
         <> "(interpreted as seconds), or a \"time string\" e.g. 1d2h3m4s or "
         <> "2h3s. Defaults to no timeout."
+{-# INLINEABLE timeoutParser #-}
 
 readTimeout :: ReadM Timeout
 readTimeout = do
@@ -262,6 +271,7 @@ readTimeout = do
       OApp.readerAbort $
         ErrorMsg $ "Could not parse timeout: " <> str
     Right t -> pure $ MkTimeout $ PFin $ RelativeTime.toSeconds t
+{-# INLINEABLE readTimeout #-}
 
 cmdTruncationParser :: Parser (Truncation 'TCmdName)
 cmdTruncationParser =
@@ -280,6 +290,7 @@ cmdTruncationParser =
         <> "everywhere the command/key-name shows up (i.e. in command logs or "
         <> "final success/error message); File logs created via --file-log "
         <> "are unaffected."
+{-# INLINEABLE cmdTruncationParser #-}
 
 lineTruncationParser :: Parser ALineTruncation
 lineTruncationParser =
@@ -300,9 +311,11 @@ lineTruncationParser =
         <> "string literal 'detect' or 'd' (no quotes), to detect the "
         <> "terminal size automatically. Defaults to no truncation. This does "
         <> "not affect file logs with --file-log."
+{-# INLINEABLE lineTruncationParser #-}
 
 readTruncation :: ReadM (Truncation a)
 readTruncation = MkTruncation . PFin <$> OApp.auto
+{-# INLINEABLE readTruncation #-}
 
 readDetectTruncation :: ReadM ALineTruncation
 readDetectTruncation = do
@@ -313,6 +326,7 @@ readDetectTruncation = do
     else
       OApp.readerAbort $
         ErrorMsg $ "Unrecognized truncation option:" <> T.unpack s
+{-# INLINEABLE readDetectTruncation #-}
 
 fileLoggingParser :: Parser FilePathDefault
 fileLoggingParser =
@@ -333,6 +347,7 @@ fileLoggingParser =
         <> "failures. If the string literal 'default' or 'd' is given, we "
         <> "will write to the Xdg config directory e.g. "
         <> "~/.config/shell-run/shell-run.log"
+{-# INLINEABLE fileLoggingParser #-}
 
 readLogFile :: ReadM FilePathDefault
 readLogFile = do
@@ -340,6 +355,7 @@ readLogFile = do
   if f == "d" || f == "default"
     then pure FPDefault
     else pure (FPManual f)
+{-# INLINEABLE readLogFile #-}
 
 commandLoggingParser :: Parser CmdLogging
 commandLoggingParser =
@@ -356,6 +372,7 @@ commandLoggingParser =
         <> "themselves. This flag gives each command a console region in "
         <> "which its logs will be printed. Only the latest log per region "
         <> "is show at a given time."
+{-# INLINEABLE commandLoggingParser #-}
 
 commandDisplayParser :: Parser CmdDisplay
 commandDisplayParser =
@@ -370,6 +387,7 @@ commandDisplayParser =
     help =
       "In console output, display key name from legend file over actual "
         <> "command if it exists."
+{-# INLINEABLE commandDisplayParser #-}
 
 commandsParser :: Parser (NonEmptySeq Text)
 commandsParser =
@@ -378,6 +396,7 @@ commandsParser =
       ( T.pack
           <$> OApp.argument OApp.str (OApp.metavar "Commands...")
       )
+{-# INLINEABLE commandsParser #-}
 
 globalLoggingParser :: Parser Bool
 globalLoggingParser =
@@ -392,3 +411,4 @@ globalLoggingParser =
     help =
       "The option disables _all_ logging. This is primarily useful for "
         <> "debugging or testing where logging is undesirable."
+{-# INLINEABLE globalLoggingParser #-}

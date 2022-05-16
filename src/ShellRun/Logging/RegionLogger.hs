@@ -36,4 +36,6 @@ class Monad m => RegionLogger m where
 instance RegionLogger m => RegionLogger (ReaderT e m) where
   type Region (ReaderT e m) = Region m
   putLog = lift . putLog
+  {-# INLINEABLE putLog #-}
   putRegionLog region = lift . putRegionLog region
+  {-# INLINEABLE putRegionLog #-}

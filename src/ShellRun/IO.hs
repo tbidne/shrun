@@ -85,9 +85,11 @@ makeFieldLabelsNoPrefix ''Stderr
 
 stripChars :: Text -> Text
 stripChars = T.stripEnd . T.replace "\r" ""
+{-# INLINEABLE stripChars #-}
 
 makeStdErr :: Text -> Stderr
 makeStdErr err = MkStderr $ "Error: '" <> stripChars err
+{-# INLINEABLE makeStdErr #-}
 
 -- | Result from reading a handle. The ordering is based on:
 --
@@ -129,7 +131,9 @@ data ReadHandleResult
 -- | @since 0.1
 instance Bounded ReadHandleResult where
   minBound = ReadErr ""
+  {-# INLINEABLE minBound #-}
   maxBound = ReadSuccess ""
+  {-# INLINEABLE maxBound #-}
 
 -- | @since 0.1
 instance Ord ReadHandleResult where
@@ -139,6 +143,7 @@ instance Ord ReadHandleResult where
   compare ReadNoData _ = GT
   compare _ ReadNoData = LT
   compare (ReadErr _) _ = GT
+  {-# INLINEABLE compare #-}
 
 makePrismLabels ''ReadHandleResult
 
@@ -149,6 +154,7 @@ readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess err) = MkStderr err
+{-# INLINEABLE readHandleResultToStderr #-}
 
 -- | Attempts to read from the handle.
 --
@@ -178,9 +184,11 @@ readHandle handle = do
             Left ex -> ReadErr $ readEx ex
             Right "" -> ReadNoData
             Right o -> ReadSuccess $ stripChars o
+{-# INLINEABLE readHandle #-}
 
 blockSize :: Int
 blockSize = 1024
+{-# INLINEABLE blockSize #-}
 
 -- | Returns the result of running a shell command given by
 -- 'Text' on 'FilePath'.
@@ -190,12 +198,14 @@ sh :: Command -> Maybe FilePath -> IO Text
 sh (MkCommand _ cmd) fp = T.pack <$> P.readCreateProcess proc ""
   where
     proc = (P.shell (T.unpack cmd)) {P.cwd = fp}
+{-# INLINEABLE sh #-}
 
 -- | Version of 'sh' that ignores the return value.
 --
 -- @since 0.1
 sh_ :: Command -> Maybe FilePath -> IO ()
 sh_ cmd = void . sh cmd
+{-# INLINEABLE sh_ #-}
 
 -- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
 --
@@ -207,6 +217,7 @@ shExitCode (MkCommand _ cmd) path = do
   where
     proc = (P.shell (T.unpack cmd)) {P.cwd = path}
     wrap f = f . T.strip . T.pack
+{-# INLINEABLE shExitCode #-}
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
@@ -218,6 +229,7 @@ tryShExitCode cmd path = do
   pure $ case code of
     ExitSuccess -> Right stdout
     ExitFailure _ -> Left $ makeStdErr err
+{-# INLINEABLE tryShExitCode #-}
 
 -- | Version of 'tryShExitCode' with timing. On success, stdout is not
 -- returned.
@@ -240,6 +252,7 @@ tryTimeSh cmd = do
 
   let diff = Utils.diffTime start end
   pure $ bimap (diff,) (const diff) res
+{-# INLINEABLE tryTimeSh #-}
 
 -- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
 -- to a 'ConsoleRegion' instead of the usual swallowing.
@@ -259,6 +272,7 @@ tryTimeShStreamRegion ::
   m (Either (Tuple2 Natural Stderr) Natural)
 tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
   tryTimeShAnyRegion (Just region) cmd
+{-# INLINEABLE tryTimeShStreamRegion #-}
 
 -- | We stream the commands' output like 'tryTimeShStreamRegion' except we do
 -- __not__ create a console region. This function is intended for when we want
@@ -278,6 +292,7 @@ tryTimeShStreamNoRegion ::
   Command ->
   m (Either (Tuple2 Natural Stderr) Natural)
 tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
+{-# INLINEABLE tryTimeShStreamNoRegion #-}
 
 -- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
 -- to a 'ConsoleRegion' instead of the usual swallowing.
@@ -353,6 +368,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   let diff = Utils.diffTime start end
       finalResult = bimap (diff,) (const diff) result
   pure finalResult
+{-# INLINEABLE tryTimeShAnyRegion #-}
 
 streamOutput ::
   ( HasCmdLogging env,
@@ -398,3 +414,4 @@ streamOutput mRegion cmd recvH ph = do
     liftIO $ P.getProcessExitCode ph
   lastRead <- liftIO $ IORef.readIORef lastReadRef
   pure (exitCode, lastRead)
+{-# INLINEABLE streamOutput #-}

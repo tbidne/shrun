@@ -55,12 +55,14 @@ formatConsoleLog log@MkLog {cmd, msg, lvl} = do
   where
     colorize = P.color $ Log.logToColor log
     prefix = Log.logToPrefix log
+{-# INLINEABLE formatConsoleLog #-}
 
 -- | Variant of 'displayCmd\'' using 'MonadReader'.
 --
 -- @since 0.1
 displayCmd :: (HasCmdDisplay env, MonadReader env m) => Command -> m Text
 displayCmd cmd = asks getCmdDisplay <&> displayCmd' cmd
+{-# INLINEABLE displayCmd #-}
 
 -- | Pretty show for 'Command'. If the command has a key, and 'CmdDisplay' is
 -- 'ShowKey' then we return the key. Otherwise we return the command itself.
@@ -81,3 +83,4 @@ displayCmd cmd = asks getCmdDisplay <&> displayCmd' cmd
 displayCmd' :: Command -> CmdDisplay -> Text
 displayCmd' (MkCommand (Just key) _) ShowKey = key
 displayCmd' (MkCommand _ cmd) _ = cmd
+{-# INLINEABLE displayCmd' #-}

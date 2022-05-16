@@ -40,10 +40,13 @@ instance Ord Timeout where
   compare (MkTimeout PPosInf) _ = LT
   compare _ (MkTimeout PPosInf) = GT
   compare (MkTimeout (PFin x)) (MkTimeout (PFin y)) = compare y x
+  {-# INLINEABLE compare #-}
 
 -- | @since 0.1
 instance Bounded Timeout where
   minBound = MkTimeout PPosInf
+  {-# INLINEABLE minBound #-}
   maxBound = MkTimeout (PFin 0)
+  {-# INLINEABLE maxBound #-}
 
 makeFieldLabelsNoPrefix ''Timeout

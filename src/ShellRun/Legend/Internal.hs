@@ -90,6 +90,7 @@ linesToMap = foldr f (Right Map.empty)
       case Map.lookup key mp of
         Just _ -> Left $ DuplicateKeyErr key
         Nothing -> Right $ Map.insert key cmd mp
+{-# INLINEABLE linesToMap #-}
 
 parseLine :: Text -> Either LegendErr (Tuple2 Text Text)
 parseLine l =
@@ -99,5 +100,6 @@ parseLine l =
     (k, v) -> Right (k, v)
   where
     breakPoint = $$(R.refineTH @NonEmpty @Text "=")
+{-# INLINEABLE parseLine #-}
 
 makePrismLabels ''LegendErr

@@ -34,9 +34,11 @@ instance Semigroup FilePathDefault where
   _ <> FPManual f = FPManual f
   FPDefault <> _ = FPDefault
   FPNone <> r = r
+  {-# INLINEABLE (<>) #-}
 
 -- | @since 0.1
 instance Monoid FilePathDefault where
   mempty = FPNone
+  {-# INLINEABLE mempty #-}
 
 makePrismLabels ''FilePathDefault

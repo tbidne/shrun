@@ -184,12 +184,14 @@ makeFieldLabelsNoPrefix ''Log
 -- @since 0.1
 logToColor :: Log -> Color
 logToColor = levelToColor . view #lvl
+{-# INLINEABLE logToColor #-}
 
 -- | Transforms log to a prefix based on its 'LogLevel'.
 --
 -- @since 0.1
 logToPrefix :: Log -> Text
 logToPrefix = levelToPrefix . view #lvl
+{-# INLINEABLE logToPrefix #-}
 
 -- | Maps 'LogLevel' to 'Color'.
 --
@@ -205,6 +207,7 @@ levelToColor InfoSuccess = P.Green
 levelToColor Warn = P.Yellow
 levelToColor Error = P.Red
 levelToColor Fatal = P.Red
+{-# INLINEABLE levelToColor #-}
 
 -- | Maps 'LogLevel' to \'Prefix\'.
 --
@@ -220,3 +223,4 @@ levelToPrefix InfoSuccess = "[Info] "
 levelToPrefix Warn = "[Warn] "
 levelToPrefix Error = "[Error] "
 levelToPrefix Fatal = "[Fatal Error] "
+{-# INLINEABLE levelToPrefix #-}

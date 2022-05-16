@@ -99,6 +99,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
 -- @since 0.1
 runShellT :: ShellT env m a -> env -> m a
 runShellT (MkShellT rdr) = runReaderT rdr
+{-# INLINEABLE runShellT #-}
 
 -- | @since 0.1
 instance
@@ -121,6 +122,7 @@ instance
         maybeSendLogToQueue log
         maybePrintLog (liftIO . putStrLn) log
       else pure ()
+  {-# INLINEABLE putLog #-}
 
   putRegionLog :: ConsoleRegion -> Log -> ShellT env m ()
   putRegionLog region lg@MkLog {mode} = do
@@ -135,6 +137,7 @@ instance
         maybeSendLogToQueue lg
         maybePrintLog (liftIO . logFn region) lg
       else pure ()
+  {-# INLINEABLE putRegionLog #-}
 
 maybePrintLog ::
   ( HasCmdDisplay env,
@@ -149,6 +152,7 @@ maybePrintLog fn log@MkLog {dest} = do
   case dest of
     LogFile -> pure ()
     _ -> LFormat.formatConsoleLog log >>= fn
+{-# INLINEABLE maybePrintLog #-}
 
 -- | @since 0.1
 instance
@@ -162,9 +166,11 @@ instance
   where
   getDefaultDir :: ShellT Env m FilePath
   getDefaultDir = liftIO $ Dir.getXdgDirectory XdgConfig "shell-run"
+  {-# INLINEABLE getDefaultDir #-}
 
   legendPathToMap :: FilePath -> ShellT Env m (Either LegendErr LegendMap)
   legendPathToMap = liftIO . Legend.legendPathToMap
+  {-# INLINEABLE legendPathToMap #-}
 
   runCommands :: NonEmptySeq Command -> ShellT Env m ()
   runCommands commands = Regions.displayConsoleRegions $
@@ -215,6 +221,7 @@ instance
         case fileLogging of
           Nothing -> pure ()
           Just (fp, queue) -> Queue.flushQueue queue >>= traverse_ (logFile fp)
+  {-# INLINEABLE runCommands #-}
 
 runCommand ::
   ( HasCmdDisplay env,
@@ -261,6 +268,7 @@ runCommand cmd = do
           mode = Finish,
           dest = LogBoth
         }
+{-# INLINEABLE runCommand #-}
 
 counter ::
   ( HasCmdDisplay env,
@@ -288,6 +296,7 @@ counter cmds = do
         IORef.modifyIORef' timer (+ 1)
         IORef.readIORef timer
       logCounter r elapsed
+{-# INLINEABLE counter #-}
 
 logCounter ::
   ( RegionLogger m,
@@ -306,6 +315,7 @@ logCounter region elapsed = do
             dest = LogConsole
           }
   putRegionLog region lg
+{-# INLINEABLE logCounter #-}
 
 keepRunning ::
   ( HasCmdDisplay env,
@@ -344,10 +354,12 @@ keepRunning allCmds region timer mto = do
           }
       pure False
     else pure True
+{-# INLINEABLE keepRunning #-}
 
 timedOut :: Natural -> Timeout -> Bool
 timedOut _ (MkTimeout PPosInf) = False
 timedOut timer (MkTimeout (PFin t)) = timer > t
+{-# INLINEABLE timedOut #-}
 
 maybeSendLogToQueue ::
   ( HasFileLogging env,
@@ -364,6 +376,7 @@ maybeSendLogToQueue log@MkLog {dest} =
         Nothing -> pure ()
         Just (_, queue) -> do
           Queue.writeQueue queue log
+{-# INLINEABLE maybeSendLogToQueue #-}
 
 maybePollQueue :: (HasFileLogging env, MonadIO m) => ShellT env m ()
 maybePollQueue = do
@@ -371,9 +384,12 @@ maybePollQueue = do
   case fileLogging of
     Nothing -> pure ()
     Just (fp, queue) -> writeQueueToFile fp queue
+{-# INLINEABLE maybePollQueue #-}
 
 writeQueueToFile :: MonadIO m => FilePath -> LogTextQueue -> m void
 writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
+{-# INLINEABLE writeQueueToFile #-}
 
 logFile :: MonadIO m => FilePath -> LogText -> m ()
 logFile fp = liftIO . appendFileUtf8 fp . view #unLogText
+{-# INLINEABLE logFile #-}

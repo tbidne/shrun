@@ -20,7 +20,9 @@ class Monad m => MonadTime m where
 -- | @since 0.1
 instance MonadTime IO where
   getSystemTime = Clock.getCurrentTime
+  {-# INLINEABLE getSystemTime #-}
 
 -- | @since 0.1
 instance MonadTime m => MonadTime (ReaderT e m) where
   getSystemTime = lift getSystemTime
+  {-# INLINEABLE getSystemTime #-}

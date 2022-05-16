@@ -33,3 +33,4 @@ legendPathToMap legendPath = do
             <> "`: "
             <> showt err
     Right contents -> Internal.linesToMap $ T.lines contents
+{-# INLINEABLE legendPathToMap #-}

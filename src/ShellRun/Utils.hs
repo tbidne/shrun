@@ -53,6 +53,7 @@ diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
     -- Allegedly safe because 'C.diffTimeSpec' guaranteed to be non-negative.
     i642n :: Int64 -> Natural
     i642n = fromIntegral
+{-# INLINEABLE diffTime #-}
 
 -- | Relaxes 'foldMap'\'s 'Monoid' constraint to 'Semigroup'. Requires a
 -- starting value. This will have to do until semigroupoids' Foldable1 is
@@ -69,6 +70,7 @@ diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
 -- @since 0.1
 foldMap1 :: (Foldable f, Semigroup s) => (a -> s) -> a -> f a -> s
 foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
+{-# INLINEABLE foldMap1 #-}
 
 -- | Wrapper for 'Text'\'s 'T.breakOn' that differs in two ways:
 --
@@ -109,12 +111,14 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
   pair -> pair
   where
     point = R.unrefine rpoint
+{-# INLINEABLE breakStripPoint #-}
 
 -- | Decodes a 'ByteString' to UTF-8 in lenient mode.
 --
 -- @since 0.1
 decodeUtf8Lenient :: ByteString -> Text
 decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode
+{-# INLINEABLE decodeUtf8Lenient #-}
 
 -- | Wrapper around "Text"\'s 'T.splitOn'. This /should/ be total, as
 -- 'T.splitOn' is partial exactly when the first parameter is empty, which we
@@ -144,6 +148,7 @@ splitOn rs txt = case T.splitOn s txt of
         <> ", text: "
         <> txt
     s = R.unrefine rs
+{-# INLINEABLE splitOn #-}
 
 -- | For 'Natural' \(n\) and 'Text' \(t = t_0 t_1 \ldots t_m\), truncates
 -- \(t\) if \(m > n\). In this case, \(t\) is truncated to \(n - 3\), and an
@@ -169,6 +174,8 @@ truncateIfNeeded n txt
   where
     txt' = T.take (n' - 3) txt <> "..."
     n' = n2i n
+{-# INLINEABLE truncateIfNeeded #-}
 
 n2i :: Natural -> Int
 n2i = fromIntegral
+{-# INLINEABLE n2i #-}

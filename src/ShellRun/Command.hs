@@ -57,6 +57,7 @@ data Command = MkCommand
 
 instance IsString Command where
   fromString = MkCommand Nothing . T.pack
+  {-# INLINEABLE fromString #-}
 
 -- | Returns a list of 'Text' commands, potentially transforming a
 -- given string via the `LegendMap` @legend@.
@@ -102,6 +103,7 @@ instance IsString Command where
 -- @since 0.1
 translateCommands :: LegendMap -> NonEmptySeq Text -> Either LegendErr (NonEmptySeq Command)
 translateCommands mp (t :|^ ts) = sequenceA $ U.foldMap1 (lineToCommands mp) t ts
+{-# INLINEABLE translateCommands #-}
 
 lineToCommands :: LegendMap -> Text -> NonEmptySeq (Either LegendErr Command)
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
@@ -134,11 +136,13 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           maybeCyclicVal = headMaybe $ Set.toList intersect
           path' = path <> LTBuilder.fromText line <> " -> "
           neToSet = Set.fromList . NESeq.toList
+{-# INLINEABLE lineToCommands #-}
 
 builderToPath :: Builder -> Text -> Text -> Text
 builderToPath path l v =
   LazyT.toStrict $
     LTBuilder.toLazyText $
       path <> LTBuilder.fromText l <> " -> " <> LTBuilder.fromText v
+{-# INLINEABLE builderToPath #-}
 
 makeFieldLabelsNoPrefix ''Command
