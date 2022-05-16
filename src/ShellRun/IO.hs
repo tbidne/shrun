@@ -178,7 +178,7 @@ readHandle handle = do
           pure $ ReadErr $ displayEx "Cannot read from handle" ("" :: List Char)
       | otherwise -> do
           output :: Either SomeException ByteString <-
-            liftIO $ try $ BS.hGetNonBlocking handle blockSize
+            liftBase $ try $ BS.hGetNonBlocking handle blockSize
           let outDecoded = fmap Utils.decodeUtf8Lenient output
           pure $ case outDecoded of
             Left ex -> ReadErr $ readEx ex
@@ -237,18 +237,18 @@ tryShExitCode cmd path = do
 -- @since 0.1
 tryTimeSh ::
   ( HasCompletedCmds env,
-    MonadIO m,
+    MonadBase IO m,
     MonadReader env m
   ) =>
   Command ->
   m (Either (Tuple2 Natural Stderr) Natural)
 tryTimeSh cmd = do
-  start <- liftIO $ C.getTime Monotonic
-  res <- liftIO $ tryShExitCode cmd Nothing
-  end <- liftIO $ C.getTime Monotonic
+  start <- liftBase $ C.getTime Monotonic
+  res <- liftBase $ tryShExitCode cmd Nothing
+  end <- liftBase $ C.getTime Monotonic
 
   completedCmds <- asks getCompletedCmds
-  liftIO $ STM.atomically $ TVar.modifyTVar' completedCmds (cmd <|)
+  liftBase $ STM.atomically $ TVar.modifyTVar' completedCmds (cmd <|)
 
   let diff = Utils.diffTime start end
   pure $ bimap (diff,) (const diff) res
@@ -284,7 +284,6 @@ tryTimeShStreamNoRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
     MonadBaseControl IO m,
-    MonadIO m,
     MonadReader env m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -302,7 +301,6 @@ tryTimeShAnyRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
     MonadBaseControl IO m,
-    MonadIO m,
     MonadReader env m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -314,7 +312,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   -- Create pseudo terminal here because otherwise we have trouble streaming
   -- input from child processes. Data gets buffered and trying to override the
   -- buffering strategy (i.e. handles returned by CreatePipe) does not work.
-  (recvH, sendH) <- liftIO $ do
+  (recvH, sendH) <- liftBase $ do
     (recvFD, sendFD) <- PTerm.openPseudoTerminal
     recvH <- PBS.fdToHandle recvFD
     sendH <- PBS.fdToHandle sendFD
@@ -339,20 +337,20 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
             close_fds = False
           }
 
-  start <- liftIO $ C.getTime Monotonic
+  start <- liftBase $ C.getTime Monotonic
   (exitCode, lastRead) <- control $ \runInBase ->
     P.withCreateProcess pr $ \_ _ _ ph ->
       runInBase $ streamOutput mRegion cmd recvH ph
-  end <- liftIO $ C.getTime Monotonic
+  end <- liftBase $ C.getTime Monotonic
 
   completedCmds <- asks getCompletedCmds
-  liftIO $ STM.atomically $ TVar.modifyTVar' completedCmds (cmd <|)
+  liftBase $ STM.atomically $ TVar.modifyTVar' completedCmds (cmd <|)
 
   result <- case exitCode of
     ExitSuccess -> pure $ Right ()
     ExitFailure _ -> do
       -- Attempt a final read in case there is more data.
-      remainingData <- liftIO $ readHandle recvH
+      remainingData <- liftBase $ readHandle recvH
       -- Take the most recent valid read of either the lastRead when running
       -- the process, or this final remainingData just attempted. The
       -- semigroup instance favors a successful read, otherwise we take the
@@ -362,7 +360,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
             Just r -> remainingData <> r
 
       pure $ Left $ readHandleResultToStderr lastData
-  liftIO $ do
+  liftBase $ do
     Handle.hClose sendH
     Handle.hClose recvH
   let diff = Utils.diffTime start end
@@ -372,7 +370,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
 
 streamOutput ::
   ( HasCmdLogging env,
-    MonadIO m,
+    MonadBase IO m,
     MonadReader env m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -383,9 +381,9 @@ streamOutput ::
   ProcessHandle ->
   m (Tuple2 ExitCode (Maybe ReadHandleResult))
 streamOutput mRegion cmd recvH ph = do
-  lastReadRef <- liftIO $ IORef.newIORef Nothing
+  lastReadRef <- liftBase $ IORef.newIORef Nothing
   exitCode <- Loops.untilJust $ do
-    result <- liftIO $ readHandle recvH
+    result <- liftBase $ readHandle recvH
     case result of
       ReadErr _ ->
         -- We occasionally get invalid reads here -- usually when the command
@@ -394,7 +392,7 @@ streamOutput mRegion cmd recvH ph = do
         -- appear that we ever lose important messages.
         pure ()
       ReadSuccess out -> do
-        liftIO $ IORef.writeIORef lastReadRef (Just (ReadSuccess out))
+        liftBase $ IORef.writeIORef lastReadRef (Just (ReadSuccess out))
         cmdLogging <- asks getCmdLogging
         let logDest = case cmdLogging of
               Disabled -> LogFile
@@ -411,7 +409,7 @@ streamOutput mRegion cmd recvH ph = do
           Nothing -> putLog log
           Just region -> putRegionLog region log
       ReadNoData -> pure ()
-    liftIO $ P.getProcessExitCode ph
-  lastRead <- liftIO $ IORef.readIORef lastReadRef
+    liftBase $ P.getProcessExitCode ph
+  lastRead <- liftBase $ IORef.readIORef lastReadRef
   pure (exitCode, lastRead)
 {-# INLINEABLE streamOutput #-}
