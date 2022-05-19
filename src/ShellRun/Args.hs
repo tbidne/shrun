@@ -63,7 +63,7 @@ data ALineTruncation
     Undetected (Truncation 'TCmdLine)
   | -- | @since 0.1
     Detected
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1
@@ -114,7 +114,7 @@ data Args = MkArgs
     -- @since 0.1
     commands :: NonEmptySeq Text
   }
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

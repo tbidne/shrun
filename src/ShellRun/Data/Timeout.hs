@@ -20,7 +20,7 @@ newtype Timeout = MkTimeout
   { -- | @since 0.1
     unTimeout :: PosInfNum Natural
   }
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

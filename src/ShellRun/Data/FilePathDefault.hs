@@ -21,7 +21,7 @@ data FilePathDefault
     FPDefault
   | -- | @since 0.1
     FPManual FilePath
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

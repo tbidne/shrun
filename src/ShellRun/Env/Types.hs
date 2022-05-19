@@ -115,7 +115,7 @@ data TruncRegion
     --
     -- @since 0.1
     TCmdLine
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

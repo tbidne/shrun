@@ -45,7 +45,7 @@ newtype LogText = UnsafeLogText
   { -- | @since 0.1
     unLogText :: Text
   }
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

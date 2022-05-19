@@ -40,7 +40,7 @@ data LegendErr
     --
     -- @since 0.1
     DuplicateKeyErr Text
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

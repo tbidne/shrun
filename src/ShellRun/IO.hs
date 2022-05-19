@@ -114,7 +114,7 @@ data ReadHandleResult
     --
     -- @since 0.1
     ReadNoData
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

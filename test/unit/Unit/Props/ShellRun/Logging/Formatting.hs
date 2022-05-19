@@ -40,7 +40,7 @@ data Env = MkEnv
     cmdTrunc :: Truncation 'TCmdName,
     lineTrunc :: Truncation 'TCmdLine
   }
-  deriving (Eq, Show)
+  deriving stock (Eq, Show)
 
 makeFieldLabelsNoPrefix ''Env
 

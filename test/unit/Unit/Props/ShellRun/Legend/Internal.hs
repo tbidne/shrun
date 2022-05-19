@@ -93,7 +93,7 @@ data GoodLine = MkGoodLine
   { gkey :: Text,
     gvalue :: Text
   }
-  deriving (Show)
+  deriving stock (Show)
 
 genGoodLine :: MonadGen m => m GoodLine
 genGoodLine = MkGoodLine <$> genKey <*> genVal

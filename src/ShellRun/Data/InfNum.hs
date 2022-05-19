@@ -19,7 +19,7 @@ data PosInfNum a
     PFin a
   | -- | @since 0.1
     PPosInf
-  deriving
+  deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1

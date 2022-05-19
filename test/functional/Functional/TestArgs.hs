@@ -12,16 +12,16 @@ data TestArgs = MkTestArgs
   { tmpDir :: FilePath,
     legendPath :: FilePath
   }
-  deriving (Show)
+  deriving stock (Show)
 
 makeFieldLabelsNoPrefix ''TestArgs
 
 newtype TmpDir = MkTmpDir {unTmpDir :: FilePath}
-  deriving (Show)
+  deriving stock (Show)
 
 makeFieldLabelsNoPrefix ''TmpDir
 
 newtype LegendPath = MkLegendPath {unLegendPath :: FilePath}
-  deriving (Show)
+  deriving stock (Show)
 
 makeFieldLabelsNoPrefix ''LegendPath
