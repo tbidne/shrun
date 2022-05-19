@@ -1,15 +1,11 @@
 module Main (main) where
 
-import System.Environment qualified as Env
+import System.Environment.Guard (guardSet_)
 import Test.DocTest qualified as DocTest
 import Prelude
 
 main :: IO ()
-main = do
-  shouldRun <- Env.lookupEnv "RUN_DOCTEST"
-  case shouldRun of
-    Just "true" -> DocTest.doctest args
-    _ -> putStrLn "*** Doctests Disabled ***"
+main = guardSet_ "RUN_DOCTEST" $ DocTest.doctest args
   where
     args = files <> exts
 

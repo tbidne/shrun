@@ -217,7 +217,8 @@ test-suite doctest
   main-is:          Main.hs
   build-depends:
     , base
-    , doctest  >=0.16.3 && <0.21
+    , doctest    >=0.16.3 && <0.21
+    , env-guard  ^>=0.1
 
   hs-source-dirs:   test/doctest
   default-language: Haskell2010
