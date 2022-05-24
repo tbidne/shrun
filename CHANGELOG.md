@@ -1,5 +1,11 @@
 # Revision history for shell-run
 
+## 0.2.0.1 -- 2022-05-24
+
+* Update documentation
+* Update CI jobs
+* Add INLINEABLE
+
 ## 0.2 -- 2022-05-11
 
 * Update default legend: legend.txt -> shell-run.legend
