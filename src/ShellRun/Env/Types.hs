@@ -11,6 +11,7 @@ module ShellRun.Env.Types
     HasCmdLogging (..),
     HasCmdNameTrunc (..),
     HasCmdLineTrunc (..),
+    HasStripControl (..),
     HasCompletedCmds (..),
     HasFileLogging (..),
     HasGlobalLogging (..),
@@ -23,6 +24,7 @@ module ShellRun.Env.Types
     CmdLogging (..),
     Truncation (..),
     TruncRegion (..),
+    StripControl (..),
   )
 where
 
@@ -175,6 +177,46 @@ instance Bounded (Truncation a) where
 
 makeFieldLabelsNoPrefix ''Truncation
 
+-- | Determines how we should treat control characters encountered in
+-- logs.
+--
+-- @since 0.3
+data StripControl
+  = -- | Strip all control characters.
+    --
+    -- @since 0.3
+    StripControlAll
+  | -- | \"Intelligently\" strip control characters e.g. colors are fine,
+    -- ones that affect the cursor should be removed.
+    --
+    -- @since 0.3
+    StripControlSmart
+  | -- | Do not strip any control characters.
+    --
+    -- @since 0.3
+    StripControlNone
+  deriving stock
+    ( -- | @since 0.3
+      Bounded,
+      -- | @since 0.3
+      Enum,
+      -- | @since 0.3
+      Eq,
+      -- | @since 0.3
+      Ord,
+      -- | @since 0.3
+      Show
+    )
+  deriving
+    ( -- | @since 0.3
+      Semigroup,
+      -- | @since 0.3
+      Monoid
+    )
+    via Supremum StripControl
+
+makePrismLabels ''StripControl
+
 -- | Path to legend file.
 --
 -- @since 0.1
@@ -230,6 +272,13 @@ class HasCmdLineTrunc env where
   -- | @since 0.1
   getCmdLineTrunc :: env -> Truncation 'TCmdLine
 
+-- | Determines control character behavior.
+--
+-- @since 0.3
+class HasStripControl env where
+  -- | @since 0.3
+  getStripControl :: env -> StripControl
+
 -- | Determines command line truncation behavior.
 --
 -- @since 0.1
@@ -279,6 +328,11 @@ data Env = MkEnv
     --
     -- @since 0.1
     lineNameTrunc :: Truncation 'TCmdLine,
+    -- | Determines to what extent we should remove control characters
+    -- from logs.
+    --
+    -- @since 0.3
+    stripControl :: StripControl,
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
     --
@@ -331,6 +385,11 @@ instance HasCmdNameTrunc Env where
 instance HasCmdLineTrunc Env where
   getCmdLineTrunc = view #lineNameTrunc
   {-# INLINEABLE getCmdLineTrunc #-}
+
+-- | @since 0.3
+instance HasStripControl Env where
+  getStripControl = view #stripControl
+  {-# INLINEABLE getStripControl #-}
 
 -- | @since 0.1
 instance HasCompletedCmds Env where

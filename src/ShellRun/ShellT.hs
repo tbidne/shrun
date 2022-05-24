@@ -30,12 +30,13 @@ import ShellRun.Env
   ( CmdLogging (..),
     Env (..),
     HasCmdDisplay (..),
-    HasCmdLineTrunc (..),
+    HasCmdLineTrunc,
     HasCmdLogging (..),
-    HasCmdNameTrunc (..),
+    HasCmdNameTrunc,
     HasCompletedCmds (..),
     HasFileLogging (..),
     HasGlobalLogging (..),
+    HasStripControl,
     HasTimeout (..),
   )
 import ShellRun.IO (Stderr (..))
@@ -174,8 +175,7 @@ instance
       let actions = Async.mapConcurrently_ runCommand commands
           actionsWithTimer = Async.race_ actions (counter commands)
 
-      result <- try @_ @SomeException @() $
-        withRunInIO $ \runInIO -> runInIO actionsWithTimer
+      result <- tryAny $ withRunInIO $ \runInIO -> runInIO actionsWithTimer
 
       Async.cancel fileLogger
 
@@ -226,6 +226,7 @@ runCommand ::
     HasCompletedCmds env,
     HasFileLogging env,
     HasGlobalLogging env,
+    HasStripControl env,
     MonadMask m,
     MonadUnliftIO m
   ) =>

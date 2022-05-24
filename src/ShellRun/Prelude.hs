@@ -89,7 +89,13 @@ import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X (view, (.~), (^.))
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrismLabels)
 import Refined as X (Refined)
-import UnliftIO as X (Exception (..), MonadUnliftIO (..), SomeException, try)
+import UnliftIO as X
+  ( Exception (..),
+    MonadUnliftIO (..),
+    SomeException,
+    try,
+    tryAny,
+  )
 import Prelude as X
   ( Bool (..),
     Bounded (..),

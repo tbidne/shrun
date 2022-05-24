@@ -10,6 +10,7 @@ module ShellRun.Utils
     decodeUtf8Lenient,
     splitOn,
     truncateIfNeeded,
+    stripAnsiControl,
 
     -- * Timing Utils
     diffTime,
@@ -17,6 +18,7 @@ module ShellRun.Utils
   )
 where
 
+import Data.Char qualified as Ch
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
@@ -27,6 +29,9 @@ import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
+import Text.Megaparsec (Parsec)
+import Text.Megaparsec qualified as MP
+import Text.Megaparsec.Char qualified as MPC
 
 -- $setup
 -- >>> :set -XOverloadedLists
@@ -179,3 +184,51 @@ truncateIfNeeded n txt
 n2i :: Natural -> Int
 n2i = fromIntegral
 {-# INLINEABLE n2i #-}
+
+type MParser :: Type -> Type
+type MParser = Parsec Void Text
+
+stripAnsiControl :: Text -> Text
+stripAnsiControl "" = ""
+stripAnsiControl txt = case MP.parse ansiParse "ShellRun.Utils" txt of
+  Right stripped -> stripped
+  Left err ->
+    "Strip Error: "
+      <> T.pack (MP.errorBundlePretty err)
+      <> ": "
+      <> txt
+
+ansiParse :: MParser Text
+ansiParse = do
+  firstAnsi <- MP.optional ansiEscape
+  escaped <- MP.many $ do
+    normal <- MP.takeWhile1P Nothing ('\ESC' /=)
+    esc <- MP.optional ansiEscape
+    pure $ normal <> fromMaybe "" esc
+  pure $ fromMaybe "" firstAnsi <> T.concat escaped
+
+ansiEscape :: MParser Text
+ansiEscape = do
+  esc <- MPC.string "\ESC["
+  -- optional nums like 1;2
+  ns <- ansiNums
+  mControl <- ansiControl
+  pure $ case mControl of
+    -- this is an ansi control that we want to skip entirely
+    Just _ -> ""
+    -- ansi non-control, add it back
+    Nothing -> esc <> ns
+
+ansiNums :: MParser Text
+ansiNums = do
+  n <- MP.optional (MP.takeWhileP Nothing Ch.isDigit)
+  sc <- MP.optional (MPC.char ';')
+  m <- MP.optional (MP.takeWhileP Nothing Ch.isDigit)
+  pure $
+    fromMaybe "" n
+      <> maybe "" T.singleton sc
+      <> fromMaybe "" m
+
+ansiControl :: MParser (Maybe Char)
+ansiControl = do
+  MP.optional $ MP.oneOf $ 'f' : ['A' .. 'T']

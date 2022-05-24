@@ -31,6 +31,7 @@ import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
+    StripControl (..),
     TruncRegion (..),
     Truncation (..),
   )
@@ -97,6 +98,11 @@ data Args = MkArgs
     --
     -- @since 0.1
     legend :: FilePathDefault,
+    -- | Determines to what extent we should remove control characters
+    -- from logs.
+    --
+    -- @since 0.3
+    stripControl :: StripControl,
     -- | Timeout.
     --
     -- @since 0.1
@@ -158,6 +164,7 @@ defaultArgs cmds =
       fileLogging = mempty,
       cmdDisplay = mempty,
       legend = FPDefault,
+      stripControl = mempty,
       timeout = mempty,
       cmdNameTrunc = mempty,
       cmdLineTrunc = mempty,
@@ -200,6 +207,7 @@ argsParser =
     <*> fileLoggingParser
     <*> commandDisplayParser
     <*> legendParser
+    <*> stripControlParser
     <*> timeoutParser
     <*> cmdTruncationParser
     <*> lineTruncationParser
@@ -327,6 +335,43 @@ readDetectTruncation = do
       OApp.readerAbort $
         ErrorMsg $ "Unrecognized truncation option:" <> T.unpack s
 {-# INLINEABLE readDetectTruncation #-}
+
+stripControlParser :: Parser StripControl
+stripControlParser =
+  OApp.option
+    readStripControl
+    ( OApp.value defValue
+        <> OApp.long "strip-control"
+        <> OApp.short 's'
+        <> OApp.help help
+        <> OApp.metavar "[all | smart | none]"
+    )
+  where
+    defValue = StripControlAll
+    help =
+      "Control characters can wreak layout havoc with the --cmd-log"
+        <> " option, thus we include this option. The default 'all' strips all"
+        <> " such chars -- the 'safest' option -- though it can leave ugly"
+        <> " remnants e.g. ansi escape sequences like [0m. 'none' does nothing"
+        <> " i.e. all chars are left untouched. 'smart' attempts to strip only"
+        <> " the control chars that affect layout (e.g. cursor movements) and"
+        <> " leaves others unaffected (e.g. colors). This has the potential"
+        <> " to be the 'prettiest' though it is likely to miss some chars."
+        <> " 'smart' is experimental and subject to change."
+{-# INLINEABLE stripControlParser #-}
+
+readStripControl :: ReadM StripControl
+readStripControl = do
+  s <- OApp.str
+  let s' = T.toCaseFold s
+  case s' of
+    "all" -> pure StripControlAll
+    "none" -> pure StripControlNone
+    "smart" -> pure StripControlSmart
+    _ ->
+      OApp.readerAbort $
+        ErrorMsg $ "Unrecognized strip-control option: " <> T.unpack s
+{-# INLINEABLE readStripControl #-}
 
 fileLoggingParser :: Parser FilePathDefault
 fileLoggingParser =

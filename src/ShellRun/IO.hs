@@ -20,10 +20,8 @@ module ShellRun.IO
     shExitCode,
     tryShExitCode,
 
-    -- * File Handles
-    ReadHandleResult (..),
-    readHandle,
-    readHandleResultToStderr,
+    -- * Utils
+    stripChars',
   )
 where
 
@@ -32,6 +30,7 @@ import Control.Concurrent.STM.TVar qualified as TVar
 import Control.Monad.Catch (MonadMask)
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
+import Data.Char qualified as Ch
 import Data.IORef qualified as IORef
 import Data.Sequence ((<|))
 import Data.Text qualified as T
@@ -43,6 +42,8 @@ import ShellRun.Env.Types
   ( CmdLogging (..),
     HasCmdLogging (..),
     HasCompletedCmds (..),
+    HasStripControl (..),
+    StripControl (..),
   )
 import ShellRun.Logging.Log
   ( Log (..),
@@ -83,13 +84,36 @@ newtype Stderr = MkStderr
 
 makeFieldLabelsNoPrefix ''Stderr
 
-stripChars :: Text -> Text
-stripChars = T.stripEnd . T.replace "\r" ""
-{-# INLINEABLE stripChars #-}
+-- We always strip leading/trailing whitespace. Additional options concern
+-- internal control chars.
+stripChars :: (HasStripControl env, MonadReader env m) => Text -> m Text
+stripChars txt = stripChars' txt <$> asks getStripControl
+{-# INLINE stripChars #-}
+
+-- | Applies the given 'StripControl' to the 'Text'.
+--
+-- * 'StripControlAll': Strips whitespace + all control chars.
+-- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.
+-- * 'StripControlNone': Strips whitespace.
+--
+-- @since 0.3
+stripChars' :: Text -> StripControl -> Text
+stripChars' txt = \case
+    -- whitespace + all control chars
+    StripControlAll -> stripAll txt
+    -- whitespace + 'ansi control' chars
+    StripControlSmart -> stripSmart txt
+    -- whitespace
+    StripControlNone -> stripNone txt
+  where
+    stripAll = T.filter (not . Ch.isControl) . T.strip
+    stripSmart = T.strip . Utils.stripAnsiControl
+    stripNone = T.strip
+{-# INLINE stripChars' #-}
 
 makeStdErr :: Text -> Stderr
-makeStdErr err = MkStderr $ "Error: '" <> stripChars err
-{-# INLINEABLE makeStdErr #-}
+makeStdErr err = MkStderr $ "Error: '" <> T.strip err
+{-# INLINE makeStdErr #-}
 
 -- | Result from reading a handle. The ordering is based on:
 --
@@ -159,7 +183,8 @@ readHandleResultToStderr (ReadSuccess err) = MkStderr err
 -- | Attempts to read from the handle.
 --
 -- @since 0.1
-readHandle :: Handle -> IO ReadHandleResult
+readHandle ::
+  (HasStripControl env, MonadIO m, MonadReader env m) => Handle -> m ReadHandleResult
 readHandle handle = do
   let displayEx :: Show a => Text -> a -> Text
       displayEx prefix =
@@ -167,10 +192,13 @@ readHandle handle = do
           . makeStdErr
           . (<>) prefix
           . showt
-      readEx = displayEx "IOException reading handle: "
+      readEx = displayEx "Handle exception: "
 
-  isClosed <- Handle.hIsClosed handle
-  canRead <- Handle.hIsReadable handle
+  (isClosed, canRead) <-
+    liftIO $
+      (,)
+        <$> Handle.hIsClosed handle
+        <*> Handle.hIsReadable handle
   if
       | isClosed ->
           pure $ ReadErr $ displayEx "Handle closed" ("" :: List Char)
@@ -178,12 +206,12 @@ readHandle handle = do
           pure $ ReadErr $ displayEx "Cannot read from handle" ("" :: List Char)
       | otherwise -> do
           output :: Either SomeException ByteString <-
-            liftIO $ try $ BS.hGetNonBlocking handle blockSize
+            liftIO $ tryAny $ BS.hGetNonBlocking handle blockSize
           let outDecoded = fmap Utils.decodeUtf8Lenient output
-          pure $ case outDecoded of
-            Left ex -> ReadErr $ readEx ex
-            Right "" -> ReadNoData
-            Right o -> ReadSuccess $ stripChars o
+          case outDecoded of
+            Left ex -> pure $ ReadErr $ readEx ex
+            Right "" -> pure ReadNoData
+            Right o -> ReadSuccess <$> stripChars o
 {-# INLINEABLE readHandle #-}
 
 blockSize :: Int
@@ -261,6 +289,7 @@ tryTimeSh cmd = do
 tryTimeShStreamRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
+    HasStripControl env,
     MonadMask m,
     MonadReader env m,
     MonadUnliftIO m,
@@ -282,6 +311,7 @@ tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 tryTimeShStreamNoRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
+    HasStripControl env,
     MonadReader env m,
     MonadUnliftIO m,
     RegionLogger m,
@@ -299,6 +329,7 @@ tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 tryTimeShAnyRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
+    HasStripControl env,
     MonadReader env m,
     MonadUnliftIO m,
     RegionLogger m,
@@ -349,7 +380,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
     ExitSuccess -> pure $ Right ()
     ExitFailure _ -> do
       -- Attempt a final read in case there is more data.
-      remainingData <- liftIO $ readHandle recvH
+      remainingData <- readHandle recvH
       -- Take the most recent valid read of either the lastRead when running
       -- the process, or this final remainingData just attempted. The
       -- semigroup instance favors a successful read, otherwise we take the
@@ -369,6 +400,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
 
 streamOutput ::
   ( HasCmdLogging env,
+    HasStripControl env,
     MonadIO m,
     MonadReader env m,
     RegionLogger m,
@@ -382,7 +414,7 @@ streamOutput ::
 streamOutput mRegion cmd recvH ph = do
   lastReadRef <- liftIO $ IORef.newIORef Nothing
   exitCode <- Loops.untilJust $ do
-    result <- liftIO $ readHandle recvH
+    result <- readHandle recvH
     case result of
       ReadErr _ ->
         -- We occasionally get invalid reads here -- usually when the command

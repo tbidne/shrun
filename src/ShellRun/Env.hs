@@ -13,6 +13,7 @@ module ShellRun.Env
     HasFileLogging (..),
     HasGlobalLogging (..),
     HasLegend (..),
+    HasStripControl (..),
     HasTimeout (..),
 
     -- * Types
@@ -52,6 +53,7 @@ import ShellRun.Env.Types
     HasFileLogging (..),
     HasGlobalLogging (..),
     HasLegend (..),
+    HasStripControl (..),
     HasTimeout (..),
     TruncRegion (..),
     Truncation (..),
@@ -105,6 +107,7 @@ toEnv fileLogging' completedCmds' args = do
         cmdDisplay = args ^. #cmdDisplay,
         cmdNameTrunc = args ^. #cmdNameTrunc,
         lineNameTrunc = lineNameTrunc',
+        stripControl = args ^. #stripControl,
         completedCmds = completedCmds',
         globalLogging = args ^. #globalLogging,
         commands = args ^. #commands
