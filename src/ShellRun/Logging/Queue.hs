@@ -108,8 +108,8 @@ instance Show LogTextQueue where
 -- | Atomically writes to the queue.
 --
 -- @since 0.1
-writeQueue :: MonadBase IO m => LogTextQueue -> Log -> m ()
-writeQueue queue = liftBase . (writeq <=< formatFileLog)
+writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
+writeQueue queue = liftIO . (writeq <=< formatFileLog)
   where
     writeq = STM.atomically . TBQueue.writeTBQueue (queue ^. #getLogTextQueue)
 {-# INLINEABLE writeQueue #-}
@@ -117,13 +117,13 @@ writeQueue queue = liftBase . (writeq <=< formatFileLog)
 -- | Atomically reads from the queue. Does not retry.
 --
 -- @since 0.1
-readQueue :: MonadBase IO m => LogTextQueue -> m (Maybe LogText)
-readQueue = liftBase . STM.atomically . TBQueue.tryReadTBQueue . view #getLogTextQueue
+readQueue :: MonadIO m => LogTextQueue -> m (Maybe LogText)
+readQueue = liftIO . STM.atomically . TBQueue.tryReadTBQueue . view #getLogTextQueue
 {-# INLINEABLE readQueue #-}
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1
-flushQueue :: MonadBase IO m => LogTextQueue -> m [LogText]
-flushQueue = liftBase . STM.atomically . STM.flushTBQueue . view #getLogTextQueue
+flushQueue :: MonadIO m => LogTextQueue -> m [LogText]
+flushQueue = liftIO . STM.atomically . STM.flushTBQueue . view #getLogTextQueue
 {-# INLINEABLE flushQueue #-}

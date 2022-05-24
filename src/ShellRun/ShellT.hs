@@ -10,8 +10,6 @@ module ShellRun.ShellT
 where
 
 import Control.Concurrent qualified as CC
-import Control.Concurrent.Async.Lifted.Safe (Forall, Pure)
-import Control.Concurrent.Async.Lifted.Safe qualified as Async
 import Control.Concurrent.STM.TVar qualified as TVar
 import Control.Monad qualified as M
 import Control.Monad.Catch (MonadMask)
@@ -57,6 +55,7 @@ import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.Directory (XdgDirectory (..))
 import System.Directory qualified as Dir
+import UnliftIO.Async qualified as Async
 
 -- | `ShellT` is the main application type that runs shell commands.
 --
@@ -71,10 +70,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.1
       Monad,
       -- | @since 0.1
-      MonadBase b,
-      -- | @since 0.1
-      MonadBaseControl b,
-      -- | @since 0.1
       MonadReader env,
       -- | @since 0.1
       MonadCatch,
@@ -85,7 +80,9 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.1
       MonadTime,
       -- | @since 0.1
-      MonadThrow
+      MonadThrow,
+      -- | @since 0.1
+      MonadUnliftIO
     )
     via (ReaderT env m)
   deriving
@@ -108,7 +105,7 @@ instance
     HasCmdLineTrunc env,
     HasFileLogging env,
     HasGlobalLogging env,
-    MonadBase IO m
+    MonadIO m
   ) =>
   RegionLogger (ShellT env m)
   where
@@ -120,7 +117,7 @@ instance
     if b
       then do
         maybeSendLogToQueue log
-        maybePrintLog (liftBase . putStrLn) log
+        maybePrintLog (liftIO . putStrLn) log
       else pure ()
   {-# INLINEABLE putLog #-}
 
@@ -135,7 +132,7 @@ instance
               Finish -> Regions.finishConsoleRegion
 
         maybeSendLogToQueue lg
-        maybePrintLog (liftBase . logFn region) lg
+        maybePrintLog (liftIO . logFn region) lg
       else pure ()
   {-# INLINEABLE putRegionLog #-}
 
@@ -156,31 +153,29 @@ maybePrintLog fn log@MkLog {dest} = do
 
 -- | @since 0.1
 instance
-  ( Forall (Pure (ShellT Env m)),
-    MonadBaseControl IO m,
-    MonadCatch m,
-    MonadIO m,
-    MonadMask m
+  ( MonadCatch m,
+    MonadMask m,
+    MonadUnliftIO m
   ) =>
   MonadShell (ShellT Env m)
   where
   getDefaultDir :: ShellT Env m FilePath
-  getDefaultDir = liftBase $ Dir.getXdgDirectory XdgConfig "shell-run"
+  getDefaultDir = liftIO $ Dir.getXdgDirectory XdgConfig "shell-run"
   {-# INLINEABLE getDefaultDir #-}
 
   legendPathToMap :: FilePath -> ShellT Env m (Either LegendErr LegendMap)
-  legendPathToMap = liftBase . Legend.legendPathToMap
+  legendPathToMap = liftIO . Legend.legendPathToMap
   {-# INLINEABLE legendPathToMap #-}
 
   runCommands :: NonEmptySeq Command -> ShellT Env m ()
   runCommands commands = Regions.displayConsoleRegions $
     Async.withAsync maybePollQueue $ \fileLogger -> do
-      start <- liftBase $ C.getTime Monotonic
+      start <- liftIO $ C.getTime Monotonic
       let actions = Async.mapConcurrently_ runCommand commands
           actionsWithTimer = Async.race_ actions (counter commands)
 
       result <- try @_ @SomeException @() $
-        control $ \runInIO -> runInIO actionsWithTimer
+        withRunInIO $ \runInIO -> runInIO actionsWithTimer
 
       Async.cancel fileLogger
 
@@ -203,7 +198,7 @@ instance
             putRegionLog r fatalLog
           Right _ -> pure ()
 
-        end <- liftBase $ C.getTime Monotonic
+        end <- liftIO $ C.getTime Monotonic
         let totalTime = U.diffTime start end
             totalTimeTxt = "Finished! Total time elapsed: " <> formatSeconds totalTime
             finalLog =
@@ -231,9 +226,8 @@ runCommand ::
     HasCompletedCmds env,
     HasFileLogging env,
     HasGlobalLogging env,
-    MonadBaseControl IO m,
-    MonadIO m,
-    MonadMask m
+    MonadMask m,
+    MonadUnliftIO m
   ) =>
   Command ->
   ShellT env m ()
@@ -276,7 +270,6 @@ counter ::
     HasTimeout env,
     MonadMask m,
     MonadReader env m,
-    MonadBase IO m,
     MonadIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -287,12 +280,12 @@ counter cmds = do
   -- This brief delay is so that our timer starts "last" i.e. after each individual
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
-  liftBase $ CC.threadDelay 100_000
+  liftIO $ CC.threadDelay 100_000
   Regions.withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
-    timer <- liftBase $ IORef.newIORef 0
+    timer <- liftIO $ IORef.newIORef 0
     Loops.whileM_ (keepRunning cmds r timer timeout) $ do
-      elapsed <- liftBase $ do
+      elapsed <- liftIO $ do
         CC.threadDelay 1_000_000
         IORef.modifyIORef' timer (+ 1)
         IORef.readIORef timer
@@ -321,7 +314,7 @@ logCounter region elapsed = do
 keepRunning ::
   ( HasCmdDisplay env,
     HasCompletedCmds env,
-    MonadBase IO m,
+    MonadIO m,
     MonadReader env m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -332,12 +325,12 @@ keepRunning ::
   Timeout ->
   m Bool
 keepRunning allCmds region timer mto = do
-  elapsed <- liftBase $ IORef.readIORef timer
+  elapsed <- liftIO $ IORef.readIORef timer
   if timedOut elapsed mto
     then do
       cmdDisplay <- asks getCmdDisplay
       completedCmdsTVar <- asks getCompletedCmds
-      completedCmds <- liftBase $ TVar.readTVarIO completedCmdsTVar
+      completedCmds <- liftIO $ TVar.readTVarIO completedCmdsTVar
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ NESeq.toList allCmds
@@ -364,7 +357,7 @@ timedOut timer (MkTimeout (PFin t)) = timer > t
 
 maybeSendLogToQueue ::
   ( HasFileLogging env,
-    MonadBase IO m
+    MonadIO m
   ) =>
   Log ->
   ShellT env m ()
@@ -379,7 +372,7 @@ maybeSendLogToQueue log@MkLog {dest} =
           Queue.writeQueue queue log
 {-# INLINEABLE maybeSendLogToQueue #-}
 
-maybePollQueue :: (HasFileLogging env, MonadBase IO m) => ShellT env m ()
+maybePollQueue :: (HasFileLogging env, MonadIO m) => ShellT env m ()
 maybePollQueue = do
   fileLogging <- asks getFileLogging
   case fileLogging of
@@ -387,10 +380,10 @@ maybePollQueue = do
     Just (fp, queue) -> writeQueueToFile fp queue
 {-# INLINEABLE maybePollQueue #-}
 
-writeQueueToFile :: MonadBase IO m => FilePath -> LogTextQueue -> m void
+writeQueueToFile :: MonadIO m => FilePath -> LogTextQueue -> m void
 writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
 {-# INLINEABLE writeQueueToFile #-}
 
-logFile :: MonadBase IO m => FilePath -> LogText -> m ()
-logFile fp = liftBase . appendFileUtf8 fp . view #unLogText
+logFile :: MonadIO m => FilePath -> LogText -> m ()
+logFile fp = liftIO . appendFileUtf8 fp . view #unLogText
 {-# INLINEABLE logFile #-}

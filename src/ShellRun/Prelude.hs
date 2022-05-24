@@ -40,7 +40,6 @@ import Control.Applicative as X
     Applicative (..),
     (<**>),
   )
-import Control.Exception as X (Exception (..), SomeException)
 import Control.Monad as X
   ( Monad (..),
     join,
@@ -49,12 +48,10 @@ import Control.Monad as X
     (=<<),
     (>=>),
   )
-import Control.Monad.Base as X (MonadBase (..))
-import Control.Monad.Catch as X (MonadCatch (..), MonadThrow (..), try)
-import Control.Monad.IO.Class as X
+import Control.Monad.Catch as X (MonadCatch (..), MonadThrow (..))
+import Control.Monad.IO.Class as X (MonadIO (..))
 import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.Trans as X (MonadTrans (..))
-import Control.Monad.Trans.Control as X (MonadBaseControl (..), control)
 import Control.Monad.Writer as X (MonadWriter (..), WriterT (..))
 import Data.Bifunctor as X (Bifunctor (..))
 import Data.ByteString as X (ByteString)
@@ -92,6 +89,7 @@ import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X (view, (.~), (^.))
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrismLabels)
 import Refined as X (Refined)
+import UnliftIO as X (Exception (..), MonadUnliftIO (..), SomeException, try)
 import Prelude as X
   ( Bool (..),
     Bounded (..),
