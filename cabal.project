@@ -22,7 +22,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/env-guard.git
-    tag: 89a68d033d0671239b5e5e4a31f4355c46d4b6d3
+    tag: 57c2be47346085a0bd48df129da578d44452904b
 
 source-repository-package
     type: git

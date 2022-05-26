@@ -13,7 +13,7 @@ extra-deps:
 - git: https://github.com/tbidne/algebra-simple.git
   commit: be105b31e3bd2bc00c69cd5c1e869294b26fbb17
 - git: https://github.com/tbidne/env-guard.git
-  commit: 89a68d033d0671239b5e5e4a31f4355c46d4b6d3
+  commit: 57c2be47346085a0bd48df129da578d44452904b
 - git: https://github.com/tbidne/relative-time.git
   commit: dd4bf2a37bc22763eed6c9bf80ada9b323fb7a22
 flags:

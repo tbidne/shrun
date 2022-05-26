@@ -44,11 +44,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1652929261,
-        "narHash": "sha256-j5fe2DZNBCZlLdnJzfNbU5YAZlM8jV6qinvbLkw9VLs=",
+        "lastModified": 1653562352,
+        "narHash": "sha256-ny98RDjnxvnRP7FDINM5Xvv6APGTxtlZKmhqkOwK0RE=",
         "owner": "tbidne",
         "repo": "env-guard",
-        "rev": "89a68d033d0671239b5e5e4a31f4355c46d4b6d3",
+        "rev": "57c2be47346085a0bd48df129da578d44452904b",
         "type": "github"
       },
       "original": {

@@ -32,13 +32,13 @@ packages:
 - completed:
     name: env-guard
     pantry-tree:
-      sha256: 9316c18d5e16921505028dca43257cd98e8fd467b76e49554e3b969da63590e2
-      size: 1335
-    commit: 89a68d033d0671239b5e5e4a31f4355c46d4b6d3
+      sha256: d2bd5efb32f27d5012ab73e5bf0cecec72da6ca477127db3e2211837c6062b10
+      size: 1414
+    commit: 57c2be47346085a0bd48df129da578d44452904b
     git: https://github.com/tbidne/env-guard.git
     version: '0.1'
   original:
-    commit: 89a68d033d0671239b5e5e4a31f4355c46d4b6d3
+    commit: 57c2be47346085a0bd48df129da578d44452904b
     git: https://github.com/tbidne/env-guard.git
 - completed:
     name: relative-time
