@@ -137,8 +137,8 @@ test-suite unit
     Unit.Specs
     Unit.Specs.ShellRun.Args
     Unit.Specs.ShellRun.Command
-    Unit.Specs.ShellRun.Legend.Internal
     Unit.Specs.ShellRun.IO
+    Unit.Specs.ShellRun.Legend.Internal
     Unit.Specs.ShellRun.Utils
 
   build-depends:

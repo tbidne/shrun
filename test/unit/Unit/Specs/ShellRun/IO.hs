@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Specs for ShellRun.Utils.
 module Unit.Specs.ShellRun.IO (specs) where
 
