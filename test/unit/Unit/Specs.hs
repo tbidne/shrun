@@ -5,6 +5,7 @@ import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
 import Unit.Specs.ShellRun.Args qualified as Args
 import Unit.Specs.ShellRun.Command qualified as Command
+import Unit.Specs.ShellRun.IO qualified as IO
 import Unit.Specs.ShellRun.Legend.Internal qualified as Legend.Internal
 import Unit.Specs.ShellRun.Utils qualified as Utils
 
@@ -15,6 +16,7 @@ specs =
     "HUnit tests"
     [ Args.specs,
       Command.specs,
+      IO.specs,
       Legend.Internal.specs,
       Utils.specs
     ]

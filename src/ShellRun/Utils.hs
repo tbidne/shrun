@@ -188,6 +188,10 @@ n2i = fromIntegral
 type MParser :: Type -> Type
 type MParser = Parsec Void Text
 
+-- | Attempts to strip 'ansi control' sequences from text.
+-- See: https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+--
+-- @since 0.3
 stripAnsiControl :: Text -> Text
 stripAnsiControl "" = ""
 stripAnsiControl txt = case MP.parse ansiParse "ShellRun.Utils" txt of
@@ -209,6 +213,10 @@ ansiParse = do
 
 ansiEscape :: MParser Text
 ansiEscape = do
+  -- NB. Correctness depends on '\ESC' always being followed by '['. This is
+  -- probably dubious, but if it is ever shown to be false then we will
+  -- likely have to give up on the above takeWhile1P and compare the full
+  -- string.
   esc <- MPC.string "\ESC["
   -- optional nums like 1;2
   ns <- ansiNums

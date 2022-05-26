@@ -11,7 +11,12 @@ import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
-import ShellRun.Env.Types (CmdDisplay (..), CmdLogging (..), Truncation (..))
+import ShellRun.Env.Types
+  ( CmdDisplay (..),
+    CmdLogging (..),
+    StripControl (..),
+    Truncation (..),
+  )
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit qualified as THU
 import Unit.Prelude
@@ -27,6 +32,7 @@ specs =
       fileLoggingSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
+      stripControlSpecs,
       cmdNameTruncSpecs,
       cmdLineTruncSpecs,
       globalLoggingSpecs,
@@ -49,6 +55,7 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
               timeout = MkTimeout PPosInf,
               cmdLogging = Disabled,
               cmdDisplay = ShowCmd,
+              stripControl = StripControlAll,
               cmdNameTrunc = MkTruncation PPosInf,
               cmdLineTrunc = Undetected (MkTruncation PPosInf),
               fileLogging = FPNone,
@@ -204,6 +211,56 @@ parseLongShowKey :: TestTree
 parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
   let argList = ["--key-show", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = ShowKey}
+  verifyResult argList expected
+
+stripControlSpecs :: TestTree
+stripControlSpecs =
+  Tasty.testGroup
+    "Strip control arg parsing"
+    [ parseShortStripControlAll,
+      parseShortStripControlNone,
+      parseShortStripControlSmart,
+      parseLongStripControlSmart
+    ]
+
+parseShortStripControlAll :: TestTree
+parseShortStripControlAll = THU.testCase "Should parse -sall as StripControlAll" $ do
+  let argList = ["-sall", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { stripControl = StripControlAll
+            }
+  verifyResult argList expected
+
+parseShortStripControlNone :: TestTree
+parseShortStripControlNone = THU.testCase "Should parse -snone as StripControlNone" $ do
+  let argList = ["-snone", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { stripControl = StripControlNone
+            }
+  verifyResult argList expected
+
+parseShortStripControlSmart :: TestTree
+parseShortStripControlSmart = THU.testCase "Should parse -ssmart as StripControlSmart" $ do
+  let argList = ["-ssmart", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { stripControl = StripControlSmart
+            }
+  verifyResult argList expected
+
+parseLongStripControlSmart :: TestTree
+parseLongStripControlSmart = THU.testCase "Should parse --strip-control=smart as StripControlSmart" $ do
+  let argList = ["--strip-control=smart", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { stripControl = StripControlSmart
+            }
   verifyResult argList expected
 
 cmdNameTruncSpecs :: TestTree

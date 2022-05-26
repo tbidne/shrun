@@ -99,14 +99,14 @@ stripChars txt = stripChars' txt <$> asks getStripControl
 -- @since 0.3
 stripChars' :: Text -> StripControl -> Text
 stripChars' txt = \case
-    -- whitespace + all control chars
-    StripControlAll -> stripAll txt
-    -- whitespace + 'ansi control' chars
-    StripControlSmart -> stripSmart txt
-    -- whitespace
-    StripControlNone -> stripNone txt
+  -- whitespace + all control chars
+  StripControlAll -> stripAll txt
+  -- whitespace + 'ansi control' chars
+  StripControlSmart -> stripSmart txt
+  -- whitespace
+  StripControlNone -> stripNone txt
   where
-    stripAll = T.filter (not . Ch.isControl) . T.strip
+    stripAll = T.strip . T.filter (not . Ch.isControl)
     stripSmart = T.strip . Utils.stripAnsiControl
     stripNone = T.strip
 {-# INLINE stripChars' #-}

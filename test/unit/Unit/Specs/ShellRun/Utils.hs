@@ -15,7 +15,8 @@ specs :: TestTree
 specs =
   Tasty.testGroup
     "ShellRun.Utils"
-    [ breakStripPointSpecs
+    [ breakStripPointSpecs,
+      stripAnsiControlSpecs
     ]
 
 breakStripPointSpecs :: TestTree
@@ -56,3 +57,32 @@ trailingKey =
 
 point :: Refined R.NonEmpty Text
 point = $$(R.refineTH @NonEmpty @Text "=")
+
+stripAnsiControlSpecs :: TestTree
+stripAnsiControlSpecs =
+  Tasty.testGroup
+    "stripAnsiControl"
+    [ ansiEmptyText,
+      ansiControl,
+      ansiNonControl
+    ]
+
+ansiEmptyText :: TestTree
+ansiEmptyText =
+  THU.testCase "Empty test should be identity" $
+    "" @=? Utils.stripAnsiControl ""
+
+ansiControl :: TestTree
+ansiControl =
+  THU.testCase "Ansi control sequences are stripped" $ do
+    "" @=? Utils.stripAnsiControl "\ESC[A"
+    "foo" @=? Utils.stripAnsiControl "foo\ESC[A"
+    "bar" @=? Utils.stripAnsiControl "\ESC[Abar"
+    "foobar\ESC[1mbaz" @=? Utils.stripAnsiControl "foo\ESC[Abar\ESC[1m\ESC[0Kbaz"
+
+ansiNonControl :: TestTree
+ansiNonControl =
+  THU.testCase "Ansi non-control is not stripped" $ do
+    "\ESC[1" @=? Utils.stripAnsiControl "\ESC[1"
+    "\ESC[0mfoo" @=? Utils.stripAnsiControl "\ESC[0mfoo"
+    "foo\ESC[0mbar" @=? Utils.stripAnsiControl "foo\ESC[0mbar"
