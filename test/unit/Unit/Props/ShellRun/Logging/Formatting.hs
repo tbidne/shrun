@@ -21,6 +21,8 @@ import ShellRun.Env.Types
     HasCmdDisplay (..),
     HasCmdLineTrunc (..),
     HasCmdNameTrunc (..),
+    HasStripControl (..),
+    StripControl (..),
     TruncRegion (..),
     Truncation (..),
   )
@@ -117,6 +119,9 @@ instance HasCmdNameTrunc Env where
 instance HasCmdLineTrunc Env where
   getCmdLineTrunc = view #lineTrunc
 
+instance HasStripControl Env where
+  getStripControl = const StripControlNone
+
 -- | Entry point for ShellRun.Logging.Formatting property tests.
 props :: TestTree
 props =
@@ -139,7 +144,7 @@ messageProps = T.askOption $ \(MkMaxRuns limit) ->
         log@MkLog {msg} <- H.forAll LGens.genLog
         let result = runMockApp (Formatting.formatConsoleLog log) env
         H.annotate $ "Result: " <> T.unpack result
-        H.assert $ msg `T.isInfixOf` result || "..." `T.isSuffixOf` result
+        H.assert $ (T.strip msg) `T.isInfixOf` result || "..." `T.isSuffixOf` result
 
 prefixProps :: TestTree
 prefixProps = T.askOption $ \(MkMaxRuns limit) ->

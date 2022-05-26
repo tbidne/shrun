@@ -19,9 +19,6 @@ module ShellRun.IO
     sh_,
     shExitCode,
     tryShExitCode,
-
-    -- * Utils
-    stripChars',
   )
 where
 
@@ -30,7 +27,6 @@ import Control.Concurrent.STM.TVar qualified as TVar
 import Control.Monad.Catch (MonadMask)
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
-import Data.Char qualified as Ch
 import Data.IORef qualified as IORef
 import Data.Sequence ((<|))
 import Data.Text qualified as T
@@ -42,8 +38,6 @@ import ShellRun.Env.Types
   ( CmdLogging (..),
     HasCmdLogging (..),
     HasCompletedCmds (..),
-    HasStripControl (..),
-    StripControl (..),
   )
 import ShellRun.Logging.Log
   ( Log (..),
@@ -83,33 +77,6 @@ newtype Stderr = MkStderr
   }
 
 makeFieldLabelsNoPrefix ''Stderr
-
--- We always strip leading/trailing whitespace. Additional options concern
--- internal control chars.
-stripChars :: (HasStripControl env, MonadReader env m) => Text -> m Text
-stripChars txt = stripChars' txt <$> asks getStripControl
-{-# INLINE stripChars #-}
-
--- | Applies the given 'StripControl' to the 'Text'.
---
--- * 'StripControlAll': Strips whitespace + all control chars.
--- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.
--- * 'StripControlNone': Strips whitespace.
---
--- @since 0.3
-stripChars' :: Text -> StripControl -> Text
-stripChars' txt = \case
-  -- whitespace + all control chars
-  StripControlAll -> stripAll txt
-  -- whitespace + 'ansi control' chars
-  StripControlSmart -> stripSmart txt
-  -- whitespace
-  StripControlNone -> stripNone txt
-  where
-    stripAll = T.strip . T.filter (not . Ch.isControl)
-    stripSmart = T.strip . Utils.stripAnsiControl
-    stripNone = T.strip
-{-# INLINE stripChars' #-}
 
 makeStdErr :: Text -> Stderr
 makeStdErr err = MkStderr $ "Error: '" <> T.strip err
@@ -183,8 +150,7 @@ readHandleResultToStderr (ReadSuccess err) = MkStderr err
 -- | Attempts to read from the handle.
 --
 -- @since 0.1
-readHandle ::
-  (HasStripControl env, MonadIO m, MonadReader env m) => Handle -> m ReadHandleResult
+readHandle :: (MonadIO m) => Handle -> m ReadHandleResult
 readHandle handle = do
   let displayEx :: Show a => Text -> a -> Text
       displayEx prefix =
@@ -211,7 +177,7 @@ readHandle handle = do
           case outDecoded of
             Left ex -> pure $ ReadErr $ readEx ex
             Right "" -> pure ReadNoData
-            Right o -> ReadSuccess <$> stripChars o
+            Right o -> pure $ ReadSuccess o
 {-# INLINEABLE readHandle #-}
 
 blockSize :: Int
@@ -289,7 +255,6 @@ tryTimeSh cmd = do
 tryTimeShStreamRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
-    HasStripControl env,
     MonadMask m,
     MonadReader env m,
     MonadUnliftIO m,
@@ -311,7 +276,6 @@ tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 tryTimeShStreamNoRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
-    HasStripControl env,
     MonadReader env m,
     MonadUnliftIO m,
     RegionLogger m,
@@ -329,7 +293,6 @@ tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 tryTimeShAnyRegion ::
   ( HasCmdLogging env,
     HasCompletedCmds env,
-    HasStripControl env,
     MonadReader env m,
     MonadUnliftIO m,
     RegionLogger m,
@@ -400,7 +363,6 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
 
 streamOutput ::
   ( HasCmdLogging env,
-    HasStripControl env,
     MonadIO m,
     MonadReader env m,
     RegionLogger m,

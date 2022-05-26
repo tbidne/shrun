@@ -21,6 +21,7 @@ where
 import Control.Concurrent.STM qualified as STM
 import Control.Concurrent.STM.TBQueue (TBQueue)
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
+import Data.Text qualified as T
 import ShellRun.Class.MonadTime (MonadTime (..))
 import ShellRun.Logging.Log (Log (..))
 import ShellRun.Logging.Log qualified as Log
@@ -79,11 +80,12 @@ pattern MkLogText t <- UnsafeLogText t
 --
 -- @since 0.1
 formatFileLog :: MonadTime m => Log -> m LogText
-formatFileLog log@MkLog {cmd, msg} = do
+formatFileLog log = do
   currTime <- getSystemTime
-  let formatted = case cmd of
-        Nothing -> prefix <> msg
-        Just com -> prefix <> "[" <> (com ^. #command) <> "] " <> msg
+  let msg' = T.strip $ log ^. #msg
+      formatted = case log ^. #cmd of
+        Nothing -> prefix <> msg'
+        Just com -> prefix <> "[" <> (com ^. #command) <> "] " <> msg'
       withTimestamp = "[" <> showt currTime <> "] " <> formatted <> "\n"
   pure $ UnsafeLogText withTimestamp
   where

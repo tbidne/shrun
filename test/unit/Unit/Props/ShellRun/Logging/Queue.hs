@@ -88,7 +88,7 @@ messageProps = T.askOption $ \(MkMaxRuns limit) ->
         log@MkLog {msg} <- H.forAll LGens.genLog
         let MkLogText result = Queue.formatFileLog @MockTime log ^. #runMockTime
         H.annotate $ T.unpack result
-        H.assert $ T.isInfixOf msg result
+        H.assert $ T.isInfixOf (T.strip msg) result
 
 prefixProps :: TestTree
 prefixProps = T.askOption $ \(MkMaxRuns limit) ->
@@ -141,7 +141,7 @@ shapeProps = T.askOption $ \(MkMaxRuns limit) ->
                 <> "["
                 <> maybe "test error: did not receive Just command" (view #command) cmd
                 <> "] "
-                <> msg
+                <> (T.strip msg)
                 <> "\n"
         H.annotate $ T.unpack expected
         H.annotate $ T.unpack result

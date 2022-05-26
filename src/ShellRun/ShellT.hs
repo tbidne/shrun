@@ -106,6 +106,7 @@ instance
     HasCmdLineTrunc env,
     HasFileLogging env,
     HasGlobalLogging env,
+    HasStripControl env,
     MonadIO m
   ) =>
   RegionLogger (ShellT env m)
@@ -141,6 +142,7 @@ maybePrintLog ::
   ( HasCmdDisplay env,
     HasCmdNameTrunc env,
     HasCmdLineTrunc env,
+    HasStripControl env,
     MonadReader env m
   ) =>
   (Text -> m ()) ->

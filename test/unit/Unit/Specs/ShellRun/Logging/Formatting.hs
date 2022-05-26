@@ -1,17 +1,17 @@
--- | Specs for ShellRun.Utils.
-module Unit.Specs.ShellRun.IO (specs) where
+-- | Specs for ShellRun.Logging.Formatting.
+module Unit.Specs.ShellRun.Logging.Formatting (specs) where
 
 import ShellRun.Env.Types (StripControl (..))
-import ShellRun.IO qualified as IO
+import ShellRun.Logging.Formatting qualified as Formatting
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit qualified as THU
 import Unit.Prelude
 
--- | Entry point for ShellRun.Utils specs.
+-- | Entry point for ShellRun.Formatting specs.
 specs :: TestTree
 specs =
   Tasty.testGroup
-    "ShellRun.IO"
+    "ShellRun.Logging.Formatting"
     [ stripChars'Specs
     ]
 
@@ -30,7 +30,7 @@ stripNone =
     "" @=? stripNone' ""
     "\ESC[ foo \ESC[A  bar \n baz" @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
   where
-    stripNone' = flip IO.stripChars' StripControlNone
+    stripNone' = flip Formatting.stripChars' StripControlNone
 
 stripAll :: TestTree
 stripAll =
@@ -38,7 +38,7 @@ stripAll =
     "" @=? stripAll' ""
     "[ foo [A [K  bar  baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
-    stripAll' = flip IO.stripChars' StripControlAll
+    stripAll' = flip Formatting.stripChars' StripControlAll
 
 stripSmart :: TestTree
 stripSmart =
@@ -46,4 +46,4 @@ stripSmart =
     "" @=? stripSmart' ""
     "foo  \ESC[X  bar \n baz" @=? stripSmart' " \n \ESC[G foo \ESC[A \ESC[X  bar \n baz \t  "
   where
-    stripSmart' = flip IO.stripChars' StripControlSmart
+    stripSmart' = flip Formatting.stripChars' StripControlSmart
