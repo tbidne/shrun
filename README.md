@@ -33,6 +33,7 @@
     - [Disable Log](#disable-log)
   - [Log Formatting](#log-formatting)
     - [Key Show](#key-show)
+    - [Strip Control](#strip-control)
     - [Command Name Truncation](#command-name-truncation)
     - [Command Line Truncation](#command-line-truncation)
 - [Building](#building)
@@ -196,6 +197,12 @@ rather than the usual
 ![key_show_on](./screens/key_show_off.png)
 
 Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
+
+### Strip Control
+
+**Arg:** `-s,--strip-control [all | smart | none]`
+
+**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. The default `all` strips all such chars -- the 'safest' option, as far as layout preservation goes -- though it can leave ugly remnants e.g. ansi escape sequences like `[0m`. `none` does nothing i.e. all chars are left untouched. `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' though it is likely to miss some chars. `smart` is experimental and subject to change.
 
 ### Command Name Truncation
 
