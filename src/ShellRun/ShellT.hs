@@ -11,6 +11,7 @@ where
 
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Effects.MonadTime (MonadTime (..))
+import ShellRun.Env.Types (Env)
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types (LogMode (..))
 import ShellRun.Prelude
@@ -55,9 +56,12 @@ runShellT :: ShellT env m a -> env -> m a
 runShellT (MkShellT rdr) = runReaderT rdr
 {-# INLINEABLE runShellT #-}
 
+-- Concrete Env here so we can vary our logging logic with other envs
+-- (i.e. in tests).
+
 -- | @since 0.1
-instance (MonadIO m) => RegionLogger (ShellT env m) where
-  type Region (ShellT env m) = ConsoleRegion
+instance MonadIO m => RegionLogger (ShellT Env m) where
+  type Region (ShellT Env m) = ConsoleRegion
 
   logFn = liftIO . putStrLn
 

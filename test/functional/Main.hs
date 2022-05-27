@@ -24,10 +24,10 @@ specs args = do
   Tasty.testGroup
     "Functional Tests"
     [ Success.spec args,
-      SuccessShowKey.spec args,
       SuccessCommandLogging.spec args,
       SuccessFileLogging.spec args,
       SuccessNoLogging.spec,
+      SuccessShowKey.spec args,
       Timeout.spec,
       Truncation.spec
     ]

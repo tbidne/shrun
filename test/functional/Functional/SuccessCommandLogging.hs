@@ -5,12 +5,8 @@ import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Functional.Utils qualified as U
-import ShellRun qualified as SR
-import ShellRun.Env qualified as Env
 import System.Directory qualified as Dir
-import System.Environment qualified as SysEnv
 import System.FilePath ((</>))
-import System.IO.Silently qualified as Shh
 import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..))
 import Test.ShellRun.Verifier qualified as V
 import Test.Tasty qualified as Tasty
@@ -32,9 +28,7 @@ spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
               ]
                 <> commands
 
-        env <- SysEnv.withArgs argList Env.runParser
-        let action = SR.runShellT SR.runShell env
-        _ <- Shh.capture_ action
+        _ <- U.runAndGetLogs argList
 
         fileResult <- readFileUtf8Lenient outpath
         let results = MkResultText <$> T.lines fileResult

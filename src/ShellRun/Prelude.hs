@@ -40,6 +40,7 @@ import Control.Applicative as X
     Applicative (..),
     (<**>),
   )
+import Control.Concurrent as X (threadDelay)
 import Control.Concurrent.STM as X (atomically)
 import Control.Concurrent.STM.TBQueue as X
   ( TBQueue,
@@ -56,6 +57,7 @@ import Control.Concurrent.STM.TVar as X
   )
 import Control.Monad as X
   ( Monad (..),
+    forever,
     join,
     void,
     (<=<),
@@ -82,6 +84,7 @@ import Data.Functor as X
     (<$>),
     (<&>),
   )
+import Data.IORef as X (IORef, modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter, zip)
 import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
@@ -100,7 +103,7 @@ import GHC.Generics as X (Generic)
 import GHC.Natural as X (Natural)
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
-import Optics.Core as X (over', set', view, (%!~), (.~), (^.))
+import Optics.Core as X (over', set', view, (%), (%!~), (.~), (^.))
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrismLabels)
 import Refined as X (Refined)
 import UnliftIO as X

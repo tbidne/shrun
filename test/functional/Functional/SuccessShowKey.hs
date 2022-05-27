@@ -2,14 +2,9 @@
 -- than the command.
 module Functional.SuccessShowKey (spec) where
 
-import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Functional.Utils qualified as U
-import ShellRun qualified as SR
-import ShellRun.Env qualified as Env
-import System.Environment qualified as SysEnv
-import System.IO.Silently qualified as Shh
 import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
 import Test.ShellRun.Verifier qualified as V
 import Test.Tasty qualified as Tasty
@@ -41,11 +36,8 @@ withShowKey legendPath addShowKey = do
   let legendArg = "--legend=" <> legendPath
       argList = [legendArg, showKeyArg] <> commands
 
-  env <- SysEnv.withArgs argList Env.runParser
-  let action = SR.runShellT SR.runShell env
-  result <- Shh.capture_ action
+  results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
 
-  let results = MkResultText <$> T.lines (T.pack result)
   V.verifyExpectedUnexpected results expected unexpected
   where
     commands = ["both"]

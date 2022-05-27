@@ -8,10 +8,16 @@ module Functional.Utils
     subCommandPrefix,
     infoSuccessPrefix,
     errPrefix,
+
+    -- * IO
+    runAndGetLogs,
   )
 where
 
+import Functional.FuncEnv qualified as FuncEnv
 import Functional.Prelude
+import ShellRun qualified as SR
+import System.Environment qualified as SysEnv
 
 -- | Expected timeout 'Text'.
 cancelled :: Text
@@ -32,3 +38,9 @@ infoSuccessPrefix txt = "[Info] [" <> txt <> "] Success. Time elapsed:"
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text
 errPrefix txt = "[Error] [" <> txt <> "] Error:"
+
+runAndGetLogs :: List (List Char) -> IO (IORef [Text])
+runAndGetLogs argList = do
+  funcEnv <- SysEnv.withArgs argList FuncEnv.mkFuncEnv
+  SR.runShellT SR.runShell funcEnv
+  pure $ funcEnv ^. #logs

@@ -9,13 +9,8 @@ module ShellRun
   )
 where
 
-import Control.Concurrent qualified as CC
-import Control.Concurrent.STM.TVar qualified as TVar
-import Control.Monad qualified as M
 import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
-import Data.IORef (IORef)
-import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import Data.Time.Relative (formatSeconds)
 import ShellRun.Command (Command (..))
@@ -265,15 +260,15 @@ counter cmds = do
   -- This brief delay is so that our timer starts "last" i.e. after each individual
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
-  liftIO $ CC.threadDelay 100_000
+  liftIO $ threadDelay 100_000
   Regions.withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
-    timer <- liftIO $ IORef.newIORef 0
+    timer <- liftIO $ newIORef 0
     Loops.whileM_ (keepRunning cmds r timer timeout) $ do
       elapsed <- liftIO $ do
-        CC.threadDelay 1_000_000
-        IORef.modifyIORef' timer (+ 1)
-        IORef.readIORef timer
+        threadDelay 1_000_000
+        modifyIORef' timer (+ 1)
+        readIORef timer
       logCounter r elapsed
 {-# INLINEABLE counter #-}
 
@@ -313,12 +308,12 @@ keepRunning ::
   Timeout ->
   m Bool
 keepRunning allCmds region timer mto = do
-  elapsed <- liftIO $ IORef.readIORef timer
+  elapsed <- liftIO $ readIORef timer
   if timedOut elapsed mto
     then do
       cmdDisplay <- asks getCmdDisplay
       completedCmdsTVar <- asks getCompletedCmds
-      completedCmds <- liftIO $ TVar.readTVarIO completedCmdsTVar
+      completedCmds <- liftIO $ readTVarIO completedCmdsTVar
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ NESeq.toList allCmds
@@ -352,7 +347,7 @@ maybePollQueue = do
 {-# INLINEABLE maybePollQueue #-}
 
 writeQueueToFile :: MonadIO m => FilePath -> LogTextQueue -> m void
-writeQueueToFile fp queue = M.forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
+writeQueueToFile fp queue = forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
 {-# INLINEABLE writeQueueToFile #-}
 
 logFile :: MonadIO m => FilePath -> LogText -> m ()
