@@ -5,12 +5,12 @@ import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Functional.Utils qualified as U
-import Functional.Verify (ExpectedText (..), ResultText (..), UnexpectedText (..))
-import Functional.Verify qualified as V
 import ShellRun qualified as SR
 import ShellRun.Env qualified as Env
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
+import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
+import Test.ShellRun.Verifier qualified as V
 import Test.Tasty.HUnit qualified as THU
 
 -- | Spec that should run commands successfully.

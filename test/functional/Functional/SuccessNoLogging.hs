@@ -3,12 +3,12 @@ module Functional.SuccessNoLogging (spec) where
 
 import Data.Text qualified as T
 import Functional.Prelude
-import Functional.Verify (ResultText (..), UnexpectedText (..))
-import Functional.Verify qualified as V
 import ShellRun qualified as SR
 import ShellRun.Env qualified as Env
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
+import Test.ShellRun.Verifier (ResultText (..), UnexpectedText (..))
+import Test.ShellRun.Verifier qualified as V
 import Test.Tasty.HUnit qualified as THU
 
 -- | Spec that should run commands successfully.

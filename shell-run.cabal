@@ -213,14 +213,14 @@ test-suite functional
     Functional.Timeout
     Functional.Truncation
     Functional.Utils
-    Functional.Verify
 
   build-depends:
     , base
     , directory
     , filepath
     , shell-run
-    , silently     ^>=1.2
+    , shell-run-verifier
+    , silently            ^>=1.2
     , tasty
     , tasty-hunit
     , text

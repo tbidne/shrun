@@ -4,12 +4,12 @@ module Functional.Truncation (spec) where
 import Data.Text qualified as T
 import Functional.Prelude
 import Functional.Utils qualified as U
-import Functional.Verify (ExpectedText (..), ResultText (..))
-import Functional.Verify qualified as V
 import ShellRun qualified as SR
 import ShellRun.Env qualified as Env
 import System.Environment qualified as SysEnv
 import System.IO.Silently qualified as Shh
+import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..))
+import Test.ShellRun.Verifier qualified as V
 import Test.Tasty qualified as Tasty
 import Test.Tasty.HUnit qualified as THU
 
