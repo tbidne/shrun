@@ -14,15 +14,15 @@ import Data.String (IsString)
 import Data.Text qualified as T
 import Hedgehog qualified as H
 import Refined qualified as R
-import ShellRun.Class.MonadTime (MonadTime (..))
 import ShellRun.Command (Command (..))
-import ShellRun.Logging.Log
+import ShellRun.Effects.MonadTime (MonadTime (..))
+import ShellRun.Logging.Queue (LogText (..))
+import ShellRun.Logging.Queue qualified as Queue
+import ShellRun.Logging.Types
   ( Log (..),
     LogLevel (..),
   )
-import ShellRun.Logging.Log qualified as Log
-import ShellRun.Logging.Queue (LogText (..))
-import ShellRun.Logging.Queue qualified as Queue
+import ShellRun.Logging.Types qualified as Log
 import ShellRun.Utils qualified as Utils
 import Test.Tasty qualified as T
 import Text.Read qualified as TR
@@ -141,7 +141,7 @@ shapeProps = T.askOption $ \(MkMaxRuns limit) ->
                 <> "["
                 <> maybe "test error: did not receive Just command" (view #command) cmd
                 <> "] "
-                <> (T.strip msg)
+                <> T.strip msg
                 <> "\n"
         H.annotate $ T.unpack expected
         H.annotate $ T.unpack result

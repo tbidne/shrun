@@ -2,7 +2,10 @@
 --
 -- @since 0.1
 module ShellRun.Logging.Formatting
-  ( formatConsoleLog,
+  ( -- * High-level
+    formatConsoleLog,
+
+    -- * Low-level
     displayCmd,
     displayCmd',
     stripChars',
@@ -15,15 +18,12 @@ import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
   ( CmdDisplay (..),
-    HasCmdDisplay (..),
-    HasCmdLineTrunc (..),
-    HasCmdNameTrunc (..),
-    HasStripControl (..),
+    HasLogging (..),
     StripControl (..),
     Truncation (..),
   )
-import ShellRun.Logging.Log (Log (..), LogLevel (..))
-import ShellRun.Logging.Log qualified as Log
+import ShellRun.Logging.Types (Log (..), LogLevel (..))
+import ShellRun.Logging.Types qualified as Log
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import ShellRun.Utils qualified as Utils
@@ -32,15 +32,7 @@ import System.Console.Pretty qualified as P
 -- | Formats a log to be printed to the console.
 --
 -- @since 0.1
-formatConsoleLog ::
-  ( HasCmdDisplay env,
-    HasCmdNameTrunc env,
-    HasCmdLineTrunc env,
-    HasStripControl env,
-    MonadReader env m
-  ) =>
-  Log ->
-  m Text
+formatConsoleLog :: (HasLogging env, MonadReader env m) => Log -> m Text
 formatConsoleLog log = do
   MkTruncation cmdNameTrunc <- asks getCmdNameTrunc
   MkTruncation lineNameTrunc <- asks getCmdLineTrunc
@@ -68,7 +60,7 @@ formatConsoleLog log = do
 -- | Variant of 'displayCmd\'' using 'MonadReader'.
 --
 -- @since 0.1
-displayCmd :: (HasCmdDisplay env, MonadReader env m) => Command -> m Text
+displayCmd :: (HasLogging env, MonadReader env m) => Command -> m Text
 displayCmd cmd = asks getCmdDisplay <&> displayCmd' cmd
 {-# INLINEABLE displayCmd #-}
 
@@ -95,7 +87,7 @@ displayCmd' (MkCommand _ cmd) _ = cmd
 
 -- We always strip leading/trailing whitespace. Additional options concern
 -- internal control chars.
-stripChars :: (HasStripControl env, MonadReader env m) => Text -> m Text
+stripChars :: (HasLogging env, MonadReader env m) => Text -> m Text
 stripChars txt = stripChars' txt <$> asks getStripControl
 {-# INLINE stripChars #-}
 

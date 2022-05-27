@@ -7,32 +7,35 @@ module Integration.MockShell.MockShellBase
   )
 where
 
-import Data.Functor.Identity (Identity (..))
 import Integration.MockEnv (MockEnv)
 import Integration.Prelude
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
+import System.Console.Regions (ConsoleRegion)
 
 -- | 'MockShellBase' serves as a base type for our various integration tests.
 -- Its main purpose is convenience, so we do not have to re-derive various
 -- typeclasses (e.g. MonadLogger).
 type MockShellBase :: Type -> Type
-newtype MockShellBase a = MkMockShellBase (ReaderT MockEnv (WriterT (List Text) Identity) a)
+newtype MockShellBase a = MkMockShellBase (ReaderT MockEnv IO a)
   deriving
     ( Functor,
       Applicative,
       Monad,
+      MonadCatch,
+      MonadIO,
+      MonadMask,
       MonadReader MockEnv,
-      MonadWriter (List Text)
+      MonadThrow,
+      MonadUnliftIO
     )
-    via (ReaderT MockEnv (WriterT (List Text) Identity))
+    via (ReaderT MockEnv IO)
 
-runMockShellBase :: MockShellBase a -> MockEnv -> (a, List Text)
-runMockShellBase (MkMockShellBase rdr) = runIdentity . runWriterT . runReaderT rdr
+runMockShellBase :: MockShellBase a -> MockEnv -> IO a
+runMockShellBase (MkMockShellBase rdr) = runReaderT rdr
 
 instance RegionLogger MockShellBase where
-  type Region MockShellBase = ()
-  putLog = tell . pure . view #msg
-  putRegionLog _ = putLog
-
-instance Show a => Show (MockShellBase a) where
-  show x = "MkMockShellBase" <> show x
+  type Region MockShellBase = ConsoleRegion
+  logFn logTxt = do
+    ls <- asks $ view #logs
+    liftIO $ atomically $ modifyTVar' ls (logTxt :)
+  logModeToRegionFn _ _ = logFn

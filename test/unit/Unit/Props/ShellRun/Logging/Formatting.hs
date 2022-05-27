@@ -18,20 +18,15 @@ import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Env.Types
   ( CmdDisplay (..),
-    HasCmdDisplay (..),
-    HasCmdLineTrunc (..),
-    HasCmdNameTrunc (..),
-    HasStripControl (..),
+    CmdLogging (..),
+    HasLogging (..),
     StripControl (..),
     TruncRegion (..),
     Truncation (..),
   )
 import ShellRun.Logging.Formatting qualified as Formatting
-import ShellRun.Logging.Log
-  ( Log (..),
-    LogLevel (..),
-  )
-import ShellRun.Logging.Log qualified as Log
+import ShellRun.Logging.Types (Log (..), LogLevel (..))
+import ShellRun.Logging.Types qualified as Log
 import Test.Tasty qualified as T
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
@@ -110,16 +105,13 @@ genPPosInf = HGen.choice [fmap PFin genNat, pure PPosInf]
 runMockApp :: ReaderT env Identity a -> env -> a
 runMockApp env = runIdentity . runReaderT env
 
-instance HasCmdDisplay Env where
+instance HasLogging Env where
   getCmdDisplay = view #cmdDisplay
-
-instance HasCmdNameTrunc Env where
+  getCmdLogging = const Enabled
   getCmdNameTrunc = view #cmdTrunc
-
-instance HasCmdLineTrunc Env where
   getCmdLineTrunc = view #lineTrunc
-
-instance HasStripControl Env where
+  getFileLogging = const Nothing
+  getGlobalLogging = const False
   getStripControl = const StripControlNone
 
 -- | Entry point for ShellRun.Logging.Formatting property tests.
@@ -144,7 +136,7 @@ messageProps = T.askOption $ \(MkMaxRuns limit) ->
         log@MkLog {msg} <- H.forAll LGens.genLog
         let result = runMockApp (Formatting.formatConsoleLog log) env
         H.annotate $ "Result: " <> T.unpack result
-        H.assert $ (T.strip msg) `T.isInfixOf` result || "..." `T.isSuffixOf` result
+        H.assert $ T.strip msg `T.isInfixOf` result || "..." `T.isSuffixOf` result
 
 prefixProps :: TestTree
 prefixProps = T.askOption $ \(MkMaxRuns limit) ->

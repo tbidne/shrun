@@ -12,6 +12,7 @@ module ShellRun.Legend
 where
 
 import Data.Text qualified as T
+import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Legend.Internal (LegendErr (..), LegendMap)
 import ShellRun.Legend.Internal qualified as Internal
 import ShellRun.Prelude
@@ -21,9 +22,9 @@ import ShellRun.Prelude
 -- (see 'Internal.linesToMap'), an error will be returned.
 --
 -- @since 0.1
-legendPathToMap :: FilePath -> IO (Either LegendErr LegendMap)
+legendPathToMap :: (MonadFSReader m, MonadUnliftIO m) => FilePath -> m (Either LegendErr LegendMap)
 legendPathToMap legendPath = do
-  res <- try (readFileUtf8Lenient legendPath) :: IO (Either SomeException Text)
+  res <- tryAny (readFile legendPath)
   pure $ case res of
     Left err ->
       Left $

@@ -18,17 +18,14 @@ module ShellRun.Logging.Queue
   )
 where
 
-import Control.Concurrent.STM qualified as STM
-import Control.Concurrent.STM.TBQueue (TBQueue)
-import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Data.Text qualified as T
-import ShellRun.Class.MonadTime (MonadTime (..))
-import ShellRun.Logging.Log (Log (..))
-import ShellRun.Logging.Log qualified as Log
+import ShellRun.Effects.MonadTime (MonadTime (..))
+import ShellRun.Logging.Types (Log (..))
+import ShellRun.Logging.Types qualified as Log
 import ShellRun.Prelude
 
 -- $setup
--- >>> import ShellRun.Logging.Log (LogDest (..), LogLevel (..), LogMode (..))
+-- >>> import ShellRun.Logging.Types (LogDest (..), LogLevel (..), LogMode (..))
 -- >>> import Data.Text qualified as T
 -- >>> :{
 --  hardcodeTimestamp :: LogText -> Text
@@ -113,19 +110,19 @@ instance Show LogTextQueue where
 writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
 writeQueue queue = liftIO . (writeq <=< formatFileLog)
   where
-    writeq = STM.atomically . TBQueue.writeTBQueue (queue ^. #getLogTextQueue)
+    writeq = atomically . writeTBQueue (queue ^. #getLogTextQueue)
 {-# INLINEABLE writeQueue #-}
 
 -- | Atomically reads from the queue. Does not retry.
 --
 -- @since 0.1
 readQueue :: MonadIO m => LogTextQueue -> m (Maybe LogText)
-readQueue = liftIO . STM.atomically . TBQueue.tryReadTBQueue . view #getLogTextQueue
+readQueue = liftIO . atomically . tryReadTBQueue . view #getLogTextQueue
 {-# INLINEABLE readQueue #-}
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1
 flushQueue :: MonadIO m => LogTextQueue -> m [LogText]
-flushQueue = liftIO . STM.atomically . STM.flushTBQueue . view #getLogTextQueue
+flushQueue = liftIO . atomically . flushTBQueue . view #getLogTextQueue
 {-# INLINEABLE flushQueue #-}

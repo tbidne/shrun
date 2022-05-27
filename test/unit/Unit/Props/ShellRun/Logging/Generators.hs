@@ -15,7 +15,7 @@ where
 
 import Hedgehog.Gen qualified as HGen
 import ShellRun.Command (Command (..))
-import ShellRun.Logging.Log (Log (..), LogDest (..), LogLevel (..), LogMode (..))
+import ShellRun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import Unit.Prelude
 import Unit.Props.Generators qualified as PGens
 

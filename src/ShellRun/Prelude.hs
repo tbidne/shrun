@@ -40,6 +40,20 @@ import Control.Applicative as X
     Applicative (..),
     (<**>),
   )
+import Control.Concurrent.STM as X (atomically)
+import Control.Concurrent.STM.TBQueue as X
+  ( TBQueue,
+    flushTBQueue,
+    newTBQueue,
+    tryReadTBQueue,
+    writeTBQueue,
+  )
+import Control.Concurrent.STM.TVar as X
+  ( TVar,
+    modifyTVar',
+    newTVarIO,
+    readTVarIO,
+  )
 import Control.Monad as X
   ( Monad (..),
     join,
@@ -48,7 +62,7 @@ import Control.Monad as X
     (=<<),
     (>=>),
   )
-import Control.Monad.Catch as X (MonadCatch (..), MonadThrow (..))
+import Control.Monad.Catch as X (MonadCatch (..), MonadMask (..), MonadThrow (..))
 import Control.Monad.IO.Class as X (MonadIO (..))
 import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.Trans as X (MonadTrans (..))
@@ -86,13 +100,15 @@ import GHC.Generics as X (Generic)
 import GHC.Natural as X (Natural)
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
-import Optics.Core as X (view, (.~), (^.))
+import Optics.Core as X (over', set', view, (%!~), (.~), (^.))
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrismLabels)
 import Refined as X (Refined)
 import UnliftIO as X
   ( Exception (..),
     MonadUnliftIO (..),
     SomeException,
+    throwIO,
+    throwString,
     try,
     tryAny,
   )

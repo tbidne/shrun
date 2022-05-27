@@ -56,14 +56,14 @@ library
   exposed-modules:
     ShellRun
     ShellRun.Args
-    ShellRun.Class.MonadShell
-    ShellRun.Class.MonadTime
     ShellRun.Command
     ShellRun.Data.FilePathDefault
     ShellRun.Data.InfNum
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
     ShellRun.Data.Timeout
+    ShellRun.Effects.MonadFSReader
+    ShellRun.Effects.MonadTime
     ShellRun.Env
     ShellRun.Env.Types
     ShellRun.IO
@@ -73,6 +73,7 @@ library
     ShellRun.Logging.Log
     ShellRun.Logging.Queue
     ShellRun.Logging.RegionLogger
+    ShellRun.Logging.Types
     ShellRun.Prelude
     ShellRun.ShellT
     ShellRun.Utils
@@ -109,6 +110,19 @@ library
     , unordered-containers  ^>=0.2.9.0
 
   hs-source-dirs:   src
+  default-language: Haskell2010
+
+library shell-run-verifier
+  import:           common-exts
+  exposed-modules:  Test.ShellRun.Verifier
+  build-depends:
+    , base
+    , optics-core
+    , optics-th
+    , tasty-hunit
+    , text
+
+  hs-source-dirs:   test/verifier
   default-language: Haskell2010
 
 executable shell-run
@@ -173,10 +187,13 @@ test-suite integration
 
   build-depends:
     , base
+    , concurrent-output
+    , containers
     , shell-run
+    , shell-run-verifier
     , tasty
     , tasty-hunit
-    , unordered-containers
+    , text
 
   hs-source-dirs:   test/integration
   default-language: Haskell2010

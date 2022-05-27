@@ -10,8 +10,7 @@ where
 import Integration.MockEnv (MockEnv)
 import Integration.MockShell.MockShellBase (MockShellBase, runMockShellBase)
 import Integration.Prelude
-import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Legend (LegendErr (..))
+import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 
 -- | 'BadLegendMockShell' is intended to test a run of
@@ -22,19 +21,19 @@ newtype BadLegendMockShell a = MkBadLegendMockShell (MockShellBase a)
     ( Functor,
       Applicative,
       Monad,
+      MonadCatch,
+      MonadIO,
+      MonadMask,
       MonadReader MockEnv,
-      MonadWriter (List Text),
+      MonadThrow,
+      MonadUnliftIO,
       RegionLogger
     )
     via MockShellBase
 
-runBadLegendMockShell :: BadLegendMockShell a -> MockEnv -> (a, List Text)
+runBadLegendMockShell :: BadLegendMockShell a -> MockEnv -> IO a
 runBadLegendMockShell (MkBadLegendMockShell rdr) = runMockShellBase rdr
 
-instance MonadShell BadLegendMockShell where
-  getDefaultDir = pure "config"
-  legendPathToMap _ = pure $ Left $ FileErr "File not found"
-  runCommands _ = pure ()
-
-instance Show a => Show (BadLegendMockShell a) where
-  show _ = "MkBadLegendMockShell"
+instance MonadFSReader BadLegendMockShell where
+  getXdgConfig _ = pure "config"
+  readFile _ = throwString "File not found"

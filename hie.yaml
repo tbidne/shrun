@@ -3,6 +3,9 @@ cradle:
     - path: "./src"
       component: "lib:shell-run"
 
+    - path: "./test/verifier"
+      component: "shell-run:lib:shell-run-verifier"
+
     - path: "./app/Main.hs"
       component: "shell-run:exe:shell-run"
 
@@ -19,4 +22,7 @@ cradle:
       component: "shell-run:test:doctest"
 
     - path: "./benchmarks/Main.hs"
+      component: "shell-run:bench:benchmarks"
+
+    - path: "./benchmarks/Benchmark/Prelude.hs"
       component: "shell-run:bench:benchmarks"

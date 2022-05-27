@@ -10,9 +10,7 @@ where
 import Integration.MockEnv (MockEnv)
 import Integration.MockShell.MockShellBase (MockShellBase, runMockShellBase)
 import Integration.Prelude
-import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Data.NonEmptySeq qualified as NESeq
-import ShellRun.Legend (LegendErr (..))
+import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 
 -- | 'NoLegendMockShell' is intended to test a run of
@@ -23,24 +21,23 @@ newtype NoLegendMockShell a = MkNoLegendMockShell (MockShellBase a)
     ( Functor,
       Applicative,
       Monad,
+      MonadCatch,
+      MonadIO,
+      MonadMask,
       MonadReader MockEnv,
-      MonadWriter (List Text),
+      MonadThrow,
+      MonadUnliftIO,
       RegionLogger
     )
     via MockShellBase
 
-runNoLegendMockShell :: NoLegendMockShell a -> MockEnv -> (a, List Text)
+runNoLegendMockShell :: NoLegendMockShell a -> MockEnv -> IO a
 runNoLegendMockShell (MkNoLegendMockShell rdr) = runMockShellBase rdr
 
-instance MonadShell NoLegendMockShell where
-  getDefaultDir = pure "config"
-
-  -- No legend exists at default dir
-  legendPathToMap "config/shell-run.legend" = pure $ Left $ FileErr "FileNotFound"
-  -- Purposely giving a bad shell function here to prove that no legend skips
-  -- this (otherwise would die here)
-  legendPathToMap _ = pure $ Left $ EntryErr "Bad key"
-  runCommands = tell . NESeq.toList . fmap (view #command)
+instance MonadFSReader NoLegendMockShell where
+  getXdgConfig _ = pure "config"
+  readFile "config/shell-run.legend" = throwString "FileNotFound"
+  readFile _ = pure "Bad key"
 
 instance Show a => Show (NoLegendMockShell a) where
   show x = "MkNoLegendMockShell " <> show x

@@ -5,15 +5,9 @@
 module ShellRun.Env
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    HasCmdDisplay (..),
-    HasCmdLogging (..),
-    HasCmdNameTrunc (..),
-    HasCmdLineTrunc (..),
     HasCompletedCmds (..),
-    HasFileLogging (..),
-    HasGlobalLogging (..),
+    HasLogging (..),
     HasLegend (..),
-    HasStripControl (..),
     HasTimeout (..),
 
     -- * Types
@@ -29,9 +23,6 @@ module ShellRun.Env
 where
 
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
-import Control.Concurrent.STM.TVar (TVar)
-import Control.Concurrent.STM.TVar qualified as TVar
-import Control.Monad.STM qualified as STM
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
 import Options.Applicative qualified as OApp
@@ -44,16 +35,10 @@ import ShellRun.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
     Env (..),
-    HasCmdDisplay (..),
-    HasCmdLineTrunc (..),
-    HasCmdLogging (..),
-    HasCmdNameTrunc (..),
     HasCommands (..),
     HasCompletedCmds (..),
-    HasFileLogging (..),
-    HasGlobalLogging (..),
     HasLegend (..),
-    HasStripControl (..),
+    HasLogging (..),
     HasTimeout (..),
     TruncRegion (..),
     Truncation (..),
@@ -79,13 +64,13 @@ runParser = do
     FPDefault -> do
       configDir <- Dir.getXdgDirectory XdgConfig "shell-run"
       let fp = configDir </> "shell-run.log"
-      queue <- STM.atomically $ TBQueue.newTBQueue 1000
+      queue <- atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
     FPManual fp -> do
-      queue <- STM.atomically $ TBQueue.newTBQueue 1000
+      queue <- atomically $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
 
-  completedCmds' <- TVar.newTVarIO Seq.empty
+  completedCmds' <- newTVarIO Seq.empty
 
   toEnv fileLogging' completedCmds' args
 {-# INLINEABLE runParser #-}

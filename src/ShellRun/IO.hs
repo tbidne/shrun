@@ -22,9 +22,6 @@ module ShellRun.IO
   )
 where
 
-import Control.Concurrent.STM qualified as STM
-import Control.Concurrent.STM.TVar qualified as TVar
-import Control.Monad.Catch (MonadMask)
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
 import Data.IORef qualified as IORef
@@ -36,16 +33,17 @@ import ShellRun.Command (Command (..))
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Env.Types
   ( CmdLogging (..),
-    HasCmdLogging (..),
     HasCompletedCmds (..),
+    HasLogging (..),
   )
-import ShellRun.Logging.Log
+import ShellRun.Logging.Log qualified as Log
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
+import ShellRun.Logging.Types
   ( Log (..),
     LogDest (..),
     LogLevel (..),
     LogMode (..),
   )
-import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
 import System.Clock (Clock (..))
@@ -242,7 +240,7 @@ tryTimeSh cmd = do
   end <- liftIO $ C.getTime Monotonic
 
   completedCmds <- asks getCompletedCmds
-  liftIO $ STM.atomically $ TVar.modifyTVar' completedCmds (cmd <|)
+  liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
 
   let diff = Utils.diffTime start end
   pure $ bimap (diff,) (const diff) res
@@ -253,8 +251,8 @@ tryTimeSh cmd = do
 --
 -- @since 0.1
 tryTimeShStreamRegion ::
-  ( HasCmdLogging env,
-    HasCompletedCmds env,
+  ( HasCompletedCmds env,
+    HasLogging env,
     MonadMask m,
     MonadReader env m,
     MonadUnliftIO m,
@@ -274,8 +272,8 @@ tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 --
 -- @since 0.1
 tryTimeShStreamNoRegion ::
-  ( HasCmdLogging env,
-    HasCompletedCmds env,
+  ( HasCompletedCmds env,
+    HasLogging env,
     MonadReader env m,
     MonadUnliftIO m,
     RegionLogger m,
@@ -291,8 +289,8 @@ tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 --
 -- @since 0.1
 tryTimeShAnyRegion ::
-  ( HasCmdLogging env,
-    HasCompletedCmds env,
+  ( HasCompletedCmds env,
+    HasLogging env,
     MonadReader env m,
     MonadUnliftIO m,
     RegionLogger m,
@@ -337,7 +335,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   end <- liftIO $ C.getTime Monotonic
 
   completedCmds <- asks getCompletedCmds
-  liftIO $ STM.atomically $ TVar.modifyTVar' completedCmds (cmd <|)
+  liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
 
   result <- case exitCode of
     ExitSuccess -> pure $ Right ()
@@ -362,7 +360,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
 {-# INLINEABLE tryTimeShAnyRegion #-}
 
 streamOutput ::
-  ( HasCmdLogging env,
+  ( HasLogging env,
     MonadIO m,
     MonadReader env m,
     RegionLogger m,
@@ -399,8 +397,8 @@ streamOutput mRegion cmd recvH ph = do
                   dest = logDest
                 }
         case mRegion of
-          Nothing -> putLog log
-          Just region -> putRegionLog region log
+          Nothing -> Log.putLog log
+          Just region -> Log.putRegionLog region log
       ReadNoData -> pure ()
     liftIO $ P.getProcessExitCode ph
   lastRead <- liftIO $ IORef.readIORef lastReadRef

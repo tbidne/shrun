@@ -7,14 +7,8 @@
 module ShellRun.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    HasCmdDisplay (..),
-    HasCmdLogging (..),
-    HasCmdNameTrunc (..),
-    HasCmdLineTrunc (..),
-    HasStripControl (..),
+    HasLogging (..),
     HasCompletedCmds (..),
-    HasFileLogging (..),
-    HasGlobalLogging (..),
     HasLegend (..),
     HasTimeout (..),
 
@@ -28,7 +22,6 @@ module ShellRun.Env.Types
   )
 where
 
-import Control.Concurrent.STM.TVar (TVar)
 import Data.Sequence (Seq)
 import ShellRun.Command (Command)
 import ShellRun.Data.FilePathDefault (FilePathDefault (..))
@@ -238,45 +231,43 @@ class HasTimeout env where
   -- | @since 0.1
   getTimeout :: env -> Timeout
 
--- | FileLogging, if any.
---
--- @since 0.1
-class HasFileLogging env where
-  -- | @since 0.1
-  getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
-
--- | Determines if we should log commands' output to the console.
---
--- @since 0.1
-class HasCmdLogging env where
-  getCmdLogging :: env -> CmdLogging
-
--- | Determines how to display command names.
---
--- @since 0.1
-class HasCmdDisplay env where
-  -- | @since 0.1
-  getCmdDisplay :: env -> CmdDisplay
-
--- | Determines command name truncation behavior.
---
--- @since 0.1
-class HasCmdNameTrunc env where
-  -- | @since 0.1
-  getCmdNameTrunc :: env -> Truncation 'TCmdName
-
--- | Determines command line truncation behavior.
---
--- @since 0.1
-class HasCmdLineTrunc env where
-  -- | @since 0.1
-  getCmdLineTrunc :: env -> Truncation 'TCmdLine
-
--- | Determines control character behavior.
+-- | Holds logging configuration.
 --
 -- @since 0.3
-class HasStripControl env where
-  -- | @since 0.3
+class HasLogging env where
+  -- | Determines how to display command names.
+  --
+  -- @since 0.1
+  getCmdDisplay :: env -> CmdDisplay
+
+  -- | Determines command line truncation behavior.
+  --
+  -- @since 0.1
+  getCmdLineTrunc :: env -> Truncation 'TCmdLine
+
+  -- | Determines if we should log commands' output to the console.
+  --
+  -- @since 0.1
+  getCmdLogging :: env -> CmdLogging
+
+  -- | Determines command name truncation behavior.
+  --
+  -- @since 0.1
+  getCmdNameTrunc :: env -> Truncation 'TCmdName
+
+  -- | File logging, if any.
+  --
+  -- @since 0.3
+  getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
+
+  -- | Determines if logging is enabled globally.
+  --
+  -- @since 0.1
+  getGlobalLogging :: env -> Bool
+
+  -- | Determines control character behavior.
+  --
+  -- @since 0.3
   getStripControl :: env -> StripControl
 
 -- | Determines command line truncation behavior.
@@ -286,15 +277,8 @@ class HasCompletedCmds env where
   -- | @since 0.1
   getCompletedCmds :: env -> TVar (Seq Command)
 
--- | Determines command line truncation behavior.
---
--- @since 0.1
-class HasGlobalLogging env where
-  -- | @since 0.1
-  getGlobalLogging :: env -> Bool
-
 -- | The main 'Env' type used by ShellRun. Intended to be used with
--- 'ShellRun.Class.MonadReader'.
+-- 'ShellRun.Effects.MonadReader'.
 --
 -- @since 0.1
 data Env = MkEnv
@@ -361,34 +345,21 @@ instance HasTimeout Env where
   getTimeout = view #timeout
   {-# INLINEABLE getTimeout #-}
 
--- | @since 0.1
-instance HasFileLogging Env where
-  getFileLogging = view #fileLogging
-  {-# INLINEABLE getFileLogging #-}
-
--- | @since 0.1
-instance HasCmdLogging Env where
-  getCmdLogging = view #cmdLogging
-  {-# INLINEABLE getCmdLogging #-}
-
--- | @since 0.1
-instance HasCmdDisplay Env where
-  getCmdDisplay = view #cmdDisplay
-  {-# INLINEABLE getCmdDisplay #-}
-
--- | @since 0.1
-instance HasCmdNameTrunc Env where
-  getCmdNameTrunc = view #cmdNameTrunc
-  {-# INLINEABLE getCmdNameTrunc #-}
-
--- | @since 0.1
-instance HasCmdLineTrunc Env where
-  getCmdLineTrunc = view #lineNameTrunc
-  {-# INLINEABLE getCmdLineTrunc #-}
-
 -- | @since 0.3
-instance HasStripControl Env where
+instance HasLogging Env where
+  getCmdDisplay = view #cmdDisplay
+  getCmdLineTrunc = view #lineNameTrunc
+  getCmdLogging = view #cmdLogging
+  getCmdNameTrunc = view #cmdNameTrunc
+  getFileLogging = view #fileLogging
+  getGlobalLogging = view #globalLogging
   getStripControl = view #stripControl
+  {-# INLINEABLE getCmdDisplay #-}
+  {-# INLINEABLE getCmdLineTrunc #-}
+  {-# INLINEABLE getCmdLogging #-}
+  {-# INLINEABLE getCmdNameTrunc #-}
+  {-# INLINEABLE getFileLogging #-}
+  {-# INLINEABLE getGlobalLogging #-}
   {-# INLINEABLE getStripControl #-}
 
 -- | @since 0.1
@@ -400,7 +371,3 @@ instance HasCompletedCmds Env where
 instance HasCommands Env where
   getCommands = view #commands
   {-# INLINEABLE getCommands #-}
-
-instance HasGlobalLogging Env where
-  getGlobalLogging = view #globalLogging
-  {-# INLINEABLE getGlobalLogging #-}

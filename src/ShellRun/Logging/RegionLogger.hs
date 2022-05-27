@@ -8,7 +8,7 @@ module ShellRun.Logging.RegionLogger
   )
 where
 
-import ShellRun.Logging.Log (Log (..))
+import ShellRun.Logging.Types (LogMode)
 import ShellRun.Prelude
 
 -- | `RegionLogger` is a simple typeclass for abstracting logging functions.
@@ -25,17 +25,18 @@ class Monad m => RegionLogger m where
   -- | Pushes a log to the "global" region.
   --
   -- @since 0.1
-  putLog :: Log -> m ()
+  logFn :: Text -> m ()
 
-  -- | Pushes a log to the region.
+  -- | Selects a region fn based on the 'LogMode'.
   --
-  -- @since 0.1
-  putRegionLog :: Region m -> Log -> m ()
+  -- @since 0.3
+  logModeToRegionFn :: LogMode -> Region m -> Text -> m ()
 
 -- | @since 0.1
-instance RegionLogger m => RegionLogger (ReaderT e m) where
-  type Region (ReaderT e m) = Region m
-  putLog = lift . putLog
-  {-# INLINEABLE putLog #-}
-  putRegionLog region = lift . putRegionLog region
-  {-# INLINEABLE putRegionLog #-}
+-- instance RegionLogger m => RegionLogger (ReaderT e m) where
+--  type Region (ReaderT e m) = Region m
+--  putLog = lift . putLog
+--  {-# INLINEABLE putLog #-}
+--  putRegionLog region = lift . putRegionLog region
+--  {-# INLINEABLE putRegionLog #-}
+--  modeToRegionFn

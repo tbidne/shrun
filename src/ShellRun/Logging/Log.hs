@@ -1,226 +1,102 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
-
--- | This module provides the `Log` type and associated functions.
+-- | This module provides convenience functions for formatting and
+-- sending logs to destinations.
 --
 -- @since 0.1
 module ShellRun.Logging.Log
-  ( -- * Types for logging
-    Log (..),
-    LogMode (..),
-    LogLevel (..),
-    LogDest (..),
+  ( -- * High-level
+    putLog,
+    putRegionLog,
 
-    -- * Utility functions for associate levels to colors/prefixes.
-    logToColor,
-    logToPrefix,
-    levelToColor,
-    levelToPrefix,
+    -- * Low-level
+    maybePrintLog,
+    maybeSendLogToQueue,
   )
 where
 
-import ShellRun.Command (Command)
-import ShellRun.Data.Supremum (Supremum (..))
+import ShellRun.Env.Types (HasLogging (..))
+import ShellRun.Logging.Formatting qualified as LFormat
+import ShellRun.Logging.Queue qualified as Queue
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
+import ShellRun.Logging.Types (Log (..), LogDest (..))
 import ShellRun.Prelude
-import System.Console.Pretty (Color)
-import System.Console.Pretty qualified as P
 
--- | Determines the logging behavior.
+-- | Conditionally writes a log to the console and file, depending on
+-- the 'HasLogging' environment.
 --
--- @since 0.1
-data LogMode
-  = -- | Sets the logging region to this log.
-    --
-    -- @since 0.1
-    Set
-  | -- | Appends the log to the logging region.
-    --
-    -- @since 0.1
-    Append
-  | -- | Closes the logging region, finishing with the log.
-    --
-    -- @since 0.1
-    Finish
-  deriving stock
-    ( -- | @since 0.1
-      Bounded,
-      -- | @since 0.1
-      Enum,
-      -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Ord,
-      -- | @since 0.1
-      Show
-    )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via (Supremum LogMode)
+-- @since 0.3
+putLog ::
+  ( HasLogging env,
+    MonadIO m,
+    MonadReader env m,
+    RegionLogger m
+  ) =>
+  Log ->
+  m ()
+putLog log = do
+  b <- asks getGlobalLogging
+  if b
+    then do
+      maybeSendLogToQueue log
+      maybePrintLog logFn log
+    else pure ()
 
-makePrismLabels ''LogMode
-
--- | Determines the logging level.
+-- | Conditionally writes a log to the console region and file, depending on
+-- the 'HasLogging' environment.
 --
--- @since 0.1
-data LogLevel
-  = -- | @since 0.1
-    None
-  | -- | @since 0.1
-    SubCommand
-  | -- | @since 0.1
-    Debug
-  | -- | @since 0.1
-    Info
-  | -- | @since 0.1
-    InfoBlue
-  | -- | @since 0.1
-    InfoCyan
-  | -- | @since 0.1
-    InfoSuccess
-  | -- | @since 0.1
-    Warn
-  | -- | @since 0.1
-    Error
-  | -- | @since 0.1
-    Fatal
-  deriving stock
-    ( -- | @since 0.1
-      Bounded,
-      -- | @since 0.1
-      Enum,
-      -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Ord,
-      -- | @since 0.1
-      Show
-    )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via (Supremum LogLevel)
+-- @since 0.3
+putRegionLog ::
+  ( HasLogging env,
+    MonadIO m,
+    MonadReader env m,
+    RegionLogger m
+  ) =>
+  Region m ->
+  Log ->
+  m ()
+putRegionLog region lg = do
+  b <- asks getGlobalLogging
+  if b
+    then do
+      let logRegionFn = logModeToRegionFn $ lg ^. #mode
+      maybeSendLogToQueue lg
+      maybePrintLog (logRegionFn region) lg
+    else pure ()
+{-# INLINEABLE putRegionLog #-}
 
-makePrismLabels ''LogLevel
-
--- | Determines where the log is sent.
+-- | @maybePrintLog fn log@ applies @fn@ if the @log@ has dest 'LogFile'.
+-- Otherwise does nothing.
 --
--- @since 0.1
-data LogDest
-  = -- | @since 0.1
-    LogConsole
-  | -- | @since 0.1
-    LogFile
-  | -- | @since 0.1
-    LogBoth
-  deriving stock
-    ( -- | @since 0.1
-      Bounded,
-      -- | @since 0.1
-      Enum,
-      -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Ord,
-      -- | @since 0.1
-      Show
-    )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via (Supremum LogDest)
+-- @since 0.3
+maybePrintLog ::
+  ( HasLogging env,
+    MonadReader env m
+  ) =>
+  (Text -> m ()) ->
+  Log ->
+  m ()
+maybePrintLog fn log =
+  case log ^. #dest of
+    LogFile -> pure ()
+    _ -> LFormat.formatConsoleLog log >>= fn
+{-# INLINEABLE maybePrintLog #-}
 
-makePrismLabels ''LogDest
-
--- | Captures the relevant information concerning a specific log
--- (i.e. text, level, and mode).
+-- | Sends the log to the file queue as long as the dest is not 'LogConsole'.
 --
--- @since 0.1
-data Log = MkLog
-  { -- | Optional command that produced this log.
-    --
-    -- @since 0.1
-    cmd :: Maybe Command,
-    -- | The 'Text' for a given log.
-    --
-    -- @since 0.1
-    msg :: Text,
-    -- | The 'LogLevel' for a given log.
-    --
-    -- @since 0.1
-    lvl :: LogLevel,
-    -- | The 'LogMode' for a given log.
-    --
-    -- @since 0.1
-    mode :: LogMode,
-    -- | Where to send this log. Most logs should go to both the console and
-    -- the file. For a log to actually be written to a file, 'dest' must be
-    -- either 'LogFile' or 'LogBoth' /and/ file logging must be enabled
-    -- globally.
-    --
-    -- @since 0.1
-    dest :: LogDest
-  }
-  deriving stock
-    ( -- | @since 0.1
-      Show
-    )
-
-makeFieldLabelsNoPrefix ''Log
-
--- | @since 0.1
-
--- | Transforms log to a color based on its 'LogLevel'.
---
--- @since 0.1
-logToColor :: Log -> Color
-logToColor = levelToColor . view #lvl
-{-# INLINEABLE logToColor #-}
-
--- | Transforms log to a prefix based on its 'LogLevel'.
---
--- @since 0.1
-logToPrefix :: Log -> Text
-logToPrefix = levelToPrefix . view #lvl
-{-# INLINEABLE logToPrefix #-}
-
--- | Maps 'LogLevel' to 'Color'.
---
--- @since 0.1
-levelToColor :: LogLevel -> Color
-levelToColor None = P.White
-levelToColor SubCommand = P.White
-levelToColor Debug = P.White
-levelToColor Info = P.Magenta
-levelToColor InfoBlue = P.Blue
-levelToColor InfoCyan = P.Cyan
-levelToColor InfoSuccess = P.Green
-levelToColor Warn = P.Yellow
-levelToColor Error = P.Red
-levelToColor Fatal = P.Red
-{-# INLINEABLE levelToColor #-}
-
--- | Maps 'LogLevel' to \'Prefix\'.
---
--- @since 0.1
-levelToPrefix :: LogLevel -> Text
-levelToPrefix None = ""
-levelToPrefix SubCommand = "[Command] "
-levelToPrefix Debug = "[Debug] "
-levelToPrefix Info = "[Info] "
-levelToPrefix InfoBlue = "[Info] "
-levelToPrefix InfoCyan = "[Info] "
-levelToPrefix InfoSuccess = "[Info] "
-levelToPrefix Warn = "[Warn] "
-levelToPrefix Error = "[Error] "
-levelToPrefix Fatal = "[Fatal Error] "
-{-# INLINEABLE levelToPrefix #-}
+-- @since 0.3
+maybeSendLogToQueue ::
+  ( HasLogging env,
+    MonadIO m,
+    MonadReader env m
+  ) =>
+  Log ->
+  m ()
+maybeSendLogToQueue log =
+  case log ^. #dest of
+    LogConsole -> pure ()
+    _ -> do
+      fileLogging <- asks getFileLogging
+      case fileLogging of
+        Nothing -> pure ()
+        Just (_, queue) -> do
+          Queue.writeQueue queue log
+{-# INLINEABLE maybeSendLogToQueue #-}

@@ -7,15 +7,14 @@ module Integration.MockShell.GoodMockShell
   )
 where
 
-import Data.HashMap.Strict qualified as Map
+import Data.Text qualified as T
 import Integration.MockEnv (MockEnv)
 import Integration.MockShell.MockShellBase
   ( MockShellBase,
     runMockShellBase,
   )
 import Integration.Prelude
-import ShellRun.Class.MonadShell (MonadShell (..))
-import ShellRun.Data.NonEmptySeq qualified as NESeq
+import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 
 -- | 'GoodMockShell' is intended to test a \"Happy path\" run of
@@ -26,28 +25,28 @@ newtype GoodMockShell a = MkGoodMockShell (MockShellBase a)
     ( Functor,
       Applicative,
       Monad,
+      MonadCatch,
+      MonadIO,
+      MonadMask,
       MonadReader MockEnv,
-      MonadWriter (List Text),
+      MonadThrow,
+      MonadUnliftIO,
       RegionLogger
     )
     via MockShellBase
 
-runGoodMockShell :: GoodMockShell a -> MockEnv -> (a, List Text)
+runGoodMockShell :: GoodMockShell a -> MockEnv -> IO a
 runGoodMockShell (MkGoodMockShell rdr) = runMockShellBase rdr
 
-instance MonadShell GoodMockShell where
-  getDefaultDir = pure "config"
-  legendPathToMap "config/shell-run.legend" = pure $ Right $ Map.singleton "def-key" "def-val"
-  legendPathToMap _ = pure $ Right mp
+instance MonadFSReader GoodMockShell where
+  getXdgConfig _ = pure "config"
+  readFile "config/shell-run.legend" = pure "def-key=def-val"
+  readFile _ = do
+    pure legendTxt
     where
-      mp =
-        Map.fromList
-          [ ("cmd1", "command 1"),
-            ("cmd2", "command 2"),
-            ("both", "cmd1,,cmd2")
+      legendTxt =
+        T.unlines
+          [ "cmd1=echo 1",
+            "cmd2=echo 2",
+            "both=sleep 0.5,,cmd1,,cmd2"
           ]
-
-  runCommands = tell . NESeq.toList . fmap (view #command)
-
-instance Show a => Show (GoodMockShell a) where
-  show x = "MkGoodMockShell " <> show x
