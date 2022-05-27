@@ -86,7 +86,7 @@ shell-run "some long command" "another command"
 
 Will run `some long command` and `another command` concurrently.
 
-A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively. Example of running two commands `sign-peace-treaty` and `takeover` defined in a custom legend file:
+A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively. Example of running two commands (`sign-peace-treaty` and `takeover`) from a custom legend file:
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shell-run -ck -l examples/shell-run.legend sign-peace-treaty takeover</span>
@@ -96,6 +96,8 @@ A running timer is provided, and stdout/stderr will be updated when a command fi
 <span style="color:">[Command] [ui] adding emojis. we like to have fun :-)</span>
 <span style="color: #a3fefe">[Info] Running time: 6 seconds</span></code>
 </pre>
+
+Note: `shell-run` colors its logs, and the examples here _should_ show use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
 
 # Options
 
@@ -166,7 +168,9 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Arg:** `-c, --cmd-log`
 
-**Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is show at a given time.
+**Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is shown at a given time.
+
+Note: When commands have complicated output, they logs can interfere with each other (indeed even overwrite themselves). We attempt to mitigate such situations, though see [Strip Control](#strip-control).
 
 **Example:**
 
@@ -185,7 +189,7 @@ vs.
 
 Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 
-Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File-Logging](#file-logging) for details on investigating command failure.
+Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File Log](#file-log) for details on investigating command failure.
 
 ### File Log
 
@@ -218,7 +222,7 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Arg:** `-d, --disable-log`
 
-**Description**: This option globally disables all logging i.e. ordinary logs and those created via `--cmd-log` and `--file-log`. As most uses will want at the least the default success/error messages and timers, this option is primarily intended for debugging or testing where logging is undesirable.
+**Description**: This option globally disables all logging i.e. ordinary logs and those created via `--cmd-log` and `--file-log`. As most uses will want at least the default success/error messages and timers, this option is primarily intended for debugging or testing where logging is undesirable.
 
 ## Log Formatting
 
@@ -262,7 +266,12 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 **Arg:** `-s,--strip-control [all | smart | none]`
 
-**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. The default `all` strips all such chars -- the 'safest' option, as far as layout preservation goes -- though it can leave ugly remnants e.g. ansi escape sequences like `[0m`. `none` does nothing i.e. all chars are left untouched. `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' though it is likely to miss some chars. `smart` is experimental and subject to change.
+**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. The default `all` strips all such chars -- the 'safest' option, as far as layout preservation goes -- though it can leave ugly remnants e.g. ansi escape sequences like `[0m`. `none` does nothing i.e. all chars are left untouched. `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
+
+* Simple formatting is left intact.
+* Aforementioned remnants should not be left behind.
+
+Though it is likely to miss some chars. `smart` is experimental and subject to change.
 
 **Example:**
 
