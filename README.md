@@ -266,7 +266,7 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 **Arg:** `-s,--strip-control [all | smart | none]`
 
-**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. The default `all` strips all such chars -- the 'safest' option, as far as layout preservation goes -- though it can leave ugly remnants e.g. ansi escape sequences like `[0m`. `none` does nothing i.e. all chars are left untouched. `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
+**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. `all` strips all such chars -- the 'safest' option, as far as layout preservation goes -- though it can leave ugly remnants e.g. ansi escape sequences like `[0m`. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
 
 * Simple formatting is left intact.
 * Aforementioned remnants should not be left behind.

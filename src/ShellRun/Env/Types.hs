@@ -175,11 +175,7 @@ makeFieldLabelsNoPrefix ''Truncation
 --
 -- @since 0.3
 data StripControl
-  = -- | Strip all control characters.
-    --
-    -- @since 0.3
-    StripControlAll
-  | -- | \"Intelligently\" strip control characters e.g. colors are fine,
+  = -- | \"Intelligently\" strip control characters e.g. colors are fine,
     -- ones that affect the cursor should be removed.
     --
     -- @since 0.3
@@ -188,6 +184,10 @@ data StripControl
     --
     -- @since 0.3
     StripControlNone
+  | -- | Strip all control characters.
+    --
+    -- @since 0.3
+    StripControlAll
   deriving stock
     ( -- | @since 0.3
       Bounded,
