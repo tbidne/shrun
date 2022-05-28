@@ -1,5 +1,9 @@
 # Revision history for shell-run
 
+## 0.3
+
+* Adds new `--strip-control` argument for handling control chars in logs.
+
 ## 0.2.0.1 -- 2022-05-24
 
 * Update documentation
