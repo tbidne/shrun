@@ -7,16 +7,18 @@ module Integration.MockShell.BadLegendMockShell
   )
 where
 
-import Integration.MockEnv (MockEnv)
-import Integration.MockShell.MockShellBase (MockShellBase, runMockShellBase)
+import Integration.IntEnv (IntEnv)
 import Integration.Prelude
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
+import ShellRun.Effects.MonadTime (MonadTime (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
+import ShellRun.ShellT (ShellT, runShellT)
 
 -- | 'BadLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the path to the legend file is bad.
 type BadLegendMockShell :: Type -> Type
-newtype BadLegendMockShell a = MkBadLegendMockShell (MockShellBase a)
+newtype BadLegendMockShell a = MkBadLegendMockShell (ShellT IntEnv IO a)
   deriving
     ( Functor,
       Applicative,
@@ -24,15 +26,17 @@ newtype BadLegendMockShell a = MkBadLegendMockShell (MockShellBase a)
       MonadCatch,
       MonadIO,
       MonadMask,
-      MonadReader MockEnv,
+      MonadProcRunner,
+      MonadReader IntEnv,
       MonadThrow,
+      MonadTime,
       MonadUnliftIO,
       RegionLogger
     )
-    via MockShellBase
+    via ShellT IntEnv IO
 
-runBadLegendMockShell :: BadLegendMockShell a -> MockEnv -> IO a
-runBadLegendMockShell (MkBadLegendMockShell rdr) = runMockShellBase rdr
+runBadLegendMockShell :: BadLegendMockShell a -> IntEnv -> IO a
+runBadLegendMockShell (MkBadLegendMockShell rdr) = runShellT rdr
 
 instance MonadFSReader BadLegendMockShell where
   getXdgConfig _ = pure "config"

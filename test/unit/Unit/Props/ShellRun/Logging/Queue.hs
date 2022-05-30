@@ -10,6 +10,7 @@ module Unit.Props.ShellRun.Logging.Queue
 where
 
 import Data.Functor.Identity (Identity (..))
+import Data.Int (Int64)
 import Data.String (IsString)
 import Data.Text qualified as T
 import Hedgehog qualified as H
@@ -48,6 +49,7 @@ newtype MockTime a = MkMockTime
 
 instance MonadTime MockTime where
   getSystemTime = pure $ TR.read sysTime
+  getTimeSpec = pure $ fromIntegral @Int64 0
 
 makeFieldLabelsNoPrefix ''MockTime
 

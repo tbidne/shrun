@@ -21,6 +21,8 @@ import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
+import ShellRun.Effects.MonadTime (MonadTime (..))
 import ShellRun.Env
   ( CmdLogging (..),
     HasCommands (..),
@@ -30,7 +32,6 @@ import ShellRun.Env
     HasTimeout (..),
   )
 import ShellRun.IO (Stderr (..))
-import ShellRun.IO qualified as ShIO
 import ShellRun.Legend (LegendErr (..))
 import ShellRun.Legend qualified as Legend
 import ShellRun.Logging.Formatting qualified as LFormat
@@ -42,15 +43,12 @@ import ShellRun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (.
 import ShellRun.Prelude
 import ShellRun.ShellT (ShellT, runShellT)
 import ShellRun.Utils qualified as U
-import System.Clock (Clock (..))
-import System.Clock qualified as C
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.FilePath ((</>))
 import UnliftIO.Async qualified as Async
 
--- | `runShell` is the entry point for running shell commands i.e.
--- `MonadShell` instances.
+-- | `runShell` is the entry point for running shell commands.
 --
 -- @since 0.1
 runShell ::
@@ -61,10 +59,10 @@ runShell ::
     HasLegend env,
     MonadFSReader m,
     MonadMask m,
+    MonadProcRunner m,
     MonadReader env m,
-    MonadUnliftIO m,
-    RegionLogger m,
-    Region m ~ ConsoleRegion
+    MonadTime m,
+    MonadUnliftIO m
   ) =>
   m ()
 runShell = do
@@ -117,10 +115,10 @@ runCommandsOrLogErr ::
     HasLogging env,
     HasTimeout env,
     MonadMask m,
+    MonadProcRunner m,
+    MonadTime m,
     MonadReader env m,
-    MonadUnliftIO m,
-    RegionLogger m,
-    Region m ~ ConsoleRegion
+    MonadUnliftIO m
   ) =>
   Either LegendErr (NonEmptySeq Command) ->
   m ()
@@ -144,16 +142,16 @@ runCommands ::
     HasLogging env,
     HasTimeout env,
     MonadMask m,
+    MonadProcRunner m,
     MonadReader env m,
-    MonadUnliftIO m,
-    RegionLogger m,
-    Region m ~ ConsoleRegion
+    MonadTime m,
+    MonadUnliftIO m
   ) =>
   NonEmptySeq Command ->
   m ()
 runCommands commands = Regions.displayConsoleRegions $
   Async.withAsync maybePollQueue $ \fileLogger -> do
-    start <- liftIO $ C.getTime Monotonic
+    start <- getTimeSpec
     let actions = Async.mapConcurrently_ runCommand commands
         actionsWithTimer = Async.race_ actions (counter commands)
 
@@ -180,7 +178,7 @@ runCommands commands = Regions.displayConsoleRegions $
           Log.putRegionLog r fatalLog
         Right _ -> pure ()
 
-      end <- liftIO $ C.getTime Monotonic
+      end <- getTimeSpec
       let totalTime = U.diffTime start end
           totalTimeTxt = "Finished! Total time elapsed: " <> formatSeconds totalTime
           finalLog =
@@ -201,13 +199,11 @@ runCommands commands = Regions.displayConsoleRegions $
 {-# INLINEABLE runCommands #-}
 
 runCommand ::
-  ( HasCompletedCmds env,
-    HasLogging env,
+  ( HasLogging env,
     MonadMask m,
+    MonadProcRunner m,
     MonadReader env m,
-    MonadUnliftIO m,
-    RegionLogger m,
-    Region m ~ ConsoleRegion
+    MonadUnliftIO m
   ) =>
   Command ->
   m ()
@@ -225,10 +221,10 @@ runCommand cmd = do
   --       tryTimeShStreamNoRegion and tryTimeShStreamRegion handle file
   --       logging automatically.
   res <- case (cmdLogging, fileLogging, globalLogging) of
-    (_, _, False) -> ShIO.tryTimeSh cmd
-    (Disabled, Nothing, _) -> ShIO.tryTimeSh cmd
-    (Disabled, Just (_, _), _) -> ShIO.tryTimeShStreamNoRegion cmd
-    _ -> ShIO.tryTimeShStreamRegion cmd
+    (_, _, False) -> tryTimeProc cmd
+    (Disabled, Nothing, _) -> tryTimeProc cmd
+    (Disabled, Just (_, _), _) -> tryTimeProcStream cmd
+    _ -> tryTimeProcStreamRegion cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
     let (msg', lvl', t') = case res of

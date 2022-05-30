@@ -9,6 +9,7 @@ module Functional.FuncEnv
 where
 
 import Functional.Prelude
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
 import ShellRun.Env qualified as Env
 import ShellRun.Env.Types
   ( Env,
@@ -18,6 +19,7 @@ import ShellRun.Env.Types
     HasLogging (..),
     HasTimeout (..),
   )
+import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.ShellT (ShellT)
 import System.Console.Regions (ConsoleRegion)
@@ -65,6 +67,12 @@ instance RegionLogger (ShellT FuncEnv IO) where
     liftIO $ modifyIORef' ls (txt :)
 
   logModeToRegionFn _ _ = logFn
+
+-- | @since 0.3.0.1
+instance MonadProcRunner (ShellT FuncEnv IO) where
+  tryTimeProc = ShIO.tryTimeSh
+  tryTimeProcStream = ShIO.tryTimeShStreamNoRegion
+  tryTimeProcStreamRegion = ShIO.tryTimeShStreamRegion
 
 -- | Makes the 'FuncEnv' from CLI args.
 --

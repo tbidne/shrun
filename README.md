@@ -97,7 +97,7 @@ A running timer is provided, and stdout/stderr will be updated when a command fi
 <span style="color: #a3fefe">[Info] Running time: 6 seconds</span></code>
 </pre>
 
-Note: `shell-run` colors its logs, and the examples here _should_ show use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
+Note: `shell-run` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
 
 # Options
 

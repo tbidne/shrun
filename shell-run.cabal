@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               shell-run
-version:            0.3
+version:            0.3.0.1
 license:            BSD-3-Clause
 license-file:       LICENSE
 tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.2
@@ -63,6 +63,7 @@ library
     ShellRun.Data.Supremum
     ShellRun.Data.Timeout
     ShellRun.Effects.MonadFSReader
+    ShellRun.Effects.MonadProcRunner
     ShellRun.Effects.MonadTime
     ShellRun.Env
     ShellRun.Env.Types
@@ -178,10 +179,9 @@ test-suite integration
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    Integration.MockEnv
+    Integration.IntEnv
     Integration.MockShell.BadLegendMockShell
     Integration.MockShell.GoodMockShell
-    Integration.MockShell.MockShellBase
     Integration.MockShell.NoLegendMockShell
     Integration.Prelude
 

@@ -7,16 +7,18 @@ module Integration.MockShell.NoLegendMockShell
   )
 where
 
-import Integration.MockEnv (MockEnv)
-import Integration.MockShell.MockShellBase (MockShellBase, runMockShellBase)
+import Integration.IntEnv (IntEnv)
 import Integration.Prelude
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
+import ShellRun.Effects.MonadTime (MonadTime (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
+import ShellRun.ShellT (ShellT, runShellT)
 
 -- | 'NoLegendMockShell' is intended to test a run of
 -- 'ShellRun.runShell' when the legend is not included.
 type NoLegendMockShell :: Type -> Type
-newtype NoLegendMockShell a = MkNoLegendMockShell (MockShellBase a)
+newtype NoLegendMockShell a = MkNoLegendMockShell (ShellT IntEnv IO a)
   deriving
     ( Functor,
       Applicative,
@@ -24,15 +26,17 @@ newtype NoLegendMockShell a = MkNoLegendMockShell (MockShellBase a)
       MonadCatch,
       MonadIO,
       MonadMask,
-      MonadReader MockEnv,
+      MonadProcRunner,
+      MonadReader IntEnv,
       MonadThrow,
+      MonadTime,
       MonadUnliftIO,
       RegionLogger
     )
-    via MockShellBase
+    via ShellT IntEnv IO
 
-runNoLegendMockShell :: NoLegendMockShell a -> MockEnv -> IO a
-runNoLegendMockShell (MkNoLegendMockShell rdr) = runMockShellBase rdr
+runNoLegendMockShell :: NoLegendMockShell a -> IntEnv -> IO a
+runNoLegendMockShell (MkNoLegendMockShell rdr) = runShellT rdr
 
 instance MonadFSReader NoLegendMockShell where
   getXdgConfig _ = pure "config"

@@ -103,7 +103,18 @@ import GHC.Generics as X (Generic)
 import GHC.Natural as X (Natural)
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
-import Optics.Core as X (over', set', view, (%), (%!~), (.~), (^.))
+import Optics.Core as X
+  ( Iso',
+    iso,
+    over',
+    review,
+    set',
+    view,
+    (%),
+    (%!~),
+    (.~),
+    (^.),
+  )
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrismLabels)
 import Refined as X (Refined)
 import UnliftIO as X

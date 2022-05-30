@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | Provides 'MockEnv' type for running integration tests.
-module Integration.MockEnv (MockEnv (..), defaultEnv) where
+-- | Provides 'IntEnv' type for running integration tests.
+module Integration.IntEnv (IntEnv (..), defaultEnv) where
 
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
@@ -12,6 +12,7 @@ import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.Timeout (Timeout (..))
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
 import ShellRun.Env
   ( HasCommands (..),
     HasCompletedCmds (..),
@@ -19,27 +20,32 @@ import ShellRun.Env
     HasLogging (..),
   )
 import ShellRun.Env.Types (CmdDisplay (..), CmdLogging (..), HasTimeout (..), StripControl (..), Truncation (..))
+import ShellRun.IO (Stderr)
+import ShellRun.Logging.RegionLogger (RegionLogger (..))
+import ShellRun.ShellT (ShellT)
+import System.Console.Regions (ConsoleRegion)
 
 -- | Includes the bare minimum fields necessary to run 'ShellRun.runShell'.
-data MockEnv = MkMockEnv
+data IntEnv = MkIntEnv
   { legend :: FilePathDefault,
     commands :: NonEmptySeq Text,
     completedCmds :: TVar (Seq Command),
-    logs :: TVar [Text]
+    logs :: TVar [Text],
+    cmdsRun :: TVar [Command]
   }
 
-makeFieldLabelsNoPrefix ''MockEnv
+makeFieldLabelsNoPrefix ''IntEnv
 
-instance HasLegend MockEnv where
+instance HasLegend IntEnv where
   getLegend = view #legend
 
-instance HasCommands MockEnv where
+instance HasCommands IntEnv where
   getCommands = view #commands
 
-instance HasCompletedCmds MockEnv where
+instance HasCompletedCmds IntEnv where
   getCompletedCmds = view #completedCmds
 
-instance HasLogging MockEnv where
+instance HasLogging IntEnv where
   getCmdDisplay _ = ShowKey
   getCmdLineTrunc _ = MkTruncation PPosInf
   getCmdLogging _ = Enabled
@@ -48,18 +54,38 @@ instance HasLogging MockEnv where
   getGlobalLogging _ = True
   getStripControl _ = StripControlNone
 
-instance HasTimeout MockEnv where
+instance HasTimeout IntEnv where
   getTimeout _ = MkTimeout PPosInf
 
--- | Constructs a default 'MockEnv'.
-defaultEnv :: NonEmptySeq Text -> IO MockEnv
+instance RegionLogger (ShellT IntEnv IO) where
+  type Region (ShellT IntEnv IO) = ConsoleRegion
+  logFn logTxt = do
+    ls <- asks $ view #logs
+    liftIO $ atomically $ modifyTVar' ls (logTxt :)
+  logModeToRegionFn _ _ = logFn
+
+instance MonadProcRunner (ShellT IntEnv IO) where
+  tryTimeProc = saveCmd
+  tryTimeProcStream = saveCmd
+  tryTimeProcStreamRegion = saveCmd
+
+saveCmd :: Command -> ShellT IntEnv IO (Either (Natural, Stderr) Natural)
+saveCmd cmd = do
+  cr <- asks $ view #cmdsRun
+  liftIO $ atomically $ modifyTVar' cr (cmd :)
+  pure $ Right 0
+
+-- | Constructs a default 'IntEnv'.
+defaultEnv :: NonEmptySeq Text -> IO IntEnv
 defaultEnv cmds = do
   completedCmds' <- newTVarIO Seq.empty
   logs' <- newTVarIO []
+  cmdsRun' <- newTVarIO []
   pure $
-    MkMockEnv
+    MkIntEnv
       { legend = FPNone,
         commands = cmds,
         completedCmds = completedCmds',
-        logs = logs'
+        logs = logs',
+        cmdsRun = cmdsRun'
       }

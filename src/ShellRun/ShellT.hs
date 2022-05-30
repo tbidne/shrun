@@ -10,8 +10,10 @@ module ShellRun.ShellT
 where
 
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
 import ShellRun.Effects.MonadTime (MonadTime (..))
 import ShellRun.Env.Types (Env)
+import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types (LogMode (..))
 import ShellRun.Prelude
@@ -68,3 +70,9 @@ instance MonadIO m => RegionLogger (ShellT Env m) where
   logModeToRegionFn Set cr = liftIO . Regions.setConsoleRegion cr
   logModeToRegionFn Append cr = liftIO . Regions.appendConsoleRegion cr
   logModeToRegionFn Finish cr = liftIO . Regions.finishConsoleRegion cr
+
+-- | @since 0.3.0.1
+instance (MonadMask m, MonadUnliftIO m) => MonadProcRunner (ShellT Env m) where
+  tryTimeProc = ShIO.tryTimeSh
+  tryTimeProcStream = ShIO.tryTimeShStreamNoRegion
+  tryTimeProcStreamRegion = ShIO.tryTimeShStreamRegion

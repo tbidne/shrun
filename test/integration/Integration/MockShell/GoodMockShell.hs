@@ -8,19 +8,18 @@ module Integration.MockShell.GoodMockShell
 where
 
 import Data.Text qualified as T
-import Integration.MockEnv (MockEnv)
-import Integration.MockShell.MockShellBase
-  ( MockShellBase,
-    runMockShellBase,
-  )
+import Integration.IntEnv (IntEnv)
 import Integration.Prelude
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
+import ShellRun.Effects.MonadTime (MonadTime (..))
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
+import ShellRun.ShellT (ShellT, runShellT)
 
 -- | 'GoodMockShell' is intended to test a \"Happy path\" run of
 -- 'ShellRun.runShell'.
 type GoodMockShell :: Type -> Type
-newtype GoodMockShell a = MkGoodMockShell (MockShellBase a)
+newtype GoodMockShell a = MkGoodMockShell (ShellT IntEnv IO a)
   deriving
     ( Functor,
       Applicative,
@@ -28,15 +27,17 @@ newtype GoodMockShell a = MkGoodMockShell (MockShellBase a)
       MonadCatch,
       MonadIO,
       MonadMask,
-      MonadReader MockEnv,
+      MonadProcRunner,
+      MonadReader IntEnv,
+      MonadTime,
       MonadThrow,
       MonadUnliftIO,
       RegionLogger
     )
-    via MockShellBase
+    via ShellT IntEnv IO
 
-runGoodMockShell :: GoodMockShell a -> MockEnv -> IO a
-runGoodMockShell (MkGoodMockShell rdr) = runMockShellBase rdr
+runGoodMockShell :: GoodMockShell a -> IntEnv -> IO a
+runGoodMockShell (MkGoodMockShell rdr) = runShellT rdr
 
 instance MonadFSReader GoodMockShell where
   getXdgConfig _ = pure "config"
@@ -46,7 +47,7 @@ instance MonadFSReader GoodMockShell where
     where
       legendTxt =
         T.unlines
-          [ "cmd1=echo 1",
-            "cmd2=echo 2",
-            "both=sleep 0.5,,cmd1,,cmd2"
+          [ "cmd1=cmd 1",
+            "cmd2=cmd 2",
+            "both=cmd1,,cmd2,,echo hi"
           ]
