@@ -31,6 +31,7 @@ import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
 import ShellRun.Data.Supremum (Supremum (..))
+import ShellRun.Effects.MonadTime (MonadTime (..), withTiming)
 import ShellRun.Env.Types
   ( CmdLogging (..),
     HasCompletedCmds (..),
@@ -46,8 +47,6 @@ import ShellRun.Logging.Types
   )
 import ShellRun.Prelude
 import ShellRun.Utils qualified as Utils
-import System.Clock (Clock (..))
-import System.Clock qualified as C
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.Exit (ExitCode (..))
@@ -230,20 +229,18 @@ tryShExitCode cmd path = do
 tryTimeSh ::
   ( HasCompletedCmds env,
     MonadIO m,
-    MonadReader env m
+    MonadReader env m,
+    MonadTime m
   ) =>
   Command ->
   m (Either (Tuple2 Natural Stderr) Natural)
 tryTimeSh cmd = do
-  start <- liftIO $ C.getTime Monotonic
-  res <- liftIO $ tryShExitCode cmd Nothing
-  end <- liftIO $ C.getTime Monotonic
+  (res, time) <- withTiming $ liftIO $ tryShExitCode cmd Nothing
 
   completedCmds <- asks getCompletedCmds
   liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
 
-  let diff = Utils.diffTime start end
-  pure $ bimap (diff,) (const diff) res
+  pure $ bimap (time,) (const time) res
 {-# INLINEABLE tryTimeSh #-}
 
 -- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
@@ -255,6 +252,7 @@ tryTimeShStreamRegion ::
     HasLogging env,
     MonadMask m,
     MonadReader env m,
+    MonadTime m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -275,6 +273,7 @@ tryTimeShStreamNoRegion ::
   ( HasCompletedCmds env,
     HasLogging env,
     MonadReader env m,
+    MonadTime m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -292,6 +291,7 @@ tryTimeShAnyRegion ::
   ( HasCompletedCmds env,
     HasLogging env,
     MonadReader env m,
+    MonadTime m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -328,11 +328,10 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
             close_fds = False
           }
 
-  start <- liftIO $ C.getTime Monotonic
-  (exitCode, lastRead) <- withRunInIO $ \run ->
-    P.withCreateProcess pr $ \_ _ _ ph ->
-      run $ streamOutput mRegion cmd recvH ph
-  end <- liftIO $ C.getTime Monotonic
+  ((exitCode, lastRead), time) <- withTiming $ do
+    withRunInIO $ \run ->
+      P.withCreateProcess pr $ \_ _ _ ph ->
+        run $ streamOutput mRegion cmd recvH ph
 
   completedCmds <- asks getCompletedCmds
   liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
@@ -354,9 +353,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   liftIO $ do
     Handle.hClose sendH
     Handle.hClose recvH
-  let diff = Utils.diffTime start end
-      finalResult = bimap (diff,) (const diff) result
-  pure finalResult
+  pure $ bimap (time,) (const time) result
 {-# INLINEABLE tryTimeShAnyRegion #-}
 
 streamOutput ::

@@ -3,12 +3,15 @@
 -- @since 0.1
 module ShellRun.Effects.MonadTime
   ( MonadTime (..),
+    withTiming,
+    withTiming_,
   )
 where
 
 import Data.Time.Clock (UTCTime)
 import Data.Time.Clock qualified as Clock
 import ShellRun.Prelude
+import ShellRun.Utils qualified as U
 import System.Clock (Clock (Monotonic), TimeSpec)
 import System.Clock qualified as C
 
@@ -38,3 +41,21 @@ instance MonadTime m => MonadTime (ReaderT e m) where
   getTimeSpec = lift getTimeSpec
   {-# INLINEABLE getSystemTime #-}
   {-# INLINEABLE getTimeSpec #-}
+
+-- | Times an action.
+--
+-- @since 0.3.0.1
+withTiming :: MonadTime m => m a -> m (a, Natural)
+withTiming m = do
+  start <- getTimeSpec
+  res <- m
+  end <- getTimeSpec
+  pure (res, U.diffTime start end)
+{-# INLINEABLE withTiming #-}
+
+-- | 'withTiming' that ignores the result.
+--
+-- @since 0.3.0.1
+withTiming_ :: MonadTime m => m a -> m Natural
+withTiming_ = fmap snd . withTiming
+{-# INLINEABLE withTiming_ #-}

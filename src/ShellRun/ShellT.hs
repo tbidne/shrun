@@ -72,7 +72,7 @@ instance MonadIO m => RegionLogger (ShellT Env m) where
   logModeToRegionFn Finish cr = liftIO . Regions.finishConsoleRegion cr
 
 -- | @since 0.3.0.1
-instance (MonadMask m, MonadUnliftIO m) => MonadProcRunner (ShellT Env m) where
+instance (MonadMask m, MonadTime m, MonadUnliftIO m) => MonadProcRunner (ShellT Env m) where
   tryTimeProc = ShIO.tryTimeSh
   tryTimeProcStream = ShIO.tryTimeShStreamNoRegion
   tryTimeProcStreamRegion = ShIO.tryTimeShStreamRegion

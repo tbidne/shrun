@@ -22,7 +22,7 @@ import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
-import ShellRun.Effects.MonadTime (MonadTime (..))
+import ShellRun.Effects.MonadTime (MonadTime (..), withTiming)
 import ShellRun.Env
   ( CmdLogging (..),
     HasCommands (..),
@@ -42,7 +42,6 @@ import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import ShellRun.Prelude
 import ShellRun.ShellT (ShellT, runShellT)
-import ShellRun.Utils qualified as U
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.FilePath ((</>))
@@ -151,11 +150,10 @@ runCommands ::
   m ()
 runCommands commands = Regions.displayConsoleRegions $
   Async.withAsync maybePollQueue $ \fileLogger -> do
-    start <- getTimeSpec
-    let actions = Async.mapConcurrently_ runCommand commands
-        actionsWithTimer = Async.race_ actions (counter commands)
-
-    result <- tryAny actionsWithTimer
+    (result, totalTime) <- withTiming $ do
+      let actions = Async.mapConcurrently_ runCommand commands
+          actionsWithTimer = Async.race_ actions (counter commands)
+      tryAny actionsWithTimer
 
     Async.cancel fileLogger
 
@@ -178,9 +176,7 @@ runCommands commands = Regions.displayConsoleRegions $
           Log.putRegionLog r fatalLog
         Right _ -> pure ()
 
-      end <- getTimeSpec
-      let totalTime = U.diffTime start end
-          totalTimeTxt = "Finished! Total time elapsed: " <> formatSeconds totalTime
+      let totalTimeTxt = "Finished! Total time elapsed: " <> formatSeconds totalTime
           finalLog =
             MkLog
               { cmd = Nothing,
