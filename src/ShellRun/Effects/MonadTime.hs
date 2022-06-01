@@ -8,8 +8,8 @@ module ShellRun.Effects.MonadTime
   )
 where
 
-import Data.Time.Clock (UTCTime)
-import Data.Time.Clock qualified as Clock
+import Data.Time.LocalTime (ZonedTime (..))
+import Data.Time.LocalTime qualified as Local
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (Monotonic), TimeSpec)
@@ -20,7 +20,7 @@ import System.Clock qualified as C
 -- @since 0.1
 class Monad m => MonadTime m where
   -- | @since 0.1
-  getSystemTime :: m UTCTime
+  getSystemTime :: m ZonedTime
 
   -- | Retrieves the current 'TimeSpec', used for easy timing at the
   -- nanosecond level.
@@ -30,7 +30,7 @@ class Monad m => MonadTime m where
 
 -- | @since 0.1
 instance MonadTime IO where
-  getSystemTime = Clock.getCurrentTime
+  getSystemTime = Local.getZonedTime
   getTimeSpec = C.getTime Monotonic
   {-# INLINEABLE getSystemTime #-}
   {-# INLINEABLE getTimeSpec #-}
