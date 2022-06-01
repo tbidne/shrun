@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               shell-run
-version:            0.3.1.0
+version:            0.4
 license:            BSD-3-Clause
 license-file:       LICENSE
 tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.2
@@ -186,9 +186,11 @@ test-suite integration
     Integration.Prelude
 
   build-depends:
+    , algebra-simple
     , base
     , concurrent-output
     , containers
+    , relative-time
     , shell-run
     , shell-run-verifier
     , tasty

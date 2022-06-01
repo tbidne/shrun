@@ -6,7 +6,9 @@ module Integration.IntEnv (IntEnv (..), defaultEnv) where
 
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
+import Data.Time.Relative (RelativeTime)
 import Integration.Prelude
+import Numeric.Algebra.Additive.AMonoid (zero)
 import ShellRun.Command (Command)
 import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
@@ -69,11 +71,11 @@ instance MonadProcRunner (ShellT IntEnv IO) where
   tryTimeProcStream = saveCmd
   tryTimeProcStreamRegion = saveCmd
 
-saveCmd :: Command -> ShellT IntEnv IO (Either (Natural, Stderr) Natural)
+saveCmd :: Command -> ShellT IntEnv IO (Either (RelativeTime, Stderr) RelativeTime)
 saveCmd cmd = do
   cr <- asks $ view #cmdsRun
   liftIO $ atomically $ modifyTVar' cr (cmd :)
-  pure $ Right 0
+  pure $ Right zero
 
 -- | Constructs a default 'IntEnv'.
 defaultEnv :: NonEmptySeq Text -> IO IntEnv

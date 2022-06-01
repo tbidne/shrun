@@ -12,7 +12,7 @@ where
 import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
-import Data.Time.Relative (formatSeconds)
+import Data.Time.Relative (formatRelativeTime, formatSeconds)
 import ShellRun.Command (Command (..))
 import ShellRun.Command qualified as Command
 import ShellRun.Data.FilePathDefault (FilePathDefault (..))
@@ -176,7 +176,7 @@ runCommands commands = Regions.displayConsoleRegions $
           Log.putRegionLog r fatalLog
         Right _ -> pure ()
 
-      let totalTimeTxt = "Finished! Total time elapsed: " <> formatSeconds totalTime
+      let totalTimeTxt = "Finished! Total time elapsed: " <> formatRelativeTime totalTime
           finalLog =
             MkLog
               { cmd = Nothing,
@@ -229,7 +229,7 @@ runCommand cmd = do
     Log.putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = msg' <> ". Time elapsed: " <> T.pack (formatSeconds t'),
+          msg = msg' <> ". Time elapsed: " <> T.pack (formatRelativeTime t'),
           lvl = lvl',
           mode = Finish,
           dest = LogBoth

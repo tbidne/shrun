@@ -10,6 +10,8 @@ where
 
 import Data.Time.LocalTime (ZonedTime (..))
 import Data.Time.LocalTime qualified as Local
+import Data.Time.Relative (RelativeTime)
+import Data.Time.Relative qualified as Relative
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 import System.Clock (Clock (Monotonic), TimeSpec)
@@ -45,17 +47,18 @@ instance MonadTime m => MonadTime (ReaderT e m) where
 -- | Times an action in terms of seconds.
 --
 -- @since 0.3.0.1
-withTiming :: MonadTime m => m a -> m (Natural, a)
+withTiming :: MonadTime m => m a -> m (RelativeTime, a)
 withTiming m = do
   start <- getTimeSpec
   res <- m
   end <- getTimeSpec
-  pure (U.diffTime start end, res)
+  let seconds = U.diffTime start end
+  pure (Relative.fromSeconds seconds, res)
 {-# INLINEABLE withTiming #-}
 
 -- | 'withTiming' that ignores the result.
 --
 -- @since 0.3.0.1
-withTiming_ :: MonadTime m => m a -> m Natural
+withTiming_ :: MonadTime m => m a -> m RelativeTime
 withTiming_ = fmap (view _1) . withTiming
 {-# INLINEABLE withTiming_ #-}

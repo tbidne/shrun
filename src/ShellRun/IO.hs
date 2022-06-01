@@ -24,9 +24,9 @@ where
 
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
-import Data.IORef qualified as IORef
 import Data.Sequence ((<|))
 import Data.Text qualified as T
+import Data.Time.Relative (RelativeTime)
 import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import ShellRun.Command (Command (..))
@@ -233,7 +233,7 @@ tryTimeSh ::
     MonadTime m
   ) =>
   Command ->
-  m (Either (Tuple2 Natural Stderr) Natural)
+  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
 tryTimeSh cmd = do
   (time, res) <- withTiming $ liftIO $ tryShExitCode cmd Nothing
 
@@ -258,7 +258,7 @@ tryTimeShStreamRegion ::
     Region m ~ ConsoleRegion
   ) =>
   Command ->
-  m (Either (Tuple2 Natural Stderr) Natural)
+  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
 tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
   tryTimeShAnyRegion (Just region) cmd
 {-# INLINEABLE tryTimeShStreamRegion #-}
@@ -279,7 +279,7 @@ tryTimeShStreamNoRegion ::
     Region m ~ ConsoleRegion
   ) =>
   Command ->
-  m (Either (Tuple2 Natural Stderr) Natural)
+  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
 tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 {-# INLINEABLE tryTimeShStreamNoRegion #-}
 
@@ -298,7 +298,7 @@ tryTimeShAnyRegion ::
   ) =>
   Maybe ConsoleRegion ->
   Command ->
-  m (Either (Tuple2 Natural Stderr) Natural)
+  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
 tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   -- Create pseudo terminal here because otherwise we have trouble streaming
   -- input from child processes. Data gets buffered and trying to override the
@@ -369,7 +369,7 @@ streamOutput ::
   ProcessHandle ->
   m (Tuple2 ExitCode (Maybe ReadHandleResult))
 streamOutput mRegion cmd recvH ph = do
-  lastReadRef <- liftIO $ IORef.newIORef Nothing
+  lastReadRef <- liftIO $ newIORef Nothing
   exitCode <- Loops.untilJust $ do
     result <- readHandle recvH
     case result of
@@ -380,7 +380,7 @@ streamOutput mRegion cmd recvH ph = do
         -- appear that we ever lose important messages.
         pure ()
       ReadSuccess out -> do
-        liftIO $ IORef.writeIORef lastReadRef (Just (ReadSuccess out))
+        liftIO $ writeIORef lastReadRef (Just (ReadSuccess out))
         cmdLogging <- asks getCmdLogging
         let logDest = case cmdLogging of
               Disabled -> LogFile
@@ -398,6 +398,6 @@ streamOutput mRegion cmd recvH ph = do
           Just region -> Log.putRegionLog region log
       ReadNoData -> pure ()
     liftIO $ P.getProcessExitCode ph
-  lastRead <- liftIO $ IORef.readIORef lastReadRef
+  lastRead <- liftIO $ readIORef lastReadRef
   pure (exitCode, lastRead)
 {-# INLINEABLE streamOutput #-}
