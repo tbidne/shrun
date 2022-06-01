@@ -42,20 +42,20 @@ instance MonadTime m => MonadTime (ReaderT e m) where
   {-# INLINEABLE getSystemTime #-}
   {-# INLINEABLE getTimeSpec #-}
 
--- | Times an action.
+-- | Times an action in terms of seconds.
 --
 -- @since 0.3.0.1
-withTiming :: MonadTime m => m a -> m (a, Natural)
+withTiming :: MonadTime m => m a -> m (Natural, a)
 withTiming m = do
   start <- getTimeSpec
   res <- m
   end <- getTimeSpec
-  pure (res, U.diffTime start end)
+  pure (U.diffTime start end, res)
 {-# INLINEABLE withTiming #-}
 
 -- | 'withTiming' that ignores the result.
 --
 -- @since 0.3.0.1
 withTiming_ :: MonadTime m => m a -> m Natural
-withTiming_ = fmap snd . withTiming
+withTiming_ = fmap (view _1) . withTiming
 {-# INLINEABLE withTiming_ #-}

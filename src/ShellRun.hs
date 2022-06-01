@@ -150,7 +150,7 @@ runCommands ::
   m ()
 runCommands commands = Regions.displayConsoleRegions $
   Async.withAsync maybePollQueue $ \fileLogger -> do
-    (result, totalTime) <- withTiming $ do
+    (totalTime, result) <- withTiming $ do
       let actions = Async.mapConcurrently_ runCommand commands
           actionsWithTimer = Async.race_ actions (counter commands)
       tryAny actionsWithTimer

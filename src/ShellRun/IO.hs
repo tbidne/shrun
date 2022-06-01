@@ -235,7 +235,7 @@ tryTimeSh ::
   Command ->
   m (Either (Tuple2 Natural Stderr) Natural)
 tryTimeSh cmd = do
-  (res, time) <- withTiming $ liftIO $ tryShExitCode cmd Nothing
+  (time, res) <- withTiming $ liftIO $ tryShExitCode cmd Nothing
 
   completedCmds <- asks getCompletedCmds
   liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
@@ -328,7 +328,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
             close_fds = False
           }
 
-  ((exitCode, lastRead), time) <- withTiming $ do
+  (time, (exitCode, lastRead)) <- withTiming $ do
     withRunInIO $ \run ->
       P.withCreateProcess pr $ \_ _ _ ph ->
         run $ streamOutput mRegion cmd recvH ph
