@@ -214,8 +214,8 @@ argsParser =
     <*> cmdTruncationParser
     <*> lineTruncationParser
     <*> commandsParser
-      <**> OApp.helper
-      <**> version
+    <**> OApp.helper
+    <**> version
 {-# INLINEABLE argsParser #-}
 
 version :: Parser (a -> a)
@@ -279,7 +279,8 @@ readTimeout = do
   case RelativeTime.fromString str of
     Left _ ->
       OApp.readerAbort $
-        ErrorMsg $ "Could not parse timeout: " <> str
+        ErrorMsg $
+          "Could not parse timeout: " <> str
     Right t -> pure $ MkTimeout $ PFin $ RelativeTime.toSeconds t
 {-# INLINEABLE readTimeout #-}
 
@@ -335,7 +336,8 @@ readDetectTruncation = do
     then pure Detected
     else
       OApp.readerAbort $
-        ErrorMsg $ "Unrecognized truncation option:" <> T.unpack s
+        ErrorMsg $
+          "Unrecognized truncation option:" <> T.unpack s
 {-# INLINEABLE readDetectTruncation #-}
 
 stripControlParser :: Parser StripControl
@@ -372,7 +374,8 @@ readStripControl = do
     "smart" -> pure StripControlSmart
     _ ->
       OApp.readerAbort $
-        ErrorMsg $ "Unrecognized strip-control option: " <> T.unpack s
+        ErrorMsg $
+          "Unrecognized strip-control option: " <> T.unpack s
 {-# INLINEABLE readStripControl #-}
 
 fileLoggingParser :: Parser FilePathDefault
