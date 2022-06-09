@@ -41,4 +41,4 @@ jobs:
         run: nix run github:tbidne/nix-hs-tools/0.3#nixpkgs-fmt -- --check
 
       - name: haddock
-        run: nix develop -c nix run github:tbidne/nix-hs-tools/0.3#haddock -- --exclude ShellRun.Prelude
+        run: nix develop -c nix run github:tbidne/nix-hs-tools/0.3#haddock -- -x ShellRun.Prelude
