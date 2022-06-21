@@ -1,6 +1,12 @@
 # Revision history for shell-run
 
-## 0.3
+## 0.4 -- 2022-06-21
+
+* File logging in local time, not UTC.
+* Internal improvements (type safety, linting/ci ease).
+* Improve integration test.
+
+## 0.3 -- 2022-05-28
 
 * Adds new `--strip-control` argument for handling control chars in logs.
 
