@@ -6,7 +6,7 @@ license-file:       LICENSE
 tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.2
 copyright:          2021 Thomas Bidne
 author:             Thomas Bidne
-maintainer:         tbidne@prontonmail.com
+maintainer:         tbidne@protonmail.com
 homepage:           https://github.com/tbidne/shell-run/
 bug-reports:        https://github.com/tbidne/shell-run/issues
 synopsis:           A utility program for running shell commands concurrently.
