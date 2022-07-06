@@ -8,13 +8,13 @@
 [![BSD-3-Clause](https://img.shields.io/github/license/tbidne/shell-run?color=blue)](https://opensource.org/licenses/BSD-3-Clause)
 
 
-[![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix%209.2.2&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
-[![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2019.4&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
+[![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix%209.2&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
+[![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2019&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
 
-[![8.10.7](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10.7/main?label=8.10.7&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10.yaml)
-[![9.0.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.0.2/main?label=9.0.2&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.0.yaml)
-[![9.2.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.2.2/main?label=9.2.2&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.2.yaml)
+[![8.10](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10/main?label=8.10&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10.yaml)
+[![9.0](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.0/main?label=9.0&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.0.yaml)
+[![9.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.2/main?label=9.2&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.2.yaml)
 
 </div>
 
@@ -345,9 +345,9 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 You will need one of:
 
 * [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and one of:
-  * [ghc 8.10.7](https://www.haskell.org/ghc/download_ghc_8_10_7.html)
-  * [ghc 9.0.2](https://www.haskell.org/ghc/download_ghc_9_0_2.html)
-  * [ghc 9.2.2](https://www.haskell.org/ghc/download_ghc_9_2_2.html)
+  * [ghc 8.10](https://www.haskell.org/ghc/download_ghc_8_10_7.html)
+  * [ghc 9.0](https://www.haskell.org/ghc/download_ghc_9_0_2.html)
+  * [ghc 9.2](https://www.haskell.org/ghc/download_ghc_9_2_2.html)
 * [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
 * [nix](https://nixos.org/download.html)
 
