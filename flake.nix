@@ -4,7 +4,7 @@
     algebra-simple-src.url = "github:tbidne/algebra-simple";
     env-guard-src.url = "github:tbidne/env-guard";
     flake-utils.url = "github:numtide/flake-utils";
-    nixpkgs.url = "github:nixos/nixpkgs?rev=98000933d72a97632caf0db0027ea3eb2e5e7f29";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     relative-time-src.url = "github:tbidne/relative-time";
   };
   outputs =
@@ -18,7 +18,7 @@
     flake-utils.lib.eachDefaultSystem (system:
     let
       pkgs = import nixpkgs { inherit system; };
-      compilerVersion = "ghc922";
+      compilerVersion = "ghc923";
       compiler = pkgs.haskell.packages."${compilerVersion}";
       mkPkg = returnShellEnv:
         compiler.developPackage {
@@ -29,7 +29,6 @@
             pkgs.haskell.lib.addBuildTools drv (with compiler; [
               cabal-install
               haskell-language-server
-              hlint
               ghcid
               ormolu
             ]);
