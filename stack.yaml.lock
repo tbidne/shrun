@@ -28,13 +28,13 @@ packages:
 - completed:
     name: algebra-simple
     pantry-tree:
-      sha256: 9946b6fc1b6d0f3b9f36c7e1348183ba047500f27af21f8ed3d687e8dcac58a4
-      size: 4282
-    commit: be105b31e3bd2bc00c69cd5c1e869294b26fbb17
+      sha256: 89428919fcac72e858065d24f38033929a99f4812dedb907749a89b1ca0911c7
+      size: 4921
+    commit: 12bf44cb4815cf6ee040636f86e10d04386a6e4c
     git: https://github.com/tbidne/algebra-simple.git
     version: '0.1'
   original:
-    commit: be105b31e3bd2bc00c69cd5c1e869294b26fbb17
+    commit: 12bf44cb4815cf6ee040636f86e10d04386a6e4c
     git: https://github.com/tbidne/algebra-simple.git
 - completed:
     name: relative-time
