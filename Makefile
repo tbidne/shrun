@@ -1,12 +1,22 @@
 # core
 
+ARGS = ""
+
 .PHONY: build
 build:
-	cabal build all
+	if [ -z "$(ARGS)" ]; then \
+		cabal build; \
+	else \
+		cabal build $(ARGS); \
+	fi
 
 .PHONY: test
 test:
-	RUN_DOCTEST=1 cabal test
+	if [ -z "$(ARGS)" ]; then \
+		RUN_DOCTEST=1 cabal test; \
+	else \
+		RUN_DOCTEST=1 cabal test; \
+	fi
 
 .PHONY: doctest
 doctest:
@@ -26,11 +36,15 @@ functional:
 
 .PHONY: repl
 repl:
-	cabal repl
+	if [ -z "$(ARGS)" ]; then \
+		cabal repl; \
+	else \
+		cabal repl $(ARGS); \
+	fi
 
 .PHONY: watch
 watch:
-	ghcid --command "cabal repl"
+	ghcid --command "cabal repl $(ARGS)"
 
 # ci
 
@@ -38,7 +52,7 @@ watch:
 cic: formatc lintc haddockc
 
 .PHONY: ci
-ci: format lint
+ci: lint format
 
 # formatting
 
