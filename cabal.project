@@ -21,12 +21,7 @@ source-repository-package
 
 source-repository-package
     type: git
-    location: https://github.com/tbidne/env-guard.git
-    tag: 57c2be47346085a0bd48df129da578d44452904b
-
-source-repository-package
-    type: git
     location: https://github.com/tbidne/relative-time.git
-    tag: dd4bf2a37bc22763eed6c9bf80ada9b323fb7a22
+    tag: 9a66dc08ef90c5c00fac987d7bddc5a46ebdbf8a
 
 optimization: 2
