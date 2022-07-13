@@ -1,4 +1,4 @@
-resolver: lts-19.14
+resolver: nightly-2022-07-07
 packages:
 - .
 ghc-options:
@@ -20,4 +20,4 @@ flags:
     aeson: false
     quickcheck: false
 nix:
-  shell-file: nix/stack_lts-19.nix
+  shell-file: nix/stack_nightly.nix

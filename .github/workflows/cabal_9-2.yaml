@@ -1,4 +1,4 @@
-name: "9.2"
+name: "cabal_9-2"
 
 on:
   push:
@@ -12,46 +12,47 @@ on:
   workflow_dispatch:
 
 jobs:
-  cabal_9-2-2:
+  cabal_9-2:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3.0.2
 
       - name: Setup nix
-        uses: cachix/install-nix-action@v12
+        uses: cachix/install-nix-action@v17
         with:
-          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/1ffba9f2f683063c2b14c9f4d12c55ad5f4ed887.tar.gz
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: Compile
         run: |
-          nix-shell nix/ghc_9-2.nix --command \
+          nix-shell nix/cabal_9-2.nix --command \
             "cabal update && \
              cabal build --write-ghc-environment-files=always"
 
-      - name: DocTest
+      - name: Doc Tests
         run: |
-          nix-shell nix/ghc_9-2.nix --command \
+          nix-shell nix/cabal_9-2.nix --command \
             "cabal update && \
              cabal build --write-ghc-environment-files=always && \
-             RUN_DOCTEST=true cabal test doctest --test-show-details=direct"
+             RUN_DOCTEST=1 cabal test doctest"
 
       - name: Unit Tests
         run: |
-          nix-shell nix/ghc_9-2.nix --command \
+          nix-shell nix/cabal_9-2.nix --command \
             "cabal update && \
              cabal build --write-ghc-environment-files=always && \
-             MAX_RUNS=10000 cabal test unit --test-show-details=direct"
+             MAX_RUNS=10000 cabal test unit"
 
       - name: Integration Tests
         run: |
-          nix-shell nix/ghc_9-2.nix --command \
+          nix-shell nix/cabal_9-2.nix --command \
             "cabal update && \
              cabal build --write-ghc-environment-files=always && \
-             cabal test integration --test-show-details=direct"
+             cabal test integration"
 
       - name: Functional Tests
         run: |
-          nix-shell nix/ghc_9-2.nix --command \
+          nix-shell nix/cabal_9-2.nix --command \
             "cabal update && \
              cabal build --write-ghc-environment-files=always && \
-             cabal test functional --test-show-details=direct"
+             cabal test functional"

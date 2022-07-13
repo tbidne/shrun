@@ -1,4 +1,4 @@
-name: nix
+name: "stack_lts-18"
 
 on:
   push:
@@ -8,11 +8,11 @@ on:
   pull_request:
     branches:
       - main
-  
+
   workflow_dispatch:
 
 jobs:
-  nix:
+  stack_lts-18:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3.0.2
@@ -22,13 +22,13 @@ jobs:
         with:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Compile & Test
+
+      - name: Compile
         run: |
-          nix build
-          if [ -f "./result/bin/shell-run" ]; then
-            echo "Build succeeded"
-          else
-            echo "Build failed"
-            exit -1
-          fi
+          nix-shell nix/stack_lts-18.nix --command \
+            "stack update && stack build --nix --ghc-options -Werror"
+
+      - name: Test
+        run: |
+          nix-shell nix/stack_lts-18.nix --command \
+            "stack update && stack test --nix --ghc-options -Werror"

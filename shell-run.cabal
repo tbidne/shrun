@@ -3,7 +3,7 @@ name:               shell-run
 version:            0.4
 license:            BSD-3-Clause
 license-file:       LICENSE
-tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.2
+tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.3
 copyright:          2021 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -100,7 +100,7 @@ library
     , package-version       ^>=0.1.0.0
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
-    , refined               ^>=0.6
+    , refined               >=0.6      && <0.8
     , relative-time         ^>=0.1
     , stm                   ^>=2.5.0
     , terminal-size         ^>=0.3.0

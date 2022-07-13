@@ -10,6 +10,8 @@ package shell-run
   benchmark-options:
     +RTS -T --nonmoving-gc -RTS
 
+optimization: 2
+test-show-details: direct
 
 package refined
   flags: -aeson -quickcheck
@@ -23,5 +25,3 @@ source-repository-package
     type: git
     location: https://github.com/tbidne/relative-time.git
     tag: 9a66dc08ef90c5c00fac987d7bddc5a46ebdbf8a
-
-optimization: 2

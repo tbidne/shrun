@@ -9,12 +9,15 @@
 
 
 [![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix%209.2&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
-[![stack](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack/main?label=stack%2019&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_ci.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
 
-[![8.10](https://img.shields.io/github/workflow/status/tbidne/shell-run/8.10/main?label=8.10&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_8-10.yaml)
-[![9.0](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.0/main?label=9.0&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.0.yaml)
-[![9.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/9.2/main?label=9.2&logo=haskell&logoColor=904d8c&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/ghc_9.2.yaml)
+[![cabal 8.10](https://img.shields.io/github/workflow/status/tbidne/shell-run/cabal_8-10/main?label=8.10&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/cabal_8-10.yaml)
+[![cabal 9.0](https://img.shields.io/github/workflow/status/tbidne/shell-run/cabal_9-0/main?label=9.0&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/cabal_9-0.yaml)
+[![cabal 9.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/cabal_9-2/main?label=9.2&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/cabal_9-2.yaml)
+
+[![stack lts-18](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack_lts-18/main?label=stack%20lts-18&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_lts-18.yaml)
+[![stack lts-19](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack_lts-19/main?label=stack%20lts-19&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_lts-19.yaml)
+[![stack nightly](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack_nightly/main?label=stack%20nightly&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_nightly.yaml)
 
 </div>
 
