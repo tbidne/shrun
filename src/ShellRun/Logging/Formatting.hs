@@ -12,7 +12,6 @@ module ShellRun.Logging.Formatting
   )
 where
 
-import Data.Char qualified as Ch
 import Data.Text qualified as T
 import ShellRun.Command (Command (..))
 import ShellRun.Data.InfNum (PosInfNum (..))
@@ -100,14 +99,8 @@ stripChars txt = stripChars' txt <$> asks getStripControl
 -- @since 0.3
 stripChars' :: Text -> StripControl -> Text
 stripChars' txt = \case
-  -- whitespace + all control chars
-  StripControlAll -> stripAll txt
-  -- whitespace + 'ansi control' chars
-  StripControlSmart -> stripSmart txt
+  StripControlAll -> Utils.stripControlAll txt
+  StripControlSmart -> Utils.stripControlSmart txt
   -- whitespace
-  StripControlNone -> stripNone txt
-  where
-    stripAll = T.strip . T.filter (not . Ch.isControl)
-    stripSmart = T.strip . Utils.stripAnsiControl
-    stripNone = T.strip
+  StripControlNone -> T.strip txt
 {-# INLINE stripChars' #-}

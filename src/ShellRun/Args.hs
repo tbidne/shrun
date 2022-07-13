@@ -351,15 +351,16 @@ stripControlParser =
   where
     defValue = StripControlSmart
     help =
-      "Control characters can wreak layout havoc with the --cmd-log"
-        <> " option, thus we include this option. 'all' strips all"
-        <> " such chars -- the 'safest' option -- though it can leave ugly"
-        <> " remnants e.g. ansi escape sequences like [0m. 'none' does nothing"
-        <> " i.e. all chars are left untouched. The default 'smart' attempts to strip"
-        <> " only the control chars that affect layout (e.g. cursor movements) and"
-        <> " leaves others unaffected (e.g. colors). This has the potential"
-        <> " to be the 'prettiest' though it is likely to miss some chars."
-        <> " 'smart' is experimental and subject to change."
+      mconcat
+        [ "Control characters can wreak layout havoc with the --cmd-log",
+          " option, thus we include this option. 'all' strips all",
+          " such chars. 'none' does nothing i.e. all chars are left",
+          " untouched. The default 'smart' attempts to strip",
+          " only the control chars that affect layout (e.g. cursor movements) and",
+          " leaves others unaffected (e.g. colors). This has the potential",
+          " to be the 'prettiest' though it is possible to miss some chars.",
+          " This option is experimental and subject to change."
+        ]
 {-# INLINEABLE stripControlParser #-}
 
 readStripControl :: ReadM StripControl

@@ -10,7 +10,8 @@ module ShellRun.Utils
     decodeUtf8Lenient,
     splitOn,
     truncateIfNeeded,
-    stripAnsiControl,
+    stripControlAll,
+    stripControlSmart,
 
     -- * Timing Utils
     diffTime,
@@ -18,7 +19,7 @@ module ShellRun.Utils
   )
 where
 
-import Data.Char qualified as Ch
+import Data.Char (isControl, isLetter)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
@@ -29,9 +30,6 @@ import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
-import Text.Megaparsec (Parsec)
-import Text.Megaparsec qualified as MP
-import Text.Megaparsec.Char qualified as MPC
 
 -- $setup
 -- >>> :set -XOverloadedLists
@@ -185,58 +183,109 @@ n2i :: Natural -> Int
 n2i = fromIntegral
 {-# INLINEABLE n2i #-}
 
-type MParser :: Type -> Type
-type MParser = Parsec Void Text
-
--- | Attempts to strip 'ansi control' sequences from text.
--- See: https://en.wikipedia.org/wiki/ANSI_escape_code#CSI_(Control_Sequence_Introducer)_sequences
+-- | Strips all control chars, including ansi escape sequences. Leading
+-- and trailing whitespace is also stripped.
 --
--- @since 0.3
+-- ==== __Examples__
+--
+-- >>> stripControlAll "foo\ESC[0;3Abar \n baz"
+-- "foobar  baz"
+--
+-- @since 0.4.0.1
+stripControlAll :: Text -> Text
+stripControlAll =
+  -- The ansi stripping must come first. For example, if we strip control
+  -- chars from "\ESC[0;3mfoo" we get "0;3mfoo", and then stripAnsiAll will
+  -- no longer recognize this as an ansi sequences - i.e. this will leave
+  -- remnants from the ansi sequences.
+  --
+  -- By performing stripAnsiAll first, we remove entire ansi sequences,
+  -- then remove other control chars (e.g. newlines, tabs).
+  T.strip . T.filter (not . isControl) . stripAnsiAll
+
+-- | Strips control chars, including most ansi escape sequences. Leading and
+-- trailing whitespace is also stripped. We leave behind SGR ansi escape
+-- sequences e.g. text coloring. See
+-- https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters.
+--
+-- ==== __Examples__
+--
+-- >>> stripControlSmart "foo\ESC[0;3Abar \n baz"
+-- "foobar  baz"
+--
+-- >>> stripControlSmart "foo\ESC[0;3mbar \n baz"
+-- "foo\ESC[0;3mbar  baz"
+--
+-- @since 0.4.0.1
+stripControlSmart :: Text -> Text
+stripControlSmart =
+  -- Like 'stripControlAll', we need to handle the ansi sequences first.
+  -- Because we actually leave some sequences behind, we need to be more
+  -- surgical removing the rest of the control chars (e.g. newline, tabs).
+  T.strip . T.filter ctrlToFilter . stripAnsiControl
+  where
+    -- stripAnsiControl should be handling all \ESC sequences, so we should
+    -- be safe to ignore these, accomplishing our goal of preserving the SGR
+    -- sequences. If this is too aggressive, we can instead attempt to strip
+    -- out the known 'bad' control chars e.g.
+    --
+    --   ctrlToFilter = not . (`elem` ['\n', '\t', '\v'])
+    --
+    ctrlToFilter c
+      | isControl c = c == '\ESC'
+      | otherwise = True
+
+-- | Strips all ansi sequences from the given text.
+--
+-- ==== __Examples__
+--
+-- >>> stripAnsiAll "foo\ESC[0;3Abar"
+-- "foobar"
+--
+-- @since 0.4.0.1
+stripAnsiAll :: Text -> Text
+stripAnsiAll = T.concat . fmap (view _1) . splitAnsi
+
+-- | Strips ansi control sequences only.
+--
+-- ==== __Examples__
+--
+-- >>> stripAnsiControl "foo\ESC[0;3Abar"
+-- "foobar"
+--
+-- >>> stripAnsiControl "foo\ESC[0;3mbar"
+-- "foo\ESC[0;3mbar"
+--
+-- @since 0.4.0.1
 stripAnsiControl :: Text -> Text
-stripAnsiControl "" = ""
-stripAnsiControl txt = case MP.parse ansiParse "ShellRun.Utils" txt of
-  Right stripped -> stripped
-  Left err ->
-    "Strip Error: "
-      <> T.pack (MP.errorBundlePretty err)
-      <> ": "
-      <> txt
+stripAnsiControl txt =
+  foldl' f "" splitTxt
+  where
+    splitTxt = splitAnsi txt
+    f acc (preAnsi, code, withAnsi)
+      | nonControlAnsi code = acc <> withAnsi
+      | otherwise = acc <> preAnsi
 
-ansiParse :: MParser Text
-ansiParse = do
-  firstAnsi <- MP.optional ansiEscape
-  escaped <- MP.many $ do
-    normal <- MP.takeWhile1P Nothing ('\ESC' /=)
-    esc <- MP.optional ansiEscape
-    pure $ normal <> fromMaybe "" esc
-  pure $ fromMaybe "" firstAnsi <> T.concat escaped
+nonControlAnsi :: Text -> Bool
+nonControlAnsi ansi = case T.unsnoc ansi of
+  -- 'm' equals color: only code we consider 'good' for now
+  Just (_, 'm') -> True
+  _ -> False
 
-ansiEscape :: MParser Text
-ansiEscape = do
-  -- NB. Correctness depends on '\ESC' always being followed by '['. This is
-  -- probably dubious, but if it is ever shown to be false then we will
-  -- likely have to give up on the above takeWhile1P and compare the full
-  -- string.
-  esc <- MPC.string "\ESC["
-  -- optional nums like 1;2
-  ns <- ansiNums
-  mControl <- ansiControl
-  pure $ case mControl of
-    -- this is an ansi control that we want to skip entirely
-    Just _ -> ""
-    -- ansi non-control, add it back
-    Nothing -> esc <> ns
-
-ansiNums :: MParser Text
-ansiNums = do
-  n <- MP.optional (MP.takeWhileP Nothing Ch.isDigit)
-  sc <- MP.optional (MPC.char ';')
-  m <- MP.optional (MP.takeWhileP Nothing Ch.isDigit)
-  pure $
-    fromMaybe "" n
-      <> maybe "" T.singleton sc
-      <> fromMaybe "" m
-
-ansiControl :: MParser (Maybe Char)
-ansiControl = do
-  MP.optional $ MP.oneOf $ 'f' : ['A' .. 'T']
+-- tuple is: (text, ansi_code, ansi_code <> text)
+-- example: splitAnsi "foo\ESC[0;3mbar"
+splitAnsi :: Text -> [(Text, Text, Text)]
+splitAnsi "" = []
+splitAnsi t =
+  -- (foo, \ESC[0;3m, bar) : ...
+  (preAnsi, ansiCode, preAnsi <> ansiCode) : rest
+  where
+    -- (foo, \ESC[0;3mbar)
+    (!preAnsi, !withAnsiFull) = T.breakOn "\ESC[" t
+    -- (\ESC[0;3, mbar)
+    (!ansiCodeNoChar, !withAnsiChar) = T.break isLetter withAnsiFull
+    -- (\ESC[0;3m, bar)
+    (!ansiCode, !rest) = case T.uncons withAnsiChar of
+      -- (m, bar)
+      Just (!ansiChar, !rest') -> (T.snoc ansiCodeNoChar ansiChar, splitAnsi rest')
+      Nothing -> (ansiCodeNoChar, [])

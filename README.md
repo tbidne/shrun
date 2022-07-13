@@ -269,21 +269,21 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 **Arg:** `-s,--strip-control [all | smart | none]`
 
-**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. `all` strips all such chars -- the 'safest' option, as far as layout preservation goes -- though it can leave ugly remnants e.g. ansi escape sequences like `[0m`. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
+**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. `all` strips all such chars. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
 
 * Simple formatting is left intact.
-* Aforementioned remnants should not be left behind.
+* The layout should not be damaged.
 
-Though it is likely to miss some chars. `smart` is experimental and subject to change.
+Though it is possible to miss some chars. This option is experimental and subject to change.
 
 **Example:**
 
 Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes. The former sets the text color to magenta, and the latter resets the cursor to the left by 3 places i.e. partially overwrites the previous characters. We also include the options `-cx10` (show command logs and truncate command name to 10 chars) to make the output easier to read.
 
-`all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted, but the remaining bits of the ansi sequences are left.
+`all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shell-run -cx10 --strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
-<span style="color:">[Command] [echo -e...] foo [35m hello [3D bye</span>
+<span style="color:">[Command] [echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
@@ -296,7 +296,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -cx10 --strip-control smart "echo -e ' foo \033[7m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run -cx10 --strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>

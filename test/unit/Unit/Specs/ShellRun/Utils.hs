@@ -61,28 +61,32 @@ point = $$(R.refineTH @NonEmpty @Text "=")
 stripAnsiControlSpecs :: TestTree
 stripAnsiControlSpecs =
   Tasty.testGroup
-    "stripAnsiControl"
-    [ ansiEmptyText,
-      ansiControl,
-      ansiNonControl
+    "Text Stripping"
+    [ emptyText,
+      allControlStripped,
+      someControlStripped
     ]
 
-ansiEmptyText :: TestTree
-ansiEmptyText =
-  THU.testCase "Empty test should be identity" $
-    "" @=? Utils.stripAnsiControl ""
+emptyText :: TestTree
+emptyText =
+  THU.testCase "Empty test should be identity" $ do
+    "" @=? Utils.stripControlAll ""
+    "" @=? Utils.stripControlSmart ""
 
-ansiControl :: TestTree
-ansiControl =
-  THU.testCase "Ansi control sequences are stripped" $ do
-    "" @=? Utils.stripAnsiControl "\ESC[A"
-    "foo" @=? Utils.stripAnsiControl "foo\ESC[A"
-    "bar" @=? Utils.stripAnsiControl "\ESC[Abar"
-    "foobar\ESC[1mbaz" @=? Utils.stripAnsiControl "foo\ESC[Abar\ESC[1m\ESC[0Kbaz"
+allControlStripped :: TestTree
+allControlStripped =
+  THU.testCase "All control sequences are stripped" $ do
+    "" @=? Utils.stripControlAll "\ESC[A"
+    "foo" @=? Utils.stripControlAll "foo\ESC[A"
+    "bar" @=? Utils.stripControlAll "\ESC[Abar"
+    "foobarbaz" @=? Utils.stripControlAll "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
 
-ansiNonControl :: TestTree
-ansiNonControl =
-  THU.testCase "Ansi non-control is not stripped" $ do
-    "\ESC[1" @=? Utils.stripAnsiControl "\ESC[1"
-    "\ESC[0mfoo" @=? Utils.stripAnsiControl "\ESC[0mfoo"
-    "foo\ESC[0mbar" @=? Utils.stripAnsiControl "foo\ESC[0mbar"
+someControlStripped :: TestTree
+someControlStripped =
+  THU.testCase "Some control sequences are not stripped" $ do
+    "" @=? Utils.stripControlSmart "\ESC[A"
+    "foo" @=? Utils.stripControlSmart "foo\ESC[A"
+    "bar" @=? Utils.stripControlSmart "\ESC[Abar"
+    "foobar\ESC[1mbaz" @=? Utils.stripControlSmart "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
+    "\ESC[0mfoo" @=? Utils.stripControlSmart "\ESC[0mfoo"
+    "foo\ESC[0mbar" @=? Utils.stripControlSmart "foo\ESC[0mbar"

@@ -115,6 +115,8 @@ import Optics.Core as X
     (.~),
     (^.),
     _1,
+    _2,
+    _3,
   )
 import Optics.TH as X (makeFieldLabelsNoPrefix)
 import Refined as X (Refined)

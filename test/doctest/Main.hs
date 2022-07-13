@@ -33,6 +33,7 @@ exts =
   [ "-XNoImplicitPrelude",
     "-XNoStarIsType",
     "-XApplicativeDo",
+    "-XBangPatterns",
     "-XDataKinds",
     "-XDeriveGeneric",
     "-XDerivingVia",

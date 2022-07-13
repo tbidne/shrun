@@ -36,7 +36,7 @@ stripAll :: TestTree
 stripAll =
   THU.testCase "StripControlAll should strip whitespace + all control" $ do
     "" @=? stripAll' ""
-    "[ foo [A [K  bar  baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
+    "oo    bar  baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
     stripAll' = flip Formatting.stripChars' StripControlAll
 
@@ -44,6 +44,6 @@ stripSmart :: TestTree
 stripSmart =
   THU.testCase "StripControlSmart should strip whitespace + some control" $ do
     "" @=? stripSmart' ""
-    "foo  \ESC[X  bar \n baz" @=? stripSmart' " \n \ESC[G foo \ESC[A \ESC[X  bar \n baz \t  "
+    "foo \ESC[m   bar  baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
     stripSmart' = flip Formatting.stripChars' StripControlSmart
