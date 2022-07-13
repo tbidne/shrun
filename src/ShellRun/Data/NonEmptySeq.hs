@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 -- | Provides the 'NonEmptySeq' type.
@@ -43,8 +41,6 @@ data NonEmptySeq a = a :|^ (Seq a)
     )
 
 infixr 5 :|^
-
-makePrismLabels ''NonEmptySeq
 
 -- | @since 0.1
 instance Semigroup (NonEmptySeq a) where

@@ -133,8 +133,6 @@ instance Ord ReadHandleResult where
   compare (ReadErr _) _ = GT
   {-# INLINEABLE compare #-}
 
-makePrismLabels ''ReadHandleResult
-
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
 --
 -- @since 0.1

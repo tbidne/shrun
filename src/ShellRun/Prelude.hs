@@ -116,7 +116,7 @@ import Optics.Core as X
     (^.),
     _1,
   )
-import Optics.TH as X (makeFieldLabelsNoPrefix, makePrismLabels)
+import Optics.TH as X (makeFieldLabelsNoPrefix)
 import Refined as X (Refined)
 import UnliftIO as X
   ( Exception (..),

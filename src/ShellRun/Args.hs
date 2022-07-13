@@ -72,8 +72,6 @@ data ALineTruncation
       Show
     )
 
-makePrismLabels ''ALineTruncation
-
 -- | Type for parsing command line args.
 --
 -- @since 0.1

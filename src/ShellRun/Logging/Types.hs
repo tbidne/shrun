@@ -61,8 +61,6 @@ data LogMode
     )
     via (Supremum LogMode)
 
-makePrismLabels ''LogMode
-
 -- | Determines the logging level.
 --
 -- @since 0.1
@@ -107,8 +105,6 @@ data LogLevel
     )
     via (Supremum LogLevel)
 
-makePrismLabels ''LogLevel
-
 -- | Determines where the log is sent.
 --
 -- @since 0.1
@@ -138,8 +134,6 @@ data LogDest
       Monoid
     )
     via (Supremum LogDest)
-
-makePrismLabels ''LogDest
 
 -- | Captures the relevant information concerning a specific log
 -- (i.e. text, level, and mode).

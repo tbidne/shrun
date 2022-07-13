@@ -62,8 +62,6 @@ data CmdLogging
     )
     via Supremum CmdLogging
 
-makePrismLabels ''CmdLogging
-
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
 data CmdDisplay
@@ -96,8 +94,6 @@ data CmdDisplay
     )
     via Supremum CmdDisplay
 
-makePrismLabels ''CmdDisplay
-
 -- | The different regions to apply truncation rules.
 --
 -- @since 0.1
@@ -116,8 +112,6 @@ data TruncRegion
       -- | @since 0.1
       Show
     )
-
-makePrismLabels ''TruncRegion
 
 -- | The maximum number of command characters to display in the logs.
 -- The ordering is such that smaller numbers are greater, i.e., the
@@ -207,8 +201,6 @@ data StripControl
       Monoid
     )
     via Supremum StripControl
-
-makePrismLabels ''StripControl
 
 -- | Path to legend file.
 --
