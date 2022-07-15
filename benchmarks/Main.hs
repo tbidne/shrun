@@ -44,7 +44,7 @@ run desc args =
 
 loops :: [(String, String)]
 loops =
-  force $
+  force
     [ ("10_000", bashLoop "10000"),
       ("100_000", bashLoop "100000"),
       ("1_000_000", bashLoop "1000000")

@@ -23,6 +23,3 @@ cradle:
 
     - path: "./benchmarks/Main.hs"
       component: "shell-run:bench:benchmarks"
-
-    - path: "./benchmarks/Benchmark/Prelude.hs"
-      component: "shell-run:bench:benchmarks"
