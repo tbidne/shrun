@@ -52,7 +52,7 @@ newtype LogText = UnsafeLogText
       Show
     )
 
--- | @since 0.4.0.1
+-- | @since 0.5
 _LogText :: Getter LogText Text
 _LogText = to (\(MkLogText t) -> t)
 
@@ -101,7 +101,7 @@ newtype LogTextQueue = MkLogTextQueue
     getLogTextQueue :: TBQueue LogText
   }
 
--- | @since 0.4.0.1
+-- | @since 0.5
 makePrisms ''LogTextQueue
 
 -- | @since 0.1

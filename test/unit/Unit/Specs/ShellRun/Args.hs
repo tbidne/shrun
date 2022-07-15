@@ -1,7 +1,6 @@
 -- | Specs for ShellRun.Args.
 module Unit.Specs.ShellRun.Args (specs) where
 
-import Data.String (String)
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
 import ShellRun.Args (ALineTruncation (..), Args (..))
@@ -54,7 +53,7 @@ parseDefaultArgs = THU.testCase "Should parse default args" $ do
             { legend = FPDefault,
               timeout = MkTimeout PPosInf,
               cmdLogging = Disabled,
-              cmdDisplay = ShowCmd,
+              cmdDisplay = ShowKey,
               stripControl = StripControlSmart,
               cmdNameTrunc = MkTruncation PPosInf,
               cmdLineTrunc = Undetected (MkTruncation PPosInf),
@@ -209,15 +208,15 @@ commandDisplaySpecs =
     ]
 
 parseShortShowKey :: TestTree
-parseShortShowKey = THU.testCase "Should parse -k as ShowKey" $ do
+parseShortShowKey = THU.testCase "Should parse -k as HideKey" $ do
   let argList = ["-k", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = ShowKey}
+      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = HideKey}
   verifyResult argList expected
 
 parseLongShowKey :: TestTree
-parseLongShowKey = THU.testCase "Should parse --key-show as ShowKey" $ do
-  let argList = ["--key-show", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = ShowKey}
+parseLongShowKey = THU.testCase "Should parse --key-hide as ShowKey" $ do
+  let argList = ["--key-hide", "command"]
+      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = HideKey}
   verifyResult argList expected
 
 stripControlSpecs :: TestTree

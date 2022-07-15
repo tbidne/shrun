@@ -191,7 +191,7 @@ n2i = fromIntegral
 -- >>> stripControlAll "foo\ESC[0;3Abar \n baz"
 -- "foobar  baz"
 --
--- @since 0.4.0.1
+-- @since 0.5
 stripControlAll :: Text -> Text
 stripControlAll =
   -- The ansi stripping must come first. For example, if we strip control
@@ -216,7 +216,7 @@ stripControlAll =
 -- >>> stripControlSmart "foo\ESC[0;3mbar \n baz"
 -- "foo\ESC[0;3mbar  baz"
 --
--- @since 0.4.0.1
+-- @since 0.5
 stripControlSmart :: Text -> Text
 stripControlSmart =
   -- Like 'stripControlAll', we need to handle the ansi sequences first.
@@ -242,7 +242,7 @@ stripControlSmart =
 -- >>> stripAnsiAll "foo\ESC[0;3Abar"
 -- "foobar"
 --
--- @since 0.4.0.1
+-- @since 0.5
 stripAnsiAll :: Text -> Text
 stripAnsiAll = T.concat . fmap (view _1) . splitAnsi
 
@@ -256,7 +256,7 @@ stripAnsiAll = T.concat . fmap (view _1) . splitAnsi
 -- >>> stripAnsiControl "foo\ESC[0;3mbar"
 -- "foo\ESC[0;3mbar"
 --
--- @since 0.4.0.1
+-- @since 0.5
 stripAnsiControl :: Text -> Text
 stripAnsiControl txt =
   foldl' f "" splitTxt

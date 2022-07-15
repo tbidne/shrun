@@ -65,15 +65,15 @@ data CmdLogging
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
 data CmdDisplay
-  = -- | Display the command itself, not the key.
-    --
-    -- @since 0.1
-    ShowCmd
-  | -- | Display the command's key, if it exists, rather
+  = -- | Display the command's key, if it exists, rather
     -- than the key itself.
     --
     -- @since 0.1
     ShowKey
+  | -- | Display the command itself, not the key.
+    --
+    -- @since 0.5
+    HideKey
   deriving stock
     ( -- | @since 0.1
       Bounded,
@@ -162,7 +162,7 @@ instance Bounded (Truncation a) where
   maxBound = MkTruncation (PFin 0)
   {-# INLINEABLE maxBound #-}
 
--- | @since 0.4.0.1
+-- | @since 0.5
 makePrisms ''Truncation
 
 -- | Determines how we should treat control characters encountered in

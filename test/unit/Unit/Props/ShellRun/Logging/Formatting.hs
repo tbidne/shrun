@@ -86,7 +86,7 @@ genLongLineText = HGen.text range HGen.latin1
 
 genEnvDispCmd :: Gen Env
 genEnvDispCmd =
-  MkEnv ShowCmd
+  MkEnv HideKey
     <$> fmap MkTruncation genPPosInf
     <*> fmap MkTruncation genPPosInf
 

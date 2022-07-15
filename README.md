@@ -30,7 +30,7 @@
     - [File Log](#file-log)
     - [Disable Log](#disable-log)
   - [Log Formatting](#log-formatting)
-    - [Key Show](#key-show)
+    - [Key Hide](#key-hide)
     - [Strip Control](#strip-control)
     - [Command Name Truncation](#command-name-truncation)
     - [Command Line Truncation](#command-line-truncation)
@@ -224,23 +224,23 @@ Practically speaking, this does not have much effect, just that if a command die
 
 ## Log Formatting
 
-### Key Show
+### Key Hide
 
-**Arg:** `-k, --key-show`
+**Arg:** `-k, --key-hide`
 
-**Description:** When displaying logs pertaining to a specific command, the default behavior is to use the actual command as the name. This can make the logs cluttered if the command is long, or it can be confusing if there are multiple similar commands that only have minor syntactic differences. This flag instead uses the key name for display, if one exists.
+**Description:** By default, we display the key name from the legend file over the actual command that was run, if the former exists. This flag instead shows the literal command. Commands without keys are unaffected.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --key-show --cmd-log --legend=examples/shell-run.legend skynet</span>
-<span style="color:">[Command] [skynet] preparing nuclear missil-- i mean gift baskets</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --legend=examples/shell-run.legend skynet</span>
+<span style="color:">[Command] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] preparing nuclear missil-- i mean gift baskets</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --key-show --cmd-log --legend=examples/shell-run.legend skynet</span>
-<span style="color: #69ff94">[Success] [skynet] Success. Time elapsed: 10 seconds</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --legend=examples/shell-run.legend skynet</span>
+<span style="color: #69ff94">[Success] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] Success. Time elapsed: 10 seconds</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
 </pre>
 
@@ -248,13 +248,13 @@ rather than the usual
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --legend=examples/shell-run.legend skynet</span>
-<span style="color:">[Command] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] preparing nuclear missil-- i mean gift baskets</span>
+<span style="color:">[Command] [skynet] preparing nuclear missil-- i mean gift baskets</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --legend=examples/shell-run.legend skynet</span>
-<span style="color: #69ff94">[Success] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] Success. Time elapsed: 10 seconds</span>
+<span style="color: #69ff94">[Success] [skynet] Success. Time elapsed: 10 seconds</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
 </pre>
 

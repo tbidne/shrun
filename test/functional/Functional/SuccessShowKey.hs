@@ -43,8 +43,8 @@ withShowKey legendPath addShowKey = do
     commands = ["both"]
     (showKeyArg, expected, unexpected) =
       if addShowKey
-        then ("--key-show", showKeyExpected, showKeyUnexpected)
-        else ("", noShowKeyExpected, noShowKeyUnexpected)
+        then ("", showKeyExpected, showKeyUnexpected)
+        else ("--key-hide", noShowKeyExpected, noShowKeyUnexpected)
 
 showKeyExpected :: List ExpectedText
 showKeyExpected =

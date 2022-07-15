@@ -147,7 +147,7 @@ instance Monoid ALineTruncation where
 -- MkArgs
 --   { cmdLogging = Disabled,
 --     fileLogging = FPNone,
---     cmdDisplay = ShowCmd,
+--     cmdDisplay = ShowKey,
 --     legend = FPDefault,
 --     timeout = MkTimeout {unTimeout = PPosInf},
 --     stripControl = StripControlSmart,
@@ -431,16 +431,20 @@ commandLoggingParser =
 commandDisplayParser :: Parser CmdDisplay
 commandDisplayParser =
   OApp.flag
-    ShowCmd
     ShowKey
+    HideKey
     ( OApp.short 'k'
-        <> OApp.long "key-show"
+        <> OApp.long "key-hide"
         <> OApp.help help
     )
   where
     help =
-      "In console output, display key name from legend file over actual "
-        <> "command if it exists."
+      mconcat
+        [ "By default, we display the key name from the legend file over the ",
+          "actual command that was run, if the former exists. This flag ",
+          "instead shows the literal command. Commands without keys are ",
+          "unaffected."
+        ]
 {-# INLINEABLE commandDisplayParser #-}
 
 commandsParser :: Parser (NonEmptySeq Text)

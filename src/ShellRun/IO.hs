@@ -63,7 +63,7 @@ newtype Stdout = MkStdout
     getStdout :: Text
   }
 
--- | @since 0.4.0.1
+-- | @since 0.5
 makePrisms ''Stdout
 
 -- | Newtype wrapper for stderr.
@@ -74,7 +74,7 @@ newtype Stderr = MkStderr
     getStderr :: Text
   }
 
--- | @since 0.4.0.1
+-- | @since 0.5
 makePrisms ''Stderr
 
 makeStdErr :: Text -> Stderr

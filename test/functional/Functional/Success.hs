@@ -14,7 +14,7 @@ spec args =
   THU.testCase "Should run commands successfully" $ do
     MkTestArgs {legendPath} <- args
     let legendArg = "--legend=" <> legendPath
-        argList = [legendArg, timeout] <> commands
+        argList = [legendArg, "--key-hide", timeout] <> commands
 
     results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
 

@@ -252,7 +252,7 @@ infixl 4 <<$>>
 
 -- | Flipped '(.)'
 --
--- @since 0.4.0.1
+-- @since 0.5
 (.>) :: (a -> b) -> (b -> c) -> a -> c
 f .> g = g . f
 {-# INLINE (.>) #-}

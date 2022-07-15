@@ -66,13 +66,13 @@ displayCmd cmd = asks getCmdDisplay <&> displayCmd' cmd
 -- | Pretty show for 'Command'. If the command has a key, and 'CmdDisplay' is
 -- 'ShowKey' then we return the key. Otherwise we return the command itself.
 --
--- >>> displayCmd' (MkCommand Nothing "some long command") ShowCmd
+-- >>> displayCmd' (MkCommand Nothing "some long command") HideKey
 -- "some long command"
 --
 -- >>> displayCmd' (MkCommand Nothing "some long command") ShowKey
 -- "some long command"
 --
--- >>> displayCmd' (MkCommand (Just "long") "some long command") ShowCmd
+-- >>> displayCmd' (MkCommand (Just "long") "some long command") HideKey
 -- "some long command"
 --
 -- >>> displayCmd' (MkCommand (Just "long") "some long command") ShowKey
