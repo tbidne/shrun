@@ -17,7 +17,7 @@ props = T.testGroup "ShellRun.Utils" [diffTimeProps]
 
 diffTimeProps :: TestTree
 diffTimeProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "diffTime" "diffTimeProps" $
+  testPropertyNamed "diffTime" "diffTimeProps" $
     H.withTests limit $
       H.property $ do
         t1 <- H.forAll PGens.genTimeSpec

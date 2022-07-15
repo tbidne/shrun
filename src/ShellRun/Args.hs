@@ -126,6 +126,7 @@ data Args = MkArgs
       Show
     )
 
+-- | @since 0.1
 makeFieldLabelsNoPrefix ''Args
 
 -- | @since 0.1

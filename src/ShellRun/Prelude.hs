@@ -16,6 +16,7 @@ module ShellRun.Prelude
 
     -- * Misc utilities
     (<<$>>),
+    (.>),
     monoBimap,
 
     -- * 'Text' replacements for 'P.String' functions.
@@ -78,6 +79,7 @@ import Data.Foldable as X
     length,
     traverse_,
   )
+import Data.Function as X ((&))
 import Data.Functor as X
   ( Functor (..),
     ($>),
@@ -104,21 +106,26 @@ import GHC.Natural as X (Natural)
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X
-  ( Iso',
+  ( Getter,
+    Iso',
     iso,
     over',
+    preview,
     review,
     set',
+    to,
     view,
     (%),
     (%!~),
     (.~),
     (^.),
+    (^?),
     _1,
     _2,
     _3,
+    _Just,
   )
-import Optics.TH as X (makeFieldLabelsNoPrefix)
+import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
 import UnliftIO as X
   ( Exception (..),
@@ -241,6 +248,15 @@ monoBimap f = bimap f f
 {-# INLINEABLE (<<$>>) #-}
 
 infixl 4 <<$>>
+
+-- | Flipped '(.)'
+--
+-- @since 0.4.0.1
+(.>) :: (a -> b) -> (b -> c) -> a -> c
+f .> g = g . f
+{-# INLINE (.>) #-}
+
+infixr 9 .>
 
 -- | Alias for [].
 --

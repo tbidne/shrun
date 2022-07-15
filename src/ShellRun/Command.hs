@@ -55,6 +55,9 @@ data Command = MkCommand
       Hashable
     )
 
+-- | @since 0.1
+makeFieldLabelsNoPrefix ''Command
+
 instance IsString Command where
   fromString = MkCommand Nothing . T.pack
   {-# INLINEABLE fromString #-}
@@ -144,5 +147,3 @@ builderToPath path l v =
     LTBuilder.toLazyText $
       path <> LTBuilder.fromText l <> " -> " <> LTBuilder.fromText v
 {-# INLINEABLE builderToPath #-}
-
-makeFieldLabelsNoPrefix ''Command

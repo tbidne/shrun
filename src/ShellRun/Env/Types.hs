@@ -162,7 +162,8 @@ instance Bounded (Truncation a) where
   maxBound = MkTruncation (PFin 0)
   {-# INLINEABLE maxBound #-}
 
-makeFieldLabelsNoPrefix ''Truncation
+-- | @since 0.4.0.1
+makePrisms ''Truncation
 
 -- | Determines how we should treat control characters encountered in
 -- logs.
@@ -325,6 +326,7 @@ data Env = MkEnv
     commands :: NonEmptySeq Text
   }
 
+-- | @since 0.1
 makeFieldLabelsNoPrefix ''Env
 
 -- | @since 0.1

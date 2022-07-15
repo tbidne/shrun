@@ -7,11 +7,13 @@
 -- @since 0.1
 module ShellRun.Logging.Queue
   ( -- * LogText
-    LogText (MkLogText, unLogText),
+    LogText (MkLogText),
+    _LogText,
     formatFileLog,
 
     -- * Queue
     LogTextQueue (..),
+    _MkLogTextQueue,
     readQueue,
     writeQueue,
     flushQueue,
@@ -50,7 +52,9 @@ newtype LogText = UnsafeLogText
       Show
     )
 
-makeFieldLabelsNoPrefix ''LogText
+-- | @since 0.4.0.1
+_LogText :: Getter LogText Text
+_LogText = to (\(MkLogText t) -> t)
 
 -- | @since 0.1
 pattern MkLogText :: Text -> LogText
@@ -97,7 +101,8 @@ newtype LogTextQueue = MkLogTextQueue
     getLogTextQueue :: TBQueue LogText
   }
 
-makeFieldLabelsNoPrefix ''LogTextQueue
+-- | @since 0.4.0.1
+makePrisms ''LogTextQueue
 
 -- | @since 0.1
 instance Show LogTextQueue where
@@ -110,19 +115,19 @@ instance Show LogTextQueue where
 writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
 writeQueue queue = liftIO . (writeq <=< formatFileLog)
   where
-    writeq = atomically . writeTBQueue (queue ^. #getLogTextQueue)
+    writeq = atomically . writeTBQueue (queue ^. _MkLogTextQueue)
 {-# INLINEABLE writeQueue #-}
 
 -- | Atomically reads from the queue. Does not retry.
 --
 -- @since 0.1
 readQueue :: MonadIO m => LogTextQueue -> m (Maybe LogText)
-readQueue = liftIO . atomically . tryReadTBQueue . view #getLogTextQueue
+readQueue = liftIO . atomically . tryReadTBQueue . view _MkLogTextQueue
 {-# INLINEABLE readQueue #-}
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1
 flushQueue :: MonadIO m => LogTextQueue -> m [LogText]
-flushQueue = liftIO . atomically . flushTBQueue . view #getLogTextQueue
+flushQueue = liftIO . atomically . flushTBQueue . view _MkLogTextQueue
 {-# INLINEABLE flushQueue #-}

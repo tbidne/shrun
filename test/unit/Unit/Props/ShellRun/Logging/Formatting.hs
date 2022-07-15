@@ -129,7 +129,7 @@ props =
 
 messageProps :: TestTree
 messageProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Includes message" "messageProps" $
+  testPropertyNamed "Includes message" "messageProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnv
@@ -140,7 +140,7 @@ messageProps = T.askOption $ \(MkMaxRuns limit) ->
 
 prefixProps :: TestTree
 prefixProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Formats prefix" "prefixProps" $
+  testPropertyNamed "Formats prefix" "prefixProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnv
@@ -167,7 +167,7 @@ prefixProps = T.askOption $ \(MkMaxRuns limit) ->
 
 displayCmdProps :: TestTree
 displayCmdProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Displays command literal" "displayCmdProps" $
+  testPropertyNamed "Displays command literal" "displayCmdProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvDispCmd
@@ -178,7 +178,7 @@ displayCmdProps = T.askOption $ \(MkMaxRuns limit) ->
 
 displayKeyProps :: TestTree
 displayKeyProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Displays command lkey" "displayKeyProps" $
+  testPropertyNamed "Displays command lkey" "displayKeyProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvDispKey
@@ -189,7 +189,7 @@ displayKeyProps = T.askOption $ \(MkMaxRuns limit) ->
 
 cmdTruncProps :: TestTree
 cmdTruncProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Truncates long command" "cmdTruncProps" $
+  testPropertyNamed "Truncates long command" "cmdTruncProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvCmdTrunc
@@ -202,7 +202,7 @@ cmdTruncProps = T.askOption $ \(MkMaxRuns limit) ->
 
 lineTruncProps :: TestTree
 lineTruncProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Truncates long line" "lineTruncProps" $
+  testPropertyNamed "Truncates long line" "lineTruncProps" $
     H.withTests limit $
       H.property $ do
         env <- H.forAll genEnvLineTrunc

@@ -63,7 +63,8 @@ newtype Stdout = MkStdout
     getStdout :: Text
   }
 
-makeFieldLabelsNoPrefix ''Stdout
+-- | @since 0.4.0.1
+makePrisms ''Stdout
 
 -- | Newtype wrapper for stderr.
 --
@@ -73,7 +74,8 @@ newtype Stderr = MkStderr
     getStderr :: Text
   }
 
-makeFieldLabelsNoPrefix ''Stderr
+-- | @since 0.4.0.1
+makePrisms ''Stderr
 
 makeStdErr :: Text -> Stderr
 makeStdErr err = MkStderr $ "Error: '" <> T.strip err
@@ -149,7 +151,7 @@ readHandle :: (MonadIO m) => Handle -> m ReadHandleResult
 readHandle handle = do
   let displayEx :: Show a => Text -> a -> Text
       displayEx prefix =
-        view #getStderr
+        view _MkStderr
           . makeStdErr
           . (<>) prefix
           . showt

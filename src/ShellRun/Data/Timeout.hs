@@ -49,4 +49,5 @@ instance Bounded Timeout where
   maxBound = MkTimeout (PFin 0)
   {-# INLINEABLE maxBound #-}
 
-makeFieldLabelsNoPrefix ''Timeout
+-- | @since 0.4.0.1
+makePrisms ''Timeout

@@ -20,6 +20,7 @@ jobs:
       - name: Setup nix
         uses: cachix/install-nix-action@v17
         with:
+          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/b39924fc7764c08ae3b51beef9a3518c414cdb7d.tar.gz
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 

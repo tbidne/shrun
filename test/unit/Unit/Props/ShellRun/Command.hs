@@ -26,7 +26,7 @@ props = T.testGroup "ShellRun.Command" [translateProps]
 
 translateProps :: TestTree
 translateProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "translateCommands includes everything" "translateProps" $
+  testPropertyNamed "translateCommands includes everything" "translateProps" $
     H.withTests limit $
       H.property $ do
         (legend, origCmds) <- H.forAll genLegendCommands

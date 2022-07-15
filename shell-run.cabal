@@ -1,9 +1,9 @@
 cabal-version:      2.4
 name:               shell-run
-version:            0.4
+version:            0.4.0.1
 license:            BSD-3-Clause
 license-file:       LICENSE
-tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.3
+tested-with:        GHC ==9.2.3
 copyright:          2021 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -27,29 +27,16 @@ common common-exts
     NoImplicitPrelude
     NoStarIsType
     ApplicativeDo
-    BangPatterns
     DataKinds
-    DeriveGeneric
     DerivingVia
     DuplicateRecordFields
-    FlexibleContexts
-    FlexibleInstances
-    GeneralizedNewtypeDeriving
-    ImportQualifiedPost
-    InstanceSigs
     LambdaCase
-    MultiParamTypeClasses
     MultiWayIf
-    NamedFieldPuns
-    NumericUnderscores
     OverloadedLabels
     OverloadedStrings
     PatternSynonyms
-    ScopedTypeVariables
-    StandaloneKindSignatures
-    TupleSections
-    TypeApplications
     TypeFamilies
+    NoFieldSelectors
 
 library
   import:           common-exts
@@ -110,7 +97,7 @@ library
     , unordered-containers  ^>=0.2.9.0
 
   hs-source-dirs:   src
-  default-language: Haskell2010
+  default-language: GHC2021
 
 library shell-run-verifier
   import:           common-exts
@@ -123,7 +110,7 @@ library shell-run-verifier
     , text
 
   hs-source-dirs:   test/verifier
-  default-language: Haskell2010
+  default-language: GHC2021
 
 executable shell-run
   import:           common-exts
@@ -131,7 +118,7 @@ executable shell-run
   build-depends:    shell-run
   hs-source-dirs:   app
   ghc-options:      -threaded -with-rtsopts=-N
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite unit
   import:           common-exts
@@ -165,13 +152,13 @@ test-suite unit
     , shell-run
     , tagged                ^>=0.8.6
     , tasty                 >=1.1.0.3 && <1.5
-    , tasty-hedgehog        >=1.0.1.0 && <1.3
+    , tasty-hedgehog        ^>=1.2.0.0
     , tasty-hunit           >=0.9     && <0.11
     , text
     , unordered-containers
 
   hs-source-dirs:   test/unit
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite integration
   import:           common-exts
@@ -197,7 +184,7 @@ test-suite integration
     , text
 
   hs-source-dirs:   test/integration
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite functional
   import:           common-exts
@@ -228,7 +215,7 @@ test-suite functional
     , text
 
   hs-source-dirs:   test/functional
-  default-language: Haskell2010
+  default-language: GHC2021
 
 test-suite doctest
   import:           common-exts
@@ -240,7 +227,7 @@ test-suite doctest
     , env-guard  ^>=0.2
 
   hs-source-dirs:   test/doctest
-  default-language: Haskell2010
+  default-language: GHC2021
 
 benchmark benchmarks
   import:           common-exts
@@ -254,4 +241,4 @@ benchmark benchmarks
     , shell-run
 
   hs-source-dirs:   benchmarks
-  default-language: Haskell2010
+  default-language: GHC2021

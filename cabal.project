@@ -19,9 +19,9 @@ package refined
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: 12bf44cb4815cf6ee040636f86e10d04386a6e4c
+    tag: 078953fdac6bb9738aa6adae12bd893cf4debc01
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/relative-time.git
-    tag: 9a66dc08ef90c5c00fac987d7bddc5a46ebdbf8a
+    tag: f25b269f0ff3eefd4a568cc11611bc3ac8fa565c

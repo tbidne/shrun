@@ -169,6 +169,7 @@ data Log = MkLog
       Show
     )
 
+-- | @since 0.1
 makeFieldLabelsNoPrefix ''Log
 
 -- | @since 0.1

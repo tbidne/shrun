@@ -25,7 +25,7 @@ props =
 successProps :: TestTree
 successProps =
   T.askOption $ \(MkMaxRuns limit) ->
-    testPropertyCompat "linesToMap success props" "successProps" $
+    testPropertyNamed "linesToMap success props" "successProps" $
       -- NOTE: This set to at least 1,000 as we have had test errors before
       -- that got through (i.e. duplicate keys) because 100 was not enough,
       -- and it's still fast.
@@ -44,7 +44,7 @@ successProps =
 
 failureProps :: TestTree
 failureProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "linesToMap failure props" "failureProps" $
+  testPropertyNamed "linesToMap failure props" "failureProps" $
     H.withTests limit $
       H.property $ do
         commands <- H.forAll genBadLines

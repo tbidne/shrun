@@ -36,7 +36,7 @@ import ShellRun.Legend (LegendErr (..))
 import ShellRun.Legend qualified as Legend
 import ShellRun.Logging.Formatting qualified as LFormat
 import ShellRun.Logging.Log qualified as Log
-import ShellRun.Logging.Queue (LogText (..), LogTextQueue)
+import ShellRun.Logging.Queue (LogText (..), LogTextQueue, _LogText)
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
@@ -343,5 +343,5 @@ writeQueueToFile fp queue = forever $ Queue.readQueue queue >>= traverse_ (logFi
 {-# INLINEABLE writeQueueToFile #-}
 
 logFile :: MonadIO m => FilePath -> LogText -> m ()
-logFile fp = liftIO . appendFileUtf8 fp . view #unLogText
+logFile fp = liftIO . appendFileUtf8 fp . view _LogText
 {-# INLINEABLE logFile #-}

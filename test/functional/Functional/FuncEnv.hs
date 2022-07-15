@@ -30,6 +30,7 @@ data FuncEnv = MkFuncEnv
     logs :: !(IORef [Text])
   }
 
+-- | @since 0.1
 makeFieldLabelsNoPrefix ''FuncEnv
 
 -- | @since 0.3

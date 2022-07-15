@@ -74,7 +74,7 @@ formattingProps =
 
 timestampProps :: TestTree
 timestampProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Starts with timestamp" "timestampProps" $
+  testPropertyNamed "Starts with timestamp" "timestampProps" $
     H.withTests limit $
       H.property $ do
         log <- H.forAll LGens.genLog
@@ -84,7 +84,7 @@ timestampProps = T.askOption $ \(MkMaxRuns limit) ->
 
 messageProps :: TestTree
 messageProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Includes message" "messageProps" $
+  testPropertyNamed "Includes message" "messageProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {msg} <- H.forAll LGens.genLog
@@ -94,7 +94,7 @@ messageProps = T.askOption $ \(MkMaxRuns limit) ->
 
 prefixProps :: TestTree
 prefixProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Formats prefix" "prefixProps" $
+  testPropertyNamed "Formats prefix" "prefixProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {lvl} <- H.forAll LGens.genLog
@@ -119,7 +119,7 @@ prefixProps = T.askOption $ \(MkMaxRuns limit) ->
 
 commandProps :: TestTree
 commandProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Formats command" "commandProps" $
+  testPropertyNamed "Formats command" "commandProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
@@ -130,7 +130,7 @@ commandProps = T.askOption $ \(MkMaxRuns limit) ->
 
 shapeProps :: TestTree
 shapeProps = T.askOption $ \(MkMaxRuns limit) ->
-  testPropertyCompat "Formats shape" "shapeProps" $
+  testPropertyNamed "Formats shape" "shapeProps" $
     H.withTests limit $
       H.property $ do
         log@MkLog {cmd, msg} <- H.forAll LGens.genLogWithCmd
