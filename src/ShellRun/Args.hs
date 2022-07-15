@@ -241,18 +241,20 @@ legendParser =
     ( OApp.value FPDefault
         <> OApp.long "legend"
         <> OApp.short 'l'
-        <> OApp.help legendHelp
-        <> OApp.metavar "PATH"
+        <> OApp.help help
+        <> OApp.metavar "[PATH]"
     )
   where
-    legendHelp =
-      "Path to legend file, used for translating commands. "
-        <> "Key/value pairs have the form 'key=cmd1,,cmd2,,...' "
-        <> ", i.e., keys can refer to multiple commands and refer to "
-        <> "other keys recursively. Lines starting with '#' are "
-        <> "considered comments and ignored. If no path is given, we "
-        <> "automatically look in the Xdg config directory e.g. "
-        <> "~/.config/shell-run/shell-run.legend."
+    help =
+      mconcat
+        [ "Path to legend file, used for translating commands. ",
+          "Key/value pairs have the form 'key=cmd1,,cmd2,,...' ",
+          ", i.e., keys can refer to multiple commands and refer to ",
+          "other keys recursively. Lines starting with '#' are ",
+          "considered comments and ignored. If this argument is not given ",
+          "or it is empty, we automatically look in the Xdg config directory ",
+          "e.g. ~/.config/shell-run/shell-run.legend."
+        ]
 {-# INLINEABLE legendParser #-}
 
 timeoutParser :: Parser Timeout
@@ -386,25 +388,27 @@ fileLoggingParser =
         <> OApp.long "file-log"
         <> OApp.short 'f'
         <> OApp.help help
-        <> OApp.metavar "PATH"
+        <> OApp.metavar "[PATH]"
     )
   where
     help =
-      "If a path is supplied, all logs will additionally be written to the "
-        <> "supplied file. Furthermore, command logs will be written to the "
-        <> "file irrespective of --cmd-log. Console logging is "
-        <> "unaffected. This can be useful for investigating command "
-        <> "failures. If the string literal 'default' or 'd' is given, we "
-        <> "will write to the Xdg config directory e.g. "
-        <> "~/.config/shell-run/shell-run.log"
+      mconcat
+        [ "If a path is supplied, all logs will additionally be written to ",
+          "the supplied file. Furthermore, command logs will be written to ",
+          "the file irrespective of --cmd-log. Console logging is unaffected. ",
+          "This can be useful for investigating command failures. ",
+          "If an empty argument is given (i.e. -f '', --file-log=) then we ",
+          "write to the Xdg config directory e.g. ",
+          "~/.config/shell-run/shell-run.log."
+        ]
 {-# INLINEABLE fileLoggingParser #-}
 
 readLogFile :: ReadM FilePathDefault
-readLogFile = do
-  f <- OApp.str
-  if f == "d" || f == "default"
-    then pure FPDefault
-    else pure (FPManual f)
+readLogFile =
+  OApp.str >>= \f ->
+    if null f
+      then pure FPDefault
+      else pure (FPManual f)
 {-# INLINEABLE readLogFile #-}
 
 commandLoggingParser :: Parser CmdLogging

@@ -70,7 +70,8 @@ legendSpecs =
     "Legend arg parsing"
     [ parseShortLegend,
       parseLongLegend,
-      parseDefaultLegend
+      parseLongDefaultLegend,
+      parseShortDefaultLegend
     ]
 
 parseShortLegend :: TestTree
@@ -85,9 +86,15 @@ parseLongLegend = THU.testCase "Should parse long legend" $ do
       expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/shell-run.legend"}
   verifyResult argList expected
 
-parseDefaultLegend :: TestTree
-parseDefaultLegend = THU.testCase "Should parse default legend" $ do
-  let argList = ["--legend", "default", "command"]
+parseLongDefaultLegend :: TestTree
+parseLongDefaultLegend = THU.testCase "Should parse long empty legend" $ do
+  let argList = ["--legend", "", "command"]
+      expected = Just $ (Args.defaultArgs defCommand) {legend = FPDefault}
+  verifyResult argList expected
+
+parseShortDefaultLegend :: TestTree
+parseShortDefaultLegend = THU.testCase "Should parse short empty legend" $ do
+  let argList = ["-l", "", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {legend = FPDefault}
   verifyResult argList expected
 
@@ -145,8 +152,8 @@ fileLoggingSpecs =
     "FileLogging arg parsing"
     [ parseShortFileLogging,
       parseLongFileLogging,
-      parseDefaultFileLogging,
-      parseDFileLogging
+      parseLongDefaultFileLogging,
+      parseShortDefaultFileLogging
     ]
 
 parseShortFileLogging :: TestTree
@@ -161,15 +168,15 @@ parseLongFileLogging = THU.testCase "Should parse filepath with --file-log" $ do
       expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPManual "logfile"}
   verifyResult argList expected
 
-parseDefaultFileLogging :: TestTree
-parseDefaultFileLogging = THU.testCase "Should parse default --file-log" $ do
-  let argList = ["--file-log", "default", "command"]
+parseLongDefaultFileLogging :: TestTree
+parseLongDefaultFileLogging = THU.testCase "Should parse empty --file-log" $ do
+  let argList = ["--file-log", "", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPDefault}
   verifyResult argList expected
 
-parseDFileLogging :: TestTree
-parseDFileLogging = THU.testCase "Should parse default -fd" $ do
-  let argList = ["-f", "d", "command"]
+parseShortDefaultFileLogging :: TestTree
+parseShortDefaultFileLogging = THU.testCase "Should parse empty -f" $ do
+  let argList = ["-f", "", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPDefault}
   verifyResult argList expected
 

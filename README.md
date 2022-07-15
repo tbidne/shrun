@@ -103,13 +103,13 @@ Note: `shell-run` colors its logs, and the examples shown here _should_ use thes
 
 ### Legend
 
-**Arg:** `-l, --legend PATH`
+**Arg:** `-l, --legend [PATH]`
 
 **Description**: A legend file can be provided that maps key names to commands. Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
 
 Each line can be separated by as many new lines as desired, and comments start with a `#`. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands.
 
-If this option is omitted, we search for a legend file in the Xdg config directory e.g. `~/.config/shell-run/shell-run.legend`. This will not cause an error if it is not found, though there will be a log message.
+If this option is omitted or the path is omitted (e.g. `--legend=`, `-l ''`), we search for a legend file in the Xdg config directory e.g. `~/.config/shell-run/shell-run.legend`. This will not cause an error if it is not found, though there will be a log message.
 
 **Example:** For instance, given a legend file
 
@@ -191,9 +191,9 @@ Practically speaking, this does not have much effect, just that if a command die
 
 ### File Log
 
-**Arg:** `-f, --file-log PATH`
+**Arg:** `-f, --file-log [PATH]`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string literal `default` or `d` is given, we will write to the Xdg config directory e.g. `~/.config/shell-run/shell-run.log`.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the path is empty (e.g. `--file-log=`, `-f ''`), we will write to the Xdg config directory e.g. `~/.config/shell-run/shell-run.log`.
 
 **Example:**
 
