@@ -8,7 +8,7 @@ package shell-run
     -Wredundant-constraints -Wunused-packages -Wmissing-deriving-strategies
 
   benchmark-options:
-    +RTS -T --nonmoving-gc -RTS
+    +RTS -T --nonmoving-gc -RTS --csv bench.csv
 
 optimization: 2
 test-show-details: direct

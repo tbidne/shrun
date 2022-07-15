@@ -88,17 +88,18 @@ import Data.Functor as X
   )
 import Data.IORef as X (IORef, modifyIORef', newIORef, readIORef, writeIORef)
 import Data.Kind as X (Constraint, Type)
-import Data.List as X (filter, zip)
+import Data.List as X (filter, zip, (++))
 import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
 import Data.Monoid as X (Monoid (..))
 import Data.Ord as X (Ordering (..))
 import Data.Semigroup as X (Semigroup (..))
+import Data.String as X (String)
 import Data.Text as X (Text)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TextEnc
 import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
-import Data.Traversable as X (Traversable (..))
+import Data.Traversable as X (Traversable (..), for)
 import Data.Void as X (Void, absurd)
 import GHC.Float as X (Double (..), Float (..))
 import GHC.Generics as X (Generic)

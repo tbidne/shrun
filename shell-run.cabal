@@ -233,12 +233,11 @@ benchmark benchmarks
   import:           common-exts
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
-  other-modules:    Benchmark.Prelude
   build-depends:
     , base
-    , criterion  ^>=1.5.6.0
-    , deepseq    ^>=1.4.4.0
+    , deepseq      ^>=1.4.4.0
     , shell-run
+    , tasty-bench  ^>=0.3
 
   hs-source-dirs:   benchmarks
   default-language: GHC2021
