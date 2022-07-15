@@ -1,5 +1,17 @@
 # Revision history for shell-run
 
+## 0.5
+
+* Improve `--strip-control`. `all` should no longer leave ansi remnants, and
+  `--smart` is much more aggressive about removing everything but harmless
+  styling.
+* `--key-show` is now the default behavior. The flag has thus been renamed
+  `--key-hide`, and is off by default.
+* `--legend` and `--file-logging` no longer interpret `"d"` and `"default"`
+  as the default paths. Instead they expect an empty string e.g.
+  `--legend=` or `-f ''`.
+* Improve benchmarking to more accurately describe memory usage.
+
 ## 0.4 -- 2022-06-21
 
 * File logging in local time, not UTC.
