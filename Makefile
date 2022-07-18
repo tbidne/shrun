@@ -49,7 +49,7 @@ watch:
 # ci
 
 .PHONY: cic
-cic: formatc lintc haddockc
+cic: formatc lintc
 
 .PHONY: ci
 ci: lint format

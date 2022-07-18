@@ -43,6 +43,7 @@ library
   exposed-modules:
     ShellRun
     ShellRun.Configuration.Args
+    ShellRun.Configuration.Args.TH
     ShellRun.Configuration.Env
     ShellRun.Configuration.Env.Types
     ShellRun.Configuration.Legend
@@ -88,6 +89,7 @@ library
     , refined               >=0.6      && <0.8
     , relative-time         ^>=0.1
     , stm                   ^>=2.5.0
+    , template-haskell      >=2.17.0.0 && <2.19
     , terminal-size         ^>=0.3.0
     , text                  >=1.2.3.2  && <2.1
     , time                  >=1.9.3    && <1.14

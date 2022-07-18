@@ -33,6 +33,8 @@
     - [Strip Control](#strip-control)
     - [Command Name Truncation](#command-name-truncation)
     - [Command Line Truncation](#command-line-truncation)
+  - [Miscellaneous](#miscellaneous)
+    - [Default Config](#default-config)
 - [Building](#building)
   - [Cabal](#cabal)
   - [Stack](#stack)
@@ -342,6 +344,14 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 <span style="color:">[Command] [echo 'some ridiculously long command i mean is this really necessary' && sleep 5] some ridiculously long command...</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
+
+## Miscellaneous
+
+### Default Config
+
+**Arg:** `--default-config`
+
+**Description:** Writes a default configuration to `stdout`.
 
 # Building
 

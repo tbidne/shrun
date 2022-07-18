@@ -47,7 +47,7 @@ key-hide = false
 #    some 'bad' sequences remain.
 strip-control = "smart"
 
-# If trie, _all_ logging is disabled. This is almost never what you want, as
+# If true, _all_ logging is disabled. This is almost never what you want, as
 # most usages will at least want to know which commands succeeded/failed.
 # This option is primarily here to help testing.
 disable-log = false

@@ -27,6 +27,7 @@ import Options.Applicative
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
+import ShellRun.Configuration.Args.TH (getDefaultConfigTH)
 import ShellRun.Configuration.Env.Types
   ( ALineTruncation (..),
     CmdDisplay (..),
@@ -47,7 +48,7 @@ import ShellRun.Prelude
 data Args = MkArgs
   { -- | Optional config file.
     --
-    -- @since 0.1
+    -- @since 0.5
     configPath :: !(Maybe FilePath),
     -- | Global option for logging. If it is true then all logging is
     -- disabled.
@@ -156,6 +157,7 @@ argsParser =
     <*> commandsParser
     <**> OA.helper
     <**> version
+    <**> defaultConfig
 {-# INLINEABLE argsParser #-}
 
 version :: Parser (a -> a)
@@ -172,6 +174,11 @@ version = OA.infoOption txt (OA.long "version" <> OA.short 'v')
 
 versNum :: List Char
 versNum = "Version: " <> $$(PV.packageVersionStringTH "shell-run.cabal")
+
+defaultConfig :: Parser (a -> a)
+defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config")
+  where
+    txt = T.unlines $$(getDefaultConfigTH)
 
 configParser :: Parser (Maybe FilePath)
 configParser =
