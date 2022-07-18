@@ -39,7 +39,7 @@ instance HasTimeout FuncEnv where
 -- | @since 0.3
 instance HasLogging FuncEnv where
   getCmdDisplay = view (#coreEnv % #cmdDisplay)
-  getCmdLineTrunc = view (#coreEnv % #lineNameTrunc)
+  getCmdLineTrunc = view (#coreEnv % #cmdLineTrunc)
   getCmdLogging = view (#coreEnv % #cmdLogging)
   getCmdNameTrunc = view (#coreEnv % #cmdNameTrunc)
   getFileLogging = view (#coreEnv % #fileLogging)

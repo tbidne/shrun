@@ -33,7 +33,7 @@ import System.Console.Pretty qualified as P
 formatConsoleLog :: (HasLogging env, MonadReader env m) => Log -> m Text
 formatConsoleLog log = do
   cmdNameTrunc <- asks getCmdNameTrunc
-  lineNameTrunc <- asks getCmdLineTrunc
+  cmdLineTrunc <- asks getCmdLineTrunc
   msg' <- stripChars $ log ^. #msg
   case log ^. #cmd of
     Nothing -> pure $ colorize $ prefix <> msg'
@@ -47,7 +47,7 @@ formatConsoleLog log = do
 
           -- truncate entire if necessary (flag on and command log only)
           line = colorize $ prefix <> "[" <> name' <> "] " <> msg'
-          line' = case (log ^. #lvl, lineNameTrunc ^? _Just % _MkTruncation) of
+          line' = case (log ^. #lvl, cmdLineTrunc ^? _Just % _MkTruncation) of
             (SubCommand, Just m) -> U.truncateIfNeeded m line
             _ -> line
        in pure line'

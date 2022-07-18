@@ -16,7 +16,7 @@ module ShellRun.Configuration.Env.Types
     CmdDisplay (..),
     CmdLogging (..),
     Truncation (..),
-    ALineTruncation (..),
+    LineTruncation (..),
     TruncRegion (..),
     StripControl (..),
 
@@ -184,7 +184,7 @@ instance DecodeTOML (Truncation a) where
 -- automatically.
 --
 -- @since 0.1
-data ALineTruncation
+data LineTruncation
   = -- | @since 0.1
     Undetected (Truncation 'TCmdLine)
   | -- | @since 0.1
@@ -197,10 +197,10 @@ data ALineTruncation
     )
 
 -- | @since 0.5
-makePrisms ''ALineTruncation
+makePrisms ''LineTruncation
 
 -- | @since 0.5
-instance DecodeTOML ALineTruncation where
+instance DecodeTOML LineTruncation where
   tomlDecoder = makeDecoder $ \case
     String "detect" -> pure Detected
     String bad -> invalidValue "Unexpected cmd-line-trunc. Only valid string is 'detect': " (String bad)
@@ -352,7 +352,7 @@ data Env = MkEnv
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1
-    lineNameTrunc :: !(Maybe (Truncation 'TCmdLine)),
+    cmdLineTrunc :: !(Maybe (Truncation 'TCmdLine)),
     -- | Determines to what extent we should remove control characters
     -- from logs.
     --
@@ -391,8 +391,8 @@ instance Show Env where
         . showsPrec appPrec1 (env ^. #cmdDisplay)
         . showString ", cmdNameTrunc = "
         . showsPrec appPrec1 (env ^. #cmdNameTrunc)
-        . showString ", lineNameTrunc = "
-        . showsPrec appPrec1 (env ^. #lineNameTrunc)
+        . showString ", cmdLineTrunc = "
+        . showsPrec appPrec1 (env ^. #cmdLineTrunc)
         . showString ", stripControl = "
         . showsPrec appPrec1 (env ^. #stripControl)
         . showString ", completedCmds = <TVar>"
@@ -410,7 +410,7 @@ instance HasTimeout Env where
 -- | @since 0.3
 instance HasLogging Env where
   getCmdDisplay = view #cmdDisplay
-  getCmdLineTrunc = view #lineNameTrunc
+  getCmdLineTrunc = view #cmdLineTrunc
   getCmdLogging = view #cmdLogging
   getCmdNameTrunc = view #cmdNameTrunc
   getFileLogging = view #fileLogging

@@ -6,9 +6,9 @@ import Options.Applicative qualified as OptApp
 import ShellRun.Configuration.Args (Args (..))
 import ShellRun.Configuration.Args qualified as Args
 import ShellRun.Configuration.Env.Types
-  ( ALineTruncation (..),
-    CmdDisplay (..),
+  ( CmdDisplay (..),
     CmdLogging (..),
+    LineTruncation (..),
     StripControl (..),
     Truncation (..),
   )

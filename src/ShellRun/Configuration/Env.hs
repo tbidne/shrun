@@ -30,14 +30,14 @@ import Data.Text qualified as T
 import Options.Applicative qualified as OApp
 import ShellRun.Configuration.Args (parserInfoArgs)
 import ShellRun.Configuration.Env.Types
-  ( ALineTruncation (..),
-    CmdDisplay (..),
+  ( CmdDisplay (..),
     CmdLogging (..),
     Env (..),
     HasCommands (..),
     HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
+    LineTruncation (..),
     StripControl (..),
     TruncRegion (..),
     Truncation (..),
@@ -167,7 +167,7 @@ configToEnv cfg cmdsText = do
         cmdLogging = maybeOrMempty #cmdLogging,
         cmdDisplay = maybeOrMempty #cmdDisplay,
         cmdNameTrunc = cfg ^. #cmdNameTrunc,
-        lineNameTrunc = cmdLineTrunc',
+        cmdLineTrunc = cmdLineTrunc',
         stripControl = maybeOrMempty #stripControl,
         completedCmds = completedCmds',
         disableLogging = disableLogging',

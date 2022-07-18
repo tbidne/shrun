@@ -91,10 +91,10 @@ makeEnvAndVerify
     -- Because the 'detect' option will read variable widths, depending on
     -- the terminal size. We use 'Just 0' as a sentinel for "do not test the
     -- actual value".
-    let resultLineNameTrunc = result ^. #lineNameTrunc
+    let resultcmdLineTrunc = result ^. #cmdLineTrunc
     case cmdLineTrunc of
       Just 0 ->
         assertBool
-          ("Should be just " <> show resultLineNameTrunc)
-          (isJust $ result ^. #lineNameTrunc)
-      other -> other @=? resultLineNameTrunc
+          ("Should be just " <> show resultcmdLineTrunc)
+          (isJust $ result ^. #cmdLineTrunc)
+      other -> other @=? resultcmdLineTrunc

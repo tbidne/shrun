@@ -12,9 +12,9 @@ where
 
 import ShellRun.Configuration.Args (Args (..))
 import ShellRun.Configuration.Env.Types
-  ( ALineTruncation,
-    CmdDisplay,
+  ( CmdDisplay,
     CmdLogging,
+    LineTruncation,
     StripControl,
     TruncRegion (..),
     Truncation,
@@ -52,7 +52,7 @@ data TomlConfig = MkTomlConfig
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.5
-    cmdLineTrunc :: !(Maybe ALineTruncation),
+    cmdLineTrunc :: !(Maybe LineTruncation),
     -- | Determines to what extent we should remove control characters
     -- from logs.
     --
@@ -141,7 +141,7 @@ decodeCmdNameTrunc :: Decoder (Maybe (Truncation 'TCmdName))
 decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
 
 -- | @since 0.5
-decodeCmdLineTrunc :: Decoder (Maybe ALineTruncation)
+decodeCmdLineTrunc :: Decoder (Maybe LineTruncation)
 decodeCmdLineTrunc = getFieldOptWith tomlDecoder "cmd-line-trunc"
 
 -- | @since 0.5

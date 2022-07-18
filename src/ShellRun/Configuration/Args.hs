@@ -29,9 +29,9 @@ import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Types (ArgPolicy (..))
 import ShellRun.Configuration.Args.TH (getDefaultConfigTH)
 import ShellRun.Configuration.Env.Types
-  ( ALineTruncation (..),
-    CmdDisplay (..),
+  ( CmdDisplay (..),
     CmdLogging (..),
+    LineTruncation (..),
     StripControl (..),
     TruncRegion (..),
     Truncation (..),
@@ -83,7 +83,7 @@ data Args = MkArgs
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1
-    cmdLineTrunc :: !(Maybe ALineTruncation),
+    cmdLineTrunc :: !(Maybe LineTruncation),
     -- | List of commands.
     --
     -- @since 0.1
@@ -253,7 +253,7 @@ cmdTruncationParser =
         ]
 {-# INLINEABLE cmdTruncationParser #-}
 
-lineTruncationParser :: Parser (Maybe ALineTruncation)
+lineTruncationParser :: Parser (Maybe LineTruncation)
 lineTruncationParser =
   OA.optional $
     OA.option
@@ -280,7 +280,7 @@ readTruncation :: ReadM (Truncation a)
 readTruncation = MkTruncation <$> OA.auto
 {-# INLINEABLE readTruncation #-}
 
-readDetectTruncation :: ReadM ALineTruncation
+readDetectTruncation :: ReadM LineTruncation
 readDetectTruncation =
   OA.str >>= T.toCaseFold .> \case
     "detect" -> pure Detected
