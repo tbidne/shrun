@@ -1,7 +1,7 @@
 cabal-version:      2.4
 name:               shell-run
 version:            0.5
-license:            BSD-3-Clause
+license:            MIT
 license-file:       LICENSE
 tested-with:        GHC ==9.2.3
 copyright:          2021 Thomas Bidne
