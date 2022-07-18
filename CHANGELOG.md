@@ -2,14 +2,16 @@
 
 ## 0.5
 
+* Added toml configuration. This subsumes the old `--legend` file, as that is
+  part of the toml file.
 * Improve `--strip-control`. `all` should no longer leave ansi remnants, and
   `--smart` is much more aggressive about removing everything but harmless
   styling.
 * `--key-show` is now the default behavior. The flag has thus been renamed
   `--key-hide`, and is off by default.
-* `--legend` and `--file-logging` no longer interpret `"d"` and `"default"`
-  as the default paths. Instead they expect an empty string e.g.
-  `--legend=` or `-f ''`.
+* `--file-logging` no longer interprets `"d"` and `"default"`
+  as the default paths. Instead it expects an empty string e.g.
+  `--file-logging=` or `-f ''`.
 * Improve benchmarking to more accurately describe memory usage.
 
 ## 0.4 -- 2022-06-21
