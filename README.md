@@ -13,6 +13,8 @@
 [![stack nightly](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack_nightly/main?label=stack%20nightly&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_nightly.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
 
+![usage](./examples/usage.gif)
+
 </div>
 
 ---
@@ -85,16 +87,7 @@ shell-run "some long command" "another command"
 
 Will run `some long command` and `another command` concurrently.
 
-A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively. Example of running two commands (`sign-peace-treaty` and `takeover`) from a custom config file:
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -l -c examples/config.toml sign-peace-treaty takeover</span>
-<span style="color: #ff6e6e">[Error] [sign-peace-treaty] /bin/sh: line 1: lol psyche: command not found. Time elapsed: 1 second</span>
-<span style="color: #69ff94">[Info] [querying-targets] Success. Time elapsed: 2 seconds</span>
-<span style="color:">[Command] [skynet] preparing nuclear missil-- i mean gift baskets</span>
-<span style="color:">[Command] [ui] adding emojis. we like to have fun :-)</span>
-<span style="color: #a3fefe">[Info] Running time: 6 seconds</span></code>
-</pre>
+A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively.
 
 Note: `shell-run` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
 
