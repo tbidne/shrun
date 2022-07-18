@@ -235,13 +235,13 @@ Practically speaking, this does not have much effect, just that if a command die
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --legend=examples/shell-run.legend skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --config=examples/config.toml skynet</span>
 <span style="color:">[Command] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] preparing nuclear missil-- i mean gift baskets</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --legend=examples/shell-run.legend skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --config=examples/config.toml skynet</span>
 <span style="color: #69ff94">[Success] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] Success. Time elapsed: 10 seconds</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
 </pre>
@@ -249,13 +249,13 @@ Practically speaking, this does not have much effect, just that if a command die
 rather than the usual
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --legend=examples/shell-run.legend skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --config=examples/config.toml skynet</span>
 <span style="color:">[Command] [skynet] preparing nuclear missil-- i mean gift baskets</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --legend=examples/shell-run.legend skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --config=examples/config.toml skynet</span>
 <span style="color: #69ff94">[Success] [skynet] Success. Time elapsed: 10 seconds</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
 </pre>
@@ -275,25 +275,25 @@ Though it is possible to miss some chars. This option is experimental and subjec
 
 **Example:**
 
-Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes. The former sets the text color to magenta, and the latter resets the cursor to the left by 3 places i.e. partially overwrites the previous characters. We also include the options `-cx10` (show command logs and truncate command name to 10 chars) to make the output easier to read.
+Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes. The former sets the text color to magenta, and the latter resets the cursor to the left by 3 places i.e. partially overwrites the previous characters. We also include the options `-lx10` (show command logs and truncate command name to 10 chars) to make the output easier to read.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -cx10 --strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run -lx10 --strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
 `none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -cx10 --strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run -lx10 --strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -cx10 --strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run -lx10 --strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
@@ -352,11 +352,11 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 You will need one of:
 
-* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 9.2](https://www.haskell.org/ghc/download_ghc_9_2_3.html)
+* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 9.2](https://www.haskell.org/ghcup/)
 * [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
 * [nix](https://nixos.org/download.html)
 
-If you have never built a haskell program before, `stack` is probably the best choice.
+If you have never built a haskell program before, `cabal` + `ghcup` is probably the best choice.
 
 ## Cabal
 
