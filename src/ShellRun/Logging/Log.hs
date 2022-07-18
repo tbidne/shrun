@@ -13,7 +13,7 @@ module ShellRun.Logging.Log
   )
 where
 
-import ShellRun.Env.Types (HasLogging (..))
+import ShellRun.Configuration.Env.Types (HasLogging (..))
 import ShellRun.Logging.Formatting qualified as LFormat
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
@@ -33,12 +33,12 @@ putLog ::
   Log ->
   m ()
 putLog log = do
-  b <- asks getGlobalLogging
+  b <- asks getDisableLogging
   if b
-    then do
+    then pure ()
+    else do
       maybeSendLogToQueue log
       maybePrintLog logFn log
-    else pure ()
 
 -- | Conditionally writes a log to the console region and file, depending on
 -- the 'HasLogging' environment.
@@ -54,13 +54,13 @@ putRegionLog ::
   Log ->
   m ()
 putRegionLog region lg = do
-  b <- asks getGlobalLogging
+  b <- asks getDisableLogging
   if b
-    then do
+    then pure ()
+    else do
       let logRegionFn = logModeToRegionFn $ lg ^. #mode
       maybeSendLogToQueue lg
       maybePrintLog (logRegionFn region) lg
-    else pure ()
 {-# INLINEABLE putRegionLog #-}
 
 -- | @maybePrintLog fn log@ applies @fn@ if the @log@ has dest 'LogFile'.

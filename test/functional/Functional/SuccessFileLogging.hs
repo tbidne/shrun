@@ -10,8 +10,6 @@ import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..))
 import Test.ShellRun.Verifier qualified as V
-import Test.Tasty qualified as Tasty
-import Test.Tasty.HUnit qualified as THU
 
 -- | Spec that should run commands displaying the key in the logs.
 spec :: IO TestArgs -> TestTree
@@ -19,15 +17,15 @@ spec :: IO TestArgs -> TestTree
 -- 1. We need to cleanup the output file, so we use Tasty's withResource
 --    facility, even though there is no acquisition.
 -- 2. The teardown needs our global TestArgs to get the working directory.
-spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
-  Tasty.testGroup
+spec args = withResource (pure ()) (teardown args) $ \_ ->
+  testGroup
     "File logging tests"
     [ fileLogging args
     ]
 
 fileLogging :: IO TestArgs -> TestTree
 fileLogging args =
-  THU.testCase "Should write logs to file" $ do
+  testCase "Should write logs to file" $ do
     MkTestArgs {tmpDir} <- args
     let outpath = tmpDir </> outfile
         argList = ["-f" <> outpath, "sleep 2"]

@@ -15,7 +15,7 @@ import Data.String (IsString)
 import Data.Text qualified as T
 import Hedgehog qualified as H
 import Refined qualified as R
-import ShellRun.Command (Command (..))
+import ShellRun.Data.Command (Command (..))
 import ShellRun.Effects.MonadTime (MonadTime (..))
 import ShellRun.Logging.Queue (LogText (..))
 import ShellRun.Logging.Queue qualified as Queue

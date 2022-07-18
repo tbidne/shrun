@@ -42,21 +42,20 @@ library
   import:           common-exts
   exposed-modules:
     ShellRun
-    ShellRun.Args
-    ShellRun.Command
+    ShellRun.Configuration.Args
+    ShellRun.Configuration.Env
+    ShellRun.Configuration.Env.Types
+    ShellRun.Configuration.Legend
+    ShellRun.Configuration.Toml
+    ShellRun.Data.Command
     ShellRun.Data.FilePathDefault
-    ShellRun.Data.InfNum
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
     ShellRun.Data.Timeout
     ShellRun.Effects.MonadFSReader
     ShellRun.Effects.MonadProcRunner
     ShellRun.Effects.MonadTime
-    ShellRun.Env
-    ShellRun.Env.Types
     ShellRun.IO
-    ShellRun.Legend
-    ShellRun.Legend.Internal
     ShellRun.Logging.Formatting
     ShellRun.Logging.Log
     ShellRun.Logging.Queue
@@ -92,6 +91,7 @@ library
     , terminal-size         ^>=0.3.0
     , text                  >=1.2.3.2  && <2.1
     , time                  >=1.9.3    && <1.14
+    , toml-reader           ^>=0.1.0.0
     , unix                  ^>=2.7.2
     , unliftio              ^>=0.2.0.0
     , unordered-containers  ^>=0.2.9.0
@@ -115,7 +115,10 @@ library shell-run-verifier
 executable shell-run
   import:           common-exts
   main-is:          Main.hs
-  build-depends:    shell-run
+  build-depends:
+    , base
+    , shell-run
+
   hs-source-dirs:   app
   ghc-options:      -threaded -with-rtsopts=-N
   default-language: GHC2021
@@ -129,16 +132,14 @@ test-suite unit
     Unit.Prelude
     Unit.Props
     Unit.Props.Generators
-    Unit.Props.ShellRun.Command
-    Unit.Props.ShellRun.Legend.Internal
+    Unit.Props.ShellRun.Configuration.Legend
     Unit.Props.ShellRun.Logging.Formatting
     Unit.Props.ShellRun.Logging.Generators
     Unit.Props.ShellRun.Logging.Queue
     Unit.Props.ShellRun.Utils
     Unit.Specs
-    Unit.Specs.ShellRun.Args
-    Unit.Specs.ShellRun.Command
-    Unit.Specs.ShellRun.Legend.Internal
+    Unit.Specs.ShellRun.Configuration.Args
+    Unit.Specs.ShellRun.Configuration.Legend
     Unit.Specs.ShellRun.Logging.Formatting
     Unit.Specs.ShellRun.Utils
 
@@ -165,23 +166,17 @@ test-suite integration
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    Integration.IntEnv
-    Integration.MockShell.BadLegendMockShell
-    Integration.MockShell.GoodMockShell
-    Integration.MockShell.NoLegendMockShell
+    Integration.Defaults
+    Integration.Examples
+    Integration.Failures
     Integration.Prelude
+    Integration.Utils
 
   build-depends:
-    , algebra-simple
     , base
-    , concurrent-output
-    , containers
-    , relative-time
     , shell-run
-    , shell-run-verifier
     , tasty
     , tasty-hunit
-    , text
 
   hs-source-dirs:   test/integration
   default-language: GHC2021

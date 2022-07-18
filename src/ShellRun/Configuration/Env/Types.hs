@@ -3,13 +3,12 @@
 
 -- | Provides types and typeclasses for our environment.
 --
--- @since 0.1
-module ShellRun.Env.Types
+-- @since 0.5
+module ShellRun.Configuration.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
     HasLogging (..),
     HasCompletedCmds (..),
-    HasLegend (..),
     HasTimeout (..),
 
     -- * Types
@@ -17,20 +16,35 @@ module ShellRun.Env.Types
     CmdDisplay (..),
     CmdLogging (..),
     Truncation (..),
+    ALineTruncation (..),
     TruncRegion (..),
     StripControl (..),
+
+    -- * Optics
+    _HideKey,
+    _ShowKey,
+    _Disabled,
+    _Enabled,
+    _TCmdName,
+    _TCmdLine,
+    _MkTruncation,
+    _StripControlSmart,
+    _StripControlAll,
+    _StripControlNone,
+    _Undetected,
+    _Detected,
   )
 where
 
 import Data.Sequence (Seq)
-import ShellRun.Command (Command)
-import ShellRun.Data.FilePathDefault (FilePathDefault (..))
-import ShellRun.Data.InfNum (PosInfNum (..))
+import GHC.Show (appPrec, appPrec1)
+import ShellRun.Data.Command (Command)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Logging.Queue (LogTextQueue)
 import ShellRun.Prelude
+import Text.Show (showParen, showString)
 
 -- | Type for determining if we stream commands' logs.
 --
@@ -61,6 +75,16 @@ data CmdLogging
       Monoid
     )
     via Supremum CmdLogging
+
+-- | @since 0.5
+makePrisms ''CmdLogging
+
+-- | @since 0.5
+instance DecodeTOML CmdLogging where
+  tomlDecoder =
+    tomlDecoder <&> \case
+      True -> Enabled
+      False -> Disabled
 
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
@@ -94,6 +118,16 @@ data CmdDisplay
     )
     via Supremum CmdDisplay
 
+-- | @since 0.5
+makePrisms ''CmdDisplay
+
+-- | @since 0.5
+instance DecodeTOML CmdDisplay where
+  tomlDecoder =
+    tomlDecoder <&> \case
+      True -> HideKey
+      False -> ShowKey
+
 -- | The different regions to apply truncation rules.
 --
 -- @since 0.1
@@ -113,57 +147,67 @@ data TruncRegion
       Show
     )
 
+-- | @since 0.5
+makePrisms ''TruncRegion
+
 -- | The maximum number of command characters to display in the logs.
--- The ordering is such that smaller numbers are greater, i.e., the
--- minimum element is 'PPosInf' and the maximum is zero.
---
--- ==== __Examples__
--- >>> max (MkTruncation PPosInf) (MkTruncation (PFin 7))
--- MkTruncation {unTruncation = PFin 7}
---
--- >>> MkTruncation (PFin 7) <> MkTruncation (PFin 10)
--- MkTruncation {unTruncation = PFin 7}
---
--- >>> mempty @(Truncation TCmdName)
--- MkTruncation {unTruncation = PPosInf}
 --
 -- @since 0.1
 type Truncation :: TruncRegion -> Type
 newtype Truncation a = MkTruncation
   { -- | @since 0.1
-    unTruncation :: PosInfNum Natural
+    unTruncation :: Natural
   }
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Ord,
+      -- | @since 0.1
+      Show
+    )
+  deriving
+    ( -- | @since 0.5
+      Num
+    )
+    via Natural
+
+-- | @since 0.5
+makePrisms ''Truncation
+
+-- | @since 0.5
+instance DecodeTOML (Truncation a) where
+  tomlDecoder = MkTruncation <$> tomlDecoder
+
+-- | Determines command log line truncation behavior. We need a separate
+-- type from 'Truncation' to add a third option, to detect the terminal size
+-- automatically.
+--
+-- @since 0.1
+data ALineTruncation
+  = -- | @since 0.1
+    Undetected (Truncation 'TCmdLine)
+  | -- | @since 0.1
+    Detected
   deriving stock
     ( -- | @since 0.1
       Eq,
       -- | @since 0.1
       Show
     )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via Supremum (Truncation a)
-
--- | @since 0.1
-instance Ord (Truncation a) where
-  compare x y | x == y = EQ
-  compare (MkTruncation PPosInf) _ = LT
-  compare _ (MkTruncation PPosInf) = GT
-  compare (MkTruncation (PFin x)) (MkTruncation (PFin y)) = compare y x
-  {-# INLINEABLE compare #-}
-
--- | @since 0.1
-instance Bounded (Truncation a) where
-  minBound = MkTruncation PPosInf
-  {-# INLINEABLE minBound #-}
-  maxBound = MkTruncation (PFin 0)
-  {-# INLINEABLE maxBound #-}
 
 -- | @since 0.5
-makePrisms ''Truncation
+makePrisms ''ALineTruncation
+
+-- | @since 0.5
+instance DecodeTOML ALineTruncation where
+  tomlDecoder = makeDecoder $ \case
+    String "detect" -> pure Detected
+    String bad -> invalidValue "Unexpected cmd-line-trunc. Only valid string is 'detect': " (String bad)
+    Integer i
+      | i >= 0 -> pure $ Undetected $ MkTruncation $ fromIntegral i
+      | otherwise -> invalidValue "Unexpected cmd-line-trunc. Integers must be >= 0" (Integer i)
+    badTy -> typeMismatch badTy
 
 -- | Determines how we should treat control characters encountered in
 -- logs.
@@ -203,26 +247,34 @@ data StripControl
     )
     via Supremum StripControl
 
--- | Path to legend file.
---
--- @since 0.1
-class HasLegend env where
-  -- | @since 0.1
-  getLegend :: env -> FilePathDefault
+-- | @since 0.5
+makePrisms ''StripControl
+
+-- | @since 0.5
+instance DecodeTOML StripControl where
+  tomlDecoder =
+    tomlDecoder >>= \case
+      "none" -> pure StripControlNone
+      "smart" -> pure StripControlSmart
+      "all" -> pure StripControlAll
+      bad ->
+        fail $
+          "Unexpected strip-control. Expected one of none, smart, all: "
+            <> unpack bad
 
 -- | The commands themselves.
 --
 -- @since 0.1
 class HasCommands env where
   -- | @since 0.1
-  getCommands :: env -> NonEmptySeq Text
+  getCommands :: env -> NonEmptySeq Command
 
 -- | Timeout, if any.
 --
 -- @since 0.1
 class HasTimeout env where
   -- | @since 0.1
-  getTimeout :: env -> Timeout
+  getTimeout :: env -> Maybe Timeout
 
 -- | Holds logging configuration.
 --
@@ -236,7 +288,7 @@ class HasLogging env where
   -- | Determines command line truncation behavior.
   --
   -- @since 0.1
-  getCmdLineTrunc :: env -> Truncation 'TCmdLine
+  getCmdLineTrunc :: env -> Maybe (Truncation 'TCmdLine)
 
   -- | Determines if we should log commands' output to the console.
   --
@@ -246,7 +298,7 @@ class HasLogging env where
   -- | Determines command name truncation behavior.
   --
   -- @since 0.1
-  getCmdNameTrunc :: env -> Truncation 'TCmdName
+  getCmdNameTrunc :: env -> Maybe (Truncation 'TCmdName)
 
   -- | File logging, if any.
   --
@@ -256,7 +308,7 @@ class HasLogging env where
   -- | Determines if logging is enabled globally.
   --
   -- @since 0.1
-  getGlobalLogging :: env -> Bool
+  getDisableLogging :: env -> Bool
 
   -- | Determines control character behavior.
   --
@@ -275,69 +327,85 @@ class HasCompletedCmds env where
 --
 -- @since 0.1
 data Env = MkEnv
-  { -- | Optional path to a legend file.
+  { -- | Timeout.
     --
     -- @since 0.1
-    legend :: FilePathDefault,
-    -- | Timeout.
-    --
-    -- @since 0.1
-    timeout :: Timeout,
+    timeout :: !(Maybe Timeout),
     -- | Optional file logging. If enabled, holds the path to the file
     -- and the log queue.
     --
     -- @since 0.1
-    fileLogging :: Maybe (Tuple2 FilePath LogTextQueue),
+    fileLogging :: !(Maybe (Tuple2 FilePath LogTextQueue)),
     -- | Whether to log commands.
     --
     -- @since 0.1
-    cmdLogging :: CmdLogging,
+    cmdLogging :: !CmdLogging,
     -- | Whether to display the command (key) names or the commands
     -- themselves.
     --
     -- @since 0.1
-    cmdDisplay :: CmdDisplay,
+    cmdDisplay :: !CmdDisplay,
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1
-    cmdNameTrunc :: Truncation 'TCmdName,
+    cmdNameTrunc :: !(Maybe (Truncation 'TCmdName)),
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1
-    lineNameTrunc :: Truncation 'TCmdLine,
+    lineNameTrunc :: !(Maybe (Truncation 'TCmdLine)),
     -- | Determines to what extent we should remove control characters
     -- from logs.
     --
     -- @since 0.3
-    stripControl :: StripControl,
+    stripControl :: !StripControl,
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
     --
     -- @since 0.1
-    completedCmds :: TVar (Seq Command),
+    completedCmds :: !(TVar (Seq Command)),
     -- | Overarching option for logging. If it is false then all logging is
     -- disabled.
     --
     -- @since 0.1
-    globalLogging :: Bool,
+    disableLogging :: !Bool,
     -- | The commands to run.
     --
     -- @since 0.1
-    commands :: NonEmptySeq Text
+    commands :: !(NonEmptySeq Command)
   }
 
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''Env
 
--- | @since 0.1
-instance HasLegend Env where
-  getLegend = view #legend
-  {-# INLINEABLE getLegend #-}
+-- | @since 0.5
+instance Show Env where
+  showsPrec p env =
+    showParen (p > appPrec) $
+      showString "MkEnv {timeout = "
+        . showsPrec appPrec1 (env ^. #timeout)
+        . showString ", fileLogging = "
+        . showsPrec appPrec1 (env ^. #fileLogging)
+        . showString ", cmdLogging = "
+        . showsPrec appPrec1 (env ^. #cmdLogging)
+        . showString ", cmdDisplay = "
+        . showsPrec appPrec1 (env ^. #cmdDisplay)
+        . showString ", cmdNameTrunc = "
+        . showsPrec appPrec1 (env ^. #cmdNameTrunc)
+        . showString ", lineNameTrunc = "
+        . showsPrec appPrec1 (env ^. #lineNameTrunc)
+        . showString ", stripControl = "
+        . showsPrec appPrec1 (env ^. #stripControl)
+        . showString ", completedCmds = <TVar>"
+        . showString ", disableLogging = "
+        . showsPrec appPrec1 (env ^. #disableLogging)
+        . showString ", commands = "
+        . showsPrec appPrec1 (env ^. #commands)
+        . showString "}"
 
 -- | @since 0.1
 instance HasTimeout Env where
   getTimeout = view #timeout
-  {-# INLINEABLE getTimeout #-}
+  {-# INLINE getTimeout #-}
 
 -- | @since 0.3
 instance HasLogging Env where
@@ -346,22 +414,22 @@ instance HasLogging Env where
   getCmdLogging = view #cmdLogging
   getCmdNameTrunc = view #cmdNameTrunc
   getFileLogging = view #fileLogging
-  getGlobalLogging = view #globalLogging
+  getDisableLogging = view #disableLogging
   getStripControl = view #stripControl
-  {-# INLINEABLE getCmdDisplay #-}
-  {-# INLINEABLE getCmdLineTrunc #-}
-  {-# INLINEABLE getCmdLogging #-}
-  {-# INLINEABLE getCmdNameTrunc #-}
-  {-# INLINEABLE getFileLogging #-}
-  {-# INLINEABLE getGlobalLogging #-}
-  {-# INLINEABLE getStripControl #-}
+  {-# INLINE getCmdDisplay #-}
+  {-# INLINE getCmdLineTrunc #-}
+  {-# INLINE getCmdLogging #-}
+  {-# INLINE getCmdNameTrunc #-}
+  {-# INLINE getFileLogging #-}
+  {-# INLINE getDisableLogging #-}
+  {-# INLINE getStripControl #-}
 
 -- | @since 0.1
 instance HasCompletedCmds Env where
   getCompletedCmds = view #completedCmds
-  {-# INLINEABLE getCompletedCmds #-}
+  {-# INLINE getCompletedCmds #-}
 
 -- | @since 0.1
 instance HasCommands Env where
   getCommands = view #commands
-  {-# INLINEABLE getCommands #-}
+  {-# INLINE getCommands #-}

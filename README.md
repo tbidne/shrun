@@ -20,9 +20,9 @@
 ### Table of Contents
 - [Motivation](#motivation)
 - [Introduction](#introduction)
-- [Options](#options)
+- [Configuration](#configuration)
   - [Core Functionality](#core-functionality)
-    - [Legend](#legend)
+    - [Config](#config)
     - [Timeout](#timeout)
   - [Logging](#logging)
     - [Command Log](#command-log)
@@ -83,10 +83,10 @@ shell-run "some long command" "another command"
 
 Will run `some long command` and `another command` concurrently.
 
-A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively. Example of running two commands (`sign-peace-treaty` and `takeover`) from a custom legend file:
+A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively. Example of running two commands (`sign-peace-treaty` and `takeover`) from a custom config file:
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -ck -l examples/shell-run.legend sign-peace-treaty takeover</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run -l -c examples/config.toml sign-peace-treaty takeover</span>
 <span style="color: #ff6e6e">[Error] [sign-peace-treaty] /bin/sh: line 1: lol psyche: command not found. Time elapsed: 1 second</span>
 <span style="color: #69ff94">[Info] [querying-targets] Success. Time elapsed: 2 seconds</span>
 <span style="color:">[Command] [skynet] preparing nuclear missil-- i mean gift baskets</span>
@@ -96,45 +96,53 @@ A running timer is provided, and stdout/stderr will be updated when a command fi
 
 Note: `shell-run` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
 
-# Options
+# Configuration
+
+`shell-run` can be configured by either CLI args or a `toml` config file.
 
 ## Core Functionality
 
-### Legend
+### Config
 
-**Arg:** `-l, --legend [PATH]`
+**Arg:** `-c, --config [PATH]`
 
-**Description**: A legend file can be provided that maps key names to commands. Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
+**Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/config/shell-run/config.toml`.
+
+Examples can be found in [./examples](./examples).
+
+#### Legend
+
+In addition to providing an alternative to CLI args, the config file has a `legend` section. This allows one to define aliases for commands. Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
 
 Each line can be separated by as many new lines as desired, and comments start with a `#`. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands.
 
-If this option is omitted or the path is omitted (e.g. `--legend=`, `-l ''`), we search for a legend file in the Xdg config directory e.g. `~/.config/shell-run/shell-run.legend`. This will not cause an error if it is not found, though there will be a log message.
+**Example:** For instance, given the section
 
-**Example:** For instance, given a legend file
+```toml
+legend = """
+  cmd1=echo "command one"
 
-```text
-cmd1=echo "command one"
+  # recursive references
+  cmd2=cmd1
+  cmd3=cmd2
 
-# recursive references
-cmd2=cmd1
-cmd3=cmd2
+  cmd4=command four
 
-cmd4=command four
-
-# runs 3 and 4
-all=cmd3,,cmd4,,echo hi
+  # runs 3 and 4
+  all=cmd3,,cmd4,,echo hi
+"""
 ```
 
 Then the command
 
 ```sh
-shell-run --legend=path/to/legend all "echo cat"
+shell-run --config=path/to/config all "echo cat"
 ```
 
 Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurrently. A picture is worth a thousand words:
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --legend=examples/shell-run.legend all "echo cat"</span>
+<code><span style="color: #ff79c6">$</span><span> shell-run --config=examples/config.toml all "echo cat"</span>
 <span style="color: #69ff94">[Info] [echo cat] Success. Time elapsed: 0 seconds</span>
 <span style="color: #69ff94">[Info] [echo hi] Success. Time elapsed: 0 second</span>
 <span style="color: #69ff94">[Info] [echo "command one"] Success. Time elapsed: 0 second</span>
@@ -142,7 +150,7 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 0 seconds</span></code>
 </pre>
 
-Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend file will not throw an error).
+Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
 
 ### Timeout
 
@@ -163,7 +171,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 ### Command Log
 
-**Arg:** `-c, --cmd-log`
+**Arg:** `-l, --cmd-log`
 
 **Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is shown at a given time.
 
@@ -261,7 +269,7 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 ### Strip Control
 
-**Arg:** `-s,--strip-control [all | smart | none]`
+**Arg:** `-s,--strip-control <all | smart | none>`
 
 **Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. `all` strips all such chars. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
 
@@ -317,7 +325,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 ### Command Line Truncation
 
-**Arg:** `-y, --cmd-line-trunc NATURAL or detect/d`
+**Arg:** `-y, --cmd-line-trunc <NATURAL | detect>`
 
 **Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect` or `d`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
 

@@ -5,11 +5,10 @@ import Functional.Prelude
 import Functional.Utils qualified as U
 import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..))
 import Test.ShellRun.Verifier qualified as V
-import Test.Tasty.HUnit qualified as THU
 
 -- | Spec that should timeout.
 spec :: TestTree
-spec = THU.testCase "Should time out" $ do
+spec = testCase "Should time out" $ do
   results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
 
   V.verifyExpected results allExpected

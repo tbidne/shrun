@@ -20,8 +20,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Optics.Core (view)
 import Optics.TH (makeFieldLabelsNoPrefix)
-import Test.Tasty.HUnit (Assertion)
-import Test.Tasty.HUnit qualified as THU
+import Test.Tasty.HUnit (Assertion, assertBool)
 import Prelude
 
 -- | Newtype wrapper for 'Text' results.
@@ -71,7 +70,7 @@ findOneExpected results (MkExpectedText expected) = do
           <> "> in output: \n<"
           <> formatResults results
           <> ">"
-  THU.assertBool err found
+  assertBool err found
   where
     searchT :: ResultText -> Bool -> Bool
     searchT (MkResultText result) acc = expected `T.isInfixOf` result || acc
@@ -85,7 +84,7 @@ findOneUnexpected results (MkUnexpectedText unexpected) = do
           <> "> in output: \n<"
           <> formatResults results
           <> ">"
-  THU.assertBool err (not found)
+  assertBool err (not found)
   where
     searchT :: ResultText -> Bool -> Bool
     searchT (MkResultText result) acc = unexpected `T.isInfixOf` result || acc

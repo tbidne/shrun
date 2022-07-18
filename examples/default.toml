@@ -1,0 +1,92 @@
+# All keys are optional
+
+# Sets a timeout, after which all remaining commands are terminated.
+# Can either be a non-negative integer (seconds) or a "time string"
+# e.g. "1d2h3m4s", "2h30s".
+#timeout = 20
+
+# Writes all logs to a file. The "default" option writes to the Xdg direction
+# e.g. ~/.config/shell-run/shell-run.log. Any other string is interpreted as
+# a PATH.
+#file-logging = "default"
+
+# If enabled, the output of the commands themselves will be logged. The
+# default behavior is to swallow command logs.
+cmd-log = false
+
+# By default (key-hide = false), logs will refer to the key name, as defined in
+# legend section. If set to true, logs will instead reference the literal
+# command.
+#
+# For example, if there is an alias 'cmd1 = some long command' and we
+# run 'cmd1', then, with key-hide = true the logs will print
+# 'some long command'. With key-hide = false, they will instead print 'cmd1'.
+key-hide = false
+
+# If set, this truncates command names in the logs to the specificed number of
+# characters. This setting is useful when:
+#
+# 1. You do not want a long command to clutter the logs
+# 2. The command is not run with an alias (so it cannot be hidden with key-hide = false).
+#cmd-name-trunc = 80
+
+# If set, this truncates the entire line to the specified number of
+# characters. It can either be a non-negative integer or the string 'detect',
+# in which we attempt to detect the terminal width.
+#cmd-line-trunc = "detect"
+
+# With cmd-logging = true, the logs can become garbled in the presence of
+# control characters (e.g. newlines, ansi escape sequences). This option
+# attempts to mitigate these issues. The choices are:
+#
+# 1. "none": All output is left untouched i.e. any control chars will remain.
+# 2. "all": All control chars and ansi sequences are stripped.
+# 3. "smart" (default): An attempt is made to leave ansi sequences that merely
+#    affect text formatting (e.g. colors, emphasis), while stripping everything
+#    else. This has the potential to be the prettiest, though it is possible
+#    some 'bad' sequences remain.
+strip-control = "smart"
+
+# If trie, _all_ logging is disabled. This is almost never what you want, as
+# most usages will at least want to know which commands succeeded/failed.
+# This option is primarily here to help testing.
+disable-log = false
+
+# Command aliases are defined here. The general syntax is:
+#
+#    alias = cmd1,,cmd2,,cmd3,,...
+#
+# where cmd1,... are either commands ore aliases themselves. Thus recursive
+# references are allowed, but a cycle will cause an error. Duplicate keys
+# will also cause an error.
+legend = """
+  ############
+  # EXAMPLES #
+  ############
+
+  cmd1=echo "command one"
+
+  # recursive references
+  cmd2=cmd1
+  cmd3=cmd2
+
+  # this will error
+  cmd4=echo four
+
+  # runs 3, 4, and echo
+  all=cmd3,,cmd4,,echo hi
+
+  ################
+  # BAD EXAMPLES #
+  ################
+
+  # duplicates will cause an error when reading this file.
+  #dup_key=echo duplicate
+  #dup_key=echo duplicate
+
+  # cyclic keys will cause an error when _actually used_ e.g. try running
+  # shell-run -c path/to/this/config.toml a
+  a=c
+  b=a
+  c=b
+"""

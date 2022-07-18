@@ -13,27 +13,21 @@ import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
-import ShellRun.Command (Command (..))
-import ShellRun.Command qualified as Command
-import ShellRun.Data.FilePathDefault (FilePathDefault (..))
-import ShellRun.Data.InfNum (PosInfNum (..))
+import ShellRun.Configuration.Env
+  ( CmdLogging (..),
+    HasCommands (..),
+    HasCompletedCmds (..),
+    HasLogging (..),
+    HasTimeout (..),
+  )
+import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
 import ShellRun.Effects.MonadTime (MonadTime (..), withTiming)
-import ShellRun.Env
-  ( CmdLogging (..),
-    HasCommands (..),
-    HasCompletedCmds (..),
-    HasLegend (..),
-    HasLogging (..),
-    HasTimeout (..),
-  )
 import ShellRun.IO (Stderr (..))
-import ShellRun.Legend (LegendErr (..))
-import ShellRun.Legend qualified as Legend
 import ShellRun.Logging.Formatting qualified as LFormat
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Logging.Queue (LogText (..), LogTextQueue, _LogText)
@@ -44,10 +38,9 @@ import ShellRun.Prelude
 import ShellRun.ShellT (ShellT, runShellT)
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
-import System.FilePath ((</>))
 import UnliftIO.Async qualified as Async
 
--- | `runShell` is the entry point for running shell commands.
+-- | Entry point
 --
 -- @since 0.1
 runShell ::
@@ -55,7 +48,6 @@ runShell ::
     HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
-    HasLegend env,
     MonadFSReader m,
     MonadMask m,
     MonadProcRunner m,
@@ -64,76 +56,7 @@ runShell ::
     MonadUnliftIO m
   ) =>
   m ()
-runShell = do
-  legendMap <- asks getLegend
-  cmds <- asks getCommands
-  parsedCommands <- maybePathToCommands legendMap cmds
-  runCommandsOrLogErr parsedCommands
-{-# INLINEABLE runShell #-}
-
-maybePathToCommands ::
-  ( HasLogging env,
-    MonadFSReader m,
-    MonadReader env m,
-    MonadUnliftIO m,
-    RegionLogger m
-  ) =>
-  FilePathDefault ->
-  NonEmptySeq Text ->
-  m (Either LegendErr (NonEmptySeq Command))
-maybePathToCommands FPNone cmds = pure $ Right $ fmap (MkCommand Nothing) cmds
-maybePathToCommands FPDefault cmds = do
-  -- Search for the default legend
-  defPath <- (</> "shell-run.legend") <$> getXdgConfig "shell-run"
-  eMap <- Legend.legendPathToMap defPath
-  case eMap of
-    Left le -> case le of
-      -- Because we search for the default legend file by default, we do not
-      -- want to error if we do not find it (user may not have created it).
-      -- Other errors are reported.
-      FileErr _ -> do
-        Log.putLog $
-          MkLog
-            { cmd = Nothing,
-              msg = "No legend file found at: " <> showt defPath,
-              lvl = Info,
-              mode = Append,
-              dest = LogBoth
-            }
-        pure $ Right $ fmap (MkCommand Nothing) cmds
-      other -> pure $ Left other
-    Right lMap -> pure $ Command.translateCommands lMap cmds
-maybePathToCommands (FPManual path) cmds = do
-  -- Manually specified a legend file, all errors are fair game.
-  lMap <- Legend.legendPathToMap path
-  pure $ lMap >>= (`Command.translateCommands` cmds)
-{-# INLINEABLE maybePathToCommands #-}
-
-runCommandsOrLogErr ::
-  ( HasCompletedCmds env,
-    HasLogging env,
-    HasTimeout env,
-    MonadMask m,
-    MonadProcRunner m,
-    MonadTime m,
-    MonadReader env m,
-    MonadUnliftIO m
-  ) =>
-  Either LegendErr (NonEmptySeq Command) ->
-  m ()
-runCommandsOrLogErr (Right cmds) = runCommands cmds
-runCommandsOrLogErr (Left err) = Log.putLog log
-  where
-    errTxt = "Error parsing legend file: " <> showt err
-    log =
-      MkLog
-        { cmd = Nothing,
-          msg = errTxt,
-          lvl = Fatal,
-          mode = Append,
-          dest = LogBoth
-        }
-{-# INLINEABLE runCommandsOrLogErr #-}
+runShell = asks getCommands >>= runCommands
 
 runCommands ::
   forall m env.
@@ -204,7 +127,7 @@ runCommand ::
   Command ->
   m ()
 runCommand cmd = do
-  globalLogging <- asks getGlobalLogging
+  disableLogging <- asks getDisableLogging
   cmdLogging <- asks getCmdLogging
   fileLogging <- asks getFileLogging
 
@@ -216,8 +139,8 @@ runCommand cmd = do
   --       enabled/disabled, so no need for a separate function. That is,
   --       tryTimeShStreamNoRegion and tryTimeShStreamRegion handle file
   --       logging automatically.
-  res <- case (cmdLogging, fileLogging, globalLogging) of
-    (_, _, False) -> tryTimeProc cmd
+  res <- case (cmdLogging, fileLogging, disableLogging) of
+    (_, _, True) -> tryTimeProc cmd
     (Disabled, Nothing, _) -> tryTimeProc cmd
     (Disabled, Just (_, _), _) -> tryTimeProcStream cmd
     _ -> tryTimeProcStreamRegion cmd
@@ -297,7 +220,7 @@ keepRunning ::
   NonEmptySeq Command ->
   ConsoleRegion ->
   IORef Natural ->
-  Timeout ->
+  Maybe Timeout ->
   m Bool
 keepRunning allCmds region timer mto = do
   elapsed <- liftIO $ readIORef timer
@@ -325,9 +248,9 @@ keepRunning allCmds region timer mto = do
     else pure True
 {-# INLINEABLE keepRunning #-}
 
-timedOut :: Natural -> Timeout -> Bool
-timedOut _ (MkTimeout PPosInf) = False
-timedOut timer (MkTimeout (PFin t)) = timer > t
+timedOut :: Natural -> Maybe Timeout -> Bool
+timedOut _ Nothing = False
+timedOut timer (Just (MkTimeout t)) = timer > t
 {-# INLINEABLE timedOut #-}
 
 maybePollQueue :: (HasLogging env, MonadIO m, MonadReader env m) => m ()

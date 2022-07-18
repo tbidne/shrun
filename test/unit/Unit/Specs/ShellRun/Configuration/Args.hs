@@ -1,32 +1,30 @@
 -- | Specs for ShellRun.Args.
-module Unit.Specs.ShellRun.Args (specs) where
+module Unit.Specs.ShellRun.Configuration.Args (specs) where
 
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import ShellRun.Args (ALineTruncation (..), Args (..))
-import ShellRun.Args qualified as Args
-import ShellRun.Data.FilePathDefault (FilePathDefault (..))
-import ShellRun.Data.InfNum (PosInfNum (..))
-import ShellRun.Data.NonEmptySeq (NonEmptySeq)
-import ShellRun.Data.NonEmptySeq qualified as NESeq
-import ShellRun.Data.Timeout (Timeout (..))
-import ShellRun.Env.Types
-  ( CmdDisplay (..),
+import ShellRun.Configuration.Args (Args (..))
+import ShellRun.Configuration.Args qualified as Args
+import ShellRun.Configuration.Env.Types
+  ( ALineTruncation (..),
+    CmdDisplay (..),
     CmdLogging (..),
     StripControl (..),
     Truncation (..),
   )
-import Test.Tasty qualified as Tasty
-import Test.Tasty.HUnit qualified as THU
+import ShellRun.Data.FilePathDefault (FilePathDefault (..))
+import ShellRun.Data.NonEmptySeq (NonEmptySeq)
+import ShellRun.Data.NonEmptySeq qualified as NESeq
+import ShellRun.Data.Timeout (Timeout (..))
 import Unit.Prelude
 
 -- | Entry point for ShellRun.Args specs.
 specs :: TestTree
 specs =
-  Tasty.testGroup
+  testGroup
     "ShellRun.Args"
     [ defaultSpec,
-      legendSpecs,
+      configSpecs,
       timeoutSpecs,
       fileLoggingSpecs,
       commandLoggingSpecs,
@@ -40,66 +38,60 @@ specs =
 
 defaultSpec :: TestTree
 defaultSpec =
-  Tasty.testGroup
+  testGroup
     "Default parsing"
     [parseDefaultArgs]
 
 parseDefaultArgs :: TestTree
-parseDefaultArgs = THU.testCase "Should parse default args" $ do
+parseDefaultArgs = testCase "Should parse default args" $ do
   let argList = ["command"]
       expected =
         Just $
           MkArgs
-            { legend = FPDefault,
-              timeout = MkTimeout PPosInf,
-              cmdLogging = Disabled,
-              cmdDisplay = ShowKey,
-              stripControl = StripControlSmart,
-              cmdNameTrunc = MkTruncation PPosInf,
-              cmdLineTrunc = Undetected (MkTruncation PPosInf),
-              fileLogging = FPNone,
-              globalLogging = True,
+            { configPath = Nothing,
+              timeout = Nothing,
+              cmdLogging = Nothing,
+              cmdDisplay = Nothing,
+              stripControl = Nothing,
+              cmdNameTrunc = Nothing,
+              cmdLineTrunc = Nothing,
+              fileLogging = Nothing,
+              disableLogging = Nothing,
               commands = NESeq.singleton "command"
             }
   verifyResult argList expected
 
-legendSpecs :: TestTree
-legendSpecs =
-  Tasty.testGroup
-    "Legend arg parsing"
-    [ parseShortLegend,
-      parseLongLegend,
-      parseLongDefaultLegend,
-      parseShortDefaultLegend
+configSpecs :: TestTree
+configSpecs =
+  testGroup
+    "Config arg parsing"
+    [ parseShortConfig,
+      parseLongConfig
     ]
 
-parseShortLegend :: TestTree
-parseShortLegend = THU.testCase "Should parse short legend" $ do
-  let argList = ["-l./path/shell-run.legend", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/shell-run.legend"}
+parseShortConfig :: TestTree
+parseShortConfig = testCase "Should parse short config" $ do
+  let argList = ["-c./path/config.toml", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { configPath = Just "./path/config.toml"
+            }
   verifyResult argList expected
 
-parseLongLegend :: TestTree
-parseLongLegend = THU.testCase "Should parse long legend" $ do
-  let argList = ["--legend=./path/shell-run.legend", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {legend = FPManual "./path/shell-run.legend"}
-  verifyResult argList expected
-
-parseLongDefaultLegend :: TestTree
-parseLongDefaultLegend = THU.testCase "Should parse long empty legend" $ do
-  let argList = ["--legend", "", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {legend = FPDefault}
-  verifyResult argList expected
-
-parseShortDefaultLegend :: TestTree
-parseShortDefaultLegend = THU.testCase "Should parse short empty legend" $ do
-  let argList = ["-l", "", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {legend = FPDefault}
+parseLongConfig :: TestTree
+parseLongConfig = testCase "Should parse long config" $ do
+  let argList = ["--config=./path/config.toml", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { configPath = Just "./path/config.toml"
+            }
   verifyResult argList expected
 
 timeoutSpecs :: TestTree
 timeoutSpecs =
-  Tasty.testGroup
+  testGroup
     "Timeout arg parsing"
     [ parseShortTimeout,
       parseLongTimeout,
@@ -110,44 +102,44 @@ timeoutSpecs =
     ]
 
 parseShortTimeout :: TestTree
-parseShortTimeout = THU.testCase "Should parse short timeout" $ do
+parseShortTimeout = testCase "Should parse short timeout" $ do
   let argList = ["-t7", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 7}
   verifyResult argList expected
 
 parseLongTimeout :: TestTree
-parseLongTimeout = THU.testCase "Should parse long timeout" $ do
+parseLongTimeout = testCase "Should parse long timeout" $ do
   let argList = ["--timeout=7", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 7}
   verifyResult argList expected
 
 parseTimeString :: TestTree
-parseTimeString = THU.testCase "Should parse time string" $ do
+parseTimeString = testCase "Should parse time string" $ do
   let argList = ["--timeout=2h4s", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 7204}
   verifyResult argList expected
 
 parseLongTimeString :: TestTree
-parseLongTimeString = THU.testCase "Should parse full time string" $ do
+parseLongTimeString = testCase "Should parse full time string" $ do
   let argList = ["--timeout=1d2h3m4s", "command"]
       expected = Just $ (Args.defaultArgs defCommand) {timeout = toTO 93784}
   verifyResult argList expected
 
 parseTimeoutWordFail :: TestTree
-parseTimeoutWordFail = THU.testCase "Word should fail" $ do
+parseTimeoutWordFail = testCase "Word should fail" $ do
   let argList = ["--timeout=cat", "command"]
       expected = Nothing
   verifyResult argList expected
 
 parseNegativeTimeoutFail :: TestTree
-parseNegativeTimeoutFail = THU.testCase "Negative should fail" $ do
+parseNegativeTimeoutFail = testCase "Negative should fail" $ do
   let argList = ["--timeout=-7", "command"]
       expected = Nothing
   verifyResult argList expected
 
 fileLoggingSpecs :: TestTree
 fileLoggingSpecs =
-  Tasty.testGroup
+  testGroup
     "FileLogging arg parsing"
     [ parseShortFileLogging,
       parseLongFileLogging,
@@ -156,72 +148,104 @@ fileLoggingSpecs =
     ]
 
 parseShortFileLogging :: TestTree
-parseShortFileLogging = THU.testCase "Should parse filepath with -f" $ do
+parseShortFileLogging = testCase "Should parse filepath with -f" $ do
   let argList = ["-flogfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPManual "logfile"}
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { fileLogging = Just $ FPManual "logfile"
+            }
   verifyResult argList expected
 
 parseLongFileLogging :: TestTree
-parseLongFileLogging = THU.testCase "Should parse filepath with --file-log" $ do
+parseLongFileLogging = testCase "Should parse filepath with --file-log" $ do
   let argList = ["--file-log=logfile", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPManual "logfile"}
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { fileLogging = Just $ FPManual "logfile"
+            }
   verifyResult argList expected
 
 parseLongDefaultFileLogging :: TestTree
-parseLongDefaultFileLogging = THU.testCase "Should parse empty --file-log" $ do
+parseLongDefaultFileLogging = testCase "Should parse empty --file-log" $ do
   let argList = ["--file-log", "", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPDefault}
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { fileLogging = Just FPDefault
+            }
   verifyResult argList expected
 
 parseShortDefaultFileLogging :: TestTree
-parseShortDefaultFileLogging = THU.testCase "Should parse empty -f" $ do
+parseShortDefaultFileLogging = testCase "Should parse empty -f" $ do
   let argList = ["-f", "", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {fileLogging = FPDefault}
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { fileLogging = Just FPDefault
+            }
   verifyResult argList expected
 
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =
-  Tasty.testGroup
+  testGroup
     "CmdLogging arg parsing"
     [ parseShortCommandLogging,
       parseLongCommandLogging
     ]
 
 parseShortCommandLogging :: TestTree
-parseShortCommandLogging = THU.testCase "Should parse -c as CmdLogging" $ do
-  let argList = ["-c", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {cmdLogging = Enabled}
+parseShortCommandLogging = testCase "Should parse -l as CmdLogging" $ do
+  let argList = ["-l", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { cmdLogging = Just Enabled
+            }
   verifyResult argList expected
 
 parseLongCommandLogging :: TestTree
-parseLongCommandLogging = THU.testCase "Should parse --cmd-log as CmdLogging" $ do
+parseLongCommandLogging = testCase "Should parse --cmd-log as CmdLogging" $ do
   let argList = ["--cmd-log", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {cmdLogging = Enabled}
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { cmdLogging = Just Enabled
+            }
   verifyResult argList expected
 
 commandDisplaySpecs :: TestTree
 commandDisplaySpecs =
-  Tasty.testGroup
+  testGroup
     "CmdDisplay arg parsing"
     [ parseShortShowKey,
       parseLongShowKey
     ]
 
 parseShortShowKey :: TestTree
-parseShortShowKey = THU.testCase "Should parse -k as HideKey" $ do
+parseShortShowKey = testCase "Should parse -k as HideKey" $ do
   let argList = ["-k", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = HideKey}
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { cmdDisplay = Just HideKey
+            }
   verifyResult argList expected
 
 parseLongShowKey :: TestTree
-parseLongShowKey = THU.testCase "Should parse --key-hide as ShowKey" $ do
+parseLongShowKey = testCase "Should parse --key-hide as ShowKey" $ do
   let argList = ["--key-hide", "command"]
-      expected = Just $ (Args.defaultArgs defCommand) {cmdDisplay = HideKey}
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { cmdDisplay = Just HideKey
+            }
   verifyResult argList expected
 
 stripControlSpecs :: TestTree
 stripControlSpecs =
-  Tasty.testGroup
+  testGroup
     "Strip control arg parsing"
     [ parseShortStripControlAll,
       parseShortStripControlNone,
@@ -230,175 +254,162 @@ stripControlSpecs =
     ]
 
 parseShortStripControlAll :: TestTree
-parseShortStripControlAll = THU.testCase "Should parse -sall as StripControlAll" $ do
+parseShortStripControlAll = testCase "Should parse -sall as StripControlAll" $ do
   let argList = ["-sall", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { stripControl = StripControlAll
+            { stripControl = Just StripControlAll
             }
   verifyResult argList expected
 
 parseShortStripControlNone :: TestTree
-parseShortStripControlNone = THU.testCase "Should parse -snone as StripControlNone" $ do
+parseShortStripControlNone = testCase "Should parse -snone as StripControlNone" $ do
   let argList = ["-snone", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { stripControl = StripControlNone
+            { stripControl = Just StripControlNone
             }
   verifyResult argList expected
 
 parseShortStripControlSmart :: TestTree
-parseShortStripControlSmart = THU.testCase "Should parse -ssmart as StripControlSmart" $ do
+parseShortStripControlSmart = testCase "Should parse -ssmart as StripControlSmart" $ do
   let argList = ["-ssmart", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { stripControl = StripControlSmart
+            { stripControl = Just StripControlSmart
             }
   verifyResult argList expected
 
 parseLongStripControlSmart :: TestTree
-parseLongStripControlSmart = THU.testCase "Should parse --strip-control=smart as StripControlSmart" $ do
+parseLongStripControlSmart = testCase "Should parse --strip-control=smart as StripControlSmart" $ do
   let argList = ["--strip-control=smart", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { stripControl = StripControlSmart
+            { stripControl = Just StripControlSmart
             }
   verifyResult argList expected
 
 cmdNameTruncSpecs :: TestTree
 cmdNameTruncSpecs =
-  Tasty.testGroup
+  testGroup
     "Command name truncation arg parsing"
     [ parseShortCmdNameTrunc,
       parseLongCmdNameTrunc
     ]
 
 parseShortCmdNameTrunc :: TestTree
-parseShortCmdNameTrunc = THU.testCase "Should parse -x as command name truncation" $ do
+parseShortCmdNameTrunc = testCase "Should parse -x as command name truncation" $ do
   let argList = ["-x", "15", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { cmdNameTrunc = MkTruncation (PFin 15)
+            { cmdNameTrunc = Just $ MkTruncation 15
             }
   verifyResult argList expected
 
 parseLongCmdNameTrunc :: TestTree
-parseLongCmdNameTrunc = THU.testCase
+parseLongCmdNameTrunc = testCase
   "Should parse --cmd-name-trunc as command name truncation"
   $ do
     let argList = ["--cmd-name-trunc", "15", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { cmdNameTrunc = MkTruncation (PFin 15)
+              { cmdNameTrunc = Just $ MkTruncation 15
               }
     verifyResult argList expected
 
 cmdLineTruncSpecs :: TestTree
 cmdLineTruncSpecs =
-  Tasty.testGroup
+  testGroup
     "Command line truncation arg parsing"
     [ parseShortCmdLineTrunc,
       parseLongCmdLineTrunc,
-      parseDetectCmdLineTrunc,
-      parseDCmdLineTrunc
+      parseDetectCmdLineTrunc
     ]
 
 parseShortCmdLineTrunc :: TestTree
-parseShortCmdLineTrunc = THU.testCase "Should parse -y as command line truncation" $ do
+parseShortCmdLineTrunc = testCase "Should parse -y as command line truncation" $ do
   let argList = ["-y", "15", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { cmdLineTrunc = Undetected $ MkTruncation (PFin 15)
+            { cmdLineTrunc = Just $ Undetected $ MkTruncation 15
             }
   verifyResult argList expected
 
 parseLongCmdLineTrunc :: TestTree
-parseLongCmdLineTrunc = THU.testCase
+parseLongCmdLineTrunc = testCase
   "Should parse --cmd-line-trunc as command line truncation"
   $ do
     let argList = ["--cmd-line-trunc", "15", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { cmdLineTrunc = Undetected $ MkTruncation (PFin 15)
+              { cmdLineTrunc = Just $ Undetected $ MkTruncation 15
               }
     verifyResult argList expected
 
 parseDetectCmdLineTrunc :: TestTree
-parseDetectCmdLineTrunc = THU.testCase
+parseDetectCmdLineTrunc = testCase
   "Should parse --cmd-line-trunc detect as detect command line truncation"
   $ do
     let argList = ["--cmd-line-trunc", "detect", "command"]
         expected =
           Just $
             (Args.defaultArgs defCommand)
-              { cmdLineTrunc = Detected
-              }
-    verifyResult argList expected
-
-parseDCmdLineTrunc :: TestTree
-parseDCmdLineTrunc = THU.testCase
-  "Should parse -yd as detect command line truncation"
-  $ do
-    let argList = ["-y", "d", "command"]
-        expected =
-          Just $
-            (Args.defaultArgs defCommand)
-              { cmdLineTrunc = Detected
+              { cmdLineTrunc = Just Detected
               }
     verifyResult argList expected
 
 globalLoggingSpecs :: TestTree
 globalLoggingSpecs =
-  Tasty.testGroup
+  testGroup
     "Global logging arg parsing"
     [ parseShortGlobalLogging,
       parseLongGlobalLogging
     ]
 
 parseShortGlobalLogging :: TestTree
-parseShortGlobalLogging = THU.testCase "Should parse -d as no global logging" $ do
+parseShortGlobalLogging = testCase "Should parse -d as no global logging" $ do
   let argList = ["-d", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { globalLogging = False
+            { disableLogging = Just True
             }
   verifyResult argList expected
 
 parseLongGlobalLogging :: TestTree
-parseLongGlobalLogging = THU.testCase "Should parse --disable-log as no global logging" $ do
+parseLongGlobalLogging = testCase "Should parse --disable-log as no global logging" $ do
   let argList = ["--disable-log", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
-            { globalLogging = False
+            { disableLogging = Just True
             }
   verifyResult argList expected
 
 commandSpecs :: TestTree
 commandSpecs =
-  Tasty.testGroup
+  testGroup
     "Command arg parsing"
     [ emptyCommandsFail,
       parseCommands
     ]
 
 emptyCommandsFail :: TestTree
-emptyCommandsFail = THU.testCase "Empty commands fail" $ do
+emptyCommandsFail = testCase "Empty commands fail" $ do
   let argList = []
       expected = Nothing
   verifyResult argList expected
 
 parseCommands :: TestTree
-parseCommands = THU.testCase
+parseCommands = testCase
   "Bare strings parsed as commands"
   $ do
     let argList = ["one", "two", "three"]
@@ -413,8 +424,8 @@ verifyResult argList expected = do
 prefs :: ParserPrefs
 prefs = OptApp.prefs mempty
 
-toTO :: Natural -> Timeout
-toTO n = MkTimeout $ PFin n
+toTO :: Natural -> Maybe Timeout
+toTO = Just . MkTimeout
 
 defCommand :: NonEmptySeq Text
 defCommand = NESeq.unsafeFromList ["command"]

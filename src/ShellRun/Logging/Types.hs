@@ -19,7 +19,7 @@ module ShellRun.Logging.Types
   )
 where
 
-import ShellRun.Command (Command)
+import ShellRun.Data.Command (Command)
 import ShellRun.Data.Supremum (Supremum (..))
 import ShellRun.Prelude
 import System.Console.Pretty (Color)

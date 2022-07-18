@@ -17,11 +17,11 @@ import Test.Tasty qualified as Tasty
 -- | Entry point for functional tests.
 main :: IO ()
 main =
-  Tasty.defaultMain $ Tasty.withResource setup teardown specs
+  defaultMain $ Tasty.withResource setup teardown specs
 
 specs :: IO TestArgs -> TestTree
 specs args = do
-  Tasty.testGroup
+  testGroup
     "Functional Tests"
     [ Success.spec args,
       SuccessCommandLogging.spec args,
@@ -36,13 +36,13 @@ setup :: IO TestArgs
 setup = do
   cwd <- (</> "test/functional") <$> Dir.getCurrentDirectory
   let td = cwd </> "tmp"
-      lp = cwd </> "shell-run.legend"
+      lp = cwd </> "config.toml"
 
   Dir.createDirectoryIfMissing False td
   pure $
     MkTestArgs
       { tmpDir = td,
-        legendPath = lp
+        configPath = lp
       }
 
 teardown :: TestArgs -> IO ()

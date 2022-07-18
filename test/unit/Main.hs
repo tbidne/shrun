@@ -26,7 +26,7 @@ main = do
   let maxRunProps = Tasty.localOption (MkMaxRuns maxRuns) Unit.Props.props
 
   Tasty.defaultMainWithIngredients ingredients $
-    Tasty.testGroup "Unit tests" [Unit.Specs.specs, maxRunProps]
+    testGroup "Unit tests" [Unit.Specs.specs, maxRunProps]
   where
     parseMaxRuns = M.mfilter (> 0) . TR.readMaybe
     ingredients = Tasty.includingOptions [Option @MaxRuns Proxy] : Tasty.defaultIngredients

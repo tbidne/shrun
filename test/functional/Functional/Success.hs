@@ -6,22 +6,19 @@ import Functional.TestArgs (TestArgs (..))
 import Functional.Utils qualified as U
 import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
 import Test.ShellRun.Verifier qualified as V
-import Test.Tasty.HUnit qualified as THU
 
 -- | Spec that should run commands successfully.
 spec :: IO TestArgs -> TestTree
 spec args =
-  THU.testCase "Should run commands successfully" $ do
-    MkTestArgs {legendPath} <- args
-    let legendArg = "--legend=" <> legendPath
-        argList = [legendArg, "--key-hide", timeout] <> commands
+  testCase "Should run commands successfully" $ do
+    MkTestArgs {configPath} <- args
+    let argList = ["--config", configPath, "--key-hide", "--timeout", "5"] <> commands
 
     results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
 
     V.verifyExpectedUnexpected results allExpected allUnexpected
   where
     commands = ["bad", "both", "echo hi"]
-    timeout = "--timeout=5"
 
 allExpected :: List ExpectedText
 allExpected =

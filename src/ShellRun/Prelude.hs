@@ -65,7 +65,8 @@ import Control.Monad as X
     (=<<),
     (>=>),
   )
-import Control.Monad.Catch as X (MonadCatch (..), MonadMask (..), MonadThrow (..))
+import Control.Monad.Catch as X (MonadCatch, MonadMask (..), MonadThrow)
+import Control.Monad.Fail as X (MonadFail (..))
 import Control.Monad.IO.Class as X (MonadIO (..))
 import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.Trans as X (MonadTrans (..))
@@ -94,7 +95,7 @@ import Data.Monoid as X (Monoid (..))
 import Data.Ord as X (Ordering (..))
 import Data.Semigroup as X (Semigroup (..))
 import Data.String as X (String)
-import Data.Text as X (Text)
+import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TextEnc
 import Data.Text.Encoding.Error qualified as TextEncErr
@@ -109,6 +110,9 @@ import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X
   ( Getter,
     Iso',
+    Lens',
+    Prism,
+    Prism',
     iso,
     over',
     preview,
@@ -116,8 +120,10 @@ import Optics.Core as X
     set',
     to,
     view,
+    (#),
     (%),
     (%!~),
+    (%?),
     (.~),
     (^.),
     (^?),
@@ -125,13 +131,36 @@ import Optics.Core as X
     _2,
     _3,
     _Just,
+    _Left,
+    _Nothing,
+    _Right,
   )
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
+import TOML as X
+  ( DecodeTOML (..),
+    Decoder,
+    TOMLError (..),
+    Value (..),
+    decode,
+    getArrayOf,
+    getField,
+    getFieldOpt,
+    getFieldOptWith,
+    getFieldWith,
+    invalidValue,
+    makeDecoder,
+    renderTOMLError,
+    typeMismatch,
+  )
 import UnliftIO as X
   ( Exception (..),
     MonadUnliftIO (..),
     SomeException,
+    catch,
+    catchAny,
+    catchIO,
+    onException,
     throwIO,
     throwString,
     try,

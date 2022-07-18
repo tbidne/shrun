@@ -17,10 +17,10 @@ main =
 files :: [String]
 files =
   [ "-isrc",
-    "src/ShellRun/Args.hs",
-    "src/ShellRun/Command.hs",
+    "src/ShellRun/Configuration/Args.hs",
+    "src/ShellRun/Configuration/Legend.hs",
+    "src/ShellRun/Data/Command.hs",
     "src/ShellRun/Data/NonEmptySeq.hs",
-    "src/ShellRun/Legend/Internal.hs",
     "src/ShellRun/Logging/Formatting.hs",
     "src/ShellRun/Logging/Queue.hs",
     "src/ShellRun/Utils.hs"

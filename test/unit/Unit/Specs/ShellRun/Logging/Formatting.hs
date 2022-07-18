@@ -1,23 +1,21 @@
 -- | Specs for ShellRun.Logging.Formatting.
 module Unit.Specs.ShellRun.Logging.Formatting (specs) where
 
-import ShellRun.Env.Types (StripControl (..))
+import ShellRun.Configuration.Env.Types (StripControl (..))
 import ShellRun.Logging.Formatting qualified as Formatting
-import Test.Tasty qualified as Tasty
-import Test.Tasty.HUnit qualified as THU
 import Unit.Prelude
 
 -- | Entry point for ShellRun.Formatting specs.
 specs :: TestTree
 specs =
-  Tasty.testGroup
+  testGroup
     "ShellRun.Logging.Formatting"
     [ stripChars'Specs
     ]
 
 stripChars'Specs :: TestTree
 stripChars'Specs =
-  Tasty.testGroup
+  testGroup
     "stripChars'"
     [ stripNone,
       stripAll,
@@ -26,7 +24,7 @@ stripChars'Specs =
 
 stripNone :: TestTree
 stripNone =
-  THU.testCase "StripControlNone should only strip external whitespace" $ do
+  testCase "StripControlNone should only strip external whitespace" $ do
     "" @=? stripNone' ""
     "\ESC[ foo \ESC[A  bar \n baz" @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
   where
@@ -34,7 +32,7 @@ stripNone =
 
 stripAll :: TestTree
 stripAll =
-  THU.testCase "StripControlAll should strip whitespace + all control" $ do
+  testCase "StripControlAll should strip whitespace + all control" $ do
     "" @=? stripAll' ""
     "oo    bar  baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
@@ -42,7 +40,7 @@ stripAll =
 
 stripSmart :: TestTree
 stripSmart =
-  THU.testCase "StripControlSmart should strip whitespace + some control" $ do
+  testCase "StripControlSmart should strip whitespace + some control" $ do
     "" @=? stripSmart' ""
     "foo \ESC[m   bar  baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where

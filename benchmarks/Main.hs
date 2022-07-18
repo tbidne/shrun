@@ -2,7 +2,7 @@ module Main (main) where
 
 import Control.DeepSeq (force)
 import ShellRun (runShell, runShellT)
-import ShellRun.Env (runParser)
+import ShellRun.Configuration.Env (makeEnv)
 import ShellRun.Prelude
 import System.Environment (withArgs)
 import Test.Tasty.Bench
@@ -28,7 +28,7 @@ basicLogs :: Benchmark
 basicLogs = bgroup "Basic Logging" (runLoops [])
 
 cmdLogs :: Benchmark
-cmdLogs = bgroup "Command Logging" (runLoops ["-c"])
+cmdLogs = bgroup "Command Logging" (runLoops ["-l"])
 
 runLoops :: [String] -> [Benchmark]
 runLoops args = fmap f loops
@@ -39,7 +39,7 @@ runLoops args = fmap f loops
 run :: String -> [String] -> Benchmark
 run desc args =
   bench desc $ nfIO $ do
-    srEnv <- withArgs args runParser
+    srEnv <- withArgs args makeEnv
     runShellT runShell srEnv
 
 loops :: [(String, String)]

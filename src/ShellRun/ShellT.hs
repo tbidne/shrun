@@ -9,10 +9,10 @@ module ShellRun.ShellT
   )
 where
 
+import ShellRun.Configuration.Env.Types (Env)
 import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
 import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
 import ShellRun.Effects.MonadTime (MonadTime (..))
-import ShellRun.Env.Types (Env)
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types (LogMode (..))

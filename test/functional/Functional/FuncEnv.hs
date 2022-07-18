@@ -9,16 +9,15 @@ module Functional.FuncEnv
 where
 
 import Functional.Prelude
-import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
-import ShellRun.Env qualified as Env
-import ShellRun.Env.Types
+import ShellRun.Configuration.Env qualified as Env
+import ShellRun.Configuration.Env.Types
   ( Env,
     HasCommands (..),
     HasCompletedCmds (..),
-    HasLegend (..),
     HasLogging (..),
     HasTimeout (..),
   )
+import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.ShellT (ShellT)
@@ -34,10 +33,6 @@ data FuncEnv = MkFuncEnv
 makeFieldLabelsNoPrefix ''FuncEnv
 
 -- | @since 0.3
-instance HasLegend FuncEnv where
-  getLegend = view (#coreEnv % #legend)
-
--- | @since 0.3
 instance HasTimeout FuncEnv where
   getTimeout = view (#coreEnv % #timeout)
 
@@ -48,7 +43,7 @@ instance HasLogging FuncEnv where
   getCmdLogging = view (#coreEnv % #cmdLogging)
   getCmdNameTrunc = view (#coreEnv % #cmdNameTrunc)
   getFileLogging = view (#coreEnv % #fileLogging)
-  getGlobalLogging = view (#coreEnv % #globalLogging)
+  getDisableLogging = view (#coreEnv % #disableLogging)
   getStripControl = view (#coreEnv % #stripControl)
 
 -- | @since 0.3
@@ -81,7 +76,7 @@ instance MonadProcRunner (ShellT FuncEnv IO) where
 mkFuncEnv :: IO FuncEnv
 mkFuncEnv = do
   ls <- newIORef []
-  env <- Env.runParser
+  env <- Env.makeEnv
   pure $
     MkFuncEnv
       { coreEnv = env,

@@ -35,6 +35,3 @@ jobs:
 
       - name: nixpkgs-fmt
         run: make nixpkgsfmtc
-
-      - name: haddock
-        run: nix-shell --command "cabal update && make haddockc" nix/cabal_9-2.nix

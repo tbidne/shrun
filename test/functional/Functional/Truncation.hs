@@ -5,15 +5,13 @@ import Functional.Prelude
 import Functional.Utils qualified as U
 import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..))
 import Test.ShellRun.Verifier qualified as V
-import Test.Tasty qualified as Tasty
-import Test.Tasty.HUnit qualified as THU
 
 -- | Spec that should run commands successfully and print stdout.
 spec :: TestTree
 spec =
-  Tasty.testGroup
+  testGroup
     "Truncation tests"
-    [ THU.testCase "Should truncate command name" $ do
+    [ testCase "Should truncate command name" $ do
         results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
         V.verifyExpected results expected
     ]

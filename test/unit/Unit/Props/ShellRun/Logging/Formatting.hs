@@ -14,9 +14,7 @@ import Data.Text qualified as T
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
-import ShellRun.Command (Command (..))
-import ShellRun.Data.InfNum (PosInfNum (..))
-import ShellRun.Env.Types
+import ShellRun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
     HasLogging (..),
@@ -24,6 +22,7 @@ import ShellRun.Env.Types
     TruncRegion (..),
     Truncation (..),
   )
+import ShellRun.Data.Command (Command (..))
 import ShellRun.Logging.Formatting qualified as Formatting
 import ShellRun.Logging.Types (Log (..), LogLevel (..))
 import ShellRun.Logging.Types qualified as Log
@@ -34,8 +33,8 @@ import Unit.Props.ShellRun.Logging.Generators qualified as LGens
 
 data Env = MkEnv
   { cmdDisplay :: CmdDisplay,
-    cmdTrunc :: Truncation 'TCmdName,
-    lineTrunc :: Truncation 'TCmdLine
+    cmdTrunc :: Maybe (Truncation 'TCmdName),
+    lineTrunc :: Maybe (Truncation 'TCmdLine)
   }
   deriving stock (Eq, Show)
 
@@ -45,8 +44,8 @@ genEnv :: Gen Env
 genEnv =
   MkEnv
     <$> HGen.enumBounded
-    <*> fmap MkTruncation genPPosInf
-    <*> fmap MkTruncation genPPosInf
+    <*> (fmap . fmap) MkTruncation genMInt
+    <*> (fmap . fmap) MkTruncation genMInt
 
 cmdTruncLimit :: Integral a => a
 cmdTruncLimit = 30
@@ -55,8 +54,8 @@ genEnvCmdTrunc :: Gen Env
 genEnvCmdTrunc =
   MkEnv
     <$> HGen.enumBounded
-    <*> fmap (MkTruncation . PFin) genNat
-    <*> pure (MkTruncation PPosInf)
+    <*> fmap (Just . MkTruncation) genNat
+    <*> pure Nothing
   where
     genNat = HGen.integral range
     range = HRange.linear 0 cmdTruncLimit
@@ -73,8 +72,8 @@ genEnvLineTrunc :: Gen Env
 genEnvLineTrunc =
   MkEnv
     <$> HGen.enumBounded
-    <*> pure (MkTruncation PPosInf)
-    <*> fmap (MkTruncation . PFin) genNat
+    <*> pure Nothing
+    <*> fmap (Just . MkTruncation) genNat
   where
     genNat = HGen.integral range
     range = HRange.linear 0 lineTruncLimit
@@ -87,17 +86,17 @@ genLongLineText = HGen.text range HGen.latin1
 genEnvDispCmd :: Gen Env
 genEnvDispCmd =
   MkEnv HideKey
-    <$> fmap MkTruncation genPPosInf
-    <*> fmap MkTruncation genPPosInf
+    <$> (fmap . fmap) MkTruncation genMInt
+    <*> (fmap . fmap) MkTruncation genMInt
 
 genEnvDispKey :: Gen Env
 genEnvDispKey =
   MkEnv ShowKey
-    <$> fmap MkTruncation genPPosInf
-    <*> fmap MkTruncation genPPosInf
+    <$> (fmap . fmap) MkTruncation genMInt
+    <*> (fmap . fmap) MkTruncation genMInt
 
-genPPosInf :: Gen (PosInfNum Natural)
-genPPosInf = HGen.choice [fmap PFin genNat, pure PPosInf]
+genMInt :: Gen (Maybe Natural)
+genMInt = HGen.choice [Just <$> genNat, pure Nothing]
   where
     genNat = HGen.integral range
     range = HRange.exponential 0 100
@@ -111,7 +110,7 @@ instance HasLogging Env where
   getCmdNameTrunc = view #cmdTrunc
   getCmdLineTrunc = view #lineTrunc
   getFileLogging = const Nothing
-  getGlobalLogging = const False
+  getDisableLogging = const False
   getStripControl = const StripControlNone
 
 -- | Entry point for ShellRun.Logging.Formatting property tests.

@@ -9,15 +9,13 @@ import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..))
 import Test.ShellRun.Verifier qualified as V
-import Test.Tasty qualified as Tasty
-import Test.Tasty.HUnit qualified as THU
 
 -- | Spec that should run commands successfully and print stdout.
 spec :: IO TestArgs -> TestTree
-spec args = Tasty.withResource (pure ()) (teardown args) $ \_ ->
-  Tasty.testGroup
+spec args = withResource (pure ()) (teardown args) $ \_ ->
+  testGroup
     "Command logging tests"
-    [ THU.testCase "Should print commands stdout" $ do
+    [ testCase "Should print commands stdout" $ do
         MkTestArgs {tmpDir} <- args
         let outpath = tmpDir </> outfile
             argList =

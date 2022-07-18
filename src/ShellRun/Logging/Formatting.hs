@@ -13,14 +13,13 @@ module ShellRun.Logging.Formatting
 where
 
 import Data.Text qualified as T
-import ShellRun.Command (Command (..))
-import ShellRun.Data.InfNum (PosInfNum (..))
-import ShellRun.Env.Types
+import ShellRun.Configuration.Env.Types
   ( CmdDisplay (..),
     HasLogging (..),
     StripControl (..),
-    Truncation (..),
+    _MkTruncation,
   )
+import ShellRun.Data.Command (Command (..))
 import ShellRun.Logging.Types (Log (..), LogLevel (..))
 import ShellRun.Logging.Types qualified as Log
 import ShellRun.Prelude
@@ -33,8 +32,8 @@ import System.Console.Pretty qualified as P
 -- @since 0.1
 formatConsoleLog :: (HasLogging env, MonadReader env m) => Log -> m Text
 formatConsoleLog log = do
-  MkTruncation cmdNameTrunc <- asks getCmdNameTrunc
-  MkTruncation lineNameTrunc <- asks getCmdLineTrunc
+  cmdNameTrunc <- asks getCmdNameTrunc
+  lineNameTrunc <- asks getCmdLineTrunc
   msg' <- stripChars $ log ^. #msg
   case log ^. #cmd of
     Nothing -> pure $ colorize $ prefix <> msg'
@@ -42,13 +41,14 @@ formatConsoleLog log = do
       -- get cmd name to display
       name <- displayCmd com
       let -- truncate cmd/name if necessary
-          name' = case cmdNameTrunc of
-            PPosInf -> name
-            PFin n -> U.truncateIfNeeded n name
+          name' = case cmdNameTrunc ^? _Just % _MkTruncation of
+            Nothing -> name
+            Just n -> U.truncateIfNeeded n name
+
           -- truncate entire if necessary (flag on and command log only)
           line = colorize $ prefix <> "[" <> name' <> "] " <> msg'
-          line' = case (log ^. #lvl, lineNameTrunc) of
-            (SubCommand, PFin m) -> U.truncateIfNeeded m line
+          line' = case (log ^. #lvl, lineNameTrunc ^? _Just % _MkTruncation) of
+            (SubCommand, Just m) -> U.truncateIfNeeded m line
             _ -> line
        in pure line'
   where

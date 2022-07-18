@@ -29,14 +29,14 @@ import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
 import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
-import ShellRun.Command (Command (..))
-import ShellRun.Data.Supremum (Supremum (..))
-import ShellRun.Effects.MonadTime (MonadTime (..), withTiming)
-import ShellRun.Env.Types
+import ShellRun.Configuration.Env.Types
   ( CmdLogging (..),
     HasCompletedCmds (..),
     HasLogging (..),
   )
+import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Supremum (Supremum (..))
+import ShellRun.Effects.MonadTime (MonadTime (..), withTiming)
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types

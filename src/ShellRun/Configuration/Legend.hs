@@ -1,66 +1,125 @@
-{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ViewPatterns #-}
 
--- | Provides the 'Command' wrapper for commands.
+-- | Provides types for the legend functionality.
 --
--- @since 0.1
-module ShellRun.Command
-  ( Command (..),
+-- @since 0.5
+module ShellRun.Configuration.Legend
+  ( -- * Parsing
+    linesToMap,
+    LegendMap,
+    LegendError (..),
+
+    -- * Translation
     translateCommands,
+    CyclicKeyError (..),
   )
 where
 
+import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as Set
-import Data.Hashable (Hashable)
-import Data.String (IsString (..))
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
+import Refined (NonEmpty)
 import Refined qualified as R
+import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
-import ShellRun.Legend (LegendErr (..), LegendMap)
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 
--- $setup
--- >>> :set -XOverloadedLists
-
--- | Wrapper for shell commands.
+-- | Alias for our legend map.
 --
 -- @since 0.1
-data Command = MkCommand
-  { -- | The key name for the command, for display purposes.
-    --
-    -- @since 0.1
-    getKey :: Maybe Text,
-    -- | The shell command to run.
-    --
-    -- @since 0.1
-    command :: Text
-  }
+type LegendMap = HashMap Text Text
+
+-- | Errors when parsing the legend.
+--
+-- @since 0.5
+data LegendError
+  = -- | @since 0.5
+    LegendErrorDuplicateKeys !Text
+  | -- | @since 0.5
+    LegendErrorEmptyKey !Text
+  | -- | @since 0.5
+    LegendErrorEmptyValue !Text
   deriving stock
-    ( -- | @since 0.1
+    ( -- | @since 0.5
       Eq,
-      -- | @since 0.1
-      Generic,
-      -- | @since 0.1
+      -- | @since 0.5
       Show
     )
-  deriving anyclass
-    ( -- | @since 0.1
-      Hashable
+
+-- | @since 0.5
+instance Exception LegendError where
+  displayException (LegendErrorDuplicateKeys k) = "Legend error: found duplicate keys: " <> unpack k
+  displayException (LegendErrorEmptyKey k) = "Legend error: key cannot be empty: " <> unpack k
+  displayException (LegendErrorEmptyValue v) = "Legend error: value cannot be empty: " <> unpack v
+
+-- | Attempts to parse the given ['Text'] into 'LegendMap'.
+-- The text lines can either be comments (start with \'#\') or
+-- key value pairs. The pairs have the form:
+--
+-- @
+-- key=val
+-- @
+--
+-- Parsing can fail if, for any non-comment line:
+--
+-- - Key is empty.
+-- - Value is empty.
+-- - There are duplicate keys.
+--
+-- ==== __Examples__
+-- >>> linesToMap ["=val"]
+-- Left (LegendErrorEmptyKey "=val")
+--
+-- >>> linesToMap ["key="]
+-- Left (LegendErrorEmptyValue "key=")
+--
+-- >>> linesToMap ["key=value"]
+-- Right (fromList [("key","value")])
+--
+-- >>> linesToMap ["key=value1","key=value2"]
+-- Left (LegendErrorDuplicateKeys "key")
+--
+-- @since 0.1
+linesToMap :: List Text -> Either LegendError LegendMap
+linesToMap = foldr f (Right Map.empty)
+  where
+    f "" mp = mp
+    f (T.stripPrefix "#" -> Just _) mp = mp
+    f line mp = join $ liftA2 insertPair (parseLine line) mp
+    insertPair (key, cmd) mp =
+      case Map.lookup key mp of
+        Just _ -> Left $ LegendErrorDuplicateKeys key
+        Nothing -> Right $ Map.insert key cmd mp
+
+parseLine :: Text -> Either LegendError (Tuple2 Text Text)
+parseLine l =
+  case U.breakStripPoint breakPoint l of
+    ("", _) -> Left $ LegendErrorEmptyKey l
+    (_, "") -> Left $ LegendErrorEmptyValue l
+    (k, v) -> Right (k, v)
+  where
+    breakPoint = $$(R.refineTH @NonEmpty @Text "=")
+
+-- | @since 0.5
+newtype CyclicKeyError = MkCyclicKeyError Text
+  deriving stock
+    ( -- | @since 0.5
+      Eq,
+      -- | @since 0.5
+      Show
     )
 
--- | @since 0.1
-makeFieldLabelsNoPrefix ''Command
-
-instance IsString Command where
-  fromString = MkCommand Nothing . T.pack
-  {-# INLINEABLE fromString #-}
+-- | @since 0.5
+instance Exception CyclicKeyError where
+  displayException (MkCyclicKeyError path) =
+    "Encountered cyclic definitions when translating commands: " <> unpack path
 
 -- | Returns a list of 'Text' commands, potentially transforming a
 -- given string via the `LegendMap` @legend@.
@@ -78,14 +137,14 @@ instance IsString Command where
 -- map.
 --
 -- ==== __Examples__
+-- >>> import ShellRun.Data.NonEmptySeq (unsafeFromList, singleton)
 -- >>> :{
 --   let m = Map.fromList
 --         [ ("cmd1", "one"),
 --           ("cmd2", "two"),
 --           ("all", "cmd1,,cmd2,,other")
 --         ]
---       -- with -XOverloadedLists for Data.Seq literal
---       cmds = translateCommands m ("all" :|^ ["blah"])
+--       cmds = translateCommands m (unsafeFromList ["all", "blah"])
 --   in (fmap . fmap) (view #command) cmds
 -- :}
 -- Right ("one" :|^ fromList ["two","other","blah"])
@@ -99,16 +158,15 @@ instance IsString Command where
 --           ("b", "c"),
 --           ("c", "a")
 --         ]
---   in translateCommands m ("a" :|^ [])
+--   in translateCommands m (singleton "a")
 -- :}
--- Left (CyclicKeyErr "a -> b -> c -> a")
+-- Left (MkCyclicKeyError "a -> b -> c -> a")
 --
 -- @since 0.1
-translateCommands :: LegendMap -> NonEmptySeq Text -> Either LegendErr (NonEmptySeq Command)
+translateCommands :: LegendMap -> NonEmptySeq Text -> Either CyclicKeyError (NonEmptySeq Command)
 translateCommands mp (t :|^ ts) = sequenceA $ U.foldMap1 (lineToCommands mp) t ts
-{-# INLINEABLE translateCommands #-}
 
-lineToCommands :: LegendMap -> Text -> NonEmptySeq (Either LegendErr Command)
+lineToCommands :: LegendMap -> Text -> NonEmptySeq (Either CyclicKeyError Command)
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
@@ -121,7 +179,7 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
       Just val -> case maybeCyclicVal of
         Just cyclicVal ->
           let pathTxt = builderToPath path line cyclicVal
-           in NESeq.singleton $ Left (CyclicKeyErr pathTxt)
+           in NESeq.singleton $ Left (MkCyclicKeyError pathTxt)
         Nothing -> cmds >>= go (Just line) foundKeys' path'
         where
           -- WARN: Using a double comma right now as a delimiter. Hoping
@@ -139,11 +197,9 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           maybeCyclicVal = headMaybe $ Set.toList intersect
           path' = path <> LTBuilder.fromText line <> " -> "
           neToSet = Set.fromList . NESeq.toList
-{-# INLINEABLE lineToCommands #-}
 
 builderToPath :: Builder -> Text -> Text -> Text
 builderToPath path l v =
   LazyT.toStrict $
     LTBuilder.toLazyText $
       path <> LTBuilder.fromText l <> " -> " <> LTBuilder.fromText v
-{-# INLINEABLE builderToPath #-}

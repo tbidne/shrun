@@ -6,14 +6,12 @@ module Unit.Specs.ShellRun.Utils (specs) where
 import Refined (NonEmpty)
 import Refined qualified as R
 import ShellRun.Utils qualified as Utils
-import Test.Tasty qualified as Tasty
-import Test.Tasty.HUnit qualified as THU
 import Unit.Prelude
 
 -- | Entry point for ShellRun.Utils specs.
 specs :: TestTree
 specs =
-  Tasty.testGroup
+  testGroup
     "ShellRun.Utils"
     [ breakStripPointSpecs,
       stripAnsiControlSpecs
@@ -21,7 +19,7 @@ specs =
 
 breakStripPointSpecs :: TestTree
 breakStripPointSpecs =
-  Tasty.testGroup
+  testGroup
     "Text"
     [ missingKey,
       stripKey,
@@ -32,27 +30,27 @@ breakStripPointSpecs =
 
 missingKey :: TestTree
 missingKey =
-  THU.testCase "Missing key should return (str, \"\")" $
+  testCase "Missing key should return (str, \"\")" $
     ("ab", "") @=? Utils.breakStripPoint point "ab"
 
 stripKey :: TestTree
 stripKey =
-  THU.testCase "Normal case should strip out key" $
+  testCase "Normal case should strip out key" $
     ("abc", "def") @=? Utils.breakStripPoint point "abc=def"
 
 multiBreaksFirst :: TestTree
 multiBreaksFirst =
-  THU.testCase "Multiple keys should only break on first)" $
+  testCase "Multiple keys should only break on first)" $
     ("ab", "cd=ef") @=? Utils.breakStripPoint point "ab=cd=ef"
 
 leadingKey :: TestTree
 leadingKey =
-  THU.testCase "Leading key should return (\"\", str)" $
+  testCase "Leading key should return (\"\", str)" $
     ("", "ab") @=? Utils.breakStripPoint point "=ab"
 
 trailingKey :: TestTree
 trailingKey =
-  THU.testCase "Trailing key should return (str, \"\")" $
+  testCase "Trailing key should return (str, \"\")" $
     ("ab", "") @=? Utils.breakStripPoint point "ab="
 
 point :: Refined R.NonEmpty Text
@@ -60,7 +58,7 @@ point = $$(R.refineTH @NonEmpty @Text "=")
 
 stripAnsiControlSpecs :: TestTree
 stripAnsiControlSpecs =
-  Tasty.testGroup
+  testGroup
     "Text Stripping"
     [ emptyText,
       allControlStripped,
@@ -69,13 +67,13 @@ stripAnsiControlSpecs =
 
 emptyText :: TestTree
 emptyText =
-  THU.testCase "Empty test should be identity" $ do
+  testCase "Empty test should be identity" $ do
     "" @=? Utils.stripControlAll ""
     "" @=? Utils.stripControlSmart ""
 
 allControlStripped :: TestTree
 allControlStripped =
-  THU.testCase "All control sequences are stripped" $ do
+  testCase "All control sequences are stripped" $ do
     "" @=? Utils.stripControlAll "\ESC[A"
     "foo" @=? Utils.stripControlAll "foo\ESC[A"
     "bar" @=? Utils.stripControlAll "\ESC[Abar"
@@ -83,7 +81,7 @@ allControlStripped =
 
 someControlStripped :: TestTree
 someControlStripped =
-  THU.testCase "Some control sequences are not stripped" $ do
+  testCase "Some control sequences are not stripped" $ do
     "" @=? Utils.stripControlSmart "\ESC[A"
     "foo" @=? Utils.stripControlSmart "foo\ESC[A"
     "bar" @=? Utils.stripControlSmart "\ESC[Abar"

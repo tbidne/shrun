@@ -1,8 +1,12 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Provides the 'FilePathDefault' type.
 --
 -- @since 0.1
 module ShellRun.Data.FilePathDefault
   ( FilePathDefault (..),
+    _FPDefault,
+    _FPManual,
   )
 where
 
@@ -13,11 +17,9 @@ import ShellRun.Prelude
 -- @since 0.1
 data FilePathDefault
   = -- | @since 0.1
-    FPNone
-  | -- | @since 0.1
     FPDefault
   | -- | @since 0.1
-    FPManual FilePath
+    FPManual !FilePath
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -25,15 +27,12 @@ data FilePathDefault
       Show
     )
 
--- | @since 0.1
-instance Semigroup FilePathDefault where
-  FPManual f <> _ = FPManual f
-  _ <> FPManual f = FPManual f
-  FPDefault <> _ = FPDefault
-  FPNone <> r = r
-  {-# INLINEABLE (<>) #-}
+-- | @since 0.5
+makePrisms ''FilePathDefault
 
--- | @since 0.1
-instance Monoid FilePathDefault where
-  mempty = FPNone
-  {-# INLINEABLE mempty #-}
+-- | @since 0.5
+instance DecodeTOML FilePathDefault where
+  tomlDecoder =
+    tomlDecoder @Text <&> \case
+      "default" -> FPDefault
+      other -> FPManual $ unpack other

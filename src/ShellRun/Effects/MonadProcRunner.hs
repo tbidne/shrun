@@ -7,7 +7,7 @@ module ShellRun.Effects.MonadProcRunner
 where
 
 import Data.Time.Relative (RelativeTime)
-import ShellRun.Command (Command)
+import ShellRun.Data.Command (Command)
 import ShellRun.IO (Stderr)
 import ShellRun.Logging.RegionLogger (RegionLogger (Region))
 import ShellRun.Prelude

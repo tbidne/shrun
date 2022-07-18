@@ -1,0 +1,24 @@
+# All values are non-defaults so we can test that this file is being used
+
+timeout = "1h"
+file-logging = "default"
+cmd-log = true
+key-hide = true
+cmd-name-trunc = 80
+cmd-line-trunc = 150
+strip-control = "all"
+disable-log = true
+legend = """
+  cmd1=echo "command one"
+
+  # recursive references
+  cmd2=cmd1
+  cmd3=cmd2
+
+  all=cmd3,,echo hi
+
+  # cyclic keys
+  a=b
+  b=c
+  c=a
+"""
