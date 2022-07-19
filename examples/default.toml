@@ -6,7 +6,7 @@
 #timeout = 20
 
 # Writes all logs to a file. The "default" option writes to the Xdg direction
-# e.g. ~/.config/shell-run/shell-run.log. Any other string is interpreted as
+# e.g. ~/.config/shell-run/log. Any other string is interpreted as
 # a PATH.
 #file-logging = "default"
 

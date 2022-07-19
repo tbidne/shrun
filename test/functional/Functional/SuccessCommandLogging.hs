@@ -46,7 +46,7 @@ expected =
         ]
 
 outfile :: List Char
-outfile = "cmd_shell-run.log"
+outfile = "cmd_log"
 
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do

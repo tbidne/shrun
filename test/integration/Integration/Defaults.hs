@@ -41,7 +41,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     ["cmd1"]
     (view _MkConfigIO)
     (Just 3_600)
-    (Just "test/integration/toml/shell-run.log")
+    (Just "test/integration/toml/log")
     Enabled
     HideKey
     (Just 80)

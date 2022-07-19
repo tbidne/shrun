@@ -102,7 +102,7 @@ makeEnv = do
           let path = configDir </> "config.toml"
           b <- doesFileExist path
           if b
-            then readConfig (configDir </> "config.toml")
+            then readConfig path
             else do
               putTextLn ("No default config found at: " <> pack path)
               pure mempty
@@ -131,7 +131,7 @@ configToEnv cfg cmdsText = do
     Nothing -> pure Nothing
     Just FPDefault -> do
       configDir <- getXdgConfig "shell-run"
-      let fp = configDir </> "shell-run.log"
+      let fp = configDir </> "log"
       queue <- liftSTM $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
     Just (FPManual f) -> do

@@ -371,7 +371,7 @@ fileLoggingParser =
           "This can be useful for investigating command failures. ",
           "If an empty argument is given (i.e. -f '', --file-log=) then we ",
           "write to the Xdg config directory e.g. ",
-          "~/.config/shell-run/shell-run.log."
+          "~/.config/shell-run/log."
         ]
 
 readLogFile :: ReadM FilePathDefault
