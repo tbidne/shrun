@@ -1,4 +1,13 @@
+# cabal
 dist-newstyle*
-.stack-work*
-result*
 cabal.project.local
+
+# stack
+.stack-work*
+
+# nix
+result*
+
+# profiling
+bench.csv
+*prof

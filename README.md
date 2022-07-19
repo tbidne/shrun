@@ -25,6 +25,7 @@
 - [Configuration](#configuration)
   - [Core Functionality](#core-functionality)
     - [Config](#config)
+    - [No Config](#no-config)
     - [Timeout](#timeout)
   - [Logging](#logging)
     - [Command Log](#command-log)
@@ -104,6 +105,12 @@ Note: `shell-run` colors its logs, and the examples shown here _should_ use thes
 **Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/config/shell-run/config.toml`.
 
 Examples can be found in [./examples](./examples).
+
+### No Config
+
+**Arg:** `--no-config`
+
+**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit --config or implicit reading of the Xdg config file. Used for when a config file exists at the expected Xdg location, but we want to ignore it.
 
 #### Legend
 

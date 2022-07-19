@@ -99,19 +99,29 @@ makeEnv ::
   m Env
 makeEnv = do
   args <- liftIO $ OApp.execParser parserInfoArgs
-  fileConfig <- case args ^. #configPath of
-    Nothing -> do
-      configDir <- getXdgConfig "shell-run"
-      let path = configDir </> "config.toml"
-      b <- liftIO $ doesFileExist path
-      if b
-        then readConfig (configDir </> "config.toml")
-        else do
-          liftIO $ putStrLn ("No default config found at: " <> pack path)
-          pure mempty
-    Just f -> readConfig f
+  tomlConfig <-
+    if args ^. #noConfig
+      then -- 1. If noConfig is true then we ignore all toml config
+        pure mempty
+      else case args ^. #configPath of
+        -- 2. noConfig is false and toml config explicitly set: try reading
+        --    (all errors rethrown)
+        Just f -> readConfig f
+        -- 3. noConfig is false and toml config not set: try reading from
+        --    default location. If it does not exist that's fine, just print
+        --    a message. If it does, try to read it and throw any errors
+        --    (e.g. file errors, toml errors).
+        Nothing -> do
+          configDir <- getXdgConfig "shell-run"
+          let path = configDir </> "config.toml"
+          b <- liftIO $ doesFileExist path
+          if b
+            then readConfig (configDir </> "config.toml")
+            else do
+              liftIO $ putStrLn ("No default config found at: " <> pack path)
+              pure mempty
 
-  let finalConfig = args ^. argsToTomlConfig <> fileConfig
+  let finalConfig = args ^. argsToTomlConfig <> tomlConfig
 
   configToEnv finalConfig (args ^. #commands)
   where

@@ -50,6 +50,10 @@ data Args = MkArgs
     --
     -- @since 0.5
     configPath :: !(Maybe FilePath),
+    -- | Ignores toml config file.
+    --
+    -- @since 0.5
+    noConfig :: Bool,
     -- | Global option for logging. If it is true then all logging is
     -- disabled.
     --
@@ -109,6 +113,7 @@ defaultArgs cmds =
       fileLogging = empty,
       cmdDisplay = empty,
       configPath = empty,
+      noConfig = False,
       stripControl = empty,
       timeout = empty,
       cmdNameTrunc = empty,
@@ -146,6 +151,7 @@ argsParser :: Parser Args
 argsParser =
   MkArgs
     <$> configParser
+    <*> noConfigParser
     <*> globalLoggingParser
     <*> fileLoggingParser
     <*> commandDisplayParser
@@ -198,6 +204,25 @@ configParser =
         [ "Path to TOML config file. If this argument is not given ",
           "we automatically look in the Xdg config directory ",
           "e.g. ~/.config/shell-run/config.toml"
+        ]
+
+noConfigParser :: Parser Bool
+noConfigParser =
+  OA.flag
+    False
+    True
+    ( mconcat
+        [ OA.long "no-config",
+          OA.help helpTxt
+        ]
+    )
+  where
+    helpTxt =
+      mconcat
+        [ "Overrides toml file config regardless of how it was obtained i.e. ",
+          "explicit --config or implicit reading of the Xdg config file. ",
+          "Used for when a config file exists at the expected Xdg ",
+          "location, but we want to ignore it."
         ]
 
 timeoutParser :: Parser (Maybe Timeout)

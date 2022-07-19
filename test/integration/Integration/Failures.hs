@@ -34,7 +34,7 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
 
 duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
-  let args = ["-c", "test/unit/Unit/toml/duplicate-keys.toml", "cmd"]
+  let args = ["-c", "test/integration/toml/duplicate-keys.toml", "cmd"]
   result <- view _MkConfigIO $ do
     withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
       `catch` \e -> pure $ Just e
@@ -47,7 +47,7 @@ duplicateKeys = testCase "Duplicate keys throws exception" $ do
 
 emptyKey :: TestTree
 emptyKey = testCase "Empty key throws exception" $ do
-  let args = ["-c", "test/unit/Unit/toml/empty-key.toml", "cmd"]
+  let args = ["-c", "test/integration/toml/empty-key.toml", "cmd"]
   result <- view _MkConfigIO $ do
     withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
       `catch` \e -> pure $ Just e
@@ -60,7 +60,7 @@ emptyKey = testCase "Empty key throws exception" $ do
 
 emptyValue :: TestTree
 emptyValue = testCase "Empty value throws exception" $ do
-  let args = ["-c", "test/unit/Unit/toml/empty-value.toml", "cmd"]
+  let args = ["-c", "test/integration/toml/empty-value.toml", "cmd"]
   result <- view _MkConfigIO $ do
     withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
       `catch` \e -> pure $ Just e

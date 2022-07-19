@@ -32,7 +32,7 @@ newtype ConfigIO a = MkConfigIO (IO a)
 makePrisms ''ConfigIO
 
 instance MonadFSReader ConfigIO where
-  getXdgConfig _ = pure "test/unit/Unit/toml"
+  getXdgConfig _ = pure "test/integration/toml"
   readFile = liftIO . readFileUtf8Lenient
 
 -- IO with no default config file

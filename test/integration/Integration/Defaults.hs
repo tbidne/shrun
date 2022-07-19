@@ -16,7 +16,8 @@ specs =
     "Default configuration behavior"
     [ defaultEnv,
       usesDefaultConfigFile,
-      cliOverridesConfigFile
+      cliOverridesConfigFile,
+      ignoresDefaultConfigFile
     ]
 
 defaultEnv :: TestTree
@@ -40,7 +41,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     ["cmd1"]
     (view _MkConfigIO)
     (Just 3_600)
-    (Just "test/unit/Unit/toml/shell-run.log")
+    (Just "test/integration/toml/shell-run.log")
     Enabled
     HideKey
     (Just 80)
@@ -53,7 +54,7 @@ cliOverridesConfigFile :: TestTree
 cliOverridesConfigFile = testCase "CLI args overrides config file" $ do
   makeEnvAndVerify
     [ "--config",
-      "test/unit/Unit/toml/overridden.toml",
+      "test/integration/toml/overridden.toml",
       "--timeout",
       "10",
       "--file-log",
@@ -79,3 +80,18 @@ cliOverridesConfigFile = testCase "CLI args overrides config file" $ do
     StripControlNone
     True
     (NESeq.singleton "cmd")
+
+ignoresDefaultConfigFile :: TestTree
+ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
+  makeEnvAndVerify
+    ["--no-config", "cmd1"]
+    (view _MkConfigIO)
+    Nothing
+    Nothing
+    Disabled
+    ShowKey
+    Nothing
+    Nothing
+    StripControlSmart
+    False
+    (NESeq.singleton "cmd1")

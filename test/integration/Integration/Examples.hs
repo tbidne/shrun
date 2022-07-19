@@ -23,7 +23,7 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
     ["-c", "examples/config.toml", "cmd"]
     (view _MkConfigIO)
     (Just 20)
-    (Just "test/unit/Unit/toml/shell-run.log")
+    (Just "test/integration/toml/shell-run.log")
     Enabled
     ShowKey
     (Just 80)
