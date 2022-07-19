@@ -22,13 +22,13 @@ main = do
     ]
 
 noLogs :: Benchmark
-noLogs = bgroup "No Logging" (runLoops ["-d"])
+noLogs = bgroup "No Logging" (runLoops ["-d", "--no-config"])
 
 basicLogs :: Benchmark
-basicLogs = bgroup "Basic Logging" (runLoops [])
+basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
 
 cmdLogs :: Benchmark
-cmdLogs = bgroup "Command Logging" (runLoops ["-l"])
+cmdLogs = bgroup "Command Logging" (runLoops ["-l", "--no-config"])
 
 runLoops :: [String] -> [Benchmark]
 runLoops args = fmap f loops
