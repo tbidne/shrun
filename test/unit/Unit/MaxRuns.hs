@@ -26,5 +26,5 @@ instance IsOption MaxRuns where
   optionName = Tagged "max-runs"
   optionHelp = Tagged "The maximum number of runs for each test."
 
-readLimit :: List Char -> Maybe MaxRuns
+readLimit :: String -> Maybe MaxRuns
 readLimit = fmap (fromIntegral @Int) . TR.readMaybe

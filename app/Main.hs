@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Shrun qualified as SR
+import Shrun (runShellT, shrun)
 import Shrun.Configuration.Env (makeEnv)
 import Shrun.Prelude
 import System.Exit (ExitCode (..), exitFailure)
@@ -18,4 +18,4 @@ main =
       putStrLn . pack . displayException >=> const exitFailure
 
 run :: IO ()
-run = makeEnv >>= SR.runShellT SR.runShell
+run = makeEnv >>= runShellT shrun

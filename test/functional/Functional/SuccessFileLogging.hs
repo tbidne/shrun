@@ -42,7 +42,7 @@ expected =
     <$> [ U.infoSuccessPrefix "sleep 2"
         ]
 
-outfile :: List Char
+outfile :: String
 outfile = "log"
 
 teardown :: IO TestArgs -> () -> IO ()

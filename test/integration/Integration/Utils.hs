@@ -78,7 +78,7 @@ makeEnvAndVerify ::
     Terminal m
   ) =>
   -- | List of CLI arguments.
-  [String] ->
+  (List String) ->
   -- | Natural transformation from m to IO.
   (forall x. m x -> IO x) ->
   Maybe Timeout ->

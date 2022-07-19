@@ -178,7 +178,7 @@ version = OA.infoOption txt (OA.long "version" <> OA.short 'v')
           "Date: " <> $(GitRev.gitCommitDate)
         ]
 
-versNum :: List Char
+versNum :: String
 versNum = "Version: " <> $$(PV.packageVersionStringTH "shrun.cabal")
 
 defaultConfig :: Parser (a -> a)

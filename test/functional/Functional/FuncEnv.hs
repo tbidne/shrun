@@ -27,7 +27,7 @@ import System.Console.Regions qualified as Regions
 -- | @since 0.3
 data FuncEnv = MkFuncEnv
   { coreEnv :: !Env,
-    logs :: !(IORef [Text])
+    logs :: !(IORef (List Text))
   }
 
 -- | @since 0.1

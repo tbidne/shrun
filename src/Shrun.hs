@@ -5,7 +5,7 @@
 module Shrun
   ( ShellT,
     runShellT,
-    runShell,
+    shrun,
   )
 where
 
@@ -45,7 +45,7 @@ import UnliftIO.Async qualified as Async
 -- | Entry point
 --
 -- @since 0.1
-runShell ::
+shrun ::
   ( Atomic m,
     FileSystemWriter m,
     HasCommands env,
@@ -60,7 +60,7 @@ runShell ::
     Timing m
   ) =>
   m ()
-runShell = asks getCommands >>= runCommands
+shrun = asks getCommands >>= runCommands
 
 runCommands ::
   forall m env.

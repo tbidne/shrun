@@ -30,19 +30,19 @@ basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
 cmdLogs :: Benchmark
 cmdLogs = bgroup "Command Logging" (runLoops ["-l", "--no-config"])
 
-runLoops :: [String] -> [Benchmark]
+runLoops :: List String -> List Benchmark
 runLoops args = fmap f loops
   where
     f (!desc, !cmd) =
       run desc (cmd : args)
 
-run :: String -> [String] -> Benchmark
+run :: String -> List String -> Benchmark
 run desc args =
   bench desc $ nfIO $ do
     srEnv <- withArgs args makeEnv
     runShellT runShell srEnv
 
-loops :: [(String, String)]
+loops :: List (String, String)
 loops =
   force
     [ ("10_000", bashLoop "10000"),

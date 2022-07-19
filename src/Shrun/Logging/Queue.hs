@@ -129,6 +129,6 @@ readQueue = liftSTM . tryReadTBQueue . view _MkLogTextQueue
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1
-flushQueue :: Atomic m => LogTextQueue -> m [LogText]
+flushQueue :: Atomic m => LogTextQueue -> m (List LogText)
 flushQueue = liftSTM . flushTBQueue . view _MkLogTextQueue
 {-# INLINEABLE flushQueue #-}

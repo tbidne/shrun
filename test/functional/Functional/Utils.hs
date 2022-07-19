@@ -39,8 +39,8 @@ infoSuccessPrefix txt = "[Info] [" <> txt <> "] Success. Time elapsed:"
 errPrefix :: Text -> Text
 errPrefix txt = "[Error] [" <> txt <> "] Error:"
 
-runAndGetLogs :: List (List Char) -> IO (IORef [Text])
+runAndGetLogs :: List String -> IO (IORef (List Text))
 runAndGetLogs argList = do
   funcEnv <- SysEnv.withArgs argList FuncEnv.mkFuncEnv
-  SR.runShellT SR.runShell funcEnv
+  SR.runShellT SR.shrun funcEnv
   pure $ funcEnv ^. #logs
