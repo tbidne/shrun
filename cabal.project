@@ -1,6 +1,6 @@
 packages: .
 
-package shell-run
+package shrun
   ghc-options:
     -Wall -Wcompat -Werror -Widentities -Wunused-binds
     -Wincomplete-record-updates -Wincomplete-uni-patterns

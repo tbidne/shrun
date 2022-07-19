@@ -1,4 +1,4 @@
-# Revision history for shell-run
+# Revision history for shrun
 
 All notable changes to this project will be documented in this file.
 
@@ -11,6 +11,7 @@ Major/Minor/Patch definitions apply to the application's interface / usage
 
 ## [Unreleased]
 ### Changed
+* Renamed executable from `shell-run` to `shrun`.
 * Added toml configuration. This subsumes the old `--legend` file, as that is
   part of the new toml file.
 * `--key-show` is now the default behavior. The flag has thus been renamed
@@ -46,16 +47,16 @@ Major/Minor/Patch definitions apply to the application's interface / usage
 
 ## [0.2] -- 2022-05-11
 ### Changed
-* Update default legend: legend.txt -> shell-run.legend
-* Update default logs: logs.txt -> shell-run.log
+* Update default legend: legend.txt -> shrun.legend
+* Update default logs: logs.txt -> shrun.log
 
 ## [0.1] -- 2022-04-03
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shell-run/compare/0.1...HEAD
-[0.4]: https://github.com/tbidne/shell-run/compare/0.3..0.4
-[0.3]: https://github.com/tbidne/shell-run/compare/0.2.0.1..0.3
-[0.2.0.1]: https://github.com/tbidne/shell-run/compare/0.2..0.2.0.1
-[0.2]: https://github.com/tbidne/shell-run/compare/0.1..0.2
-[0.1]: https://github.com/tbidne/shell-run/releases/tag/
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.1...HEAD
+[0.4]: https://github.com/tbidne/shrun/compare/0.3..0.4
+[0.3]: https://github.com/tbidne/shrun/compare/0.2.0.1..0.3
+[0.2.0.1]: https://github.com/tbidne/shrun/compare/0.2..0.2.0.1
+[0.2]: https://github.com/tbidne/shrun/compare/0.1..0.2
+[0.1]: https://github.com/tbidne/shrun/releases/tag/

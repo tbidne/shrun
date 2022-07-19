@@ -11,20 +11,20 @@ where
 
 import Data.Maybe (isJust)
 import Integration.Prelude as X
-import ShellRun.Configuration.Env (makeEnv)
-import ShellRun.Configuration.Env.Types
+import Shrun.Configuration.Env (makeEnv)
+import Shrun.Configuration.Env.Types
   ( CmdDisplay,
     CmdLogging,
     StripControl,
     TruncRegion (..),
     Truncation,
   )
-import ShellRun.Data.Command (Command)
-import ShellRun.Data.NonEmptySeq (NonEmptySeq)
-import ShellRun.Data.Timeout (Timeout)
-import ShellRun.Effects.Atomic (Atomic (..))
-import ShellRun.Effects.FileSystemReader (FileSystemReader (..))
-import ShellRun.Effects.Terminal (Terminal (..))
+import Shrun.Data.Command (Command)
+import Shrun.Data.NonEmptySeq (NonEmptySeq)
+import Shrun.Data.Timeout (Timeout)
+import Shrun.Effects.Atomic (Atomic (..))
+import Shrun.Effects.FileSystemReader (FileSystemReader (..))
+import Shrun.Effects.Terminal (Terminal (..))
 import System.Environment (withArgs)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml

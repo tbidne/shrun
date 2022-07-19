@@ -3,8 +3,8 @@ module Functional.Truncation (spec) where
 
 import Functional.Prelude
 import Functional.Utils qualified as U
-import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..))
-import Test.ShellRun.Verifier qualified as V
+import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
+import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should run commands successfully and print stdout.
 spec :: TestTree

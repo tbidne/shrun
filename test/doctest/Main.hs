@@ -17,13 +17,13 @@ main =
 files :: [String]
 files =
   [ "-isrc",
-    "src/ShellRun/Configuration/Args.hs",
-    "src/ShellRun/Configuration/Legend.hs",
-    "src/ShellRun/Data/Command.hs",
-    "src/ShellRun/Data/NonEmptySeq.hs",
-    "src/ShellRun/Logging/Formatting.hs",
-    "src/ShellRun/Logging/Queue.hs",
-    "src/ShellRun/Utils.hs"
+    "src/Shrun/Configuration/Args.hs",
+    "src/Shrun/Configuration/Legend.hs",
+    "src/Shrun/Data/Command.hs",
+    "src/Shrun/Data/NonEmptySeq.hs",
+    "src/Shrun/Logging/Formatting.hs",
+    "src/Shrun/Logging/Queue.hs",
+    "src/Shrun/Utils.hs"
   ]
 
 -- This is needed because DocTest does not read the cabal

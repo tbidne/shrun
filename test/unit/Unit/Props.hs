@@ -3,10 +3,10 @@ module Unit.Props (props) where
 
 import Test.Tasty (TestTree)
 import Test.Tasty qualified as T
-import Unit.Props.ShellRun.Configuration.Legend qualified as Legend
-import Unit.Props.ShellRun.Logging.Formatting qualified as Logging.Formatting
-import Unit.Props.ShellRun.Logging.Queue qualified as Logging.Queue
-import Unit.Props.ShellRun.Utils qualified as Utils
+import Unit.Props.Shrun.Configuration.Legend qualified as Legend
+import Unit.Props.Shrun.Logging.Formatting qualified as Logging.Formatting
+import Unit.Props.Shrun.Logging.Queue qualified as Logging.Queue
+import Unit.Props.Shrun.Utils qualified as Utils
 
 -- | Entry point for props.
 props :: TestTree

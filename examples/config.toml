@@ -6,7 +6,7 @@
 timeout = 20
 
 # Writes all logs to a file. The "default" option writes to the Xdg direction
-# e.g. ~/.config/shell-run/log. Any other string is interpreted as
+# e.g. ~/.config/shrun/log. Any other string is interpreted as
 # a PATH.
 file-logging = "default"
 
@@ -85,7 +85,7 @@ legend = [
   #{ key = 'dup_key', val = 'echo duplicate 2'},
 
   # cyclic keys will cause an error when _actually used_ e.g. try running
-  # shell-run -c examples/config.toml a
+  # shrun -c examples/config.toml a
   { key = 'a', val = 'c'},
   { key = 'b', val = 'a'},
   { key = 'c', val = 'b'},

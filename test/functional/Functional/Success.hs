@@ -4,8 +4,8 @@ module Functional.Success (spec) where
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Functional.Utils qualified as U
-import Test.ShellRun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
-import Test.ShellRun.Verifier qualified as V
+import Test.Shrun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
+import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should run commands successfully.
 spec :: IO TestArgs -> TestTree

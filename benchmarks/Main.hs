@@ -1,9 +1,9 @@
 module Main (main) where
 
 import Control.DeepSeq (force)
-import ShellRun (runShell, runShellT)
-import ShellRun.Configuration.Env (makeEnv)
-import ShellRun.Prelude
+import Shrun (runShell, runShellT)
+import Shrun.Configuration.Env (makeEnv)
+import Shrun.Prelude
 import System.Environment (withArgs)
 import Test.Tasty.Bench
   ( Benchmark,

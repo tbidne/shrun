@@ -16,7 +16,7 @@ where
 
 import Functional.FuncEnv qualified as FuncEnv
 import Functional.Prelude
-import ShellRun qualified as SR
+import Shrun qualified as SR
 import System.Environment qualified as SysEnv
 
 -- | Expected timeout 'Text'.

@@ -1,25 +1,25 @@
 cradle:
   cabal:
     - path: "./src"
-      component: "lib:shell-run"
+      component: "lib:shrun"
 
     - path: "./test/verifier"
-      component: "shell-run:lib:shell-run-verifier"
+      component: "shrun:lib:shrun-verifier"
 
     - path: "./app/Main.hs"
-      component: "shell-run:exe:shell-run"
+      component: "shrun:exe:shrun"
 
     - path: "./test/unit"
-      component: "shell-run:test:unit"
+      component: "shrun:test:unit"
 
     - path: "./test/integration"
-      component: "shell-run:test:integration"
+      component: "shrun:test:integration"
 
     - path: "./test/functional"
-      component: "shell-run:test:functional"
+      component: "shrun:test:functional"
 
     - path: "./test/doctest"
-      component: "shell-run:test:doctest"
+      component: "shrun:test:doctest"
 
     - path: "./benchmarks/Main.hs"
-      component: "shell-run:bench:benchmarks"
+      component: "shrun:bench:benchmarks"

@@ -2,14 +2,14 @@ module Integration.Failures (specs) where
 
 import Integration.Prelude
 import Integration.Utils (_MkConfigIO)
-import ShellRun.Configuration.Env (TomlError (..), makeEnv)
-import ShellRun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
+import Shrun.Configuration.Env (TomlError (..), makeEnv)
+import Shrun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
 import System.Environment (withArgs)
 
 specs :: TestTree
 specs =
   testGroup
-    "ShellRun.Configuration.Env"
+    "Shrun.Configuration.Env"
     [ missingConfig,
       duplicateKeys,
       emptyKey,

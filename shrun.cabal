@@ -1,0 +1,244 @@
+cabal-version:      2.4
+name:               shrun
+version:            0.5
+license:            MIT
+license-file:       LICENSE
+tested-with:        GHC ==9.2.3
+copyright:          2021 Thomas Bidne
+author:             Thomas Bidne
+maintainer:         tbidne@protonmail.com
+homepage:           https://github.com/tbidne/shrun/
+bug-reports:        https://github.com/tbidne/shrun/issues
+synopsis:           A utility program for running shell commands concurrently.
+description:
+  Please see the README at https://github.com/tbidne/shrun/#readme
+
+category:           Shell scripting, Utils, Concurrency
+extra-source-files:
+  CHANGELOG.md
+  README.md
+
+source-repository head
+  type:     git
+  location: https://github.com/tbidne/shrun
+
+common common-exts
+  default-extensions:
+    NoImplicitPrelude
+    NoStarIsType
+    ApplicativeDo
+    DataKinds
+    DerivingVia
+    DuplicateRecordFields
+    LambdaCase
+    MultiWayIf
+    OverloadedLabels
+    OverloadedStrings
+    PatternSynonyms
+    TypeFamilies
+    NoFieldSelectors
+
+library
+  import:           common-exts
+  exposed-modules:
+    Shrun
+    Shrun.Configuration.Args
+    Shrun.Configuration.Args.TH
+    Shrun.Configuration.Env
+    Shrun.Configuration.Env.Types
+    Shrun.Configuration.Legend
+    Shrun.Configuration.Toml
+    Shrun.Data.Command
+    Shrun.Data.FilePathDefault
+    Shrun.Data.Legend
+    Shrun.Data.NonEmptySeq
+    Shrun.Data.Supremum
+    Shrun.Data.Timeout
+    Shrun.Effects.Atomic
+    Shrun.Effects.FileSystemReader
+    Shrun.Effects.FileSystemWriter
+    Shrun.Effects.Terminal
+    Shrun.Effects.TimedProcess
+    Shrun.Effects.Timing
+    Shrun.IO
+    Shrun.Logging.Formatting
+    Shrun.Logging.Log
+    Shrun.Logging.Queue
+    Shrun.Logging.RegionLogger
+    Shrun.Logging.Types
+    Shrun.Prelude
+    Shrun.ShellT
+    Shrun.Utils
+
+  build-depends:
+    , algebra-simple        ^>=0.1
+    , base                  >=4.14.1.0 && <4.17
+    , bytestring            >=0.10.12  && <0.12
+    , clock                 >=0.7.2    && <0.9
+    , concurrent-output     ^>=1.10.7
+    , containers            ^>=0.6.2.1
+    , directory             ^>=1.3.5.0
+    , exceptions            ^>=0.10.4
+    , filepath              ^>=1.4.2.1
+    , gitrev                >=1.2.0    && <1.4
+    , hashable              >=1.3.0.0  && <1.5
+    , monad-loops           >=0.3      && <0.5
+    , mtl                   >=2.2.1    && <2.4
+    , optics-core           ^>=0.4
+    , optics-th             ^>=0.4
+    , optparse-applicative  >=0.15     && <0.18
+    , package-version       ^>=0.1.0.0
+    , pretty-terminal       ^>=0.1
+    , process               ^>=1.6.9.0
+    , refined               >=0.6      && <0.8
+    , relative-time         ^>=0.1
+    , stm                   ^>=2.5.0
+    , template-haskell      >=2.17.0.0 && <2.19
+    , terminal-size         ^>=0.3.0
+    , text                  >=1.2.3.2  && <2.1
+    , time                  >=1.9.3    && <1.14
+    , toml-reader           ^>=0.1.0.0
+    , unix                  ^>=2.7.2
+    , unliftio              ^>=0.2.0.0
+    , unordered-containers  ^>=0.2.9.0
+
+  hs-source-dirs:   src
+  default-language: GHC2021
+
+library shrun-verifier
+  import:           common-exts
+  exposed-modules:  Test.Shrun.Verifier
+  build-depends:
+    , base
+    , optics-core
+    , optics-th
+    , tasty-hunit
+    , text
+
+  hs-source-dirs:   test/verifier
+  default-language: GHC2021
+
+executable shrun
+  import:           common-exts
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , shrun
+
+  hs-source-dirs:   app
+  ghc-options:      -threaded -with-rtsopts=-N
+  default-language: GHC2021
+
+test-suite unit
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:
+    Unit.MaxRuns
+    Unit.Prelude
+    Unit.Props
+    Unit.Props.Generators
+    Unit.Props.Shrun.Configuration.Legend
+    Unit.Props.Shrun.Logging.Formatting
+    Unit.Props.Shrun.Logging.Generators
+    Unit.Props.Shrun.Logging.Queue
+    Unit.Props.Shrun.Utils
+    Unit.Specs
+    Unit.Specs.Shrun.Configuration.Args
+    Unit.Specs.Shrun.Configuration.Legend
+    Unit.Specs.Shrun.Logging.Formatting
+    Unit.Specs.Shrun.Utils
+
+  build-depends:
+    , algebra-simple
+    , base
+    , clock
+    , hedgehog              >=1.0.2   && <1.2
+    , optparse-applicative
+    , refined
+    , shrun
+    , tagged                ^>=0.8.6
+    , tasty                 >=1.1.0.3 && <1.5
+    , tasty-hedgehog        ^>=1.2.0.0
+    , tasty-hunit           >=0.9     && <0.11
+    , text
+    , unordered-containers
+
+  hs-source-dirs:   test/unit
+  default-language: GHC2021
+
+test-suite integration
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:
+    Integration.Defaults
+    Integration.Examples
+    Integration.Failures
+    Integration.Prelude
+    Integration.Utils
+
+  build-depends:
+    , base
+    , shrun
+    , tasty
+    , tasty-hunit
+
+  hs-source-dirs:   test/integration
+  default-language: GHC2021
+
+test-suite functional
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:
+    Functional.FuncEnv
+    Functional.Prelude
+    Functional.Success
+    Functional.SuccessCommandLogging
+    Functional.SuccessFileLogging
+    Functional.SuccessNoLogging
+    Functional.SuccessShowKey
+    Functional.TestArgs
+    Functional.Timeout
+    Functional.Truncation
+    Functional.Utils
+
+  build-depends:
+    , base
+    , concurrent-output
+    , directory
+    , filepath
+    , shrun
+    , shrun-verifier
+    , tasty
+    , tasty-hunit
+    , text
+
+  hs-source-dirs:   test/functional
+  default-language: GHC2021
+
+test-suite doctest
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , doctest    >=0.16.3 && <0.21
+    , env-guard  ^>=0.2
+
+  hs-source-dirs:   test/doctest
+  default-language: GHC2021
+
+benchmark benchmarks
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , deepseq      ^>=1.4.4.0
+    , shrun
+    , tasty-bench  ^>=0.3
+
+  hs-source-dirs:   benchmarks
+  default-language: GHC2021

@@ -1,17 +1,17 @@
 <div align="center">
 
-# Shell-Run
+# Shrun
 
 ## Run Shell Commands Concurrently
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shell-run?include_prereleases&sort=semver)](https://github.com/tbidne/shell-run/releases/)
-[![MIT](https://img.shields.io/github/license/tbidne/shell-run?color=blue)](https://opensource.org/licenses/MIT)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shrun?include_prereleases&sort=semver)](https://github.com/tbidne/shrun/releases/)
+[![MIT](https://img.shields.io/github/license/tbidne/shrun?color=blue)](https://opensource.org/licenses/MIT)
 
 
-[![nix](https://img.shields.io/github/workflow/status/tbidne/shell-run/nix/main?label=nix%209.2&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/nix_ci.yaml)
-[![cabal 9.2](https://img.shields.io/github/workflow/status/tbidne/shell-run/cabal_9-2/main?label=9.2&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/cabal_9-2.yaml)
-[![stack nightly](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack_nightly/main?label=stack%20nightly&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_nightly.yaml)
-[![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
+[![nix](https://img.shields.io/github/workflow/status/tbidne/shrun/nix/main?label=nix%209.2&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/nix_ci.yaml)
+[![cabal 9.2](https://img.shields.io/github/workflow/status/tbidne/shrun/cabal_9-2/main?label=9.2&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/cabal_9-2.yaml)
+[![stack nightly](https://img.shields.io/github/workflow/status/tbidne/shrun/stack_nightly/main?label=stack%20nightly&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/stack_nightly.yaml)
+[![style](https://img.shields.io/github/workflow/status/tbidne/shrun/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/style_ci.yaml)
 
 ![demo](./examples/demo.gif)
 
@@ -45,7 +45,7 @@
 
 # Motivation
 
-`shell-run` was borne of frustration. Suppose you run several shell commands on a regular basis e.g. updates after pulling the latest code. You can run these manually like:
+`shrun` was borne of frustration. Suppose you run several shell commands on a regular basis e.g. updates after pulling the latest code. You can run these manually like:
 
 ```sh
 cmd1
@@ -76,25 +76,25 @@ All well and good, but this approach has several deficiencies:
 
     But this is messy and grows exponentially in the number of aliases for each variation.
 
-`shell-run` purports to overcome these limitations.
+`shrun` purports to overcome these limitations.
 
 # Introduction
 
-In a nut-shell (😉), `shell-run` is a wrapper around running shell commands. For instance:
+In a nut-shell (😉), `shrun` is a wrapper around running shell commands. For instance:
 
 ```sh
-shell-run "some long command" "another command"
+shrun "some long command" "another command"
 ```
 
 Will run `some long command` and `another command` concurrently.
 
 A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively.
 
-Note: `shell-run` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
+Note: `shrun` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
 
 # Configuration
 
-`shell-run` can be configured by either CLI args or a `toml` config file.
+`shrun` can be configured by either CLI args or a `toml` config file.
 
 ## Core Functionality
 
@@ -102,7 +102,7 @@ Note: `shell-run` colors its logs, and the examples shown here _should_ use thes
 
 **Arg:** `-c, --config [PATH]`
 
-**Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/config/shell-run/config.toml`.
+**Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/config/shrun/config.toml`.
 
 Examples can be found in [./examples](./examples).
 
@@ -126,13 +126,13 @@ legend = [
 Then the command
 
 ```sh
-shell-run --config=path/to/config all "echo cat"
+shrun --config=path/to/config all "echo cat"
 ```
 
 Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurrently. A picture is worth a thousand words:
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --config=examples/config.toml all "echo cat"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --config=examples/config.toml all "echo cat"</span>
 <span style="color: #69ff94">[Info] [echo cat] Success. Time elapsed: 0 seconds</span>
 <span style="color: #69ff94">[Info] [echo hi] Success. Time elapsed: 0 second</span>
 <span style="color: #69ff94">[Info] [echo "command one"] Success. Time elapsed: 0 second</span>
@@ -157,7 +157,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --timeout 8 "sleep 5" "sleep 10" "sleep 15"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --timeout 8 "sleep 5" "sleep 10" "sleep 15"</span>
 <span style="color: #69ff94">[Info] [sleep 5] Success. Time elapsed: 5 seconds</span>
 <span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 10, sleep 15</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 9 seconds</span></code>
@@ -176,7 +176,7 @@ Note: When commands have complicated output, they logs can interfere with each o
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command] [for i in {1..10}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
@@ -184,7 +184,7 @@ Note: When commands have complicated output, they logs can interfere with each o
 vs.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run "for i in {1..10}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
 
@@ -196,12 +196,12 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Arg:** `-f, --file-log [PATH]`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the path is empty (e.g. `--file-log=`, `-f ''`), we will write to the Xdg config directory e.g. `~/.config/shell-run/log`.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the path is empty (e.g. `--file-log=`, `-f ''`), we will write to the Xdg config directory e.g. `~/.config/shrun/log`.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --file-log=out.log --cmd-log "sleep 2" "bad" "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log=out.log --cmd-log "sleep 2" "bad" "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #ff6e6e">[Error] [for i in {1..10}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #69ff94">[Info] [sleep 2] Success. Time elapsed: 2 seconds</span>
 <span style="color: #69ff94">[Info] [for i in {1..3}; do echo hi; sleep 1; done] Success. Time elapsed: 3 seconds</span>
@@ -236,13 +236,13 @@ Practically speaking, this does not have much effect, just that if a command die
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --config=examples/config.toml skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --key-hide --cmd-log --config=examples/config.toml skynet</span>
 <span style="color:">[Command] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] preparing nuclear missil-- i mean gift baskets</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --key-hide --cmd-log --config=examples/config.toml skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --key-hide --cmd-log --config=examples/config.toml skynet</span>
 <span style="color: #69ff94">[Success] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] Success. Time elapsed: 10 seconds</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
 </pre>
@@ -250,13 +250,13 @@ Practically speaking, this does not have much effect, just that if a command die
 rather than the usual
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --config=examples/config.toml skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --config=examples/config.toml skynet</span>
 <span style="color:">[Command] [skynet] preparing nuclear missil-- i mean gift baskets</span>
 <span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --config=examples/config.toml skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --config=examples/config.toml skynet</span>
 <span style="color: #69ff94">[Success] [skynet] Success. Time elapsed: 10 seconds</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
 </pre>
@@ -280,21 +280,21 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -lx10 --strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
 `none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -lx10 --strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run -lx10 --strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
@@ -308,13 +308,13 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command] [for i i...] hi</span>
 <span style="color: #a3fefe">[Info] Running time: 2 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #69ff94">[Success] [for i i...] Success. Time elapsed: 3 seconds</span>
 <span style="color: #d6acff">[Info] Finished! Total time elapsed: 3 seconds</span></code>
 </pre>
@@ -328,13 +328,13 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --cmd-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
 <span style="color:">[Command] [echo 'some ridiculously long command i mean is this really ne...</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shell-run --cmd-log --cmd-line-trunc detect "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-line-trunc detect "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
 <span style="color:">[Command] [echo 'some ridiculously long command i mean is this really necessary' && sleep 5] some ridiculously long command...</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
@@ -361,23 +361,23 @@ If you have never built a haskell program before, `cabal` + `ghcup` is probably 
 
 ## Cabal
 
-You will need `ghc` and `cabal-install`. From there `shell-run` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
+You will need `ghc` and `cabal-install`. From there `shrun` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
 ## Stack
 
-Like `cabal`, `shell-run` can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
+Like `cabal`, `shrun` can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
 
 ## Nix
 
 ### From source
 
-Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shell-run` can be built with `nix build`, which will compile and run the tests.
+Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shrun` can be built with `nix build`, which will compile and run the tests.
 
 To launch a shell with various tools (e.g. `cabal`, `hls`), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code. At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `nixpkgs`.
 
 ### Via nix
 
-Because `shell-run` is a flake, it be built as part of a nix expression. For instance, if you want to add `shell-run` to `NixOS`, your `flake.nix` might look something like:
+Because `shrun` is a flake, it be built as part of a nix expression. For instance, if you want to add `shrun` to `NixOS`, your `flake.nix` might look something like:
 
 ```nix
 {
@@ -385,25 +385,25 @@ Because `shell-run` is a flake, it be built as part of a nix expression. For ins
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
-    shell-run-src.url= "github:tbidne/shell-run/main";
+    shrun-src.url= "github:tbidne/shrun/main";
   };
 
-  outputs = { self, nixpkgs, shell-run-src, ... }:
+  outputs = { self, nixpkgs, shrun-src, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         system = system;
       };
-      shell-run = shell-run-src.defaultPackage.${system};
+      shrun = shrun-src.defaultPackage.${system};
       # Alternative if you want tests disabled.
-      #shell-run = pkgs.haskell.lib.dontCheck shell-run-src.defaultPackage.${system};
+      #shrun = pkgs.haskell.lib.dontCheck shrun-src.defaultPackage.${system};
     in
     {
       nixosConfigurations = {
         nixos = nixpkgs.lib.nixosSystem {
           system = system;
           modules = [
-            (import ./configuration.nix { inherit pkgs shell-run; })
+            (import ./configuration.nix { inherit pkgs shrun; })
           ];
         };
       };
@@ -414,11 +414,11 @@ Because `shell-run` is a flake, it be built as part of a nix expression. For ins
 Then in `configuration.nix` you can simply have:
 
 ```nix
-{ pkgs, shell-run, ... }:
+{ pkgs, shrun, ... }:
 
 {
   environment.systemPackages = [
-    shell-run
+    shrun
   ];
 }
 ```

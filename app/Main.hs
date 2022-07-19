@@ -1,8 +1,8 @@
 module Main (main) where
 
-import ShellRun qualified as SR
-import ShellRun.Configuration.Env (makeEnv)
-import ShellRun.Prelude
+import Shrun qualified as SR
+import Shrun.Configuration.Env (makeEnv)
+import Shrun.Prelude
 import System.Exit (ExitCode (..), exitFailure)
 
 main :: IO ()

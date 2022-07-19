@@ -3,6 +3,6 @@ module Integration.Prelude
   )
 where
 
-import ShellRun.Prelude as X
+import Shrun.Prelude as X
 import Test.Tasty as X (TestName, TestTree, defaultMain, testGroup)
 import Test.Tasty.HUnit as X (Assertion, assertBool, assertFailure, testCase, (@=?))

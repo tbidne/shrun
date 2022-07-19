@@ -1,5 +1,5 @@
 {
-  description = "Shell-Run is a tool for concurrently running shell commands.";
+  description = "Shrun is a tool for concurrently running shell commands.";
   inputs = {
     algebra-simple-src.url = "github:tbidne/algebra-simple";
     flake-utils.url = "github:numtide/flake-utils";
@@ -21,7 +21,7 @@
       mkPkg = returnShellEnv:
         compiler.developPackage {
           inherit returnShellEnv;
-          name = "shell-run";
+          name = "shrun";
           root = ./.;
           modifier = drv:
             pkgs.haskell.lib.addBuildTools drv (with compiler; [

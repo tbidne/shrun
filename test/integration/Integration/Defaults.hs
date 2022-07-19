@@ -2,13 +2,13 @@ module Integration.Defaults (specs) where
 
 import Integration.Prelude
 import Integration.Utils (makeEnvAndVerify, _MkConfigIO, _MkNoConfigIO)
-import ShellRun.Configuration.Env
+import Shrun.Configuration.Env
   ( CmdDisplay (..),
     CmdLogging (..),
     StripControl (..),
   )
-import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.NonEmptySeq qualified as NESeq
+import Shrun.Data.Command (Command (..))
+import Shrun.Data.NonEmptySeq qualified as NESeq
 
 specs :: TestTree
 specs =

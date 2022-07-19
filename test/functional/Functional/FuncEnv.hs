@@ -9,18 +9,18 @@ module Functional.FuncEnv
 where
 
 import Functional.Prelude
-import ShellRun.Configuration.Env qualified as Env
-import ShellRun.Configuration.Env.Types
+import Shrun.Configuration.Env qualified as Env
+import Shrun.Configuration.Env.Types
   ( Env,
     HasCommands (..),
     HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
   )
-import ShellRun.Effects.TimedProcess (TimedProcess (..))
-import ShellRun.IO qualified as ShIO
-import ShellRun.Logging.RegionLogger (RegionLogger (..))
-import ShellRun.ShellT (ShellT)
+import Shrun.Effects.TimedProcess (TimedProcess (..))
+import Shrun.IO qualified as ShIO
+import Shrun.Logging.RegionLogger (RegionLogger (..))
+import Shrun.ShellT (ShellT)
 import System.Console.Regions (ConsoleRegion)
 import System.Console.Regions qualified as Regions
 

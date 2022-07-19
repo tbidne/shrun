@@ -14,7 +14,7 @@ import Hedgehog as X
     withTests,
     (===),
   )
-import ShellRun.Prelude as X
+import Shrun.Prelude as X
 import Test.Tasty as X (TestName, TestTree, defaultMain, testGroup)
 import Test.Tasty.HUnit as X (Assertion, assertBool, assertFailure, testCase, (@=?))
 import Test.Tasty.Hedgehog as X (testPropertyNamed)

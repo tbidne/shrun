@@ -27,7 +27,7 @@ jobs:
       - name: Compile & Test
         run: |
           nix build
-          if [ -f "./result/bin/shell-run" ]; then
+          if [ -f "./result/bin/shrun" ]; then
             echo "Build succeeded"
           else
             echo "Build failed"

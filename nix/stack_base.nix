@@ -22,7 +22,7 @@ let
   compiler = pkgs.haskell.packages."${compilerVersion}";
 in
 pkgs.haskell.lib.buildStackProject {
-  name = "shell-run";
+  name = "shrun";
 
   buildInputs = with pkgs; [
     git
