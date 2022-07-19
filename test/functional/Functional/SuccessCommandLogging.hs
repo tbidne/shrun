@@ -21,6 +21,7 @@ spec args = withResource (pure ()) (teardown args) $ \_ ->
             argList =
               [ -- Need file logging to read commands
                 "-f" <> outpath,
+                "--no-config",
                 "sleep 2",
                 cmdLogging
               ]

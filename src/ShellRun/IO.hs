@@ -22,8 +22,10 @@ module ShellRun.IO
   )
 where
 
+import Control.Concurrent.STM.TVar (modifyTVar')
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
+import Data.IORef (writeIORef)
 import Data.Sequence ((<|))
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
@@ -36,7 +38,8 @@ import ShellRun.Configuration.Env.Types
   )
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.Supremum (Supremum (..))
-import ShellRun.Effects.MonadTime (MonadTime (..), withTiming)
+import ShellRun.Effects.Atomic (Atomic (..))
+import ShellRun.Effects.Timing (Timing (..), withTiming)
 import ShellRun.Logging.Log qualified as Log
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types
@@ -227,10 +230,11 @@ tryShExitCode cmd path = do
 --
 -- @since 0.1
 tryTimeSh ::
-  ( HasCompletedCmds env,
+  ( Atomic m,
+    HasCompletedCmds env,
     MonadIO m,
     MonadReader env m,
-    MonadTime m
+    Timing m
   ) =>
   Command ->
   m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
@@ -248,11 +252,12 @@ tryTimeSh cmd = do
 --
 -- @since 0.1
 tryTimeShStreamRegion ::
-  ( HasCompletedCmds env,
+  ( Atomic m,
+    HasCompletedCmds env,
     HasLogging env,
     MonadMask m,
     MonadReader env m,
-    MonadTime m,
+    Timing m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -270,10 +275,11 @@ tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 --
 -- @since 0.1
 tryTimeShStreamNoRegion ::
-  ( HasCompletedCmds env,
+  ( Atomic m,
+    HasCompletedCmds env,
     HasLogging env,
     MonadReader env m,
-    MonadTime m,
+    Timing m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -288,10 +294,11 @@ tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
 --
 -- @since 0.1
 tryTimeShAnyRegion ::
-  ( HasCompletedCmds env,
+  ( Atomic m,
+    HasCompletedCmds env,
     HasLogging env,
     MonadReader env m,
-    MonadTime m,
+    Timing m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion
@@ -357,11 +364,13 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
 {-# INLINEABLE tryTimeShAnyRegion #-}
 
 streamOutput ::
-  ( HasLogging env,
+  ( Atomic m,
+    HasLogging env,
     MonadIO m,
     MonadReader env m,
     RegionLogger m,
-    Region m ~ ConsoleRegion
+    Region m ~ ConsoleRegion,
+    Timing m
   ) =>
   Maybe ConsoleRegion ->
   Command ->
@@ -369,7 +378,7 @@ streamOutput ::
   ProcessHandle ->
   m (Tuple2 ExitCode (Maybe ReadHandleResult))
 streamOutput mRegion cmd recvH ph = do
-  lastReadRef <- liftIO $ newIORef Nothing
+  lastReadRef <- newIORef Nothing
   exitCode <- Loops.untilJust $ do
     result <- readHandle recvH
     case result of

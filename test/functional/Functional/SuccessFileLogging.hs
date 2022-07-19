@@ -28,7 +28,7 @@ fileLogging args =
   testCase "Should write logs to file" $ do
     MkTestArgs {tmpDir} <- args
     let outpath = tmpDir </> outfile
-        argList = ["-f" <> outpath, "sleep 2"]
+        argList = ["--no-config", "-f" <> outpath, "sleep 2"]
 
     _ <- U.runAndGetLogs argList
     fileResult <- readFileUtf8Lenient outpath

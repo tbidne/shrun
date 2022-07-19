@@ -50,12 +50,7 @@ import Control.Concurrent.STM.TBQueue as X
     tryReadTBQueue,
     writeTBQueue,
   )
-import Control.Concurrent.STM.TVar as X
-  ( TVar,
-    modifyTVar',
-    newTVarIO,
-    readTVarIO,
-  )
+import Control.Concurrent.STM.TVar as X (TVar)
 import Control.Monad as X
   ( Monad (..),
     forever,
@@ -87,7 +82,7 @@ import Data.Functor as X
     (<$>),
     (<&>),
   )
-import Data.IORef as X (IORef, modifyIORef', newIORef, readIORef, writeIORef)
+import Data.IORef as X (IORef)
 import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter, zip, (++))
 import Data.Maybe as X (Maybe (..), fromMaybe, maybe)

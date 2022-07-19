@@ -16,7 +16,7 @@ import Data.Text qualified as T
 import Hedgehog qualified as H
 import Refined qualified as R
 import ShellRun.Data.Command (Command (..))
-import ShellRun.Effects.MonadTime (MonadTime (..))
+import ShellRun.Effects.Timing (Timing (..))
 import ShellRun.Logging.Queue (LogText (..))
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Logging.Types
@@ -31,7 +31,7 @@ import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.ShellRun.Logging.Generators qualified as LGens
 
--- The mock time our 'MonadTime' returns.
+-- The mock time our 'Timing' returns.
 sysTime :: IsString a => a
 sysTime = "2022-02-20 23:47:39.90228065 UTC"
 
@@ -40,14 +40,14 @@ sysTime = "2022-02-20 23:47:39.90228065 UTC"
 sysTimeNE :: Refined R.NonEmpty Text
 sysTimeNE = $$(R.refineTH "[2022-02-20 23:47:39.90228065 UTC]")
 
--- Monad with mock implementation for 'MonadTime'.
+-- Monad with mock implementation for 'Timing'.
 newtype MockTime a = MkMockTime
   { runMockTime :: a
   }
   deriving stock (Eq, Show)
   deriving (Applicative, Functor, Monad) via Identity
 
-instance MonadTime MockTime where
+instance Timing MockTime where
   getSystemTime = pure $ TR.read sysTime
   getTimeSpec = pure $ fromIntegral @Int64 0
 

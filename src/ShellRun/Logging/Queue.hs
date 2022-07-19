@@ -21,7 +21,8 @@ module ShellRun.Logging.Queue
 where
 
 import Data.Text qualified as T
-import ShellRun.Effects.MonadTime (MonadTime (..))
+import ShellRun.Effects.Atomic (Atomic (..))
+import ShellRun.Effects.Timing (Timing (..))
 import ShellRun.Logging.Types (Log (..))
 import ShellRun.Logging.Types qualified as Log
 import ShellRun.Prelude
@@ -80,7 +81,7 @@ pattern MkLogText t <- UnsafeLogText t
 -- "[2022-02-23 20:58:04.231933782 UTC] [Error] [cmd] cmd: command not found\n"
 --
 -- @since 0.1
-formatFileLog :: MonadTime m => Log -> m LogText
+formatFileLog :: Timing m => Log -> m LogText
 formatFileLog log = do
   currTime <- getSystemTime
   let msg' = T.strip $ log ^. #msg
@@ -112,22 +113,22 @@ instance Show LogTextQueue where
 -- | Atomically writes to the queue.
 --
 -- @since 0.1
-writeQueue :: MonadIO m => LogTextQueue -> Log -> m ()
-writeQueue queue = liftIO . (writeq <=< formatFileLog)
+writeQueue :: (Atomic m, Timing m) => LogTextQueue -> Log -> m ()
+writeQueue queue = (writeq <=< formatFileLog)
   where
-    writeq = atomically . writeTBQueue (queue ^. _MkLogTextQueue)
+    writeq = liftSTM . writeTBQueue (queue ^. _MkLogTextQueue)
 {-# INLINEABLE writeQueue #-}
 
 -- | Atomically reads from the queue. Does not retry.
 --
 -- @since 0.1
-readQueue :: MonadIO m => LogTextQueue -> m (Maybe LogText)
-readQueue = liftIO . atomically . tryReadTBQueue . view _MkLogTextQueue
+readQueue :: Atomic m => LogTextQueue -> m (Maybe LogText)
+readQueue = liftSTM . tryReadTBQueue . view _MkLogTextQueue
 {-# INLINEABLE readQueue #-}
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1
-flushQueue :: MonadIO m => LogTextQueue -> m [LogText]
-flushQueue = liftIO . atomically . flushTBQueue . view _MkLogTextQueue
+flushQueue :: Atomic m => LogTextQueue -> m [LogText]
+flushQueue = liftSTM . flushTBQueue . view _MkLogTextQueue
 {-# INLINEABLE flushQueue #-}

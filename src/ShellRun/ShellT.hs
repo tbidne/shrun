@@ -10,9 +10,12 @@ module ShellRun.ShellT
 where
 
 import ShellRun.Configuration.Env.Types (Env)
-import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
-import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
-import ShellRun.Effects.MonadTime (MonadTime (..))
+import ShellRun.Effects.Atomic (Atomic (..))
+import ShellRun.Effects.FileSystemReader (FileSystemReader (..))
+import ShellRun.Effects.FileSystemWriter (FileSystemWriter (..))
+import ShellRun.Effects.Terminal (Terminal (..))
+import ShellRun.Effects.TimedProcess (TimedProcess (..))
+import ShellRun.Effects.Timing (Timing (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.Logging.Types (LogMode (..))
@@ -36,14 +39,20 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadReader env,
       -- | @since 0.1
       MonadCatch,
-      -- | @since 0.1
-      MonadFSReader,
+      -- | @since 0.5
+      Atomic,
+      -- | @since 0.5
+      FileSystemReader,
+      -- | @since 0.5
+      FileSystemWriter,
       -- | @since 0.1
       MonadIO,
       -- | @since 0.1
       MonadMask,
-      -- | @since 0.1
-      MonadTime,
+      -- | @since 0.5
+      Terminal,
+      -- | @since 0.5
+      Timing,
       -- | @since 0.1
       MonadThrow,
       -- | @since 0.1
@@ -62,17 +71,22 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- (i.e. in tests).
 
 -- | @since 0.1
-instance MonadIO m => RegionLogger (ShellT Env m) where
+instance (MonadIO m, MonadMask m, Terminal m) => RegionLogger (ShellT Env m) where
   type Region (ShellT Env m) = ConsoleRegion
 
-  logFn = liftIO . putStrLn
+  logFn = putTextLn
 
   logModeToRegionFn Set cr = liftIO . Regions.setConsoleRegion cr
   logModeToRegionFn Append cr = liftIO . Regions.appendConsoleRegion cr
   logModeToRegionFn Finish cr = liftIO . Regions.finishConsoleRegion cr
 
+  withConsoleRegion = Regions.withConsoleRegion
+
 -- | @since 0.3.0.1
-instance (MonadMask m, MonadTime m, MonadUnliftIO m) => MonadProcRunner (ShellT Env m) where
-  tryTimeProc = ShIO.tryTimeSh
-  tryTimeProcStream = ShIO.tryTimeShStreamNoRegion
-  tryTimeProcStreamRegion = ShIO.tryTimeShStreamRegion
+instance
+  (Atomic m, MonadMask m, MonadUnliftIO m, Terminal m, Timing m) =>
+  TimedProcess (ShellT Env m)
+  where
+  tryTime = ShIO.tryTimeSh
+  tryTimeStream = ShIO.tryTimeShStreamNoRegion
+  tryTimeStreamRegion = ShIO.tryTimeShStreamRegion

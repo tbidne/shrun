@@ -53,9 +53,12 @@ library
     ShellRun.Data.NonEmptySeq
     ShellRun.Data.Supremum
     ShellRun.Data.Timeout
-    ShellRun.Effects.MonadFSReader
-    ShellRun.Effects.MonadProcRunner
-    ShellRun.Effects.MonadTime
+    ShellRun.Effects.Atomic
+    ShellRun.Effects.FileSystemReader
+    ShellRun.Effects.FileSystemWriter
+    ShellRun.Effects.Terminal
+    ShellRun.Effects.TimedProcess
+    ShellRun.Effects.Timing
     ShellRun.IO
     ShellRun.Logging.Formatting
     ShellRun.Logging.Log

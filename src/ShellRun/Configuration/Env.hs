@@ -27,8 +27,6 @@ where
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Data.Sequence qualified as Seq
 import Data.Text qualified as T
-import Options.Applicative qualified as OApp
-import ShellRun.Configuration.Args (parserInfoArgs)
 import ShellRun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -47,26 +45,12 @@ import ShellRun.Configuration.Toml (TomlConfig, argsToTomlConfig)
 import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.FilePathDefault (FilePathDefault (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
-import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
+import ShellRun.Effects.Atomic (Atomic (..))
+import ShellRun.Effects.FileSystemReader (FileSystemReader (..))
+import ShellRun.Effects.Terminal (Terminal (..))
 import ShellRun.Logging.Queue (LogTextQueue (..))
 import ShellRun.Prelude
-import System.Console.Terminal.Size (Window (..))
-import System.Console.Terminal.Size qualified as TSize
-import System.Directory (doesFileExist)
 import System.FilePath ((</>))
-
--- | @since 0.5
-data TermSizeException = MkTermSizeException
-  deriving stock
-    ( -- | @since 0.5
-      Eq,
-      -- | @since 0.5
-      Show
-    )
-
--- | @since 0.5
-instance Exception TermSizeException where
-  displayException = const "Failed to detect the terminal size."
 
 -- | @since 0.5
 newtype TomlError = MkTomlError
@@ -93,12 +77,14 @@ instance Exception TomlError where
 --
 -- @since 0.1
 makeEnv ::
-  ( MonadFSReader m,
-    MonadUnliftIO m
+  ( Atomic m,
+    FileSystemReader m,
+    MonadIO m,
+    Terminal m
   ) =>
   m Env
 makeEnv = do
-  args <- liftIO $ OApp.execParser parserInfoArgs
+  args <- getArgs
   tomlConfig <-
     if args ^. #noConfig
       then -- 1. If noConfig is true then we ignore all toml config
@@ -114,11 +100,11 @@ makeEnv = do
         Nothing -> do
           configDir <- getXdgConfig "shell-run"
           let path = configDir </> "config.toml"
-          b <- liftIO $ doesFileExist path
+          b <- doesFileExist path
           if b
             then readConfig (configDir </> "config.toml")
             else do
-              liftIO $ putStrLn ("No default config found at: " <> pack path)
+              putTextLn ("No default config found at: " <> pack path)
               pure mempty
 
   let finalConfig = args ^. argsToTomlConfig <> tomlConfig
@@ -132,8 +118,10 @@ makeEnv = do
         Left tomlErr -> throwIO $ MkTomlError tomlErr
 
 configToEnv ::
-  ( MonadFSReader m,
-    MonadIO m
+  ( Atomic m,
+    FileSystemReader m,
+    MonadIO m,
+    Terminal m
   ) =>
   TomlConfig ->
   NonEmptySeq Text ->
@@ -144,17 +132,14 @@ configToEnv cfg cmdsText = do
     Just FPDefault -> do
       configDir <- getXdgConfig "shell-run"
       let fp = configDir </> "shell-run.log"
-      queue <- liftIO $ atomically $ TBQueue.newTBQueue 1000
+      queue <- liftSTM $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
     Just (FPManual f) -> do
-      queue <- liftIO $ atomically $ TBQueue.newTBQueue 1000
+      queue <- liftSTM $ TBQueue.newTBQueue 1000
       pure $ Just (f, MkLogTextQueue queue)
 
   cmdLineTrunc' <- case cfg ^. #cmdLineTrunc of
-    Just Detected ->
-      (width <<$>> liftIO TSize.size) >>= \case
-        Just h -> pure $ Just $ MkTruncation h
-        Nothing -> throwIO MkTermSizeException
+    Just Detected -> Just . MkTruncation <$> getTerminalWidth
     Just (Undetected x) -> pure $ Just x
     Nothing -> pure Nothing
 
@@ -168,7 +153,7 @@ configToEnv cfg cmdsText = do
         Left err -> throwIO err
       Left err -> throwIO err
 
-  completedCmds' <- liftIO $ newTVarIO Seq.empty
+  completedCmds' <- newTVarIO Seq.empty
 
   pure $
     MkEnv

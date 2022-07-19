@@ -13,7 +13,7 @@ spec = testCase "Should time out" $ do
 
   V.verifyExpected results allExpected
   where
-    argList = timeout : commands
+    argList = "--no-config" : timeout : commands
     commands = ["sleep 10"]
     timeout = "--timeout=5"
 

@@ -22,34 +22,60 @@ import ShellRun.Configuration.Env.Types
 import ShellRun.Data.Command (Command)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.Timeout (Timeout)
-import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
+import ShellRun.Effects.Atomic (Atomic (..))
+import ShellRun.Effects.FileSystemReader (FileSystemReader (..))
+import ShellRun.Effects.Terminal (Terminal (..))
 import System.Environment (withArgs)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (IO a)
-  deriving (Applicative, Functor, Monad, MonadIO, MonadUnliftIO) via IO
+  deriving
+    ( Applicative,
+      Atomic,
+      Functor,
+      Monad,
+      MonadIO,
+      MonadUnliftIO,
+      Terminal
+    )
+    via IO
 
 makePrisms ''ConfigIO
 
-instance MonadFSReader ConfigIO where
+instance FileSystemReader ConfigIO where
   getXdgConfig _ = pure "test/integration/toml"
-  readFile = liftIO . readFileUtf8Lenient
+  readFile = liftIO . readFile
+  doesFileExist = liftIO . doesFileExist
+  getArgs = liftIO getArgs
 
 -- IO with no default config file
 newtype NoConfigIO a = MkNoConfigIO (IO a)
-  deriving (Applicative, Functor, Monad, MonadIO, MonadUnliftIO) via IO
+  deriving
+    ( Applicative,
+      Atomic,
+      Functor,
+      Monad,
+      MonadIO,
+      MonadUnliftIO,
+      Terminal
+    )
+    via IO
 
 makePrisms ''NoConfigIO
 
-instance MonadFSReader NoConfigIO where
+instance FileSystemReader NoConfigIO where
   getXdgConfig _ = pure "./"
-  readFile = liftIO . readFileUtf8Lenient
+  readFile = liftIO . readFile
+  doesFileExist = liftIO . doesFileExist
+  getArgs = liftIO getArgs
 
 -- | Makes an 'Env' for the given monad and compares the result with the
 -- expected params.
 makeEnvAndVerify ::
-  ( MonadFSReader m,
-    MonadUnliftIO m
+  ( Atomic m,
+    FileSystemReader m,
+    MonadUnliftIO m,
+    Terminal m
   ) =>
   -- | List of CLI arguments.
   [String] ->

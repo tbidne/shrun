@@ -14,6 +14,8 @@ module ShellRun.Logging.Log
 where
 
 import ShellRun.Configuration.Env.Types (HasLogging (..))
+import ShellRun.Effects.Atomic (Atomic (..))
+import ShellRun.Effects.Timing (Timing (..))
 import ShellRun.Logging.Formatting qualified as LFormat
 import ShellRun.Logging.Queue qualified as Queue
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
@@ -25,10 +27,11 @@ import ShellRun.Prelude
 --
 -- @since 0.3
 putLog ::
-  ( HasLogging env,
-    MonadIO m,
+  ( Atomic m,
+    HasLogging env,
     MonadReader env m,
-    RegionLogger m
+    RegionLogger m,
+    Timing m
   ) =>
   Log ->
   m ()
@@ -45,10 +48,11 @@ putLog log = do
 --
 -- @since 0.3
 putRegionLog ::
-  ( HasLogging env,
-    MonadIO m,
+  ( Atomic m,
+    HasLogging env,
     MonadReader env m,
-    RegionLogger m
+    RegionLogger m,
+    Timing m
   ) =>
   Region m ->
   Log ->
@@ -84,9 +88,10 @@ maybePrintLog fn log =
 --
 -- @since 0.3
 maybeSendLogToQueue ::
-  ( HasLogging env,
-    MonadIO m,
-    MonadReader env m
+  ( Atomic m,
+    HasLogging env,
+    MonadReader env m,
+    Timing m
   ) =>
   Log ->
   m ()

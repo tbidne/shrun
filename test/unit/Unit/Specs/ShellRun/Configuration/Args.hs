@@ -49,6 +49,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
         Just $
           MkArgs
             { configPath = Nothing,
+              noConfig = False,
               timeout = Nothing,
               cmdLogging = Nothing,
               cmdDisplay = Nothing,
@@ -66,7 +67,8 @@ configSpecs =
   testGroup
     "Config arg parsing"
     [ parseShortConfig,
-      parseLongConfig
+      parseLongConfig,
+      parseNoConfig
     ]
 
 parseShortConfig :: TestTree
@@ -86,6 +88,16 @@ parseLongConfig = testCase "Should parse long config" $ do
         Just $
           (Args.defaultArgs defCommand)
             { configPath = Just "./path/config.toml"
+            }
+  verifyResult argList expected
+
+parseNoConfig :: TestTree
+parseNoConfig = testCase "Should parse no-config" $ do
+  let argList = ["--no-config", "command"]
+      expected =
+        Just $
+          (Args.defaultArgs defCommand)
+            { noConfig = True
             }
   verifyResult argList expected
 

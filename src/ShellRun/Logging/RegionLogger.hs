@@ -10,6 +10,7 @@ where
 
 import ShellRun.Logging.Types (LogMode)
 import ShellRun.Prelude
+import System.Console.Regions (RegionLayout)
 
 -- | `RegionLogger` is a simple typeclass for abstracting logging functions.
 --
@@ -31,3 +32,8 @@ class Monad m => RegionLogger m where
   --
   -- @since 0.3
   logModeToRegionFn :: LogMode -> Region m -> Text -> m ()
+
+  -- | Runs an @m a@ with a console region.
+  --
+  -- @since 0.5
+  withConsoleRegion :: RegionLayout -> (Region m -> m a) -> m a

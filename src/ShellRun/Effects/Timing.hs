@@ -1,8 +1,8 @@
--- | Provides the 'MonadTime' class.
+-- | Provides the 'Timing' class.
 --
 -- @since 0.1
-module ShellRun.Effects.MonadTime
-  ( MonadTime (..),
+module ShellRun.Effects.Timing
+  ( Timing (..),
     withTiming,
     withTiming_,
   )
@@ -20,7 +20,7 @@ import System.Clock qualified as C
 -- | Class for retrieving the current system time.
 --
 -- @since 0.1
-class Monad m => MonadTime m where
+class Monad m => Timing m where
   -- | @since 0.1
   getSystemTime :: m ZonedTime
 
@@ -31,14 +31,14 @@ class Monad m => MonadTime m where
   getTimeSpec :: m TimeSpec
 
 -- | @since 0.1
-instance MonadTime IO where
+instance Timing IO where
   getSystemTime = Local.getZonedTime
   getTimeSpec = C.getTime Monotonic
   {-# INLINEABLE getSystemTime #-}
   {-# INLINEABLE getTimeSpec #-}
 
 -- | @since 0.1
-instance MonadTime m => MonadTime (ReaderT e m) where
+instance Timing m => Timing (ReaderT e m) where
   getSystemTime = lift getSystemTime
   getTimeSpec = lift getTimeSpec
   {-# INLINEABLE getSystemTime #-}
@@ -47,7 +47,7 @@ instance MonadTime m => MonadTime (ReaderT e m) where
 -- | Times an action in terms of seconds.
 --
 -- @since 0.3.0.1
-withTiming :: MonadTime m => m a -> m (RelativeTime, a)
+withTiming :: Timing m => m a -> m (RelativeTime, a)
 withTiming m = do
   start <- getTimeSpec
   res <- m
@@ -59,6 +59,6 @@ withTiming m = do
 -- | 'withTiming' that ignores the result.
 --
 -- @since 0.3.0.1
-withTiming_ :: MonadTime m => m a -> m RelativeTime
+withTiming_ :: Timing m => m a -> m RelativeTime
 withTiming_ = fmap (view _1) . withTiming
 {-# INLINEABLE withTiming_ #-}

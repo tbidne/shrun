@@ -17,11 +17,12 @@ import ShellRun.Configuration.Env.Types
     HasLogging (..),
     HasTimeout (..),
   )
-import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
+import ShellRun.Effects.TimedProcess (TimedProcess (..))
 import ShellRun.IO qualified as ShIO
 import ShellRun.Logging.RegionLogger (RegionLogger (..))
 import ShellRun.ShellT (ShellT)
 import System.Console.Regions (ConsoleRegion)
+import System.Console.Regions qualified as Regions
 
 -- | @since 0.3
 data FuncEnv = MkFuncEnv
@@ -64,11 +65,13 @@ instance RegionLogger (ShellT FuncEnv IO) where
 
   logModeToRegionFn _ _ = logFn
 
+  withConsoleRegion = Regions.withConsoleRegion
+
 -- | @since 0.3.0.1
-instance MonadProcRunner (ShellT FuncEnv IO) where
-  tryTimeProc = ShIO.tryTimeSh
-  tryTimeProcStream = ShIO.tryTimeShStreamNoRegion
-  tryTimeProcStreamRegion = ShIO.tryTimeShStreamRegion
+instance TimedProcess (ShellT FuncEnv IO) where
+  tryTime = ShIO.tryTimeSh
+  tryTimeStream = ShIO.tryTimeShStreamNoRegion
+  tryTimeStreamRegion = ShIO.tryTimeShStreamRegion
 
 -- | Makes the 'FuncEnv' from CLI args.
 --

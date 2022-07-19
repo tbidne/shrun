@@ -2,6 +2,10 @@
 
 ARGS = ""
 
+.PHONY: clean
+clean:
+	cabal clean
+
 .PHONY: build
 build:
 	if [ -z "$(ARGS)" ]; then \

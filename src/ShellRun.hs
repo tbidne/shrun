@@ -24,9 +24,11 @@ import ShellRun.Data.Command (Command (..))
 import ShellRun.Data.NonEmptySeq (NonEmptySeq)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Data.Timeout (Timeout (..))
-import ShellRun.Effects.MonadFSReader (MonadFSReader (..))
-import ShellRun.Effects.MonadProcRunner (MonadProcRunner (..))
-import ShellRun.Effects.MonadTime (MonadTime (..), withTiming)
+import ShellRun.Effects.Atomic (Atomic (..))
+import ShellRun.Effects.FileSystemWriter (FileSystemWriter (..))
+import ShellRun.Effects.Terminal (Terminal (..))
+import ShellRun.Effects.TimedProcess (TimedProcess (..))
+import ShellRun.Effects.Timing (Timing (..), withTiming)
 import ShellRun.IO (Stderr (..))
 import ShellRun.Logging.Formatting qualified as LFormat
 import ShellRun.Logging.Log qualified as Log
@@ -44,30 +46,35 @@ import UnliftIO.Async qualified as Async
 --
 -- @since 0.1
 runShell ::
-  ( HasCommands env,
+  ( Atomic m,
+    FileSystemWriter m,
+    HasCommands env,
     HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
-    MonadFSReader m,
     MonadMask m,
-    MonadProcRunner m,
     MonadReader env m,
-    MonadTime m,
-    MonadUnliftIO m
+    MonadUnliftIO m,
+    Terminal m,
+    TimedProcess m,
+    Timing m
   ) =>
   m ()
 runShell = asks getCommands >>= runCommands
 
 runCommands ::
   forall m env.
-  ( HasCompletedCmds env,
+  ( Atomic m,
+    FileSystemWriter m,
+    HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
     MonadMask m,
-    MonadProcRunner m,
     MonadReader env m,
-    MonadTime m,
-    MonadUnliftIO m
+    MonadUnliftIO m,
+    Terminal m,
+    TimedProcess m,
+    Timing m
   ) =>
   NonEmptySeq Command ->
   m ()
@@ -118,11 +125,13 @@ runCommands commands = Regions.displayConsoleRegions $
 {-# INLINEABLE runCommands #-}
 
 runCommand ::
-  ( HasLogging env,
+  ( Atomic m,
+    HasLogging env,
     MonadMask m,
-    MonadProcRunner m,
+    TimedProcess m,
     MonadReader env m,
-    MonadUnliftIO m
+    MonadUnliftIO m,
+    Timing m
   ) =>
   Command ->
   m ()
@@ -140,10 +149,10 @@ runCommand cmd = do
   --       tryTimeShStreamNoRegion and tryTimeShStreamRegion handle file
   --       logging automatically.
   res <- case (cmdLogging, fileLogging, disableLogging) of
-    (_, _, True) -> tryTimeProc cmd
-    (Disabled, Nothing, _) -> tryTimeProc cmd
-    (Disabled, Just (_, _), _) -> tryTimeProcStream cmd
-    _ -> tryTimeProcStreamRegion cmd
+    (_, _, True) -> tryTime cmd
+    (Disabled, Nothing, _) -> tryTime cmd
+    (Disabled, Just (_, _), _) -> tryTimeStream cmd
+    _ -> tryTimeStreamRegion cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
     let (msg', lvl', t') = case res of
@@ -160,14 +169,15 @@ runCommand cmd = do
 {-# INLINEABLE runCommand #-}
 
 counter ::
-  ( HasCompletedCmds env,
+  ( Atomic m,
+    HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
-    MonadMask m,
     MonadReader env m,
-    MonadIO m,
     RegionLogger m,
-    Region m ~ ConsoleRegion
+    Region m ~ ConsoleRegion,
+    Terminal m,
+    Timing m
   ) =>
   NonEmptySeq Command ->
   m ()
@@ -175,24 +185,25 @@ counter cmds = do
   -- This brief delay is so that our timer starts "last" i.e. after each individual
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
-  liftIO $ threadDelay 100_000
-  Regions.withConsoleRegion Linear $ \r -> do
+  sleep 100_000
+  withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
-    timer <- liftIO $ newIORef 0
+    timer <- newIORef 0
     Loops.whileM_ (keepRunning cmds r timer timeout) $ do
-      elapsed <- liftIO $ do
-        threadDelay 1_000_000
+      elapsed <- do
+        sleep 1_000_000
         modifyIORef' timer (+ 1)
         readIORef timer
       logCounter r elapsed
 {-# INLINEABLE counter #-}
 
 logCounter ::
-  ( HasLogging env,
-    MonadIO m,
+  ( Atomic m,
+    HasLogging env,
     MonadReader env m,
     RegionLogger m,
-    Region m ~ ConsoleRegion
+    Region m ~ ConsoleRegion,
+    Timing m
   ) =>
   ConsoleRegion ->
   Natural ->
@@ -210,12 +221,13 @@ logCounter region elapsed = do
 {-# INLINEABLE logCounter #-}
 
 keepRunning ::
-  ( HasCompletedCmds env,
+  ( Atomic m,
+    HasCompletedCmds env,
     HasLogging env,
-    MonadIO m,
     MonadReader env m,
     RegionLogger m,
-    Region m ~ ConsoleRegion
+    Region m ~ ConsoleRegion,
+    Timing m
   ) =>
   NonEmptySeq Command ->
   ConsoleRegion ->
@@ -223,12 +235,12 @@ keepRunning ::
   Maybe Timeout ->
   m Bool
 keepRunning allCmds region timer mto = do
-  elapsed <- liftIO $ readIORef timer
+  elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
       cmdDisplay <- asks getCmdDisplay
       completedCmdsTVar <- asks getCompletedCmds
-      completedCmds <- liftIO $ readTVarIO completedCmdsTVar
+      completedCmds <- readTVarIO completedCmdsTVar
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ NESeq.toList allCmds
@@ -253,7 +265,7 @@ timedOut _ Nothing = False
 timedOut timer (Just (MkTimeout t)) = timer > t
 {-# INLINEABLE timedOut #-}
 
-maybePollQueue :: (HasLogging env, MonadIO m, MonadReader env m) => m ()
+maybePollQueue :: (Atomic m, FileSystemWriter m, HasLogging env, MonadReader env m) => m ()
 maybePollQueue = do
   fileLogging <- asks getFileLogging
   case fileLogging of
@@ -261,10 +273,10 @@ maybePollQueue = do
     Just (fp, queue) -> writeQueueToFile fp queue
 {-# INLINEABLE maybePollQueue #-}
 
-writeQueueToFile :: MonadIO m => FilePath -> LogTextQueue -> m void
+writeQueueToFile :: (Atomic m, FileSystemWriter m) => FilePath -> LogTextQueue -> m void
 writeQueueToFile fp queue = forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
 {-# INLINEABLE writeQueueToFile #-}
 
-logFile :: MonadIO m => FilePath -> LogText -> m ()
-logFile fp = liftIO . appendFileUtf8 fp . view _LogText
+logFile :: FileSystemWriter m => FilePath -> LogText -> m ()
+logFile fp = appendFile fp . view _LogText
 {-# INLINEABLE logFile #-}
