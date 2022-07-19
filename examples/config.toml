@@ -59,9 +59,9 @@ disable-log = false
 # Cycles are not allowed, nor are duplicate keys.
 legend = [
   # INITIAL EXAMPLE
-  { key = 'sign-peace-treaty', val = 'sleep 1 && "lol psyche"' },
-  { key = 'querying-targets', val = 'sleep 2' },
-  { key = 'skynet', val = 'echo "preparing nuclear missil-- i mean gift baskets"; sleep 10' },
+  { key = 'sign-peace-treaty', val = 'echo play it cool... && sleep 5 && "lol psyche"' },
+  { key = 'querying-targets', val = 'echo finding targets... && sleep 7' },
+  { key = 'skynet', val = 'echo "preparing nuclear missil-- i mean gift baskets"; sleep 13' },
   { key = 'ui', val = 'echo "adding emojis. we like to have fun :-)"; sleep 10' },
   { key = 'takeover', val = ['querying-targets', 'ui', 'skynet'] },
 
