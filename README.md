@@ -13,7 +13,7 @@
 [![stack nightly](https://img.shields.io/github/workflow/status/tbidne/shell-run/stack_nightly/main?label=stack%20nightly&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/stack_nightly.yaml)
 [![style](https://img.shields.io/github/workflow/status/tbidne/shell-run/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shell-run/actions/workflows/style_ci.yaml)
 
-![usage](./examples/usage.gif)
+![demo](./examples/demo.gif)
 
 </div>
 
