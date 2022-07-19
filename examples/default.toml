@@ -52,41 +52,34 @@ strip-control = "smart"
 # This option is primarily here to help testing.
 disable-log = false
 
-# Command aliases are defined here. The general syntax is:
+# Command aliases are defined here. Values can either be a single unit or a
+# list of units, where a unit is either a command literal
+# (e.g. bash expression) or a recursive reference to another alias.
 #
-#    alias = cmd1,,cmd2,,cmd3,,...
-#
-# where cmd1,... are either commands ore aliases themselves. Thus recursive
-# references are allowed, but a cycle will cause an error. Duplicate keys
-# will also cause an error.
-legend = """
-  ############
-  # EXAMPLES #
-  ############
-
-  cmd1=echo "command one"
+# Cycles are not allowed, nor are duplicate keys.
+legend = [
+  # EXAMPLES
+  { key = 'cmd1', val = 'echo "command one"' },
 
   # recursive references
-  cmd2=cmd1
-  cmd3=cmd2
+  { key = 'cmd2', val = 'cmd1' },
+  { key = 'cmd3', val = 'cmd2' },
 
-  # this will error
-  cmd4=echo four
+  # this will error when run
+  { key = 'cmd4', val = 'command four' },
 
-  # runs 3, 4, and echo
-  all=cmd3,,cmd4,,echo hi
+  # runs 3, 4 and echo
+  { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
 
-  ################
-  # BAD EXAMPLES #
-  ################
+  # BAD EXAMPLES
 
   # duplicates will cause an error when reading this file.
-  #dup_key=echo duplicate
-  #dup_key=echo duplicate
+  #{ key = 'dup_key', val = 'echo duplicate 1'},
+  #{ key = 'dup_key', val = 'echo duplicate 2'},
 
   # cyclic keys will cause an error when _actually used_ e.g. try running
-  # shell-run -c path/to/this/config.toml a
-  a=c
-  b=a
-  c=b
-"""
+  # shell-run -c examples/config.toml a
+  { key = 'a', val = 'c'},
+  { key = 'b', val = 'a'},
+  { key = 'c', val = 'b'},
+]

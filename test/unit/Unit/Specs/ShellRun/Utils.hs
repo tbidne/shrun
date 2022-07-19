@@ -3,7 +3,6 @@
 -- | Specs for ShellRun.Utils.
 module Unit.Specs.ShellRun.Utils (specs) where
 
-import Refined (NonEmpty)
 import Refined qualified as R
 import ShellRun.Utils qualified as Utils
 import Unit.Prelude
@@ -54,7 +53,7 @@ trailingKey =
     ("ab", "") @=? Utils.breakStripPoint point "ab="
 
 point :: Refined R.NonEmpty Text
-point = $$(R.refineTH @NonEmpty @Text "=")
+point = $$(R.refineTH @R.NonEmpty @Text "=")
 
 stripAnsiControlSpecs :: TestTree
 stripAnsiControlSpecs =

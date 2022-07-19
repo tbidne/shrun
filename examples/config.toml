@@ -52,58 +52,44 @@ strip-control = "smart"
 # This option is primarily here to help testing.
 disable-log = false
 
-# Command aliases are defined here. The general syntax is:
+# Command aliases are defined here. Values can either be a single unit or a
+# list of units, where a unit is either a command literal
+# (e.g. bash expression) or a recursive reference to another alias.
 #
-#    alias = cmd1,,cmd2,,cmd3,,...
-#
-# where cmd1,... are either commands ore aliases themselves. Thus recursive
-# references are allowed, but a cycle will cause an error. Duplicate keys
-# will also cause an error.
-legend = """
-  #####################
-  #  INITIAL EXAMPLE  #
-  #####################
+# Cycles are not allowed, nor are duplicate keys.
+legend = [
+  # INITIAL EXAMPLE
+  { key = 'sign-peace-treaty', val = 'sleep 1 && "lol psyche"' },
+  { key = 'querying-targets', val = 'sleep 2' },
+  { key = 'skynet', val = 'echo "preparing nuclear missil-- i mean gift baskets"; sleep 10' },
+  { key = 'ui', val = 'echo "adding emojis. we like to have fun :-)"; sleep 10' },
+  { key = 'takeover', val = ['querying-targets', 'ui', 'skynet'] },
 
-  # got'em
-  sign-peace-treaty=sleep 1 && "lol psyche"
-
-  # harmless commands, nothing to see here
-  querying-targets=sleep 2
-  skynet=echo "preparing nuclear missil-- i mean gift baskets"; sleep 10
-  ui=echo "adding emojis. we like to have fun :-)"; sleep 10
-
-  # alias for multiple commands because who likes typing
-  takeover=querying-targets,,ui,,skynet
-
-  #########################
-  # README LEGEND EXAMPLE #
-  #########################
-
-  cmd1=echo "command one"
+  # README LEGEND EXAMPLE
+  { key = 'cmd1', val = 'echo "command one"' },
 
   # recursive references
-  cmd2=cmd1
-  cmd3=cmd2
+  { key = 'cmd2', val = 'cmd1' },
+  { key = 'cmd3', val = 'cmd2' },
 
   # this will error
-  cmd4=command four
+  { key = 'cmd4', val = 'command four' },
 
-  # runs 3, 4, and echo
-  all=cmd3,,cmd4,,echo hi
+  # runs 3, 4 and echo
+  { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
 
-  ################
-  # BAD EXAMPLES #
-  ################
+  # BAD EXAMPLES
 
   # duplicates will cause an error when reading this file.
-  #dup_key=echo duplicate
-  #dup_key=echo duplicate
+  #{ key = 'dup_key', val = 'echo duplicate 1'},
+  #{ key = 'dup_key', val = 'echo duplicate 2'},
 
   # cyclic keys will cause an error when _actually used_ e.g. try running
-  # shell-run -c examples/shell-run.legend a
-  a=c
-  b=a
-  c=b
+  # shell-run -c examples/config.toml a
+  { key = 'a', val = 'c'},
+  { key = 'b', val = 'a'},
+  { key = 'c', val = 'b'},
 
-  bench_1_000_000=for i in {1..1000000}; do echo ${i}; done
-"""
+  # MISC
+  { key = 'bench_1_000_000', val = 'for i in {1..1000000}; do echo ${i}; done' }
+]

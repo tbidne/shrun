@@ -6,13 +6,14 @@ module Unit.Specs.ShellRun.Configuration.Legend (specs) where
 import Data.HashMap.Strict qualified as Map
 import ShellRun.Configuration.Legend
   ( CyclicKeyError (..),
-    LegendError (..),
+    DuplicateKeyError (..),
     LegendMap,
     linesToMap,
     translateCommands,
   )
 import ShellRun.Data.Command (Command (..))
-import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
+import ShellRun.Data.Legend (unsafeKeyVal)
+import ShellRun.Data.NonEmptySeq (NonEmptySeq (..), singleton, unsafeFromList)
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import Unit.Prelude
 
@@ -86,19 +87,19 @@ cycleCmdFail = testCase "Should fail on cycle" $ do
 legend :: LegendMap
 legend =
   Map.fromList
-    [ ("one", "cmd1"),
-      ("two", "cmd2"),
-      ("three", "cmd3"),
-      ("oneAndTwo", "one,,two"),
-      ("all", "oneAndTwo,,cmd3")
+    [ ("one", singleton "cmd1"),
+      ("two", singleton "cmd2"),
+      ("three", singleton "cmd3"),
+      ("oneAndTwo", unsafeFromList ["one", "two"]),
+      ("all", unsafeFromList ["oneAndTwo", "cmd3"])
     ]
 
 cyclicLegend :: LegendMap
 cyclicLegend =
   Map.fromList
-    [ ("a", "b,,x"),
-      ("b", "c,,x"),
-      ("c", "a,,x")
+    [ ("a", unsafeFromList ["b", "x"]),
+      ("b", unsafeFromList ["c", "x"]),
+      ("c", unsafeFromList ["a", "x"])
     ]
 
 linesToMapSpecs :: TestTree
@@ -106,34 +107,32 @@ linesToMapSpecs =
   testGroup
     "linesToMap"
     [ parseMapAndSkip,
-      emptyKeyThrowErr,
-      emptyValThrowErr,
       duplicateKeysThrowErr
     ]
 
 parseMapAndSkip :: TestTree
 parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
-  let result = linesToMap ["a=b,,k", "b=c", "#c=x"]
+  let result =
+        linesToMap
+          [ unsafeKeyVal "a" (unsafeFromList ["b", "k"]),
+            unsafeKeyVal "b" (singleton "c")
+          ]
       expected =
         Right
           ( Map.fromList
-              [ ("a", "b,,k"),
-                ("b", "c")
+              [ ("a", unsafeFromList ["b", "k"]),
+                ("b", singleton "c")
               ]
           )
   expected @=? result
 
-emptyKeyThrowErr :: TestTree
-emptyKeyThrowErr =
-  testCase "Empty key should throw error" $
-    Left (LegendErrorEmptyKey "=b") @=? linesToMap ["=b"]
-
-emptyValThrowErr :: TestTree
-emptyValThrowErr =
-  testCase "Empty value should throw error" $
-    Left (LegendErrorEmptyValue "a=") @=? linesToMap ["a="]
-
 duplicateKeysThrowErr :: TestTree
 duplicateKeysThrowErr =
   testCase "Duplicate keys should throw error" $
-    Left (LegendErrorDuplicateKeys "a") @=? linesToMap ["a=b", "b=c", "a=d"]
+    Left (MkDuplicateKeyError "a") @=? linesToMap result
+  where
+    result =
+      [ unsafeKeyVal "a" (singleton "b"),
+        unsafeKeyVal "b" (singleton "c"),
+        unsafeKeyVal "a" (singleton "d")
+      ]

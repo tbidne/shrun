@@ -114,7 +114,7 @@ instance Show LogTextQueue where
 --
 -- @since 0.1
 writeQueue :: (Atomic m, Timing m) => LogTextQueue -> Log -> m ()
-writeQueue queue = (writeq <=< formatFileLog)
+writeQueue queue = writeq <=< formatFileLog
   where
     writeq = liftSTM . writeTBQueue (queue ^. _MkLogTextQueue)
 {-# INLINEABLE writeQueue #-}

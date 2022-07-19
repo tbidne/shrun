@@ -18,6 +18,7 @@ module ShellRun.Configuration.Env
     Truncation (..),
     TruncRegion (..),
     StripControl (..),
+    TomlError (..),
 
     -- * Functions
     makeEnv,
@@ -26,7 +27,6 @@ where
 
 import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Data.Sequence qualified as Seq
-import Data.Text qualified as T
 import ShellRun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -147,7 +147,7 @@ configToEnv cfg cmdsText = do
 
   commands' <- case cfg ^. #legend of
     Nothing -> pure $ MkCommand Nothing <$> cmdsText
-    Just txt -> case linesToMap $ fmap T.strip (T.lines txt) of
+    Just aliases -> case linesToMap aliases of
       Right mp -> case translateCommands mp cmdsText of
         Right cmds -> pure cmds
         Left err -> throwIO err

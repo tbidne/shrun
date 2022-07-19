@@ -85,6 +85,7 @@ import Data.Functor as X
 import Data.IORef as X (IORef)
 import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter, zip, (++))
+import Data.List.NonEmpty as X (NonEmpty (..))
 import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
 import Data.Monoid as X (Monoid (..))
 import Data.Ord as X (Ordering (..))
@@ -103,8 +104,10 @@ import GHC.Natural as X (Natural)
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X
-  ( Getter,
+  ( A_Getter,
+    Getter,
     Iso',
+    LabelOptic (..),
     Lens',
     Prism,
     Prism',
@@ -138,6 +141,7 @@ import TOML as X
     TOMLError (..),
     Value (..),
     decode,
+    decodeWith,
     getArrayOf,
     getField,
     getFieldOpt,
@@ -146,6 +150,7 @@ import TOML as X
     invalidValue,
     makeDecoder,
     renderTOMLError,
+    runDecoder,
     typeMismatch,
   )
 import UnliftIO as X
@@ -232,7 +237,7 @@ showt = T.pack . P.show
 -- | 'Text' version of 'error'.
 --
 -- @since 0.1
-error :: Text -> a
+error :: HasCallStack => Text -> a
 error = P.error . T.unpack
 {-# INLINEABLE error #-}
 

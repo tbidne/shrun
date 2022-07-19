@@ -20,7 +20,6 @@ module ShellRun.Data.NonEmptySeq
   )
 where
 
-import Data.List.NonEmpty (NonEmpty (..))
 import Data.Sequence (Seq (..))
 import GHC.Exts qualified as Exts
 import ShellRun.Prelude hiding (toList)
@@ -72,6 +71,10 @@ instance Foldable NonEmptySeq where
 instance Traversable NonEmptySeq where
   traverse f = fmap unsafeFromSeq . traverse f . toSeq
   {-# INLINEABLE traverse #-}
+
+-- | @since 0.5
+instance DecodeTOML a => DecodeTOML (NonEmptySeq a) where
+  tomlDecoder = unsafeFromNonEmpty <$> tomlDecoder
 
 -- | Creates a singleton 'NonEmptySeq'.
 --

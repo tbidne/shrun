@@ -20,6 +20,7 @@ import ShellRun.Configuration.Env.Types
     Truncation,
   )
 import ShellRun.Data.FilePathDefault (FilePathDefault)
+import ShellRun.Data.Legend (KeyVal)
 import ShellRun.Data.Timeout (Timeout)
 import ShellRun.Prelude
 
@@ -66,7 +67,7 @@ data TomlConfig = MkTomlConfig
     -- | Legend text containing command aliases.
     --
     -- @since 0.5
-    legend :: !(Maybe Text)
+    legend :: !(Maybe (List KeyVal))
   }
   deriving stock
     ( -- | @since 0.1
@@ -153,7 +154,7 @@ decodeDisableLogging :: Decoder (Maybe Bool)
 decodeDisableLogging = getFieldOptWith tomlDecoder "disable-log"
 
 -- | @since 0.5
-decodeLegend :: Decoder (Maybe Text)
+decodeLegend :: Decoder (Maybe (List KeyVal))
 decodeLegend = getFieldOptWith tomlDecoder "legend"
 
 -- | @since 0.5

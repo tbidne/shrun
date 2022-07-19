@@ -1,4 +1,7 @@
-legend = """
-  key1=val
-  key1=other
-"""
+[[legend]]
+key = "key1"
+val = "val"
+
+[[legend]]
+key = "key1"
+val = "other"

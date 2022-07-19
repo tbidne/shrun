@@ -1,3 +1,1 @@
-legend = """
-  key=
-"""
+legend = [ { key = "key", val = "" } ]

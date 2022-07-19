@@ -106,33 +106,21 @@ Note: `shell-run` colors its logs, and the examples shown here _should_ use thes
 
 Examples can be found in [./examples](./examples).
 
-### No Config
-
-**Arg:** `--no-config`
-
-**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit --config or implicit reading of the Xdg config file. Used for when a config file exists at the expected Xdg location, but we want to ignore it.
 
 #### Legend
 
-In addition to providing an alternative to CLI args, the config file has a `legend` section. This allows one to define aliases for commands. Lines are formatted `<cmd_key>=<command value>` (no angle brackets).
-
-Each line can be separated by as many new lines as desired, and comments start with a `#`. Command values themselves can include multiple commands delimited by two commas, and they may reference other commands.
+In addition to providing an alternative to CLI args, the config file has a `legend` section. This allows one to define aliases for commands. Each alias has a key and a value. The value can either be a single unit or a list of units, where a unit is either a command literal (e.g. bash expression) or a recursive reference to another alias.
 
 **Example:** For instance, given the section
 
 ```toml
-legend = """
-  cmd1=echo "command one"
-
-  # recursive references
-  cmd2=cmd1
-  cmd3=cmd2
-
-  cmd4=command four
-
-  # runs 3 and 4
-  all=cmd3,,cmd4,,echo hi
-"""
+legend = [
+  { key = 'cmd1', val = 'echo "command one"' },
+  { key = 'cmd2', val = 'cmd1' },
+  { key = 'cmd3', val = 'cmd2' },
+  { key = 'cmd4', val = 'command four' },
+  { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
+]
 ```
 
 Then the command
@@ -153,6 +141,12 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 </pre>
 
 Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
+
+### No Config
+
+**Arg:** `--no-config`
+
+**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit --config or implicit reading of the Xdg config file. Used for when a config file exists at the expected Xdg location, but we want to ignore it.
 
 ### Timeout
 

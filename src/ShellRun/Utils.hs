@@ -16,6 +16,9 @@ module ShellRun.Utils
     -- * Timing Utils
     diffTime,
     foldMap1,
+
+    -- * Refined Utils
+    _Refined,
   )
 where
 
@@ -25,6 +28,7 @@ import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
 import GHC.Exts (IsList (..))
 import GHC.Int (Int64)
+import Refined (unrefine)
 import Refined qualified as R
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Prelude
@@ -289,3 +293,7 @@ splitAnsi t =
       -- (m, bar)
       Just (!ansiChar, !rest') -> (T.snoc ansiCodeNoChar ansiChar, splitAnsi rest')
       Nothing -> (ansiCodeNoChar, [])
+
+-- | @since 0.5
+_Refined :: Getter (Refined p a) a
+_Refined = to unrefine

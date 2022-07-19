@@ -1,6 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE ViewPatterns #-}
-
 -- | Provides types for the legend functionality.
 --
 -- @since 0.5
@@ -8,7 +5,7 @@ module ShellRun.Configuration.Legend
   ( -- * Parsing
     linesToMap,
     LegendMap,
-    LegendError (..),
+    DuplicateKeyError (..),
 
     -- * Translation
     translateCommands,
@@ -16,36 +13,22 @@ module ShellRun.Configuration.Legend
   )
 where
 
-import Data.HashMap.Strict (HashMap)
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as Set
-import Data.Text qualified as T
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
-import Refined (NonEmpty)
-import Refined qualified as R
 import ShellRun.Data.Command (Command (..))
+import ShellRun.Data.Legend (KeyVal, LegendMap)
 import ShellRun.Data.NonEmptySeq (NonEmptySeq (..))
 import ShellRun.Data.NonEmptySeq qualified as NESeq
 import ShellRun.Prelude
 import ShellRun.Utils qualified as U
 
--- | Alias for our legend map.
---
--- @since 0.1
-type LegendMap = HashMap Text Text
-
 -- | Errors when parsing the legend.
 --
 -- @since 0.5
-data LegendError
-  = -- | @since 0.5
-    LegendErrorDuplicateKeys !Text
-  | -- | @since 0.5
-    LegendErrorEmptyKey !Text
-  | -- | @since 0.5
-    LegendErrorEmptyValue !Text
+newtype DuplicateKeyError = MkDuplicateKeyError Text
   deriving stock
     ( -- | @since 0.5
       Eq,
@@ -54,58 +37,21 @@ data LegendError
     )
 
 -- | @since 0.5
-instance Exception LegendError where
-  displayException (LegendErrorDuplicateKeys k) = "Legend error: found duplicate keys: " <> unpack k
-  displayException (LegendErrorEmptyKey k) = "Legend error: key cannot be empty: " <> unpack k
-  displayException (LegendErrorEmptyValue v) = "Legend error: value cannot be empty: " <> unpack v
+instance Exception DuplicateKeyError where
+  displayException (MkDuplicateKeyError k) = "Legend error: found duplicate key: " <> unpack k
 
--- | Attempts to parse the given ['Text'] into 'LegendMap'.
--- The text lines can either be comments (start with \'#\') or
--- key value pairs. The pairs have the form:
---
--- @
--- key=val
--- @
---
--- Parsing can fail if, for any non-comment line:
---
--- - Key is empty.
--- - Value is empty.
--- - There are duplicate keys.
---
--- ==== __Examples__
--- >>> linesToMap ["=val"]
--- Left (LegendErrorEmptyKey "=val")
---
--- >>> linesToMap ["key="]
--- Left (LegendErrorEmptyValue "key=")
---
--- >>> linesToMap ["key=value"]
--- Right (fromList [("key","value")])
---
--- >>> linesToMap ["key=value1","key=value2"]
--- Left (LegendErrorDuplicateKeys "key")
+-- | Attempts to parse the given ['KeyVal'] into 'LegendMap'.
+-- Duplicate keys are not allowed.
 --
 -- @since 0.1
-linesToMap :: List Text -> Either LegendError LegendMap
+linesToMap :: List KeyVal -> Either DuplicateKeyError LegendMap
 linesToMap = foldr f (Right Map.empty)
   where
-    f "" mp = mp
-    f (T.stripPrefix "#" -> Just _) mp = mp
-    f line mp = join $ liftA2 insertPair (parseLine line) mp
+    f keyVal mp = join $ liftA2 insertPair (Right (keyVal ^. #key, keyVal ^. #val)) mp
     insertPair (key, cmd) mp =
       case Map.lookup key mp of
-        Just _ -> Left $ LegendErrorDuplicateKeys key
+        Just _ -> Left $ MkDuplicateKeyError key
         Nothing -> Right $ Map.insert key cmd mp
-
-parseLine :: Text -> Either LegendError (Tuple2 Text Text)
-parseLine l =
-  case U.breakStripPoint breakPoint l of
-    ("", _) -> Left $ LegendErrorEmptyKey l
-    (_, "") -> Left $ LegendErrorEmptyValue l
-    (k, v) -> Right (k, v)
-  where
-    breakPoint = $$(R.refineTH @NonEmpty @Text "=")
 
 -- | @since 0.5
 newtype CyclicKeyError = MkCyclicKeyError Text
@@ -140,9 +86,9 @@ instance Exception CyclicKeyError where
 -- >>> import ShellRun.Data.NonEmptySeq (unsafeFromList, singleton)
 -- >>> :{
 --   let m = Map.fromList
---         [ ("cmd1", "one"),
---           ("cmd2", "two"),
---           ("all", "cmd1,,cmd2,,other")
+--         [ ("cmd1", singleton "one"),
+--           ("cmd2", singleton "two"),
+--           ("all", unsafeFromList ["cmd1","cmd2","other"])
 --         ]
 --       cmds = translateCommands m (unsafeFromList ["all", "blah"])
 --   in (fmap . fmap) (view #command) cmds
@@ -154,9 +100,9 @@ instance Exception CyclicKeyError where
 --
 -- >>> :{
 --   let m = Map.fromList
---         [ ("a", "b"),
---           ("b", "c"),
---           ("c", "a")
+--         [ ("a", singleton "b"),
+--           ("b", singleton "c"),
+--           ("c", singleton "a")
 --         ]
 --   in translateCommands m (singleton "a")
 -- :}
@@ -180,17 +126,13 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
         Just cyclicVal ->
           let pathTxt = builderToPath path line cyclicVal
            in NESeq.singleton $ Left (MkCyclicKeyError pathTxt)
-        Nothing -> cmds >>= go (Just line) foundKeys' path'
+        Nothing -> val >>= go (Just line) foundKeys' path'
         where
-          -- WARN: Using a double comma right now as a delimiter. Hoping
-          -- this isn't a thing that appears in real bash commands...
-          cmds = U.splitOn $$(R.refineTH @R.NonEmpty @Text ",,") val
           foundKeys' = Set.insert line foundKeys
-
           -- Detect if we have an intersection between previously found
           -- keys and the values we just found. If so we have found a
           -- cyclic error.
-          intersect = Set.intersection foundKeys (neToSet cmds)
+          intersect = Set.intersection foundKeys (neToSet val)
           -- If there are cycles then this should be `Just cyclicVal`
           -- (this list should have at most one since we are detecting
           -- the first cycle)

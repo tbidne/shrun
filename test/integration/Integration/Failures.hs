@@ -2,8 +2,8 @@ module Integration.Failures (specs) where
 
 import Integration.Prelude
 import Integration.Utils (_MkConfigIO)
-import ShellRun.Configuration.Env (makeEnv)
-import ShellRun.Configuration.Legend (CyclicKeyError (..), LegendError (..))
+import ShellRun.Configuration.Env (TomlError (..), makeEnv)
+import ShellRun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
 import System.Environment (withArgs)
 
 specs :: TestTree
@@ -40,9 +40,8 @@ duplicateKeys = testCase "Duplicate keys throws exception" $ do
       `catch` \e -> pure $ Just e
 
   case result of
-    Just (LegendErrorDuplicateKeys k) ->
+    Just (MkDuplicateKeyError k) ->
       "key1" @=? k
-    Just other -> assertFailure $ "Unexpected exception: " <> show other
     Nothing -> assertFailure "Exception exception"
 
 emptyKey :: TestTree
@@ -53,9 +52,8 @@ emptyKey = testCase "Empty key throws exception" $ do
       `catch` \e -> pure $ Just e
 
   case result of
-    Just (LegendErrorEmptyKey k) ->
-      "=value" @=? k
-    Just other -> assertFailure $ "Unexpected exception: " <> show other
+    Just err@(MkTomlError _) ->
+      "TOML error: Decode error at '.legend[0].key': Unexpected empty text" @=? displayException err
     Nothing -> assertFailure "Exception exception"
 
 emptyValue :: TestTree
@@ -66,9 +64,8 @@ emptyValue = testCase "Empty value throws exception" $ do
       `catch` \e -> pure $ Just e
 
   case result of
-    Just (LegendErrorEmptyValue v) ->
-      "key=" @=? v
-    Just other -> assertFailure $ "Unexpected exception: " <> show other
+    Just err@(MkTomlError _) ->
+      "TOML error: Decode error at '.legend[0].val': Unexpected empty text" @=? displayException err
     Nothing -> assertFailure "Exception exception"
 
 cyclicKeys :: TestTree
