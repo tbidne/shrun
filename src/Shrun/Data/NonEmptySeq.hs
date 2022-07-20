@@ -9,13 +9,14 @@ module Shrun.Data.NonEmptySeq
 
     -- * Construction
     singleton,
+    fromList,
+    fromNonEmpty,
 
     -- * Elimination
     toSeq,
     toList,
 
     -- * Unsafe
-    unsafeFromNonEmpty,
     unsafeFromList,
   )
 where
@@ -23,9 +24,6 @@ where
 import Data.Sequence (Seq (..))
 import GHC.Exts qualified as Exts
 import Shrun.Prelude hiding (toList)
-
--- $setup
--- >>> import GHC.Exts (fromList)
 
 -- | Represents a non-empty sequence. This is useful for when we want a
 -- non-empty, finite list.
@@ -74,7 +72,7 @@ instance Traversable NonEmptySeq where
 
 -- | @since 0.5
 instance DecodeTOML a => DecodeTOML (NonEmptySeq a) where
-  tomlDecoder = unsafeFromNonEmpty <$> tomlDecoder
+  tomlDecoder = fromNonEmpty <$> tomlDecoder
 
 -- | Creates a singleton 'NonEmptySeq'.
 --
@@ -86,7 +84,7 @@ singleton x = x :|^ Empty
 -- | Exposes the underlying sequence.
 --
 -- ==== __Examples__
--- >>> toSeq (1 :|^ fromList [2,3,4])
+-- >>> toSeq (1 :|^ Exts.fromList [2,3,4])
 -- fromList [1,2,3,4]
 --
 -- @since 0.1
@@ -97,7 +95,7 @@ toSeq (x :|^ xs) = x :<| xs
 -- | 'NonEmptySeq' to list.
 --
 -- ==== __Examples__
--- >>> toList (1 :|^ fromList [2,3,4])
+-- >>> toList (1 :|^ Exts.fromList [2,3,4])
 -- [1,2,3,4]
 --
 -- @since 0.1
@@ -109,15 +107,24 @@ toList (x :|^ xs) = Exts.toList (x :<| xs)
 -- terminate for infinite 'NonEmpty'.
 --
 -- ==== __Examples__
--- >>> unsafeFromNonEmpty ( 1 :| [3,4])
+-- >>> fromNonEmpty ( 1 :| [3,4])
 -- 1 :|^ fromList [3,4]
 --
 -- @since 0.1
-unsafeFromNonEmpty :: HasCallStack => NonEmpty a -> NonEmptySeq a
-unsafeFromNonEmpty (x :| xs) = x :|^ Exts.fromList xs
-{-# INLINEABLE unsafeFromNonEmpty #-}
+fromNonEmpty :: NonEmpty a -> NonEmptySeq a
+fromNonEmpty (x :| xs) = x :|^ Exts.fromList xs
+{-# INLINEABLE fromNonEmpty #-}
 
--- | Even more unsafe than 'unsafeFromNonEmpty'; will throw an error on an
+-- | Returns 'Just' 'NonEmptySeq' if the list is non-empty. Otherwise
+-- returns 'Nothing'.
+--
+-- @since 0.5
+fromList :: List a -> Maybe (NonEmptySeq a)
+fromList [] = Nothing
+fromList (x : xs) = Just $ x :|^ Exts.fromList xs
+{-# INLINEABLE fromList #-}
+
+-- | Even more unsafe than 'fromNonEmpty'; will throw an error on an
 -- empty list.
 --
 -- ==== __Examples__
@@ -126,8 +133,10 @@ unsafeFromNonEmpty (x :| xs) = x :|^ Exts.fromList xs
 --
 -- @since 0.1
 unsafeFromList :: HasCallStack => List a -> NonEmptySeq a
-unsafeFromList [] = error "[Shrun.Data.NonEmptySeq] Empty list passed to unsafeFromList"
-unsafeFromList (x : xs) = x :|^ Exts.fromList xs
+unsafeFromList =
+  fromList .> \case
+    Nothing -> error "[Shrun.Data.NonEmptySeq] Empty list passed to unsafeFromList"
+    Just xs -> xs
 {-# INLINEABLE unsafeFromList #-}
 
 unsafeFromSeq :: HasCallStack => Seq a -> NonEmptySeq a

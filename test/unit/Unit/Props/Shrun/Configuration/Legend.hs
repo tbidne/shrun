@@ -11,7 +11,7 @@ import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Shrun.Configuration.Legend (LegendMap, linesToMap, translateCommands)
 import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
-import Shrun.Data.NonEmptySeq (NonEmptySeq, singleton)
+import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Test.Tasty (askOption)
 import Unit.MaxRuns (MaxRuns (..))
@@ -89,7 +89,7 @@ genGoodLines = do
     range = Range.linearFrom 20 1 80
     takeUnique (foundKeys, newList) (MkGoodLine k v)
       | Set.member k foundKeys = (foundKeys, newList)
-      | otherwise = (Set.insert k foundKeys, unsafeKeyVal k (singleton v) : newList)
+      | otherwise = (Set.insert k foundKeys, unsafeKeyVal k [v] : newList)
 
 data GoodLine = MkGoodLine
   { gkey :: Text,
@@ -178,7 +178,7 @@ genKeyVal = do
   --  2. makes our test more robust (tests more values)
   --  3. The performance hit is negligible
   v <- Gen.filter (/= k) genVal
-  pure $ unsafeKeyVal k (singleton v)
+  pure $ unsafeKeyVal k [v]
 
 genCommands :: MonadGen m => m (NonEmptySeq Text)
 genCommands = NESeq.unsafeFromList <$> Gen.list range genCommand

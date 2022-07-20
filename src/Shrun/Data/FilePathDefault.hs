@@ -12,7 +12,7 @@ where
 
 import Shrun.Prelude
 
--- | FilePath option that includes none and default possibilities.
+-- | FilePath option that includes a default possibility.
 --
 -- @since 0.1
 data FilePathDefault

@@ -6,13 +6,15 @@
 -- @since 0.1
 module Shrun.Data.Legend
   ( LegendMap,
-    KeyVal,
+    KeyVal (MkKeyVal),
+    mkKeyVal,
     unsafeKeyVal,
   )
 where
 
 import Data.HashMap.Strict (HashMap)
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..), singleton)
+import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
+import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Prelude
 
 -- | Alias for our legend map.
@@ -20,12 +22,18 @@ import Shrun.Prelude
 -- @since 0.1
 type LegendMap = HashMap Text (NonEmptySeq Text)
 
--- | Holds a map key/val pair.
+-- | Holds a map key/val pair. The maintained invariants are:
+--
+-- * @key@ is non-empty.
+-- * @val@ is non-empty.
+-- * all @v_i@ in @val@ are non-empty.
 --
 -- @since 0.5
-data KeyVal = MkKeyValue
-  { key :: Text,
-    val :: NonEmptySeq Text
+data KeyVal = UnsafeKeyVal
+  { -- | @since 0.5
+    key :: !Text,
+    -- | @since 0.5
+    val :: !(NonEmptySeq Text)
   }
   deriving stock
     ( -- | @since 0.5
@@ -34,37 +42,62 @@ data KeyVal = MkKeyValue
       Show
     )
 
+-- | Unidirectional pattern synonym for 'KeyVal'.
+--
+-- @since 0.5
+pattern MkKeyVal :: Text -> NonEmptySeq Text -> KeyVal
+pattern MkKeyVal k v <- UnsafeKeyVal k v
+
+{-# COMPLETE MkKeyVal #-}
+
 -- | @since 0.5
 instance
   (k ~ A_Getter, a ~ Text, b ~ Text) =>
   LabelOptic "key" k KeyVal KeyVal a b
   where
-  labelOptic = to (\(MkKeyValue k _) -> k)
+  labelOptic = to (\(UnsafeKeyVal k _) -> k)
 
 -- | @since 0.5
 instance
   (k ~ A_Getter, a ~ NonEmptySeq Text, b ~ NonEmptySeq Text) =>
   LabelOptic "val" k KeyVal KeyVal a b
   where
-  labelOptic = to (\(MkKeyValue _ v) -> v)
+  labelOptic = to (\(UnsafeKeyVal _ v) -> v)
 
 instance DecodeTOML KeyVal where
   tomlDecoder =
-    MkKeyValue
+    UnsafeKeyVal
       <$> decodeKey
       <*> decodeVal
 
-unsafeKeyVal :: HasCallStack => Text -> NonEmptySeq Text -> KeyVal
-unsafeKeyVal "" _ = error "empty key"
-unsafeKeyVal k vals = case traverse testNE vals of
-  Just vals' -> MkKeyValue k vals'
-  Nothing -> error "empty val"
+-- | Smart constructor for 'KeyVal'. Given @UnsafeKeyVal key vals@, all
+-- conditions must be satisfied for success:
+--
+-- * @key@ is non-empty.
+-- * @vals@ is non-empty.
+-- * all @v_i@ in @vals@ are non-empty.
+--
+--
+-- @since 0.5
+mkKeyVal :: Text -> List Text -> Maybe KeyVal
+mkKeyVal "" _ = Nothing
+mkKeyVal _ [] = Nothing
+mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.fromList vals
+
+-- | Variant of 'UnsafeKeyVal' that throws an error on failures.
+--
+-- @since 0.5
+unsafeKeyVal :: HasCallStack => Text -> List Text -> KeyVal
+unsafeKeyVal "" _ = error "[Shrun.Data.Legend.unsafeKeyVal]: empty key"
+unsafeKeyVal k vals = case mkKeyVal k vals of
+  Just kv -> kv
+  Nothing -> error "[Shrun.Data.Legend.unsafeKeyVal]: empty val"
 
 decodeKey :: Decoder Text
 decodeKey = getFieldWith decodeNonEmptyText "key"
 
 decodeVal :: Decoder (NonEmptySeq Text)
-decodeVal = getFieldWith (decodeArray <|> fmap singleton decodeNonEmptyText) "val"
+decodeVal = getFieldWith (decodeArray <|> fmap NESeq.singleton decodeNonEmptyText) "val"
 
 decodeArray :: Decoder (NonEmptySeq Text)
 decodeArray =

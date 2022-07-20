@@ -114,8 +114,8 @@ parseMapAndSkip :: TestTree
 parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
   let result =
         linesToMap
-          [ unsafeKeyVal "a" (unsafeFromList ["b", "k"]),
-            unsafeKeyVal "b" (singleton "c")
+          [ unsafeKeyVal "a" ["b", "k"],
+            unsafeKeyVal "b" ["c"]
           ]
       expected =
         Right
@@ -132,7 +132,7 @@ duplicateKeysThrowErr =
     Left (MkDuplicateKeyError "a") @=? linesToMap result
   where
     result =
-      [ unsafeKeyVal "a" (singleton "b"),
-        unsafeKeyVal "b" (singleton "c"),
-        unsafeKeyVal "a" (singleton "d")
+      [ unsafeKeyVal "a" ["b"],
+        unsafeKeyVal "b" ["c"],
+        unsafeKeyVal "a" ["d"]
       ]

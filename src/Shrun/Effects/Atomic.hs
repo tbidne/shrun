@@ -11,17 +11,26 @@ import Control.Concurrent.STM.TVar qualified as TVar
 import Data.IORef qualified as Ref
 import Shrun.Prelude
 
--- | Represents a readable filesystem.
+-- | Represents atomic/mutable operations e.g. STM, IORefs.
 --
 -- @since 0.5
 class Monad m => Atomic m where
+  -- | @since 0.5
   liftSTM :: STM a -> m a
 
+  -- | @since 0.5
   newIORef :: a -> m (IORef a)
+
+  -- | @since 0.5
   readIORef :: IORef a -> m a
+
+  -- | @since 0.5
   modifyIORef' :: IORef a -> (a -> a) -> m ()
 
+  -- | @since 0.5
   newTVarIO :: a -> m (TVar a)
+
+  -- | @since 0.5
   readTVarIO :: TVar a -> m a
 
 -- | @since 0.5

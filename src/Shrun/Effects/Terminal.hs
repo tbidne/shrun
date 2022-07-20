@@ -22,7 +22,7 @@ data TermSizeException = MkTermSizeException
 instance Exception TermSizeException where
   displayException = const "Failed to detect the terminal size."
 
--- | Represents a readable filesystem.
+-- | Represents a terminal.
 --
 -- @since 0.5
 class Monad m => Terminal m where

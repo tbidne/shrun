@@ -19,7 +19,7 @@ import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
 import Shrun.Data.Command (Command (..))
-import Shrun.Data.Legend (KeyVal, LegendMap)
+import Shrun.Data.Legend (KeyVal (..), LegendMap)
 import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Prelude
@@ -47,7 +47,7 @@ instance Exception DuplicateKeyError where
 linesToMap :: List KeyVal -> Either DuplicateKeyError LegendMap
 linesToMap = foldr f (Right Map.empty)
   where
-    f keyVal mp = join $ liftA2 insertPair (Right (keyVal ^. #key, keyVal ^. #val)) mp
+    f (MkKeyVal k v) mp = join $ liftA2 insertPair (Right (k, v)) mp
     insertPair (key, cmd) mp =
       case Map.lookup key mp of
         Just _ -> Left $ MkDuplicateKeyError key

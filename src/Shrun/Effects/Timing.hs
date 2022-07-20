@@ -1,6 +1,6 @@
 -- | Provides the 'Timing' class.
 --
--- @since 0.1
+-- @since 0.5
 module Shrun.Effects.Timing
   ( Timing (..),
     withTiming,
@@ -19,25 +19,25 @@ import System.Clock qualified as C
 
 -- | Class for retrieving the current system time.
 --
--- @since 0.1
+-- @since 0.5
 class Monad m => Timing m where
-  -- | @since 0.1
+  -- | @since 0.5
   getSystemTime :: m ZonedTime
 
   -- | Retrieves the current 'TimeSpec', used for easy timing at the
   -- nanosecond level.
   --
-  -- @since 0.3.0.1
+  -- @since 0.5
   getTimeSpec :: m TimeSpec
 
--- | @since 0.1
+-- | @since 0.5
 instance Timing IO where
   getSystemTime = Local.getZonedTime
   getTimeSpec = C.getTime Monotonic
   {-# INLINEABLE getSystemTime #-}
   {-# INLINEABLE getTimeSpec #-}
 
--- | @since 0.1
+-- | @since 0.5
 instance Timing m => Timing (ReaderT e m) where
   getSystemTime = lift getSystemTime
   getTimeSpec = lift getTimeSpec
@@ -46,7 +46,7 @@ instance Timing m => Timing (ReaderT e m) where
 
 -- | Times an action in terms of seconds.
 --
--- @since 0.3.0.1
+-- @since 0.5
 withTiming :: Timing m => m a -> m (RelativeTime, a)
 withTiming m = do
   start <- getTimeSpec
@@ -58,7 +58,7 @@ withTiming m = do
 
 -- | 'withTiming' that ignores the result.
 --
--- @since 0.3.0.1
+-- @since 0.5
 withTiming_ :: Timing m => m a -> m RelativeTime
 withTiming_ = fmap (view _1) . withTiming
 {-# INLINEABLE withTiming_ #-}

@@ -423,7 +423,7 @@ commandDisplayParser =
 
 commandsParser :: Parser (NonEmptySeq Text)
 commandsParser =
-  NESeq.unsafeFromNonEmpty
+  NESeq.fromNonEmpty
     <$> NE.some1
       ( T.pack
           <$> OA.argument OA.str (OA.metavar "Commands...")

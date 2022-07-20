@@ -46,7 +46,7 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Effects.Atomic (Atomic (..))
-import Shrun.Effects.FileSystemReader (FileSystemReader (..))
+import Shrun.Effects.FileSystemReader (FileSystemReader (..), getShrunXdgConfig)
 import Shrun.Effects.Terminal (Terminal (..))
 import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
@@ -98,7 +98,7 @@ makeEnv = do
         --    a message. If it does, try to read it and throw any errors
         --    (e.g. file errors, toml errors).
         Nothing -> do
-          configDir <- getXdgConfig "shrun"
+          configDir <- getShrunXdgConfig
           let path = configDir </> "config.toml"
           b <- doesFileExist path
           if b
@@ -130,7 +130,7 @@ configToEnv cfg cmdsText = do
   fileLogging' <- case cfg ^. #fileLogging of
     Nothing -> pure Nothing
     Just FPDefault -> do
-      configDir <- getXdgConfig "shrun"
+      configDir <- getShrunXdgConfig
       let fp = configDir </> "log"
       queue <- liftSTM $ TBQueue.newTBQueue 1000
       pure $ Just (fp, MkLogTextQueue queue)
