@@ -1,7 +1,7 @@
 module Main (main) where
 
 import Control.DeepSeq (force)
-import Shrun (runShell, runShellT)
+import Shrun (runShellT, shrun)
 import Shrun.Configuration.Env (makeEnv)
 import Shrun.Prelude
 import System.Environment (withArgs)
@@ -40,7 +40,7 @@ run :: String -> List String -> Benchmark
 run desc args =
   bench desc $ nfIO $ do
     srEnv <- withArgs args makeEnv
-    runShellT runShell srEnv
+    runShellT shrun srEnv
 
 loops :: List (String, String)
 loops =
