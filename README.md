@@ -100,7 +100,7 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 ### Config
 
-**Arg:** `-c, --config [PATH]`
+**Arg:** `-c, --config PATH`
 
 **Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/config/shrun/config.toml`.
 

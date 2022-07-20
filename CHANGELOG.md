@@ -5,8 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Haskell Package Versioning Policy](https://pvp.haskell.org/).
 
-Note that we PVP is applied to the _application_, not _library_. That is, the
-Major/Minor/Patch definitions apply to the application's interface / usage
+Note that PVP is applied to the _application_, not the _library_. That is,
+the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
 ## [Unreleased]

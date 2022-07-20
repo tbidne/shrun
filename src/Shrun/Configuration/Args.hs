@@ -195,7 +195,7 @@ configParser =
           [ OA.long "config",
             OA.short 'c',
             OA.help helpTxt,
-            OA.metavar "[PATH]"
+            OA.metavar "PATH"
           ]
       )
   where
