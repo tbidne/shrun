@@ -59,7 +59,6 @@ library
     Shrun.Effects.Mutable
     Shrun.Effects.Process
     Shrun.Effects.Terminal
-    Shrun.Effects.TimedProcess
     Shrun.Effects.Timing
     Shrun.IO
     Shrun.Logging.Formatting
