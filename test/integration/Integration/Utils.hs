@@ -11,7 +11,7 @@ where
 
 import Data.Maybe (isJust)
 import Integration.Prelude as X
-import Shrun.Configuration.Env (makeEnv)
+import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types
   ( CmdDisplay,
     CmdLogging,
@@ -23,6 +23,7 @@ import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Effects.FileSystemReader (FileSystemReader (..))
+import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Terminal (Terminal (..))
 import System.Environment (withArgs)
@@ -31,6 +32,7 @@ import System.Environment (withArgs)
 newtype ConfigIO a = MkConfigIO (IO a)
   deriving
     ( Applicative,
+      FileSystemWriter,
       Functor,
       Monad,
       MonadIO,
@@ -52,6 +54,7 @@ instance FileSystemReader ConfigIO where
 newtype NoConfigIO a = MkNoConfigIO (IO a)
   deriving
     ( Applicative,
+      FileSystemWriter,
       Functor,
       Monad,
       MonadIO,
@@ -72,7 +75,9 @@ instance FileSystemReader NoConfigIO where
 -- | Makes an 'Env' for the given monad and compares the result with the
 -- expected params.
 makeEnvAndVerify ::
+  forall m.
   ( FileSystemReader m,
+    FileSystemWriter m,
     MonadUnliftIO m,
     Mutable m,
     Terminal m
@@ -82,7 +87,7 @@ makeEnvAndVerify ::
   -- | Natural transformation from m to IO.
   (forall x. m x -> IO x) ->
   Maybe Timeout ->
-  Maybe FilePath ->
+  Maybe () ->
   StripControl ->
   CmdLogging ->
   CmdDisplay ->
@@ -105,10 +110,10 @@ makeEnvAndVerify
   stripControl
   disableLogging
   commands = do
-    result <- toIO $ withRunInIO (\runner -> withArgs args (runner makeEnv))
+    result <- toIO $ withRunInIO $ \runner ->
+      withArgs args (runner (withEnv pure))
 
     timeout @=? result ^. #timeout
-    fileLogging @=? result ^? (#fileLogging %? _1)
     fileLogStripControl @=? result ^. #fileLogStripControl
     cmdLogging @=? result ^. #cmdLogging
     cmdDisplay @=? result ^. #cmdDisplay
@@ -116,6 +121,13 @@ makeEnvAndVerify
     stripControl @=? result ^. #stripControl
     disableLogging @=? result ^. #disableLogging
     commands @=? result ^. #commands
+
+    let resultFileLogging = result ^. #fileLogging
+    case (fileLogging, resultFileLogging) of
+      (Just _, Just _) -> pure ()
+      (Nothing, Nothing) -> pure ()
+      (Just _, Nothing) -> assertFailure "Expected file logging to be enabled"
+      (Nothing, Just _) -> assertFailure "Expected file logging to be disabled"
 
     -- Because the 'detect' option will read variable widths, depending on
     -- the terminal size. We use 'Just 0' as a sentinel for "do not test the

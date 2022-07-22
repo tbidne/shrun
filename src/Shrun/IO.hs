@@ -22,7 +22,7 @@ import Data.ByteString qualified as BS
 import Data.IORef (writeIORef)
 import Data.Sequence ((<|))
 import Data.Text qualified as T
-import GHC.IO.Handle (BufferMode (..), Handle)
+import GHC.IO.Handle (BufferMode (..))
 import GHC.IO.Handle qualified as Handle
 import Shrun.Configuration.Env.Types
   ( CmdLogging (..),

@@ -1,13 +1,12 @@
 module Main (main) where
 
-import Shrun (runShellT, shrun)
-import Shrun.Configuration.Env (makeEnv)
+import Shrun.Configuration.Env (makeEnvAndShrun)
 import Shrun.Prelude
 import System.Exit (ExitCode (..), exitFailure)
 
 main :: IO ()
 main =
-  run
+  makeEnvAndShrun
     `catch` doNothingOnSuccess
     `catchAny` printExceptions
   where
@@ -16,6 +15,3 @@ main =
     doNothingOnSuccess ex@(ExitFailure _) = throwIO ex
     printExceptions =
       putStrLn . pack . displayException >=> const exitFailure
-
-run :: IO ()
-run = makeEnv >>= runShellT shrun

@@ -21,12 +21,13 @@ module Shrun.Configuration.Env
     TomlError (..),
 
     -- * Functions
-    makeEnv,
+    withEnv,
+    makeEnvAndShrun,
   )
 where
 
-import Control.Concurrent.STM.TBQueue qualified as TBQueue
 import Data.Sequence qualified as Seq
+import Shrun
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -46,8 +47,10 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Effects.FileSystemReader (FileSystemReader (..), getShrunXdgConfig)
+import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Terminal (Terminal (..))
+import Shrun.Effects.Timing (Timing)
 import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
 import System.FilePath ((</>))
@@ -72,18 +75,35 @@ instance Exception TomlError where
   displayException err =
     "TOML error: " <> unpack (renderTOMLError $ err ^. _MkTomlError)
 
--- | Returns the 'Env' based on the CLI args and TOML config file.
--- CLI args take precedence over config file.
+-- | 'withEnv' with 'shrun'.
 --
 -- @since 0.1
-makeEnv ::
+makeEnvAndShrun ::
   ( FileSystemReader m,
-    MonadIO m,
+    FileSystemWriter m,
+    MonadMask m,
+    MonadUnliftIO m,
+    Mutable m,
+    Terminal m,
+    Timing m
+  ) =>
+  m ()
+makeEnvAndShrun = withEnv (runShellT shrun)
+
+-- | Creates an 'Env' from CLI args and TOML config to run with a monadic
+-- action.
+--
+-- @since 0.5
+withEnv ::
+  ( FileSystemReader m,
+    FileSystemWriter m,
+    MonadUnliftIO m,
     Mutable m,
     Terminal m
   ) =>
-  m Env
-makeEnv = do
+  (Env -> m a) ->
+  m a
+withEnv onEnv = do
   args <- getArgs
   tomlConfig <-
     if args ^. #noConfig
@@ -109,7 +129,7 @@ makeEnv = do
 
   let finalConfig = args ^. argsToTomlConfig <> tomlConfig
 
-  configToEnv finalConfig (args ^. #commands)
+  fromToml onEnv finalConfig (args ^. #commands)
   where
     readConfig fp = do
       contents <- readFile fp
@@ -117,27 +137,18 @@ makeEnv = do
         Right cfg -> pure cfg
         Left tomlErr -> throwIO $ MkTomlError tomlErr
 
-configToEnv ::
+fromToml ::
   ( FileSystemReader m,
-    MonadIO m,
+    FileSystemWriter m,
+    MonadUnliftIO m,
     Mutable m,
     Terminal m
   ) =>
+  (Env -> m a) ->
   TomlConfig ->
   NonEmptySeq Text ->
-  m Env
-configToEnv cfg cmdsText = do
-  fileLogging' <- case cfg ^. #fileLogging of
-    Nothing -> pure Nothing
-    Just FPDefault -> do
-      configDir <- getShrunXdgConfig
-      let fp = configDir </> "log"
-      queue <- liftSTM $ TBQueue.newTBQueue 1000
-      pure $ Just (fp, MkLogTextQueue queue)
-    Just (FPManual f) -> do
-      queue <- liftSTM $ TBQueue.newTBQueue 1000
-      pure $ Just (f, MkLogTextQueue queue)
-
+  m a
+fromToml onEnv cfg cmdsText = do
   cmdLineTrunc' <- case cfg ^. #cmdLineTrunc of
     Just Detected -> Just . MkTruncation <$> getTerminalWidth
     Just (Undetected x) -> pure $ Just x
@@ -156,20 +167,34 @@ configToEnv cfg cmdsText = do
 
   completedCmds' <- newTVarIO Seq.empty
 
-  pure $
-    MkEnv
-      { timeout = cfg ^. #timeout,
-        fileLogging = fileLogging',
-        fileLogStripControl = fileLogStripControl,
-        cmdLogging = maybeOrMempty #cmdLogging,
-        cmdDisplay = maybeOrMempty #cmdDisplay,
-        cmdNameTrunc = cfg ^. #cmdNameTrunc,
-        cmdLineTrunc = cmdLineTrunc',
-        stripControl = maybeOrMempty #stripControl,
-        completedCmds = completedCmds',
-        disableLogging = disableLogging',
-        commands = commands'
-      }
+  let envWithFileLogging fl =
+        MkEnv
+          { timeout = cfg ^. #timeout,
+            fileLogging = fl,
+            fileLogStripControl = fileLogStripControl,
+            cmdLogging = maybeOrMempty #cmdLogging,
+            cmdDisplay = maybeOrMempty #cmdDisplay,
+            cmdNameTrunc = cfg ^. #cmdNameTrunc,
+            cmdLineTrunc = cmdLineTrunc',
+            stripControl = maybeOrMempty #stripControl,
+            completedCmds = completedCmds',
+            disableLogging = disableLogging',
+            commands = commands'
+          }
+  case cfg ^. #fileLogging of
+    Nothing -> onEnv (envWithFileLogging Nothing)
+    Just FPDefault -> do
+      configDir <- getShrunXdgConfig
+      let fp = configDir </> "log"
+
+      queue <- liftSTM $ newTBQueue 1000
+
+      withFile fp AppendMode $ \h ->
+        onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
+    Just (FPManual f) -> do
+      queue <- liftSTM $ newTBQueue 1000
+      withFile f AppendMode $ \h ->
+        onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
   where
     maybeOrMempty :: Monoid a => Lens' TomlConfig (Maybe a) -> a
     maybeOrMempty = fromMaybe mempty . (`view` cfg)

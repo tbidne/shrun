@@ -9,10 +9,14 @@ import Integration.Prelude
 -- | Entry point for integration tests.
 main :: IO ()
 main = do
-  defaultMain $
-    testGroup
-      "Integration tests"
+  defaultMain (testGroup "Integration tests" tests)
+    `finally` do
+      deleteIfExists "log"
+      deleteIfExists "test/integration/toml/log"
+  where
+    tests =
       [ Defaults.specs,
         Examples.specs,
         Failures.specs
       ]
+

@@ -22,9 +22,12 @@ module Shrun.Prelude
     -- * 'Text' replacements for 'P.String' functions.
     error,
     showt,
+
+    -- * FileSystem
     readFileUtf8Lenient,
     writeFileUtf8,
     appendFileUtf8,
+    deleteIfExists,
 
     -- * Anti-punning aliases
     List,
@@ -135,6 +138,8 @@ import Optics.Core as X
   )
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
+import System.Directory qualified as Dir
+import System.IO as X (Handle, IOMode (..))
 import TOML as X
   ( DecodeTOML (..),
     Decoder,
@@ -303,3 +308,12 @@ type Tuple2 = (,)
 --
 -- @since 0.1
 type Tuple3 = (,,)
+
+-- | Deletes a file if it exists.
+--
+-- @since 0.5
+deleteIfExists :: FilePath -> IO ()
+deleteIfExists fp =
+  Dir.doesFileExist fp >>= \case
+    True -> Dir.removeFile fp
+    False -> pure ()

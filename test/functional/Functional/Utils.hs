@@ -14,9 +14,10 @@ module Functional.Utils
   )
 where
 
-import Functional.FuncEnv qualified as FuncEnv
+import Functional.FuncEnv (FuncEnv (..))
 import Functional.Prelude
 import Shrun qualified as SR
+import Shrun.Configuration.Env qualified as Env
 import System.Environment qualified as SysEnv
 
 -- | Expected timeout 'Text'.
@@ -41,6 +42,12 @@ errPrefix txt = "[Error] [" <> txt <> "] Error:"
 
 runAndGetLogs :: List String -> IO (IORef (List Text))
 runAndGetLogs argList = do
-  funcEnv <- SysEnv.withArgs argList FuncEnv.mkFuncEnv
-  SR.runShellT SR.shrun funcEnv
-  pure $ funcEnv ^. #logs
+  SysEnv.withArgs argList $ Env.withEnv $ \env -> do
+    ls <- newIORef []
+    let funcEnv =
+          MkFuncEnv
+            { coreEnv = env,
+              logs = ls
+            }
+    SR.runShellT SR.shrun funcEnv
+    pure $ funcEnv ^. #logs

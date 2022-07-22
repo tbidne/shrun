@@ -4,12 +4,10 @@
 -- | @since 0.3
 module Functional.FuncEnv
   ( FuncEnv (..),
-    mkFuncEnv,
   )
 where
 
 import Functional.Prelude
-import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
   ( Env,
     HasCommands (..),
@@ -73,16 +71,3 @@ instance Process (ShellT FuncEnv IO) where
   tryCmd = ShIO.tryCommand
   tryCmdStream = ShIO.tryCommandStreamNoRegion
   tryCmdStreamRegion = ShIO.tryCommandStreamRegion
-
--- | Makes the 'FuncEnv' from CLI args.
---
--- @since 0.3
-mkFuncEnv :: IO FuncEnv
-mkFuncEnv = do
-  ls <- newIORef []
-  env <- Env.makeEnv
-  pure $
-    MkFuncEnv
-      { coreEnv = env,
-        logs = ls
-      }

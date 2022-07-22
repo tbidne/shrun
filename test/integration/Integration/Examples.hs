@@ -18,20 +18,22 @@ specs =
     ]
 
 examplesConfig :: TestTree
-examplesConfig = testCase "examples/config.toml is valid" $ do
-  makeEnvAndVerify
-    ["-c", "examples/config.toml", "cmd"]
-    (view _MkConfigIO)
-    (Just 20)
-    (Just "test/integration/toml/log")
-    StripControlAll
-    Enabled
-    ShowKey
-    (Just 80)
-    (Just 0)
-    StripControlSmart
-    False
-    (NESeq.singleton "cmd")
+examplesConfig =
+  testCase "examples/config.toml is valid" $
+    do
+      makeEnvAndVerify
+        ["-c", "examples/config.toml", "cmd"]
+        (view _MkConfigIO)
+        (Just 20)
+        (Just ())
+        StripControlAll
+        Enabled
+        ShowKey
+        (Just 80)
+        (Just 0)
+        StripControlSmart
+        False
+        (NESeq.singleton "cmd")
 
 examplesDefault :: TestTree
 examplesDefault = testCase "examples/default.toml is valid" $ do

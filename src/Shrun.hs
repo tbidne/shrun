@@ -13,7 +13,7 @@ import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
-import Shrun.Configuration.Env
+import Shrun.Configuration.Env.Types
   ( CmdLogging (..),
     HasCommands (..),
     HasCompletedCmds (..),
@@ -120,7 +120,9 @@ runCommands commands = Regions.displayConsoleRegions $
       fileLogging <- asks getFileLogging
       case fileLogging of
         Nothing -> pure ()
-        Just (fp, queue) -> Queue.flushQueue queue >>= traverse_ (logFile fp)
+        Just (h, queue) -> do
+          Queue.flushQueue queue >>= traverse_ (logFile h)
+          hFlush h
 {-# INLINEABLE runCommands #-}
 
 runCommand ::
@@ -277,19 +279,19 @@ maybePollQueue = do
   fileLogging <- asks getFileLogging
   case fileLogging of
     Nothing -> pure ()
-    Just (fp, queue) -> writeQueueToFile fp queue
+    Just (h, queue) -> writeQueueToFile h queue
 {-# INLINEABLE maybePollQueue #-}
 
 writeQueueToFile ::
   ( FileSystemWriter m,
     Mutable m
   ) =>
-  FilePath ->
+  Handle ->
   LogTextQueue ->
   m void
-writeQueueToFile fp queue = forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
+writeQueueToFile h queue = forever $ Queue.readQueue queue >>= traverse_ (logFile h)
 {-# INLINEABLE writeQueueToFile #-}
 
-logFile :: FileSystemWriter m => FilePath -> LogText -> m ()
-logFile fp = appendFile fp . view _MkLogText
+logFile :: FileSystemWriter m => Handle -> LogText -> m ()
+logFile h = hPut h . view _MkLogText
 {-# INLINEABLE logFile #-}

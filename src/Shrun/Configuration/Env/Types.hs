@@ -303,7 +303,7 @@ class HasLogging env where
   -- | File logging, if any.
   --
   -- @since 0.3
-  getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
+  getFileLogging :: env -> Maybe (Handle, LogTextQueue)
 
   -- | Determines control character behavior for file logs.
   --
@@ -340,7 +340,7 @@ data Env = MkEnv
     -- and the log queue.
     --
     -- @since 0.1
-    fileLogging :: !(Maybe (Tuple2 FilePath LogTextQueue)),
+    fileLogging :: !(Maybe (Tuple2 Handle LogTextQueue)),
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     --

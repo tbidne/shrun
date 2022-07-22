@@ -2,7 +2,7 @@ module Integration.Failures (specs) where
 
 import Integration.Prelude
 import Integration.Utils (_MkConfigIO)
-import Shrun.Configuration.Env (TomlError (..), makeEnv)
+import Shrun.Configuration.Env (TomlError (..), withEnv)
 import Shrun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
 import System.Environment (withArgs)
 
@@ -23,7 +23,7 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
   result <-
     view _MkConfigIO $
       do
-        withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
+        withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
         `catchIO` \e -> pure $ Just e
 
   case result of
@@ -36,7 +36,7 @@ duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
   let args = ["-c", "test/integration/toml/duplicate-keys.toml", "cmd"]
   result <- view _MkConfigIO $ do
-    withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
+    withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
       `catch` \e -> pure $ Just e
 
   case result of
@@ -48,7 +48,7 @@ emptyKey :: TestTree
 emptyKey = testCase "Empty key throws exception" $ do
   let args = ["-c", "test/integration/toml/empty-key.toml", "cmd"]
   result <- view _MkConfigIO $ do
-    withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
+    withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
       `catch` \e -> pure $ Just e
 
   case result of
@@ -60,7 +60,7 @@ emptyValue :: TestTree
 emptyValue = testCase "Empty value throws exception" $ do
   let args = ["-c", "test/integration/toml/empty-value.toml", "cmd"]
   result <- view _MkConfigIO $ do
-    withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
+    withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
       `catch` \e -> pure $ Just e
 
   case result of
@@ -73,7 +73,7 @@ cyclicKeys = testCase "Cyclic keys throws exception" $ do
   -- using config.toml, which has cyclic definition
   let args = ["a"]
   result <- view _MkConfigIO $ do
-    withRunInIO (\runner -> withArgs args (runner makeEnv) $> Nothing)
+    withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
       `catch` \e -> pure $ Just e
 
   case result of

@@ -42,7 +42,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     ["cmd1"]
     (view _MkConfigIO)
     (Just 3_600)
-    (Just "test/integration/toml/log")
+    (Just ())
     StripControlNone
     Enabled
     HideKey
@@ -53,38 +53,41 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     (NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\""))
 
 cliOverridesConfigFile :: TestTree
-cliOverridesConfigFile = testCase "CLI args overrides config file" $ do
-  makeEnvAndVerify
-    [ "--config",
-      "test/integration/toml/overridden.toml",
-      "--timeout",
-      "10",
-      "--file-log",
-      "log",
-      "--file-log-strip-control",
-      "none",
-      "--cmd-log",
-      "--key-hide",
-      "--cmd-name-trunc",
-      "10",
-      "--cmd-line-trunc",
-      "60",
-      "--strip-control",
-      "none",
-      "--disable-log",
-      "cmd"
-    ]
-    (view _MkConfigIO)
-    (Just 10)
-    (Just "log")
-    StripControlNone
-    Enabled
-    HideKey
-    (Just 10)
-    (Just 60)
-    StripControlNone
-    True
-    (NESeq.singleton "cmd")
+cliOverridesConfigFile =
+  testCase "CLI args overrides config file" $
+    do
+      makeEnvAndVerify
+        [ "--config",
+          "test/integration/toml/overridden.toml",
+          "--timeout",
+          "10",
+          "--file-log",
+          "log",
+          "--file-log-strip-control",
+          "none",
+          "--cmd-log",
+          "--key-hide",
+          "--cmd-name-trunc",
+          "10",
+          "--cmd-line-trunc",
+          "60",
+          "--strip-control",
+          "none",
+          "--disable-log",
+          "cmd"
+        ]
+        (view _MkConfigIO)
+        (Just 10)
+        (Just ())
+        StripControlNone
+        Enabled
+        HideKey
+        (Just 10)
+        (Just 60)
+        StripControlNone
+        True
+        (NESeq.singleton "cmd")
+      `finally` deleteIfExists "log"
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
