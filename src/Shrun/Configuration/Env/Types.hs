@@ -42,7 +42,7 @@ import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging.Queue (LogTextQueue)
+import Shrun.Logging.Types (LogTextQueue)
 import Shrun.Prelude
 import Text.Show (showParen, showString)
 
@@ -305,6 +305,11 @@ class HasLogging env where
   -- @since 0.3
   getFileLogging :: env -> Maybe (FilePath, LogTextQueue)
 
+  -- | Determines control character behavior for file logs.
+  --
+  -- @since 0.5
+  getFileLogStripControl :: env -> StripControl
+
   -- | Determines if logging is enabled globally.
   --
   -- @since 0.1
@@ -336,6 +341,11 @@ data Env = MkEnv
     --
     -- @since 0.1
     fileLogging :: !(Maybe (Tuple2 FilePath LogTextQueue)),
+    -- | Determines to what extent we should remove control characters
+    -- from file logs.
+    --
+    -- @since 0.3
+    fileLogStripControl :: !StripControl,
     -- | Whether to log commands.
     --
     -- @since 0.1
@@ -414,6 +424,7 @@ instance HasLogging Env where
   getCmdLogging = view #cmdLogging
   getCmdNameTrunc = view #cmdNameTrunc
   getFileLogging = view #fileLogging
+  getFileLogStripControl = view #fileLogStripControl
   getDisableLogging = view #disableLogging
   getStripControl = view #stripControl
   {-# INLINE getCmdDisplay #-}

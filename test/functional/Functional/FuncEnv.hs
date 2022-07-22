@@ -44,6 +44,7 @@ instance HasLogging FuncEnv where
   getCmdLogging = view (#coreEnv % #cmdLogging)
   getCmdNameTrunc = view (#coreEnv % #cmdNameTrunc)
   getFileLogging = view (#coreEnv % #fileLogging)
+  getFileLogStripControl = view (#coreEnv % #fileLogStripControl)
   getDisableLogging = view (#coreEnv % #disableLogging)
   getStripControl = view (#coreEnv % #stripControl)
 

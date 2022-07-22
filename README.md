@@ -7,7 +7,6 @@
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shrun?include_prereleases&sort=semver)](https://github.com/tbidne/shrun/releases/)
 [![MIT](https://img.shields.io/github/license/tbidne/shrun?color=blue)](https://opensource.org/licenses/MIT)
 
-
 [![nix](https://img.shields.io/github/workflow/status/tbidne/shrun/nix/main?label=nix%209.2&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/nix_ci.yaml)
 [![cabal 9.2](https://img.shields.io/github/workflow/status/tbidne/shrun/cabal_9-2/main?label=9.2&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/cabal_9-2.yaml)
 [![stack nightly](https://img.shields.io/github/workflow/status/tbidne/shrun/stack_nightly/main?label=stack%20nightly&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/stack_nightly.yaml)
@@ -34,6 +33,7 @@
   - [Log Formatting](#log-formatting)
     - [Key Hide](#key-hide)
     - [Strip Control](#strip-control)
+    - [File Log Strip Control](#file-log-strip-control)
     - [Command Name Truncation](#command-name-truncation)
     - [Command Line Truncation](#command-line-truncation)
   - [Miscellaneous](#miscellaneous)
@@ -298,6 +298,12 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
+
+### File Log Strip Control
+
+**Arg:** `-f, --file-log-strip-control <all | smart | none>`
+
+**Description**: Like [`--strip-control`](#strip-control), but applies to file logs. If none is given defaults to `all`.
 
 ### Command Name Truncation
 

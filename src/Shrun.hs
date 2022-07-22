@@ -32,7 +32,7 @@ import Shrun.Effects.Timing (Timing (..), withTiming)
 import Shrun.IO (Stderr (..))
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Log qualified as Log
-import Shrun.Logging.Queue (LogText (..), LogTextQueue, _LogText)
+import Shrun.Logging.Queue (LogText (..), LogTextQueue, _MkLogText)
 import Shrun.Logging.Queue qualified as Queue
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
@@ -291,5 +291,5 @@ writeQueueToFile fp queue = forever $ Queue.readQueue queue >>= traverse_ (logFi
 {-# INLINEABLE writeQueueToFile #-}
 
 logFile :: FileSystemWriter m => FilePath -> LogText -> m ()
-logFile fp = appendFile fp . view _LogText
+logFile fp = appendFile fp . view _MkLogText
 {-# INLINEABLE logFile #-}

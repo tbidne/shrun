@@ -110,6 +110,7 @@ instance HasLogging Env where
   getCmdNameTrunc = view #cmdTrunc
   getCmdLineTrunc = view #lineTrunc
   getFileLogging = const Nothing
+  getFileLogStripControl = const StripControlAll
   getDisableLogging = const False
   getStripControl = const StripControlNone
 

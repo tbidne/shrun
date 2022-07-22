@@ -16,6 +16,12 @@ module Shrun.Logging.Types
     logToPrefix,
     levelToColor,
     levelToPrefix,
+
+    -- * Log Queue
+    LogText (.., MkLogText),
+    _MkLogText,
+    LogTextQueue (..),
+    _MkLogTextQueue,
   )
 where
 
@@ -219,3 +225,44 @@ levelToPrefix Warn = "[Warn] "
 levelToPrefix Error = "[Error] "
 levelToPrefix Fatal = "[Fatal Error] "
 {-# INLINEABLE levelToPrefix #-}
+
+-- | 'LogText' is a textual representation of a given 'Log'. No coloring
+-- is included, but we include the prefix (e.g. Warn) along with a timestamp.
+--
+-- @since 0.1
+newtype LogText = UnsafeLogText
+  { -- | @since 0.1
+    unLogText :: Text
+  }
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Show
+    )
+
+-- | @since 0.5
+_MkLogText :: Getter LogText Text
+_MkLogText = to (\(MkLogText t) -> t)
+
+-- | @since 0.1
+pattern MkLogText :: Text -> LogText
+pattern MkLogText t <- UnsafeLogText t
+
+{-# COMPLETE MkLogText #-}
+
+-- | Newtype wrapper over a 'TBQueue'.
+--
+-- @since 0.1
+newtype LogTextQueue = MkLogTextQueue
+  { -- | @since 0.1
+    getLogTextQueue :: TBQueue LogText
+  }
+
+-- | @since 0.5
+makePrisms ''LogTextQueue
+
+-- | @since 0.1
+instance Show LogTextQueue where
+  show _ = "<MkLogTextQueue>"
+  {-# INLINEABLE show #-}

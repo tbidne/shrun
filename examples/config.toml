@@ -8,7 +8,10 @@ timeout = 20
 # Writes all logs to a file. The "default" option writes to the Xdg direction
 # e.g. ~/.config/shrun/log. Any other string is interpreted as
 # a PATH.
-file-logging = "default"
+file-log = "default"
+
+# Like strip-control, but for file logs. Defaults to all.
+file-log-strip-control = "all"
 
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.

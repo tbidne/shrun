@@ -27,6 +27,7 @@ defaultEnv = testCase "No arguments and empty config path should return default 
     (view _MkNoConfigIO)
     Nothing
     Nothing
+    StripControlAll
     Disabled
     ShowKey
     Nothing
@@ -42,6 +43,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     (view _MkConfigIO)
     (Just 3_600)
     (Just "test/integration/toml/log")
+    StripControlNone
     Enabled
     HideKey
     (Just 80)
@@ -59,6 +61,8 @@ cliOverridesConfigFile = testCase "CLI args overrides config file" $ do
       "10",
       "--file-log",
       "log",
+      "--file-log-strip-control",
+      "none",
       "--cmd-log",
       "--key-hide",
       "--cmd-name-trunc",
@@ -73,6 +77,7 @@ cliOverridesConfigFile = testCase "CLI args overrides config file" $ do
     (view _MkConfigIO)
     (Just 10)
     (Just "log")
+    StripControlNone
     Enabled
     HideKey
     (Just 10)
@@ -88,6 +93,7 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
     (view _MkConfigIO)
     Nothing
     Nothing
+    StripControlAll
     Disabled
     ShowKey
     Nothing

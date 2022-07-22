@@ -54,32 +54,28 @@ data Args = MkArgs
     --
     -- @since 0.5
     noConfig :: Bool,
+    -- | Timeout.
+    --
+    -- @since 0.1
+    timeout :: !(Maybe Timeout),
     -- | Global option for logging. If it is true then all logging is
     -- disabled.
     --
     -- @since 0.1
     disableLogging :: !(Maybe Bool),
-    -- | Optional path to log file.
-    --
-    -- @since 0.1
-    fileLogging :: !(Maybe FilePathDefault),
-    -- | Whether to display command by (key) name or command.
-    --
-    -- @since 0.1
-    cmdDisplay :: !(Maybe CmdDisplay),
     -- | Whether to log commands.
     --
     -- @since 0.1
     cmdLogging :: !(Maybe CmdLogging),
+    -- | Whether to display command by (key) name or command.
+    --
+    -- @since 0.1
+    cmdDisplay :: !(Maybe CmdDisplay),
     -- | Determines to what extent we should remove control characters
     -- from logs.
     --
     -- @since 0.3
     stripControl :: !(Maybe StripControl),
-    -- | Timeout.
-    --
-    -- @since 0.1
-    timeout :: !(Maybe Timeout),
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1
@@ -88,6 +84,14 @@ data Args = MkArgs
     --
     -- @since 0.1
     cmdLineTrunc :: !(Maybe LineTruncation),
+    -- | Optional path to log file.
+    --
+    -- @since 0.1
+    fileLogging :: !(Maybe FilePathDefault),
+    -- | 'stripControl' for the log file.
+    --
+    -- @since 0.5
+    fileLogStripControl :: !(Maybe StripControl),
     -- | List of commands.
     --
     -- @since 0.1
@@ -111,6 +115,7 @@ defaultArgs cmds =
   MkArgs
     { cmdLogging = empty,
       fileLogging = empty,
+      fileLogStripControl = empty,
       cmdDisplay = empty,
       configPath = empty,
       noConfig = False,
@@ -152,14 +157,15 @@ argsParser =
   MkArgs
     <$> configParser
     <*> noConfigParser
-    <*> globalLoggingParser
-    <*> fileLoggingParser
-    <*> commandDisplayParser
-    <*> commandLoggingParser
-    <*> stripControlParser
     <*> timeoutParser
+    <*> disableLoggingParser
+    <*> commandLoggingParser
+    <*> commandDisplayParser
+    <*> stripControlParser
     <*> cmdTruncationParser
     <*> lineTruncationParser
+    <*> fileLoggingParser
+    <*> fileLogStripControlParser
     <*> commandsParser
     <**> OA.helper
     <**> version
@@ -182,9 +188,10 @@ versNum :: String
 versNum = "Version: " <> $$(PV.packageVersionStringTH "shrun.cabal")
 
 defaultConfig :: Parser (a -> a)
-defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config")
+defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config" <> OA.help help)
   where
     txt = T.unlines $$(getDefaultConfigTH)
+    help = "Writes a default config.toml file to stdout."
 
 configParser :: Parser (Maybe FilePath)
 configParser =
@@ -381,6 +388,24 @@ readLogFile =
       then pure FPDefault
       else pure (FPManual f)
 
+fileLogStripControlParser :: Parser (Maybe StripControl)
+fileLogStripControlParser =
+  OA.optional $
+    OA.option
+      readStripControl
+      ( mconcat
+          [ OA.long "file-log-strip-control",
+            OA.help helpTxt,
+            OA.metavar "<all | smart | none>"
+          ]
+      )
+  where
+    helpTxt =
+      mconcat
+        [ "--strip-control for file logs created with --file-log. ",
+          "Defaults to all."
+        ]
+
 commandLoggingParser :: Parser (Maybe CmdLogging)
 commandLoggingParser =
   OA.optional $
@@ -429,8 +454,8 @@ commandsParser =
           <$> OA.argument OA.str (OA.metavar "Commands...")
       )
 
-globalLoggingParser :: Parser (Maybe Bool)
-globalLoggingParser =
+disableLoggingParser :: Parser (Maybe Bool)
+disableLoggingParser =
   OA.optional $
     OA.flag'
       True

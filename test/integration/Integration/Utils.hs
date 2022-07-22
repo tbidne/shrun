@@ -83,6 +83,7 @@ makeEnvAndVerify ::
   (forall x. m x -> IO x) ->
   Maybe Timeout ->
   Maybe FilePath ->
+  StripControl ->
   CmdLogging ->
   CmdDisplay ->
   Maybe (Truncation 'TCmdName) ->
@@ -96,6 +97,7 @@ makeEnvAndVerify
   toIO
   timeout
   fileLogging
+  fileLogStripControl
   cmdLogging
   cmdDisplay
   cmdNameTrunc
@@ -107,6 +109,7 @@ makeEnvAndVerify
 
     timeout @=? result ^. #timeout
     fileLogging @=? result ^? (#fileLogging %? _1)
+    fileLogStripControl @=? result ^. #fileLogStripControl
     cmdLogging @=? result ^. #cmdLogging
     cmdDisplay @=? result ^. #cmdDisplay
     cmdNameTrunc @=? result ^. #cmdNameTrunc

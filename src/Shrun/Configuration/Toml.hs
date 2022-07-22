@@ -37,6 +37,10 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.5
     fileLogging :: !(Maybe FilePathDefault),
+    -- | 'stripControl' for file logging.
+    --
+    -- @since 0.5
+    fileLogStripControl :: !(Maybe StripControl),
     -- | Whether to log commands.
     --
     -- @since 0.5
@@ -81,7 +85,7 @@ makeFieldLabelsNoPrefix ''TomlConfig
 
 -- | @since 0.5
 instance Semigroup TomlConfig where
-  MkTomlConfig a b c d e f g h i <> MkTomlConfig a' b' c' d' e' f' g' h' i' =
+  MkTomlConfig a b c d e f g h i j <> MkTomlConfig a' b' c' d' e' f' g' h' i' j' =
     MkTomlConfig
       (a <|> a')
       (b <|> b')
@@ -92,11 +96,13 @@ instance Semigroup TomlConfig where
       (g <|> g')
       (h <|> h')
       (i <|> i')
+      (j <|> j')
 
 -- | @since 0.5
 instance Monoid TomlConfig where
   mempty =
     MkTomlConfig
+      Nothing
       Nothing
       Nothing
       Nothing
@@ -113,6 +119,7 @@ instance DecodeTOML TomlConfig where
     MkTomlConfig
       <$> decodeTimeout
       <*> decodeFileLogging
+      <*> decodeFileLogStripControl
       <*> decodeCmdLogging
       <*> decodeCmdDisplay
       <*> decodeCmdNameTrunc
@@ -127,7 +134,7 @@ decodeTimeout = getFieldOptWith tomlDecoder "timeout"
 
 -- | @since 0.5
 decodeFileLogging :: Decoder (Maybe FilePathDefault)
-decodeFileLogging = getFieldOptWith tomlDecoder "file-logging"
+decodeFileLogging = getFieldOptWith tomlDecoder "file-log"
 
 -- | @since 0.5
 decodeCmdLogging :: Decoder (Maybe CmdLogging)
@@ -150,6 +157,10 @@ decodeStripControl :: Decoder (Maybe StripControl)
 decodeStripControl = getFieldOptWith tomlDecoder "strip-control"
 
 -- | @since 0.5
+decodeFileLogStripControl :: Decoder (Maybe StripControl)
+decodeFileLogStripControl = getFieldOptWith tomlDecoder "file-log-strip-control"
+
+-- | @since 0.5
 decodeDisableLogging :: Decoder (Maybe Bool)
 decodeDisableLogging = getFieldOptWith tomlDecoder "disable-log"
 
@@ -165,6 +176,7 @@ argsToTomlConfig = to a2c
       MkTomlConfig
         { timeout = args ^. #timeout,
           fileLogging = args ^. #fileLogging,
+          fileLogStripControl = args ^. #fileLogStripControl,
           cmdLogging = args ^. #cmdLogging,
           cmdDisplay = args ^. #cmdDisplay,
           cmdNameTrunc = args ^. #cmdNameTrunc,

@@ -1,7 +1,8 @@
 # All values are non-defaults so we can test that this file is being used
 
 timeout = "1h"
-file-logging = "default"
+file-log = "default"
+file-log-strip-control = "none"
 cmd-log = true
 key-hide = true
 cmd-name-trunc = 80

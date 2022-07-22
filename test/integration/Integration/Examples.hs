@@ -24,6 +24,7 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
     (view _MkConfigIO)
     (Just 20)
     (Just "test/integration/toml/log")
+    StripControlAll
     Enabled
     ShowKey
     (Just 80)
@@ -39,6 +40,7 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
     (view _MkConfigIO)
     Nothing
     Nothing
+    StripControlAll
     Disabled
     ShowKey
     Nothing

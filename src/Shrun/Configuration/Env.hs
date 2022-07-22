@@ -144,6 +144,7 @@ configToEnv cfg cmdsText = do
     Nothing -> pure Nothing
 
   let disableLogging' = fromMaybe False (cfg ^. #disableLogging)
+      fileLogStripControl = fromMaybe StripControlAll (cfg ^. #fileLogStripControl)
 
   commands' <- case cfg ^. #legend of
     Nothing -> pure $ MkCommand Nothing <$> cmdsText
@@ -159,6 +160,7 @@ configToEnv cfg cmdsText = do
     MkEnv
       { timeout = cfg ^. #timeout,
         fileLogging = fileLogging',
+        fileLogStripControl = fileLogStripControl,
         cmdLogging = maybeOrMempty #cmdLogging,
         cmdDisplay = maybeOrMempty #cmdDisplay,
         cmdNameTrunc = cfg ^. #cmdNameTrunc,

@@ -27,6 +27,7 @@ specs =
       configSpecs,
       timeoutSpecs,
       fileLoggingSpecs,
+      fileLogStripControlSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
       stripControlSpecs,
@@ -57,6 +58,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               cmdNameTrunc = Nothing,
               cmdLineTrunc = Nothing,
               fileLogging = Nothing,
+              fileLogStripControl = Nothing,
               disableLogging = Nothing,
               commands = NESeq.singleton "command"
             }
@@ -198,6 +200,51 @@ parseShortDefaultFileLogging = testCase "Should parse empty -f" $ do
             { fileLogging = Just FPDefault
             }
   verifyResult argList expected
+
+fileLogStripControlSpecs :: TestTree
+fileLogStripControlSpecs =
+  testGroup
+    "Strip control arg parsing"
+    [ parseFileLogStripControlAll,
+      parseFileLogStripControlNone,
+      parseFileLogStripControlSmart
+    ]
+
+parseFileLogStripControlAll :: TestTree
+parseFileLogStripControlAll = testCase
+  "Should parse --file-log-strip-control all as StripControlAll"
+  $ do
+    let argList = ["--file-log-strip-control", "all", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { fileLogStripControl = Just StripControlAll
+              }
+    verifyResult argList expected
+
+parseFileLogStripControlNone :: TestTree
+parseFileLogStripControlNone = testCase
+  "Should parse --file-log-strip-control none as StripControlNone"
+  $ do
+    let argList = ["--file-log-strip-control", "none", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { fileLogStripControl = Just StripControlNone
+              }
+    verifyResult argList expected
+
+parseFileLogStripControlSmart :: TestTree
+parseFileLogStripControlSmart = testCase
+  "Should parse --file-log-strip-control smart as StripControlSmart"
+  $ do
+    let argList = ["--file-log-strip-control", "smart", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { fileLogStripControl = Just StripControlSmart
+              }
+    verifyResult argList expected
 
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =

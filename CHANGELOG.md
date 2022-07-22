@@ -19,6 +19,11 @@ the major/minor/patch definitions apply to the application's interface / usage
 * `--file-log` no longer interprets `"d"` and `"default"`
   as the default paths. Instead it expects an empty string e.g.
   `--file-log=` or `-f ''`.
+* Renamed toml's `--file-logging` to `--file-log` for consistency with CLI.
+
+### Added
+* `--file-log-strip-control` for adding `--strip-control` functionality
+  to file logs.
 
 ### Fixed
 * Improve `--strip-control`. `all` should no longer leave ansi remnants, and
