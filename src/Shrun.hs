@@ -24,10 +24,10 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Data.Timeout (Timeout (..))
-import Shrun.Effects.Atomic (Atomic (..))
 import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
+import Shrun.Effects.Mutable (Mutable (..))
+import Shrun.Effects.Process (Process (..), tryTimeCmd)
 import Shrun.Effects.Terminal (Terminal (..))
-import Shrun.Effects.TimedProcess (TimedProcess (..))
 import Shrun.Effects.Timing (Timing (..), withTiming)
 import Shrun.IO (Stderr (..))
 import Shrun.Logging.Formatting qualified as LFormat
@@ -46,8 +46,7 @@ import UnliftIO.Async qualified as Async
 --
 -- @since 0.1
 shrun ::
-  ( Atomic m,
-    FileSystemWriter m,
+  ( FileSystemWriter m,
     HasCommands env,
     HasCompletedCmds env,
     HasLogging env,
@@ -55,25 +54,25 @@ shrun ::
     MonadMask m,
     MonadReader env m,
     MonadUnliftIO m,
+    Mutable m,
+    Process m,
     Terminal m,
-    TimedProcess m,
     Timing m
   ) =>
   m ()
 shrun = asks getCommands >>= runCommands
 
 runCommands ::
-  forall m env.
-  ( Atomic m,
-    FileSystemWriter m,
+  ( FileSystemWriter m,
     HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
     MonadMask m,
     MonadReader env m,
     MonadUnliftIO m,
+    Mutable m,
+    Process m,
     Terminal m,
-    TimedProcess m,
     Timing m
   ) =>
   NonEmptySeq Command ->
@@ -125,12 +124,12 @@ runCommands commands = Regions.displayConsoleRegions $
 {-# INLINEABLE runCommands #-}
 
 runCommand ::
-  ( Atomic m,
-    HasLogging env,
+  ( HasLogging env,
     MonadMask m,
-    TimedProcess m,
+    Mutable m,
     MonadReader env m,
     MonadUnliftIO m,
+    Process m,
     Timing m
   ) =>
   Command ->
@@ -146,16 +145,18 @@ runCommand cmd = do
   --       region.
   -- 3, 4. CmdLogging: Stream and create the region. FileLogging is globally
   --       enabled/disabled, so no need for a separate function. That is,
-  --       tryTimeShStreamNoRegion and tryTimeShStreamRegion handle file
+  --       tryCommandStreamNoRegion and tryCommandStreamRegion handle file
   --       logging automatically.
-  res <- case (cmdLogging, fileLogging, disableLogging) of
-    (_, _, True) -> tryTime cmd
-    (Disabled, Nothing, _) -> tryTime cmd
-    (Disabled, Just (_, _), _) -> tryTimeStream cmd
-    _ -> tryTimeStreamRegion cmd
+  let cmdFn = case (cmdLogging, fileLogging, disableLogging) of
+        (_, _, True) -> tryCmd
+        (Disabled, Nothing, _) -> tryCmd
+        (Disabled, Just (_, _), _) -> tryCmdStream
+        _ -> tryCmdStreamRegion
+
+  cmdResult <- tryTimeCmd cmdFn cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
-    let (msg', lvl', t') = case res of
+    let (msg', lvl', t') = case cmdResult of
           Left (t, MkStderr err) -> (err, Error, t)
           Right t -> ("Success", InfoSuccess, t)
     Log.putRegionLog r $
@@ -169,11 +170,11 @@ runCommand cmd = do
 {-# INLINEABLE runCommand #-}
 
 counter ::
-  ( Atomic m,
-    HasCompletedCmds env,
+  ( HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
     MonadReader env m,
+    Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
     Terminal m,
@@ -198,9 +199,9 @@ counter cmds = do
 {-# INLINEABLE counter #-}
 
 logCounter ::
-  ( Atomic m,
-    HasLogging env,
+  ( HasLogging env,
     MonadReader env m,
+    Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
     Timing m
@@ -221,10 +222,10 @@ logCounter region elapsed = do
 {-# INLINEABLE logCounter #-}
 
 keepRunning ::
-  ( Atomic m,
-    HasCompletedCmds env,
+  ( HasCompletedCmds env,
     HasLogging env,
     MonadReader env m,
+    Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
     Timing m
@@ -265,7 +266,13 @@ timedOut _ Nothing = False
 timedOut timer (Just (MkTimeout t)) = timer > t
 {-# INLINEABLE timedOut #-}
 
-maybePollQueue :: (Atomic m, FileSystemWriter m, HasLogging env, MonadReader env m) => m ()
+maybePollQueue ::
+  ( FileSystemWriter m,
+    HasLogging env,
+    MonadReader env m,
+    Mutable m
+  ) =>
+  m ()
 maybePollQueue = do
   fileLogging <- asks getFileLogging
   case fileLogging of
@@ -273,7 +280,13 @@ maybePollQueue = do
     Just (fp, queue) -> writeQueueToFile fp queue
 {-# INLINEABLE maybePollQueue #-}
 
-writeQueueToFile :: (Atomic m, FileSystemWriter m) => FilePath -> LogTextQueue -> m void
+writeQueueToFile ::
+  ( FileSystemWriter m,
+    Mutable m
+  ) =>
+  FilePath ->
+  LogTextQueue ->
+  m void
 writeQueueToFile fp queue = forever $ Queue.readQueue queue >>= traverse_ (logFile fp)
 {-# INLINEABLE writeQueueToFile #-}
 

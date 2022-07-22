@@ -14,7 +14,7 @@ module Shrun.Logging.Log
 where
 
 import Shrun.Configuration.Env.Types (HasLogging (..))
-import Shrun.Effects.Atomic (Atomic (..))
+import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Timing (Timing (..))
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Queue qualified as Queue
@@ -27,9 +27,9 @@ import Shrun.Prelude
 --
 -- @since 0.3
 putLog ::
-  ( Atomic m,
-    HasLogging env,
+  ( HasLogging env,
     MonadReader env m,
+    Mutable m,
     RegionLogger m,
     Timing m
   ) =>
@@ -48,9 +48,9 @@ putLog log = do
 --
 -- @since 0.3
 putRegionLog ::
-  ( Atomic m,
-    HasLogging env,
+  ( HasLogging env,
     MonadReader env m,
+    Mutable m,
     RegionLogger m,
     Timing m
   ) =>
@@ -88,9 +88,9 @@ maybePrintLog fn log =
 --
 -- @since 0.3
 maybeSendLogToQueue ::
-  ( Atomic m,
-    HasLogging env,
+  ( HasLogging env,
     MonadReader env m,
+    Mutable m,
     Timing m
   ) =>
   Log ->

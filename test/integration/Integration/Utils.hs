@@ -22,8 +22,8 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Effects.Atomic (Atomic (..))
 import Shrun.Effects.FileSystemReader (FileSystemReader (..))
+import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Terminal (Terminal (..))
 import System.Environment (withArgs)
 
@@ -31,11 +31,11 @@ import System.Environment (withArgs)
 newtype ConfigIO a = MkConfigIO (IO a)
   deriving
     ( Applicative,
-      Atomic,
       Functor,
       Monad,
       MonadIO,
       MonadUnliftIO,
+      Mutable,
       Terminal
     )
     via IO
@@ -52,11 +52,11 @@ instance FileSystemReader ConfigIO where
 newtype NoConfigIO a = MkNoConfigIO (IO a)
   deriving
     ( Applicative,
-      Atomic,
       Functor,
       Monad,
       MonadIO,
       MonadUnliftIO,
+      Mutable,
       Terminal
     )
     via IO
@@ -72,9 +72,9 @@ instance FileSystemReader NoConfigIO where
 -- | Makes an 'Env' for the given monad and compares the result with the
 -- expected params.
 makeEnvAndVerify ::
-  ( Atomic m,
-    FileSystemReader m,
+  ( FileSystemReader m,
     MonadUnliftIO m,
+    Mutable m,
     Terminal m
   ) =>
   -- | List of CLI arguments.

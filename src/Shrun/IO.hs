@@ -10,15 +10,9 @@ module Shrun.IO
     Stderr (..),
 
     -- * Timing shell programs
-    tryTimeSh,
-    tryTimeShStreamRegion,
-    tryTimeShStreamNoRegion,
-
-    -- * Low level running shell programs
-    sh,
-    sh_,
-    shExitCode,
-    tryShExitCode,
+    tryCommand,
+    tryCommandStreamRegion,
+    tryCommandStreamNoRegion,
   )
 where
 
@@ -28,7 +22,6 @@ import Data.ByteString qualified as BS
 import Data.IORef (writeIORef)
 import Data.Sequence ((<|))
 import Data.Text qualified as T
-import Data.Time.Relative (RelativeTime)
 import GHC.IO.Handle (BufferMode (..), Handle)
 import GHC.IO.Handle qualified as Handle
 import Shrun.Configuration.Env.Types
@@ -38,8 +31,8 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
-import Shrun.Effects.Atomic (Atomic (..))
-import Shrun.Effects.Timing (Timing (..), withTiming)
+import Shrun.Effects.Mutable (Mutable (..))
+import Shrun.Effects.Timing (Timing (..))
 import Shrun.Logging.Log qualified as Log
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types
@@ -184,23 +177,6 @@ blockSize :: Int
 blockSize = 1024
 {-# INLINEABLE blockSize #-}
 
--- | Returns the result of running a shell command given by
--- 'Text' on 'FilePath'.
---
--- @since 0.1
-sh :: Command -> Maybe FilePath -> IO Text
-sh (MkCommand _ cmd) fp = T.pack <$> P.readCreateProcess proc ""
-  where
-    proc = (P.shell (T.unpack cmd)) {P.cwd = fp}
-{-# INLINEABLE sh #-}
-
--- | Version of 'sh' that ignores the return value.
---
--- @since 0.1
-sh_ :: Command -> Maybe FilePath -> IO ()
-sh_ cmd = void . sh cmd
-{-# INLINEABLE sh_ #-}
-
 -- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
 --
 -- @since 0.1
@@ -229,84 +205,82 @@ tryShExitCode cmd path = do
 -- returned.
 --
 -- @since 0.1
-tryTimeSh ::
-  ( Atomic m,
-    HasCompletedCmds env,
+tryCommand ::
+  ( HasCompletedCmds env,
     MonadIO m,
-    MonadReader env m,
-    Timing m
+    MonadReader env m
   ) =>
   Command ->
-  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
-tryTimeSh cmd = do
-  (time, res) <- withTiming $ liftIO $ tryShExitCode cmd Nothing
+  m (Maybe Stderr)
+tryCommand cmd = do
+  res <- liftIO $ tryShExitCode cmd Nothing
 
   completedCmds <- asks getCompletedCmds
   liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
 
-  pure $ bimap (time,) (const time) res
-{-# INLINEABLE tryTimeSh #-}
+  pure $ res ^? _Left
+{-# INLINEABLE tryCommand #-}
 
--- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
+-- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- to a 'ConsoleRegion' instead of the usual swallowing.
 --
 -- @since 0.1
-tryTimeShStreamRegion ::
-  ( Atomic m,
-    HasCompletedCmds env,
+tryCommandStreamRegion ::
+  ( HasCompletedCmds env,
     HasLogging env,
     MonadMask m,
     MonadReader env m,
-    Timing m,
+    Mutable m,
     MonadUnliftIO m,
     RegionLogger m,
-    Region m ~ ConsoleRegion
+    Region m ~ ConsoleRegion,
+    Timing m
   ) =>
   Command ->
-  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
-tryTimeShStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
-  tryTimeShAnyRegion (Just region) cmd
-{-# INLINEABLE tryTimeShStreamRegion #-}
+  m (Maybe Stderr)
+tryCommandStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
+  tryCommandAnyRegion (Just region) cmd
+{-# INLINEABLE tryCommandStreamRegion #-}
 
--- | We stream the commands' output like 'tryTimeShStreamRegion' except we do
+-- | We stream the commands' output like 'tryCommandStreamRegion' except we do
 -- __not__ create a console region. This function is intended for when we want
 -- to send command logs to a file, but do not want to stream them to the
 -- console.
 --
 -- @since 0.1
-tryTimeShStreamNoRegion ::
-  ( Atomic m,
-    HasCompletedCmds env,
+tryCommandStreamNoRegion ::
+  ( HasCompletedCmds env,
     HasLogging env,
     MonadReader env m,
-    Timing m,
+    Mutable m,
     MonadUnliftIO m,
     RegionLogger m,
-    Region m ~ ConsoleRegion
+    Region m ~ ConsoleRegion,
+    Timing m
   ) =>
   Command ->
-  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
-tryTimeShStreamNoRegion = tryTimeShAnyRegion Nothing
-{-# INLINEABLE tryTimeShStreamNoRegion #-}
+  m (Maybe Stderr)
+tryCommandStreamNoRegion = tryCommandAnyRegion Nothing
+{-# INLINEABLE tryCommandStreamNoRegion #-}
 
--- | Similar to 'tryTimeSh' except we attempt to stream the commands' output
+-- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- to a 'ConsoleRegion' instead of the usual swallowing.
 --
 -- @since 0.1
-tryTimeShAnyRegion ::
-  ( Atomic m,
-    HasCompletedCmds env,
+tryCommandAnyRegion ::
+  ( HasCompletedCmds env,
     HasLogging env,
     MonadReader env m,
-    Timing m,
+    Mutable m,
     MonadUnliftIO m,
     RegionLogger m,
-    Region m ~ ConsoleRegion
+    Region m ~ ConsoleRegion,
+    Timing m
   ) =>
   Maybe ConsoleRegion ->
   Command ->
-  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
-tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
+  m (Maybe Stderr)
+tryCommandAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   -- Create pseudo terminal here because otherwise we have trouble streaming
   -- input from child processes. Data gets buffered and trying to override the
   -- buffering strategy (i.e. handles returned by CreatePipe) does not work.
@@ -335,7 +309,7 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
             close_fds = False
           }
 
-  (time, (exitCode, lastRead)) <- withTiming $ do
+  (exitCode, lastRead) <- do
     withRunInIO $ \run ->
       P.withCreateProcess pr $ \_ _ _ ph ->
         run $ streamOutput mRegion cmd recvH ph
@@ -360,14 +334,14 @@ tryTimeShAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   liftIO $ do
     Handle.hClose sendH
     Handle.hClose recvH
-  pure $ bimap (time,) (const time) result
-{-# INLINEABLE tryTimeShAnyRegion #-}
+  pure $ result ^? _Left
+{-# INLINEABLE tryCommandAnyRegion #-}
 
 streamOutput ::
-  ( Atomic m,
-    HasLogging env,
+  ( HasLogging env,
     MonadIO m,
     MonadReader env m,
+    Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
     Timing m

@@ -45,8 +45,8 @@ import Shrun.Configuration.Toml (TomlConfig, argsToTomlConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
-import Shrun.Effects.Atomic (Atomic (..))
 import Shrun.Effects.FileSystemReader (FileSystemReader (..), getShrunXdgConfig)
+import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Terminal (Terminal (..))
 import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
@@ -77,9 +77,9 @@ instance Exception TomlError where
 --
 -- @since 0.1
 makeEnv ::
-  ( Atomic m,
-    FileSystemReader m,
+  ( FileSystemReader m,
     MonadIO m,
+    Mutable m,
     Terminal m
   ) =>
   m Env
@@ -118,9 +118,9 @@ makeEnv = do
         Left tomlErr -> throwIO $ MkTomlError tomlErr
 
 configToEnv ::
-  ( Atomic m,
-    FileSystemReader m,
+  ( FileSystemReader m,
     MonadIO m,
+    Mutable m,
     Terminal m
   ) =>
   TomlConfig ->

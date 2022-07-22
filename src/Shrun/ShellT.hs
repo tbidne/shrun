@@ -10,11 +10,11 @@ module Shrun.ShellT
 where
 
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Effects.Atomic (Atomic (..))
 import Shrun.Effects.FileSystemReader (FileSystemReader (..))
 import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
+import Shrun.Effects.Mutable
+import Shrun.Effects.Process (Process (..))
 import Shrun.Effects.Terminal (Terminal (..))
-import Shrun.Effects.TimedProcess (TimedProcess (..))
 import Shrun.Effects.Timing (Timing (..))
 import Shrun.IO qualified as ShIO
 import Shrun.Logging.RegionLogger (RegionLogger (..))
@@ -40,8 +40,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.1
       MonadCatch,
       -- | @since 0.5
-      Atomic,
-      -- | @since 0.5
       FileSystemReader,
       -- | @since 0.5
       FileSystemWriter,
@@ -49,6 +47,8 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadIO,
       -- | @since 0.1
       MonadMask,
+      -- | @since 0.5
+      Mutable,
       -- | @since 0.5
       Terminal,
       -- | @since 0.5
@@ -84,9 +84,9 @@ instance (MonadIO m, MonadMask m, Terminal m) => RegionLogger (ShellT Env m) whe
 
 -- | @since 0.3.0.1
 instance
-  (Atomic m, MonadMask m, MonadUnliftIO m, Terminal m, Timing m) =>
-  TimedProcess (ShellT Env m)
+  (MonadMask m, MonadUnliftIO m, Mutable m, Terminal m, Timing m) =>
+  Process (ShellT Env m)
   where
-  tryTime = ShIO.tryTimeSh
-  tryTimeStream = ShIO.tryTimeShStreamNoRegion
-  tryTimeStreamRegion = ShIO.tryTimeShStreamRegion
+  tryCmd = ShIO.tryCommand
+  tryCmdStream = ShIO.tryCommandStreamNoRegion
+  tryCmdStreamRegion = ShIO.tryCommandStreamRegion

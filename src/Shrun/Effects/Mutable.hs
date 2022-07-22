@@ -1,8 +1,8 @@
--- | Provides the 'Atomic' typeclass.
+-- | Provides the 'Mutable' typeclass.
 --
 -- @since 0.3
-module Shrun.Effects.Atomic
-  ( Atomic (..),
+module Shrun.Effects.Mutable
+  ( Mutable (..),
   )
 where
 
@@ -11,10 +11,10 @@ import Control.Concurrent.STM.TVar qualified as TVar
 import Data.IORef qualified as Ref
 import Shrun.Prelude
 
--- | Represents atomic/mutable operations e.g. STM, IORefs.
+-- | Represents mutable operations e.g. STM, IORefs.
 --
 -- @since 0.5
-class Monad m => Atomic m where
+class Monad m => Mutable m where
   -- | @since 0.5
   liftSTM :: STM a -> m a
 
@@ -34,7 +34,7 @@ class Monad m => Atomic m where
   readTVarIO :: TVar a -> m a
 
 -- | @since 0.5
-instance Atomic IO where
+instance Mutable IO where
   liftSTM = atomically
 
   newIORef = Ref.newIORef
@@ -45,7 +45,7 @@ instance Atomic IO where
   readTVarIO = TVar.readTVarIO
 
 -- | @since 0.5
-instance Atomic m => Atomic (ReaderT env m) where
+instance Mutable m => Mutable (ReaderT env m) where
   liftSTM = lift . liftSTM
 
   newIORef = lift . newIORef

@@ -17,7 +17,7 @@ import Shrun.Configuration.Env.Types
     HasLogging (..),
     HasTimeout (..),
   )
-import Shrun.Effects.TimedProcess (TimedProcess (..))
+import Shrun.Effects.Process (Process (..))
 import Shrun.IO qualified as ShIO
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.ShellT (ShellT)
@@ -67,11 +67,11 @@ instance RegionLogger (ShellT FuncEnv IO) where
 
   withConsoleRegion = Regions.withConsoleRegion
 
--- | @since 0.3.0.1
-instance TimedProcess (ShellT FuncEnv IO) where
-  tryTime = ShIO.tryTimeSh
-  tryTimeStream = ShIO.tryTimeShStreamNoRegion
-  tryTimeStreamRegion = ShIO.tryTimeShStreamRegion
+-- | @since 0.5
+instance Process (ShellT FuncEnv IO) where
+  tryCmd = ShIO.tryCommand
+  tryCmdStream = ShIO.tryCommandStreamNoRegion
+  tryCmdStreamRegion = ShIO.tryCommandStreamRegion
 
 -- | Makes the 'FuncEnv' from CLI args.
 --

@@ -54,9 +54,10 @@ library
     Shrun.Data.NonEmptySeq
     Shrun.Data.Supremum
     Shrun.Data.Timeout
-    Shrun.Effects.Atomic
     Shrun.Effects.FileSystemReader
     Shrun.Effects.FileSystemWriter
+    Shrun.Effects.Mutable
+    Shrun.Effects.Process
     Shrun.Effects.Terminal
     Shrun.Effects.TimedProcess
     Shrun.Effects.Timing

@@ -60,7 +60,7 @@ import Control.Monad as X
     (=<<),
     (>=>),
   )
-import Control.Monad.Catch as X (MonadCatch, MonadMask (..), MonadThrow)
+import Control.Monad.Catch as X (MonadCatch, MonadMask (..), MonadThrow, throwM)
 import Control.Monad.Fail as X (MonadFail (..))
 import Control.Monad.IO.Class as X (MonadIO (..))
 import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)

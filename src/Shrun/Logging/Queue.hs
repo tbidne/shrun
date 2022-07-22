@@ -21,7 +21,7 @@ module Shrun.Logging.Queue
 where
 
 import Data.Text qualified as T
-import Shrun.Effects.Atomic (Atomic (..))
+import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Timing (Timing (..))
 import Shrun.Logging.Types (Log (..))
 import Shrun.Logging.Types qualified as Log
@@ -113,7 +113,7 @@ instance Show LogTextQueue where
 -- | Atomically writes to the queue.
 --
 -- @since 0.1
-writeQueue :: (Atomic m, Timing m) => LogTextQueue -> Log -> m ()
+writeQueue :: (Mutable m, Timing m) => LogTextQueue -> Log -> m ()
 writeQueue queue = writeq <=< formatFileLog
   where
     writeq = liftSTM . writeTBQueue (queue ^. _MkLogTextQueue)
@@ -122,13 +122,13 @@ writeQueue queue = writeq <=< formatFileLog
 -- | Atomically reads from the queue. Does not retry.
 --
 -- @since 0.1
-readQueue :: Atomic m => LogTextQueue -> m (Maybe LogText)
+readQueue :: Mutable m => LogTextQueue -> m (Maybe LogText)
 readQueue = liftSTM . tryReadTBQueue . view _MkLogTextQueue
 {-# INLINEABLE readQueue #-}
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1
-flushQueue :: Atomic m => LogTextQueue -> m (List LogText)
+flushQueue :: Mutable m => LogTextQueue -> m (List LogText)
 flushQueue = liftSTM . flushTBQueue . view _MkLogTextQueue
 {-# INLINEABLE flushQueue #-}
