@@ -160,6 +160,7 @@ import UnliftIO as X
     catch,
     catchAny,
     catchIO,
+    finally,
     onException,
     throwIO,
     throwString,

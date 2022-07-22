@@ -237,6 +237,7 @@ benchmark benchmarks
   build-depends:
     , base
     , deepseq      ^>=1.4.4.0
+    , directory
     , shrun
     , tasty-bench  ^>=0.3
 

@@ -4,6 +4,7 @@ import Control.DeepSeq (force)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Env (makeEnv)
 import Shrun.Prelude
+import System.Directory (doesFileExist, removeFile)
 import System.Environment (withArgs)
 import Test.Tasty.Bench
   ( Benchmark,
@@ -14,12 +15,18 @@ import Test.Tasty.Bench
   )
 
 main :: IO ()
-main = do
-  defaultMain
-    [ noLogs,
-      basicLogs,
-      cmdLogs
-    ]
+main =
+  do
+    defaultMain
+      [ noLogs,
+        basicLogs,
+        cmdLogs,
+        fileLogs
+      ]
+    `finally` do
+      doesFileExist "bench.log" >>= \case
+        True -> removeFile "bench.log"
+        False -> pure ()
 
 noLogs :: Benchmark
 noLogs = bgroup "No Logging" (runLoops ["-d", "--no-config"])
@@ -29,6 +36,9 @@ basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
 
 cmdLogs :: Benchmark
 cmdLogs = bgroup "Command Logging" (runLoops ["-l", "--no-config"])
+
+fileLogs :: Benchmark
+fileLogs = bgroup "File Logging" (runLoops ["-f", "bench.log", "--no-config"])
 
 runLoops :: List String -> List Benchmark
 runLoops args = fmap f loops
