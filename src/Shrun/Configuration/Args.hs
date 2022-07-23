@@ -6,6 +6,7 @@
 -- @since 0.5
 module Shrun.Configuration.Args
   ( Args (..),
+    FileMode (..),
     defaultArgs,
     parserInfoArgs,
   )
@@ -41,6 +42,37 @@ import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.Prelude
+
+-- | File mode.
+--
+-- @since 0.5
+data FileMode
+  = FileModeAppend
+  | FileModeWrite
+  deriving stock
+    ( -- | @since 0.5
+      Eq,
+      -- | @since 0.5
+      Show
+    )
+
+-- | @since 0.5
+instance Semigroup FileMode where
+  FileModeAppend <> _ = FileModeAppend
+  _ <> FileModeAppend = FileModeAppend
+  l <> _ = l
+
+-- | @since 0.5
+instance Monoid FileMode where
+  mempty = FileModeWrite
+
+-- | @since 0.5
+instance DecodeTOML FileMode where
+  tomlDecoder =
+    tomlDecoder @Text >>= \case
+      "append" -> pure FileModeAppend
+      "write" -> pure FileModeWrite
+      bad -> fail $ "Unrecognized file-mode: " <> unpack bad
 
 -- | Type for parsing command line args.
 --
@@ -88,6 +120,10 @@ data Args = MkArgs
     --
     -- @since 0.1
     fileLogging :: !(Maybe FilePathDefault),
+    -- | Mode to use with the file log.
+    --
+    -- since 0.5
+    fileLogMode :: Maybe FileMode,
     -- | 'stripControl' for the log file.
     --
     -- @since 0.5
@@ -116,6 +152,7 @@ defaultArgs cmds =
     { cmdLogging = empty,
       fileLogging = empty,
       fileLogStripControl = empty,
+      fileLogMode = empty,
       cmdDisplay = empty,
       configPath = empty,
       noConfig = False,
@@ -165,6 +202,7 @@ argsParser =
     <*> cmdTruncationParser
     <*> lineTruncationParser
     <*> fileLoggingParser
+    <*> fileLogModeParser
     <*> fileLogStripControlParser
     <*> commandsParser
     <**> OA.helper
@@ -387,6 +425,30 @@ readLogFile =
     if null f
       then pure FPDefault
       else pure (FPManual f)
+
+fileLogModeParser :: Parser (Maybe FileMode)
+fileLogModeParser =
+  OA.optional $
+    OA.option
+      readFileMode
+      ( mconcat
+          [ OA.long "file-log-mode",
+            OA.help helpTxt,
+            OA.metavar "<append | write>"
+          ]
+      )
+  where
+    helpTxt = "Mode in which to open the log file. Defaults to write."
+
+readFileMode :: ReadM FileMode
+readFileMode =
+  OA.str >>= \case
+    "append" -> pure FileModeAppend
+    "write" -> pure FileModeWrite
+    bad ->
+      OA.readerAbort $
+        ErrorMsg $
+          "Unrecognized --file-log-mode option: " <> unpack bad
 
 fileLogStripControlParser :: Parser (Maybe StripControl)
 fileLogStripControlParser =

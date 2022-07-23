@@ -24,12 +24,16 @@ the major/minor/patch definitions apply to the application's interface / usage
 ### Added
 * `--file-log-strip-control` for adding `--strip-control` functionality
   to file logs.
+* `--file-log-mode` option for choosing between `append` and `write` file
+  modes.
 
 ### Fixed
 * Improve `--strip-control`. `all` should no longer leave ansi remnants, and
   `--smart` is much more aggressive about removing everything but harmless
   styling.
 * Improve benchmarking to more accurately describe memory usage.
+* File logging handled more intelligently: no longer opening/closing on each
+  write.
 
 ## [0.4] -- 2022-06-21
 ### Changed

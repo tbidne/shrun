@@ -29,6 +29,7 @@
   - [Logging](#logging)
     - [Command Log](#command-log)
     - [File Log](#file-log)
+    - [File Log Mode](#file-log-mode)
     - [Disable Log](#disable-log)
   - [Log Formatting](#log-formatting)
     - [Key Hide](#key-hide)
@@ -218,6 +219,12 @@ Practically speaking, this does not have much effect, just that if a command die
 <span style="color:">[2022-05-26 11:25:59.150635686 UTC] [Command] [for i in {1..3}; do echo hi; sleep 1; done] hi</span>
 <span style="color:">[2022-05-26 11:26:02.153745075 UTC] [Info] Finished! Total time elapsed: 3 seconds</span></code>
 </pre>
+
+### File Log Mode
+
+**Arg:** `--file-log-mode <append | write>`
+
+**Description:** Mode in which to open the log file. Defaults to write.
 
 ### Disable Log
 

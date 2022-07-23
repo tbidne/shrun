@@ -10,7 +10,7 @@ module Shrun.Configuration.Toml
   )
 where
 
-import Shrun.Configuration.Args (Args (..))
+import Shrun.Configuration.Args (Args (..), FileMode (..))
 import Shrun.Configuration.Env.Types
   ( CmdDisplay,
     CmdLogging,
@@ -37,6 +37,10 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.5
     fileLogging :: !(Maybe FilePathDefault),
+    -- | Mode to use with the file log.
+    --
+    -- since 0.5
+    fileLogMode :: Maybe FileMode,
     -- | 'stripControl' for file logging.
     --
     -- @since 0.5
@@ -85,7 +89,7 @@ makeFieldLabelsNoPrefix ''TomlConfig
 
 -- | @since 0.5
 instance Semigroup TomlConfig where
-  MkTomlConfig a b c d e f g h i j <> MkTomlConfig a' b' c' d' e' f' g' h' i' j' =
+  MkTomlConfig a b c d e f g h i j k <> MkTomlConfig a' b' c' d' e' f' g' h' i' j' k' =
     MkTomlConfig
       (a <|> a')
       (b <|> b')
@@ -97,11 +101,13 @@ instance Semigroup TomlConfig where
       (h <|> h')
       (i <|> i')
       (j <|> j')
+      (k <|> k')
 
 -- | @since 0.5
 instance Monoid TomlConfig where
   mempty =
     MkTomlConfig
+      Nothing
       Nothing
       Nothing
       Nothing
@@ -119,6 +125,7 @@ instance DecodeTOML TomlConfig where
     MkTomlConfig
       <$> decodeTimeout
       <*> decodeFileLogging
+      <*> decodeFileLogMode
       <*> decodeFileLogStripControl
       <*> decodeCmdLogging
       <*> decodeCmdDisplay
@@ -135,6 +142,10 @@ decodeTimeout = getFieldOptWith tomlDecoder "timeout"
 -- | @since 0.5
 decodeFileLogging :: Decoder (Maybe FilePathDefault)
 decodeFileLogging = getFieldOptWith tomlDecoder "file-log"
+
+-- | @since 0.5
+decodeFileLogMode :: Decoder (Maybe FileMode)
+decodeFileLogMode = getFieldOptWith tomlDecoder "file-log-mode"
 
 -- | @since 0.5
 decodeCmdLogging :: Decoder (Maybe CmdLogging)
@@ -176,6 +187,7 @@ argsToTomlConfig = to a2c
       MkTomlConfig
         { timeout = args ^. #timeout,
           fileLogging = args ^. #fileLogging,
+          fileLogMode = args ^. #fileLogMode,
           fileLogStripControl = args ^. #fileLogStripControl,
           cmdLogging = args ^. #cmdLogging,
           cmdDisplay = args ^. #cmdDisplay,

@@ -2,6 +2,7 @@
 
 timeout = "1h"
 file-log = "default"
+file-log-mode = "append"
 file-log-strip-control = "none"
 cmd-log = true
 key-hide = true

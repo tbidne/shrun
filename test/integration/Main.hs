@@ -19,4 +19,3 @@ main = do
         Examples.specs,
         Failures.specs
       ]
-

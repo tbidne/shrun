@@ -28,6 +28,7 @@ where
 
 import Data.Sequence qualified as Seq
 import Shrun
+import Shrun.Configuration.Args (FileMode (..))
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -181,6 +182,11 @@ fromToml onEnv cfg cmdsText = do
             disableLogging = disableLogging',
             commands = commands'
           }
+
+      ioMode = case maybeOrMempty #fileLogMode of
+        FileModeAppend -> AppendMode
+        FileModeWrite -> WriteMode
+
   case cfg ^. #fileLogging of
     Nothing -> onEnv (envWithFileLogging Nothing)
     Just FPDefault -> do
@@ -189,11 +195,11 @@ fromToml onEnv cfg cmdsText = do
 
       queue <- liftSTM $ newTBQueue 1000
 
-      withFile fp AppendMode $ \h ->
+      withFile fp ioMode $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
     Just (FPManual f) -> do
       queue <- liftSTM $ newTBQueue 1000
-      withFile f AppendMode $ \h ->
+      withFile f ioMode $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
   where
     maybeOrMempty :: Monoid a => Lens' TomlConfig (Maybe a) -> a

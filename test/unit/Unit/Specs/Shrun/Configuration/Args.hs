@@ -3,7 +3,7 @@ module Unit.Specs.Shrun.Configuration.Args (specs) where
 
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import Shrun.Configuration.Args (Args (..))
+import Shrun.Configuration.Args (Args (..), FileMode (..))
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
@@ -27,6 +27,7 @@ specs =
       configSpecs,
       timeoutSpecs,
       fileLoggingSpecs,
+      fileLogModeSpecs,
       fileLogStripControlSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
@@ -58,6 +59,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               cmdNameTrunc = Nothing,
               cmdLineTrunc = Nothing,
               fileLogging = Nothing,
+              fileLogMode = Nothing,
               fileLogStripControl = Nothing,
               disableLogging = Nothing,
               commands = NESeq.singleton "command"
@@ -200,6 +202,38 @@ parseShortDefaultFileLogging = testCase "Should parse empty -f" $ do
             { fileLogging = Just FPDefault
             }
   verifyResult argList expected
+
+fileLogModeSpecs :: TestTree
+fileLogModeSpecs =
+  testGroup
+    "File log mode"
+    [ parseFileLogModeAppend,
+      parseFileLogModeWrite
+    ]
+
+parseFileLogModeAppend :: TestTree
+parseFileLogModeAppend = testCase
+  "Should parse --file-log-mode append as FileModeAppend"
+  $ do
+    let argList = ["--file-log-mode", "append", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { fileLogMode = Just FileModeAppend
+              }
+    verifyResult argList expected
+
+parseFileLogModeWrite :: TestTree
+parseFileLogModeWrite = testCase
+  "Should parse --file-log-mode write as FileModeWrite"
+  $ do
+    let argList = ["--file-log-mode", "write", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { fileLogMode = Just FileModeWrite
+              }
+    verifyResult argList expected
 
 fileLogStripControlSpecs :: TestTree
 fileLogStripControlSpecs =
