@@ -3,7 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Haskell Package Versioning Policy](https://pvp.haskell.org/).
+and this project adheres to the
+[Haskell Package Versioning Policy](https://pvp.haskell.org/).
 
 Note that PVP is applied to the _application_, not the _library_. That is,
 the major/minor/patch definitions apply to the application's interface / usage
@@ -63,9 +64,9 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.1...HEAD
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.4...main
 [0.4]: https://github.com/tbidne/shrun/compare/0.3..0.4
 [0.3]: https://github.com/tbidne/shrun/compare/0.2.0.1..0.3
 [0.2.0.1]: https://github.com/tbidne/shrun/compare/0.2..0.2.0.1
 [0.2]: https://github.com/tbidne/shrun/compare/0.1..0.2
-[0.1]: https://github.com/tbidne/shrun/releases/tag/
+[0.1]: https://github.com/tbidne/shrun/releases/tag/0.1
