@@ -68,37 +68,37 @@ format: cabalfmt hsformat nixpkgsfmt
 
 .PHONY: hsformat
 hsformat:
-	nix run github:tbidne/nix-hs-tools/0.6#ormolu -- --mode inplace
+	nix run github:tbidne/nix-hs-tools/0.6.1#ormolu -- --mode inplace
 
 .PHONY: hsformatc
 hsformatc:
-	nix run github:tbidne/nix-hs-tools/0.6#ormolu -- --mode check
+	nix run github:tbidne/nix-hs-tools/0.6.1#ormolu -- --mode check
 
 .PHONY: cabalfmt
 cabalfmt:
-	nix run github:tbidne/nix-hs-tools/0.6#cabal-fmt -- --inplace
+	nix run github:tbidne/nix-hs-tools/0.6.1#cabal-fmt -- --inplace
 
 .PHONY: cabalfmtc
 cabalfmtc:
-	nix run github:tbidne/nix-hs-tools/0.6#cabal-fmt -- --check
+	nix run github:tbidne/nix-hs-tools/0.6.1#cabal-fmt -- --check
 
 .PHONY: nixpkgsfmt
 nixpkgsfmt:
-	nix run github:tbidne/nix-hs-tools/0.6#nixpkgs-fmt
+	nix run github:tbidne/nix-hs-tools/0.6.1#nixpkgs-fmt
 
 .PHONY: nixpkgsfmtc
 nixpkgsfmtc:
-	nix run github:tbidne/nix-hs-tools/0.6#nixpkgs-fmt -- --check
+	nix run github:tbidne/nix-hs-tools/0.6.1#nixpkgs-fmt -- --check
 
 # linting
 
 .PHONY: lint
 lint:
-	nix run github:tbidne/nix-hs-tools/0.6#hlint -- --refact
+	nix run github:tbidne/nix-hs-tools/0.6.1#hlint -- --refact
 
 .PHONY: lintc
 lintc:
-	nix run github:tbidne/nix-hs-tools/0.6#hlint
+	nix run github:tbidne/nix-hs-tools/0.6.1#hlint
 
 .PHONY: haddock
 haddock:
@@ -109,4 +109,4 @@ haddock:
 
 .PHONY: haddockc
 haddockc:
-	nix run github:tbidne/nix-hs-tools/0.6#haddock-cov -- -x Shrun.Prelude
+	nix run github:tbidne/nix-hs-tools/0.6.1#haddock-cov -- -x Shrun.Prelude -m Shrun.Data.FilePathDefault 74 -m Shrun.Configuration.Env.Types 76
