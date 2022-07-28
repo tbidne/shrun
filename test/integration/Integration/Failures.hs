@@ -10,7 +10,7 @@ import System.Environment (withArgs)
 specs :: TestTree
 specs =
   testGroup
-    "Shrun.Configuration.Env"
+    "Failures"
     [ missingConfig,
       duplicateKeys,
       emptyKey,
@@ -24,8 +24,7 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
   let args = ["-c", "bad-file.toml", "cmd"]
   result <-
     flip runConfigIO logsRef $
-      do
-        withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
+      withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
         `catchIO` \e -> pure $ Just e
 
   case result of

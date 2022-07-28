@@ -49,6 +49,7 @@ instance FileSystemReader ConfigIO where
 
 instance Terminal ConfigIO where
   putTextLn t = ask >>= (`modifyIORef'` (t :))
+
   -- hardcoded so we can test 'detect'
   getTerminalWidth = pure 0
   sleep = liftIO . sleep

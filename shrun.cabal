@@ -177,14 +177,17 @@ test-suite integration
     Integration.Defaults
     Integration.Examples
     Integration.Failures
+    Integration.Miscellaneous
     Integration.Prelude
     Integration.Utils
 
   build-depends:
+    , algebra-simple
     , base
     , shrun
     , tasty
     , tasty-hunit
+    , text
 
   hs-source-dirs:   test/integration
   default-language: GHC2021
