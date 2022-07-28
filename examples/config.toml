@@ -71,14 +71,14 @@ disable-log = false
 #
 # Cycles are not allowed, nor are duplicate keys.
 legend = [
-  # INITIAL EXAMPLE
+  # GIF Demo
   { key = 'sign-peace-treaty', val = 'echo play it cool... && sleep 5 && "lol psyche"' },
   { key = 'querying-targets', val = 'echo finding targets... && sleep 7' },
   { key = 'skynet', val = 'echo "preparing nuclear missil-- i mean gift baskets"; sleep 13' },
   { key = 'ui', val = 'echo "adding emojis. we like to have fun :-)"; sleep 10' },
   { key = 'takeover', val = ['querying-targets', 'ui', 'skynet'] },
 
-  # README LEGEND EXAMPLE
+  # README Legend Example
   { key = 'cmd1', val = 'echo "command one"' },
 
   # recursive references
@@ -91,7 +91,7 @@ legend = [
   # runs 3, 4 and echo
   { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
 
-  # BAD EXAMPLES
+  # Bad Examples
 
   # duplicates will cause an error when reading this file.
   #{ key = 'dup_key', val = 'echo duplicate 1'},

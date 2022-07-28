@@ -47,7 +47,7 @@
 
 # Motivation
 
-`shrun` was borne of frustration. Suppose you run several shell commands on a regular basis e.g. updates after pulling the latest code. You can run these manually like:
+`shrun` was borne of frustration. Consider running several shell commands on a regular basis e.g. a developer running updates after pulling the latest code. These can be run manually:
 
 ```sh
 cmd1
@@ -56,7 +56,7 @@ cmd3
 ...
 ```
 
-But that can be a lot of repetitive typing, especially when the commands are longer. Thus you write an alias:
+But this can be a lot of repetitive typing, especially when the commands are longer. Thus an alias is written:
 
 ```sh
 alias run_commands="cmd1 && cmd2 && cmd3 ..."
@@ -64,13 +64,15 @@ alias run_commands="cmd1 && cmd2 && cmd3 ..."
 
 All well and good, but this approach has several deficiencies:
 
-1. You do not receive any information about how long your commands have been running. If any of the commands are long-lived, how do you know when it's been "too long" and you should cancel them? You can look at a clock or use a stopwatch, but that requires remembering every time you run the command, which is certainly unsatisfying.
+1. There is no information about how long the commands have been running. If any of the commands are long-lived, how would we know when it has been "too long" and the commands should be cancelled? One could use a wall clock or a stopwatch, but that is imprecise and requires remembering every time the commands are run, which is certainly unsatisfying.
 
-1. These commands are all run synchronously even though there may be no relation between them. For example, if you have three commands that each take 5 minutes, the combination will take 15 minutes. This is usually unnecessary.
+1. These commands are all run synchronously even though there may be no relation between them. For example, three commands that each take 5 minutes will combine to take 15 minutes. This is usually unnecessary.
 
-1. Related to above, if any command fails then subsequent ones will not be run. This can be frustrating, as you may kick off a run and leave, only to return and find out that later, longer-running commands never ran because of some trivial error in the beginning.
+1. Related to above, if any command fails then subsequent ones will not be run. This can be frustrating, especially when a quicker command in the beginning prevents a longer one at the end from even starting.
 
-1. It does not scale. Imagine you have variations of `cmd3` you want to run under different circumstances. You could create multiple aliases:
+1. If the alias is tweaked to run all regardless (`cmd1; cmd2; cmd3 ...`), then it can be difficult to determine which, if any, failed. Additionally, understanding logs is much harder.
+
+1. It does not scale. Imagine we have variations of `cmd3` we want to run under different circumstances. We could create multiple aliases:
 
         
         alias run_commands_cmd3a="cmd1 && cmd2 && cmd3a"
@@ -90,13 +92,13 @@ shrun "some long command" "another command"
 
 Will run `some long command` and `another command` concurrently.
 
-A running timer is provided, and stdout/stderr will be updated when a command finishes/crashes, respectively.
+A running timer is provided, and stdout will be updated when a command finishes or crashes.
 
 Note: `shrun` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
 
 # Configuration
 
-`shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [./examples/default.toml](./examples/default.toml) for a description of the `toml` file.
+`shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [default.toml](./examples/default.toml) for a description of the `toml` file.
 
 ## Core Functionality
 
@@ -104,9 +106,9 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 **Arg:** `-c, --config PATH`
 
-**Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/config/shrun/config.toml`.
+**Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/.config/shrun/config.toml`.
 
-Examples can be found in [./examples](./examples).
+Examples can be found in [examples](./examples).
 
 
 #### Legend
@@ -148,7 +150,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Arg:** `--no-config`
 
-**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit --config or implicit reading of the Xdg config file. Used for when a config file exists at the expected Xdg location, but we want to ignore it.
+**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit --config or implicit reading of the Xdg config file. This is useful when a config file exists at the expected Xdg location, but we wish to ignore it.
 
 ### Timeout
 
@@ -173,7 +175,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is shown at a given time.
 
-Note: When commands have complicated output, they logs can interfere with each other (indeed even overwrite themselves). We attempt to mitigate such situations, though see [Strip Control](#strip-control).
+Note: When commands have complicated output, the logs can interfere with each other (indeed even overwrite themselves). We attempt to mitigate such situations: see [Strip Control](#strip-control).
 
 **Example:**
 
@@ -317,7 +319,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 **Arg:** `-f, --file-log-strip-control <all | smart | none>`
 
-**Description**: Like [`--strip-control`](#strip-control), but applies to file logs. If none is given defaults to `all`.
+**Description**: Like [`--strip-control`](#strip-control), but applies to file logs. If no option is given, defaults to `all`.
 
 ### Command Name Truncation
 
@@ -343,7 +345,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 **Arg:** `-y, --cmd-line-trunc <NATURAL | detect>`
 
-**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect` or `d`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
+**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
 
 **Example:**
 

@@ -12,7 +12,7 @@
 #file-log = "default"
 
 # Mode in which to read the log file. Defaults to write.
-file-log-log-mode = "write"
+file-log-mode = "write"
 
 # Like strip-control, but for file logs. Defaults to all.
 file-log-strip-control = "all"
@@ -71,7 +71,7 @@ disable-log = false
 #
 # Cycles are not allowed, nor are duplicate keys.
 legend = [
-  # EXAMPLES
+  # Examples
   { key = 'cmd1', val = 'echo "command one"' },
 
   # recursive references
@@ -84,7 +84,7 @@ legend = [
   # runs 3, 4 and echo
   { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
 
-  # BAD EXAMPLES
+  # Bad Examples
 
   # duplicates will cause an error when reading this file.
   #{ key = 'dup_key', val = 'echo duplicate 1'},
