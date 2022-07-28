@@ -45,7 +45,7 @@
         };
     in
     {
-      package.default = mkPkg false;
+      packages.default = mkPkg false;
 
       devShell = mkPkg true;
     });

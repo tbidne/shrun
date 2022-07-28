@@ -22,5 +22,4 @@ let
 in
 {
   inherit get-pkgs;
-
 }
