@@ -70,15 +70,19 @@ import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.Trans as X (MonadTrans (..))
 import Control.Monad.Writer as X (MonadWriter (..), WriterT (..))
 import Data.Bifunctor as X (Bifunctor (..))
+import Data.Bool as X (Bool (..), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
 import Data.ByteString qualified as BS
+import Data.Char as X (Char)
 import Data.Either as X (Either (..))
+import Data.Eq as X (Eq (..))
 import Data.Foldable as X
   ( Foldable (..),
+    any,
     length,
     traverse_,
   )
-import Data.Function as X ((&))
+import Data.Function as X (const, flip, id, ($), (&), (.))
 import Data.Functor as X
   ( Functor (..),
     ($>),
@@ -86,12 +90,13 @@ import Data.Functor as X
     (<&>),
   )
 import Data.IORef as X (IORef)
+import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
-import Data.List as X (filter, zip, (++))
+import Data.List as X (filter, replicate, zip, (++))
 import Data.List.NonEmpty as X (NonEmpty (..))
 import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
 import Data.Monoid as X (Monoid (..))
-import Data.Ord as X (Ordering (..))
+import Data.Ord as X (Ord (..), Ordering (..))
 import Data.Semigroup as X (Semigroup (..))
 import Data.String as X (String)
 import Data.Text as X (Text, pack, unpack)
@@ -100,11 +105,17 @@ import Data.Text.Encoding qualified as TextEnc
 import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..), for)
+import Data.Tuple as X (fst, snd)
 import Data.Void as X (Void, absurd)
+import GHC.Enum as X (Bounded (..), Enum (..))
+import GHC.Err as X (undefined)
 import GHC.Float as X (Double (..), Float (..))
 import GHC.Generics as X (Generic)
+import GHC.Integer as X (Integer)
 import GHC.Natural as X (Natural)
-import GHC.Real as X (truncate)
+import GHC.Num as X (Num (..))
+import GHC.Real as X (Integral (..), fromIntegral, truncate)
+import GHC.Show as X (Show (..))
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X
@@ -140,7 +151,7 @@ import Optics.Core as X
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
 import System.Directory qualified as Dir
-import System.IO as X (Handle, IOMode (..))
+import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
 import TOML as X
   ( DecodeTOML (..),
     Decoder,
@@ -173,38 +184,7 @@ import UnliftIO as X
     try,
     tryAny,
   )
-import Prelude as X
-  ( Bool (..),
-    Bounded (..),
-    Char,
-    Enum (..),
-    Eq (..),
-    FilePath,
-    IO,
-    Int,
-    Integer,
-    Integral (..),
-    Num (..),
-    Ord (..),
-    Show (..),
-    any,
-    const,
-    flip,
-    fromIntegral,
-    fst,
-    id,
-    not,
-    otherwise,
-    print,
-    replicate,
-    seq,
-    snd,
-    undefined,
-    ($),
-    (&&),
-    (.),
-    (||),
-  )
+import Prelude as X (seq)
 import Prelude qualified as P
 
 -- $setup
