@@ -184,6 +184,7 @@ test-suite integration
   build-depends:
     , algebra-simple
     , base
+    , directory
     , shrun
     , tasty
     , tasty-hunit
@@ -213,7 +214,6 @@ test-suite functional
     , base
     , concurrent-output
     , directory
-    , filepath
     , shrun
     , shrun-verifier
     , tasty

@@ -28,7 +28,10 @@ module Shrun.Prelude
     readFileUtf8Lenient,
     writeFileUtf8,
     appendFileUtf8,
-    deleteIfExists,
+    deleteFileIfExists,
+    deleteFileIfExistsNoThrow,
+    deleteDirIfExists,
+    deleteDirIfExistsNoThrow,
 
     -- * Anti-punning aliases
     List,
@@ -152,6 +155,7 @@ import Optics.Core as X
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
 import System.Directory qualified as Dir
+import System.FilePath as X ((</>))
 import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
 import TOML as X
   ( DecodeTOML (..),
@@ -302,8 +306,55 @@ type Tuple3 = (,,)
 -- | Deletes a file if it exists.
 --
 -- @since 0.5
-deleteIfExists :: FilePath -> IO ()
-deleteIfExists fp =
-  Dir.doesFileExist fp >>= \case
-    True -> Dir.removeFile fp
+deleteFileIfExists :: FilePath -> IO ()
+deleteFileIfExists = deleteIfExists Dir.doesFileExist Dir.removeFile
+
+-- | 'deleteFileIfExists' except catches all exceptions.
+--
+-- @since 0.5
+deleteFileIfExistsNoThrow :: FilePath -> IO (Maybe SomeException)
+deleteFileIfExistsNoThrow =
+  deleteIfExistsNoThrow
+    Dir.doesFileExist
+    Dir.removeFile
+
+-- | Deletes a directory if it exists.
+--
+-- @since 0.5
+deleteDirIfExists :: FilePath -> IO ()
+deleteDirIfExists = deleteIfExists Dir.doesDirectoryExist Dir.removeDirectory
+
+-- | 'deleteDirIfExists' except catches all exceptions.
+--
+-- @since 0.5
+deleteDirIfExistsNoThrow :: FilePath -> IO (Maybe SomeException)
+deleteDirIfExistsNoThrow =
+  deleteIfExistsNoThrow
+    Dir.doesDirectoryExist
+    Dir.removeDirectory
+
+-- | Deletes a file if it exists.
+--
+-- @since 0.5
+deleteIfExists ::
+  (FilePath -> IO Bool) ->
+  (FilePath -> IO ()) ->
+  FilePath ->
+  IO ()
+deleteIfExists exists del fp = do
+  exists fp >>= \case
+    True -> del fp
     False -> pure ()
+
+-- | 'deleteFileIfExists' except catches all exceptions.
+--
+-- @since 0.5
+deleteIfExistsNoThrow ::
+  (FilePath -> IO Bool) ->
+  (FilePath -> IO ()) ->
+  FilePath ->
+  IO (Maybe SomeException)
+deleteIfExistsNoThrow exists del fp =
+  tryAny (deleteIfExists exists del fp) >>= \case
+    Right _ -> pure Nothing
+    Left ex -> pure $ Just ex

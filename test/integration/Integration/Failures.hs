@@ -48,7 +48,7 @@ duplicateKeys = testCase "Duplicate keys throws exception" $ do
   case result of
     Just (MkDuplicateKeyError k) ->
       "key1" @=? k
-    Nothing -> assertFailure "Exception exception"
+    Nothing -> assertFailure "Expected exception"
 
   logs <- IORef.readIORef logsRef
   logs @=? []
@@ -65,7 +65,7 @@ emptyKey = testCase "Empty key throws exception" $ do
   case result of
     Just err@(MkTomlError _) ->
       "TOML error: Decode error at '.legend[0].key': Unexpected empty text" @=? displayException err
-    Nothing -> assertFailure "Exception exception"
+    Nothing -> assertFailure "Expected exception"
 
   logs <- IORef.readIORef logsRef
   logs @=? []

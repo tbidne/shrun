@@ -6,7 +6,6 @@ import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Functional.Utils qualified as U
 import System.Directory qualified as Dir
-import System.FilePath ((</>))
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
 import Test.Shrun.Verifier qualified as V
 

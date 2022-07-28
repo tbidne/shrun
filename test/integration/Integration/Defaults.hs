@@ -16,13 +16,13 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 
-specs :: TestTree
-specs =
+specs :: IO TestArgs -> TestTree
+specs testArgs =
   testGroup
     "Default configuration behavior"
     [ defaultEnv,
       usesDefaultConfigFile,
-      cliOverridesConfigFile,
+      cliOverridesConfigFile testArgs,
       ignoresDefaultConfigFile
     ]
 
@@ -70,22 +70,24 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
           commands = NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\"")
         }
 
-cliOverridesConfigFile :: TestTree
-cliOverridesConfigFile = testCase "CLI args overrides config file" $ do
+cliOverridesConfigFile :: IO TestArgs -> TestTree
+cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
+  logPath <- (</> "cli-log") . view #workingTmpDir <$> testArgs
   logsRef <- IORef.newIORef []
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
-    `finally` deleteIfExists "log"
+
+  makeEnvAndVerify (args logPath) (`runConfigIO` logsRef) expected
+    `finally` deleteFileIfExists logPath
 
   logs <- IORef.readIORef logsRef
   logs @=? []
   where
-    args =
+    args logPath =
       [ "--config",
         "test/integration/toml/overridden.toml",
         "--timeout",
         "10",
         "--file-log",
-        "log",
+        logPath,
         "--file-log-strip-control",
         "none",
         "--cmd-log",

@@ -11,7 +11,6 @@ import Functional.TestArgs (TestArgs (..))
 import Functional.Timeout qualified as Timeout
 import Functional.Truncation qualified as Truncation
 import System.Directory qualified as Dir
-import System.FilePath ((</>))
 import Test.Tasty qualified as Tasty
 
 -- | Entry point for functional tests.

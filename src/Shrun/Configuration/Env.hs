@@ -60,7 +60,6 @@ import Shrun.Effects.Terminal (Terminal (..))
 import Shrun.Effects.Timing (Timing)
 import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
-import System.FilePath ((</>))
 
 -- | @since 0.5
 newtype TomlError = MkTomlError
