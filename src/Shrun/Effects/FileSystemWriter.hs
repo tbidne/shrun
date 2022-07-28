@@ -21,11 +21,6 @@ class Monad m => FileSystemWriter m where
   -- @since 0.5
   appendFile :: FilePath -> Text -> m ()
 
-  -- | Opens a file.
-  --
-  -- @since 0.5
-  openFile :: FilePath -> IOMode -> m Handle
-
   -- | Deletes a file.
   --
   -- @since 0.5
@@ -49,7 +44,6 @@ class Monad m => FileSystemWriter m where
 -- | @since 0.5
 instance FileSystemWriter IO where
   appendFile = appendFileUtf8
-  openFile = IO.openFile
   deleteFile = Dir.removeFile
   hPut h = BS.hPut h . TEnc.encodeUtf8
   hFlush = IO.hFlush
@@ -58,7 +52,6 @@ instance FileSystemWriter IO where
 -- | @since 0.5
 instance (FileSystemWriter m, MonadUnliftIO m) => FileSystemWriter (ReaderT env m) where
   appendFile fp = lift . appendFile fp
-  openFile fp = lift . openFile fp
   deleteFile = lift . deleteFile
   hPut h = lift . hPut h
   hFlush = lift . hFlush

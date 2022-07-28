@@ -18,6 +18,7 @@ module Shrun.Prelude
     (<<$>>),
     (.>),
     monoBimap,
+    m2b,
 
     -- * 'Text' replacements for 'P.String' functions.
     error,
@@ -274,6 +275,14 @@ f .> g = g . f
 {-# INLINE (.>) #-}
 
 infixr 9 .>
+
+-- | Transforms a maybe to a bool
+--
+-- @since 0.1
+m2b :: Maybe a -> Bool
+m2b (Just _) = True
+m2b Nothing = False
+{-# INLINE m2b #-}
 
 -- | Alias for [].
 --

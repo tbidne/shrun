@@ -1,7 +1,8 @@
 module Integration.Examples (specs) where
 
+import Data.IORef qualified as IORef
 import Integration.Prelude
-import Integration.Utils (makeEnvAndVerify, _MkConfigIO)
+import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -18,35 +19,47 @@ specs =
     ]
 
 examplesConfig :: TestTree
-examplesConfig =
-  testCase "examples/config.toml is valid" $
-    do
-      makeEnvAndVerify
-        ["-c", "examples/config.toml", "cmd"]
-        (view _MkConfigIO)
-        (Just 20)
-        (Just ())
-        StripControlAll
-        Enabled
-        ShowKey
-        (Just 80)
-        (Just 0)
-        StripControlSmart
-        False
-        (NESeq.singleton "cmd")
+examplesConfig = testCase "examples/config.toml is valid" $ do
+  logsRef <- IORef.newIORef []
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- IORef.readIORef logsRef
+  logs @=? []
+  where
+    args = ["-c", "examples/config.toml", "cmd"]
+    expected =
+      MkSimpleEnv
+        { timeout = Just 20,
+          fileLogging = True,
+          fileLogStripControl = StripControlAll,
+          cmdLogging = Enabled,
+          cmdDisplay = ShowKey,
+          cmdNameTrunc = Just 80,
+          cmdLineTrunc = Just 150,
+          stripControl = StripControlSmart,
+          disableLogging = False,
+          commands = NESeq.singleton "cmd"
+        }
 
 examplesDefault :: TestTree
 examplesDefault = testCase "examples/default.toml is valid" $ do
-  makeEnvAndVerify
-    ["-c", "examples/default.toml", "cmd"]
-    (view _MkConfigIO)
-    Nothing
-    Nothing
-    StripControlAll
-    Disabled
-    ShowKey
-    Nothing
-    Nothing
-    StripControlSmart
-    False
-    (NESeq.singleton "cmd")
+  logsRef <- IORef.newIORef []
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- IORef.readIORef logsRef
+  logs @=? []
+  where
+    args = ["-c", "examples/default.toml", "cmd"]
+    expected =
+      MkSimpleEnv
+        { timeout = Nothing,
+          fileLogging = False,
+          fileLogStripControl = StripControlAll,
+          cmdLogging = Disabled,
+          cmdDisplay = ShowKey,
+          cmdNameTrunc = Nothing,
+          cmdLineTrunc = Nothing,
+          stripControl = StripControlSmart,
+          disableLogging = False,
+          commands = NESeq.singleton "cmd"
+        }

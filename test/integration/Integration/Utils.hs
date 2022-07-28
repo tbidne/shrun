@@ -1,24 +1,19 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Integration.Utils
   ( ConfigIO (..),
-    _MkConfigIO,
+    runConfigIO,
     NoConfigIO (..),
-    _MkNoConfigIO,
+    runNoConfigIO,
+    SimpleEnv (..),
     makeEnvAndVerify,
   )
 where
 
-import Data.Maybe (isJust)
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Env.Types
-  ( CmdDisplay,
-    CmdLogging,
-    StripControl,
-    TruncRegion (..),
-    Truncation,
-  )
+import Shrun.Configuration.Env.Types (CmdDisplay, CmdLogging, Env, StripControl, TruncRegion (..), Truncation)
 import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
@@ -29,20 +24,21 @@ import Shrun.Effects.Terminal (Terminal (..))
 import System.Environment (withArgs)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
-newtype ConfigIO a = MkConfigIO (IO a)
+newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
   deriving
     ( Applicative,
       FileSystemWriter,
       Functor,
       Monad,
       MonadIO,
+      MonadReader (IORef [Text]),
       MonadUnliftIO,
-      Mutable,
-      Terminal
+      Mutable
     )
-    via IO
+    via (ReaderT (IORef [Text])) IO
 
-makePrisms ''ConfigIO
+runConfigIO :: ConfigIO a -> IORef [Text] -> IO a
+runConfigIO (MkConfigIO rdr) = runReaderT rdr
 
 instance FileSystemReader ConfigIO where
   getXdgConfig _ = pure "test/integration/toml"
@@ -51,8 +47,14 @@ instance FileSystemReader ConfigIO where
   doesFileExist = liftIO . doesFileExist
   getArgs = liftIO getArgs
 
+instance Terminal ConfigIO where
+  putTextLn t = ask >>= (`modifyIORef'` (t :))
+  -- hardcoded so we can test 'detect'
+  getTerminalWidth = pure 0
+  sleep = liftIO . sleep
+
 -- IO with no default config file
-newtype NoConfigIO a = MkNoConfigIO (IO a)
+newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
   deriving
     ( Applicative,
       FileSystemWriter,
@@ -60,12 +62,12 @@ newtype NoConfigIO a = MkNoConfigIO (IO a)
       Monad,
       MonadIO,
       MonadUnliftIO,
-      Mutable,
-      Terminal
+      Mutable
     )
-    via IO
+    via (ReaderT (IORef [Text])) IO
 
-makePrisms ''NoConfigIO
+runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
+runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
 
 instance FileSystemReader NoConfigIO where
   getXdgConfig _ = pure "./"
@@ -73,6 +75,44 @@ instance FileSystemReader NoConfigIO where
   getFileSize = liftIO . getFileSize
   doesFileExist = liftIO . doesFileExist
   getArgs = liftIO getArgs
+
+deriving via ConfigIO instance Terminal NoConfigIO
+
+-- | Used to check our result Env against our expectations. Very similar to
+-- real Env, except some types are simplified:
+--
+-- * FileLogging is merely a bool since we just want to check off/on, not
+--   equality with a file handle or queue.
+data SimpleEnv = MkSimpleEnv
+  { timeout :: Maybe Timeout,
+    fileLogging :: Bool,
+    fileLogStripControl :: StripControl,
+    cmdLogging :: CmdLogging,
+    cmdDisplay :: CmdDisplay,
+    cmdNameTrunc :: Maybe (Truncation 'TCmdName),
+    cmdLineTrunc :: Maybe (Truncation 'TCmdLine),
+    stripControl :: StripControl,
+    disableLogging :: Bool,
+    commands :: NonEmptySeq Command
+  }
+  deriving stock (Eq, Show)
+
+makeFieldLabelsNoPrefix ''SimpleEnv
+
+simplifyEnv :: Getter Env SimpleEnv
+simplifyEnv = to $ \env ->
+  MkSimpleEnv
+    { timeout = env ^. #timeout,
+      fileLogging = m2b (env ^. #fileLogging),
+      fileLogStripControl = env ^. #fileLogStripControl,
+      cmdLogging = env ^. #cmdLogging,
+      cmdDisplay = env ^. #cmdDisplay,
+      cmdNameTrunc = env ^. #cmdNameTrunc,
+      cmdLineTrunc = env ^. #cmdLineTrunc,
+      stripControl = env ^. #stripControl,
+      disableLogging = env ^. #disableLogging,
+      commands = env ^. #commands
+    }
 
 -- | Makes an 'Env' for the given monad and compares the result with the
 -- expected params.
@@ -88,56 +128,14 @@ makeEnvAndVerify ::
   List String ->
   -- | Natural transformation from m to IO.
   (forall x. m x -> IO x) ->
-  Maybe Timeout ->
-  Maybe () ->
-  StripControl ->
-  CmdLogging ->
-  CmdDisplay ->
-  Maybe (Truncation 'TCmdName) ->
-  Maybe (Truncation 'TCmdLine) ->
-  StripControl ->
-  Bool ->
-  NonEmptySeq Command ->
+  -- | Expectation
+  SimpleEnv ->
   Assertion
 makeEnvAndVerify
   args
   toIO
-  timeout
-  fileLogging
-  fileLogStripControl
-  cmdLogging
-  cmdDisplay
-  cmdNameTrunc
-  cmdLineTrunc
-  stripControl
-  disableLogging
-  commands = do
+  expected = do
     result <- toIO $ withRunInIO $ \runner ->
       withArgs args (runner (withEnv pure))
 
-    timeout @=? result ^. #timeout
-    fileLogStripControl @=? result ^. #fileLogStripControl
-    cmdLogging @=? result ^. #cmdLogging
-    cmdDisplay @=? result ^. #cmdDisplay
-    cmdNameTrunc @=? result ^. #cmdNameTrunc
-    stripControl @=? result ^. #stripControl
-    disableLogging @=? result ^. #disableLogging
-    commands @=? result ^. #commands
-
-    let resultFileLogging = result ^. #fileLogging
-    case (fileLogging, resultFileLogging) of
-      (Just _, Just _) -> pure ()
-      (Nothing, Nothing) -> pure ()
-      (Just _, Nothing) -> assertFailure "Expected file logging to be enabled"
-      (Nothing, Just _) -> assertFailure "Expected file logging to be disabled"
-
-    -- Because the 'detect' option will read variable widths, depending on
-    -- the terminal size. We use 'Just 0' as a sentinel for "do not test the
-    -- actual value".
-    let resultcmdLineTrunc = result ^. #cmdLineTrunc
-    case cmdLineTrunc of
-      Just 0 ->
-        assertBool
-          ("Should be just " <> show resultcmdLineTrunc)
-          (isJust $ result ^. #cmdLineTrunc)
-      other -> other @=? resultcmdLineTrunc
+    expected @=? result ^. simplifyEnv
