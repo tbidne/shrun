@@ -27,6 +27,8 @@ the major/minor/patch definitions apply to the application's interface / usage
   to file logs.
 * `--file-log-mode` option for choosing between `append` and `write` file
   modes.
+* `--file-log-size-mode` option for warning or automatically deleting the
+  log file if it crosses a user-specified threshold.
 
 ### Fixed
 * Improve `--strip-control`. `all` should no longer leave ansi remnants, and

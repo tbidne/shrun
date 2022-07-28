@@ -37,6 +37,17 @@ packages:
     commit: 078953fdac6bb9738aa6adae12bd893cf4debc01
     git: https://github.com/tbidne/algebra-simple.git
 - completed:
+    name: byte-types
+    pantry-tree:
+      sha256: 22e70ed25469cb754ccccc855ede91251c40f30c7b839d4e5c1f6b76f0597850
+      size: 4527
+    commit: 45b593e3043df0a968074bee0bec0843105b41c4
+    git: https://github.com/tbidne/byte-types.git
+    version: '0.1'
+  original:
+    commit: 45b593e3043df0a968074bee0bec0843105b41c4
+    git: https://github.com/tbidne/byte-types.git
+- completed:
     name: relative-time
     pantry-tree:
       sha256: dda4ccaac47d1d9cbfd4ca30cdc2b25a442dd9b7745156160999c05811762c8e

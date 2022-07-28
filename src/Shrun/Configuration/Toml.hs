@@ -10,7 +10,7 @@ module Shrun.Configuration.Toml
   )
 where
 
-import Shrun.Configuration.Args (Args (..), FileMode (..))
+import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
 import Shrun.Configuration.Env.Types
   ( CmdDisplay,
     CmdLogging,
@@ -45,6 +45,10 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.5
     fileLogStripControl :: !(Maybe StripControl),
+    -- | Threshold for when we should warn about the log file size.
+    --
+    -- @since 0.5
+    fileLogSizeMode :: !(Maybe FileSizeMode),
     -- | Whether to log commands.
     --
     -- @since 0.5
@@ -89,7 +93,7 @@ makeFieldLabelsNoPrefix ''TomlConfig
 
 -- | @since 0.5
 instance Semigroup TomlConfig where
-  MkTomlConfig a b c d e f g h i j k <> MkTomlConfig a' b' c' d' e' f' g' h' i' j' k' =
+  MkTomlConfig a b c d e f g h i j k l <> MkTomlConfig a' b' c' d' e' f' g' h' i' j' k' l' =
     MkTomlConfig
       (a <|> a')
       (b <|> b')
@@ -102,11 +106,13 @@ instance Semigroup TomlConfig where
       (i <|> i')
       (j <|> j')
       (k <|> k')
+      (l <|> l')
 
 -- | @since 0.5
 instance Monoid TomlConfig where
   mempty =
     MkTomlConfig
+      Nothing
       Nothing
       Nothing
       Nothing
@@ -127,6 +133,7 @@ instance DecodeTOML TomlConfig where
       <*> decodeFileLogging
       <*> decodeFileLogMode
       <*> decodeFileLogStripControl
+      <*> decodeFileLogSizeMode
       <*> decodeCmdLogging
       <*> decodeCmdDisplay
       <*> decodeCmdNameTrunc
@@ -172,6 +179,10 @@ decodeFileLogStripControl :: Decoder (Maybe StripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "file-log-strip-control"
 
 -- | @since 0.5
+decodeFileLogSizeMode :: Decoder (Maybe FileSizeMode)
+decodeFileLogSizeMode = getFieldOptWith tomlDecoder "file-log-size-mode"
+
+-- | @since 0.5
 decodeDisableLogging :: Decoder (Maybe Bool)
 decodeDisableLogging = getFieldOptWith tomlDecoder "disable-log"
 
@@ -189,6 +200,7 @@ argsToTomlConfig = to a2c
           fileLogging = args ^. #fileLogging,
           fileLogMode = args ^. #fileLogMode,
           fileLogStripControl = args ^. #fileLogStripControl,
+          fileLogSizeMode = args ^. #fileLogSizeMode,
           cmdLogging = args ^. #cmdLogging,
           cmdDisplay = args ^. #cmdDisplay,
           cmdNameTrunc = args ^. #cmdNameTrunc,

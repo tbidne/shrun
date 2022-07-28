@@ -30,6 +30,7 @@
     - [Command Log](#command-log)
     - [File Log](#file-log)
     - [File Log Mode](#file-log-mode)
+    - [File Log Size Mode](#file-log-size-mode)
     - [Disable Log](#disable-log)
   - [Log Formatting](#log-formatting)
     - [Key Hide](#key-hide)
@@ -95,7 +96,7 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 # Configuration
 
-`shrun` can be configured by either CLI args or a `toml` config file.
+`shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [./examples/default.toml](./examples/default.toml) for a description of the `toml` file.
 
 ## Core Functionality
 
@@ -225,6 +226,12 @@ Practically speaking, this does not have much effect, just that if a command die
 **Arg:** `--file-log-mode <append | write>`
 
 **Description:** Mode in which to open the log file. Defaults to write.
+
+### File Log Size Mode
+
+**Arg:** `--file-log-size-mode <warn SIZE | delete SIZE>`
+
+**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`.
 
 ### Disable Log
 

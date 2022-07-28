@@ -17,18 +17,18 @@ module Shrun.Utils
     diffTime,
     foldMap1,
 
-    -- * Refined Utils
-    _Refined,
+    -- * Misc Utils
+    parseByteText,
   )
 where
 
+import Data.Bytes
 import Data.Char (isControl, isLetter)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
 import GHC.Exts (IsList (..))
 import GHC.Int (Int64)
-import Refined (unrefine)
 import Refined qualified as R
 import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Prelude
@@ -294,6 +294,23 @@ splitAnsi t =
       Just (!ansiChar, !rest') -> (T.snoc ansiCodeNoChar ansiChar, splitAnsi rest')
       Nothing -> (ansiCodeNoChar, [])
 
--- | @since 0.5
-_Refined :: Getter (Refined p a) a
-_Refined = to unrefine
+-- | Parses bytes with arbitrary units and converts to bytes. First attempts
+-- to parse as a 'Natural' so we do not lose precision. If that fails, falls
+-- back to 'Double'.
+--
+-- ==== __Examples__
+--
+-- >>> parseByteText "120 mb"
+-- Right (MkBytes 120000000)
+--
+-- >>> parseByteText "4.5 terabytes"
+-- Right (MkBytes 4500000000000)
+--
+-- @since 0.5
+parseByteText :: Text -> Either Text (Bytes B Natural)
+parseByteText txt =
+  case parse @(SomeSize Natural) txt of
+    Right b -> Right $ toB b
+    Left _ -> case parse @(SomeSize Double) txt of
+      Right b -> Right (truncate <$> toB b)
+      Left err -> Left err

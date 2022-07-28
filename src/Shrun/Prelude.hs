@@ -104,6 +104,7 @@ import Data.Void as X (Void, absurd)
 import GHC.Float as X (Double (..), Float (..))
 import GHC.Generics as X (Generic)
 import GHC.Natural as X (Natural)
+import GHC.Real as X (truncate)
 import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X

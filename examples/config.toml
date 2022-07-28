@@ -1,4 +1,5 @@
-# All keys are optional
+# All keys are optional. The default descriptions describes what happens
+# when the key is omitted.
 
 # Sets a timeout, after which all remaining commands are terminated.
 # Can either be a non-negative integer (seconds) or a "time string"
@@ -11,10 +12,16 @@ timeout = 20
 file-log = "default"
 
 # Mode in which to read the log file. Defaults to write.
-file-log-log-mode = "write"
+file-log-mode = "write"
 
 # Like strip-control, but for file logs. Defaults to all.
 file-log-strip-control = "all"
+
+# Sets a threshold for the file log size, upon which we either print a
+# warning or delete the file, if it is exceeded. Format is value and units
+# e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to no warnings
+# nor deletions.
+file-log-size-mode = "warn 1 g"
 
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.

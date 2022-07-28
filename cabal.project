@@ -6,6 +6,7 @@ package shrun
     -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints -Wunused-packages -Wmissing-deriving-strategies
+    -Wno-unticked-promoted-constructors
 
   benchmark-options:
     +RTS -T --nonmoving-gc -RTS --csv bench.csv
@@ -20,6 +21,11 @@ source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
     tag: 078953fdac6bb9738aa6adae12bd893cf4debc01
+
+source-repository-package
+    type: git
+    location: https://github.com/tbidne/byte-types.git
+    tag: 45b593e3043df0a968074bee0bec0843105b41c4
 
 source-repository-package
     type: git

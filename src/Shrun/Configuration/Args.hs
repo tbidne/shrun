@@ -7,11 +7,14 @@
 module Shrun.Configuration.Args
   ( Args (..),
     FileMode (..),
+    FileSizeMode (..),
     defaultArgs,
     parserInfoArgs,
   )
 where
 
+import Data.Bytes (Bytes (..), Size (..))
+import Data.Char qualified as Ch
 import Data.List qualified as L
 import Data.List.NonEmpty qualified as NE
 import Data.String (IsString (..))
@@ -42,13 +45,16 @@ import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.Prelude
+import Shrun.Utils qualified as U
 
 -- | File mode.
 --
 -- @since 0.5
 data FileMode
-  = FileModeAppend
-  | FileModeWrite
+  = -- | @since 0.5
+    FileModeAppend
+  | -- | @since 0.5
+    FileModeWrite
   deriving stock
     ( -- | @since 0.5
       Eq,
@@ -73,6 +79,57 @@ instance DecodeTOML FileMode where
       "append" -> pure FileModeAppend
       "write" -> pure FileModeWrite
       bad -> fail $ "Unrecognized file-mode: " <> unpack bad
+
+parseFileSizeMode :: MonadFail m => Text -> m FileSizeMode
+parseFileSizeMode txt = do
+  let (m, byteTxt) = T.break Ch.isSpace txt
+  cons <- case m of
+    "warn" -> pure FileSizeModeWarn
+    "delete" -> pure FileSizeModeDelete
+    bad -> fail $ "Unrecognized file-log-size-mode: " <> unpack bad
+  case U.parseByteText byteTxt of
+    Right b -> pure $ cons b
+    Left err -> fail $ "Could not parse --file-log-size-mode size: " <> unpack err
+
+-- | Determines what to do if the log file surpasses the given size
+-- threshold.
+--
+-- @since 0.5
+data FileSizeMode
+  = -- | Print a warning.
+    --
+    -- @since 0.5
+    FileSizeModeWarn (Bytes B Natural)
+  | -- | Delete the file.
+    --
+    -- @since 0.5
+    FileSizeModeDelete (Bytes B Natural)
+  deriving stock
+    ( -- | @since 0.5
+      Eq,
+      -- | @since 0.5
+      Show
+    )
+
+-- | @since 0.5
+instance Semigroup FileSizeMode where
+  FileSizeModeWarn l <> FileSizeModeWarn r = FileSizeModeWarn $ takeGt l r
+  l <> FileSizeModeWarn _ = l
+  FileSizeModeWarn _ <> r = r
+  FileSizeModeDelete l <> FileSizeModeDelete r = FileSizeModeDelete $ takeGt l r
+
+-- | @since 0.5
+instance Monoid FileSizeMode where
+  mempty = FileSizeModeWarn $ MkBytes 0
+
+-- | @since 0.5
+instance DecodeTOML FileSizeMode where
+  tomlDecoder = tomlDecoder >>= parseFileSizeMode
+
+takeGt :: Ord n => Bytes s n -> Bytes s n -> Bytes s n
+takeGt l r
+  | l >= r = l
+  | otherwise = r
 
 -- | Type for parsing command line args.
 --
@@ -128,6 +185,10 @@ data Args = MkArgs
     --
     -- @since 0.5
     fileLogStripControl :: !(Maybe StripControl),
+    -- | Threshold for when we should warn about the log file size.
+    --
+    -- @since 0.5
+    fileLogSizeMode :: !(Maybe FileSizeMode),
     -- | List of commands.
     --
     -- @since 0.1
@@ -153,6 +214,7 @@ defaultArgs cmds =
       fileLogging = empty,
       fileLogStripControl = empty,
       fileLogMode = empty,
+      fileLogSizeMode = empty,
       cmdDisplay = empty,
       configPath = empty,
       noConfig = False,
@@ -204,6 +266,7 @@ argsParser =
     <*> fileLoggingParser
     <*> fileLogModeParser
     <*> fileLogStripControlParser
+    <*> fileLogSizeModeParser
     <*> commandsParser
     <**> OA.helper
     <**> version
@@ -467,6 +530,27 @@ fileLogStripControlParser =
         [ "--strip-control for file logs created with --file-log. ",
           "Defaults to all."
         ]
+
+fileLogSizeModeParser :: Parser (Maybe FileSizeMode)
+fileLogSizeModeParser =
+  OA.optional $
+    OA.option
+      readFileSize
+      ( mconcat
+          [ OA.long "file-log-size-mode",
+            OA.help helpTxt,
+            OA.metavar "<warn SIZE | delete SIZE>"
+          ]
+      )
+  where
+    helpTxt =
+      mconcat
+        [ "Sets a threshold for the file log size, upon which we either ",
+          "print a warning or delete the file, if it is exceeded. ",
+          "The SIZE should include the value and units e.g. ",
+          "warn 10 mb, warn 5 gigabytes, delete 20.5B."
+        ]
+    readFileSize = OA.str >>= parseFileSizeMode
 
 commandLoggingParser :: Parser (Maybe CmdLogging)
 commandLoggingParser =

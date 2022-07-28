@@ -73,6 +73,7 @@ library
   build-depends:
     , algebra-simple        ^>=0.1
     , base                  >=4.14.1.0 && <4.17
+    , byte-types            ^>=0.1
     , bytestring            >=0.10.12  && <0.12
     , clock                 >=0.7.2    && <0.9
     , concurrent-output     ^>=1.10.7
@@ -152,6 +153,7 @@ test-suite unit
   build-depends:
     , algebra-simple
     , base
+    , byte-types
     , clock
     , hedgehog              >=1.0.2   && <1.2
     , optparse-applicative

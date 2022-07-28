@@ -9,6 +9,7 @@ where
 import Data.ByteString qualified as BS
 import Data.Text.Encoding qualified as TEnc
 import Shrun.Prelude
+import System.Directory qualified as Dir
 import System.IO qualified as IO
 
 -- | Represents a writable filesystem.
@@ -25,10 +26,10 @@ class Monad m => FileSystemWriter m where
   -- @since 0.5
   openFile :: FilePath -> IOMode -> m Handle
 
-  -- | Closes a file.
+  -- | Deletes a file.
   --
   -- @since 0.5
-  hClose :: Handle -> m ()
+  deleteFile :: FilePath -> m ()
 
   -- | Writes the text to the specified handle.
   --
@@ -49,7 +50,7 @@ class Monad m => FileSystemWriter m where
 instance FileSystemWriter IO where
   appendFile = appendFileUtf8
   openFile = IO.openFile
-  hClose = IO.hClose
+  deleteFile = Dir.removeFile
   hPut h = BS.hPut h . TEnc.encodeUtf8
   hFlush = IO.hFlush
   withFile = IO.withFile
@@ -58,7 +59,7 @@ instance FileSystemWriter IO where
 instance (FileSystemWriter m, MonadUnliftIO m) => FileSystemWriter (ReaderT env m) where
   appendFile fp = lift . appendFile fp
   openFile fp = lift . openFile fp
-  hClose = lift . hClose
+  deleteFile = lift . deleteFile
   hPut h = lift . hPut h
   hFlush = lift . hFlush
   withFile fp mode m =

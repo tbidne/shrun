@@ -26,9 +26,15 @@ module Shrun.Configuration.Env
   )
 where
 
+import Data.Bytes
+  ( FloatingFormatter (MkFloatingFormatter),
+    Normalize (normalize),
+    formatSized,
+    sizedFormatterNatural,
+  )
 import Data.Sequence qualified as Seq
 import Shrun
-import Shrun.Configuration.Args (FileMode (..))
+import Shrun.Configuration.Args (FileMode (..), FileSizeMode (..))
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -192,15 +198,52 @@ fromToml onEnv cfg cmdsText = do
     Just FPDefault -> do
       configDir <- getShrunXdgConfig
       let fp = configDir </> "log"
+      handleLogFileSize fp
 
       queue <- liftSTM $ newTBQueue 1000
 
       withFile fp ioMode $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
-    Just (FPManual f) -> do
+    Just (FPManual fp) -> do
+      handleLogFileSize fp
       queue <- liftSTM $ newTBQueue 1000
-      withFile f ioMode $ \h ->
+      withFile fp ioMode $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
   where
     maybeOrMempty :: Monoid a => Lens' TomlConfig (Maybe a) -> a
     maybeOrMempty = fromMaybe mempty . (`view` cfg)
+
+    handleLogFileSize fp = case cfg ^. #fileLogSizeMode of
+      Nothing -> pure ()
+      Just fileSizeMode -> do
+        fileSize <- getFileSize fp
+        case fileSizeMode of
+          FileSizeModeWarn warnSize ->
+            if fileSize > warnSize
+              then putTextLn $ sizeWarning warnSize fp fileSize
+              else pure ()
+          FileSizeModeDelete delSize ->
+            if fileSize > delSize
+              then do
+                putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
+                deleteFile fp
+              else pure ()
+
+    sizeWarning warnSize fp fileSize =
+      mconcat
+        [ "Warning: log file '",
+          pack fp,
+          "' has size: ",
+          pack (formatBytes fileSize),
+          ", but specified threshold is: ",
+          pack (formatBytes warnSize),
+          "."
+        ]
+
+    formatBytes =
+      formatSized (MkFloatingFormatter (Just 2)) sizedFormatterNatural
+        . normalize
+        -- Convert to double _before_ normalizing. We may lose some precision
+        -- here, but it is better than normalizing a natural, which will
+        -- truncate (i.e. greater precision loss).
+        . fmap (fromIntegral @Natural @Double)

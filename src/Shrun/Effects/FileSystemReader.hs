@@ -7,6 +7,7 @@ module Shrun.Effects.FileSystemReader
   )
 where
 
+import Data.Bytes (Bytes (..), Size (B))
 import Options.Applicative (execParser)
 import Shrun.Configuration.Args (Args, parserInfoArgs)
 import Shrun.Prelude
@@ -27,6 +28,11 @@ class Monad m => FileSystemReader m where
   -- @since 0.5
   readFile :: FilePath -> m Text
 
+  -- | Gets the file size.
+  --
+  -- @since 0.5
+  getFileSize :: FilePath -> m (Bytes B Natural)
+
   -- | Test for file existence.
   --
   -- @since 0.5
@@ -44,10 +50,24 @@ instance FileSystemReader IO where
   doesFileExist = Dir.doesFileExist
   getArgs = execParser parserInfoArgs
 
+  getFileSize fp = do
+    bytes <- Dir.getFileSize fp
+    if bytes < 0
+      then
+        throwString $
+          mconcat
+            [ "File '",
+              fp,
+              "' has negative size: ",
+              show bytes
+            ]
+      else pure $ MkBytes (fromIntegral bytes)
+
 -- | @since 0.5
 instance FileSystemReader m => FileSystemReader (ReaderT env m) where
   getXdgConfig = lift . getXdgConfig
   readFile = lift . readFile
+  getFileSize = lift . getFileSize
   doesFileExist = lift . doesFileExist
   getArgs = lift getArgs
 

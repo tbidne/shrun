@@ -1,9 +1,10 @@
 -- | Specs for Shrun.Args.
 module Unit.Specs.Shrun.Configuration.Args (specs) where
 
+import Data.Bytes (Bytes (..))
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import Shrun.Configuration.Args (Args (..), FileMode (..))
+import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
@@ -29,6 +30,7 @@ specs =
       fileLoggingSpecs,
       fileLogModeSpecs,
       fileLogStripControlSpecs,
+      fileLogSizeModeSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
       stripControlSpecs,
@@ -61,6 +63,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               fileLogging = Nothing,
               fileLogMode = Nothing,
               fileLogStripControl = Nothing,
+              fileLogSizeMode = Nothing,
               disableLogging = Nothing,
               commands = NESeq.singleton "command"
             }
@@ -277,6 +280,38 @@ parseFileLogStripControlSmart = testCase
           Just $
             (Args.defaultArgs defCommand)
               { fileLogStripControl = Just StripControlSmart
+              }
+    verifyResult argList expected
+
+fileLogSizeModeSpecs :: TestTree
+fileLogSizeModeSpecs =
+  testGroup
+    "File log size mode parsing"
+    [ parseFileLogSizeWarn,
+      parseFileLogSizeDelete
+    ]
+
+parseFileLogSizeWarn :: TestTree
+parseFileLogSizeWarn = testCase
+  "Should parse --file-log-size-mode warn"
+  $ do
+    let argList = ["--file-log-size-mode", "warn 10 gb", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { fileLogSizeMode = Just $ FileSizeModeWarn $ MkBytes 10_000_000_000
+              }
+    verifyResult argList expected
+
+parseFileLogSizeDelete :: TestTree
+parseFileLogSizeDelete = testCase
+  "Should parse --file-log-size-mode delete"
+  $ do
+    let argList = ["--file-log-size-mode", "delete 2.4Kilobytes", "command"]
+        expected =
+          Just $
+            (Args.defaultArgs defCommand)
+              { fileLogSizeMode = Just $ FileSizeModeDelete $ MkBytes 2_400
               }
     verifyResult argList expected
 

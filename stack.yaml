@@ -7,12 +7,15 @@ ghc-options:
     -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints -Wunused-packages -Wmissing-deriving-strategies
+    -Wno-unticked-promoted-constructors
 extra-deps:
 - env-guard-0.2@sha256:59410eed9b9ddbd115760a59c7170927320d8612e414701d323a0c8985c97523,1251
 - package-version-0.1.0.0@sha256:bb9fc93e905540aa8e1b32f80c2dc82756a4481c63779bd92e3796ed8085ab98,2854
 - strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
 - git: https://github.com/tbidne/algebra-simple.git
   commit: 078953fdac6bb9738aa6adae12bd893cf4debc01
+- git: https://github.com/tbidne/byte-types.git
+  commit: 45b593e3043df0a968074bee0bec0843105b41c4
 - git: https://github.com/tbidne/relative-time.git
   commit: f25b269f0ff3eefd4a568cc11611bc3ac8fa565c
 flags:

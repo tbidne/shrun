@@ -47,6 +47,7 @@ makePrisms ''ConfigIO
 instance FileSystemReader ConfigIO where
   getXdgConfig _ = pure "test/integration/toml"
   readFile = liftIO . readFile
+  getFileSize = liftIO . getFileSize
   doesFileExist = liftIO . doesFileExist
   getArgs = liftIO getArgs
 
@@ -69,6 +70,7 @@ makePrisms ''NoConfigIO
 instance FileSystemReader NoConfigIO where
   getXdgConfig _ = pure "./"
   readFile = liftIO . readFile
+  getFileSize = liftIO . getFileSize
   doesFileExist = liftIO . doesFileExist
   getArgs = liftIO getArgs
 
