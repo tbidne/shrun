@@ -15,7 +15,8 @@ specs =
       duplicateKeys,
       emptyKey,
       emptyValue,
-      cyclicKeys
+      cyclicKeys,
+      emptyFileLog
     ]
 
 missingConfig :: TestTree
@@ -29,12 +30,12 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
 
   case result of
     Nothing -> assertFailure "Exception exception"
-    Just ex ->
-      "bad-file.toml: withBinaryFile: does not exist (No such file or directory)"
-        @=? displayException ex
+    Just ex -> expectedErr @=? displayException ex
 
   logs <- IORef.readIORef logsRef
   logs @=? []
+  where
+    expectedErr = "bad-file.toml: withBinaryFile: does not exist (No such file or directory)"
 
 duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
@@ -63,12 +64,13 @@ emptyKey = testCase "Empty key throws exception" $ do
         `catch` \e -> pure $ Just e
 
   case result of
-    Just err@(MkTomlError _) ->
-      "TOML error: Decode error at '.legend[0].key': Unexpected empty text" @=? displayException err
+    Just err@(MkTomlError _) -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
   logs <- IORef.readIORef logsRef
   logs @=? []
+  where
+    expectedErr = "TOML error: Decode error at '.legend[0].key': Unexpected empty text"
 
 emptyValue :: TestTree
 emptyValue = testCase "Empty value throws exception" $ do
@@ -80,12 +82,13 @@ emptyValue = testCase "Empty value throws exception" $ do
         `catch` \e -> pure $ Just e
 
   case result of
-    Just err@(MkTomlError _) ->
-      "TOML error: Decode error at '.legend[0].val': Unexpected empty text" @=? displayException err
+    Just err@(MkTomlError _) -> expectedErr @=? displayException err
     Nothing -> assertFailure "Exception exception"
 
   logs <- IORef.readIORef logsRef
   logs @=? []
+  where
+    expectedErr = "TOML error: Decode error at '.legend[0].val': Unexpected empty text"
 
 cyclicKeys :: TestTree
 cyclicKeys = testCase "Cyclic keys throws exception" $ do
@@ -103,3 +106,21 @@ cyclicKeys = testCase "Cyclic keys throws exception" $ do
 
   logs <- IORef.readIORef logsRef
   logs @=? []
+
+emptyFileLog :: TestTree
+emptyFileLog = testCase "Empty file log throws exception" $ do
+  logsRef <- IORef.newIORef []
+  let args = ["-c", "test/integration/toml/empty-file-log.toml", "cmd"]
+  result <-
+    flip runConfigIO logsRef $
+      withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
+        `catch` \e -> pure $ Just e
+
+  case result of
+    Just err@(MkTomlError _) -> expectedErr @=? displayException err
+    Nothing -> assertFailure "Expected exception"
+
+  logs <- IORef.readIORef logsRef
+  logs @=? []
+  where
+    expectedErr = "TOML error: Decode error at '.file-log': Empty path given for --file-log"

@@ -467,7 +467,7 @@ fileLoggingParser =
           [ OA.long "file-log",
             OA.short 'f',
             OA.help helpTxt,
-            OA.metavar "[PATH]"
+            OA.metavar "<default | PATH>"
           ]
       )
   where
@@ -477,17 +477,17 @@ fileLoggingParser =
           "the supplied file. Furthermore, command logs will be written to ",
           "the file irrespective of --cmd-log. Console logging is unaffected. ",
           "This can be useful for investigating command failures. ",
-          "If an empty argument is given (i.e. -f '', --file-log=) then we ",
-          "write to the Xdg config directory e.g. ",
-          "~/.config/shrun/log."
+          "If the string 'default' is given, then we write to the Xdg config ",
+          "directory e.g. ~/.config/shrun/log."
         ]
 
 readLogFile :: ReadM FilePathDefault
-readLogFile =
-  OA.str >>= \f ->
-    if null f
-      then pure FPDefault
-      else pure (FPManual f)
+readLogFile = do
+  f <- OA.str
+  case fmap Ch.toLower f of
+    "default" -> pure FPDefault
+    "" -> fail "Empty path given for --file-log"
+    _ -> pure (FPManual f)
 
 fileLogModeParser :: Parser (Maybe FileMode)
 fileLogModeParser =

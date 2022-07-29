@@ -17,9 +17,8 @@ the major/minor/patch definitions apply to the application's interface / usage
   part of the new toml file.
 * `--key-show` is now the default behavior. The flag has thus been renamed
   `--key-hide`, and is off by default.
-* `--file-log` no longer interprets `"d"` and `"default"`
-  as the default paths. Instead it expects an empty string e.g.
-  `--file-log=` or `-f ''`.
+* `--file-log` no longer interprets `d` as the default path. Only the string
+  `default` is expected.
 * Renamed toml's `--file-logging` to `--file-log` for consistency with CLI.
 
 ### Added

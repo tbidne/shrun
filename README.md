@@ -198,9 +198,9 @@ Practically speaking, this does not have much effect, just that if a command die
 
 ### File Log
 
-**Arg:** `-f, --file-log [PATH]`
+**Arg:** `-f, --file-log <default | PATH>`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the path is empty (e.g. `--file-log=`, `-f ''`), we will write to the Xdg config directory e.g. `~/.config/shrun/log`.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the Xdg config directory e.g. `~/.config/shrun/log`.
 
 **Example:**
 

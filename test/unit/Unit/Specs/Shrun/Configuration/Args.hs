@@ -163,7 +163,9 @@ fileLoggingSpecs =
     [ parseShortFileLogging,
       parseLongFileLogging,
       parseLongDefaultFileLogging,
-      parseShortDefaultFileLogging
+      parseShortDefaultFileLogging,
+      parseShortEmptyFileLoggingFails,
+      parseLongEmptyFileLoggingFails
     ]
 
 parseShortFileLogging :: TestTree
@@ -187,8 +189,8 @@ parseLongFileLogging = testCase "Should parse filepath with --file-log" $ do
   verifyResult argList expected
 
 parseLongDefaultFileLogging :: TestTree
-parseLongDefaultFileLogging = testCase "Should parse empty --file-log" $ do
-  let argList = ["--file-log", "", "command"]
+parseLongDefaultFileLogging = testCase "Should parse default --file-log" $ do
+  let argList = ["--file-log", "default", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
@@ -197,13 +199,25 @@ parseLongDefaultFileLogging = testCase "Should parse empty --file-log" $ do
   verifyResult argList expected
 
 parseShortDefaultFileLogging :: TestTree
-parseShortDefaultFileLogging = testCase "Should parse empty -f" $ do
-  let argList = ["-f", "", "command"]
+parseShortDefaultFileLogging = testCase "Should parse default -f" $ do
+  let argList = ["-f", "default", "command"]
       expected =
         Just $
           (Args.defaultArgs defCommand)
             { fileLogging = Just FPDefault
             }
+  verifyResult argList expected
+
+parseShortEmptyFileLoggingFails :: TestTree
+parseShortEmptyFileLoggingFails = testCase "Should parse empty -f as failure" $ do
+  let argList = ["-f", "command"]
+      expected = Nothing
+  verifyResult argList expected
+
+parseLongEmptyFileLoggingFails :: TestTree
+parseLongEmptyFileLoggingFails = testCase "Should parse empty --file-log as failure" $ do
+  let argList = ["--file-log=", "command"]
+      expected = Nothing
   verifyResult argList expected
 
 fileLogModeSpecs :: TestTree
