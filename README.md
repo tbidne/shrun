@@ -416,9 +416,9 @@ Because `shrun` is a flake, it be built as part of a nix expression. For instanc
       pkgs = import nixpkgs {
         system = system;
       };
-      shrun = shrun-src.defaultPackage.${system};
+      shrun = shrun-src.packages."${system}".default;
       # Alternative if you want tests disabled.
-      #shrun = pkgs.haskell.lib.dontCheck shrun-src.defaultPackage.${system};
+      #shrun = pkgs.haskell.lib.dontCheck shrun-src.packages."${system}".default;
     in
     {
       nixosConfigurations = {
