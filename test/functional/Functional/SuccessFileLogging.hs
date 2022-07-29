@@ -6,7 +6,6 @@ import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Functional.Utils qualified as U
-import System.Directory qualified as Dir
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
 import Test.Shrun.Verifier qualified as V
 
@@ -47,4 +46,5 @@ outfile = "log"
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do
   MkTestArgs {tmpDir} <- args
-  Dir.removeFile (tmpDir </> outfile)
+  _ <- deleteDirIfExistsNoThrow (tmpDir </> outfile)
+  pure ()

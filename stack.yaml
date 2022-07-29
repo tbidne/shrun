@@ -15,7 +15,7 @@ extra-deps:
 - git: https://github.com/tbidne/algebra-simple.git
   commit: 078953fdac6bb9738aa6adae12bd893cf4debc01
 - git: https://github.com/tbidne/byte-types.git
-  commit: 45b593e3043df0a968074bee0bec0843105b41c4
+  commit: a815b1af5c912a3441b34538b7a595b6053aa662
 - git: https://github.com/tbidne/relative-time.git
   commit: f25b269f0ff3eefd4a568cc11611bc3ac8fa565c
 flags:

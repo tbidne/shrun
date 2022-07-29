@@ -25,7 +25,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/byte-types.git
-    tag: 45b593e3043df0a968074bee0bec0843105b41c4
+    tag: a815b1af5c912a3441b34538b7a595b6053aa662
 
 source-repository-package
     type: git

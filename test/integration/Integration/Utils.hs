@@ -21,7 +21,6 @@ import Shrun.Effects.FileSystemReader (FileSystemReader (..))
 import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Terminal (Terminal (..))
-import System.Environment (withArgs)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
@@ -48,6 +47,7 @@ instance FileSystemReader ConfigIO where
   getArgs = liftIO getArgs
 
 instance Terminal ConfigIO where
+  -- capture logs
   putTextLn t = ask >>= (`modifyIORef'` (t :))
 
   -- hardcoded so we can test 'detect'
@@ -132,11 +132,6 @@ makeEnvAndVerify ::
   -- | Expectation
   SimpleEnv ->
   Assertion
-makeEnvAndVerify
-  args
-  toIO
-  expected = do
-    result <- toIO $ withRunInIO $ \runner ->
-      withArgs args (runner (withEnv pure))
-
-    expected @=? result ^. simplifyEnv
+makeEnvAndVerify args toIO expected = do
+  result <- toIO $ withArgs args (withEnv pure)
+  expected @=? result ^. simplifyEnv

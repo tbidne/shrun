@@ -33,16 +33,27 @@ specs args = do
 
 setup :: IO TestArgs
 setup = do
-  cwd <- (</> "test/functional") <$> Dir.getCurrentDirectory
-  let td = cwd </> "tmp"
-      lp = cwd </> "config.toml"
+  rootTmpDir <- (</> "shrun") <$> Dir.getTemporaryDirectory
+  let workingTmpDir = rootTmpDir </> "test/integration"
 
-  Dir.createDirectoryIfMissing False td
+  cwd <- (</> "test/functional") <$> Dir.getCurrentDirectory
+  let lp = cwd </> "config.toml"
+
+  Dir.createDirectoryIfMissing True workingTmpDir
   pure $
     MkTestArgs
-      { tmpDir = td,
+      { rootDir = rootTmpDir,
+        tmpDir = workingTmpDir,
         configPath = lp
       }
 
 teardown :: TestArgs -> IO ()
-teardown = Dir.removeDirectory . view #tmpDir
+teardown testArgs = do
+  let root = testArgs ^. #rootDir
+      cwd = testArgs ^. #tmpDir
+
+  _ <- deleteDirIfExistsNoThrow cwd
+  _ <- deleteDirIfExistsNoThrow $ root </> "test/functional"
+  _ <- deleteDirIfExistsNoThrow $ root </> "test"
+  _ <- deleteDirIfExistsNoThrow root
+  pure ()

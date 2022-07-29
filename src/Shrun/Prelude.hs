@@ -176,9 +176,10 @@ import TOML as X
     runDecoder,
     typeMismatch,
   )
-import UnliftIO as X
+import UnliftIO as X (MonadUnliftIO (..))
+import UnliftIO.Environment as X (withArgs)
+import UnliftIO.Exception as X
   ( Exception (..),
-    MonadUnliftIO (..),
     SomeException,
     catch,
     catchAny,

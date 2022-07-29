@@ -342,7 +342,7 @@ timeoutParser =
           [ OA.long "timeout",
             OA.short 't',
             OA.help helpTxt,
-            OA.metavar "NATURAL"
+            OA.metavar "<NATURAL | STRING>"
           ]
       )
   where

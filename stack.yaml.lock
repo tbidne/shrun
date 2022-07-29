@@ -39,13 +39,13 @@ packages:
 - completed:
     name: byte-types
     pantry-tree:
-      sha256: 22e70ed25469cb754ccccc855ede91251c40f30c7b839d4e5c1f6b76f0597850
+      sha256: 9bb75cf97a6ece8a7d37e493f60f9df437af7cea3b6497091ee686f399c0fa12
       size: 4527
-    commit: 45b593e3043df0a968074bee0bec0843105b41c4
+    commit: a815b1af5c912a3441b34538b7a595b6053aa662
     git: https://github.com/tbidne/byte-types.git
     version: '0.1'
   original:
-    commit: 45b593e3043df0a968074bee0bec0843105b41c4
+    commit: a815b1af5c912a3441b34538b7a595b6053aa662
     git: https://github.com/tbidne/byte-types.git
 - completed:
     name: relative-time

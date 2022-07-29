@@ -7,7 +7,6 @@ import Integration.Utils (runConfigIO)
 import Numeric.Algebra (zero)
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Effects.FileSystemReader
-import System.Environment (withArgs)
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =

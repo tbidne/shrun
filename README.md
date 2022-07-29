@@ -47,7 +47,7 @@
 
 # Motivation
 
-`shrun` was borne of frustration. Consider running several shell commands on a regular basis e.g. a developer running updates after pulling the latest code. These can be run manually:
+`shrun` was borne of frustration. Suppose one needs to run several shell commands on a regular basis e.g. a developer running updates after pulling the latest code. These can be run manually in separate terminals:
 
 ```sh
 cmd1
@@ -154,7 +154,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 ### Timeout
 
-**Arg:** `-t, --timeout NATURAL`
+**Arg:** `-t, --timeout <NATURAL | STRING>`
 
 **Description:** The provided timeout must be either a raw integer (interpreted as seconds), or a "time string" e.g. `1d2m3h4s`, `3h20s`. All integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
 

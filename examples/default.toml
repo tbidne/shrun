@@ -11,7 +11,8 @@
 # a PATH.
 #file-log = "default"
 
-# Mode in which to read the log file. Defaults to write.
+# Mode in which to open the log file. Can be "write" (the default) or
+# "append".
 file-log-mode = "write"
 
 # Like strip-control, but for file logs. Defaults to all.

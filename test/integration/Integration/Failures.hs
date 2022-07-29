@@ -5,7 +5,6 @@ import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Shrun.Configuration.Env (TomlError (..), withEnv)
 import Shrun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
-import System.Environment (withArgs)
 
 specs :: TestTree
 specs =
