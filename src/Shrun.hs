@@ -117,8 +117,8 @@ runCommands commands = Regions.displayConsoleRegions $
 
       Log.putRegionLog r finalLog
 
-      fileLogging <- asks getFileLogging
-      case fileLogging of
+      fileLog <- asks getFileLogging
+      case fileLog of
         Nothing -> pure ()
         Just (h, queue) -> do
           Queue.flushQueue queue >>= traverse_ (logFile h)
@@ -139,7 +139,7 @@ runCommand ::
 runCommand cmd = do
   disableLogging <- asks getDisableLogging
   cmdLogging <- asks getCmdLogging
-  fileLogging <- asks getFileLogging
+  fileLog <- asks getFileLogging
 
   -- 1.    Logging is disabled at the global level: No logging at all.
   -- 2.    No CmdLogging and no FileLogging: No streaming at all.
@@ -149,7 +149,7 @@ runCommand cmd = do
   --       enabled/disabled, so no need for a separate function. That is,
   --       tryCommandStreamNoRegion and tryCommandStreamRegion handle file
   --       logging automatically.
-  let cmdFn = case (cmdLogging, fileLogging, disableLogging) of
+  let cmdFn = case (cmdLogging, fileLog, disableLogging) of
         (_, _, True) -> tryCmd
         (Disabled, Nothing, _) -> tryCmd
         (Disabled, Just (_, _), _) -> tryCmdStream
@@ -276,8 +276,8 @@ maybePollQueue ::
   ) =>
   m ()
 maybePollQueue = do
-  fileLogging <- asks getFileLogging
-  case fileLogging of
+  fileLog <- asks getFileLogging
+  case fileLog of
     Nothing -> pure ()
     Just (h, queue) -> writeQueueToFile h queue
 {-# INLINEABLE maybePollQueue #-}

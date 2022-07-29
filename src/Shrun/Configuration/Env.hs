@@ -176,7 +176,7 @@ fromToml onEnv cfg cmdsText = do
   let envWithFileLogging fl =
         MkEnv
           { timeout = cfg ^. #timeout,
-            fileLogging = fl,
+            fileLog = fl,
             fileLogStripControl = fileLogStripControl,
             cmdLogging = maybeOrMempty #cmdLogging,
             cmdDisplay = maybeOrMempty #cmdDisplay,
@@ -192,7 +192,7 @@ fromToml onEnv cfg cmdsText = do
         FileModeAppend -> AppendMode
         FileModeWrite -> WriteMode
 
-  case cfg ^. #fileLogging of
+  case cfg ^. #fileLog of
     Nothing -> onEnv (envWithFileLogging Nothing)
     Just FPDefault -> do
       configDir <- getShrunXdgConfig

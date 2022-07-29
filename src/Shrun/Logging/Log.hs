@@ -99,8 +99,8 @@ maybeSendLogToQueue log =
   case log ^. #dest of
     LogConsole -> pure ()
     _ -> do
-      fileLogging <- asks getFileLogging
-      case fileLogging of
+      fileLog <- asks getFileLogging
+      case fileLog of
         Nothing -> pure ()
         Just (_, queue) -> do
           Queue.writeQueue queue log

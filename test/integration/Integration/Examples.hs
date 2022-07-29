@@ -30,7 +30,7 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
     expected =
       MkSimpleEnv
         { timeout = Just 20,
-          fileLogging = True,
+          fileLog = True,
           fileLogStripControl = StripControlAll,
           cmdLogging = Enabled,
           cmdDisplay = ShowKey,
@@ -53,7 +53,7 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          fileLogging = False,
+          fileLog = False,
           fileLogStripControl = StripControlAll,
           cmdLogging = Disabled,
           cmdDisplay = ShowKey,

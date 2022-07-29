@@ -176,7 +176,7 @@ data Args = MkArgs
     -- | Optional path to log file.
     --
     -- @since 0.1
-    fileLogging :: !(Maybe FilePathDefault),
+    fileLog :: !(Maybe FilePathDefault),
     -- | Mode to use with the file log.
     --
     -- since 0.5
@@ -211,7 +211,7 @@ defaultArgs :: NonEmptySeq Text -> Args
 defaultArgs cmds =
   MkArgs
     { cmdLogging = empty,
-      fileLogging = empty,
+      fileLog = empty,
       fileLogStripControl = empty,
       fileLogMode = empty,
       fileLogSizeMode = empty,

@@ -36,7 +36,7 @@ data TomlConfig = MkTomlConfig
     -- and the log queue.
     --
     -- @since 0.5
-    fileLogging :: !(Maybe FilePathDefault),
+    fileLog :: !(Maybe FilePathDefault),
     -- | Mode to use with the file log.
     --
     -- since 0.5
@@ -197,7 +197,7 @@ argsToTomlConfig = to a2c
     a2c args =
       MkTomlConfig
         { timeout = args ^. #timeout,
-          fileLogging = args ^. #fileLogging,
+          fileLog = args ^. #fileLog,
           fileLogMode = args ^. #fileLogMode,
           fileLogStripControl = args ^. #fileLogStripControl,
           fileLogSizeMode = args ^. #fileLogSizeMode,

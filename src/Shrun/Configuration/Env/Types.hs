@@ -340,7 +340,7 @@ data Env = MkEnv
     -- and the log queue.
     --
     -- @since 0.1
-    fileLogging :: !(Maybe (Tuple2 Handle LogTextQueue)),
+    fileLog :: !(Maybe (Tuple2 Handle LogTextQueue)),
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     --
@@ -393,8 +393,8 @@ instance Show Env where
     showParen (p > appPrec) $
       showString "MkEnv {timeout = "
         . showsPrec appPrec1 (env ^. #timeout)
-        . showString ", fileLogging = "
-        . showsPrec appPrec1 (env ^. #fileLogging)
+        . showString ", fileLog = "
+        . showsPrec appPrec1 (env ^. #fileLog)
         . showString ", cmdLogging = "
         . showsPrec appPrec1 (env ^. #cmdLogging)
         . showString ", cmdDisplay = "
@@ -423,7 +423,7 @@ instance HasLogging Env where
   getCmdLineTrunc = view #cmdLineTrunc
   getCmdLogging = view #cmdLogging
   getCmdNameTrunc = view #cmdNameTrunc
-  getFileLogging = view #fileLogging
+  getFileLogging = view #fileLog
   getFileLogStripControl = view #fileLogStripControl
   getDisableLogging = view #disableLogging
   getStripControl = view #stripControl

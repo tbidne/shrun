@@ -37,7 +37,7 @@ defaultEnv = testCase "No arguments and empty config path should return default 
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          fileLogging = False,
+          fileLog = False,
           fileLogStripControl = StripControlAll,
           cmdLogging = Disabled,
           cmdDisplay = ShowKey,
@@ -59,7 +59,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     expected =
       MkSimpleEnv
         { timeout = Just 3_600,
-          fileLogging = True,
+          fileLog = True,
           fileLogStripControl = StripControlNone,
           cmdLogging = Enabled,
           cmdDisplay = HideKey,
@@ -104,7 +104,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
     expected =
       MkSimpleEnv
         { timeout = Just 10,
-          fileLogging = True,
+          fileLog = True,
           fileLogStripControl = StripControlNone,
           cmdLogging = Enabled,
           cmdDisplay = HideKey,
@@ -126,7 +126,7 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          fileLogging = False,
+          fileLog = False,
           fileLogStripControl = StripControlAll,
           cmdLogging = Disabled,
           cmdDisplay = ShowKey,

@@ -19,11 +19,11 @@ spec :: IO TestArgs -> TestTree
 spec args = withResource (pure ()) (teardown args) $ \_ ->
   testGroup
     "File logging tests"
-    [ fileLogging args
+    [ fileLog args
     ]
 
-fileLogging :: IO TestArgs -> TestTree
-fileLogging args =
+fileLog :: IO TestArgs -> TestTree
+fileLog args =
   testCase "Should write logs to file" $ do
     MkTestArgs {tmpDir} <- args
     let outpath = tmpDir </> outfile

@@ -58,7 +58,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               stripControl = Nothing,
               cmdNameTrunc = Nothing,
               cmdLineTrunc = Nothing,
-              fileLogging = Nothing,
+              fileLog = Nothing,
               fileLogMode = Nothing,
               fileLogStripControl = Nothing,
               fileLogSizeMode = Nothing,
@@ -176,7 +176,7 @@ parseShortFileLogging =
     verifyResult argList expected
   where
     argList = ["-flogfile", "command"]
-    expected = updateDefArgs #fileLogging (FPManual "logfile")
+    expected = updateDefArgs #fileLog (FPManual "logfile")
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging =
@@ -184,7 +184,7 @@ parseLongFileLogging =
     verifyResult argList expected
   where
     argList = ["--file-log=logfile", "command"]
-    expected = updateDefArgs #fileLogging (FPManual "logfile")
+    expected = updateDefArgs #fileLog (FPManual "logfile")
 
 parseLongDefaultFileLogging :: TestTree
 parseLongDefaultFileLogging =
@@ -192,7 +192,7 @@ parseLongDefaultFileLogging =
     verifyResult argList expected
   where
     argList = ["--file-log", "default", "command"]
-    expected = updateDefArgs #fileLogging FPDefault
+    expected = updateDefArgs #fileLog FPDefault
 
 parseShortDefaultFileLogging :: TestTree
 parseShortDefaultFileLogging =
@@ -200,7 +200,7 @@ parseShortDefaultFileLogging =
     verifyResult argList expected
   where
     argList = ["-f", "default", "command"]
-    expected = updateDefArgs #fileLogging FPDefault
+    expected = updateDefArgs #fileLog FPDefault
 
 parseShortEmptyFileLoggingFails :: TestTree
 parseShortEmptyFileLoggingFails =
@@ -508,7 +508,7 @@ parseCommands =
   where
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) defArgs
-    cmds = (NESeq.unsafeFromList ["one", "two", "three"])
+    cmds = NESeq.unsafeFromList ["one", "two", "three"]
 
 verifyResult :: List String -> Maybe Args -> Assertion
 verifyResult argList expected = do
@@ -525,4 +525,4 @@ defArgs :: Maybe Args
 defArgs = Just $ Args.defaultArgs defCommand
 
 updateDefArgs :: Lens' Args (Maybe a) -> a -> Maybe Args
-updateDefArgs l x = (_Just % l .~ (Just x)) defArgs
+updateDefArgs l x = ((_Just % l) ?~ x) defArgs

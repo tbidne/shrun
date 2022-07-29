@@ -86,7 +86,7 @@ deriving via ConfigIO instance Terminal NoConfigIO
 --   equality with a file handle or queue.
 data SimpleEnv = MkSimpleEnv
   { timeout :: Maybe Timeout,
-    fileLogging :: Bool,
+    fileLog :: Bool,
     fileLogStripControl :: StripControl,
     cmdLogging :: CmdLogging,
     cmdDisplay :: CmdDisplay,
@@ -104,7 +104,7 @@ simplifyEnv :: Getter Env SimpleEnv
 simplifyEnv = to $ \env ->
   MkSimpleEnv
     { timeout = env ^. #timeout,
-      fileLogging = m2b (env ^. #fileLogging),
+      fileLog = m2b (env ^. #fileLog),
       fileLogStripControl = env ^. #fileLogStripControl,
       cmdLogging = env ^. #cmdLogging,
       cmdDisplay = env ^. #cmdDisplay,
