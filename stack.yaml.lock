@@ -28,35 +28,35 @@ packages:
 - completed:
     name: algebra-simple
     pantry-tree:
-      sha256: 88e752bf0ad77dd36cb6961d2106351d489628efb18baede62b8a4951084dbb6
-      size: 4921
-    commit: 078953fdac6bb9738aa6adae12bd893cf4debc01
+      sha256: 054da92da6e250783a99efa3f148540e8843b74f9abfe84967d1e5896b76c764
+      size: 4196
+    commit: 5d9288b1e2149a1bb6db28d694c5528c0aef3cbd
     git: https://github.com/tbidne/algebra-simple.git
     version: '0.1'
   original:
-    commit: 078953fdac6bb9738aa6adae12bd893cf4debc01
+    commit: 5d9288b1e2149a1bb6db28d694c5528c0aef3cbd
     git: https://github.com/tbidne/algebra-simple.git
 - completed:
     name: byte-types
     pantry-tree:
-      sha256: 9bb75cf97a6ece8a7d37e493f60f9df437af7cea3b6497091ee686f399c0fa12
-      size: 4527
-    commit: a815b1af5c912a3441b34538b7a595b6053aa662
+      sha256: 6943d0107f38711e07745147b35139f70e991e5260931938c41dcd08448923ef
+      size: 3458
+    commit: da898995e2a96d6993c5771883a04894c5455f4d
     git: https://github.com/tbidne/byte-types.git
     version: '0.1'
   original:
-    commit: a815b1af5c912a3441b34538b7a595b6053aa662
+    commit: da898995e2a96d6993c5771883a04894c5455f4d
     git: https://github.com/tbidne/byte-types.git
 - completed:
     name: relative-time
     pantry-tree:
-      sha256: dda4ccaac47d1d9cbfd4ca30cdc2b25a442dd9b7745156160999c05811762c8e
-      size: 2232
-    commit: f25b269f0ff3eefd4a568cc11611bc3ac8fa565c
+      sha256: 3c6834bf400a09f873cbae874858546bea6c13522114ea28e82f22c965c98bce
+      size: 1430
+    commit: debaa2523b3b58afc84e9cb1dab0d3af3ff332cd
     git: https://github.com/tbidne/relative-time.git
     version: '0.1'
   original:
-    commit: f25b269f0ff3eefd4a568cc11611bc3ac8fa565c
+    commit: debaa2523b3b58afc84e9cb1dab0d3af3ff332cd
     git: https://github.com/tbidne/relative-time.git
 snapshots:
 - completed:

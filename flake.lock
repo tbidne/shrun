@@ -2,15 +2,16 @@
   "nodes": {
     "algebra-simple-src": {
       "inputs": {
+        "flake-compat": "flake-compat",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1657772524,
-        "narHash": "sha256-TOdQFtNCz7FiHn9yWKJC3NRP7mG/4vTskI2G9NwEJGg=",
+        "lastModified": 1659678641,
+        "narHash": "sha256-/toH8V5XmJncJMZGBt6M8+w3SuM1clk+I5bCtQ8+oVY=",
         "owner": "tbidne",
         "repo": "algebra-simple",
-        "rev": "078953fdac6bb9738aa6adae12bd893cf4debc01",
+        "rev": "5d9288b1e2149a1bb6db28d694c5528c0aef3cbd",
         "type": "github"
       },
       "original": {
@@ -21,15 +22,16 @@
     },
     "algebra-simple-src_2": {
       "inputs": {
+        "flake-compat": "flake-compat_2",
         "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1657772524,
-        "narHash": "sha256-TOdQFtNCz7FiHn9yWKJC3NRP7mG/4vTskI2G9NwEJGg=",
+        "lastModified": 1659653410,
+        "narHash": "sha256-G9lvaZ+yCnqbRzwWC4I37e+bi6/OnjqwfMOsvJoJPtQ=",
         "owner": "tbidne",
         "repo": "algebra-simple",
-        "rev": "078953fdac6bb9738aa6adae12bd893cf4debc01",
+        "rev": "29cd5641d7e133d599276c4e1ea7e8abb84a34f2",
         "type": "github"
       },
       "original": {
@@ -40,15 +42,16 @@
     },
     "algebra-simple-src_3": {
       "inputs": {
+        "flake-compat": "flake-compat_5",
         "flake-utils": "flake-utils_5",
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1657772524,
-        "narHash": "sha256-TOdQFtNCz7FiHn9yWKJC3NRP7mG/4vTskI2G9NwEJGg=",
+        "lastModified": 1659670855,
+        "narHash": "sha256-Rm7TzgH4SZIV4wGuFg6JLoDoMz3bEl7eLdMhjDFzUm4=",
         "owner": "tbidne",
         "repo": "algebra-simple",
-        "rev": "078953fdac6bb9738aa6adae12bd893cf4debc01",
+        "rev": "c60fc447b16f575c84ffaf39ca5640f63dc9196b",
         "type": "github"
       },
       "original": {
@@ -60,15 +63,16 @@
     "byte-types-src": {
       "inputs": {
         "algebra-simple-src": "algebra-simple-src_2",
+        "flake-compat": "flake-compat_3",
         "flake-utils": "flake-utils_3",
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1659098914,
-        "narHash": "sha256-H1OrKC5JWk3X+Hz9gM3D15B7jmsO4fxLNiGL+IsPde8=",
+        "lastModified": 1659670950,
+        "narHash": "sha256-y391uuFTgRcZ2YmAXS0dgNANxX9tXV+bBBl6hEl8ToI=",
         "owner": "tbidne",
         "repo": "byte-types",
-        "rev": "a815b1af5c912a3441b34538b7a595b6053aa662",
+        "rev": "da898995e2a96d6993c5771883a04894c5455f4d",
         "type": "github"
       },
       "original": {
@@ -78,6 +82,86 @@
       }
     },
     "flake-compat": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1650374568,
+        "narHash": "sha256-Z+s0J8/r907g149rllvwhb4pKi8Wam5ij0st8PwAh+E=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "b4a34015c698c7793d592d66adbab377907a2be8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "flake-compat_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1650374568,
+        "narHash": "sha256-Z+s0J8/r907g149rllvwhb4pKi8Wam5ij0st8PwAh+E=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "b4a34015c698c7793d592d66adbab377907a2be8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "flake-compat_3": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1650374568,
+        "narHash": "sha256-Z+s0J8/r907g149rllvwhb4pKi8Wam5ij0st8PwAh+E=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "b4a34015c698c7793d592d66adbab377907a2be8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "flake-compat_4": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1650374568,
+        "narHash": "sha256-Z+s0J8/r907g149rllvwhb4pKi8Wam5ij0st8PwAh+E=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "b4a34015c698c7793d592d66adbab377907a2be8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "flake-compat_5": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1650374568,
+        "narHash": "sha256-Z+s0J8/r907g149rllvwhb4pKi8Wam5ij0st8PwAh+E=",
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "rev": "b4a34015c698c7793d592d66adbab377907a2be8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "edolstra",
+        "repo": "flake-compat",
+        "type": "github"
+      }
+    },
+    "flake-compat_6": {
       "flake": false,
       "locked": {
         "lastModified": 1650374568,
@@ -282,15 +366,16 @@
     "relative-time-src": {
       "inputs": {
         "algebra-simple-src": "algebra-simple-src_3",
+        "flake-compat": "flake-compat_6",
         "flake-utils": "flake-utils_6",
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1657775364,
-        "narHash": "sha256-n5JcqUCXaHCllRVu5EPrfW6HY8/PEOvW3WTWUqsdCF8=",
+        "lastModified": 1659678351,
+        "narHash": "sha256-GgJmt7gBt23ZXdBYFKNE9CfRgazJW/Ezwc+CGa/49zw=",
         "owner": "tbidne",
         "repo": "relative-time",
-        "rev": "f25b269f0ff3eefd4a568cc11611bc3ac8fa565c",
+        "rev": "debaa2523b3b58afc84e9cb1dab0d3af3ff332cd",
         "type": "github"
       },
       "original": {
@@ -303,7 +388,7 @@
       "inputs": {
         "algebra-simple-src": "algebra-simple-src",
         "byte-types-src": "byte-types-src",
-        "flake-compat": "flake-compat",
+        "flake-compat": "flake-compat_4",
         "flake-utils": "flake-utils_4",
         "nixpkgs": "nixpkgs_4",
         "relative-time-src": "relative-time-src"

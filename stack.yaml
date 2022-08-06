@@ -13,11 +13,11 @@ extra-deps:
 - package-version-0.1.0.0@sha256:bb9fc93e905540aa8e1b32f80c2dc82756a4481c63779bd92e3796ed8085ab98,2854
 - strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
 - git: https://github.com/tbidne/algebra-simple.git
-  commit: 078953fdac6bb9738aa6adae12bd893cf4debc01
+  commit: 5d9288b1e2149a1bb6db28d694c5528c0aef3cbd
 - git: https://github.com/tbidne/byte-types.git
-  commit: a815b1af5c912a3441b34538b7a595b6053aa662
+  commit: da898995e2a96d6993c5771883a04894c5455f4d
 - git: https://github.com/tbidne/relative-time.git
-  commit: f25b269f0ff3eefd4a568cc11611bc3ac8fa565c
+  commit: debaa2523b3b58afc84e9cb1dab0d3af3ff332cd
 flags:
   refined:
     aeson: false
