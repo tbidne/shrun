@@ -1,0 +1,36 @@
+name: "stack"
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  stack:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack_yaml:
+          - stack.yaml
+    steps:
+      - uses: actions/checkout@v3.0.2
+
+      - uses: haskell/actions/setup@v2.0.0
+        with:
+          enable-stack: true
+
+      - name: Compile
+        env:
+          STACK_YAML: ${{ matrix.stack_yaml }}
+        run: stack build
+
+      - name: Test
+        env:
+          STACK_YAML: ${{ matrix.stack_yaml }}
+        run: stack test

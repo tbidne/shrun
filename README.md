@@ -7,10 +7,10 @@
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shrun?include_prereleases&sort=semver)](https://github.com/tbidne/shrun/releases/)
 [![MIT](https://img.shields.io/github/license/tbidne/shrun?color=blue)](https://opensource.org/licenses/MIT)
 
-[![nix](https://img.shields.io/github/workflow/status/tbidne/shrun/nix/main?label=nix%209.2&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/nix_ci.yaml)
-[![cabal 9.2](https://img.shields.io/github/workflow/status/tbidne/shrun/cabal_9-2/main?label=9.2&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/cabal_9-2.yaml)
-[![stack nightly](https://img.shields.io/github/workflow/status/tbidne/shrun/stack_nightly/main?label=stack%20nightly&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/stack_nightly.yaml)
-[![style](https://img.shields.io/github/workflow/status/tbidne/shrun/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/style_ci.yaml)
+[![nix](https://img.shields.io/github/workflow/status/tbidne/shrun/nix/main?label=nix%209.2&&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/nix.yaml)
+[![cabal](https://img.shields.io/github/workflow/status/tbidne/shrun/cabal/main?label=cabal&logo=haskell&logoColor=655889&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/cabal.yaml)
+[![stack](https://img.shields.io/github/workflow/status/tbidne/shrun/stack/main?label=stack&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/stack.yaml)
+[![style](https://img.shields.io/github/workflow/status/tbidne/shrun/style/main?label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/style.yaml)
 
 ![demo](./examples/demo.gif)
 

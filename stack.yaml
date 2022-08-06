@@ -23,4 +23,4 @@ flags:
     aeson: false
     quickcheck: false
 nix:
-  shell-file: nix/stack_nightly.nix
+  shell-file: nix/stack.nix
