@@ -10,7 +10,7 @@ Note that PVP is applied to the _application_, not the _library_. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
-## [Unreleased]
+## [0.5] -- 2022-08-08
 ### Changed
 * Renamed executable from `shell-run` to `shrun`.
 * Added toml configuration. This subsumes the old `--legend` file, as that is
