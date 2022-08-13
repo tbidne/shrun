@@ -68,11 +68,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1659670950,
-        "narHash": "sha256-y391uuFTgRcZ2YmAXS0dgNANxX9tXV+bBBl6hEl8ToI=",
+        "lastModified": 1660384537,
+        "narHash": "sha256-WhfXOtggJkh/SDtJFOJyYJEf4JghzW3bTTasRW6aXOg=",
         "owner": "tbidne",
         "repo": "byte-types",
-        "rev": "da898995e2a96d6993c5771883a04894c5455f4d",
+        "rev": "4374876dc1c9d53d810d46531268fbb26c341f74",
         "type": "github"
       },
       "original": {

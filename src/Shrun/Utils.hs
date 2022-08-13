@@ -310,7 +310,7 @@ splitAnsi t =
 parseByteText :: Text -> Either Text (Bytes B Natural)
 parseByteText txt =
   case parse @(SomeSize Natural) txt of
-    Right b -> Right $ toB b
+    Right b -> Right $ convert (Proxy @B) b
     Left _ -> case parse @(SomeSize Double) txt of
-      Right b -> Right (truncate <$> toB b)
+      Right b -> Right (truncate <$> convert (Proxy @B) b)
       Left err -> Left err

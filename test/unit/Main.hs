@@ -2,7 +2,6 @@
 module Main (main) where
 
 import Control.Monad qualified as M
-import Data.Proxy (Proxy (..))
 import System.Environment qualified as Env
 import System.Exit qualified as SysEx
 import Test.Tasty qualified as Tasty
