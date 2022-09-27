@@ -10,6 +10,10 @@ Note that PVP is applied to the _application_, not the _library_. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
+## [Unreleased]
+### Fixed
+* Fix redundant COMMANDS... on help page.
+
 ## [0.5] -- 2022-08-08
 ### Changed
 * Renamed executable from `shell-run` to `shrun`.
@@ -65,7 +69,8 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.4...main
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.5...main
+[0.5]: https://github.com/tbidne/shrun/compare/0.4..0.5
 [0.4]: https://github.com/tbidne/shrun/compare/0.3..0.4
 [0.3]: https://github.com/tbidne/shrun/compare/0.2.0.1..0.3
 [0.2.0.1]: https://github.com/tbidne/shrun/compare/0.2..0.2.0.1

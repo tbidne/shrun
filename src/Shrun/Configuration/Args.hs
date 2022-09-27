@@ -16,7 +16,6 @@ where
 import Data.Bytes (Bytes (..), Size (..))
 import Data.Char qualified as Ch
 import Data.List qualified as L
-import Data.List.NonEmpty qualified as NE
 import Data.String (IsString (..))
 import Data.Text qualified as T
 import Data.Time.Relative qualified as RelativeTime
@@ -594,8 +593,8 @@ commandDisplayParser =
 
 commandsParser :: Parser (NonEmptySeq Text)
 commandsParser =
-  NESeq.fromNonEmpty
-    <$> NE.some1
+  NESeq.unsafeFromList
+    <$> OA.some
       ( T.pack
           <$> OA.argument OA.str (OA.metavar "Commands...")
       )
