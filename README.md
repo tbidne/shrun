@@ -5,7 +5,7 @@
 ## Run Shell Commands Concurrently
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shrun?include_prereleases&sort=semver)](https://github.com/tbidne/shrun/releases/)
-![haskell](https://img.shields.io/static/v1?label=&message=9.2&logo=haskell&logoColor=655889&labelColor=2f353e&color=655889)
+![haskell](https://img.shields.io/static/v1?label=&message=9.4&logo=haskell&logoColor=655889&labelColor=2f353e&color=655889)
 [![MIT](https://img.shields.io/github/license/tbidne/shrun?color=blue)](https://opensource.org/licenses/MIT)
 
 [![nix](https://img.shields.io/github/workflow/status/tbidne/shrun/nix/main?label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/nix.yaml)
@@ -376,7 +376,9 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 You will need one of:
 
-* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 9.2](https://www.haskell.org/ghcup/)
+* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and:
+  * [ghc 9.2](https://www.haskell.org/ghcup/)
+  * [ghc 9.4](https://www.haskell.org/ghcup/)
 * [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
 * [nix](https://nixos.org/download.html)
 

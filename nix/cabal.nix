@@ -1,4 +1,4 @@
-{ ghc-vers ? "ghc924"
+{ ghc-vers ? "ghc942"
 , dev ? false
 }:
 
@@ -10,9 +10,11 @@ let
   ];
 in
 pkgs.mkShell {
-  buildInputs =
+  buildInputs = with pkgs;
     [
       pkgs.cabal-install
       compiler.ghc
+      zlib.dev
+      zlib.out
     ] ++ (if dev then dev-tools else [ ]);
 }
