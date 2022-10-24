@@ -91,7 +91,7 @@ library
     , package-version       >=0.1.0.0  && <0.4
     , pretty-terminal       ^>=0.1
     , process               ^>=1.6.9.0
-    , refined               >=0.6      && <0.8
+    , refined               >=0.6      && <0.9
     , relative-time         ^>=0.1
     , stm                   ^>=2.5.0
     , template-haskell      >=2.17.0.0 && <2.20

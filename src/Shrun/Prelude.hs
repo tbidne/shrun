@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Custom prelude. The idea is to:
 --
 -- * Re-export useful prelude functions/types
@@ -112,6 +114,9 @@ import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..), for)
 import Data.Tuple as X (fst, snd)
+#if MIN_VERSION_base(4, 17, 0)
+import Data.Type.Equality as X (type (~))
+#endif
 import Data.Void as X (Void, absurd)
 import GHC.Enum as X (Bounded (..), Enum (..))
 import GHC.Err as X (undefined)
