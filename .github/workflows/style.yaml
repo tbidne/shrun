@@ -24,17 +24,11 @@ jobs:
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: cabal-fmt
-        run: make cabalfmtc
+      - name: Format
+        run: make formatc
 
-      - name: hlint
+      - name: Lint
         run: make lintc
 
-      - name: ormolu
-        run: make hsformatc
-
-      - name: nixpkgs-fmt
-        run: make nixpkgsfmtc
-      
-      - name: haddock
+      - name: Haddock
         run: nix develop .#devShells.x86_64-linux.ci -c bash -c "make haddockc"

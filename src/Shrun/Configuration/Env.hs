@@ -218,24 +218,22 @@ fromToml onEnv cfg cmdsText = do
         fileSize <- getFileSize fp
         case fileSizeMode of
           FileSizeModeWarn warnSize ->
-            if fileSize > warnSize
-              then putTextLn $ sizeWarning warnSize fp fileSize
-              else pure ()
+            when (fileSize > warnSize) $
+              putTextLn $
+                sizeWarning warnSize fp fileSize
           FileSizeModeDelete delSize ->
-            if fileSize > delSize
-              then do
-                putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
-                deleteFile fp
-              else pure ()
+            when (fileSize > delSize) $ do
+              putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
+              deleteFile fp
 
     sizeWarning warnSize fp fileSize =
       mconcat
         [ "Warning: log file '",
           pack fp,
           "' has size: ",
-          pack (formatBytes fileSize),
+          formatBytes fileSize,
           ", but specified threshold is: ",
-          pack (formatBytes warnSize),
+          formatBytes warnSize,
           "."
         ]
 

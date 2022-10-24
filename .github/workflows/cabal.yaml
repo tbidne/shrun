@@ -15,6 +15,7 @@ jobs:
   cabal:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         ghc: ["9.2.3"]
     steps:
@@ -26,6 +27,11 @@ jobs:
 
       - name: Compile
         run: cabal build
+
+      - name: Doc Tests
+        run : |
+          cabal build --write-ghc-environment-files=always
+          RUN_DOCTEST=1 cabal test doctest
 
       - name: Unit Tests
         run: cabal test unit

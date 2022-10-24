@@ -1,12 +1,15 @@
+.PHONY: build clean repl watch ;\
+	test unit integration functional ;\
+	cic ci formatc format lint lintc ;\
+	haddock haddockc hackage
+
 # core
 
 ARGS = ""
 
-.PHONY: clean
 clean:
 	cabal clean
 
-.PHONY: build
 build:
 	if [ -z "$(ARGS)" ]; then \
 		cabal build; \
@@ -14,7 +17,6 @@ build:
 		cabal build $(ARGS); \
 	fi
 
-.PHONY: test
 test:
 	if [ -z "$(ARGS)" ]; then \
 		RUN_DOCTEST=1 cabal test; \
@@ -22,23 +24,18 @@ test:
 		RUN_DOCTEST=1 cabal test; \
 	fi
 
-.PHONY: doctest
 doctest:
 	RUN_DOCTEST=1 cabal test doctest
 
-.PHONY: unit
 unit:
 	cabal test unit
 
-.PHONY: integration
 integration:
 	cabal test integration
 
-.PHONY: functional
 functional:
 	cabal test functional
 
-.PHONY: repl
 repl:
 	if [ -z "$(ARGS)" ]; then \
 		cabal repl; \
@@ -46,67 +43,44 @@ repl:
 		cabal repl $(ARGS); \
 	fi
 
-.PHONY: watch
 watch:
 	ghcid --command "cabal repl $(ARGS)"
 
 # ci
 
-.PHONY: cic
-cic: formatc lintc
+cic: formatc lintc haddockc
 
-.PHONY: ci
-ci: lint format
+ci: lint format haddockc
 
 # formatting
 
-.PHONY: formatc
-formatc: cabalfmtc hsformatc nixpkgsfmtc
+formatc:
+	nix run github:tbidne/nix-hs-tools/0.7#nixpkgs-fmt -- --check ;\
+	nix run github:tbidne/nix-hs-tools/0.7#cabal-fmt -- --check ;\
+	nix run github:tbidne/nix-hs-tools/0.7#ormolu -- --mode check
 
-.PHONY: format
-format: cabalfmt hsformat nixpkgsfmt
-
-.PHONY: hsformat
-hsformat:
-	nix run github:tbidne/nix-hs-tools/0.6.1#ormolu -- --mode inplace
-
-.PHONY: hsformatc
-hsformatc:
-	nix run github:tbidne/nix-hs-tools/0.6.1#ormolu -- --mode check
-
-.PHONY: cabalfmt
-cabalfmt:
-	nix run github:tbidne/nix-hs-tools/0.6.1#cabal-fmt -- --inplace
-
-.PHONY: cabalfmtc
-cabalfmtc:
-	nix run github:tbidne/nix-hs-tools/0.6.1#cabal-fmt -- --check
-
-.PHONY: nixpkgsfmt
-nixpkgsfmt:
-	nix run github:tbidne/nix-hs-tools/0.6.1#nixpkgs-fmt
-
-.PHONY: nixpkgsfmtc
-nixpkgsfmtc:
-	nix run github:tbidne/nix-hs-tools/0.6.1#nixpkgs-fmt -- --check
+format:
+	nix run github:tbidne/nix-hs-tools/0.7#nixpkgs-fmt ;\
+	nix run github:tbidne/nix-hs-tools/0.7#cabal-fmt -- --inplace ;\
+	nix run github:tbidne/nix-hs-tools/0.7#ormolu -- --mode inplace
 
 # linting
 
-.PHONY: lint
 lint:
-	nix run github:tbidne/nix-hs-tools/0.6.1#hlint -- --refact
+	nix run github:tbidne/nix-hs-tools/0.7#hlint -- --refact
 
-.PHONY: lintc
 lintc:
-	nix run github:tbidne/nix-hs-tools/0.6.1#hlint
+	nix run github:tbidne/nix-hs-tools/0.7#hlint
 
-.PHONY: haddock
 haddock:
 	cabal haddock --haddock-hyperlink-source --haddock-quickjump ;\
 	mkdir -p docs/ ;\
 	find docs/ -type f | xargs -I % sh -c "rm -r %" ;\
-	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.3/shrun-0.5/opt/doc/html/shrun/* docs/
+	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.4/shrun-0.5/opt/doc/html/shrun/* docs/
 
-.PHONY: haddockc
 haddockc:
-	nix run github:tbidne/nix-hs-tools/0.6.1#haddock-cov -- -x Shrun.Prelude -m Shrun.Data.FilePathDefault 74 -m Shrun.Configuration.Env.Types 76
+	nix run github:tbidne/nix-hs-tools/0.7#haddock-cov -- \
+	. \
+	-m Shrun.Configuration.Env.Types 75 \
+	-m Shrun.Data.FilePathDefault 70 \
+	-m Shrun.Prelude 95 \

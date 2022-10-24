@@ -63,6 +63,7 @@ import Control.Monad as X
     forever,
     join,
     void,
+    when,
     (<=<),
     (=<<),
     (>=>),
