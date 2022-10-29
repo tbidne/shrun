@@ -525,7 +525,7 @@ fileLogStripControlParser =
   where
     helpTxt =
       mconcat
-        [ "--strip-control for file logs created with --file-log. ",
+        [ "--cmd-log-strip-control for file logs created with --file-log. ",
           "Defaults to all."
         ]
 

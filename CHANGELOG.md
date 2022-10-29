@@ -11,6 +11,20 @@ the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
 ## [Unreleased]
+### Changed
+* CLI
+  * `cmd-line-trunc` renamed to `cmd-log-line-trunc`.
+  * `strip-control` renamed to `cmd-log-strip-control`.
+  * `disable-log` renamed to `log-disable`.
+* TOML
+  * Commands logging is now part of the table `cmd-log`.
+    * `cmd-line-trunc` renamed to `cmd-log.line-trunc`.
+    * `strip-control` renamed to `cmd-log.strip-control`.
+  * File logging is now part of the table `file-log`.
+    * `file-log` renamed to `file-log.path`.
+    * `file-log-mode` renamed to `file-log.mode`.
+    * `file-log-strip-control` renamed to `file-log.strip-control`.
+
 ### Fixed
 * Fix redundant COMMANDS... on help page.
 

@@ -238,7 +238,7 @@ Practically speaking, this does not have much effect, just that if a command die
 
 ### Disable Log
 
-**Arg:** `-d, --disable-log`
+**Arg:** `-d, --log-disable`
 
 **Description**: This option globally disables all logging i.e. ordinary logs and those created via `--cmd-log` and `--file-log`. As most uses will want at least the default success/error messages and timers, this option is primarily intended for debugging or testing where logging is undesirable.
 
@@ -282,7 +282,7 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 ### Strip Control
 
-**Arg:** `-s,--strip-control <all | smart | none>`
+**Arg:** `-s,--cmd-log-strip-control <all | smart | none>`
 
 **Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. `all` strips all such chars. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
 
@@ -297,21 +297,21 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
 `none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
 </pre>
@@ -320,7 +320,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 **Arg:** `-f, --file-log-strip-control <all | smart | none>`
 
-**Description**: Like [`--strip-control`](#strip-control), but applies to file logs. If no option is given, defaults to `all`.
+**Description**: Like [`--cmd-log-strip-control`](#strip-control), but applies to file logs. If no option is given, defaults to `all`.
 
 ### Command Name Truncation
 
