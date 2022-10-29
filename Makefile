@@ -38,13 +38,17 @@ functional:
 
 repl:
 	if [ -z "$(ARGS)" ]; then \
-		cabal repl; \
+		cabal repl shrun; \
 	else \
 		cabal repl $(ARGS); \
 	fi
 
 watch:
-	ghcid --command "cabal repl $(ARGS)"
+	if [ -z "$(ARGS)" ]; then \
+		ghcid --command "cabal repl shrun"; \
+	else \
+		ghcid --command "cabal repl $(ARGS)"; \
+	fi
 
 # ci
 

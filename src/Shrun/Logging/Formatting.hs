@@ -17,7 +17,6 @@ import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     HasLogging (..),
     StripControl (..),
-    _MkTruncation,
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.Logging.Types (Log (..), LogLevel (..))
@@ -32,8 +31,8 @@ import System.Console.Pretty qualified as P
 -- @since 0.1
 formatConsoleLog :: (HasLogging env, MonadReader env m) => Log -> m Text
 formatConsoleLog log = do
-  cmdNameTrunc <- asks getCmdNameTrunc
-  cmdLineTrunc <- asks getCmdLineTrunc
+  cmdNameTrunc <- asks getCmdLogNameTrunc
+  cmdLineTrunc <- asks getCmdLogLineTrunc
   msg' <- stripChars $ log ^. #msg
   case log ^. #cmd of
     Nothing -> pure $ colorize $ prefix <> msg'
@@ -41,13 +40,13 @@ formatConsoleLog log = do
       -- get cmd name to display
       name <- displayCmd com
       let -- truncate cmd/name if necessary
-          name' = case cmdNameTrunc ^? _Just % _MkTruncation of
+          name' = case cmdNameTrunc ^? _Just % #unTruncation of
             Nothing -> name
             Just n -> U.truncateIfNeeded n name
 
           -- truncate entire if necessary (flag on and command log only)
           line = colorize $ prefix <> "[" <> name' <> "] " <> msg'
-          line' = case (log ^. #lvl, cmdLineTrunc ^? _Just % _MkTruncation) of
+          line' = case (log ^. #lvl, cmdLineTrunc ^? _Just % #unTruncation) of
             (SubCommand, Just m) -> U.truncateIfNeeded m line
             _ -> line
        in pure line'
@@ -87,7 +86,7 @@ displayCmd' (MkCommand _ cmd) _ = cmd
 -- We always strip leading/trailing whitespace. Additional options concern
 -- internal control chars.
 stripChars :: (HasLogging env, MonadReader env m) => Text -> m Text
-stripChars txt = stripChars' txt <$> asks getStripControl
+stripChars txt = stripChars' txt <$> asks getCmdLogStripControl
 {-# INLINE stripChars #-}
 
 -- | Applies the given 'StripControl' to the 'Text'.
@@ -97,10 +96,11 @@ stripChars txt = stripChars' txt <$> asks getStripControl
 -- * 'StripControlNone': Strips whitespace.
 --
 -- @since 0.3
-stripChars' :: Text -> StripControl -> Text
+stripChars' :: Text -> Maybe StripControl -> Text
 stripChars' txt = \case
-  StripControlAll -> Utils.stripControlAll txt
-  StripControlSmart -> Utils.stripControlSmart txt
+  Just StripControlAll -> Utils.stripControlAll txt
   -- whitespace
-  StripControlNone -> T.strip txt
+  Just StripControlNone -> T.strip txt
+  --  default to smart
+  _ -> Utils.stripControlSmart txt
 {-# INLINE stripChars' #-}

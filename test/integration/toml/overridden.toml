@@ -5,11 +5,14 @@
 # be overridden (e.g. cmd-log = true cannot be overriden from cli)
 
 timeout = "1h"
-file-log = "default"
-file-log-mode = "append"
-cmd-log = false
+log-disable = false
 key-hide = false
 cmd-name-trunc = 80
-cmd-line-trunc = 150
+
+[cmd-log]
+line-trunc = 150
 strip-control = "all"
-disable-log = false
+
+[file-log]
+path = "default"
+mode = "append"

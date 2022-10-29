@@ -8,11 +8,7 @@ import Integration.Utils
     runConfigIO,
     runNoConfigIO,
   )
-import Shrun.Configuration.Env.Types
-  ( CmdDisplay (..),
-    CmdLogging (..),
-    StripControl (..),
-  )
+import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 
@@ -32,18 +28,18 @@ defaultEnv = testCase "No arguments and empty config path should return default 
   makeEnvAndVerify ["cmd1"] (`runNoConfigIO` logsRef) expected
 
   logs <- IORef.readIORef logsRef
-  logs @=? ["No default config found at: ./config.toml"]
+  ["No default config found at: ./config.toml"] @=? logs
   where
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          fileLog = False,
-          fileLogStripControl = StripControlAll,
-          cmdLogging = Disabled,
+          cmdLogging = False,
           cmdDisplay = ShowKey,
-          cmdNameTrunc = Nothing,
-          cmdLineTrunc = Nothing,
-          stripControl = StripControlSmart,
+          cmdLogStripControl = Nothing,
+          cmdLogNameTrunc = Nothing,
+          cmdLogLineTrunc = Nothing,
+          fileLogging = False,
+          fileLogStripControl = Nothing,
           disableLogging = False,
           commands = NESeq.singleton "cmd1"
         }
@@ -54,19 +50,19 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
   makeEnvAndVerify ["cmd1"] (`runConfigIO` logsRef) expected
 
   logs <- IORef.readIORef logsRef
-  logs @=? []
+  [] @=? logs
   where
     expected =
       MkSimpleEnv
         { timeout = Just 3_600,
-          fileLog = True,
-          fileLogStripControl = StripControlNone,
-          cmdLogging = Enabled,
-          cmdDisplay = HideKey,
-          cmdNameTrunc = Just 80,
-          cmdLineTrunc = Just 150,
-          stripControl = StripControlAll,
           disableLogging = True,
+          cmdDisplay = HideKey,
+          cmdLogging = True,
+          cmdLogStripControl = Just StripControlAll,
+          cmdLogNameTrunc = Just 80,
+          cmdLogLineTrunc = Just 150,
+          fileLogging = True,
+          fileLogStripControl = Just StripControlNone,
           commands = NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\"")
         }
 
@@ -92,26 +88,26 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         "none",
         "--cmd-log",
         "--key-hide",
-        "--cmd-name-trunc",
+        "--cmd-log-name-trunc",
         "10",
-        "--cmd-line-trunc",
+        "--cmd-log-line-trunc",
         "60",
-        "--strip-control",
+        "--cmd-log-strip-control",
         "none",
-        "--disable-log",
+        "--log-disable",
         "cmd"
       ]
     expected =
       MkSimpleEnv
         { timeout = Just 10,
-          fileLog = True,
-          fileLogStripControl = StripControlNone,
-          cmdLogging = Enabled,
-          cmdDisplay = HideKey,
-          cmdNameTrunc = Just 10,
-          cmdLineTrunc = Just 60,
-          stripControl = StripControlNone,
           disableLogging = True,
+          cmdDisplay = HideKey,
+          cmdLogging = True,
+          cmdLogStripControl = Just StripControlNone,
+          cmdLogNameTrunc = Just 10,
+          cmdLogLineTrunc = Just 60,
+          fileLogging = True,
+          fileLogStripControl = Just StripControlNone,
           commands = NESeq.singleton "cmd"
         }
 
@@ -126,13 +122,13 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          fileLog = False,
-          fileLogStripControl = StripControlAll,
-          cmdLogging = Disabled,
-          cmdDisplay = ShowKey,
-          cmdNameTrunc = Nothing,
-          cmdLineTrunc = Nothing,
-          stripControl = StripControlSmart,
           disableLogging = False,
+          cmdDisplay = ShowKey,
+          cmdLogging = False,
+          cmdLogStripControl = Nothing,
+          cmdLogNameTrunc = Nothing,
+          cmdLogLineTrunc = Nothing,
+          fileLogging = False,
+          fileLogStripControl = Nothing,
           commands = NESeq.singleton "cmd1"
         }

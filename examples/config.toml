@@ -6,27 +6,10 @@
 # e.g. "1d2h3m4s", "2h30s".
 timeout = 20
 
-# Writes all logs to a file. The "default" option writes to the Xdg direction
-# e.g. ~/.config/shrun/log. Any other string is interpreted as
-# a PATH.
-file-log = "default"
-
-# Mode in which to open the log file. Can be "write" (the default) or
-# "append".
-file-log-mode = "write"
-
-# Like strip-control, but for file logs. Defaults to all.
-file-log-strip-control = "all"
-
-# Sets a threshold for the file log size, upon which we either print a
-# warning or delete the file, if it is exceeded. Format is value and units
-# e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to no warnings
-# nor deletions.
-file-log-size-mode = "warn 1 g"
-
-# If enabled, the output of the commands themselves will be logged. The
-# default behavior is to swallow command logs.
-cmd-log = true
+# If true, _all_ logging is disabled. This is almost never what you want, as
+# most usages will at least want to know which commands succeeded/failed.
+# This option is primarily here to help testing.
+log-disable = false
 
 # By default (key-hide = false), logs will refer to the key name, as defined in
 # legend section. If set to true, logs will instead reference the literal
@@ -37,34 +20,13 @@ cmd-log = true
 # 'some long command'. With key-hide = false, they will instead print 'cmd1'.
 key-hide = false
 
-# If set, this truncates command names in the logs to the specificed number of
+# If set, this truncates command names in the logs to the specified number of
 # characters. This setting is useful when:
 #
 # 1. You do not want a long command to clutter the logs
-# 2. The command is not run with an alias (so it cannot be hidden with key-hide = false).
+# 2. The command is not run with an alias (so it cannot be hidden with
+#    key-hide = false).
 cmd-name-trunc = 80
-
-# If set, this truncates the entire line to the specified number of
-# characters. It can either be a non-negative integer or the string 'detect',
-# in which we attempt to detect the terminal width.
-cmd-line-trunc = 150
-
-# With cmd-logging = true, the logs can become garbled in the presence of
-# control characters (e.g. newlines, ansi escape sequences). This option
-# attempts to mitigate these issues. The choices are:
-#
-# 1. "none": All output is left untouched i.e. any control chars will remain.
-# 2. "all": All control chars and ansi sequences are stripped.
-# 3. "smart" (default): An attempt is made to leave ansi sequences that merely
-#    affect text formatting (e.g. colors, emphasis), while stripping everything
-#    else. This has the potential to be the prettiest, though it is possible
-#    some 'bad' sequences remain.
-strip-control = "smart"
-
-# If true, _all_ logging is disabled. This is almost never what you want, as
-# most usages will at least want to know which commands succeeded/failed.
-# This option is primarily here to help testing.
-disable-log = false
 
 # Command aliases are defined here. Values can either be a single unit or a
 # list of units, where a unit is either a command literal
@@ -107,3 +69,42 @@ legend = [
   # MISC
   { key = 'bench_1_000_000', val = 'for i in {1..1000000}; do echo ${i}; done' }
 ]
+
+# If enabled, the output of the commands themselves will be logged. The
+# default behavior is to swallow command logs.
+[cmd-log]
+# With command logging, the logs can become garbled in the presence of
+# control characters (e.g. newlines, ansi escape sequences). This option
+# attempts to mitigate these issues. The choices are:
+#
+# 1. "none": All output is left untouched i.e. any control chars will remain.
+# 2. "all": All control chars and ansi sequences are stripped.
+# 3. "smart" (default): An attempt is made to leave ansi sequences that merely
+#    affect text formatting (e.g. colors, emphasis), while stripping everything
+#    else. This has the potential to be the prettiest, though it is possible
+#    some 'bad' sequences remain.
+strip-control = "smart"
+
+# If set, this truncates the entire line to the specified number of
+# characters. It can either be a non-negative integer or the string 'detect',
+# in which we attempt to detect the terminal width.
+line-trunc = 150
+
+[file-log]
+# Writes all logs to a file. The "default" option writes to the Xdg direction
+# e.g. ~/.config/shrun/log. Any other string is interpreted as
+# a PATH.
+path = "default"
+
+# Mode in which to open the log file. Can be "write" (the default) or
+# "append".
+mode = "write"
+
+# Like strip-control, but for file logs. Defaults to all.
+strip-control = "all"
+
+# Sets a threshold for the file log size, upon which we either print a
+# warning or delete the file, if it is exceeded. Format is value and units
+# e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to no warnings
+# nor deletions.
+size-mode = "warn 1 g"

@@ -24,11 +24,7 @@ import Data.Sequence ((<|))
 import Data.Text qualified as T
 import GHC.IO.Handle (BufferMode (..))
 import GHC.IO.Handle qualified as Handle
-import Shrun.Configuration.Env.Types
-  ( CmdLogging (..),
-    HasCompletedCmds (..),
-    HasLogging (..),
-  )
+import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Effects.Mutable (Mutable (..))
@@ -365,9 +361,10 @@ streamOutput mRegion cmd recvH ph = do
       ReadSuccess out -> do
         liftIO $ writeIORef lastReadRef (Just (ReadSuccess out))
         cmdLogging <- asks getCmdLogging
-        let logDest = case cmdLogging of
-              Disabled -> LogFile
-              Enabled -> LogBoth
+        let logDest =
+              if cmdLogging
+                then LogBoth
+                else LogFile
             log =
               MkLog
                 { cmd = Just cmd,

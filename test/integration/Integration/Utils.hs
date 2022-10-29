@@ -13,7 +13,13 @@ where
 
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Env.Types (CmdDisplay, CmdLogging, Env, StripControl, TruncRegion (..), Truncation)
+import Shrun.Configuration.Env.Types
+  ( CmdDisplay,
+    Env,
+    StripControl,
+    TruncRegion (..),
+    Truncation,
+  )
 import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
@@ -85,16 +91,16 @@ deriving via ConfigIO instance Terminal NoConfigIO
 -- * FileLogging is merely a bool since we just want to check off/on, not
 --   equality with a file handle or queue.
 data SimpleEnv = MkSimpleEnv
-  { timeout :: Maybe Timeout,
-    fileLog :: Bool,
-    fileLogStripControl :: StripControl,
-    cmdLogging :: CmdLogging,
-    cmdDisplay :: CmdDisplay,
-    cmdNameTrunc :: Maybe (Truncation 'TCmdName),
-    cmdLineTrunc :: Maybe (Truncation 'TCmdLine),
-    stripControl :: StripControl,
-    disableLogging :: Bool,
-    commands :: NonEmptySeq Command
+  { timeout :: !(Maybe Timeout),
+    disableLogging :: !Bool,
+    cmdDisplay :: !CmdDisplay,
+    cmdLogging :: !Bool,
+    cmdLogNameTrunc :: !(Maybe (Truncation 'TCmdName)),
+    cmdLogLineTrunc :: !(Maybe (Truncation 'TCmdLine)),
+    cmdLogStripControl :: !(Maybe StripControl),
+    fileLogging :: !Bool,
+    fileLogStripControl :: !(Maybe StripControl),
+    commands :: !(NonEmptySeq Command)
   }
   deriving stock (Eq, Show)
 
@@ -104,14 +110,14 @@ simplifyEnv :: Getter Env SimpleEnv
 simplifyEnv = to $ \env ->
   MkSimpleEnv
     { timeout = env ^. #timeout,
-      fileLog = m2b (env ^. #fileLog),
-      fileLogStripControl = env ^. #fileLogStripControl,
-      cmdLogging = env ^. #cmdLogging,
-      cmdDisplay = env ^. #cmdDisplay,
-      cmdNameTrunc = env ^. #cmdNameTrunc,
-      cmdLineTrunc = env ^. #cmdLineTrunc,
-      stripControl = env ^. #stripControl,
       disableLogging = env ^. #disableLogging,
+      cmdDisplay = env ^. #cmdDisplay,
+      cmdLogging = is (#cmdLogging % _Just) env,
+      cmdLogNameTrunc = env ^. #cmdNameTrunc,
+      cmdLogLineTrunc = env ^? (#cmdLogging %? #lineTrunc % _Just),
+      cmdLogStripControl = env ^? (#cmdLogging %? #stripControl),
+      fileLogging = m2b (env ^. #fileLogging),
+      fileLogStripControl = env ^? (#fileLogging %? #stripControl),
       commands = env ^. #commands
     }
 

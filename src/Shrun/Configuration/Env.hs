@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -- | Module that provides env types and requisite typeclasses, along with
 -- parsing functionality.
@@ -39,6 +40,7 @@ import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
     Env (..),
+    FileLogging (..),
     HasCommands (..),
     HasCompletedCmds (..),
     HasLogging (..),
@@ -74,12 +76,12 @@ newtype TomlError = MkTomlError
     )
 
 -- | @since 0.5
-makePrisms ''TomlError
+makeFieldLabelsNoPrefix ''TomlError
 
 -- | @since 0.5
 instance Exception TomlError where
   displayException err =
-    "TOML error: " <> unpack (renderTOMLError $ err ^. _MkTomlError)
+    "TOML error: " <> unpack (renderTOMLError $ err ^. #unTomlError)
 
 -- | 'withEnv' with 'shrun'.
 --
@@ -155,13 +157,16 @@ fromToml ::
   NonEmptySeq Text ->
   m a
 fromToml onEnv cfg cmdsText = do
-  cmdLineTrunc' <- case cfg ^. #cmdLineTrunc of
+  cmdLogLineTrunc <- case cfg ^? (#cmdLogging %? #lineTrunc % _Just) of
     Just Detected -> Just . MkTruncation <$> getTerminalWidth
     Just (Undetected x) -> pure $ Just x
     Nothing -> pure Nothing
 
   let disableLogging' = fromMaybe False (cfg ^. #disableLogging)
-      fileLogStripControl = fromMaybe StripControlAll (cfg ^. #fileLogStripControl)
+      fileLogStripControl =
+        fromMaybe
+          StripControlAll
+          (cfg ^? (#fileLogging %? #stripControl % _Just))
 
   commands' <- case cfg ^. #legend of
     Nothing -> pure $ MkCommand Nothing <$> cmdsText
@@ -173,26 +178,37 @@ fromToml onEnv cfg cmdsText = do
 
   completedCmds' <- newTVarIO Seq.empty
 
-  let envWithFileLogging fl =
+  let envWithFileLogging mfl =
         MkEnv
           { timeout = cfg ^. #timeout,
-            fileLog = fl,
-            fileLogStripControl = fileLogStripControl,
-            cmdLogging = maybeOrMempty #cmdLogging,
-            cmdDisplay = maybeOrMempty #cmdDisplay,
-            cmdNameTrunc = cfg ^. #cmdNameTrunc,
-            cmdLineTrunc = cmdLineTrunc',
-            stripControl = maybeOrMempty #stripControl,
-            completedCmds = completedCmds',
             disableLogging = disableLogging',
+            cmdDisplay = maybeOrMempty cfg (#cmdDisplay % _Just),
+            cmdNameTrunc = cfg ^. #cmdNameTrunc,
+            cmdLogging = case cfg ^. #cmdLogging of
+              Nothing -> Nothing
+              Just cmdLogging ->
+                Just
+                  MkCmdLogging
+                    { stripControl = maybeOrMempty cmdLogging (#stripControl % _Just),
+                      lineTrunc = cmdLogLineTrunc
+                    },
+            fileLogging = case mfl of
+              Nothing -> Nothing
+              Just log ->
+                Just
+                  MkFileLogging
+                    { log,
+                      stripControl = fileLogStripControl
+                    },
+            completedCmds = completedCmds',
             commands = commands'
           }
 
-      ioMode = case maybeOrMempty #fileLogMode of
+      ioMode = case maybeOrMempty cfg (#fileLogging %? #mode % _Just) of
         FileModeAppend -> AppendMode
         FileModeWrite -> WriteMode
 
-  case cfg ^. #fileLog of
+  case cfg ^? (#fileLogging %? #path) of
     Nothing -> onEnv (envWithFileLogging Nothing)
     Just FPDefault -> do
       configDir <- getShrunXdgConfig
@@ -209,10 +225,10 @@ fromToml onEnv cfg cmdsText = do
       withFile fp ioMode $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
   where
-    maybeOrMempty :: Monoid a => Lens' TomlConfig (Maybe a) -> a
-    maybeOrMempty = fromMaybe mempty . (`view` cfg)
+    maybeOrMempty :: (Is k An_AffineFold, Monoid a) => s -> Optic' k is s a -> a
+    maybeOrMempty x = fromMaybe mempty . (`preview` x)
 
-    handleLogFileSize fp = case cfg ^. #fileLogSizeMode of
+    handleLogFileSize fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
       Nothing -> pure ()
       Just fileSizeMode -> do
         fileSize <- getFileSize fp

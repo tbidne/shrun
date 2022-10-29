@@ -14,8 +14,7 @@ import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
 import Shrun.Configuration.Env.Types
-  ( CmdLogging (..),
-    HasCommands (..),
+  ( HasCommands (..),
     HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
@@ -151,8 +150,8 @@ runCommand cmd = do
   --       logging automatically.
   let cmdFn = case (cmdLogging, fileLog, disableLogging) of
         (_, _, True) -> tryCmd
-        (Disabled, Nothing, _) -> tryCmd
-        (Disabled, Just (_, _), _) -> tryCmdStream
+        (False, Nothing, _) -> tryCmd
+        (False, Just (_, _), _) -> tryCmdStream
         _ -> tryCmdStreamRegion
 
   cmdResult <- tryTimeCmd cmdFn cmd

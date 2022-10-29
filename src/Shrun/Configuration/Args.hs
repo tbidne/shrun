@@ -33,7 +33,6 @@ import Options.Applicative.Types (ArgPolicy (..))
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
-    CmdLogging (..),
     LineTruncation (..),
     StripControl (..),
     TruncRegion (..),
@@ -151,39 +150,39 @@ data Args = MkArgs
     --
     -- @since 0.1
     disableLogging :: !(Maybe Bool),
-    -- | Whether to log commands.
-    --
-    -- @since 0.1
-    cmdLogging :: !(Maybe CmdLogging),
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1
     cmdDisplay :: !(Maybe CmdDisplay),
-    -- | Determines to what extent we should remove control characters
-    -- from logs.
-    --
-    -- @since 0.3
-    stripControl :: !(Maybe StripControl),
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1
     cmdNameTrunc :: !(Maybe (Truncation 'TCmdName)),
+    -- | Whether to log commands.
+    --
+    -- @since 0.1
+    cmdLogging :: !(Maybe Bool),
+    -- | Determines to what extent we should remove control characters
+    -- from logs.
+    --
+    -- @since 0.3
+    cmdLogStripControl :: !(Maybe StripControl),
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1
-    cmdLineTrunc :: !(Maybe LineTruncation),
-    -- | Optional path to log file.
+    cmdLogLineTrunc :: !(Maybe LineTruncation),
+    -- | Optional path to log file. Determines if we log to a file.
     --
     -- @since 0.1
-    fileLog :: !(Maybe FilePathDefault),
-    -- | Mode to use with the file log.
-    --
-    -- since 0.5
-    fileLogMode :: Maybe FileMode,
+    fileLogging :: !(Maybe FilePathDefault),
     -- | 'stripControl' for the log file.
     --
     -- @since 0.5
     fileLogStripControl :: !(Maybe StripControl),
+    -- | Mode to use with the file log.
+    --
+    -- since 0.5
+    fileLogMode :: !(Maybe FileMode),
     -- | Threshold for when we should warn about the log file size.
     --
     -- @since 0.5
@@ -209,19 +208,19 @@ makeFieldLabelsNoPrefix ''Args
 defaultArgs :: NonEmptySeq Text -> Args
 defaultArgs cmds =
   MkArgs
-    { cmdLogging = empty,
-      fileLog = empty,
+    { timeout = empty,
+      configPath = empty,
+      noConfig = False,
+      disableLogging = empty,
+      cmdDisplay = empty,
+      cmdLogging = empty,
+      cmdLogStripControl = empty,
+      cmdNameTrunc = empty,
+      cmdLogLineTrunc = empty,
+      fileLogging = empty,
       fileLogStripControl = empty,
       fileLogMode = empty,
       fileLogSizeMode = empty,
-      cmdDisplay = empty,
-      configPath = empty,
-      noConfig = False,
-      stripControl = empty,
-      timeout = empty,
-      cmdNameTrunc = empty,
-      cmdLineTrunc = empty,
-      disableLogging = empty,
       commands = cmds
     }
 
@@ -257,14 +256,14 @@ argsParser =
     <*> noConfigParser
     <*> timeoutParser
     <*> disableLoggingParser
-    <*> commandLoggingParser
     <*> commandDisplayParser
-    <*> stripControlParser
     <*> cmdTruncationParser
+    <*> commandLoggingParser
+    <*> stripControlParser
     <*> lineTruncationParser
     <*> fileLoggingParser
-    <*> fileLogModeParser
     <*> fileLogStripControlParser
+    <*> fileLogModeParser
     <*> fileLogSizeModeParser
     <*> commandsParser
     <**> OA.helper
@@ -391,7 +390,7 @@ lineTruncationParser =
     OA.option
       (defRead <|> readDetectTruncation)
       ( mconcat
-          [ OA.long "cmd-line-trunc",
+          [ OA.long "cmd-log-line-trunc",
             OA.short 'y',
             OA.help helpTxt,
             OA.metavar "<NATURAL | detect>"
@@ -427,7 +426,7 @@ stripControlParser =
     OA.option
       readStripControl
       ( mconcat
-          [ OA.long "strip-control",
+          [ OA.long "cmd-log-strip-control",
             OA.short 's',
             OA.help helpTxt,
             OA.metavar "<all | smart | none>"
@@ -551,11 +550,11 @@ fileLogSizeModeParser =
         ]
     readFileSize = OA.str >>= parseFileSizeMode
 
-commandLoggingParser :: Parser (Maybe CmdLogging)
+commandLoggingParser :: Parser (Maybe Bool)
 commandLoggingParser =
   OA.optional $
     OA.flag'
-      Enabled
+      True
       ( mconcat
           [ OA.short 'l',
             OA.long "cmd-log",
@@ -606,7 +605,7 @@ disableLoggingParser =
       True
       ( mconcat
           [ OA.short 'd',
-            OA.long "disable-log",
+            OA.long "log-disable",
             OA.help helpTxt
           ]
       )

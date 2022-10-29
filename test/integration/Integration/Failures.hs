@@ -122,4 +122,4 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
   logs <- IORef.readIORef logsRef
   logs @=? []
   where
-    expectedErr = "TOML error: Decode error at '.file-log': Empty path given for --file-log"
+    expectedErr = "TOML error: Decode error at '.file-log.path': Empty path given for --file-log"

@@ -8,7 +8,6 @@ import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
-    CmdLogging (..),
     LineTruncation (..),
     StripControl (..),
   )
@@ -53,16 +52,16 @@ parseDefaultArgs = testCase "Should parse default args" $ do
             { configPath = Nothing,
               noConfig = False,
               timeout = Nothing,
-              cmdLogging = Nothing,
+              disableLogging = Nothing,
               cmdDisplay = Nothing,
-              stripControl = Nothing,
-              cmdNameTrunc = Nothing,
-              cmdLineTrunc = Nothing,
-              fileLog = Nothing,
+              cmdLogging = Nothing,
+              cmdLogStripControl = Nothing,
+              cmdLogNameTrunc = Nothing,
+              cmdLogLineTrunc = Nothing,
+              fileLogging = Nothing,
               fileLogMode = Nothing,
               fileLogStripControl = Nothing,
               fileLogSizeMode = Nothing,
-              disableLogging = Nothing,
               commands = NESeq.singleton "command"
             }
   verifyResult argList expected
@@ -176,7 +175,7 @@ parseShortFileLogging =
     verifyResult argList expected
   where
     argList = ["-flogfile", "command"]
-    expected = updateDefArgs #fileLog (FPManual "logfile")
+    expected = updateDefArgs #fileLogging (FPManual "logfile")
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging =
@@ -184,7 +183,7 @@ parseLongFileLogging =
     verifyResult argList expected
   where
     argList = ["--file-log=logfile", "command"]
-    expected = updateDefArgs #fileLog (FPManual "logfile")
+    expected = updateDefArgs #fileLogging (FPManual "logfile")
 
 parseLongDefaultFileLogging :: TestTree
 parseLongDefaultFileLogging =
@@ -192,7 +191,7 @@ parseLongDefaultFileLogging =
     verifyResult argList expected
   where
     argList = ["--file-log", "default", "command"]
-    expected = updateDefArgs #fileLog FPDefault
+    expected = updateDefArgs #fileLogging FPDefault
 
 parseShortDefaultFileLogging :: TestTree
 parseShortDefaultFileLogging =
@@ -200,7 +199,7 @@ parseShortDefaultFileLogging =
     verifyResult argList expected
   where
     argList = ["-f", "default", "command"]
-    expected = updateDefArgs #fileLog FPDefault
+    expected = updateDefArgs #fileLogging FPDefault
 
 parseShortEmptyFileLoggingFails :: TestTree
 parseShortEmptyFileLoggingFails =
@@ -322,7 +321,7 @@ parseShortCommandLogging = testCase "Should parse -l as CmdLogging" $ do
   verifyResult argList expected
   where
     argList = ["-l", "command"]
-    expected = updateDefArgs #cmdLogging Enabled
+    expected = updateDefArgs #cmdLogging True
 
 parseLongCommandLogging :: TestTree
 parseLongCommandLogging =
@@ -330,7 +329,7 @@ parseLongCommandLogging =
     verifyResult argList expected
   where
     argList = ["--cmd-log", "command"]
-    expected = updateDefArgs #cmdLogging Enabled
+    expected = updateDefArgs #cmdLogging True
 
 commandDisplaySpecs :: TestTree
 commandDisplaySpecs =
@@ -372,7 +371,7 @@ parseShortStripControlAll =
     verifyResult argList expected
   where
     argList = ["-sall", "command"]
-    expected = updateDefArgs #stripControl StripControlAll
+    expected = updateDefArgs #cmdLogStripControl StripControlAll
 
 parseShortStripControlNone :: TestTree
 parseShortStripControlNone =
@@ -381,7 +380,7 @@ parseShortStripControlNone =
   where
     desc = "Should parse -snone as StripControlNone"
     argList = ["-snone", "command"]
-    expected = updateDefArgs #stripControl StripControlNone
+    expected = updateDefArgs #cmdLogStripControl StripControlNone
 
 parseShortStripControlSmart :: TestTree
 parseShortStripControlSmart =
@@ -390,16 +389,16 @@ parseShortStripControlSmart =
   where
     desc = "Should parse -ssmart as StripControlSmart"
     argList = ["-ssmart", "command"]
-    expected = updateDefArgs #stripControl StripControlSmart
+    expected = updateDefArgs #cmdLogStripControl StripControlSmart
 
 parseLongStripControlSmart :: TestTree
 parseLongStripControlSmart =
   testCase desc $
     verifyResult argList expected
   where
-    desc = "Should parse --strip-control=smart as StripControlSmart"
-    argList = ["--strip-control=smart", "command"]
-    expected = updateDefArgs #stripControl StripControlSmart
+    desc = "Should parse --cmd-log-strip-control=smart as StripControlSmart"
+    argList = ["--cmd-log-strip-control=smart", "command"]
+    expected = updateDefArgs #cmdLogStripControl StripControlSmart
 
 cmdNameTruncSpecs :: TestTree
 cmdNameTruncSpecs =
@@ -416,16 +415,16 @@ parseShortCmdNameTrunc =
   where
     desc = "Should parse -x as command name truncation"
     argList = ["-x", "15", "command"]
-    expected = updateDefArgs #cmdNameTrunc 15
+    expected = updateDefArgs #cmdLogNameTrunc 15
 
 parseLongCmdNameTrunc :: TestTree
 parseLongCmdNameTrunc =
   testCase
-    "Should parse --cmd-name-trunc as command name truncation"
+    "Should parse --cmd-log-name-trunc as command name truncation"
     $ verifyResult argList expected
   where
-    argList = ["--cmd-name-trunc", "15", "command"]
-    expected = updateDefArgs #cmdNameTrunc 15
+    argList = ["--cmd-log-name-trunc", "15", "command"]
+    expected = updateDefArgs #cmdLogNameTrunc 15
 
 cmdLineTruncSpecs :: TestTree
 cmdLineTruncSpecs =
@@ -443,25 +442,25 @@ parseShortCmdLineTrunc =
   where
     desc = "Should parse -y as command line truncation"
     argList = ["-y", "15", "command"]
-    expected = updateDefArgs #cmdLineTrunc (Undetected 15)
+    expected = updateDefArgs #cmdLogLineTrunc (Undetected 15)
 
 parseLongCmdLineTrunc :: TestTree
 parseLongCmdLineTrunc =
   testCase
-    "Should parse --cmd-line-trunc as command line truncation"
+    "Should parse --cmd-log-line-trunc as command line truncation"
     $ verifyResult argList expected
   where
-    argList = ["--cmd-line-trunc", "15", "command"]
-    expected = updateDefArgs #cmdLineTrunc (Undetected 15)
+    argList = ["--cmd-log-line-trunc", "15", "command"]
+    expected = updateDefArgs #cmdLogLineTrunc (Undetected 15)
 
 parseDetectCmdLineTrunc :: TestTree
 parseDetectCmdLineTrunc =
   testCase desc $
     verifyResult argList expected
   where
-    desc = "Should parse --cmd-line-trunc detect as detect command line truncation"
-    argList = ["--cmd-line-trunc", "detect", "command"]
-    expected = updateDefArgs #cmdLineTrunc Detected
+    desc = "Should parse --cmd-log-line-trunc detect as detect command line truncation"
+    argList = ["--cmd-log-line-trunc", "detect", "command"]
+    expected = updateDefArgs #cmdLogLineTrunc Detected
 
 globalLoggingSpecs :: TestTree
 globalLoggingSpecs =
@@ -484,8 +483,8 @@ parseLongGlobalLogging =
   testCase desc $
     verifyResult argList expected
   where
-    desc = "Should parse --disable-log as no global logging"
-    argList = ["--disable-log", "command"]
+    desc = "Should parse --log-disable as no global logging"
+    argList = ["--log-disable", "command"]
     expected = updateDefArgs #disableLogging True
 
 commandSpecs :: TestTree

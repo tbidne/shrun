@@ -16,7 +16,6 @@ import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
-    CmdLogging (..),
     HasLogging (..),
     StripControl (..),
     TruncRegion (..),
@@ -106,13 +105,13 @@ runMockApp env = runIdentity . runReaderT env
 
 instance HasLogging Env where
   getCmdDisplay = view #cmdDisplay
-  getCmdLogging = const Enabled
-  getCmdNameTrunc = view #cmdTrunc
-  getCmdLineTrunc = view #lineTrunc
-  getFileLogging = const Nothing
-  getFileLogStripControl = const StripControlAll
   getDisableLogging = const False
-  getStripControl = const StripControlNone
+  getCmdLogging = const True
+  getCmdLogStripControl = const $ Just StripControlNone
+  getCmdLogNameTrunc = view #cmdTrunc
+  getCmdLogLineTrunc = view #lineTrunc
+  getFileLogging = const Nothing
+  getFileLogStripControl = const $ Just StripControlAll
 
 -- | Entry point for Shrun.Logging.Formatting property tests.
 props :: TestTree

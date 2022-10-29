@@ -15,7 +15,11 @@ import Data.String (IsString)
 import Data.Text qualified as T
 import Hedgehog qualified as H
 import Refined qualified as R
-import Shrun.Configuration.Env.Types (CmdDisplay (..), CmdLogging (..), HasLogging (..), StripControl (..))
+import Shrun.Configuration.Env.Types
+  ( CmdDisplay (..),
+    HasLogging (..),
+    StripControl (..),
+  )
 import Shrun.Data.Command (Command (..))
 import Shrun.Effects.Timing (Timing (..))
 import Shrun.Logging.Queue (LogText (..))
@@ -45,17 +49,17 @@ newtype MockEnv = MkMockEnv ()
 
 instance HasLogging MockEnv where
   getCmdDisplay = const ShowKey
-  getCmdLineTrunc = const Nothing
-  getCmdLogging = const Disabled
-  getCmdNameTrunc = const Nothing
+  getCmdLogLineTrunc = const Nothing
+  getCmdLogging = const False
+  getCmdLogStripControl = const $ Just StripControlSmart
+  getCmdLogNameTrunc = const Nothing
   getFileLogging = const Nothing
 
   -- This is what we need to run the tests. It's set to
   -- None since our generators can generate null bytes,
   -- thus properties would fail unless we prevent that.
-  getFileLogStripControl = const StripControlNone
+  getFileLogStripControl = const $ Just StripControlNone
   getDisableLogging = const False
-  getStripControl = const StripControlSmart
 
 -- Monad with mock implementation for 'Timing'.
 newtype MockTime a = MkMockTime

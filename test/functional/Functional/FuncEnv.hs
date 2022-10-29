@@ -37,14 +37,14 @@ instance HasTimeout FuncEnv where
 
 -- | @since 0.3
 instance HasLogging FuncEnv where
-  getCmdDisplay = view (#coreEnv % #cmdDisplay)
-  getCmdLineTrunc = view (#coreEnv % #cmdLineTrunc)
-  getCmdLogging = view (#coreEnv % #cmdLogging)
-  getCmdNameTrunc = view (#coreEnv % #cmdNameTrunc)
-  getFileLogging = view (#coreEnv % #fileLog)
-  getFileLogStripControl = view (#coreEnv % #fileLogStripControl)
-  getDisableLogging = view (#coreEnv % #disableLogging)
-  getStripControl = view (#coreEnv % #stripControl)
+  getDisableLogging = getDisableLogging . view #coreEnv
+  getCmdLogging = getCmdLogging . view #coreEnv
+  getCmdDisplay = getCmdDisplay . view #coreEnv
+  getCmdLogStripControl = getCmdLogStripControl . view #coreEnv
+  getCmdLogLineTrunc = getCmdLogLineTrunc . view #coreEnv
+  getCmdLogNameTrunc = getCmdLogNameTrunc . view #coreEnv
+  getFileLogging = getFileLogging . view #coreEnv
+  getFileLogStripControl = getFileLogStripControl . view #coreEnv
 
 -- | @since 0.3
 instance HasCompletedCmds FuncEnv where

@@ -131,10 +131,15 @@ import GHC.Stack as X (HasCallStack)
 import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X
   ( A_Getter,
+    AffineTraversal',
+    An_AffineFold,
+    An_AffineTraversal,
     Getter,
+    Is,
     Iso',
     LabelOptic (..),
     Lens',
+    Optic',
     Prism,
     Prism',
     iso,
@@ -160,6 +165,7 @@ import Optics.Core as X
     _Nothing,
     _Right,
   )
+import Optics.Core.Extras as X (is)
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
 import System.Directory qualified as Dir

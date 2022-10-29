@@ -28,7 +28,7 @@ stripNone =
     "" @=? stripNone' ""
     "\ESC[ foo \ESC[A  bar \n baz" @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
   where
-    stripNone' = flip Formatting.stripChars' StripControlNone
+    stripNone' = flip Formatting.stripChars' (Just StripControlNone)
 
 stripAll :: TestTree
 stripAll =
@@ -36,7 +36,7 @@ stripAll =
     "" @=? stripAll' ""
     "oo    bar  baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
-    stripAll' = flip Formatting.stripChars' StripControlAll
+    stripAll' = flip Formatting.stripChars' (Just StripControlAll)
 
 stripSmart :: TestTree
 stripSmart =
@@ -44,4 +44,4 @@ stripSmart =
     "" @=? stripSmart' ""
     "foo \ESC[m   bar  baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
-    stripSmart' = flip Formatting.stripChars' StripControlSmart
+    stripSmart' = flip Formatting.stripChars' (Just StripControlSmart)

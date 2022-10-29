@@ -1,1 +1,2 @@
-file-log = ""
+[file-log]
+path = ""

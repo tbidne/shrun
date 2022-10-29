@@ -1,15 +1,10 @@
 # All values are non-defaults so we can test that this file is being used
 
 timeout = "1h"
-file-log = "default"
-file-log-mode = "append"
-file-log-strip-control = "none"
-cmd-log = true
+log-disable = true
 key-hide = true
 cmd-name-trunc = 80
-cmd-line-trunc = 150
-strip-control = "all"
-disable-log = true
+
 legend = [
   { key = 'cmd1', val = 'echo "command one"' },
   { key = 'cmd2', val = 'echo "command one"' },
@@ -19,3 +14,12 @@ legend = [
   { key = 'b', val = 'c' },
   { key = 'c', val = 'a' },
 ]
+
+[cmd-log]
+line-trunc = 150
+strip-control = "all"
+
+[file-log]
+path = "default"
+mode = "append"
+strip-control = "none"

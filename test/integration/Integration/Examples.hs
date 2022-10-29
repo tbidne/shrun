@@ -3,11 +3,8 @@ module Integration.Examples (specs) where
 import Data.IORef qualified as IORef
 import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
-import Shrun.Configuration.Env.Types
-  ( CmdDisplay (..),
-    CmdLogging (..),
-    StripControl (..),
-  )
+import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
+import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 
 specs :: TestTree
@@ -26,19 +23,19 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
   logs <- IORef.readIORef logsRef
   logs @=? []
   where
-    args = ["-c", "examples/config.toml", "cmd"]
+    args = ["-c", "examples/config.toml", "cmd1"]
     expected =
       MkSimpleEnv
         { timeout = Just 20,
-          fileLog = True,
-          fileLogStripControl = StripControlAll,
-          cmdLogging = Enabled,
-          cmdDisplay = ShowKey,
-          cmdNameTrunc = Just 80,
-          cmdLineTrunc = Just 150,
-          stripControl = StripControlSmart,
           disableLogging = False,
-          commands = NESeq.singleton "cmd"
+          cmdDisplay = ShowKey,
+          cmdLogging = True,
+          cmdLogNameTrunc = Just 80,
+          cmdLogLineTrunc = Just 150,
+          cmdLogStripControl = Just StripControlSmart,
+          fileLogging = True,
+          fileLogStripControl = Just StripControlAll,
+          commands = NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\"")
         }
 
 examplesDefault :: TestTree
@@ -53,13 +50,13 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          fileLog = False,
-          fileLogStripControl = StripControlAll,
-          cmdLogging = Disabled,
-          cmdDisplay = ShowKey,
-          cmdNameTrunc = Nothing,
-          cmdLineTrunc = Nothing,
-          stripControl = StripControlSmart,
           disableLogging = False,
+          cmdDisplay = ShowKey,
+          cmdLogging = False,
+          cmdLogStripControl = Nothing,
+          cmdLogNameTrunc = Nothing,
+          cmdLogLineTrunc = Nothing,
+          fileLogging = False,
+          fileLogStripControl = Nothing,
           commands = NESeq.singleton "cmd"
         }
