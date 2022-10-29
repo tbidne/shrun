@@ -54,9 +54,9 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               timeout = Nothing,
               disableLogging = Nothing,
               cmdDisplay = Nothing,
+              cmdNameTrunc = Nothing,
               cmdLogging = Nothing,
               cmdLogStripControl = Nothing,
-              cmdLogNameTrunc = Nothing,
               cmdLogLineTrunc = Nothing,
               fileLogging = Nothing,
               fileLogMode = Nothing,
@@ -415,16 +415,16 @@ parseShortCmdNameTrunc =
   where
     desc = "Should parse -x as command name truncation"
     argList = ["-x", "15", "command"]
-    expected = updateDefArgs #cmdLogNameTrunc 15
+    expected = updateDefArgs #cmdNameTrunc 15
 
 parseLongCmdNameTrunc :: TestTree
 parseLongCmdNameTrunc =
   testCase
-    "Should parse --cmd-log-name-trunc as command name truncation"
+    "Should parse --cmd-name-trunc as command name truncation"
     $ verifyResult argList expected
   where
-    argList = ["--cmd-log-name-trunc", "15", "command"]
-    expected = updateDefArgs #cmdLogNameTrunc 15
+    argList = ["--cmd-name-trunc", "15", "command"]
+    expected = updateDefArgs #cmdNameTrunc 15
 
 cmdLineTruncSpecs :: TestTree
 cmdLineTruncSpecs =

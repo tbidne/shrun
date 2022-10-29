@@ -88,7 +88,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         "none",
         "--cmd-log",
         "--key-hide",
-        "--cmd-log-name-trunc",
+        "--cmd-name-trunc",
         "10",
         "--cmd-log-line-trunc",
         "60",
