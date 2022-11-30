@@ -244,7 +244,7 @@ parserInfoArgs =
     desc =
       Just $
         "\nShrun runs shell commands concurrently. In addition to "
-          <> "providing basic timing and logging functionality, we also provide "
+          <> "providing basic MonadTime and logging functionality, we also provide "
           <> "the ability to pass in a config file that can be used to define "
           <> "aliases for commands. See github.com/tbidne/shrun#README for "
           <> "full documentation."

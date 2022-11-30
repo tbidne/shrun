@@ -27,7 +27,7 @@ import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Process (Process (..), tryTimeCmd)
 import Shrun.Effects.Terminal (Terminal (..))
-import Shrun.Effects.Timing (Timing (..), withTiming)
+import Effects.MonadTime (MonadTime (..), withTiming)
 import Shrun.IO (Stderr (..))
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Log qualified as Log
@@ -37,6 +37,7 @@ import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
+import Shrun.Utils qualified as Utils
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import UnliftIO.Async qualified as Async
@@ -56,7 +57,7 @@ shrun ::
     Mutable m,
     Process m,
     Terminal m,
-    Timing m
+    MonadTime m
   ) =>
   m ()
 shrun = asks getCommands >>= runCommands
@@ -72,7 +73,7 @@ runCommands ::
     Mutable m,
     Process m,
     Terminal m,
-    Timing m
+    MonadTime m
   ) =>
   NonEmptySeq Command ->
   m ()
@@ -104,7 +105,8 @@ runCommands commands = Regions.displayConsoleRegions $
           Log.putRegionLog r fatalLog
         Right _ -> pure ()
 
-      let totalTimeTxt = "Finished! Total time elapsed: " <> formatRelativeTime totalTime
+      let totalTimeTxt = "Finished! Total time elapsed: "
+            <> formatRelativeTime (Utils.timeSpecToRelTime totalTime)
           finalLog =
             MkLog
               { cmd = Nothing,
@@ -131,7 +133,7 @@ runCommand ::
     MonadReader env m,
     MonadUnliftIO m,
     Process m,
-    Timing m
+    MonadTime m
   ) =>
   Command ->
   m ()
@@ -179,7 +181,7 @@ counter ::
     RegionLogger m,
     Region m ~ ConsoleRegion,
     Terminal m,
-    Timing m
+    MonadTime m
   ) =>
   NonEmptySeq Command ->
   m ()
@@ -205,7 +207,7 @@ logCounter ::
     Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
-    Timing m
+    MonadTime m
   ) =>
   ConsoleRegion ->
   Natural ->
@@ -229,7 +231,7 @@ keepRunning ::
     Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
-    Timing m
+    MonadTime m
   ) =>
   NonEmptySeq Command ->
   ConsoleRegion ->

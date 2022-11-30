@@ -9,7 +9,7 @@ module Shrun.IO
     Stdout (..),
     Stderr (..),
 
-    -- * Timing shell programs
+    -- * MonadTime shell programs
     tryCommand,
     tryCommandStreamRegion,
     tryCommandStreamNoRegion,
@@ -28,7 +28,7 @@ import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Shrun.Effects.Timing (Timing (..))
+import Effects.MonadTime (MonadTime (..))
 import Shrun.Logging.Log qualified as Log
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types
@@ -197,7 +197,7 @@ tryShExitCode cmd path = do
     ExitFailure _ -> Left $ makeStdErr err
 {-# INLINEABLE tryShExitCode #-}
 
--- | Version of 'tryShExitCode' with timing. On success, stdout is not
+-- | Version of 'tryShExitCode' with MonadTime. On success, stdout is not
 -- returned.
 --
 -- @since 0.1
@@ -230,7 +230,7 @@ tryCommandStreamRegion ::
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
-    Timing m
+    MonadTime m
   ) =>
   Command ->
   m (Maybe Stderr)
@@ -252,7 +252,7 @@ tryCommandStreamNoRegion ::
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
-    Timing m
+    MonadTime m
   ) =>
   Command ->
   m (Maybe Stderr)
@@ -271,7 +271,7 @@ tryCommandAnyRegion ::
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
-    Timing m
+    MonadTime m
   ) =>
   Maybe ConsoleRegion ->
   Command ->
@@ -340,7 +340,7 @@ streamOutput ::
     Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
-    Timing m
+    MonadTime m
   ) =>
   Maybe ConsoleRegion ->
   Command ->

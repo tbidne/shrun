@@ -37,6 +37,7 @@ where
 import Data.Sequence (Seq)
 import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (Command)
+import TOML (Value (String, Integer))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Data.Timeout (Timeout)

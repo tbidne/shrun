@@ -21,8 +21,9 @@ import Shrun.Configuration.Env.Types
     StripControl (..),
   )
 import Shrun.Data.Command (Command (..))
-import Shrun.Effects.Timing (Timing (..))
+import Effects.MonadTime (MonadTime (..), LocalTime (..))
 import Shrun.Logging.Queue (LogText (..))
+import Data.Time.LocalTime (midday)
 import Shrun.Logging.Queue qualified as Queue
 import Shrun.Logging.Types
   ( Log (..),
@@ -36,7 +37,7 @@ import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.Shrun.Logging.Generators qualified as LGens
 
--- The mock time our 'Timing' returns.
+-- The mock time our 'MonadTime' returns.
 sysTime :: IsString a => a
 sysTime = "2022-02-20 23:47:39.90228065 UTC"
 
@@ -61,15 +62,17 @@ instance HasLogging MockEnv where
   getFileLogStripControl = const $ Just StripControlNone
   getDisableLogging = const False
 
--- Monad with mock implementation for 'Timing'.
+-- Monad with mock implementation for 'MonadTime'.
 newtype MockTime a = MkMockTime
   { runMockTime :: a
   }
   deriving stock (Eq, Show)
   deriving (Applicative, Functor, Monad) via Identity
 
-instance Timing MockTime where
-  getSystemTime = pure $ TR.read sysTime
+instance MonadTime MockTime where
+  getSystemTime = pure $ LocalTime (toEnum 59_000) midday
+  --getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
+  getSystemZonedTime = pure $ TR.read sysTime
   getTimeSpec = pure $ fromIntegral @Int64 0
 
 instance MonadReader MockEnv MockTime where

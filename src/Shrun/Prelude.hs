@@ -175,7 +175,7 @@ import TOML as X
   ( DecodeTOML (..),
     Decoder,
     TOMLError (..),
-    Value (..),
+    Value,
     decode,
     decodeWith,
     getArrayOf,

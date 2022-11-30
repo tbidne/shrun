@@ -15,7 +15,7 @@ import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable
 import Shrun.Effects.Process (Process (..))
 import Shrun.Effects.Terminal (Terminal (..))
-import Shrun.Effects.Timing (Timing (..))
+import Effects.MonadTime (MonadTime (..))
 import Shrun.IO qualified as ShIO
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types (LogMode (..))
@@ -52,7 +52,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.5
       Terminal,
       -- | @since 0.5
-      Timing,
+      MonadTime,
       -- | @since 0.1
       MonadThrow,
       -- | @since 0.1
@@ -84,7 +84,7 @@ instance (MonadIO m, MonadMask m, Terminal m) => RegionLogger (ShellT Env m) whe
 
 -- | @since 0.3.0.1
 instance
-  (MonadMask m, MonadUnliftIO m, Mutable m, Terminal m, Timing m) =>
+  (MonadMask m, MonadUnliftIO m, Mutable m, Terminal m, MonadTime m) =>
   Process (ShellT Env m)
   where
   tryCmd = ShIO.tryCommand

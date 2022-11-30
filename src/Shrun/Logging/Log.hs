@@ -15,7 +15,7 @@ where
 
 import Shrun.Configuration.Env.Types (HasLogging (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Shrun.Effects.Timing (Timing (..))
+import Effects.MonadTime (MonadTime (..))
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Queue qualified as Queue
 import Shrun.Logging.RegionLogger (RegionLogger (..))
@@ -31,7 +31,7 @@ putLog ::
     MonadReader env m,
     Mutable m,
     RegionLogger m,
-    Timing m
+    MonadTime m
   ) =>
   Log ->
   m ()
@@ -52,7 +52,7 @@ putRegionLog ::
     MonadReader env m,
     Mutable m,
     RegionLogger m,
-    Timing m
+    MonadTime m
   ) =>
   Region m ->
   Log ->
@@ -91,7 +91,7 @@ maybeSendLogToQueue ::
   ( HasLogging env,
     MonadReader env m,
     Mutable m,
-    Timing m
+    MonadTime m
   ) =>
   Log ->
   m ()

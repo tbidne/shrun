@@ -13,8 +13,9 @@ module Shrun.Utils
     stripControlAll,
     stripControlSmart,
 
-    -- * Timing Utils
+    -- * MonadTime Utils
     diffTime,
+    timeSpecToRelTime,
     foldMap1,
 
     -- * Misc Utils
@@ -34,6 +35,7 @@ import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Prelude
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
+import Data.Time.Relative (RelativeTime, fromSeconds)
 
 -- $setup
 -- >>> :set -XOverloadedLists
@@ -61,6 +63,10 @@ diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
     i642n :: Int64 -> Natural
     i642n = fromIntegral
 {-# INLINEABLE diffTime #-}
+
+timeSpecToRelTime :: TimeSpec -> RelativeTime
+timeSpecToRelTime = fromSeconds . fromIntegral . C.sec
+{-# INLINEABLE timeSpecToRelTime #-}
 
 -- | Relaxes 'foldMap'\'s 'Monoid' constraint to 'Semigroup'. Requires a
 -- starting value. This will have to do until semigroupoids' Foldable1 is

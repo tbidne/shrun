@@ -21,7 +21,7 @@ where
 
 import Shrun.Configuration.Env.Types (HasLogging (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Shrun.Effects.Timing (Timing (..))
+import Effects.MonadTime (MonadTime (..))
 import Shrun.Logging.Formatting (stripChars')
 import Shrun.Logging.Types
   ( Log (..),
@@ -52,9 +52,9 @@ _LogText = to (\(MkLogText t) -> t)
 -- @
 --
 -- @since 0.1
-formatFileLog :: (HasLogging env, MonadReader env m, Timing m) => Log -> m LogText
+formatFileLog :: (HasLogging env, MonadReader env m, MonadTime m) => Log -> m LogText
 formatFileLog log = do
-  currTime <- getSystemTime
+  currTime <- getSystemZonedTime
   stripControl <- asks getFileLogStripControl
   let msg' = stripChars' (log ^. #msg) stripControl
       formatted = case log ^. #cmd of
@@ -73,7 +73,7 @@ writeQueue ::
   ( HasLogging env,
     MonadReader env m,
     Mutable m,
-    Timing m
+    MonadTime m
   ) =>
   LogTextQueue ->
   Log ->

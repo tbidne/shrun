@@ -59,7 +59,7 @@ import Shrun.Effects.FileSystemReader (FileSystemReader (..), getShrunXdgConfig)
 import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Terminal (Terminal (..))
-import Shrun.Effects.Timing (Timing)
+import Effects.MonadTime (MonadTime)
 import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
 
@@ -93,7 +93,7 @@ makeEnvAndShrun ::
     MonadUnliftIO m,
     Mutable m,
     Terminal m,
-    Timing m
+    MonadTime m
   ) =>
   m ()
 makeEnvAndShrun = withEnv (runShellT shrun)
@@ -217,6 +217,8 @@ fromToml onEnv cfg cmdsText = do
 
       queue <- liftSTM $ newTBQueue 1000
 
+      -- NOTE: withFile uses the system locale to open the file. We probably
+      -- want to use withBinary file instead. Consider bracket as well.
       withFile fp ioMode $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
     Just (FPManual fp) -> do

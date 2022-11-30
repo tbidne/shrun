@@ -19,6 +19,10 @@ extra-deps:
   commit: 7a8832ef4a55d565e72fab553a4d485329235bf7
 - git: https://github.com/tbidne/byte-types.git
   commit: cc0e1323b51f1ec3441ddc6578a05e9d7fcdb977
+- git: https://github.com/tbidne/monad-effects.git
+  commit: d960c1d2a20cf5e918d635d1ca66e3209e717d35
+  subdirs:
+  - monad-time
 - git: https://github.com/tbidne/relative-time.git
   commit: 6570c30825f610843b181dda26716971f0444907
 flags:
