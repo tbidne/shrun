@@ -24,6 +24,7 @@ the major/minor/patch definitions apply to the application's interface / usage
     * `file-log` renamed to `file-log.path`.
     * `file-log-mode` renamed to `file-log.mode`.
     * `file-log-strip-control` renamed to `file-log.strip-control`.
+* Timestamps in logs are now simpler: No timezone or fractions of a second.
 
 ### Fixed
 * Fix redundant COMMANDS... on help page.

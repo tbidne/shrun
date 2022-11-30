@@ -36,15 +36,17 @@ import Text.Read qualified as TR
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.Shrun.Logging.Generators qualified as LGens
+import Data.Time (ZonedTime(..))
+import Data.Time.LocalTime (utc)
 
 -- The mock time our 'MonadTime' returns.
 sysTime :: IsString a => a
-sysTime = "2022-02-20 23:47:39.90228065 UTC"
+sysTime = "2022-02-20 23:47:39"
 
 -- Refined variant of 'sysTime'. Includes brackets around the string
 -- for use when checking formatting.
 sysTimeNE :: Refined R.NonEmpty Text
-sysTimeNE = $$(R.refineTH "[2022-02-20 23:47:39.90228065 UTC]")
+sysTimeNE = $$(R.refineTH "[2022-02-20 23:47:39]")
 
 newtype MockEnv = MkMockEnv ()
 
@@ -70,9 +72,8 @@ newtype MockTime a = MkMockTime
   deriving (Applicative, Functor, Monad) via Identity
 
 instance MonadTime MockTime where
-  getSystemTime = pure $ LocalTime (toEnum 59_000) midday
-  --getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
-  getSystemZonedTime = pure $ TR.read sysTime
+  getSystemTime = pure $ TR.read sysTime
+  getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
   getTimeSpec = pure $ fromIntegral @Int64 0
 
 instance MonadReader MockEnv MockTime where

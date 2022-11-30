@@ -21,7 +21,7 @@ where
 
 import Shrun.Configuration.Env.Types (HasLogging (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Effects.MonadTime (MonadTime (..))
+import Effects.MonadTime (MonadTime (..), formatLocalTime)
 import Shrun.Logging.Formatting (stripChars')
 import Shrun.Logging.Types
   ( Log (..),
@@ -54,13 +54,13 @@ _LogText = to (\(MkLogText t) -> t)
 -- @since 0.1
 formatFileLog :: (HasLogging env, MonadReader env m, MonadTime m) => Log -> m LogText
 formatFileLog log = do
-  currTime <- getSystemZonedTime
+  currTime <- formatLocalTime <$> getSystemTime
   stripControl <- asks getFileLogStripControl
   let msg' = stripChars' (log ^. #msg) stripControl
       formatted = case log ^. #cmd of
         Nothing -> prefix <> msg'
         Just com -> prefix <> "[" <> (com ^. #command) <> "] " <> msg'
-      withTimestamp = "[" <> showt currTime <> "] " <> formatted <> "\n"
+      withTimestamp = "[" <> pack currTime <> "] " <> formatted <> "\n"
   pure $ UnsafeLogText withTimestamp
   where
     prefix = Log.logToPrefix log
