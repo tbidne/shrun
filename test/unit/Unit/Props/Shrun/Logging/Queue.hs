@@ -13,6 +13,9 @@ import Data.Functor.Identity (Identity (..))
 import Data.Int (Int64)
 import Data.String (IsString)
 import Data.Text qualified as T
+import Data.Time (ZonedTime (..))
+import Data.Time.LocalTime (midday, utc)
+import Effects.MonadTime (LocalTime (..), MonadTime (..))
 import Hedgehog qualified as H
 import Refined qualified as R
 import Shrun.Configuration.Env.Types
@@ -21,9 +24,7 @@ import Shrun.Configuration.Env.Types
     StripControl (..),
   )
 import Shrun.Data.Command (Command (..))
-import Effects.MonadTime (MonadTime (..), LocalTime (..))
 import Shrun.Logging.Queue (LogText (..))
-import Data.Time.LocalTime (midday)
 import Shrun.Logging.Queue qualified as Queue
 import Shrun.Logging.Types
   ( Log (..),
@@ -36,8 +37,6 @@ import Text.Read qualified as TR
 import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.Shrun.Logging.Generators qualified as LGens
-import Data.Time (ZonedTime(..))
-import Data.Time.LocalTime (utc)
 
 -- The mock time our 'MonadTime' returns.
 sysTime :: IsString a => a

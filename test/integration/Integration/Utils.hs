@@ -11,6 +11,9 @@ module Integration.Utils
   )
 where
 
+import Data.Text qualified as T
+import Effects.MonadFsReader (MonadFsReader (..))
+import Effects.MonadTerminal (MonadTerminal (..))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types
@@ -23,20 +26,19 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Effects.FileSystemReader (FileSystemReader (..))
-import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Shrun.Effects.Terminal (Terminal (..))
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
   deriving
     ( Applicative,
-      FileSystemWriter,
       Functor,
       Monad,
+      MonadCallStack,
+      MonadFsWriter,
       MonadIO,
       MonadReader (IORef [Text]),
+      MonadThread,
       MonadUnliftIO,
       Mutable
     )
@@ -45,28 +47,36 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
 runConfigIO :: ConfigIO a -> IORef [Text] -> IO a
 runConfigIO (MkConfigIO rdr) = runReaderT rdr
 
-instance FileSystemReader ConfigIO where
+instance MonadFsReader ConfigIO where
+  getFileSize = liftIO . getFileSize
+  getHomeDirectory = liftIO getHomeDirectory
   getXdgConfig _ = pure "test/integration/toml"
   readFile = liftIO . readFile
-  getFileSize = liftIO . getFileSize
   doesFileExist = liftIO . doesFileExist
-  getArgs = liftIO getArgs
+  doesDirectoryExist = liftIO . doesDirectoryExist
+  doesPathExist = liftIO . doesPathExist
+  canonicalizePath = liftIO . canonicalizePath
+  listDirectory = liftIO . listDirectory
 
-instance Terminal ConfigIO where
+instance MonadTerminal ConfigIO where
+  putStr = error "putStr: unimplemented"
+
   -- capture logs
-  putTextLn t = ask >>= (`modifyIORef'` (t :))
+  putStrLn t = ask >>= (`modifyIORef'` (T.pack t :))
+
+  getChar = error "getChar: unimplemented"
 
   -- hardcoded so we can test 'detect'
-  getTerminalWidth = pure 0
-  sleep = liftIO . sleep
+  getTerminalSize = liftIO getTerminalSize
 
 -- IO with no default config file
 newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
   deriving
     ( Applicative,
-      FileSystemWriter,
+      MonadFsWriter,
       Functor,
       Monad,
+      MonadCallStack,
       MonadIO,
       MonadUnliftIO,
       Mutable
@@ -76,14 +86,18 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
 runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
 
-instance FileSystemReader NoConfigIO where
+instance MonadFsReader NoConfigIO where
   getXdgConfig _ = pure "./"
+  getHomeDirectory = error "getHomeDirectory: unimplemented"
   readFile = liftIO . readFile
   getFileSize = liftIO . getFileSize
   doesFileExist = liftIO . doesFileExist
-  getArgs = liftIO getArgs
+  doesDirectoryExist = liftIO . doesDirectoryExist
+  doesPathExist = liftIO . doesPathExist
+  canonicalizePath = liftIO . canonicalizePath
+  listDirectory = liftIO . listDirectory
 
-deriving via ConfigIO instance Terminal NoConfigIO
+deriving via ConfigIO instance MonadTerminal NoConfigIO
 
 -- | Used to check our result Env against our expectations. Very similar to
 -- real Env, except some types are simplified:
@@ -125,11 +139,12 @@ simplifyEnv = to $ \env ->
 -- expected params.
 makeEnvAndVerify ::
   forall m.
-  ( FileSystemReader m,
-    FileSystemWriter m,
+  ( MonadCallStack m,
+    MonadFsReader m,
+    MonadFsWriter m,
+    MonadTerminal m,
     MonadUnliftIO m,
-    Mutable m,
-    Terminal m
+    Mutable m
   ) =>
   -- | List of CLI arguments.
   List String ->

@@ -28,6 +28,7 @@ import Data.Char (isControl, isLetter)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Text.Encoding.Error qualified as TEncErr
+import Data.Time.Relative (RelativeTime, fromSeconds)
 import GHC.Exts (IsList (..))
 import GHC.Int (Int64)
 import Refined qualified as R
@@ -35,7 +36,6 @@ import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Prelude
 import System.Clock (TimeSpec (..))
 import System.Clock qualified as C
-import Data.Time.Relative (RelativeTime, fromSeconds)
 
 -- $setup
 -- >>> :set -XOverloadedLists

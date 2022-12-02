@@ -8,13 +8,13 @@ module Shrun.Effects.Process
 where
 
 import Data.Time.Relative (RelativeTime)
-import Shrun.Data.Command (Command)
 import Effects.MonadTime (MonadTime, withTiming)
+import Shrun.Data.Command (Command)
 import Shrun.IO (Stderr)
 import Shrun.Logging.RegionLogger (RegionLogger (Region))
 import Shrun.Prelude
-import System.Console.Regions (ConsoleRegion)
 import Shrun.Utils qualified as U
+import System.Console.Regions (ConsoleRegion)
 
 -- | Effect for launching a process. Provides three functions of varying
 -- logging behavior.
@@ -44,9 +44,13 @@ class (Monad m, RegionLogger m, Region m ~ ConsoleRegion) => Process m where
 -- forced to check for failures.
 --
 -- @since 0.5
-tryTimeCmd :: (Process m, MonadTime m) =>
+tryTimeCmd ::
+  ( MonadCallStack m,
+    MonadTime m
+  ) =>
   (Command -> m (Maybe Stderr)) ->
-  Command -> m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
+  Command ->
+  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
 tryTimeCmd runner cmd =
   withTiming (runner cmd) >>= \case
     (rt, Nothing) -> pure $ Right $ U.timeSpecToRelTime rt

@@ -54,11 +54,8 @@ library
     Shrun.Data.NonEmptySeq
     Shrun.Data.Supremum
     Shrun.Data.Timeout
-    Shrun.Effects.FileSystemReader
-    Shrun.Effects.FileSystemWriter
     Shrun.Effects.Mutable
     Shrun.Effects.Process
-    Shrun.Effects.Terminal
     Shrun.IO
     Shrun.Logging.Formatting
     Shrun.Logging.Log
@@ -82,8 +79,13 @@ library
     , filepath              ^>=1.4.2.1
     , gitrev                >=1.2.0    && <1.4
     , hashable              >=1.3.0.0  && <1.5
+    , monad-callstack       ^>=0.1
+    , monad-fs-reader       ^>=0.1
+    , monad-fs-writer       ^>=0.1
     , monad-loops           >=0.3      && <0.5
-    , monad-time ^>=0.1
+    , monad-terminal        ^>=0.1
+    , monad-thread          ^>=0.1
+    , monad-time            ^>=0.1
     , mtl                   >=2.2.1    && <2.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
@@ -95,7 +97,6 @@ library
     , relative-time         ^>=0.1
     , stm                   ^>=2.5.0
     , template-haskell      >=2.17.0.0 && <2.20
-    , terminal-size         ^>=0.3.0
     , text                  >=1.2.3.2  && <2.1
     , toml-reader           ^>=0.1.0.0
     , unix                  >=2.7.2    && <2.9
@@ -155,8 +156,8 @@ test-suite unit
     , byte-types
     , clock
     , hedgehog              >=1.0.2   && <1.3
-    , optparse-applicative
     , monad-time
+    , optparse-applicative
     , refined
     , shrun
     , tagged                ^>=0.8.6
@@ -164,8 +165,8 @@ test-suite unit
     , tasty-hedgehog        >=1.2.0.0 && <1.4
     , tasty-hunit           >=0.9     && <0.11
     , text
+    , time                  >=1.9.3   && <1.14
     , unordered-containers
-    , time                  >=1.9.3     && <1.14
 
   hs-source-dirs:   test/unit
   default-language: GHC2021
@@ -186,6 +187,8 @@ test-suite integration
     , algebra-simple
     , base
     , directory
+    , monad-fs-reader
+    , monad-terminal
     , shrun
     , tasty
     , tasty-hunit

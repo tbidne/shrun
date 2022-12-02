@@ -9,13 +9,11 @@ module Shrun.ShellT
   )
 where
 
-import Shrun.Configuration.Env.Types (Env)
-import Shrun.Effects.FileSystemReader (FileSystemReader (..))
-import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
-import Shrun.Effects.Mutable
-import Shrun.Effects.Process (Process (..))
-import Shrun.Effects.Terminal (Terminal (..))
+import Effects.MonadTerminal (putTextLn)
 import Effects.MonadTime (MonadTime (..))
+import Shrun.Configuration.Env.Types (Env)
+import Shrun.Effects.Mutable (Mutable (..))
+import Shrun.Effects.Process (Process (..))
 import Shrun.IO qualified as ShIO
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types (LogMode (..))
@@ -39,24 +37,28 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadReader env,
       -- | @since 0.1
       MonadCatch,
-      -- | @since 0.5
-      FileSystemReader,
-      -- | @since 0.5
-      FileSystemWriter,
+      -- | @since 0.6
+      MonadCallStack,
+      -- | @since 0.6
+      MonadFsReader,
+      -- | @since 0.6
+      MonadFsWriter,
       -- | @since 0.1
       MonadIO,
       -- | @since 0.1
       MonadMask,
-      -- | @since 0.5
-      Mutable,
-      -- | @since 0.5
-      Terminal,
+      -- | @since 0.6
+      MonadTerminal,
+      -- | @since 0.6
+      MonadThread,
       -- | @since 0.5
       MonadTime,
       -- | @since 0.1
       MonadThrow,
       -- | @since 0.1
-      MonadUnliftIO
+      MonadUnliftIO,
+      -- | @since 0.5
+      Mutable
     )
     via (ReaderT env m)
 
@@ -71,7 +73,10 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- (i.e. in tests).
 
 -- | @since 0.1
-instance (MonadIO m, MonadMask m, Terminal m) => RegionLogger (ShellT Env m) where
+instance
+  (MonadIO m, MonadMask m, MonadTerminal m) =>
+  RegionLogger (ShellT Env m)
+  where
   type Region (ShellT Env m) = ConsoleRegion
 
   logFn = putTextLn
@@ -84,7 +89,7 @@ instance (MonadIO m, MonadMask m, Terminal m) => RegionLogger (ShellT Env m) whe
 
 -- | @since 0.3.0.1
 instance
-  (MonadMask m, MonadUnliftIO m, Mutable m, Terminal m, MonadTime m) =>
+  (MonadMask m, MonadUnliftIO m, MonadTerminal m, MonadTime m, Mutable m) =>
   Process (ShellT Env m)
   where
   tryCmd = ShIO.tryCommand

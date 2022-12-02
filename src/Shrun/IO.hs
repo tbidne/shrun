@@ -22,13 +22,13 @@ import Data.ByteString qualified as BS
 import Data.IORef (writeIORef)
 import Data.Sequence ((<|))
 import Data.Text qualified as T
+import Effects.MonadTime (MonadTime (..))
 import GHC.IO.Handle (BufferMode (..))
 import GHC.IO.Handle qualified as Handle
 import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Effects.MonadTime (MonadTime (..))
 import Shrun.Logging.Log qualified as Log
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types

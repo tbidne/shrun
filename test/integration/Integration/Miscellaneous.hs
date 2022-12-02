@@ -2,11 +2,11 @@ module Integration.Miscellaneous (specs) where
 
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
+import Effects.MonadFsReader (MonadFsReader (getFileSize))
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Numeric.Algebra (zero)
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Effects.FileSystemReader
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =

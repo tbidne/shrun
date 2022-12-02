@@ -12,7 +12,11 @@ where
 import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
+import Data.Text.Encoding qualified as TEnc
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
+import Effects.MonadFsWriter (MonadFsWriter (hFlush, hPut))
+import Effects.MonadThread as X (MonadThread (microsleep))
+import Effects.MonadTime (MonadTime (..), withTiming)
 import Shrun.Configuration.Env.Types
   ( HasCommands (..),
     HasCompletedCmds (..),
@@ -23,11 +27,8 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Data.Timeout (Timeout (..))
-import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Process (Process (..), tryTimeCmd)
-import Shrun.Effects.Terminal (Terminal (..))
-import Effects.MonadTime (MonadTime (..), withTiming)
 import Shrun.IO (Stderr (..))
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Log qualified as Log
@@ -46,33 +47,35 @@ import UnliftIO.Async qualified as Async
 --
 -- @since 0.1
 shrun ::
-  ( FileSystemWriter m,
-    HasCommands env,
+  ( HasCommands env,
     HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
+    MonadCallStack m,
+    MonadFsWriter m,
     MonadMask m,
     MonadReader env m,
+    MonadThread m,
     MonadUnliftIO m,
     Mutable m,
     Process m,
-    Terminal m,
     MonadTime m
   ) =>
   m ()
 shrun = asks getCommands >>= runCommands
 
 runCommands ::
-  ( FileSystemWriter m,
-    HasCompletedCmds env,
+  ( HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
+    MonadCallStack m,
+    MonadFsWriter m,
     MonadMask m,
     MonadReader env m,
+    MonadThread m,
     MonadUnliftIO m,
     Mutable m,
     Process m,
-    Terminal m,
     MonadTime m
   ) =>
   NonEmptySeq Command ->
@@ -105,8 +108,9 @@ runCommands commands = Regions.displayConsoleRegions $
           Log.putRegionLog r fatalLog
         Right _ -> pure ()
 
-      let totalTimeTxt = "Finished! Total time elapsed: "
-            <> formatRelativeTime (Utils.timeSpecToRelTime totalTime)
+      let totalTimeTxt =
+            "Finished! Total time elapsed: "
+              <> formatRelativeTime (Utils.timeSpecToRelTime totalTime)
           finalLog =
             MkLog
               { cmd = Nothing,
@@ -129,9 +133,10 @@ runCommands commands = Regions.displayConsoleRegions $
 runCommand ::
   ( HasLogging env,
     MonadMask m,
-    Mutable m,
+    MonadCallStack m,
     MonadReader env m,
     MonadUnliftIO m,
+    Mutable m,
     Process m,
     MonadTime m
   ) =>
@@ -177,10 +182,10 @@ counter ::
     HasLogging env,
     HasTimeout env,
     MonadReader env m,
+    MonadThread m,
     Mutable m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
-    Terminal m,
     MonadTime m
   ) =>
   NonEmptySeq Command ->
@@ -189,13 +194,13 @@ counter cmds = do
   -- This brief delay is so that our timer starts "last" i.e. after each individual
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
-  sleep 100_000
+  microsleep 100_000
   withConsoleRegion Linear $ \r -> do
     timeout <- asks getTimeout
     timer <- newIORef 0
     Loops.whileM_ (keepRunning cmds r timer timeout) $ do
       elapsed <- do
-        sleep 1_000_000
+        microsleep 1_000_000
         modifyIORef' timer (+ 1)
         readIORef timer
       logCounter r elapsed
@@ -270,8 +275,8 @@ timedOut timer (Just (MkTimeout t)) = timer > t
 {-# INLINEABLE timedOut #-}
 
 maybePollQueue ::
-  ( FileSystemWriter m,
-    HasLogging env,
+  ( HasLogging env,
+    MonadFsWriter m,
     MonadReader env m,
     Mutable m
   ) =>
@@ -284,7 +289,7 @@ maybePollQueue = do
 {-# INLINEABLE maybePollQueue #-}
 
 writeQueueToFile ::
-  ( FileSystemWriter m,
+  ( MonadFsWriter m,
     Mutable m
   ) =>
   Handle ->
@@ -293,6 +298,6 @@ writeQueueToFile ::
 writeQueueToFile h queue = forever $ Queue.readQueue queue >>= traverse_ (logFile h)
 {-# INLINEABLE writeQueueToFile #-}
 
-logFile :: FileSystemWriter m => Handle -> LogText -> m ()
-logFile h = hPut h . view _MkLogText
+logFile :: MonadFsWriter m => Handle -> LogText -> m ()
+logFile h = hPut h . TEnc.encodeUtf8 . view _MkLogText
 {-# INLINEABLE logFile #-}

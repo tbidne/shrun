@@ -19,9 +19,9 @@ module Shrun.Logging.Queue
   )
 where
 
+import Effects.MonadTime (MonadTime (..), formatLocalTime)
 import Shrun.Configuration.Env.Types (HasLogging (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Effects.MonadTime (MonadTime (..), formatLocalTime)
 import Shrun.Logging.Formatting (stripChars')
 import Shrun.Logging.Types
   ( Log (..),

@@ -118,6 +118,15 @@ import Data.Tuple as X (fst, snd)
 import Data.Type.Equality as X (type (~))
 #endif
 import Data.Void as X (Void, absurd)
+import Effects.MonadCallStack as X
+  ( MonadCallStack (throwWithCallStack),
+    catch,
+    try,
+  )
+import Effects.MonadFsReader as X (MonadFsReader)
+import Effects.MonadFsWriter as X (MonadFsWriter)
+import Effects.MonadTerminal as X (MonadTerminal)
+import Effects.MonadThread as X (MonadThread)
 import GHC.Enum as X (Bounded (..), Enum (..))
 import GHC.Err as X (undefined)
 import GHC.Float as X (Double (..), Float (..))
@@ -193,15 +202,15 @@ import UnliftIO as X (MonadUnliftIO (..))
 import UnliftIO.Environment as X (withArgs)
 import UnliftIO.Exception as X
   ( Exception (..),
+    IOException,
     SomeException,
-    catch,
+    bracket,
     catchAny,
     catchIO,
     finally,
     onException,
     throwIO,
     throwString,
-    try,
     tryAny,
   )
 import Prelude as X (seq)

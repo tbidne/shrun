@@ -25,7 +25,7 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
   result <-
     flip runConfigIO logsRef $
       withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
-        `catchIO` \e -> pure $ Just e
+        `catch` \(e :: IOException) -> pure $ Just e
 
   case result of
     Nothing -> assertFailure "Exception exception"

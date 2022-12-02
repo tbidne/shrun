@@ -12,8 +12,8 @@ where
 
 import Data.Time.Relative qualified as RT
 import Shrun.Prelude
-import Text.Read (readMaybe)
 import TOML (Value (Integer, String))
+import Text.Read (readMaybe)
 
 -- | Represents a timeout, which is a non-negative integer.
 --

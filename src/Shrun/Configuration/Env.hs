@@ -28,14 +28,40 @@ module Shrun.Configuration.Env
 where
 
 import Data.Bytes
-  ( FloatingFormatter (MkFloatingFormatter),
+  ( Bytes (MkBytes),
+    FloatingFormatter (MkFloatingFormatter),
     Normalize (normalize),
+    Size (B),
     formatSized,
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
+import Data.Text.Encoding qualified as TEnc
+import Effects.MonadFsReader
+  ( MonadFsReader
+      ( doesFileExist,
+        getFileSize,
+        getXdgConfig,
+        readFile
+      ),
+  )
+import Effects.MonadFsWriter
+  ( MonadFsWriter
+      ( hClose,
+        hFlush,
+        openFile,
+        removeFile
+      ),
+  )
+import Effects.MonadTerminal (getTerminalWidth, putTextLn)
+import Effects.MonadTime (MonadTime)
+import Options.Applicative qualified as OA
 import Shrun
-import Shrun.Configuration.Args (FileMode (..), FileSizeMode (..))
+import Shrun.Configuration.Args
+  ( FileMode (..),
+    FileSizeMode (..),
+    parserInfoArgs,
+  )
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -55,11 +81,7 @@ import Shrun.Configuration.Toml (TomlConfig, argsToTomlConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
-import Shrun.Effects.FileSystemReader (FileSystemReader (..), getShrunXdgConfig)
-import Shrun.Effects.FileSystemWriter (FileSystemWriter (..))
 import Shrun.Effects.Mutable (Mutable (..))
-import Shrun.Effects.Terminal (Terminal (..))
-import Effects.MonadTime (MonadTime)
 import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
 
@@ -87,13 +109,15 @@ instance Exception TomlError where
 --
 -- @since 0.1
 makeEnvAndShrun ::
-  ( FileSystemReader m,
-    FileSystemWriter m,
+  ( MonadCallStack m,
+    MonadFsReader m,
+    MonadFsWriter m,
     MonadMask m,
+    MonadTerminal m,
+    MonadThread m,
+    MonadTime m,
     MonadUnliftIO m,
-    Mutable m,
-    Terminal m,
-    MonadTime m
+    Mutable m
   ) =>
   m ()
 makeEnvAndShrun = withEnv (runShellT shrun)
@@ -103,16 +127,17 @@ makeEnvAndShrun = withEnv (runShellT shrun)
 --
 -- @since 0.5
 withEnv ::
-  ( FileSystemReader m,
-    FileSystemWriter m,
+  ( MonadCallStack m,
+    MonadFsReader m,
+    MonadFsWriter m,
+    MonadTerminal m,
     MonadUnliftIO m,
-    Mutable m,
-    Terminal m
+    Mutable m
   ) =>
   (Env -> m a) ->
   m a
 withEnv onEnv = do
-  args <- getArgs
+  args <- liftIO $ OA.execParser parserInfoArgs
   tomlConfig <-
     if args ^. #noConfig
       then -- 1. If noConfig is true then we ignore all toml config
@@ -140,17 +165,23 @@ withEnv onEnv = do
   fromToml onEnv finalConfig (args ^. #commands)
   where
     readConfig fp = do
-      contents <- readFile fp
+      contents <-
+        readFile fp
+          >>= ( \case
+                  Left ex -> throwWithCallStack ex
+                  Right c -> pure c
+              )
+            . TEnc.decodeUtf8'
       case decode contents of
         Right cfg -> pure cfg
         Left tomlErr -> throwIO $ MkTomlError tomlErr
 
 fromToml ::
-  ( FileSystemReader m,
-    FileSystemWriter m,
+  ( MonadFsReader m,
+    MonadFsWriter m,
+    MonadTerminal m,
     MonadUnliftIO m,
-    Mutable m,
-    Terminal m
+    Mutable m
   ) =>
   (Env -> m a) ->
   TomlConfig ->
@@ -217,14 +248,12 @@ fromToml onEnv cfg cmdsText = do
 
       queue <- liftSTM $ newTBQueue 1000
 
-      -- NOTE: withFile uses the system locale to open the file. We probably
-      -- want to use withBinary file instead. Consider bracket as well.
-      withFile fp ioMode $ \h ->
+      bracket (openFile fp ioMode) closeFile $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
     Just (FPManual fp) -> do
       handleLogFileSize fp
       queue <- liftSTM $ newTBQueue 1000
-      withFile fp ioMode $ \h ->
+      bracket (openFile fp ioMode) closeFile $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
   where
     maybeOrMempty :: (Is k An_AffineFold, Monoid a) => s -> Optic' k is s a -> a
@@ -233,7 +262,7 @@ fromToml onEnv cfg cmdsText = do
     handleLogFileSize fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
       Nothing -> pure ()
       Just fileSizeMode -> do
-        fileSize <- getFileSize fp
+        fileSize <- MkBytes @B <$> getFileSize fp
         case fileSizeMode of
           FileSizeModeWarn warnSize ->
             when (fileSize > warnSize) $
@@ -242,7 +271,7 @@ fromToml onEnv cfg cmdsText = do
           FileSizeModeDelete delSize ->
             when (fileSize > delSize) $ do
               putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
-              deleteFile fp
+              removeFile fp
 
     sizeWarning warnSize fp fileSize =
       mconcat
@@ -262,3 +291,9 @@ fromToml onEnv cfg cmdsText = do
         -- here, but it is better than normalizing a natural, which will
         -- truncate (i.e. greater precision loss).
         . fmap (fromIntegral @Natural @Double)
+
+getShrunXdgConfig :: (HasCallStack, MonadFsReader m) => m FilePath
+getShrunXdgConfig = getXdgConfig "shrun"
+
+closeFile :: MonadFsWriter f => Handle -> f ()
+closeFile f = hFlush f *> hClose f
