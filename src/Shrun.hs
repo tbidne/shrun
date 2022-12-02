@@ -15,7 +15,7 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
 import Effects.MonadFsWriter (MonadFsWriter (hFlush, hPut))
-import Effects.MonadThread as X (MonadThread (microsleep))
+import Effects.MonadThread as X (MonadThread (microsleep), sleep)
 import Effects.MonadTime (MonadTime (..), withTiming)
 import Shrun.Configuration.Env.Types
   ( HasCommands (..),
@@ -27,7 +27,6 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Data.Timeout (Timeout (..))
-import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Process (Process (..), tryTimeCmd)
 import Shrun.IO (Stderr (..))
 import Shrun.Logging.Formatting qualified as LFormat
@@ -52,14 +51,16 @@ shrun ::
     HasLogging env,
     HasTimeout env,
     MonadCallStack m,
+    MonadIORef m,
     MonadFsWriter m,
     MonadMask m,
     MonadReader env m,
+    MonadTBQueue m,
     MonadThread m,
+    MonadTime m,
+    MonadTVar m,
     MonadUnliftIO m,
-    Mutable m,
-    Process m,
-    MonadTime m
+    Process m
   ) =>
   m ()
 shrun = asks getCommands >>= runCommands
@@ -70,13 +71,15 @@ runCommands ::
     HasTimeout env,
     MonadCallStack m,
     MonadFsWriter m,
+    MonadIORef m,
     MonadMask m,
     MonadReader env m,
+    MonadTBQueue m,
     MonadThread m,
+    MonadTime m,
+    MonadTVar m,
     MonadUnliftIO m,
-    Mutable m,
-    Process m,
-    MonadTime m
+    Process m
   ) =>
   NonEmptySeq Command ->
   m ()
@@ -135,10 +138,10 @@ runCommand ::
     MonadMask m,
     MonadCallStack m,
     MonadReader env m,
+    MonadTBQueue m,
+    MonadTime m,
     MonadUnliftIO m,
-    Mutable m,
-    Process m,
-    MonadTime m
+    Process m
   ) =>
   Command ->
   m ()
@@ -181,9 +184,11 @@ counter ::
   ( HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
+    MonadIORef m,
     MonadReader env m,
+    MonadTBQueue m,
     MonadThread m,
-    Mutable m,
+    MonadTVar m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
     MonadTime m
@@ -200,7 +205,7 @@ counter cmds = do
     timer <- newIORef 0
     Loops.whileM_ (keepRunning cmds r timer timeout) $ do
       elapsed <- do
-        microsleep 1_000_000
+        sleep 1
         modifyIORef' timer (+ 1)
         readIORef timer
       logCounter r elapsed
@@ -209,7 +214,7 @@ counter cmds = do
 logCounter ::
   ( HasLogging env,
     MonadReader env m,
-    Mutable m,
+    MonadTBQueue m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
     MonadTime m
@@ -232,11 +237,13 @@ logCounter region elapsed = do
 keepRunning ::
   ( HasCompletedCmds env,
     HasLogging env,
+    MonadIORef m,
     MonadReader env m,
-    Mutable m,
+    MonadTBQueue m,
+    MonadTime m,
+    MonadTVar m,
     RegionLogger m,
-    Region m ~ ConsoleRegion,
-    MonadTime m
+    Region m ~ ConsoleRegion
   ) =>
   NonEmptySeq Command ->
   ConsoleRegion ->
@@ -249,7 +256,7 @@ keepRunning allCmds region timer mto = do
     then do
       cmdDisplay <- asks getCmdDisplay
       completedCmdsTVar <- asks getCompletedCmds
-      completedCmds <- readTVarIO completedCmdsTVar
+      completedCmds <- readTVarM completedCmdsTVar
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ NESeq.toList allCmds
@@ -278,7 +285,7 @@ maybePollQueue ::
   ( HasLogging env,
     MonadFsWriter m,
     MonadReader env m,
-    Mutable m
+    MonadTBQueue m
   ) =>
   m ()
 maybePollQueue = do
@@ -290,7 +297,7 @@ maybePollQueue = do
 
 writeQueueToFile ::
   ( MonadFsWriter m,
-    Mutable m
+    MonadTBQueue m
   ) =>
   Handle ->
   LogTextQueue ->

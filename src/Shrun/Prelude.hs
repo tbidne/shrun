@@ -51,15 +51,6 @@ import Control.Applicative as X
     (<**>),
   )
 import Control.Concurrent as X (threadDelay)
-import Control.Concurrent.STM as X (atomically)
-import Control.Concurrent.STM.TBQueue as X
-  ( TBQueue,
-    flushTBQueue,
-    newTBQueue,
-    tryReadTBQueue,
-    writeTBQueue,
-  )
-import Control.Concurrent.STM.TVar as X (TVar)
 import Control.Monad as X
   ( Monad (..),
     forever,
@@ -125,6 +116,21 @@ import Effects.MonadCallStack as X
   )
 import Effects.MonadFsReader as X (MonadFsReader)
 import Effects.MonadFsWriter as X (MonadFsWriter)
+import Effects.MonadIORef as X
+  ( MonadIORef
+      ( modifyIORef',
+        newIORef,
+        readIORef,
+        writeIORef
+      ),
+  )
+import Effects.MonadSTM as X
+  ( MonadSTM,
+    MonadTBQueue (flushTBQueueM, newTBQueueM, readTBQueueM, writeTBQueueM),
+    MonadTVar (modifyTVarM', newTVarM, readTVarM),
+    TBQueue,
+    TVar,
+  )
 import Effects.MonadTerminal as X (MonadTerminal)
 import Effects.MonadThread as X (MonadThread)
 import GHC.Enum as X (Bounded (..), Enum (..))
@@ -219,6 +225,8 @@ import Prelude qualified as P
 -- $setup
 -- >>> import Data.String (String)
 -- >>> :set -XNoOverloadedLists
+
+-- TODO: Do we still need all these file utils?
 
 -- | Strictly reads a file and leniently converts the contents to UTF8.
 --

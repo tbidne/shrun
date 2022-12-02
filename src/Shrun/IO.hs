@@ -16,10 +16,8 @@ module Shrun.IO
   )
 where
 
-import Control.Concurrent.STM.TVar (modifyTVar')
 import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
-import Data.IORef (writeIORef)
 import Data.Sequence ((<|))
 import Data.Text qualified as T
 import Effects.MonadTime (MonadTime (..))
@@ -28,7 +26,6 @@ import GHC.IO.Handle qualified as Handle
 import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
-import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Logging.Log qualified as Log
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types
@@ -204,7 +201,8 @@ tryShExitCode cmd path = do
 tryCommand ::
   ( HasCompletedCmds env,
     MonadIO m,
-    MonadReader env m
+    MonadReader env m,
+    MonadTVar m
   ) =>
   Command ->
   m (Maybe Stderr)
@@ -212,7 +210,7 @@ tryCommand cmd = do
   res <- liftIO $ tryShExitCode cmd Nothing
 
   completedCmds <- asks getCompletedCmds
-  liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
+  modifyTVarM' completedCmds (cmd <|)
 
   pure $ res ^? _Left
 {-# INLINEABLE tryCommand #-}
@@ -224,9 +222,11 @@ tryCommand cmd = do
 tryCommandStreamRegion ::
   ( HasCompletedCmds env,
     HasLogging env,
+    MonadIORef m,
     MonadMask m,
     MonadReader env m,
-    Mutable m,
+    MonadTBQueue m,
+    MonadTVar m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
@@ -247,8 +247,10 @@ tryCommandStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
 tryCommandStreamNoRegion ::
   ( HasCompletedCmds env,
     HasLogging env,
+    MonadIORef m,
     MonadReader env m,
-    Mutable m,
+    MonadTBQueue m,
+    MonadTVar m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
@@ -266,8 +268,10 @@ tryCommandStreamNoRegion = tryCommandAnyRegion Nothing
 tryCommandAnyRegion ::
   ( HasCompletedCmds env,
     HasLogging env,
+    MonadIORef m,
     MonadReader env m,
-    Mutable m,
+    MonadTBQueue m,
+    MonadTVar m,
     MonadUnliftIO m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
@@ -311,7 +315,7 @@ tryCommandAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
         run $ streamOutput mRegion cmd recvH ph
 
   completedCmds <- asks getCompletedCmds
-  liftIO $ atomically $ modifyTVar' completedCmds (cmd <|)
+  modifyTVarM' completedCmds (cmd <|)
 
   result <- case exitCode of
     ExitSuccess -> pure $ Right ()
@@ -336,8 +340,9 @@ tryCommandAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
 streamOutput ::
   ( HasLogging env,
     MonadIO m,
+    MonadIORef m,
     MonadReader env m,
-    Mutable m,
+    MonadTBQueue m,
     RegionLogger m,
     Region m ~ ConsoleRegion,
     MonadTime m
@@ -359,7 +364,7 @@ streamOutput mRegion cmd recvH ph = do
         -- appear that we ever lose important messages.
         pure ()
       ReadSuccess out -> do
-        liftIO $ writeIORef lastReadRef (Just (ReadSuccess out))
+        writeIORef lastReadRef (Just (ReadSuccess out))
         cmdLogging <- asks getCmdLogging
         let logDest =
               if cmdLogging
@@ -378,6 +383,6 @@ streamOutput mRegion cmd recvH ph = do
           Just region -> Log.putRegionLog region log
       ReadNoData -> pure ()
     liftIO $ P.getProcessExitCode ph
-  lastRead <- liftIO $ readIORef lastReadRef
+  lastRead <- readIORef lastReadRef
   pure (exitCode, lastRead)
 {-# INLINEABLE streamOutput #-}

@@ -12,7 +12,6 @@ where
 import Effects.MonadTerminal (putTextLn)
 import Effects.MonadTime (MonadTime (..))
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Effects.Process (Process (..))
 import Shrun.IO qualified as ShIO
 import Shrun.Logging.RegionLogger (RegionLogger (..))
@@ -45,8 +44,12 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadFsWriter,
       -- | @since 0.1
       MonadIO,
+      -- | @since 0.6
+      MonadIORef,
       -- | @since 0.1
       MonadMask,
+      -- | @since 0.6
+      MonadTBQueue,
       -- | @since 0.6
       MonadTerminal,
       -- | @since 0.6
@@ -55,10 +58,10 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadTime,
       -- | @since 0.1
       MonadThrow,
+      -- | @since 0.6
+      MonadTVar,
       -- | @since 0.1
-      MonadUnliftIO,
-      -- | @since 0.5
-      Mutable
+      MonadUnliftIO
     )
     via (ReaderT env m)
 
@@ -89,7 +92,14 @@ instance
 
 -- | @since 0.3.0.1
 instance
-  (MonadMask m, MonadUnliftIO m, MonadTerminal m, MonadTime m, Mutable m) =>
+  ( MonadIORef m,
+    MonadMask m,
+    MonadTerminal m,
+    MonadTBQueue m,
+    MonadTime m,
+    MonadTVar m,
+    MonadUnliftIO m
+  ) =>
   Process (ShellT Env m)
   where
   tryCmd = ShIO.tryCommand

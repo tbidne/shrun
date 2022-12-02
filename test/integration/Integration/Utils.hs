@@ -26,7 +26,6 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Effects.Mutable (Mutable (..))
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
@@ -37,10 +36,11 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
       MonadCallStack,
       MonadFsWriter,
       MonadIO,
+      MonadIORef,
       MonadReader (IORef [Text]),
-      MonadThread,
-      MonadUnliftIO,
-      Mutable
+      MonadTBQueue,
+      MonadTVar,
+      MonadUnliftIO
     )
     via (ReaderT (IORef [Text])) IO
 
@@ -78,8 +78,9 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
       Monad,
       MonadCallStack,
       MonadIO,
-      MonadUnliftIO,
-      Mutable
+      MonadTBQueue,
+      MonadTVar,
+      MonadUnliftIO
     )
     via (ReaderT (IORef [Text])) IO
 
@@ -142,9 +143,10 @@ makeEnvAndVerify ::
   ( MonadCallStack m,
     MonadFsReader m,
     MonadFsWriter m,
+    MonadTBQueue m,
     MonadTerminal m,
-    MonadUnliftIO m,
-    Mutable m
+    MonadTVar m,
+    MonadUnliftIO m
   ) =>
   -- | List of CLI arguments.
   List String ->

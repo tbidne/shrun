@@ -54,7 +54,6 @@ library
     Shrun.Data.NonEmptySeq
     Shrun.Data.Supremum
     Shrun.Data.Timeout
-    Shrun.Effects.Mutable
     Shrun.Effects.Process
     Shrun.IO
     Shrun.Logging.Formatting
@@ -82,7 +81,9 @@ library
     , monad-callstack       ^>=0.1
     , monad-fs-reader       ^>=0.1
     , monad-fs-writer       ^>=0.1
+    , monad-ioref           ^>=0.1
     , monad-loops           >=0.3      && <0.5
+    , monad-stm             ^>=0.1
     , monad-terminal        ^>=0.1
     , monad-thread          ^>=0.1
     , monad-time            ^>=0.1
@@ -95,7 +96,6 @@ library
     , process               ^>=1.6.9.0
     , refined               >=0.6      && <0.9
     , relative-time         ^>=0.1
-    , stm                   ^>=2.5.0
     , template-haskell      >=2.17.0.0 && <2.20
     , text                  >=1.2.3.2  && <2.1
     , toml-reader           ^>=0.1.0.0

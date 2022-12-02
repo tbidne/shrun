@@ -100,6 +100,14 @@
                   final.callCabal2nix "monad-fs-writer"
                     "${monad-effects}/monad-fs-writer"
                     { };
+                monad-ioref =
+                  final.callCabal2nix "monad-ioref"
+                    "${monad-effects}/monad-ioref"
+                    { };
+                monad-stm =
+                  final.callCabal2nix "monad-stm"
+                    "${monad-effects}/monad-stm"
+                    { };
                 monad-terminal =
                   final.callCabal2nix "monad-terminal"
                     "${monad-effects}/monad-terminal"

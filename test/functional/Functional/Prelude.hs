@@ -3,7 +3,6 @@ module Functional.Prelude
   )
 where
 
-import Data.IORef as X (modifyIORef', newIORef, readIORef, writeIORef)
 import Shrun.Prelude as X
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
 import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))

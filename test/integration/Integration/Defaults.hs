@@ -1,6 +1,5 @@
 module Integration.Defaults (specs) where
 
-import Data.IORef qualified as IORef
 import Integration.Prelude
 import Integration.Utils
   ( SimpleEnv (..),
@@ -24,10 +23,10 @@ specs testArgs =
 
 defaultEnv :: TestTree
 defaultEnv = testCase "No arguments and empty config path should return default Env" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify ["cmd1"] (`runNoConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   ["No default config found at: ./config.toml"] @=? logs
   where
     expected =
@@ -46,10 +45,10 @@ defaultEnv = testCase "No arguments and empty config path should return default 
 
 usesDefaultConfigFile :: TestTree
 usesDefaultConfigFile = testCase "No arguments should use config from default file" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify ["cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   [] @=? logs
   where
     expected =
@@ -69,12 +68,12 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
 cliOverridesConfigFile :: IO TestArgs -> TestTree
 cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
   logPath <- (</> "cli-log") . view #workingTmpDir <$> testArgs
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
 
   makeEnvAndVerify (args logPath) (`runConfigIO` logsRef) expected
     `finally` deleteFileIfExists logPath
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args logPath =
@@ -113,10 +112,10 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify ["--no-config", "cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     expected =

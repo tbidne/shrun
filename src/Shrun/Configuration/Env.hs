@@ -53,10 +53,11 @@ import Effects.MonadFsWriter
         removeFile
       ),
   )
+import Effects.MonadSTM
 import Effects.MonadTerminal (getTerminalWidth, putTextLn)
 import Effects.MonadTime (MonadTime)
 import Options.Applicative qualified as OA
-import Shrun
+import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
   ( FileMode (..),
     FileSizeMode (..),
@@ -81,7 +82,6 @@ import Shrun.Configuration.Toml (TomlConfig, argsToTomlConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
-import Shrun.Effects.Mutable (Mutable (..))
 import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
 
@@ -112,12 +112,14 @@ makeEnvAndShrun ::
   ( MonadCallStack m,
     MonadFsReader m,
     MonadFsWriter m,
+    MonadIORef m,
     MonadMask m,
+    MonadTBQueue m,
     MonadTerminal m,
+    MonadTVar m,
     MonadThread m,
     MonadTime m,
-    MonadUnliftIO m,
-    Mutable m
+    MonadUnliftIO m
   ) =>
   m ()
 makeEnvAndShrun = withEnv (runShellT shrun)
@@ -130,9 +132,10 @@ withEnv ::
   ( MonadCallStack m,
     MonadFsReader m,
     MonadFsWriter m,
+    MonadTBQueue m,
     MonadTerminal m,
-    MonadUnliftIO m,
-    Mutable m
+    MonadTVar m,
+    MonadUnliftIO m
   ) =>
   (Env -> m a) ->
   m a
@@ -179,9 +182,10 @@ withEnv onEnv = do
 fromToml ::
   ( MonadFsReader m,
     MonadFsWriter m,
+    MonadTBQueue m,
     MonadTerminal m,
-    MonadUnliftIO m,
-    Mutable m
+    MonadTVar m,
+    MonadUnliftIO m
   ) =>
   (Env -> m a) ->
   TomlConfig ->
@@ -207,7 +211,7 @@ fromToml onEnv cfg cmdsText = do
         Left err -> throwIO err
       Left err -> throwIO err
 
-  completedCmds' <- newTVarIO Seq.empty
+  completedCmds' <- newTVarM Seq.empty
 
   let envWithFileLogging mfl =
         MkEnv
@@ -246,13 +250,13 @@ fromToml onEnv cfg cmdsText = do
       let fp = configDir </> "log"
       handleLogFileSize fp
 
-      queue <- liftSTM $ newTBQueue 1000
+      queue <- newTBQueueM 1000
 
       bracket (openFile fp ioMode) closeFile $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
     Just (FPManual fp) -> do
       handleLogFileSize fp
-      queue <- liftSTM $ newTBQueue 1000
+      queue <- newTBQueueM 1000
       bracket (openFile fp ioMode) closeFile $ \h ->
         onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
   where
