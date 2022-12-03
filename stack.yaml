@@ -20,7 +20,7 @@ extra-deps:
 - git: https://github.com/tbidne/byte-types.git
   commit: cc0e1323b51f1ec3441ddc6578a05e9d7fcdb977
 - git: https://github.com/tbidne/monad-effects.git
-  commit: e3fb642bb17981c8243c95148ba2350caff9063b
+  commit: b3d1b6b414d9a0561da5ed529a9ff663a0345270
   subdirs:
   - monad-callstack
   - monad-fs
