@@ -52,8 +52,8 @@ teardown testArgs = do
   let root = testArgs ^. #rootDir
       cwd = testArgs ^. #tmpDir
 
-  _ <- deleteDirIfExistsNoThrow cwd
-  _ <- deleteDirIfExistsNoThrow $ root </> "test/functional"
-  _ <- deleteDirIfExistsNoThrow $ root </> "test"
-  _ <- deleteDirIfExistsNoThrow root
-  pure ()
+  void $ tryAny $ do
+    removeDirectoryIfExists cwd
+    removeDirectoryIfExists $ root </> "test/functional"
+    removeDirectoryIfExists $ root </> "test"
+    removeDirectoryIfExists root

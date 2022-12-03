@@ -14,7 +14,7 @@ import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
-import Effects.MonadFsWriter (MonadFsWriter (hFlush, hPut))
+import Effects.MonadFs (MonadFsWriter (hFlush, hPut))
 import Effects.MonadThread as X (MonadThread (microsleep), sleep)
 import Effects.MonadTime (MonadTime (..), withTiming)
 import Shrun.Configuration.Env.Types

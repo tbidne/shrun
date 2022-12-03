@@ -26,15 +26,6 @@ module Shrun.Prelude
     error,
     showt,
 
-    -- * FileSystem
-    readFileUtf8Lenient,
-    writeFileUtf8,
-    appendFileUtf8,
-    deleteFileIfExists,
-    deleteFileIfExistsNoThrow,
-    deleteDirIfExists,
-    deleteDirIfExistsNoThrow,
-
     -- * Anti-punning aliases
     List,
     Tuple2,
@@ -70,7 +61,6 @@ import Control.Monad.Writer as X (MonadWriter (..), WriterT (..))
 import Data.Bifunctor as X (Bifunctor (..))
 import Data.Bool as X (Bool (..), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
-import Data.ByteString qualified as BS
 import Data.Char as X (Char)
 import Data.Either as X (Either (..))
 import Data.Eq as X (Eq (..))
@@ -100,8 +90,6 @@ import Data.Semigroup as X (Semigroup (..))
 import Data.String as X (String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as TextEnc
-import Data.Text.Encoding.Error qualified as TextEncErr
 import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..), for)
 import Data.Tuple as X (fst, snd)
@@ -114,8 +102,15 @@ import Effects.MonadCallStack as X
     catch,
     try,
   )
-import Effects.MonadFsReader as X (MonadFsReader)
-import Effects.MonadFsWriter as X (MonadFsWriter)
+import Effects.MonadFs as X
+  ( MonadFsReader (readFile),
+    MonadFsWriter,
+    appendFileUtf8,
+    readFileUtf8Lenient,
+    removeDirectoryIfExists,
+    removeFileIfExists,
+    writeFileUtf8,
+  )
 import Effects.MonadIORef as X
   ( MonadIORef
       ( modifyIORef',
@@ -183,7 +178,6 @@ import Optics.Core as X
 import Optics.Core.Extras as X (is)
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
-import System.Directory qualified as Dir
 import System.FilePath as X ((</>))
 import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
 import TOML as X
@@ -225,31 +219,6 @@ import Prelude qualified as P
 -- $setup
 -- >>> import Data.String (String)
 -- >>> :set -XNoOverloadedLists
-
--- TODO: Do we still need all these file utils?
-
--- | Strictly reads a file and leniently converts the contents to UTF8.
---
--- @since 0.1
-readFileUtf8Lenient :: FilePath -> IO Text
-readFileUtf8Lenient =
-  fmap (TextEnc.decodeUtf8With TextEncErr.lenientDecode)
-    . BS.readFile
-{-# INLINEABLE readFileUtf8Lenient #-}
-
--- | Appends the text contents to the file.
---
--- @since 0.1
-appendFileUtf8 :: FilePath -> Text -> IO ()
-appendFileUtf8 fp = BS.appendFile fp . TextEnc.encodeUtf8
-{-# INLINEABLE appendFileUtf8 #-}
-
--- | Writes the text contents to the file.
---
--- @since 0.1
-writeFileUtf8 :: FilePath -> Text -> IO ()
-writeFileUtf8 fp = BS.writeFile fp . TextEnc.encodeUtf8
-{-# INLINEABLE writeFileUtf8 #-}
 
 -- | 'Text' version of 'P.show'.
 --
@@ -334,59 +303,3 @@ type Tuple2 = (,)
 --
 -- @since 0.1
 type Tuple3 = (,,)
-
--- | Deletes a file if it exists.
---
--- @since 0.5
-deleteFileIfExists :: FilePath -> IO ()
-deleteFileIfExists = deleteIfExists Dir.doesFileExist Dir.removeFile
-
--- | 'deleteFileIfExists' except catches all exceptions.
---
--- @since 0.5
-deleteFileIfExistsNoThrow :: FilePath -> IO (Maybe SomeException)
-deleteFileIfExistsNoThrow =
-  deleteIfExistsNoThrow
-    Dir.doesFileExist
-    Dir.removeFile
-
--- | Deletes a directory if it exists.
---
--- @since 0.5
-deleteDirIfExists :: FilePath -> IO ()
-deleteDirIfExists = deleteIfExists Dir.doesDirectoryExist Dir.removeDirectory
-
--- | 'deleteDirIfExists' except catches all exceptions.
---
--- @since 0.5
-deleteDirIfExistsNoThrow :: FilePath -> IO (Maybe SomeException)
-deleteDirIfExistsNoThrow =
-  deleteIfExistsNoThrow
-    Dir.doesDirectoryExist
-    Dir.removeDirectory
-
--- | Deletes a file if it exists.
---
--- @since 0.5
-deleteIfExists ::
-  (FilePath -> IO Bool) ->
-  (FilePath -> IO ()) ->
-  FilePath ->
-  IO ()
-deleteIfExists exists del fp = do
-  exists fp >>= \case
-    True -> del fp
-    False -> pure ()
-
--- | 'deleteFileIfExists' except catches all exceptions.
---
--- @since 0.5
-deleteIfExistsNoThrow ::
-  (FilePath -> IO Bool) ->
-  (FilePath -> IO ()) ->
-  FilePath ->
-  IO (Maybe SomeException)
-deleteIfExistsNoThrow exists del fp =
-  tryAny (deleteIfExists exists del fp) >>= \case
-    Right _ -> pure Nothing
-    Left ex -> pure $ Just ex

@@ -2,7 +2,7 @@ module Integration.Miscellaneous (specs) where
 
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import Effects.MonadFsReader (MonadFsReader (getFileSize))
+import Effects.MonadFs (MonadFsReader (getFileSize))
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Numeric.Algebra (zero)
@@ -28,7 +28,7 @@ logFileWarn testArgs = testCase "Large log file should print warning" $ do
         flip runConfigIO logsRef $
           withRunInIO (\runner -> withArgs (args logPath) (runner (withEnv pure)))
 
-  run `finally` deleteFileIfExists logPath
+  run `finally` removeFileIfExists logPath
 
   logs <- IORef.readIORef logsRef
   [warning logPath] @=? logs
@@ -64,7 +64,7 @@ logFileDelete testArgs =
           -- file should have been deleted then recreated with a file size of 0.
           getFileSize logPath
 
-    size <- run `finally` deleteFileIfExists logPath
+    size <- run `finally` removeFileIfExists logPath
     zero @=? size
 
     logs <- IORef.readIORef logsRef

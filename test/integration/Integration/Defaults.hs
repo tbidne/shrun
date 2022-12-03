@@ -71,7 +71,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
   logsRef <- newIORef []
 
   makeEnvAndVerify (args logPath) (`runConfigIO` logsRef) expected
-    `finally` deleteFileIfExists logPath
+    `finally` removeFileIfExists logPath
 
   logs <- readIORef logsRef
   logs @=? []

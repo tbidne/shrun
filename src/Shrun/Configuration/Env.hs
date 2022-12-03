@@ -37,16 +37,13 @@ import Data.Bytes
   )
 import Data.Sequence qualified as Seq
 import Data.Text.Encoding qualified as TEnc
-import Effects.MonadFsReader
+import Effects.MonadFs
   ( MonadFsReader
       ( doesFileExist,
         getFileSize,
-        getXdgConfig,
-        readFile
+        getXdgConfig
       ),
-  )
-import Effects.MonadFsWriter
-  ( MonadFsWriter
+    MonadFsWriter
       ( hClose,
         hFlush,
         openFile,

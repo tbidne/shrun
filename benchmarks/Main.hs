@@ -21,7 +21,7 @@ main =
         cmdLogs,
         fileLogs
       ]
-    `finally` deleteFileIfExists "bench.log"
+    `finally` removeFileIfExists "bench.log"
 
 noLogs :: Benchmark
 noLogs = bgroup "No Logging" (runLoops ["-d", "--no-config"])

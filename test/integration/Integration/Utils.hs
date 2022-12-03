@@ -12,7 +12,7 @@ module Integration.Utils
 where
 
 import Data.Text qualified as T
-import Effects.MonadFsReader (MonadFsReader (..))
+import Effects.MonadFs (MonadFsReader (..))
 import Effects.MonadTerminal (MonadTerminal (..))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)

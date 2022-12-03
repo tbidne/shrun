@@ -49,5 +49,4 @@ outfile = "cmd_log"
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do
   MkTestArgs {tmpDir} <- args
-  _ <- deleteFileIfExistsNoThrow (tmpDir </> outfile)
-  pure ()
+  void $ tryAny $ removeFileIfExists (tmpDir </> outfile)

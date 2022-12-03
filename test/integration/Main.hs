@@ -35,17 +35,19 @@ teardown testArgs = do
   let root = testArgs ^. #rootTmpDir
       cwd = testArgs ^. #workingTmpDir
 
-  -- There are several tests that rely on this log's existence, since it
-  -- exists in the 'config' directory, and these tests test that default.
-  -- Thus we cannot delete it until everything has finished.
-  _ <- deleteFileIfExistsNoThrow "test/integration/toml/log"
+  -- because this is caused in a bracket-style cleanup, we really do not want
+  -- this to throw
+  void $ tryAny $ do
+    -- There are several tests that rely on this log's existence, since it
+    -- exists in the 'config' directory, and these tests test that default.
+    -- Thus we cannot delete it until everything has finished.
+    removeFileIfExists "test/integration/toml/log"
 
-  -- Ideally we want to clean up after ourselves in each test. These are for
-  -- insurance.
-  _ <- deleteFileIfExistsNoThrow $ cwd </> "log"
-  _ <- deleteFileIfExistsNoThrow $ cwd </> "large-file-warn"
-  _ <- deleteFileIfExistsNoThrow $ cwd </> "large-file-del"
-  _ <- deleteDirIfExistsNoThrow $ root </> "test/integration"
-  _ <- deleteDirIfExistsNoThrow $ root </> "test"
-  _ <- deleteDirIfExistsNoThrow root
-  pure ()
+    -- Ideally we want to clean up after ourselves in each test. These are for
+    -- insurance.
+    removeFileIfExists $ cwd </> "log"
+    removeFileIfExists $ cwd </> "large-file-warn"
+    removeFileIfExists $ cwd </> "large-file-del"
+    removeFileIfExists $ root </> "test/integration"
+    removeFileIfExists $ root </> "test"
+    removeDirectoryIfExists root
