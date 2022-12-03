@@ -23,7 +23,7 @@ module Shrun.Utils
   )
 where
 
-import Data.Bytes
+import Data.Bytes (Bytes, Conversion (convert), Size (B), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as TEnc
@@ -64,6 +64,9 @@ diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
     i642n = fromIntegral
 {-# INLINEABLE diffTime #-}
 
+-- | Transforms a 'Timespec' into a 'RelativeTime'.
+--
+-- @since 0.6
 timeSpecToRelTime :: TimeSpec -> RelativeTime
 timeSpecToRelTime = fromSeconds . fromIntegral . C.sec
 {-# INLINEABLE timeSpecToRelTime #-}
