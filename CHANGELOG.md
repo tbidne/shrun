@@ -10,7 +10,7 @@ Note that PVP is applied to the _application_, not the _library_. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
-## [Unreleased]
+## [0.6] -- 2022-12-06
 ### Changed
 * CLI
   * `cmd-line-trunc` renamed to `cmd-log-line-trunc`.
@@ -84,7 +84,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.5...main
+[0.6]: https://github.com/tbidne/shrun/compare/0.5...0.6
 [0.5]: https://github.com/tbidne/shrun/compare/0.4..0.5
 [0.4]: https://github.com/tbidne/shrun/compare/0.3..0.4
 [0.3]: https://github.com/tbidne/shrun/compare/0.2.0.1..0.3
