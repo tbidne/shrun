@@ -20,17 +20,17 @@ package refined
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: c8aaa4495964ecea9bb898c4fcb8b1c718ecc813
+    tag: 2c8a79e8d3bf67c99e4851c557bf68a44c512307
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/bounds.git
-    tag: 7a8832ef4a55d565e72fab553a4d485329235bf7
+    tag: 004f03aec46f29069fd0bf5115a384cd2b3141b3
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/byte-types.git
-    tag: cc0e1323b51f1ec3441ddc6578a05e9d7fcdb977
+    tag: be3e764d76c530fd3641c133ed2d53adfc8f046d
 
 source-repository-package
     type: git
@@ -48,4 +48,4 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/relative-time.git
-    tag: 6570c30825f610843b181dda26716971f0444907
+    tag: 3bd5549074da8b6dba1660e6d01f92812cefb9c2

@@ -13,8 +13,6 @@ import Shrun.Configuration.Legend (LegendMap, linesToMap, translateCommands)
 import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.NonEmptySeq qualified as NESeq
-import Test.Tasty (askOption)
-import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 
 -- | Entry point for Shrun.Legend.Internal property tests.
@@ -30,42 +28,22 @@ linesToMapProps :: TestTree
 linesToMapProps =
   testGroup
     "linesToMap"
-    [ successProps,
-      failureProps
+    [ successProps
     ]
 
 successProps :: TestTree
 successProps =
-  askOption $ \(MkMaxRuns limit) ->
-    testPropertyNamed "linesToMap success props" "successProps" $
-      -- NOTE: This set to at least 1,000 as we have had test errors before
-      -- that got through (i.e. duplicate keys) because 100 was not enough,
-      -- and it's still fast.
-      let limit' = max 1_000 limit
-       in H.withTests limit' $
-            H.property $ do
-              commands <- H.forAll genGoodLines
-              let result = linesToMap commands
-              case result of
-                Left err -> do
-                  H.footnoteShow err
-                  H.failure
-                Right legend -> do
-                  H.annotate "Unique keys in original list should match legend"
-                  verifySize commands legend
-
-failureProps :: TestTree
-failureProps = askOption $ \(MkMaxRuns limit) ->
-  testPropertyNamed "linesToMap failure props" "failureProps" $
-    H.withTests limit $
-      H.property $ do
-        pure ()
-
--- commands <- H.forAll genBadLines
--- let result = linesToMap commands
--- case result of
---   Left _ -> H.success
---   Right _ -> H.failure
+  testPropertyNamed "linesToMap success props" "successProps" $
+    H.property $ do
+      commands <- H.forAll genGoodLines
+      let result = linesToMap commands
+      case result of
+        Left err -> do
+          H.footnoteShow err
+          H.failure
+        Right legend -> do
+          H.annotate "Unique keys in original list should match legend"
+          verifySize commands legend
 
 verifySize :: List KeyVal -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do
@@ -112,25 +90,24 @@ genVal = Gen.text range Gen.latin1
     range = Range.linearFrom 10 1 30
 
 translateProps :: TestTree
-translateProps = askOption $ \(MkMaxRuns limit) ->
+translateProps =
   testPropertyNamed "translateCommands includes everything" "translateProps" $
-    H.withTests limit $
-      H.property $ do
-        (legend, origCmds) <- H.forAll genLegendCommands
-        let legendKeySet = Set.fromList $ Map.keys legend
-            maybeFinalCmds = translateCommands legend origCmds
+    H.property $ do
+      (legend, origCmds) <- H.forAll genLegendCommands
+      let legendKeySet = Set.fromList $ Map.keys legend
+          maybeFinalCmds = translateCommands legend origCmds
 
-        case maybeFinalCmds of
-          Left err -> do
-            H.footnote $ "Received a LegendErr: " <> show err
-            H.failure
-          Right finalCmds -> do
-            let finalCmdsSet = Set.fromList $ NESeq.toList $ fmap (view #command) finalCmds
-                combinedKeySet = Set.union legendKeySet finalCmdsSet
+      case maybeFinalCmds of
+        Left err -> do
+          H.footnote $ "Received a LegendErr: " <> show err
+          H.failure
+        Right finalCmds -> do
+          let finalCmdsSet = Set.fromList $ NESeq.toList $ fmap (view #command) finalCmds
+              combinedKeySet = Set.union legendKeySet finalCmdsSet
 
-            H.footnote $ "Final commands: " <> show finalCmdsSet
-            H.footnote $ "Legend: " <> show legendKeySet
-            noCommandsMissing combinedKeySet origCmds
+          H.footnote $ "Final commands: " <> show finalCmdsSet
+          H.footnote $ "Legend: " <> show legendKeySet
+          noCommandsMissing combinedKeySet origCmds
 
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands

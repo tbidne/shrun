@@ -34,7 +34,6 @@ import Shrun.Logging.Types qualified as Log
 import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
 import Text.Read qualified as TR
-import Unit.MaxRuns (MaxRuns (..))
 import Unit.Prelude
 import Unit.Props.Shrun.Logging.Generators qualified as LGens
 
@@ -101,40 +100,37 @@ formattingProps =
     ]
 
 timestampProps :: TestTree
-timestampProps = T.askOption $ \(MkMaxRuns limit) ->
+timestampProps =
   testPropertyNamed "Starts with timestamp" "timestampProps" $
-    H.withTests limit $
-      H.property $ do
-        log <- H.forAll LGens.genLog
-        let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
-            (res, _) = Utils.breakStripPoint sysTimeNE result
-        "" === res
+    H.property $ do
+      log <- H.forAll LGens.genLog
+      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+          (res, _) = Utils.breakStripPoint sysTimeNE result
+      "" === res
 
 messageProps :: TestTree
-messageProps = T.askOption $ \(MkMaxRuns limit) ->
+messageProps =
   testPropertyNamed "Includes message" "messageProps" $
-    H.withTests limit $
-      H.property $ do
-        log@MkLog {msg} <- H.forAll LGens.genLog
-        let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
-        H.annotate $ T.unpack result
-        H.assert $ T.isInfixOf (T.strip msg) result
+    H.property $ do
+      log@MkLog {msg} <- H.forAll LGens.genLog
+      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+      H.annotate $ T.unpack result
+      H.assert $ T.isInfixOf (T.strip msg) result
 
 prefixProps :: TestTree
-prefixProps = T.askOption $ \(MkMaxRuns limit) ->
+prefixProps =
   testPropertyNamed "Formats prefix" "prefixProps" $
-    H.withTests limit $
-      H.property $ do
-        log@MkLog {lvl} <- H.forAll LGens.genLog
-        let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
-        case lvl of
-          -- level is None: no prefix
-          None -> foldr (noMatch result) (pure ()) nonEmptyPrefixes
-          -- level is not None: includes prefix
-          _ -> do
-            let pfx = Log.levelToPrefix lvl
-            H.annotate $ T.unpack pfx
-            H.assert $ T.isInfixOf pfx result
+    H.property $ do
+      log@MkLog {lvl} <- H.forAll LGens.genLog
+      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+      case lvl of
+        -- level is None: no prefix
+        None -> foldr (noMatch result) (pure ()) nonEmptyPrefixes
+        -- level is not None: includes prefix
+        _ -> do
+          let pfx = Log.levelToPrefix lvl
+          H.annotate $ T.unpack pfx
+          H.assert $ T.isInfixOf pfx result
   where
     nonEmptyPrefixes = [SubCommand .. Fatal]
     noMatch :: Text -> LogLevel -> PropertyT IO () -> PropertyT IO ()
@@ -146,33 +142,31 @@ prefixProps = T.askOption $ \(MkMaxRuns limit) ->
       acc
 
 commandProps :: TestTree
-commandProps = T.askOption $ \(MkMaxRuns limit) ->
+commandProps =
   testPropertyNamed "Formats command" "commandProps" $
-    H.withTests limit $
-      H.property $ do
-        log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
-        let cmdTxt = "[" <> cmd' <> "]"
-            MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
-        H.annotate $ T.unpack result
-        H.assert $ T.isInfixOf cmdTxt result
+    H.property $ do
+      log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
+      let cmdTxt = "[" <> cmd' <> "]"
+          MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+      H.annotate $ T.unpack result
+      H.assert $ T.isInfixOf cmdTxt result
 
 shapeProps :: TestTree
-shapeProps = T.askOption $ \(MkMaxRuns limit) ->
+shapeProps =
   testPropertyNamed "Formats shape" "shapeProps" $
-    H.withTests limit $
-      H.property $ do
-        log@MkLog {cmd, msg} <- H.forAll LGens.genLogWithCmd
-        let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
-            expected =
-              "["
-                <> sysTime
-                <> "] "
-                <> Log.logToPrefix log
-                <> "["
-                <> maybe "test error: did not receive Just command" (view #command) cmd
-                <> "] "
-                <> T.strip msg
-                <> "\n"
-        H.annotate $ T.unpack expected
-        H.annotate $ T.unpack result
-        expected === result
+    H.property $ do
+      log@MkLog {cmd, msg} <- H.forAll LGens.genLogWithCmd
+      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+          expected =
+            "["
+              <> sysTime
+              <> "] "
+              <> Log.logToPrefix log
+              <> "["
+              <> maybe "test error: did not receive Just command" (view #command) cmd
+              <> "] "
+              <> T.strip msg
+              <> "\n"
+      H.annotate $ T.unpack expected
+      H.annotate $ T.unpack result
+      expected === result

@@ -14,11 +14,11 @@ extra-deps:
 - refined-0.7@sha256:3e1119816dad5f638d104256742d8763beb6b987044190da333ab7b63f85c934,2837
 - strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
 - git: https://github.com/tbidne/algebra-simple.git
-  commit: c8aaa4495964ecea9bb898c4fcb8b1c718ecc813
+  commit: 2c8a79e8d3bf67c99e4851c557bf68a44c512307
 - git: https://github.com/tbidne/bounds.git
-  commit: 7a8832ef4a55d565e72fab553a4d485329235bf7
+  commit: 004f03aec46f29069fd0bf5115a384cd2b3141b3
 - git: https://github.com/tbidne/byte-types.git
-  commit: cc0e1323b51f1ec3441ddc6578a05e9d7fcdb977
+  commit: be3e764d76c530fd3641c133ed2d53adfc8f046d
 - git: https://github.com/tbidne/monad-effects.git
   commit: b3d1b6b414d9a0561da5ed529a9ff663a0345270
   subdirs:
@@ -30,7 +30,7 @@ extra-deps:
   - monad-thread
   - monad-time
 - git: https://github.com/tbidne/relative-time.git
-  commit: 6570c30825f610843b181dda26716971f0444907
+  commit: 3bd5549074da8b6dba1660e6d01f92812cefb9c2
 flags:
   refined:
     aeson: false

@@ -17,7 +17,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc: ["9.2.4", "9.4.2"]
+        ghc:
+        - 9.2.5
+        - 9.4.3
     steps:
       - uses: actions/checkout@v3.0.2
 
@@ -34,7 +36,7 @@ jobs:
           RUN_DOCTEST=1 cabal test doctest
 
       - name: Unit Tests
-        run: cabal test unit
+        run: cabal test unit --test-options '--hedgehog-tests 100000'
 
       - name: Integration Tests
         run: cabal test integration

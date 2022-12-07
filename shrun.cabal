@@ -96,7 +96,7 @@ library
     , relative-time         ^>=0.1
     , template-haskell      >=2.17.0.0 && <2.20
     , text                  >=1.2.3.2  && <2.1
-    , toml-reader           ^>=0.1.0.0
+    , toml-reader           >=0.1.0.0  && <0.3.0.0
     , unix                  >=2.7.2    && <2.9
     , unliftio              ^>=0.2.0.0
     , unordered-containers  ^>=0.2.9.0
@@ -133,7 +133,6 @@ test-suite unit
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    Unit.MaxRuns
     Unit.Prelude
     Unit.Props
     Unit.Props.Generators
@@ -158,9 +157,8 @@ test-suite unit
     , optparse-applicative
     , refined
     , shrun
-    , tagged                ^>=0.8.6
     , tasty                 >=1.1.0.3 && <1.5
-    , tasty-hedgehog        >=1.2.0.0 && <1.4
+    , tasty-hedgehog        >=1.2.0.0 && <1.5
     , tasty-hunit           >=0.9     && <0.11
     , text
     , time                  >=1.9.3   && <1.14
