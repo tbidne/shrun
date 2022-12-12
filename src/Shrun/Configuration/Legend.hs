@@ -135,8 +135,8 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           -- pass this in if we have a list i.e. key = [val1, val2, ...].
           --
           -- If we did, the command output would have:
-          --   [Success][all] Time: N seconds
-          --   [Success][all] Time: N seconds
+          --   [Success][all] N seconds
+          --   [Success][all] N seconds
           --   ...
           --
           -- That is, we would have multiple commands sharing the same key

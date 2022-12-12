@@ -111,9 +111,7 @@ runCommands commands = Regions.displayConsoleRegions $
           Log.putRegionLog r fatalLog
         Right _ -> pure ()
 
-      let totalTimeTxt =
-            "Time: "
-              <> formatRelativeTime (Utils.timeSpecToRelTime totalTime)
+      let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
           finalLog =
             MkLog
               { cmd = Nothing,
@@ -168,12 +166,12 @@ runCommand cmd = do
 
   Regions.withConsoleRegion Linear $ \r -> do
     let (msg', lvl', t') = case cmdResult of
-          Left (t, MkStderr err) -> (err <> ". ", LevelError, t)
+          Left (t, MkStderr err) -> (": " <> err, LevelError, t)
           Right t -> ("", LevelSuccess, t)
     Log.putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = msg' <> "Time: " <> T.pack (formatRelativeTime t'),
+          msg = T.pack (formatRelativeTime t') <> msg',
           lvl = lvl',
           mode = LogModeFinish,
           dest = LogDestBoth

@@ -26,7 +26,7 @@ cancelled = "Timed out, cancelling remaining commands:"
 
 -- | Expected total \"Time elapsed\"" 'Text'.
 totalTime :: Text
-totalTime = "Time: "
+totalTime = "[Finished] "
 
 -- | Expected success 'Text'.
 subCommandPrefix :: Text -> Text -> Text
@@ -34,11 +34,11 @@ subCommandPrefix cmd txt = "[Command][" <> cmd <> "] " <> txt
 
 -- | Expected success 'Text'.
 infoSuccessPrefix :: Text -> Text
-infoSuccessPrefix txt = "[Success][" <> txt <> "] Time:"
+infoSuccessPrefix txt = "[Success][" <> txt <> "] "
 
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text
-errPrefix txt = "[Error][" <> txt <> "] Error:"
+errPrefix txt = "[Error][" <> txt <> "] "
 
 runAndGetLogs :: List String -> IO (IORef (List Text))
 runAndGetLogs argList = do

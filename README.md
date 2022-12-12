@@ -138,11 +138,11 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --config=examples/config.toml all "echo cat"</span>
-<span style="color: #69ff94">[Info] [echo cat] Success. Time elapsed: 0 seconds</span>
-<span style="color: #69ff94">[Info] [echo hi] Success. Time elapsed: 0 second</span>
-<span style="color: #69ff94">[Info] [echo "command one"] Success. Time elapsed: 0 second</span>
-<span style="color: #ff6e6e">[Error] [command four] Error: '/bin/sh: line 1: four: command not found. Time elapsed: 0 seconds</span>
-<span style="color: #d6acff">[Info] Finished! Total time elapsed: 0 seconds</span></code>
+<span style="color: #69ff94">[Success][echo cat] 0 seconds</span>
+<span style="color: #69ff94">[Success][echo hi] 0 seconds</span>
+<span style="color: #69ff94">[Success][cmd1] 0 seconds</span>
+<span style="color: #ff6e6e">[Error][cmd4] 0 seconds: /bin/sh: line 1: four: command not found</span>
+<span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
 
 Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
@@ -163,9 +163,9 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --timeout 8 "sleep 5" "sleep 10" "sleep 15"</span>
-<span style="color: #69ff94">[Info] [sleep 5] Success. Time elapsed: 5 seconds</span>
+<span style="color: #69ff94">[Success][sleep 5] 5 seconds</span>
 <span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 10, sleep 15</span>
-<span style="color: #d6acff">[Info] Finished! Total time elapsed: 9 seconds</span></code>
+<span style="color: #d6acff">[Finished] 9 seconds</span></code>
 </pre>
 
 ## Logging
@@ -183,14 +183,14 @@ Note: When commands have complicated output, the logs can interfere with each ot
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command] [for i in {1..10}; do echo hi; sleep 1; done] hi</span>
-<span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
+<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
 vs.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun "for i in {1..10}; do echo hi; sleep 1; done"</span>
-<span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
+<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
 Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
@@ -207,21 +207,22 @@ Practically speaking, this does not have much effect, just that if a command die
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log=out.log --cmd-log "sleep 2" "bad" "for i in {1..3}; do echo hi; sleep 1; done"</span>
-<span style="color: #ff6e6e">[Error] [for i in {1..10}; do echo hi; sleep 1; done] hi</span>
-<span style="color: #69ff94">[Info] [sleep 2] Success. Time elapsed: 2 seconds</span>
-<span style="color: #69ff94">[Info] [for i in {1..3}; do echo hi; sleep 1; done] Success. Time elapsed: 3 seconds</span>
-<span style="color: #d6acff">[Info] Finished! Total time elapsed: 3 seconds</span></code>
+<span style="color: #ff6e6e">[Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #69ff94">[Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
+<span style="color: #d6acff">[Finished] 3 seconds</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> cat out.log</span>
-<span style="color:">[2022-05-26 11:25:59.150635686 UTC] [Command] [for i in {1..3}; do echo hi; sleep 1; done] hi</span>
-<span style="color:">[2022-05-26 11:25:59.152213816 UTC] [Command] [bad] /bin/sh: line 1: bad: command not found</span>
-<span style="color:">[2022-05-26 11:25:59.152253545 UTC] [Error] [bad] /bin/sh: line 1: bad: command not found. Time elapsed: 0 seconds</span>
-<span style="color:">[2022-05-26 11:26:00.151610059 UTC] [Command] [for i in {1..3}; do echo hi; sleep 1; done] hi</span>
-<span style="color:">[2022-05-26 11:26:01.150768195 UTC] [Info] [sleep 2] Success. Time elapsed: 2 seconds</span>
-<span style="color:">[2022-05-26 11:25:59.150635686 UTC] [Command] [for i in {1..3}; do echo hi; sleep 1; done] hi</span>
-<span style="color:">[2022-05-26 11:26:02.153745075 UTC] [Info] Finished! Total time elapsed: 3 seconds</span></code>
+<span style="color:">[2022-12-12 23:17:55][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2022-12-12 23:17:55][Command][bad] /bin/sh: line 1: bad: command not found</span>
+<span style="color:">[2022-12-12 23:17:55][Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
+<span style="color:">[2022-12-12 23:17:56][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2022-12-12 23:17:57][Success][sleep 2] 2 seconds</span>
+<span style="color:">[2022-12-12 23:17:57][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2022-12-12 23:17:58][Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
+<span style="color:">[2022-12-12 23:17:58][Finished] 3 seconds</span></code>
 </pre>
 
 ### File Log Mode
@@ -254,28 +255,28 @@ Practically speaking, this does not have much effect, just that if a command die
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --key-hide --cmd-log --config=examples/config.toml skynet</span>
-<span style="color:">[Command] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] preparing nuclear missil-- i mean gift baskets</span>
-<span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
+<span style="color:">[Command][echo "preparing nuclear missil-- i mean gift baskets"; sleep 13] preparing nuclear missil-- i mean gift baskets</span>
+<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --key-hide --cmd-log --config=examples/config.toml skynet</span>
-<span style="color: #69ff94">[Success] [echo "preparing nuclear missil-- i mean gift baskets"; sleep 10] Success. Time elapsed: 10 seconds</span>
-<span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
+<span style="color: #69ff94">[Success][echo "preparing nuclear missil-- i mean gift baskets"; sleep 13] 13 seconds</span>
+<span style="color: #d6acff">[Finished] 13 seconds</span></code>
 </pre>
 
 rather than the usual
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --config=examples/config.toml skynet</span>
-<span style="color:">[Command] [skynet] preparing nuclear missil-- i mean gift baskets</span>
-<span style="color: #a3fefe">[Info] Running time: 7 seconds</span></code>
+<span style="color:">[Command][skynet] preparing nuclear missil-- i mean gift baskets</span>
+<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --config=examples/config.toml skynet</span>
-<span style="color: #69ff94">[Success] [skynet] Success. Time elapsed: 10 seconds</span>
-<span style="color: #d6acff">[Info] Finished! Total time elapsed: 10 seconds</span></code>
+<span style="color: #69ff94">[Success][skynet] 13 seconds</span>
+<span style="color: #d6acff">[Finished] 13 seconds</span></code>
 </pre>
 
 Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
@@ -298,22 +299,22 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
-<span style="color:">[Command] [echo -e...] foo  hello  bye</span>
-<span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
+<span style="color:">[Command][echo -e...] foo  hello  bye</span>
+<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 
 `none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
-<span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hel bye</span></span>
-<span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
+<span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
+<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
-<span style="color:">[Command] [echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
-<span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
+<span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
+<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 
 ### File Log Strip Control
@@ -332,34 +333,34 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
-<span style="color:">[Command] [for i i...] hi</span>
-<span style="color: #a3fefe">[Info] Running time: 2 seconds</span></code>
+<span style="color:">[Command][for i i...] hi</span>
+<span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
-<span style="color: #69ff94">[Success] [for i i...] Success. Time elapsed: 3 seconds</span>
-<span style="color: #d6acff">[Info] Finished! Total time elapsed: 3 seconds</span></code>
+<span style="color: #69ff94">[Success][for i i...] 3 seconds</span>
+<span style="color: #d6acff">[Finished] 3 seconds</span></code>
 </pre>
 
 ### Command Line Truncation
 
-**Arg:** `-y, --cmd-line-trunc <NATURAL | detect>`
+**Arg:** `-y, --cmd-log-line-trunc <NATURAL | detect>`
 
 **Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
-<span style="color:">[Command] [echo 'some ridiculously long command i mean is this really ne...</span>
-<span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
+<span style="color:">[Command][echo 'some ridiculously long command i mean is this really ne...</span>
+<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-line-trunc detect "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
-<span style="color:">[Command] [echo 'some ridiculously long command i mean is this really necessary' && sleep 5] some ridiculously long command...</span>
-<span style="color: #a3fefe">[Info] Running time: 3 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-log-line-trunc detect "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
+<span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 5] some ridiculously long command...</span>
+<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 
 ## Miscellaneous
