@@ -19,12 +19,15 @@ module Shrun.Logging.Types
 
     -- * Log Queue
     LogText (.., MkLogText),
-    _MkLogText,
     LogTextQueue (..),
-    _MkLogTextQueue,
   )
 where
 
+import Optics.TH
+  ( generateUpdateableOptics,
+    makeFieldLabelsWith,
+    noPrefixFieldLabels,
+  )
 import Shrun.Data.Command (Command)
 import Shrun.Prelude
 import System.Console.Pretty (Color (..))
@@ -200,9 +203,10 @@ newtype LogText = UnsafeLogText
       Show
     )
 
--- | @since 0.5
-_MkLogText :: Getter LogText Text
-_MkLogText = to (\(MkLogText t) -> t)
+-- | @since 0.6.1
+makeFieldLabelsWith
+  (noPrefixFieldLabels & generateUpdateableOptics .~ False)
+  ''LogText
 
 -- | @since 0.1
 pattern MkLogText :: Text -> LogText
@@ -218,8 +222,8 @@ newtype LogTextQueue = MkLogTextQueue
     getLogTextQueue :: TBQueue LogText
   }
 
--- | @since 0.5
-makePrisms ''LogTextQueue
+-- | @since 0.6.1
+makeFieldLabelsNoPrefix ''LogTextQueue
 
 -- | @since 0.1
 instance Show LogTextQueue where

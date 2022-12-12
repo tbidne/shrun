@@ -7,19 +7,16 @@
 module Shrun.Logging.Queue
   ( -- * LogText
     LogText (MkLogText),
-    _MkLogText,
     formatFileLog,
 
     -- * Queue
     LogTextQueue (..),
-    _MkLogTextQueue,
     readQueue,
     writeQueue,
     flushQueue,
   )
 where
 
--- import Shrun.Effects.Mutable (Mutable (..))
 import Effects.MonadSTM (MonadTBQueue (..))
 import Effects.MonadTime (MonadTime (..), formatLocalTime)
 import Shrun.Configuration.Env.Types (HasLogging (..))
@@ -28,8 +25,6 @@ import Shrun.Logging.Types
   ( Log (..),
     LogText (..),
     LogTextQueue (..),
-    _MkLogText,
-    _MkLogTextQueue,
   )
 import Shrun.Logging.Types qualified as Log
 import Shrun.Prelude
@@ -69,19 +64,19 @@ writeQueue ::
   m ()
 writeQueue queue = writeq <=< formatFileLog
   where
-    writeq = writeTBQueueM (queue ^. _MkLogTextQueue)
+    writeq = writeTBQueueM (queue ^. #getLogTextQueue)
 {-# INLINEABLE writeQueue #-}
 
 -- | Atomically reads from the queue. Does not retry.
 --
 -- @since 0.1
 readQueue :: MonadTBQueue m => LogTextQueue -> m (Maybe LogText)
-readQueue = tryReadTBQueueM . view _MkLogTextQueue
+readQueue = tryReadTBQueueM . view #getLogTextQueue
 {-# INLINEABLE readQueue #-}
 
 -- | Atomically flushes the queue's entire contents. Does not retry.
 --
 -- @since 0.1
 flushQueue :: MonadTBQueue m => LogTextQueue -> m (List LogText)
-flushQueue = flushTBQueueM . view _MkLogTextQueue
+flushQueue = flushTBQueueM . view #getLogTextQueue
 {-# INLINEABLE flushQueue #-}

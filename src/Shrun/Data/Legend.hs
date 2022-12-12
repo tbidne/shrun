@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types for the legend.
@@ -12,6 +13,11 @@ module Shrun.Data.Legend
 where
 
 import Data.HashMap.Strict (HashMap)
+import Optics.TH
+  ( generateUpdateableOptics,
+    makeFieldLabelsWith,
+    noPrefixFieldLabels,
+  )
 import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Prelude
@@ -49,19 +55,10 @@ pattern MkKeyVal k v <- UnsafeKeyVal k v
 
 {-# COMPLETE MkKeyVal #-}
 
--- | @since 0.5
-instance
-  (k ~ A_Getter, a ~ Text, b ~ Text) =>
-  LabelOptic "key" k KeyVal KeyVal a b
-  where
-  labelOptic = to (\(UnsafeKeyVal k _) -> k)
-
--- | @since 0.5
-instance
-  (k ~ A_Getter, a ~ NonEmptySeq Text, b ~ NonEmptySeq Text) =>
-  LabelOptic "val" k KeyVal KeyVal a b
-  where
-  labelOptic = to (\(UnsafeKeyVal _ v) -> v)
+-- | @since 0.6.1
+makeFieldLabelsWith
+  (noPrefixFieldLabels & generateUpdateableOptics .~ False)
+  ''KeyVal
 
 instance DecodeTOML KeyVal where
   tomlDecoder =

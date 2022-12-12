@@ -6,7 +6,6 @@
 -- @since 0.1
 module Shrun.Data.Timeout
   ( Timeout (..),
-    _MkTimeout,
   )
 where
 
@@ -36,8 +35,8 @@ newtype Timeout = MkTimeout
     )
     via Natural
 
--- | @since 0.5
-makePrisms ''Timeout
+-- | @since 0.6.1
+makeFieldLabelsNoPrefix ''Timeout
 
 -- | @since 0.5
 instance DecodeTOML Timeout where
