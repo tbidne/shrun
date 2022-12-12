@@ -70,7 +70,6 @@ library
     , base                  >=4.16     && <4.18
     , byte-types            ^>=0.1
     , bytestring            >=0.10.12  && <0.12
-    , clock                 >=0.7.2    && <0.9
     , concurrent-output     ^>=1.10.7
     , containers            ^>=0.6.2.1
     , exceptions            ^>=0.10.4
@@ -151,7 +150,6 @@ test-suite unit
     , algebra-simple
     , base
     , byte-types
-    , clock
     , hedgehog              >=1.0.2   && <1.3
     , monad-time
     , optparse-applicative

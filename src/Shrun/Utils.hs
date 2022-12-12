@@ -7,7 +7,6 @@
 module Shrun.Utils
   ( -- * Text Utils
     breakStripPoint,
-    decodeUtf8Lenient,
     splitOn,
     truncateIfNeeded,
     stripControlAll,
@@ -26,16 +25,12 @@ where
 import Data.Bytes (Bytes, Conversion (convert), Size (B), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as TEnc
-import Data.Text.Encoding.Error qualified as TEncErr
 import Data.Time.Relative (RelativeTime, fromSeconds)
+import Effects.MonadTime (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (..))
-import GHC.Int (Int64)
 import Refined qualified as R
 import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Prelude
-import System.Clock (TimeSpec (..))
-import System.Clock qualified as C
 
 -- $setup
 -- >>> :set -XOverloadedLists
@@ -57,18 +52,14 @@ import System.Clock qualified as C
 --
 -- @since 0.1
 diffTime :: TimeSpec -> TimeSpec -> Natural
-diffTime t1 t2 = i642n $ C.sec $ C.diffTimeSpec t1 t2
-  where
-    -- Allegedly safe because 'C.diffTimeSpec' guaranteed to be non-negative.
-    i642n :: Int64 -> Natural
-    i642n = fromIntegral
+diffTime t1 t2 = view #sec $ diffTimeSpec t1 t2
 {-# INLINEABLE diffTime #-}
 
 -- | Transforms a 'Timespec' into a 'RelativeTime'.
 --
 -- @since 0.6
 timeSpecToRelTime :: TimeSpec -> RelativeTime
-timeSpecToRelTime = fromSeconds . fromIntegral . C.sec
+timeSpecToRelTime = fromSeconds . view #sec
 {-# INLINEABLE timeSpecToRelTime #-}
 
 -- | Relaxes 'foldMap'\'s 'Monoid' constraint to 'Semigroup'. Requires a
@@ -128,13 +119,6 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
   where
     point = R.unrefine rpoint
 {-# INLINEABLE breakStripPoint #-}
-
--- | Decodes a 'ByteString' to UTF-8 in lenient mode.
---
--- @since 0.1
-decodeUtf8Lenient :: ByteString -> Text
-decodeUtf8Lenient = TEnc.decodeUtf8With TEncErr.lenientDecode
-{-# INLINEABLE decodeUtf8Lenient #-}
 
 -- | Wrapper around "Text"\'s 'T.splitOn'. This /should/ be total, as
 -- 'T.splitOn' is partial exactly when the first parameter is empty, which we

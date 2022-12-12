@@ -10,7 +10,6 @@ module Unit.Props.Shrun.Logging.Queue
 where
 
 import Data.Functor.Identity (Identity (..))
-import Data.Int (Int64)
 import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Time (ZonedTime (..))
@@ -72,7 +71,7 @@ newtype MockTime a = MkMockTime
 instance MonadTime MockTime where
   getSystemTime = pure $ TR.read sysTime
   getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
-  getTimeSpec = pure $ fromIntegral @Int64 0
+  getMonotonicTime = pure 0
 
 instance MonadReader MockEnv MockTime where
   ask = pure $ MkMockEnv ()

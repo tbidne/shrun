@@ -20,6 +20,7 @@ import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
 import Data.Sequence ((<|))
 import Data.Text qualified as T
+import Effects.MonadFs (decodeUtf8Lenient)
 import Effects.MonadTime (MonadTime (..))
 import GHC.IO.Handle (BufferMode (..))
 import GHC.IO.Handle qualified as Handle
@@ -35,7 +36,6 @@ import Shrun.Logging.Types
     LogMode (..),
   )
 import Shrun.Prelude
-import Shrun.Utils qualified as Utils
 import System.Console.Regions (ConsoleRegion, RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.Exit (ExitCode (..))
@@ -159,7 +159,7 @@ readHandle handle = do
       | otherwise -> do
           output :: Either SomeException ByteString <-
             liftIO $ tryAny $ BS.hGetNonBlocking handle blockSize
-          let outDecoded = fmap Utils.decodeUtf8Lenient output
+          let outDecoded = fmap decodeUtf8Lenient output
           case outDecoded of
             Left ex -> pure $ ReadErr $ readEx ex
             Right "" -> pure ReadNoData

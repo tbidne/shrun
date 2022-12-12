@@ -120,6 +120,12 @@
     },
     "monad-effects": {
       "inputs": {
+        "algebra-simple": [
+          "algebra-simple"
+        ],
+        "bounds": [
+          "bounds"
+        ],
         "flake-compat": [
           "flake-compat"
         ],
@@ -131,11 +137,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1670093131,
-        "narHash": "sha256-97xFvQAO+fl/15Iwr3Yv/O2T7BbpAEwUQOtV42RqAbY=",
+        "lastModified": 1670798210,
+        "narHash": "sha256-c3gMbOFAtqXfWdFXTUZ1qkSEIFyA5O/4jl55UPznrp0=",
         "owner": "tbidne",
         "repo": "monad-effects",
-        "rev": "b3d1b6b414d9a0561da5ed529a9ff663a0345270",
+        "rev": "3fddc571755e7b01a0c665058e9e0503b5c07250",
         "type": "github"
       },
       "original": {

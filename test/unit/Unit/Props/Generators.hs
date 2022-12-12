@@ -9,13 +9,12 @@ module Unit.Props.Generators
   )
 where
 
-import Data.Int (Int64)
+import Effects.MonadTime (TimeSpec (..))
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Numeric.Algebra qualified as Alg
 import Refined qualified as R
 import Refined.Unsafe qualified as R
-import System.Clock (TimeSpec (..))
 import Unit.Prelude
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
@@ -29,14 +28,9 @@ genPositive = Alg.unsafeAMonoidNonZero <$> Gen.integral (Range.constant 1 1_000_
 -- | Generates 'TimeSpec' where 'sec' and 'nsec' are random 'Int64'.
 genTimeSpec :: Gen TimeSpec
 genTimeSpec = do
-  TimeSpec
-    <$> genInt64
-    <*> genInt64
-
-genInt64 :: Gen Int64
-genInt64 =
-  let range = Range.linearFrom 0 minBound maxBound
-   in Gen.int64 range
+  MkTimeSpec
+    <$> Gen.integral (Range.linearFrom 0 0 100)
+    <*> Gen.integral (Range.linearFrom 1_000_000_000 0 100_000_000_000)
 
 -- | Generates 'Int' based on 'Bounded'.
 genInt :: Gen Int
