@@ -1,19 +1,30 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module Integration.Miscellaneous (specs) where
 
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import Effects.MonadFs (MonadFsReader (getFileSize))
 import Integration.Prelude
-import Integration.Utils (runConfigIO)
+import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Numeric.Algebra (zero)
-import Shrun.Configuration.Env (withEnv)
+import Shrun.Configuration.Env
+  ( CmdDisplay (..),
+    Truncation (..),
+    withEnv,
+  )
+import Shrun.Configuration.Env.Types (StripControl (..))
+import Shrun.Data.Command (Command (..))
+import Shrun.Data.Timeout (Timeout (..))
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
   testGroup
     "Miscellaneous"
     [ logFileWarn testArgs,
-      logFileDelete testArgs
+      logFileDelete testArgs,
+      usesRecursiveCmdExample,
+      usesRecursiveCmd
     ]
 
 logFileWarn :: IO TestArgs -> TestTree
@@ -84,3 +95,58 @@ logFileDelete testArgs =
         "delete 5.5 kilobytes",
         "cmd"
       ]
+
+usesRecursiveCmdExample :: TestTree
+usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
+  logsRef <- IORef.newIORef []
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- IORef.readIORef logsRef
+  logs @=? []
+  where
+    args = ["multi1"]
+    expected =
+      MkSimpleEnv
+        { timeout = Just (MkTimeout {unTimeout = 3600}),
+          disableLogging = True,
+          cmdDisplay = HideKey,
+          cmdLogging = True,
+          cmdLogStripControl = Just StripControlAll,
+          cmdLogNameTrunc = Just (MkTruncation {unTruncation = 80}),
+          cmdLogLineTrunc = Just (MkTruncation {unTruncation = 150}),
+          fileLogging = True,
+          fileLogStripControl = Just StripControlNone,
+          commands =
+            [ MkCommand (Just "m1") "m1val",
+              "m2",
+              "m3"
+            ]
+        }
+
+usesRecursiveCmd :: TestTree
+usesRecursiveCmd = testCase "Uses recursive commands" $ do
+  logsRef <- IORef.newIORef []
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- IORef.readIORef logsRef
+  logs @=? []
+  where
+    args = ["-c", "examples/default.toml", "all", "echo cat"]
+    expected =
+      MkSimpleEnv
+        { timeout = Nothing,
+          disableLogging = False,
+          cmdDisplay = ShowKey,
+          cmdLogging = False,
+          cmdLogStripControl = Nothing,
+          cmdLogNameTrunc = Nothing,
+          cmdLogLineTrunc = Nothing,
+          fileLogging = False,
+          fileLogStripControl = Nothing,
+          commands =
+            [ MkCommand (Just "cmd1") "echo \"command one\"",
+              MkCommand (Just "cmd4") "command four",
+              "echo hi",
+              "echo cat"
+            ]
+        }

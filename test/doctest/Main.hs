@@ -10,4 +10,4 @@ main =
     "RUN_DOCTEST"
     ExpectEnvSet
     (DocTest.mainFromCabal "byte-types" [])
-    (putStrLn "*** Doc Tests disabled")
+    (putStrLn "*** Doc Tests disabled. Enable with RUN_DOCTEST=1")

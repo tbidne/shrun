@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | Provides types for the legend functionality.
 --
 -- @since 0.5
@@ -126,7 +128,23 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
         Just cyclicVal ->
           let pathTxt = builderToPath path line cyclicVal
            in NESeq.singleton $ Left (MkCyclicKeyError pathTxt)
-        Nothing -> val >>= go (Just line) foundKeys' path'
+        Nothing -> case val of
+          -- NOTE: We have to split these cases up due to handling the prevKey
+          -- differently. We want to pass along the key name (i.e. line)
+          -- iff we have exactly one value i.e. key = val. We do _not_ want to
+          -- pass this in if we have a list i.e. key = [val1, val2, ...].
+          --
+          -- If we did, the command output would have:
+          --   [Success][all] Time: N seconds
+          --   [Success][all] Time: N seconds
+          --   ...
+          --
+          -- That is, we would have multiple commands sharing the same key
+          -- name, hence the output would be ambiguous. To prevent this, only
+          -- pass the name in when it is guaranteed we have a unique
+          -- key = val mapping.
+          [x] -> go (Just line) foundKeys' path' x
+          xs -> xs >>= go Nothing foundKeys' path'
         where
           foundKeys' = Set.insert line foundKeys
           -- Detect if we have an intersection between previously found

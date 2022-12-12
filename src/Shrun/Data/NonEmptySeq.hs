@@ -22,6 +22,7 @@ module Shrun.Data.NonEmptySeq
 where
 
 import Data.Sequence (Seq (..))
+import GHC.Exts (IsList (Item))
 import GHC.Exts qualified as Exts
 import Shrun.Prelude hiding (toList)
 
@@ -69,6 +70,12 @@ instance Foldable NonEmptySeq where
 instance Traversable NonEmptySeq where
   traverse f = fmap unsafeFromSeq . traverse f . toSeq
   {-# INLINEABLE traverse #-}
+
+-- | @since 0.6.1
+instance IsList (NonEmptySeq a) where
+  type Item (NonEmptySeq a) = a
+  fromList = unsafeFromList
+  toList = toList
 
 -- | @since 0.5
 instance DecodeTOML a => DecodeTOML (NonEmptySeq a) where

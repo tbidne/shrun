@@ -16,6 +16,14 @@ the major/minor/patch definitions apply to the application's interface / usage
   * Slightly more compact now (spaces between labels removed)
   * Success/Finished message now have specific labels
 
+### Fixed
+* Bug fixed where legend key with multiple values i.e. k = [v1, v2, ...] would
+  consider each vi to have key name k. This meant output could be ambiguous
+  with key-hide = false (the default) because multiple values would have the
+  same key name. Now we only consider a value to have a key name when it is
+  unique i.e. k = v.
+
+
 ## [0.6] -- 2022-12-07
 ### Changed
 * CLI
