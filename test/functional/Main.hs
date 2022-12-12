@@ -10,12 +10,14 @@ import Functional.SuccessShowKey qualified as SuccessShowKey
 import Functional.TestArgs (TestArgs (..))
 import Functional.Timeout qualified as Timeout
 import Functional.Truncation qualified as Truncation
+import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import System.Directory qualified as Dir
 import Test.Tasty qualified as Tasty
 
 -- | Entry point for functional tests.
 main :: IO ()
-main =
+main = do
+  setUncaughtExceptionHandler (putStrLn . displayCallStack)
   defaultMain $ Tasty.withResource setup teardown specs
 
 specs :: IO TestArgs -> TestTree
@@ -34,7 +36,7 @@ specs args = do
 setup :: IO TestArgs
 setup = do
   rootTmpDir <- (</> "shrun") <$> Dir.getTemporaryDirectory
-  let workingTmpDir = rootTmpDir </> "test/integration"
+  let workingTmpDir = rootTmpDir </> "test/functional"
 
   cwd <- (</> "test/functional") <$> Dir.getCurrentDirectory
   let lp = cwd </> "config.toml"

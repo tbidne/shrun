@@ -45,13 +45,12 @@ import Effects.MonadFs
       ),
     MonadFsWriter
       ( hClose,
-        hFlush,
         openFile,
         removeFile
       ),
   )
 import Effects.MonadSTM
-import Effects.MonadTerminal (getTerminalWidth, putTextLn)
+import Effects.MonadTerminal (getTerminalWidth)
 import Effects.MonadTime (MonadTime)
 import Options.Applicative qualified as OA
 import Shrun (runShellT, shrun)

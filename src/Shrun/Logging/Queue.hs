@@ -29,10 +29,6 @@ import Shrun.Logging.Types
 import Shrun.Logging.Types qualified as Log
 import Shrun.Prelude
 
--- | @since 0.5
-_LogText :: Getter LogText Text
-_LogText = to (\(MkLogText t) -> t)
-
 -- | Formats a 'Log' into a 'LogText'. Applies prefix and timestamp.
 --
 -- @since 0.1

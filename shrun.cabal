@@ -54,7 +54,6 @@ library
     Shrun.Data.NonEmptySeq
     Shrun.Data.Supremum
     Shrun.Data.Timeout
-    Shrun.Effects.Process
     Shrun.IO
     Shrun.Logging.Formatting
     Shrun.Logging.Log

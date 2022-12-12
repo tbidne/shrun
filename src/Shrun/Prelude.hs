@@ -90,7 +90,6 @@ import Data.Semigroup as X (Semigroup (..))
 import Data.String as X (String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
-import Data.Text.IO as X (putStr, putStrLn)
 import Data.Traversable as X (Traversable (..), for)
 import Data.Tuple as X (fst, snd)
 #if MIN_VERSION_base(4, 17, 0)
@@ -100,12 +99,15 @@ import Data.Void as X (Void, absurd)
 import Effects.MonadCallStack as X
   ( MonadCallStack (throwWithCallStack),
     catch,
+    displayCallStack,
     try,
   )
 import Effects.MonadFs as X
   ( MonadFsReader (readFile),
     MonadFsWriter,
     appendFileUtf8,
+    hFlush,
+    hPutUtf8,
     readFileUtf8Lenient,
     removeDirectoryIfExists,
     removeFileIfExists,
@@ -126,7 +128,13 @@ import Effects.MonadSTM as X
     TBQueue,
     TVar,
   )
-import Effects.MonadTerminal as X (MonadTerminal)
+import Effects.MonadTerminal as X
+  ( MonadTerminal,
+    putStr,
+    putStrLn,
+    putText,
+    putTextLn,
+  )
 import Effects.MonadThread as X (MonadThread)
 import GHC.Enum as X (Bounded (..), Enum (..))
 import GHC.Err as X (undefined)
@@ -178,6 +186,7 @@ import Optics.Core as X
 import Optics.Core.Extras as X (is)
 import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
 import Refined as X (Refined)
+import System.Console.Regions as X (ConsoleRegion, RegionLayout)
 import System.FilePath as X ((</>))
 import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
 import TOML as X

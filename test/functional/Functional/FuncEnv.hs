@@ -15,11 +15,8 @@ import Shrun.Configuration.Env.Types
     HasLogging (..),
     HasTimeout (..),
   )
-import Shrun.Effects.Process (Process (..))
-import Shrun.IO qualified as ShIO
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.ShellT (ShellT)
-import System.Console.Regions (ConsoleRegion)
 import System.Console.Regions qualified as Regions
 
 -- | @since 0.3
@@ -56,8 +53,6 @@ instance HasCommands FuncEnv where
 
 -- | @since 0.3
 instance RegionLogger (ShellT FuncEnv IO) where
-  type Region (ShellT FuncEnv IO) = ConsoleRegion
-
   logFn txt = do
     ls <- asks $ view #logs
     liftIO $ modifyIORef' ls (txt :)
@@ -65,9 +60,3 @@ instance RegionLogger (ShellT FuncEnv IO) where
   logModeToRegionFn _ _ = logFn
 
   withConsoleRegion = Regions.withConsoleRegion
-
--- | @since 0.5
-instance Process (ShellT FuncEnv IO) where
-  tryCmd = ShIO.tryCommand
-  tryCmdStream = ShIO.tryCommandStreamNoRegion
-  tryCmdStreamRegion = ShIO.tryCommandStreamRegion

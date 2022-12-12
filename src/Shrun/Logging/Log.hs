@@ -53,7 +53,7 @@ putRegionLog ::
     RegionLogger m,
     MonadTime m
   ) =>
-  Region m ->
+  ConsoleRegion ->
   Log ->
   m ()
 putRegionLog region lg = do
@@ -66,8 +66,8 @@ putRegionLog region lg = do
       maybePrintLog (logRegionFn region) lg
 {-# INLINEABLE putRegionLog #-}
 
--- | @maybePrintLog fn log@ applies @fn@ if the @log@ has dest 'LogDestFile'.
--- Otherwise does nothing.
+-- | @maybePrintLog fn log@ applies @fn@ if the @log@ does __not__ have dest
+-- 'LogDestFile'. Otherwise does nothing.
 --
 -- @since 0.3
 maybePrintLog ::

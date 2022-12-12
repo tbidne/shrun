@@ -9,10 +9,8 @@ module Shrun.IO
     Stdout (..),
     Stderr (..),
 
-    -- * MonadTime shell programs
-    tryCommand,
-    tryCommandStreamRegion,
-    tryCommandStreamNoRegion,
+    -- * Running commands
+    tryCommandLogging,
   )
 where
 
@@ -20,8 +18,9 @@ import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
 import Data.Sequence ((<|))
 import Data.Text qualified as T
+import Data.Time.Relative (RelativeTime)
 import Effects.MonadFs (decodeUtf8Lenient)
-import Effects.MonadTime (MonadTime (..))
+import Effects.MonadTime (MonadTime (..), withTiming)
 import GHC.IO.Handle (BufferMode (..))
 import GHC.IO.Handle qualified as Handle
 import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
@@ -36,7 +35,8 @@ import Shrun.Logging.Types
     LogMode (..),
   )
 import Shrun.Prelude
-import System.Console.Regions (ConsoleRegion, RegionLayout (..))
+import Shrun.Utils qualified as U
+import System.Console.Regions (RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import System.Exit (ExitCode (..))
 import System.Posix.IO.ByteString qualified as PBS
@@ -194,6 +194,47 @@ tryShExitCode cmd path = do
     ExitFailure _ -> Left $ makeStdErr err
 {-# INLINEABLE tryShExitCode #-}
 
+-- | Runs the command, returning either the time elapsed along with a possible
+-- error.
+--
+-- @since 0.6.1
+tryCommandLogging ::
+  ( HasCompletedCmds env,
+    HasLogging env,
+    MonadIORef m,
+    MonadMask m,
+    MonadReader env m,
+    MonadTBQueue m,
+    MonadTime m,
+    MonadTVar m,
+    MonadUnliftIO m,
+    RegionLogger m
+  ) =>
+  Command ->
+  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
+tryCommandLogging cmd = do
+  disableLogging <- asks getDisableLogging
+  cmdLogging <- asks getCmdLogging
+  fileLog <- asks getFileLogging
+
+  -- 1.    Logging is disabled at the global level: No logging at all.
+  -- 2.    No CmdLogging and no FileLogging: No streaming at all.
+  -- 3.    No CmdLogging and FileLogging: Stream (to file) but no console
+  --       region.
+  -- 3, 4. CmdLogging: Stream and create the region. FileLogging is globally
+  --       enabled/disabled, so no need for a separate function. That is,
+  --       tryCommandStreamNoRegion and tryCommandStreamRegion handle file
+  --       logging automatically.
+  let cmdFn = case (cmdLogging, fileLog, disableLogging) of
+        (_, _, True) -> tryCommand
+        (False, Nothing, _) -> tryCommand
+        (False, Just (_, _), _) -> tryCommandStreamNoRegion
+        _ -> tryCommandStreamRegion
+
+  withTiming (cmdFn cmd) >>= \case
+    (rt, Nothing) -> pure $ Right $ U.timeSpecToRelTime rt
+    (rt, Just err) -> pure $ Left (U.timeSpecToRelTime rt, err)
+
 -- | Version of 'tryShExitCode' with MonadTime. On success, stdout is not
 -- returned.
 --
@@ -229,7 +270,6 @@ tryCommandStreamRegion ::
     MonadTVar m,
     MonadUnliftIO m,
     RegionLogger m,
-    Region m ~ ConsoleRegion,
     MonadTime m
   ) =>
   Command ->
@@ -253,7 +293,6 @@ tryCommandStreamNoRegion ::
     MonadTVar m,
     MonadUnliftIO m,
     RegionLogger m,
-    Region m ~ ConsoleRegion,
     MonadTime m
   ) =>
   Command ->
@@ -274,7 +313,6 @@ tryCommandAnyRegion ::
     MonadTVar m,
     MonadUnliftIO m,
     RegionLogger m,
-    Region m ~ ConsoleRegion,
     MonadTime m
   ) =>
   Maybe ConsoleRegion ->
@@ -344,7 +382,6 @@ streamOutput ::
     MonadReader env m,
     MonadTBQueue m,
     RegionLogger m,
-    Region m ~ ConsoleRegion,
     MonadTime m
   ) =>
   Maybe ConsoleRegion ->

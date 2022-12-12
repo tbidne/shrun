@@ -9,15 +9,11 @@ module Shrun.ShellT
   )
 where
 
-import Effects.MonadTerminal (putTextLn)
 import Effects.MonadTime (MonadTime (..))
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Effects.Process (Process (..))
-import Shrun.IO qualified as ShIO
 import Shrun.Logging.RegionLogger (RegionLogger (..))
 import Shrun.Logging.Types (LogMode (..))
 import Shrun.Prelude
-import System.Console.Regions (ConsoleRegion)
 import System.Console.Regions qualified as Regions
 
 -- | `ShellT` is the main application type that runs shell commands.
@@ -80,8 +76,6 @@ instance
   (MonadIO m, MonadMask m, MonadTerminal m) =>
   RegionLogger (ShellT Env m)
   where
-  type Region (ShellT Env m) = ConsoleRegion
-
   logFn = putTextLn
 
   logModeToRegionFn LogModeSet cr = liftIO . Regions.setConsoleRegion cr
@@ -89,19 +83,3 @@ instance
   logModeToRegionFn LogModeFinish cr = liftIO . Regions.finishConsoleRegion cr
 
   withConsoleRegion = Regions.withConsoleRegion
-
--- | @since 0.3.0.1
-instance
-  ( MonadIORef m,
-    MonadMask m,
-    MonadTerminal m,
-    MonadTBQueue m,
-    MonadTime m,
-    MonadTVar m,
-    MonadUnliftIO m
-  ) =>
-  Process (ShellT Env m)
-  where
-  tryCmd = ShIO.tryCommand
-  tryCmdStream = ShIO.tryCommandStreamNoRegion
-  tryCmdStreamRegion = ShIO.tryCommandStreamRegion

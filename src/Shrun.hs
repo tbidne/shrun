@@ -12,9 +12,7 @@ where
 import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as TEnc
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
-import Effects.MonadFs (MonadFsWriter (hFlush, hPut))
 import Effects.MonadThread as X (MonadThread (microsleep), sleep)
 import Effects.MonadTime (MonadTime (..), withTiming)
 import Shrun.Configuration.Env.Types
@@ -27,8 +25,7 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Data.Timeout (Timeout (..))
-import Shrun.Effects.Process (Process (..), tryTimeCmd)
-import Shrun.IO (Stderr (..))
+import Shrun.IO (Stderr (..), tryCommandLogging)
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Log qualified as Log
 import Shrun.Logging.Queue (LogText (..), LogTextQueue)
@@ -38,7 +35,7 @@ import Shrun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
-import System.Console.Regions (ConsoleRegion, RegionLayout (..))
+import System.Console.Regions (RegionLayout (..))
 import System.Console.Regions qualified as Regions
 import UnliftIO.Async qualified as Async
 
@@ -60,7 +57,7 @@ shrun ::
     MonadTime m,
     MonadTVar m,
     MonadUnliftIO m,
-    Process m
+    RegionLogger m
   ) =>
   m ()
 shrun = asks getCommands >>= runCommands
@@ -79,7 +76,7 @@ runCommands ::
     MonadTime m,
     MonadTVar m,
     MonadUnliftIO m,
-    Process m
+    RegionLogger m
   ) =>
   NonEmptySeq Command ->
   m ()
@@ -132,37 +129,22 @@ runCommands commands = Regions.displayConsoleRegions $
 {-# INLINEABLE runCommands #-}
 
 runCommand ::
-  ( HasLogging env,
+  ( HasCompletedCmds env,
+    HasLogging env,
     MonadMask m,
     MonadCallStack m,
+    MonadIORef m,
     MonadReader env m,
     MonadTBQueue m,
     MonadTime m,
+    MonadTVar m,
     MonadUnliftIO m,
-    Process m
+    RegionLogger m
   ) =>
   Command ->
   m ()
 runCommand cmd = do
-  disableLogging <- asks getDisableLogging
-  cmdLogging <- asks getCmdLogging
-  fileLog <- asks getFileLogging
-
-  -- 1.    Logging is disabled at the global level: No logging at all.
-  -- 2.    No CmdLogging and no FileLogging: No streaming at all.
-  -- 3.    No CmdLogging and FileLogging: Stream (to file) but no console
-  --       region.
-  -- 3, 4. CmdLogging: Stream and create the region. FileLogging is globally
-  --       enabled/disabled, so no need for a separate function. That is,
-  --       tryCommandStreamNoRegion and tryCommandStreamRegion handle file
-  --       logging automatically.
-  let cmdFn = case (cmdLogging, fileLog, disableLogging) of
-        (_, _, True) -> tryCmd
-        (False, Nothing, _) -> tryCmd
-        (False, Just (_, _), _) -> tryCmdStream
-        _ -> tryCmdStreamRegion
-
-  cmdResult <- tryTimeCmd cmdFn cmd
+  cmdResult <- tryCommandLogging cmd
 
   Regions.withConsoleRegion Linear $ \r -> do
     let (msg', lvl', t') = case cmdResult of
@@ -188,7 +170,6 @@ counter ::
     MonadThread m,
     MonadTVar m,
     RegionLogger m,
-    Region m ~ ConsoleRegion,
     MonadTime m
   ) =>
   NonEmptySeq Command ->
@@ -214,7 +195,6 @@ logCounter ::
     MonadReader env m,
     MonadTBQueue m,
     RegionLogger m,
-    Region m ~ ConsoleRegion,
     MonadTime m
   ) =>
   ConsoleRegion ->
@@ -240,8 +220,7 @@ keepRunning ::
     MonadTBQueue m,
     MonadTime m,
     MonadTVar m,
-    RegionLogger m,
-    Region m ~ ConsoleRegion
+    RegionLogger m
   ) =>
   NonEmptySeq Command ->
   ConsoleRegion ->
@@ -304,5 +283,5 @@ writeQueueToFile h queue = forever $ Queue.readQueue queue >>= traverse_ (logFil
 {-# INLINEABLE writeQueueToFile #-}
 
 logFile :: MonadFsWriter m => Handle -> LogText -> m ()
-logFile h = hPut h . TEnc.encodeUtf8 . view #unLogText
+logFile h = hPutUtf8 h . view #unLogText
 {-# INLINEABLE logFile #-}
