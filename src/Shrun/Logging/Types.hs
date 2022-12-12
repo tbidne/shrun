@@ -215,15 +215,15 @@ levelToColor Fatal = P.Red
 -- @since 0.1
 levelToPrefix :: LogLevel -> Text
 levelToPrefix None = ""
-levelToPrefix SubCommand = "[Command] "
-levelToPrefix Debug = "[Debug] "
-levelToPrefix Info = "[Info] "
-levelToPrefix InfoBlue = "[Info] "
-levelToPrefix InfoCyan = "[Info] "
-levelToPrefix InfoSuccess = "[Info] "
-levelToPrefix Warn = "[Warn] "
-levelToPrefix Error = "[Error] "
-levelToPrefix Fatal = "[Fatal Error] "
+levelToPrefix SubCommand = "[Command]"
+levelToPrefix Debug = "[Debug]"
+levelToPrefix Info = "[Info]"
+levelToPrefix InfoBlue = "[Info]"
+levelToPrefix InfoCyan = "[Info]"
+levelToPrefix InfoSuccess = "[Info]"
+levelToPrefix Warn = "[Warn]"
+levelToPrefix Error = "[Error]"
+levelToPrefix Fatal = "[Fatal Error]"
 {-# INLINEABLE levelToPrefix #-}
 
 -- | 'LogText' is a textual representation of a given 'Log'. No coloring

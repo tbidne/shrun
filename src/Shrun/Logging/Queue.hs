@@ -57,11 +57,11 @@ formatFileLog :: (HasLogging env, MonadReader env m, MonadTime m) => Log -> m Lo
 formatFileLog log = do
   currTime <- formatLocalTime <$> getSystemTime
   stripControl <- asks getFileLogStripControl
-  let msg' = stripChars' (log ^. #msg) stripControl
+  let msg' = " " <> stripChars' (log ^. #msg) stripControl
       formatted = case log ^. #cmd of
         Nothing -> prefix <> msg'
-        Just com -> prefix <> "[" <> (com ^. #command) <> "] " <> msg'
-      withTimestamp = "[" <> pack currTime <> "] " <> formatted <> "\n"
+        Just com -> prefix <> "[" <> (com ^. #command) <> "]" <> msg'
+      withTimestamp = "[" <> pack currTime <> "]" <> formatted <> "\n"
   pure $ UnsafeLogText withTimestamp
   where
     prefix = Log.logToPrefix log

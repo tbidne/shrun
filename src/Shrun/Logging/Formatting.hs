@@ -35,7 +35,7 @@ formatConsoleLog log = do
   cmdLineTrunc <- asks getCmdLogLineTrunc
   msg' <- stripChars $ log ^. #msg
   case log ^. #cmd of
-    Nothing -> pure $ colorize $ prefix <> msg'
+    Nothing -> pure $ colorize $ prefix <> " " <> msg'
     Just com -> do
       -- get cmd name to display
       name <- displayCmd com

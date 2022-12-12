@@ -159,7 +159,7 @@ shapeProps =
           expected =
             "["
               <> sysTime
-              <> "] "
+              <> "]"
               <> Log.logToPrefix log
               <> "["
               <> maybe "test error: did not receive Just command" (view #command) cmd

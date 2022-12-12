@@ -30,15 +30,15 @@ totalTime = "Finished! Total time elapsed: "
 
 -- | Expected success 'Text'.
 subCommandPrefix :: Text -> Text -> Text
-subCommandPrefix cmd txt = "[Command] [" <> cmd <> "] " <> txt
+subCommandPrefix cmd txt = "[Command][" <> cmd <> "] " <> txt
 
 -- | Expected success 'Text'.
 infoSuccessPrefix :: Text -> Text
-infoSuccessPrefix txt = "[Info] [" <> txt <> "] Success. Time elapsed:"
+infoSuccessPrefix txt = "[Info][" <> txt <> "] Success. Time elapsed:"
 
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text
-errPrefix txt = "[Error] [" <> txt <> "] Error:"
+errPrefix txt = "[Error][" <> txt <> "] Error:"
 
 runAndGetLogs :: List String -> IO (IORef (List Text))
 runAndGetLogs argList = do

@@ -10,6 +10,10 @@ Note that PVP is applied to the _application_, not the _library_. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
+## [Unreleased]
+### Changed
+* Logs are slightly more compact now (spaces between labels removed)
+
 ## [0.6] -- 2022-12-07
 ### Changed
 * CLI
