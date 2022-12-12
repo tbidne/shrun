@@ -143,23 +143,9 @@ prefixProps =
       log@MkLog {lvl} <- H.forAll LGens.genLog
       let result = runMockApp (Formatting.formatConsoleLog log) env
       H.annotate $ "Result: " <> T.unpack result
-      case lvl of
-        -- level is None: no prefix
-        None -> foldr (noMatch result) (pure ()) nonEmptyPrefixes
-        -- level is not None: includes prefix
-        _ -> do
-          let pfx = Log.levelToPrefix lvl
-          H.annotate $ T.unpack pfx
-          H.assert $ pfx `T.isInfixOf` result || "..." `T.isSuffixOf` result
-  where
-    nonEmptyPrefixes = [SubCommand .. Fatal]
-    noMatch :: Text -> LogLevel -> PropertyT IO () -> PropertyT IO ()
-    noMatch t level acc = do
-      let pfx = Log.levelToPrefix level
-      H.annotate $ T.unpack t
+      let pfx = Log.levelToPrefix lvl
       H.annotate $ T.unpack pfx
-      H.assert $ not (T.isInfixOf pfx t)
-      acc
+      H.assert $ pfx `T.isInfixOf` result || "..." `T.isSuffixOf` result
 
 displayCmdProps :: TestTree
 displayCmdProps =
@@ -201,8 +187,8 @@ lineTruncProps =
       msg' <- H.forAll genLongLineText
       log <- H.forAll LGens.genLog
 
-      -- only perform line truncation for SubCommand (also requires a command)
-      let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = SubCommand}
+      -- only perform line truncation for LevelSubCommand (also requires a command)
+      let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelSubCommand}
           result = runMockApp (Formatting.formatConsoleLog log') env
 
       H.annotate $ "Result: " <> T.unpack result

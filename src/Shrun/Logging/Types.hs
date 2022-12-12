@@ -26,10 +26,8 @@ module Shrun.Logging.Types
 where
 
 import Shrun.Data.Command (Command)
-import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Prelude
-import System.Console.Pretty (Color)
-import System.Console.Pretty qualified as P
+import System.Console.Pretty (Color (..))
 
 -- | Determines the logging behavior.
 --
@@ -38,15 +36,15 @@ data LogMode
   = -- | Sets the logging region to this log.
     --
     -- @since 0.1
-    Set
+    LogModeSet
   | -- | Appends the log to the logging region.
     --
     -- @since 0.1
-    Append
+    LogModeAppend
   | -- | Closes the logging region, finishing with the log.
     --
     -- @since 0.1
-    Finish
+    LogModeFinish
   deriving stock
     ( -- | @since 0.1
       Bounded,
@@ -55,42 +53,27 @@ data LogMode
       -- | @since 0.1
       Eq,
       -- | @since 0.1
-      Ord,
-      -- | @since 0.1
       Show
     )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via (Supremum LogMode)
 
 -- | Determines the logging level.
 --
 -- @since 0.1
 data LogLevel
   = -- | @since 0.1
-    None
+    LevelSubCommand
+  | -- | @since 0.6.1
+    LevelFinished
   | -- | @since 0.1
-    SubCommand
+    LevelTimer
+  | -- | @since 0.6.1
+    LevelSuccess
+  | -- | @since 0.6.1
+    LevelWarn
   | -- | @since 0.1
-    Debug
+    LevelError
   | -- | @since 0.1
-    Info
-  | -- | @since 0.1
-    InfoBlue
-  | -- | @since 0.1
-    InfoCyan
-  | -- | @since 0.1
-    InfoSuccess
-  | -- | @since 0.1
-    Warn
-  | -- | @since 0.1
-    Error
-  | -- | @since 0.1
-    Fatal
+    LevelFatal
   deriving stock
     ( -- | @since 0.1
       Bounded,
@@ -99,28 +82,19 @@ data LogLevel
       -- | @since 0.1
       Eq,
       -- | @since 0.1
-      Ord,
-      -- | @since 0.1
       Show
     )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via (Supremum LogLevel)
 
 -- | Determines where the log is sent.
 --
 -- @since 0.1
 data LogDest
   = -- | @since 0.1
-    LogConsole
+    LogDestConsole
   | -- | @since 0.1
-    LogFile
+    LogDestFile
   | -- | @since 0.1
-    LogBoth
+    LogDestBoth
   deriving stock
     ( -- | @since 0.1
       Bounded,
@@ -129,17 +103,8 @@ data LogDest
       -- | @since 0.1
       Eq,
       -- | @since 0.1
-      Ord,
-      -- | @since 0.1
       Show
     )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via (Supremum LogDest)
 
 -- | Captures the relevant information concerning a specific log
 -- (i.e. text, level, and mode).
@@ -164,7 +129,7 @@ data Log = MkLog
     mode :: LogMode,
     -- | Where to send this log. Most logs should go to both the console and
     -- the file. For a log to actually be written to a file, 'dest' must be
-    -- either 'LogFile' or 'LogBoth' /and/ file logging must be enabled
+    -- either 'LogDestFile' or 'LogDestBoth' /and/ file logging must be enabled
     -- globally.
     --
     -- @since 0.1
@@ -198,32 +163,26 @@ logToPrefix = levelToPrefix . view #lvl
 --
 -- @since 0.1
 levelToColor :: LogLevel -> Color
-levelToColor None = P.White
-levelToColor SubCommand = P.White
-levelToColor Debug = P.White
-levelToColor Info = P.Magenta
-levelToColor InfoBlue = P.Blue
-levelToColor InfoCyan = P.Cyan
-levelToColor InfoSuccess = P.Green
-levelToColor Warn = P.Yellow
-levelToColor Error = P.Red
-levelToColor Fatal = P.Red
+levelToColor LevelSubCommand = White
+levelToColor LevelFinished = Blue
+levelToColor LevelTimer = Cyan
+levelToColor LevelSuccess = Green
+levelToColor LevelWarn = Yellow
+levelToColor LevelError = Red
+levelToColor LevelFatal = Red
 {-# INLINEABLE levelToColor #-}
 
 -- | Maps 'LogLevel' to \'Prefix\'.
 --
 -- @since 0.1
 levelToPrefix :: LogLevel -> Text
-levelToPrefix None = ""
-levelToPrefix SubCommand = "[Command]"
-levelToPrefix Debug = "[Debug]"
-levelToPrefix Info = "[Info]"
-levelToPrefix InfoBlue = "[Info]"
-levelToPrefix InfoCyan = "[Info]"
-levelToPrefix InfoSuccess = "[Info]"
-levelToPrefix Warn = "[Warn]"
-levelToPrefix Error = "[Error]"
-levelToPrefix Fatal = "[Fatal Error]"
+levelToPrefix LevelSubCommand = "[Command]"
+levelToPrefix LevelFinished = "[Finished]"
+levelToPrefix LevelTimer = "[Timer]"
+levelToPrefix LevelSuccess = "[Success]"
+levelToPrefix LevelWarn = "[Warn]"
+levelToPrefix LevelError = "[Error]"
+levelToPrefix LevelFatal = "[Fatal]"
 {-# INLINEABLE levelToPrefix #-}
 
 -- | 'LogText' is a textual representation of a given 'Log'. No coloring

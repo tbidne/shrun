@@ -12,7 +12,9 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 ## [Unreleased]
 ### Changed
-* Logs are slightly more compact now (spaces between labels removed)
+* Logs
+  * Slightly more compact now (spaces between labels removed)
+  * Success/Finished message now have specific labels
 
 ## [0.6] -- 2022-12-07
 ### Changed

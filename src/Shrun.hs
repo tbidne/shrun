@@ -104,23 +104,23 @@ runCommands commands = Regions.displayConsoleRegions $
                 MkLog
                   { cmd = Nothing,
                     msg = errMsg,
-                    lvl = Fatal,
-                    mode = Finish,
-                    dest = LogBoth
+                    lvl = LevelFatal,
+                    mode = LogModeFinish,
+                    dest = LogDestBoth
                   }
           Log.putRegionLog r fatalLog
         Right _ -> pure ()
 
       let totalTimeTxt =
-            "Finished! Total time elapsed: "
+            "Time: "
               <> formatRelativeTime (Utils.timeSpecToRelTime totalTime)
           finalLog =
             MkLog
               { cmd = Nothing,
                 msg = T.pack totalTimeTxt,
-                lvl = InfoBlue,
-                mode = Finish,
-                dest = LogBoth
+                lvl = LevelFinished,
+                mode = LogModeFinish,
+                dest = LogDestBoth
               }
 
       Log.putRegionLog r finalLog
@@ -168,15 +168,15 @@ runCommand cmd = do
 
   Regions.withConsoleRegion Linear $ \r -> do
     let (msg', lvl', t') = case cmdResult of
-          Left (t, MkStderr err) -> (err, Error, t)
-          Right t -> ("Success", InfoSuccess, t)
+          Left (t, MkStderr err) -> (err <> ". ", LevelError, t)
+          Right t -> ("", LevelSuccess, t)
     Log.putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = msg' <> ". Time elapsed: " <> T.pack (formatRelativeTime t'),
+          msg = msg' <> "Time: " <> T.pack (formatRelativeTime t'),
           lvl = lvl',
-          mode = Finish,
-          dest = LogBoth
+          mode = LogModeFinish,
+          dest = LogDestBoth
         }
 {-# INLINEABLE runCommand #-}
 
@@ -226,10 +226,10 @@ logCounter region elapsed = do
   let lg =
         MkLog
           { cmd = Nothing,
-            msg = "Running time: " <> T.pack (formatSeconds elapsed),
-            lvl = InfoCyan,
-            mode = Set,
-            dest = LogConsole
+            msg = T.pack (formatSeconds elapsed),
+            lvl = LevelTimer,
+            mode = LogModeSet,
+            dest = LogDestConsole
           }
   Log.putRegionLog region lg
 {-# INLINEABLE logCounter #-}
@@ -268,9 +268,9 @@ keepRunning allCmds region timer mto = do
         MkLog
           { cmd = Nothing,
             msg = "Timed out, cancelling remaining commands: " <> unfinishedCmds,
-            lvl = Warn,
-            mode = Finish,
-            dest = LogBoth
+            lvl = LevelWarn,
+            mode = LogModeFinish,
+            dest = LogDestBoth
           }
       pure False
     else pure True

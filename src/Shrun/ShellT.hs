@@ -84,9 +84,9 @@ instance
 
   logFn = putTextLn
 
-  logModeToRegionFn Set cr = liftIO . Regions.setConsoleRegion cr
-  logModeToRegionFn Append cr = liftIO . Regions.appendConsoleRegion cr
-  logModeToRegionFn Finish cr = liftIO . Regions.finishConsoleRegion cr
+  logModeToRegionFn LogModeSet cr = liftIO . Regions.setConsoleRegion cr
+  logModeToRegionFn LogModeAppend cr = liftIO . Regions.appendConsoleRegion cr
+  logModeToRegionFn LogModeFinish cr = liftIO . Regions.finishConsoleRegion cr
 
   withConsoleRegion = Regions.withConsoleRegion
 

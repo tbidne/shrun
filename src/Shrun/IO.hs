@@ -368,14 +368,14 @@ streamOutput mRegion cmd recvH ph = do
         cmdLogging <- asks getCmdLogging
         let logDest =
               if cmdLogging
-                then LogBoth
-                else LogFile
+                then LogDestBoth
+                else LogDestFile
             log =
               MkLog
                 { cmd = Just cmd,
                   msg = out,
-                  lvl = SubCommand,
-                  mode = Set,
+                  lvl = LevelSubCommand,
+                  mode = LogModeSet,
                   dest = logDest
                 }
         case mRegion of

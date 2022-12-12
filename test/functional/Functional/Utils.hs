@@ -26,7 +26,7 @@ cancelled = "Timed out, cancelling remaining commands:"
 
 -- | Expected total \"Time elapsed\"" 'Text'.
 totalTime :: Text
-totalTime = "Finished! Total time elapsed: "
+totalTime = "Time: "
 
 -- | Expected success 'Text'.
 subCommandPrefix :: Text -> Text -> Text
@@ -34,7 +34,7 @@ subCommandPrefix cmd txt = "[Command][" <> cmd <> "] " <> txt
 
 -- | Expected success 'Text'.
 infoSuccessPrefix :: Text -> Text
-infoSuccessPrefix txt = "[Info][" <> txt <> "] Success. Time elapsed:"
+infoSuccessPrefix txt = "[Success][" <> txt <> "] Time:"
 
 -- | Expected error 'Text'.
 errPrefix :: Text -> Text

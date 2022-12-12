@@ -25,10 +25,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command (..))
 import Shrun.Logging.Queue (LogText (..))
 import Shrun.Logging.Queue qualified as Queue
-import Shrun.Logging.Types
-  ( Log (..),
-    LogLevel (..),
-  )
+import Shrun.Logging.Types (Log (..))
 import Shrun.Logging.Types qualified as Log
 import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
@@ -122,23 +119,9 @@ prefixProps =
     H.property $ do
       log@MkLog {lvl} <- H.forAll LGens.genLog
       let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
-      case lvl of
-        -- level is None: no prefix
-        None -> foldr (noMatch result) (pure ()) nonEmptyPrefixes
-        -- level is not None: includes prefix
-        _ -> do
-          let pfx = Log.levelToPrefix lvl
-          H.annotate $ T.unpack pfx
-          H.assert $ T.isInfixOf pfx result
-  where
-    nonEmptyPrefixes = [SubCommand .. Fatal]
-    noMatch :: Text -> LogLevel -> PropertyT IO () -> PropertyT IO ()
-    noMatch t level acc = do
-      let pfx = Log.levelToPrefix level
-      H.annotate $ T.unpack t
+      let pfx = Log.levelToPrefix lvl
       H.annotate $ T.unpack pfx
-      H.assert $ not (T.isInfixOf pfx t)
-      acc
+      H.assert $ T.isInfixOf pfx result
 
 commandProps :: TestTree
 commandProps =

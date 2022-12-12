@@ -47,7 +47,7 @@ formatConsoleLog log = do
           -- truncate entire if necessary (flag on and command log only)
           line = colorize $ prefix <> "[" <> name' <> "] " <> msg'
           line' = case (log ^. #lvl, cmdLineTrunc ^? _Just % #unTruncation) of
-            (SubCommand, Just m) -> U.truncateIfNeeded m line
+            (LevelSubCommand, Just m) -> U.truncateIfNeeded m line
             _ -> line
        in pure line'
   where

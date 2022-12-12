@@ -66,7 +66,7 @@ putRegionLog region lg = do
       maybePrintLog (logRegionFn region) lg
 {-# INLINEABLE putRegionLog #-}
 
--- | @maybePrintLog fn log@ applies @fn@ if the @log@ has dest 'LogFile'.
+-- | @maybePrintLog fn log@ applies @fn@ if the @log@ has dest 'LogDestFile'.
 -- Otherwise does nothing.
 --
 -- @since 0.3
@@ -79,11 +79,11 @@ maybePrintLog ::
   m ()
 maybePrintLog fn log =
   case log ^. #dest of
-    LogFile -> pure ()
+    LogDestFile -> pure ()
     _ -> LFormat.formatConsoleLog log >>= fn
 {-# INLINEABLE maybePrintLog #-}
 
--- | Sends the log to the file queue as long as the dest is not 'LogConsole'.
+-- | Sends the log to the file queue as long as the dest is not 'LogDestConsole'.
 --
 -- @since 0.3
 maybeSendLogToQueue ::
@@ -96,7 +96,7 @@ maybeSendLogToQueue ::
   m ()
 maybeSendLogToQueue log =
   case log ^. #dest of
-    LogConsole -> pure ()
+    LogDestConsole -> pure ()
     _ -> do
       fileLog <- asks getFileLogging
       case fileLog of

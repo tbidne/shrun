@@ -40,18 +40,6 @@ _LogText = to (\(MkLogText t) -> t)
 
 -- | Formats a 'Log' into a 'LogText'. Applies prefix and timestamp.
 --
--- ==== __Examples__
---
--- @
--- formatFileLog $ MkLog Nothing "Running time: 2 seconds" Info Set LogBoth
--- "[2022-02-23 20:58:04.231933782 UTC] [Info] Running time: 2 seconds\n"
--- @
---
--- @
--- formatFileLog $ MkLog (Just "cmd") "cmd: command not found" Error Set LogBoth
--- "[2022-02-23 20:58:04.231933782 UTC] [Error] [cmd] cmd: command not found\n"
--- @
---
 -- @since 0.1
 formatFileLog :: (HasLogging env, MonadReader env m, MonadTime m) => Log -> m LogText
 formatFileLog log = do
