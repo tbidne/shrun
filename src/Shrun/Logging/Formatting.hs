@@ -9,6 +9,7 @@ module Shrun.Logging.Formatting
     -- * Low-level
     displayCmd,
     stripChars,
+    brackets,
   )
 where
 
@@ -40,17 +41,30 @@ import System.Console.Pretty qualified as P
 -- @since 0.1
 formatConsoleLog :: Logging r -> Log -> ConsoleLog
 formatConsoleLog logging log =
-  case log ^. #cmd of
-    Nothing -> UnsafeConsoleLog $ colorize $ prefix <> " " <> msgStripped
-    Just com -> do
-      -- get cmd name to display
-      let name = displayCmd com (logging ^. #cmdDisplay)
-          -- truncate cmd/name if necessary
-          name' = truncateNameFn name
-
-          line = colorize $ prefix <> "[" <> name' <> "] " <> msgStripped
-          line' = truncateCmdLineFn line
-       in UnsafeConsoleLog line'
+  let line = case log ^. #cmd of
+        Nothing -> brackets True prefix <> msgStripped
+        Just com ->
+          -- get cmd name to display
+          let cmdName = displayCmd com (logging ^. #cmdDisplay)
+              -- truncate cmd/name if necessary
+              cmdName' = brackets True (truncateNameFn cmdName)
+           in -- truncate entire line if necessary
+              truncateCmdLineFn $
+                mconcat
+                  [ brackets False prefix,
+                    cmdName',
+                    msgStripped
+                  ]
+   in -- NOTE: We want colorize on the outside for two reasons:
+      --
+      -- 1. Truncation calculation should not take colorization into account,
+      --    as chars are invisible.
+      -- 2. Having colorization _inside_ can accidentally cause the "end color"
+      --    chars to be stripped, leading to bugs where colorizing bleeds.
+      --
+      -- This 2nd point is likely the cause for some "color bleeding" that was
+      -- occasionally noticed.
+      UnsafeConsoleLog (colorize line)
   where
     msgStripped = stripChars (log ^. #msg) mStripControl
     mCmdLogging = logging ^. #cmdLogging
@@ -86,9 +100,19 @@ formatFileLog ::
 formatFileLog fileLogging log = do
   currTime <- formatLocalTime <$> getSystemTime
   let formatted = case log ^. #cmd of
-        Nothing -> prefix <> msgStripped
-        Just com -> prefix <> "[" <> (com ^. #command) <> "] " <> msgStripped
-      withTimestamp = "[" <> pack currTime <> "]" <> formatted <> "\n"
+        Nothing -> brackets True prefix <> msgStripped
+        Just com ->
+          mconcat
+            [ brackets False prefix,
+              brackets True (com ^. #command),
+              msgStripped
+            ]
+      withTimestamp =
+        mconcat
+          [ brackets False (pack currTime),
+            formatted,
+            "\n"
+          ]
   pure $ UnsafeFileLog withTimestamp
   where
     msgStripped = stripChars (log ^. #msg) (Just stripControl)
@@ -130,3 +154,7 @@ stripChars txt = \case
   --  default to smart
   _ -> Utils.stripControlSmart txt
 {-# INLINE stripChars #-}
+
+brackets :: Bool -> Text -> Text
+brackets False s = "[" <> s <> "]"
+brackets True s = "[" <> s <> "] "

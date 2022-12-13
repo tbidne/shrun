@@ -133,11 +133,11 @@ levelToColor LevelFatal = Red
 --
 -- @since 0.1
 levelToPrefix :: LogLevel -> Text
-levelToPrefix LevelSubCommand = "[Command]"
-levelToPrefix LevelFinished = "[Finished]"
-levelToPrefix LevelTimer = "[Timer]"
-levelToPrefix LevelSuccess = "[Success]"
-levelToPrefix LevelWarn = "[Warn]"
-levelToPrefix LevelError = "[Error]"
-levelToPrefix LevelFatal = "[Fatal]"
+levelToPrefix LevelSubCommand = "Command"
+levelToPrefix LevelFinished = "Finished"
+levelToPrefix LevelTimer = "Timer"
+levelToPrefix LevelSuccess = "Success"
+levelToPrefix LevelWarn = "Warn"
+levelToPrefix LevelError = "Error"
+levelToPrefix LevelFatal = "Fatal"
 {-# INLINEABLE levelToPrefix #-}

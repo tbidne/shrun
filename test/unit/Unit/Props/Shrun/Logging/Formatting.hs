@@ -10,7 +10,6 @@ module Unit.Props.Shrun.Logging.Formatting
 where
 
 import Data.Text qualified as T
-import Hedgehog qualified as H
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
 import Shrun.Configuration.Env.Types
@@ -133,72 +132,72 @@ props =
 messageProps :: TestTree
 messageProps =
   testPropertyNamed "Includes message" "messageProps" $
-    H.property $ do
-      env <- H.forAll genEnv
-      log@MkLog {msg} <- H.forAll LGens.genLog
+    property $ do
+      env <- forAll genEnv
+      log@MkLog {msg} <- forAll LGens.genLog
       let result = formatLog env log
-      H.annotate $ "Result: " <> T.unpack result
-      H.assert $ T.strip msg `T.isInfixOf` result || "..." `T.isSuffixOf` result
+      annotate $ T.unpack result
+      assert $ T.strip msg `T.isInfixOf` result || "..." `T.isInfixOf` result
 
 prefixProps :: TestTree
 prefixProps =
   testPropertyNamed "Formats prefix" "prefixProps" $
-    H.property $ do
-      env <- H.forAll genEnv
-      log@MkLog {lvl} <- H.forAll LGens.genLog
+    property $ do
+      env <- forAll genEnv
+      log@MkLog {lvl} <- forAll LGens.genLog
       let result = formatLog env log
-      H.annotate $ "Result: " <> T.unpack result
+      annotate $ "Result: " <> T.unpack result
       let pfx = Log.levelToPrefix lvl
-      H.annotate $ T.unpack pfx
-      H.assert $ pfx `T.isInfixOf` result || "..." `T.isSuffixOf` result
+      annotate $ T.unpack pfx
+      assert $ pfx `T.isInfixOf` result || "..." `T.isInfixOf` result
 
 displayCmdProps :: TestTree
 displayCmdProps =
   testPropertyNamed "Displays command literal" "displayCmdProps" $
-    H.property $ do
-      env <- H.forAll genEnvDispCmd
-      log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
+    property $ do
+      env <- forAll genEnvDispCmd
+      log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
       let result = formatLog env log
-      H.annotate $ "Result: " <> T.unpack result
-      H.assert $ cmd' `T.isInfixOf` result || "..." `T.isInfixOf` result
+      annotate $ "Result: " <> T.unpack result
+      assert $ cmd' `T.isInfixOf` result || "..." `T.isInfixOf` result
 
 displayKeyProps :: TestTree
 displayKeyProps =
   testPropertyNamed "Displays command lkey" "displayKeyProps" $
-    H.property $ do
-      env <- H.forAll genEnvDispKey
-      log@MkLog {cmd = Just (MkCommand (Just key) _)} <- H.forAll LGens.genLogWithCmdKey
+    property $ do
+      env <- forAll genEnvDispKey
+      log@MkLog {cmd = Just (MkCommand (Just key) _)} <- forAll LGens.genLogWithCmdKey
       let result = formatLog env log
-      H.annotate $ "Result: " <> T.unpack result
-      H.assert $ key `T.isInfixOf` result || "..." `T.isInfixOf` result
+      annotate $ "Result: " <> T.unpack result
+      assert $ key `T.isInfixOf` result || "..." `T.isInfixOf` result
 
 cmdTruncProps :: TestTree
 cmdTruncProps =
   testPropertyNamed "Truncates long command" "cmdTruncProps" $
-    H.property $ do
-      env <- H.forAll genEnvCmdTrunc
-      cmd' <- MkCommand Nothing <$> H.forAll genLongCmdText
-      log <- H.forAll LGens.genLog
+    property $ do
+      env <- forAll genEnvCmdTrunc
+      cmd' <- MkCommand Nothing <$> forAll genLongCmdText
+      log <- forAll LGens.genLog
       let log' = log {cmd = Just cmd'}
           result = formatLog env log'
-      H.annotate $ "Result: " <> T.unpack result
-      H.assert $ "...]" `T.isInfixOf` result
+      annotate $ "Result: " <> T.unpack result
+      assert $ "...]" `T.isInfixOf` result
 
 lineTruncProps :: TestTree
 lineTruncProps =
   testPropertyNamed "Truncates long line" "lineTruncProps" $
-    H.property $ do
-      env <- H.forAll genEnvLineTrunc
-      msg' <- H.forAll genLongLineText
-      log <- H.forAll LGens.genLog
+    property $ do
+      env <- forAll genEnvLineTrunc
+      msg' <- forAll genLongLineText
+      log <- forAll LGens.genLog
 
       -- only perform line truncation for LevelSubCommand (also requires a command)
       let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelSubCommand}
           result = formatLog env log'
 
-      H.annotate $ "Result: " <> T.unpack result
-      H.assert $ "..." `T.isSuffixOf` result
-      H.diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
+      annotate $ "Result: " <> T.unpack result
+      assert $ "..." `T.isInfixOf` result
+      diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
 
 formatLog :: forall env. HasLogging env () => env -> Log -> Text
 formatLog env =

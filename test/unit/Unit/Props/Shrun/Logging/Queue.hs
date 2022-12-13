@@ -139,15 +139,13 @@ shapeProps =
       log@MkLog {cmd, msg} <- H.forAll LGens.genLogWithCmd
       let result = view #unFileLog $ LFormat.formatFileLog @MockTime fileLogging log ^. #runMockTime
           expected =
-            "["
-              <> sysTime
-              <> "]"
-              <> Log.logToPrefix log
-              <> "["
-              <> maybe "test error: did not receive Just command" (view #command) cmd
-              <> "] "
-              <> T.strip msg
-              <> "\n"
+            mconcat
+              [ LFormat.brackets False sysTime,
+                LFormat.brackets False (Log.logToPrefix log),
+                LFormat.brackets True (maybe "received Nothing" (view #command) cmd),
+                T.strip msg,
+                "\n"
+              ]
       H.annotate $ T.unpack expected
       H.annotate $ T.unpack result
       expected === result

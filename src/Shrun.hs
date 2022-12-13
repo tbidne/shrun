@@ -103,13 +103,16 @@ initLogging commands = displayConsoleRegions $ do
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
         runCommands
 
+        -- For both this and the consoleLogger, we want to ensure that
+        -- all logs are handled i.e. we need to ensure the
+        -- read + write action is atomic. How to ensure?
         Async.cancel fileLoggerThread
 
         -- handle any remaining file logs
-        flushTBQueueM queue >>= traverse_ (logFile h)
+        flushTBQueueM fileQueue >>= traverse_ (logFile h)
         hFlush h
       where
-        (h, queue) = fileLogging ^. #log
+        (h, fileQueue) = fileLogging ^. #log
 
     runCommands = do
       (totalTime, result) <- withTiming $ tryAny actionsWithTimer
@@ -177,6 +180,10 @@ printFinalResult totalTime result = withConsoleRegion Linear $ \r -> do
       Log.putRegionLog r fatalLog
     Right _ -> pure ()
 
+  -- FIXME: It appears this does not always make it to the file, possibly
+  -- due to a race condition. It is probably possible that the fileLoggerThread
+  -- reads this message from the queue and is then cancelled before it
+  -- can print it. This would make the message disappear.
   let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
       finalLog =
         MkLog
