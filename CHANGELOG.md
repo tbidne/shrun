@@ -11,6 +11,9 @@ the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
 ## [Unreleased]
+### Removed
+* `log-disable` option removed from CLI and TOML.
+
 ### Changed
 * Logs
   * Slightly more compact now (spaces between labels removed)
