@@ -76,6 +76,8 @@ instance
   (MonadIO m, MonadMask m, MonadTerminal m) =>
   RegionLogger (ShellT Env m)
   where
+  type Region (ShellT Env m) = ConsoleRegion
+
   logFn = putTextLn
 
   logModeToRegionFn LogModeSet cr = liftIO . Regions.setConsoleRegion cr
@@ -83,3 +85,5 @@ instance
   logModeToRegionFn LogModeFinish cr = liftIO . Regions.finishConsoleRegion cr
 
   withConsoleRegion = Regions.withConsoleRegion
+
+  displayConsoleRegions = Regions.displayConsoleRegions

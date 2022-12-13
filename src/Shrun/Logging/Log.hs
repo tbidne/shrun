@@ -20,12 +20,12 @@ import Shrun.Utils qualified as U
 --
 -- @since 0.3
 putRegionLog ::
-  ( HasLogging env,
+  ( HasLogging env r,
     MonadReader env m,
     MonadTBQueue m,
     MonadTime m
   ) =>
-  ConsoleRegion ->
+  r ->
   Log ->
   m ()
 putRegionLog region lg =
@@ -41,8 +41,8 @@ putRegionLog region lg =
 regionLogToConsoleQueue ::
   ( MonadTBQueue m
   ) =>
-  ConsoleRegion ->
-  Logging ->
+  r ->
+  Logging r ->
   Log ->
   m ()
 regionLogToConsoleQueue region logging log =
@@ -58,7 +58,7 @@ logToFileQueue ::
   ( MonadTBQueue m,
     MonadTime m
   ) =>
-  Logging ->
+  Logging r ->
   Log ->
   m ()
 logToFileQueue logging log =

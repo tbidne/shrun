@@ -100,7 +100,7 @@ genMInt = HGen.choice [Just <$> genNat, pure Nothing]
     genNat = HGen.integral range
     range = HRange.exponential 0 100
 
-instance HasLogging Env where
+instance HasLogging Env () where
   getLogging env =
     MkLogging
       { cmdDisplay = env ^. #cmdDisplay,
@@ -136,7 +136,7 @@ messageProps =
     H.property $ do
       env <- H.forAll genEnv
       log@MkLog {msg} <- H.forAll LGens.genLog
-      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
+      let result = formatLog env log
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ T.strip msg `T.isInfixOf` result || "..." `T.isSuffixOf` result
 
@@ -146,7 +146,7 @@ prefixProps =
     H.property $ do
       env <- H.forAll genEnv
       log@MkLog {lvl} <- H.forAll LGens.genLog
-      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
+      let result = formatLog env log
       H.annotate $ "Result: " <> T.unpack result
       let pfx = Log.levelToPrefix lvl
       H.annotate $ T.unpack pfx
@@ -158,7 +158,7 @@ displayCmdProps =
     H.property $ do
       env <- H.forAll genEnvDispCmd
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
-      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
+      let result = formatLog env log
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ cmd' `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -168,7 +168,7 @@ displayKeyProps =
     H.property $ do
       env <- H.forAll genEnvDispKey
       log@MkLog {cmd = Just (MkCommand (Just key) _)} <- H.forAll LGens.genLogWithCmdKey
-      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
+      let result = formatLog env log
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ key `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -180,7 +180,7 @@ cmdTruncProps =
       cmd' <- MkCommand Nothing <$> H.forAll genLongCmdText
       log <- H.forAll LGens.genLog
       let log' = log {cmd = Just cmd'}
-          result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log'
+          result = formatLog env log'
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ "...]" `T.isInfixOf` result
 
@@ -194,11 +194,16 @@ lineTruncProps =
 
       -- only perform line truncation for LevelSubCommand (also requires a command)
       let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelSubCommand}
-          result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log'
+          result = formatLog env log'
 
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ "..." `T.isSuffixOf` result
       H.diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
+
+formatLog :: forall env. HasLogging env () => env -> Log -> Text
+formatLog env =
+  view #unConsoleLog
+    . Formatting.formatConsoleLog (getLogging @env @() env)
 
 -- Colorization adds chars that the shell interprets as color commands.
 -- This affects the length, so if we do anything that tests the length

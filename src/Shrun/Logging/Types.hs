@@ -24,36 +24,9 @@ module Shrun.Logging.Types
 where
 
 import Shrun.Data.Command (Command)
-import Shrun.Logging.Types.Internal (ConsoleLog, FileLog)
+import Shrun.Logging.Types.Internal (ConsoleLog, FileLog, LogMode (..))
 import Shrun.Prelude
 import System.Console.Pretty (Color (..))
-
--- | Determines the logging behavior.
---
--- @since 0.1
-data LogMode
-  = -- | Sets the logging region to this log.
-    --
-    -- @since 0.1
-    LogModeSet
-  | -- | Appends the log to the logging region.
-    --
-    -- @since 0.1
-    LogModeAppend
-  | -- | Closes the logging region, finishing with the log.
-    --
-    -- @since 0.1
-    LogModeFinish
-  deriving stock
-    ( -- | @since 0.1
-      Bounded,
-      -- | @since 0.1
-      Enum,
-      -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Show
-    )
 
 -- | Determines the logging level.
 --
@@ -87,11 +60,11 @@ data LogLevel
 -- | Log with possible region.
 --
 -- @since 0.7
-data LogRegion
+data LogRegion r
   = -- | Log with region.
     --
     -- @since 0.7
-    LogRegion LogMode ConsoleRegion ConsoleLog
+    LogRegion LogMode r ConsoleLog
   | -- | Log without region.
     --
     -- @since 0.7

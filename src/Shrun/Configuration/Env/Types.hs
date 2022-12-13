@@ -264,7 +264,7 @@ instance Show FileLogging where
 -- | Holds logging data.
 --
 -- @since 0.7
-data Logging = MkLogging
+data Logging r = MkLogging
   { -- | Whether to display the command (key) names or the commands
     -- themselves.
     --
@@ -281,7 +281,7 @@ data Logging = MkLogging
     -- | Console log queue.
     --
     -- @since 0.7
-    consoleLogging :: TBQueue LogRegion,
+    consoleLogging :: TBQueue (LogRegion r),
     -- | Optional file logging. If enabled, holds the path to the file
     -- and the log queue.
     --
@@ -293,7 +293,7 @@ data Logging = MkLogging
 makeFieldLabelsNoPrefix ''Logging
 
 -- | @since 0.7
-instance Show Logging where
+instance Show (Logging r) where
   showsPrec p env =
     showParen (p > appPrec) $
       showString "MkEnv {cmdDisplay = "
@@ -324,11 +324,11 @@ class HasTimeout env where
 -- | Holds logging configuration.
 --
 -- @since 0.3
-class HasLogging env where
+class HasLogging env r where
   -- | Retrieves logging env.
   --
   -- @since 0.1
-  getLogging :: env -> Logging
+  getLogging :: env -> Logging r
 
 -- | Determines command line truncation behavior.
 --
@@ -349,7 +349,7 @@ data Env = MkEnv
     -- | Logging env.
     --
     -- @since 0.7
-    logging :: !Logging,
+    logging :: !(Logging ConsoleRegion),
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
     --
@@ -383,7 +383,7 @@ instance HasTimeout Env where
   {-# INLINE getTimeout #-}
 
 -- | @since 0.3
-instance HasLogging Env where
+instance HasLogging Env ConsoleRegion where
   getLogging = view #logging
 
 -- | @since 0.1

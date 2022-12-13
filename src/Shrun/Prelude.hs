@@ -192,7 +192,7 @@ import Optics.TH as X
     noPrefixFieldLabels,
   )
 import Refined as X (Refined)
-import System.Console.Regions as X (ConsoleRegion, RegionLayout)
+import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.FilePath as X ((</>))
 import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
 import TOML as X

@@ -7,6 +7,7 @@
 module Shrun.Logging.Types.Internal
   ( FileLog (..),
     ConsoleLog (..),
+    LogMode (..),
   )
 where
 
@@ -50,3 +51,33 @@ newtype ConsoleLog = UnsafeConsoleLog
 makeFieldLabelsWith
   (noPrefixFieldLabels & generateUpdateableOptics .~ False)
   ''ConsoleLog
+
+-- NOTE: LogMode exists here so we do not have cyclic dependencies w/
+-- RegionLogger
+
+-- | Determines the logging behavior.
+--
+-- @since 0.1
+data LogMode
+  = -- | Sets the logging region to this log.
+    --
+    -- @since 0.1
+    LogModeSet
+  | -- | Appends the log to the logging region.
+    --
+    -- @since 0.1
+    LogModeAppend
+  | -- | Closes the logging region, finishing with the log.
+    --
+    -- @since 0.1
+    LogModeFinish
+  deriving stock
+    ( -- | @since 0.1
+      Bounded,
+      -- | @since 0.1
+      Enum,
+      -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Show
+    )

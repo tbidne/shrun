@@ -38,7 +38,7 @@ import System.Console.Pretty qualified as P
 -- | Formats a log to be printed to the console.
 --
 -- @since 0.1
-formatConsoleLog :: Logging -> Log -> ConsoleLog
+formatConsoleLog :: Logging r -> Log -> ConsoleLog
 formatConsoleLog logging log =
   case log ^. #cmd of
     Nothing -> UnsafeConsoleLog $ colorize $ prefix <> " " <> msgStripped

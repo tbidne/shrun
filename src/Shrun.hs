@@ -41,8 +41,6 @@ import Shrun.Logging.Types
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
-import System.Console.Regions (RegionLayout (..))
-import System.Console.Regions qualified as Regions
 import UnliftIO.Async qualified as Async
 
 -- | Entry point
@@ -51,12 +49,11 @@ import UnliftIO.Async qualified as Async
 shrun ::
   ( HasCommands env,
     HasCompletedCmds env,
-    HasLogging env,
+    HasLogging env (Region m),
     HasTimeout env,
     MonadCallStack m,
     MonadIORef m,
     MonadFsWriter m,
-    MonadMask m,
     MonadReader env m,
     MonadTBQueue m,
     MonadThread m,
@@ -71,12 +68,11 @@ shrun = asks getCommands >>= initLogging
 -- | Initializes the loggers and runs the commands.
 initLogging ::
   ( HasCompletedCmds env,
-    HasLogging env,
+    HasLogging env (Region m),
     HasTimeout env,
     MonadCallStack m,
     MonadFsWriter m,
     MonadIORef m,
-    MonadMask m,
     MonadReader env m,
     MonadTBQueue m,
     MonadThread m,
@@ -87,7 +83,7 @@ initLogging ::
   ) =>
   NonEmptySeq Command ->
   m ()
-initLogging commands = Regions.displayConsoleRegions $ do
+initLogging commands = displayConsoleRegions $ do
   logging <- asks getLogging
 
   -- always start console logger
@@ -124,22 +120,22 @@ initLogging commands = Regions.displayConsoleRegions $ do
 
 runCommand ::
   ( HasCompletedCmds env,
-    HasLogging env,
-    MonadMask m,
+    HasLogging env (Region m),
     MonadCallStack m,
     MonadIORef m,
     MonadReader env m,
     MonadTBQueue m,
     MonadTime m,
     MonadTVar m,
-    MonadUnliftIO m
+    MonadUnliftIO m,
+    RegionLogger m
   ) =>
   Command ->
   m ()
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
 
-  Regions.withConsoleRegion Linear $ \r -> do
+  withConsoleRegion Linear $ \r -> do
     let (msg', lvl', t') = case cmdResult of
           Left (t, MkStderr err) -> (": " <> err, LevelError, t)
           Right t -> ("", LevelSuccess, t)
@@ -153,17 +149,17 @@ runCommand cmd = do
 
 printFinalResult ::
   ( Exception e,
-    HasLogging env,
+    HasLogging env (Region m),
     MonadIO m,
     MonadReader env m,
-    MonadMask m,
     MonadTBQueue m,
-    MonadTime m
+    MonadTime m,
+    RegionLogger m
   ) =>
   TimeSpec ->
   Either e b ->
   m ()
-printFinalResult totalTime result = Regions.withConsoleRegion Linear $ \r -> do
+printFinalResult totalTime result = withConsoleRegion Linear $ \r -> do
   case result of
     Left ex -> do
       let errMsg =
@@ -194,7 +190,7 @@ printFinalResult totalTime result = Regions.withConsoleRegion Linear $ \r -> do
 
 counter ::
   ( HasCompletedCmds env,
-    HasLogging env,
+    HasLogging env (Region m),
     HasTimeout env,
     MonadIORef m,
     MonadReader env m,
@@ -222,11 +218,11 @@ counter cmds = do
       logCounter r elapsed
 
 logCounter ::
-  ( HasLogging env,
+  ( HasLogging env (Region m),
     MonadReader env m,
     MonadTBQueue m
   ) =>
-  ConsoleRegion ->
+  Region m ->
   Natural ->
   m ()
 logCounter region elapsed = do
@@ -241,8 +237,9 @@ logCounter region elapsed = do
   Log.regionLogToConsoleQueue region logging lg
 
 keepRunning ::
+  forall m env.
   ( HasCompletedCmds env,
-    HasLogging env,
+    HasLogging env (Region m),
     MonadIORef m,
     MonadReader env m,
     MonadTBQueue m,
@@ -250,7 +247,7 @@ keepRunning ::
     MonadTVar m
   ) =>
   NonEmptySeq Command ->
-  ConsoleRegion ->
+  Region m ->
   IORef Natural ->
   Maybe Timeout ->
   m Bool
@@ -258,7 +255,7 @@ keepRunning allCmds region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      cmdDisplay <- asks (view #cmdDisplay . getLogging)
+      cmdDisplay <- asks (view #cmdDisplay . getLogging @env @(Region m))
       completedCmdsTVar <- asks getCompletedCmds
       completedCmds <- readTVarM completedCmdsTVar
 
@@ -283,7 +280,7 @@ timedOut _ Nothing = False
 timedOut timer (Just (MkTimeout t)) = timer > t
 
 pollQueueToConsole ::
-  ( HasLogging env,
+  ( HasLogging env (Region m),
     MonadFsWriter m,
     MonadReader env m,
     MonadTBQueue m,
@@ -294,7 +291,7 @@ pollQueueToConsole = do
   queue <- asks (view #consoleLogging . getLogging)
   forever $ tryReadTBQueueM queue >>= traverse_ printConsoleLog
 
-printConsoleLog :: RegionLogger m => LogRegion -> m ()
+printConsoleLog :: RegionLogger m => LogRegion (Region m) -> m ()
 printConsoleLog (LogNoRegion consoleLog) = logFn (consoleLog ^. #unConsoleLog)
 printConsoleLog (LogRegion m r consoleLog) = logModeToRegionFn m r (consoleLog ^. #unConsoleLog)
 

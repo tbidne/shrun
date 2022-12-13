@@ -45,7 +45,7 @@ sysTimeNE = $$(R.refineTH "[2022-02-20 23:47:39]")
 
 newtype MockEnv = MkMockEnv ()
 
-instance HasLogging MockEnv where
+instance HasLogging MockEnv () where
   getLogging _ =
     MkLogging
       { cmdDisplay = ShowKey,
