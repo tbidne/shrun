@@ -108,7 +108,6 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
     expected =
       MkSimpleEnv
         { timeout = Just (MkTimeout {unTimeout = 3600}),
-          disableLogging = True,
           cmdDisplay = HideKey,
           cmdLogging = True,
           cmdLogStripControl = Just StripControlAll,
@@ -135,7 +134,6 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          disableLogging = False,
           cmdDisplay = ShowKey,
           cmdLogging = False,
           cmdLogStripControl = Nothing,

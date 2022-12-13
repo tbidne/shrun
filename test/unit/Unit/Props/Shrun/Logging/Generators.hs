@@ -9,77 +9,68 @@ module Unit.Props.Shrun.Logging.Generators
     -- * Helpers
     genLogLevel,
     genLogMode,
-    genLogDest,
   )
 where
 
 import Hedgehog.Gen qualified as HGen
 import Shrun.Data.Command (Command (..))
-import Shrun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
+import Shrun.Logging.Types (Log (..), LogLevel (..), LogMode (..))
 import Unit.Prelude
 import Unit.Props.Generators qualified as PGens
 
 genLog :: Gen Log
 genLog = do
-  cmd' <- HGen.choice [pure Nothing, fmap Just genCommand]
-  msg' <- PGens.genText
-  lvl' <- genLogLevel
-  mode' <- genLogMode
-  dest' <- genLogDest
+  cmd <- HGen.choice [pure Nothing, fmap Just genCommand]
+  msg <- PGens.genText
+  lvl <- genLogLevel
+  mode <- genLogMode
   pure $
     MkLog
-      { cmd = cmd',
-        msg = msg',
-        lvl = lvl',
-        mode = mode',
-        dest = dest'
+      { cmd,
+        msg,
+        lvl,
+        mode
       }
 
 genLogWithCmd :: Gen Log
 genLogWithCmd = do
-  cmd' <- Just <$> genCommand
-  msg' <- PGens.genText
-  lvl' <- genLogLevel
-  mode' <- genLogMode
-  dest' <- genLogDest
+  cmd <- Just <$> genCommand
+  msg <- PGens.genText
+  lvl <- genLogLevel
+  mode <- genLogMode
   pure $
     MkLog
-      { cmd = cmd',
-        msg = msg',
-        lvl = lvl',
-        mode = mode',
-        dest = dest'
+      { cmd,
+        msg,
+        lvl,
+        mode
       }
 
 genLogWithCmdKey :: Gen Log
 genLogWithCmdKey = do
-  cmd' <- Just <$> genCommandWithKey
-  msg' <- PGens.genText
-  lvl' <- genLogLevel
-  mode' <- genLogMode
-  dest' <- genLogDest
+  cmd <- Just <$> genCommandWithKey
+  msg <- PGens.genText
+  lvl <- genLogLevel
+  mode <- genLogMode
   pure $
     MkLog
-      { cmd = cmd',
-        msg = msg',
-        lvl = lvl',
-        mode = mode',
-        dest = dest'
+      { cmd,
+        msg,
+        lvl,
+        mode
       }
 
 genLogNoCmd :: Gen Log
 genLogNoCmd = do
-  msg' <- PGens.genText
-  lvl' <- genLogLevel
-  mode' <- genLogMode
-  dest' <- genLogDest
+  msg <- PGens.genText
+  lvl <- genLogLevel
+  mode <- genLogMode
   pure $
     MkLog
       { cmd = Nothing,
-        msg = msg',
-        lvl = lvl',
-        mode = mode',
-        dest = dest'
+        msg,
+        lvl,
+        mode
       }
 
 genLogLevel :: Gen LogLevel
@@ -87,9 +78,6 @@ genLogLevel = HGen.enumBounded
 
 genLogMode :: Gen LogMode
 genLogMode = HGen.enumBounded
-
-genLogDest :: Gen LogDest
-genLogDest = HGen.enumBounded
 
 genCommand :: Gen Command
 genCommand = HGen.choice [genCommandWithKey, genCommandNoKey]

@@ -13,6 +13,7 @@ module Shrun.Configuration.Env.Types
 
     -- * Types
     Env (..),
+    Logging (..),
     CmdLogging (..),
     FileLogging (..),
     CmdDisplay (..),
@@ -40,7 +41,7 @@ import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging.Types (LogTextQueue)
+import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Prelude
 import TOML (Value (Integer, String))
 import Text.Show (showParen, showString)
@@ -223,71 +224,6 @@ instance DecodeTOML StripControl where
           "Unexpected strip-control. Expected one of none, smart, all: "
             <> unpack bad
 
--- | The commands themselves.
---
--- @since 0.1
-class HasCommands env where
-  -- | @since 0.1
-  getCommands :: env -> NonEmptySeq Command
-
--- | Timeout, if any.
---
--- @since 0.1
-class HasTimeout env where
-  -- | @since 0.1
-  getTimeout :: env -> Maybe Timeout
-
--- | Holds logging configuration.
---
--- @since 0.3
-class HasLogging env where
-  -- | Determines how to display command names.
-  --
-  -- @since 0.1
-  getCmdDisplay :: env -> CmdDisplay
-
-  -- | Determines if logging is enabled globally.
-  --
-  -- @since 0.1
-  getDisableLogging :: env -> Bool
-
-  -- | Determines if we should log commands' output to the console.
-  --
-  -- @since 0.1
-  getCmdLogging :: env -> Bool
-
-  -- | Determines control character behavior.
-  --
-  -- @since 0.3
-  getCmdLogStripControl :: env -> Maybe StripControl
-
-  -- | Determines command name truncation behavior.
-  --
-  -- @since 0.1
-  getCmdLogNameTrunc :: env -> Maybe (Truncation 'TCmdName)
-
-  -- | Determines command line truncation behavior.
-  --
-  -- @since 0.1
-  getCmdLogLineTrunc :: env -> Maybe (Truncation 'TCmdLine)
-
-  -- | File logging, if any.
-  --
-  -- @since 0.3
-  getFileLogging :: env -> Maybe (Handle, LogTextQueue)
-
-  -- | Determines control character behavior for file logs.
-  --
-  -- @since 0.5
-  getFileLogStripControl :: env -> Maybe StripControl
-
--- | Determines command line truncation behavior.
---
--- @since 0.1
-class HasCompletedCmds env where
-  -- | @since 0.1
-  getCompletedCmds :: env -> TVar (Seq Command)
-
 -- | @since 0.6
 data CmdLogging = MkCmdLogging
   { -- | @since 0.6
@@ -310,7 +246,7 @@ data FileLogging = MkFileLogging
   { -- | @since 0.6
     stripControl :: !StripControl,
     -- | @since 0.6
-    log :: !(Tuple2 Handle LogTextQueue)
+    log :: Tuple2 Handle (TBQueue FileLog)
   }
 
 -- | @since 0.6
@@ -325,6 +261,82 @@ instance Show FileLogging where
         . showString ", log = <(Handle, LogTextQueue)>"
         . showString "}"
 
+-- | Holds logging data.
+--
+-- @since 0.7
+data Logging = MkLogging
+  { -- | Whether to display the command (key) names or the commands
+    -- themselves.
+    --
+    -- @since 0.7
+    cmdDisplay :: !CmdDisplay,
+    -- | Truncates command names in the logs.
+    --
+    -- @since 0.7
+    cmdNameTrunc :: !(Maybe (Truncation 'TCmdName)),
+    -- | Whether to log commands.
+    --
+    -- @since 0.7
+    cmdLogging :: !(Maybe CmdLogging),
+    -- | Console log queue.
+    --
+    -- @since 0.7
+    consoleLogging :: TBQueue LogRegion,
+    -- | Optional file logging. If enabled, holds the path to the file
+    -- and the log queue.
+    --
+    -- @since 0.7
+    fileLogging :: !(Maybe FileLogging)
+  }
+
+-- | @since 0.7
+makeFieldLabelsNoPrefix ''Logging
+
+-- | @since 0.7
+instance Show Logging where
+  showsPrec p env =
+    showParen (p > appPrec) $
+      showString "MkEnv {cmdDisplay = "
+        . showsPrec appPrec1 (env ^. #cmdDisplay)
+        . showString ", cmdNameTrunc = "
+        . showsPrec appPrec1 (env ^. #cmdNameTrunc)
+        . showString ", cmdLogging = "
+        . showsPrec appPrec1 (env ^. #cmdLogging)
+        . showString ", consoleLogging = <TBQueue>"
+        . showString ", fileLogging = "
+        . showsPrec appPrec1 (env ^. #fileLogging)
+        . showString "}"
+
+-- | The commands themselves.
+--
+-- @since 0.1
+class HasCommands env where
+  -- | @since 0.1
+  getCommands :: env -> NonEmptySeq Command
+
+-- | Timeout, if any.
+--
+-- @since 0.1
+class HasTimeout env where
+  -- | @since 0.1
+  getTimeout :: env -> Maybe Timeout
+
+-- | Holds logging configuration.
+--
+-- @since 0.3
+class HasLogging env where
+  -- | Retrieves logging env.
+  --
+  -- @since 0.1
+  getLogging :: env -> Logging
+
+-- | Determines command line truncation behavior.
+--
+-- @since 0.1
+class HasCompletedCmds env where
+  -- | @since 0.1
+  getCompletedCmds :: env -> TVar (Seq Command)
+
 -- | The main 'Env' type used by Shrun. Intended to be used with
 -- 'Shrun.Effects.MonadReader'.
 --
@@ -334,29 +346,10 @@ data Env = MkEnv
     --
     -- @since 0.1
     timeout :: !(Maybe Timeout),
-    -- | Overarching option for logging. If it is false then all logging is
-    -- disabled.
+    -- | Logging env.
     --
-    -- @since 0.1
-    disableLogging :: !Bool,
-    -- | Whether to display the command (key) names or the commands
-    -- themselves.
-    --
-    -- @since 0.1
-    cmdDisplay :: !CmdDisplay,
-    -- | Truncates command names in the logs.
-    --
-    -- @since 0.6
-    cmdNameTrunc :: !(Maybe (Truncation 'TCmdName)),
-    -- | Whether to log commands.
-    --
-    -- @since 0.6
-    cmdLogging :: !(Maybe CmdLogging),
-    -- | Optional file logging. If enabled, holds the path to the file
-    -- and the log queue.
-    --
-    -- @since 0.6
-    fileLogging :: !(Maybe FileLogging),
+    -- @since 0.7
+    logging :: !Logging,
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
     --
@@ -377,14 +370,8 @@ instance Show Env where
     showParen (p > appPrec) $
       showString "MkEnv {timeout = "
         . showsPrec appPrec1 (env ^. #timeout)
-        . showString ", cmdDisplay = "
-        . showsPrec appPrec1 (env ^. #cmdDisplay)
-        . showString ", disableLogging = "
-        . showsPrec appPrec1 (env ^. #disableLogging)
-        . showString ", cmdLogging = "
-        . showsPrec appPrec1 (env ^. #cmdLogging)
-        . showString ", fileLogging = "
-        . showsPrec appPrec1 (env ^. #fileLogging)
+        . showString ", logging = "
+        . showsPrec appPrec1 (env ^. #logging)
         . showString ", completedCmds = <TVar>"
         . showString ", commands = "
         . showsPrec appPrec1 (env ^. #commands)
@@ -397,21 +384,7 @@ instance HasTimeout Env where
 
 -- | @since 0.3
 instance HasLogging Env where
-  getCmdDisplay = view #cmdDisplay
-  getDisableLogging = view #disableLogging
-  getCmdLogging = is (#cmdLogging % _Just)
-  getCmdLogStripControl = preview (#cmdLogging %? #stripControl)
-  getCmdLogNameTrunc = view #cmdNameTrunc
-  getCmdLogLineTrunc = preview (#cmdLogging %? #lineTrunc % _Just)
-  getFileLogging = preview (#fileLogging %? #log)
-  getFileLogStripControl = preview (#fileLogging %? #stripControl)
-  {-# INLINE getCmdDisplay #-}
-  {-# INLINE getCmdLogging #-}
-  {-# INLINE getCmdLogStripControl #-}
-  {-# INLINE getCmdLogNameTrunc #-}
-  {-# INLINE getCmdLogLineTrunc #-}
-  {-# INLINE getFileLogging #-}
-  {-# INLINE getDisableLogging #-}
+  getLogging = view #logging
 
 -- | @since 0.1
 instance HasCompletedCmds Env where

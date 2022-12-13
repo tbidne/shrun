@@ -3,44 +3,17 @@
 --
 -- @since 0.1
 module Shrun.Logging.Log
-  ( -- * High-level
-    putLog,
-    putRegionLog,
-
-    -- * Low-level
-    maybePrintLog,
-    maybeSendLogToQueue,
+  ( putRegionLog,
+    regionLogToConsoleQueue,
   )
 where
 
 import Effects.MonadTime (MonadTime (..))
-import Shrun.Configuration.Env.Types (HasLogging (..))
+import Shrun.Configuration.Env.Types (HasLogging (..), Logging)
 import Shrun.Logging.Formatting qualified as LFormat
-import Shrun.Logging.Queue qualified as Queue
-import Shrun.Logging.RegionLogger (RegionLogger (..))
-import Shrun.Logging.Types (Log (..), LogDest (..))
+import Shrun.Logging.Types (Log (..), LogRegion (..))
 import Shrun.Prelude
-
--- | Conditionally writes a log to the console and file, depending on
--- the 'HasLogging' environment.
---
--- @since 0.3
-putLog ::
-  ( HasLogging env,
-    MonadReader env m,
-    MonadTBQueue m,
-    RegionLogger m,
-    MonadTime m
-  ) =>
-  Log ->
-  m ()
-putLog log = do
-  b <- asks getDisableLogging
-  if b
-    then pure ()
-    else do
-      maybeSendLogToQueue log
-      maybePrintLog logFn log
+import Shrun.Utils qualified as U
 
 -- | Conditionally writes a log to the console region and file, depending on
 -- the 'HasLogging' environment.
@@ -50,57 +23,46 @@ putRegionLog ::
   ( HasLogging env,
     MonadReader env m,
     MonadTBQueue m,
-    RegionLogger m,
     MonadTime m
   ) =>
   ConsoleRegion ->
   Log ->
   m ()
-putRegionLog region lg = do
-  b <- asks getDisableLogging
-  if b
-    then pure ()
-    else do
-      let logRegionFn = logModeToRegionFn $ lg ^. #mode
-      maybeSendLogToQueue lg
-      maybePrintLog (logRegionFn region) lg
+putRegionLog region lg =
+  asks getLogging >>= \logging -> do
+    logToFileQueue logging lg
+    regionLogToConsoleQueue region logging lg
 {-# INLINEABLE putRegionLog #-}
 
 -- | @maybePrintLog fn log@ applies @fn@ if the @log@ does __not__ have dest
 -- 'LogDestFile'. Otherwise does nothing.
 --
--- @since 0.3
-maybePrintLog ::
-  ( HasLogging env,
-    MonadReader env m
+-- @since 0.7
+regionLogToConsoleQueue ::
+  ( MonadTBQueue m
   ) =>
-  (Text -> m ()) ->
+  ConsoleRegion ->
+  Logging ->
   Log ->
   m ()
-maybePrintLog fn log =
-  case log ^. #dest of
-    LogDestFile -> pure ()
-    _ -> LFormat.formatConsoleLog log >>= fn
-{-# INLINEABLE maybePrintLog #-}
+regionLogToConsoleQueue region logging log =
+  writeTBQueueM queue (LogRegion (log ^. #mode) region formatted)
+  where
+    queue = logging ^. #consoleLogging
+    formatted = LFormat.formatConsoleLog logging log
 
 -- | Sends the log to the file queue as long as the dest is not 'LogDestConsole'.
 --
--- @since 0.3
-maybeSendLogToQueue ::
-  ( HasLogging env,
-    MonadReader env m,
-    MonadTBQueue m,
+-- @since 0.7
+logToFileQueue ::
+  ( MonadTBQueue m,
     MonadTime m
   ) =>
+  Logging ->
   Log ->
   m ()
-maybeSendLogToQueue log =
-  case log ^. #dest of
-    LogDestConsole -> pure ()
-    _ -> do
-      fileLog <- asks getFileLogging
-      case fileLog of
-        Nothing -> pure ()
-        Just (_, queue) -> do
-          Queue.writeQueue queue log
-{-# INLINEABLE maybeSendLogToQueue #-}
+logToFileQueue logging log =
+  U.whenJust (logging ^. #fileLogging) $ \fl -> do
+    formatted <- LFormat.formatFileLog fl log
+    writeTBQueueM (fl ^. #log % _2) formatted
+{-# INLINEABLE logToFileQueue #-}

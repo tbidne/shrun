@@ -9,7 +9,7 @@ module Shrun.Logging.Types
     Log (..),
     LogMode (..),
     LogLevel (..),
-    LogDest (..),
+    LogRegion (..),
 
     -- * Utility functions for associate levels to colors/prefixes.
     logToColor,
@@ -18,17 +18,13 @@ module Shrun.Logging.Types
     levelToPrefix,
 
     -- * Log Queue
-    LogText (.., MkLogText),
-    LogTextQueue (..),
+    FileLog,
+    ConsoleLog,
   )
 where
 
-import Optics.TH
-  ( generateUpdateableOptics,
-    makeFieldLabelsWith,
-    noPrefixFieldLabels,
-  )
 import Shrun.Data.Command (Command)
+import Shrun.Logging.Types.Internal (ConsoleLog, FileLog)
 import Shrun.Prelude
 import System.Console.Pretty (Color (..))
 
@@ -65,13 +61,13 @@ data LogMode
 data LogLevel
   = -- | @since 0.1
     LevelSubCommand
-  | -- | @since 0.6.1
+  | -- | @since 0.7
     LevelFinished
   | -- | @since 0.1
     LevelTimer
-  | -- | @since 0.6.1
+  | -- | @since 0.7
     LevelSuccess
-  | -- | @since 0.6.1
+  | -- | @since 0.7
     LevelWarn
   | -- | @since 0.1
     LevelError
@@ -88,26 +84,18 @@ data LogLevel
       Show
     )
 
--- | Determines where the log is sent.
+-- | Log with possible region.
 --
--- @since 0.1
-data LogDest
-  = -- | @since 0.1
-    LogDestConsole
-  | -- | @since 0.1
-    LogDestFile
-  | -- | @since 0.1
-    LogDestBoth
-  deriving stock
-    ( -- | @since 0.1
-      Bounded,
-      -- | @since 0.1
-      Enum,
-      -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Show
-    )
+-- @since 0.7
+data LogRegion
+  = -- | Log with region.
+    --
+    -- @since 0.7
+    LogRegion LogMode ConsoleRegion ConsoleLog
+  | -- | Log without region.
+    --
+    -- @since 0.7
+    LogNoRegion ConsoleLog
 
 -- | Captures the relevant information concerning a specific log
 -- (i.e. text, level, and mode).
@@ -129,14 +117,7 @@ data Log = MkLog
     -- | The 'LogMode' for a given log.
     --
     -- @since 0.1
-    mode :: LogMode,
-    -- | Where to send this log. Most logs should go to both the console and
-    -- the file. For a log to actually be written to a file, 'dest' must be
-    -- either 'LogDestFile' or 'LogDestBoth' /and/ file logging must be enabled
-    -- globally.
-    --
-    -- @since 0.1
-    dest :: LogDest
+    mode :: LogMode
   }
   deriving stock
     ( -- | @since 0.1
@@ -187,45 +168,3 @@ levelToPrefix LevelWarn = "[Warn]"
 levelToPrefix LevelError = "[Error]"
 levelToPrefix LevelFatal = "[Fatal]"
 {-# INLINEABLE levelToPrefix #-}
-
--- | 'LogText' is a textual representation of a given 'Log'. No coloring
--- is included, but we include the prefix (e.g. Warn) along with a timestamp.
---
--- @since 0.1
-newtype LogText = UnsafeLogText
-  { -- | @since 0.1
-    unLogText :: Text
-  }
-  deriving stock
-    ( -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Show
-    )
-
--- | @since 0.6.1
-makeFieldLabelsWith
-  (noPrefixFieldLabels & generateUpdateableOptics .~ False)
-  ''LogText
-
--- | @since 0.1
-pattern MkLogText :: Text -> LogText
-pattern MkLogText t <- UnsafeLogText t
-
-{-# COMPLETE MkLogText #-}
-
--- | Newtype wrapper over a 'TBQueue'.
---
--- @since 0.1
-newtype LogTextQueue = MkLogTextQueue
-  { -- | @since 0.1
-    getLogTextQueue :: TBQueue LogText
-  }
-
--- | @since 0.6.1
-makeFieldLabelsNoPrefix ''LogTextQueue
-
--- | @since 0.1
-instance Show LogTextQueue where
-  show _ = "<MkLogTextQueue>"
-  {-# INLINEABLE show #-}

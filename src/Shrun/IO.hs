@@ -26,13 +26,12 @@ import GHC.IO.Handle qualified as Handle
 import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
-import Shrun.Logging.Log qualified as Log
-import Shrun.Logging.RegionLogger (RegionLogger (..))
+import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Types
   ( Log (..),
-    LogDest (..),
     LogLevel (..),
     LogMode (..),
+    LogRegion (LogRegion),
   )
 import Shrun.Prelude
 import Shrun.Utils qualified as U
@@ -52,7 +51,7 @@ newtype Stdout = MkStdout
     getStdout :: Text
   }
 
--- | @since 0.6.1
+-- | @since 0.7
 makeFieldLabelsNoPrefix ''Stdout
 
 -- | Newtype wrapper for stderr.
@@ -63,7 +62,7 @@ newtype Stderr = MkStderr
     getStderr :: Text
   }
 
--- | @since 0.6.1
+-- | @since 0.7
 makeFieldLabelsNoPrefix ''Stderr
 
 makeStdErr :: Text -> Stderr
@@ -180,7 +179,6 @@ shExitCode (MkCommand _ cmd) path = do
   where
     proc = (P.shell (T.unpack cmd)) {P.cwd = path}
     wrap f = f . T.strip . T.pack
-{-# INLINEABLE shExitCode #-}
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
@@ -192,12 +190,11 @@ tryShExitCode cmd path = do
   pure $ case code of
     ExitSuccess -> Right stdout
     ExitFailure _ -> Left $ makeStdErr err
-{-# INLINEABLE tryShExitCode #-}
 
 -- | Runs the command, returning either the time elapsed along with a possible
 -- error.
 --
--- @since 0.6.1
+-- @since 0.7
 tryCommandLogging ::
   ( HasCompletedCmds env,
     HasLogging env,
@@ -207,33 +204,42 @@ tryCommandLogging ::
     MonadTBQueue m,
     MonadTime m,
     MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m
+    MonadUnliftIO m
   ) =>
   Command ->
   m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
-tryCommandLogging cmd = do
-  disableLogging <- asks getDisableLogging
-  cmdLogging <- asks getCmdLogging
-  fileLog <- asks getFileLogging
+tryCommandLogging command = do
+  logging <- asks getLogging
 
-  -- 1.    Logging is disabled at the global level: No logging at all.
-  -- 2.    No CmdLogging and no FileLogging: No streaming at all.
-  -- 3.    No CmdLogging and FileLogging: Stream (to file) but no console
-  --       region.
-  -- 3, 4. CmdLogging: Stream and create the region. FileLogging is globally
-  --       enabled/disabled, so no need for a separate function. That is,
-  --       tryCommandStreamNoRegion and tryCommandStreamRegion handle file
-  --       logging automatically.
-  let cmdFn = case (cmdLogging, fileLog, disableLogging) of
-        (_, _, True) -> tryCommand
-        (False, Nothing, _) -> tryCommand
-        (False, Just (_, _), _) -> tryCommandStreamNoRegion
-        _ -> tryCommandStreamRegion
+  let cmdFn = case (logging ^. #cmdLogging, logging ^. #fileLogging) of
+        -- 1. No CmdLogging and no FileLogging: No streaming at all.
+        (Nothing, Nothing) -> tryCommand
+        -- 2. No CmdLogging but FileLogging: Stream (to file) but no console
+        --    region.
+        (Nothing, Just fileLogging) -> tryCommandStream (logFile fileLogging)
+        -- 3. CmdLogging: Create region and stream. Also stream to file if
+        --    requested.
+        (Just _, mFileLogging) -> \cmd ->
+          Regions.withConsoleRegion Linear $ \region ->
+            tryCommandStream
+              ( \log -> do
+                  logConsole logging region log
+                  U.whenJust mFileLogging (`logFile` log)
+              )
+              cmd
 
-  withTiming (cmdFn cmd) >>= \case
+  withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> pure $ Right $ U.timeSpecToRelTime rt
     (rt, Just err) -> pure $ Left (U.timeSpecToRelTime rt, err)
+  where
+    logConsole logging region log = do
+      let consoleQueue = logging ^. #consoleLogging
+          formatted = LFormat.formatConsoleLog logging log
+      writeTBQueueM consoleQueue (LogRegion (log ^. #mode) region formatted)
+
+    logFile fileLogging log = do
+      formatted <- LFormat.formatFileLog fileLogging log
+      writeTBQueueM (fileLogging ^. #log % _2) formatted
 
 -- | Version of 'tryShExitCode' with MonadTime. On success, stdout is not
 -- returned.
@@ -254,71 +260,25 @@ tryCommand cmd = do
   modifyTVarM' completedCmds (cmd <|)
 
   pure $ res ^? _Left
-{-# INLINEABLE tryCommand #-}
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
--- to a 'ConsoleRegion' instead of the usual swallowing.
+-- instead of the usual swallowing.
 --
 -- @since 0.1
-tryCommandStreamRegion ::
+tryCommandStream ::
   ( HasCompletedCmds env,
-    HasLogging env,
-    MonadIORef m,
-    MonadMask m,
-    MonadReader env m,
-    MonadTBQueue m,
-    MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m,
-    MonadTime m
-  ) =>
-  Command ->
-  m (Maybe Stderr)
-tryCommandStreamRegion cmd = Regions.withConsoleRegion Linear $ \region ->
-  tryCommandAnyRegion (Just region) cmd
-{-# INLINEABLE tryCommandStreamRegion #-}
-
--- | We stream the commands' output like 'tryCommandStreamRegion' except we do
--- __not__ create a console region. This function is intended for when we want
--- to send command logs to a file, but do not want to stream them to the
--- console.
---
--- @since 0.1
-tryCommandStreamNoRegion ::
-  ( HasCompletedCmds env,
-    HasLogging env,
     MonadIORef m,
     MonadReader env m,
-    MonadTBQueue m,
     MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m,
-    MonadTime m
+    MonadUnliftIO m
   ) =>
+  -- | Function to apply to streamed logs.
+  (Log -> m ()) ->
+  -- | Command to run.
   Command ->
+  -- | Error, if any.
   m (Maybe Stderr)
-tryCommandStreamNoRegion = tryCommandAnyRegion Nothing
-{-# INLINEABLE tryCommandStreamNoRegion #-}
-
--- | Similar to 'tryCommand' except we attempt to stream the commands' output
--- to a 'ConsoleRegion' instead of the usual swallowing.
---
--- @since 0.1
-tryCommandAnyRegion ::
-  ( HasCompletedCmds env,
-    HasLogging env,
-    MonadIORef m,
-    MonadReader env m,
-    MonadTBQueue m,
-    MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m,
-    MonadTime m
-  ) =>
-  Maybe ConsoleRegion ->
-  Command ->
-  m (Maybe Stderr)
-tryCommandAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
+tryCommandStream logFn cmd@(MkCommand _ cmdTxt) = do
   -- Create pseudo terminal here because otherwise we have trouble streaming
   -- input from child processes. Data gets buffered and trying to override the
   -- buffering strategy (i.e. handles returned by CreatePipe) does not work.
@@ -350,7 +310,7 @@ tryCommandAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
   (exitCode, lastRead) <- do
     withRunInIO $ \run ->
       P.withCreateProcess pr $ \_ _ _ ph ->
-        run $ streamOutput mRegion cmd recvH ph
+        run $ streamOutput logFn cmd recvH ph
 
   completedCmds <- asks getCompletedCmds
   modifyTVarM' completedCmds (cmd <|)
@@ -373,23 +333,22 @@ tryCommandAnyRegion mRegion cmd@(MkCommand _ cmdTxt) = do
     Handle.hClose sendH
     Handle.hClose recvH
   pure $ result ^? _Left
-{-# INLINEABLE tryCommandAnyRegion #-}
 
 streamOutput ::
-  ( HasLogging env,
-    MonadIO m,
-    MonadIORef m,
-    MonadReader env m,
-    MonadTBQueue m,
-    RegionLogger m,
-    MonadTime m
+  ( MonadIO m,
+    MonadIORef m
   ) =>
-  Maybe ConsoleRegion ->
+  -- | Function to apply to streamed logs.
+  (Log -> m ()) ->
+  -- | Command to run.
   Command ->
+  -- | Handle from which to read.
   Handle ->
+  -- | Process handle.
   ProcessHandle ->
+  -- | Exit code along w/ any leftover data.
   m (Tuple2 ExitCode (Maybe ReadHandleResult))
-streamOutput mRegion cmd recvH ph = do
+streamOutput logFn cmd recvH ph = do
   lastReadRef <- newIORef Nothing
   exitCode <- Loops.untilJust $ do
     result <- readHandle recvH
@@ -402,24 +361,16 @@ streamOutput mRegion cmd recvH ph = do
         pure ()
       ReadSuccess out -> do
         writeIORef lastReadRef (Just (ReadSuccess out))
-        cmdLogging <- asks getCmdLogging
-        let logDest =
-              if cmdLogging
-                then LogDestBoth
-                else LogDestFile
-            log =
+        let log =
               MkLog
                 { cmd = Just cmd,
                   msg = out,
                   lvl = LevelSubCommand,
-                  mode = LogModeSet,
-                  dest = logDest
+                  mode = LogModeSet
                 }
-        case mRegion of
-          Nothing -> Log.putLog log
-          Just region -> Log.putRegionLog region log
+
+        logFn log
       ReadNoData -> pure ()
     liftIO $ P.getProcessExitCode ph
   lastRead <- readIORef lastReadRef
   pure (exitCode, lastRead)
-{-# INLINEABLE streamOutput #-}

@@ -33,7 +33,6 @@ specs =
       stripControlSpecs,
       cmdNameTruncSpecs,
       cmdLineTruncSpecs,
-      globalLoggingSpecs,
       commandSpecs
     ]
 
@@ -52,7 +51,6 @@ parseDefaultArgs = testCase "Should parse default args" $ do
             { configPath = Nothing,
               noConfig = False,
               timeout = Nothing,
-              disableLogging = Nothing,
               cmdDisplay = Nothing,
               cmdNameTrunc = Nothing,
               cmdLogging = Nothing,
@@ -461,31 +459,6 @@ parseDetectCmdLineTrunc =
     desc = "Should parse --cmd-log-line-trunc detect as detect command line truncation"
     argList = ["--cmd-log-line-trunc", "detect", "command"]
     expected = updateDefArgs #cmdLogLineTrunc Detected
-
-globalLoggingSpecs :: TestTree
-globalLoggingSpecs =
-  testGroup
-    "Global logging arg parsing"
-    [ parseShortGlobalLogging,
-      parseLongGlobalLogging
-    ]
-
-parseShortGlobalLogging :: TestTree
-parseShortGlobalLogging =
-  testCase "Should parse -d as no global logging" $
-    verifyResult argList expected
-  where
-    argList = ["-d", "command"]
-    expected = updateDefArgs #disableLogging True
-
-parseLongGlobalLogging :: TestTree
-parseLongGlobalLogging =
-  testCase desc $
-    verifyResult argList expected
-  where
-    desc = "Should parse --log-disable as no global logging"
-    argList = ["--log-disable", "command"]
-    expected = updateDefArgs #disableLogging True
 
 commandSpecs :: TestTree
 commandSpecs =

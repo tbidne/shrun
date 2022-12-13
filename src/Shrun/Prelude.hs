@@ -184,7 +184,13 @@ import Optics.Core as X
     _Right,
   )
 import Optics.Core.Extras as X (is)
-import Optics.TH as X (makeFieldLabelsNoPrefix, makePrisms)
+import Optics.TH as X
+  ( generateUpdateableOptics,
+    makeFieldLabelsNoPrefix,
+    makeFieldLabelsWith,
+    makePrisms,
+    noPrefixFieldLabels,
+  )
 import Refined as X (Refined)
 import System.Console.Regions as X (ConsoleRegion, RegionLayout)
 import System.FilePath as X ((</>))

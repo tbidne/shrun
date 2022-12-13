@@ -13,11 +13,6 @@ module Shrun.Data.Legend
 where
 
 import Data.HashMap.Strict (HashMap)
-import Optics.TH
-  ( generateUpdateableOptics,
-    makeFieldLabelsWith,
-    noPrefixFieldLabels,
-  )
 import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Prelude
@@ -55,7 +50,7 @@ pattern MkKeyVal k v <- UnsafeKeyVal k v
 
 {-# COMPLETE MkKeyVal #-}
 
--- | @since 0.6.1
+-- | @since 0.7
 makeFieldLabelsWith
   (noPrefixFieldLabels & generateUpdateableOptics .~ False)
   ''KeyVal

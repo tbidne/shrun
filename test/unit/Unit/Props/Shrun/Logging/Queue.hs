@@ -19,12 +19,13 @@ import Hedgehog qualified as H
 import Refined qualified as R
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
+    FileLogging (..),
     HasLogging (..),
+    Logging (..),
     StripControl (..),
   )
 import Shrun.Data.Command (Command (..))
-import Shrun.Logging.Queue (LogText (..))
-import Shrun.Logging.Queue qualified as Queue
+import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Types (Log (..))
 import Shrun.Logging.Types qualified as Log
 import Shrun.Utils qualified as Utils
@@ -45,18 +46,16 @@ sysTimeNE = $$(R.refineTH "[2022-02-20 23:47:39]")
 newtype MockEnv = MkMockEnv ()
 
 instance HasLogging MockEnv where
-  getCmdDisplay = const ShowKey
-  getCmdLogLineTrunc = const Nothing
-  getCmdLogging = const False
-  getCmdLogStripControl = const $ Just StripControlSmart
-  getCmdLogNameTrunc = const Nothing
-  getFileLogging = const Nothing
-
-  -- This is what we need to run the tests. It's set to
-  -- None since our generators can generate null bytes,
-  -- thus properties would fail unless we prevent that.
-  getFileLogStripControl = const $ Just StripControlNone
-  getDisableLogging = const False
+  getLogging _ =
+    MkLogging
+      { cmdDisplay = ShowKey,
+        cmdNameTrunc = Nothing,
+        cmdLogging = Nothing,
+        consoleLogging = error err,
+        fileLogging = Nothing
+      }
+    where
+      err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using consoleLogging"
 
 -- Monad with mock implementation for 'MonadTime'.
 newtype MockTime a = MkMockTime
@@ -100,7 +99,7 @@ timestampProps =
   testPropertyNamed "Starts with timestamp" "timestampProps" $
     H.property $ do
       log <- H.forAll LGens.genLog
-      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+      let result = view #unFileLog $ LFormat.formatFileLog @MockTime fileLogging log ^. #runMockTime
           (res, _) = Utils.breakStripPoint sysTimeNE result
       "" === res
 
@@ -109,7 +108,7 @@ messageProps =
   testPropertyNamed "Includes message" "messageProps" $
     H.property $ do
       log@MkLog {msg} <- H.forAll LGens.genLog
-      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+      let result = view #unFileLog $ LFormat.formatFileLog @MockTime fileLogging log ^. #runMockTime
       H.annotate $ T.unpack result
       H.assert $ T.isInfixOf (T.strip msg) result
 
@@ -118,7 +117,7 @@ prefixProps =
   testPropertyNamed "Formats prefix" "prefixProps" $
     H.property $ do
       log@MkLog {lvl} <- H.forAll LGens.genLog
-      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+      let result = view #unFileLog $ LFormat.formatFileLog @MockTime fileLogging log ^. #runMockTime
       let pfx = Log.levelToPrefix lvl
       H.annotate $ T.unpack pfx
       H.assert $ T.isInfixOf pfx result
@@ -129,7 +128,7 @@ commandProps =
     H.property $ do
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
       let cmdTxt = "[" <> cmd' <> "]"
-          MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+          result = view #unFileLog $ LFormat.formatFileLog @MockTime fileLogging log ^. #runMockTime
       H.annotate $ T.unpack result
       H.assert $ T.isInfixOf cmdTxt result
 
@@ -138,7 +137,7 @@ shapeProps =
   testPropertyNamed "Formats shape" "shapeProps" $
     H.property $ do
       log@MkLog {cmd, msg} <- H.forAll LGens.genLogWithCmd
-      let MkLogText result = Queue.formatFileLog @_ @MockTime log ^. #runMockTime
+      let result = view #unFileLog $ LFormat.formatFileLog @MockTime fileLogging log ^. #runMockTime
           expected =
             "["
               <> sysTime
@@ -152,3 +151,8 @@ shapeProps =
       H.annotate $ T.unpack expected
       H.annotate $ T.unpack result
       expected === result
+
+fileLogging :: FileLogging
+fileLogging = MkFileLogging StripControlNone (error err)
+  where
+    err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLogging"

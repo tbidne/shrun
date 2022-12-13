@@ -69,6 +69,7 @@ import Shrun.Configuration.Env.Types
     HasLogging (..),
     HasTimeout (..),
     LineTruncation (..),
+    Logging (..),
     StripControl (..),
     TruncRegion (..),
     Truncation (..),
@@ -78,7 +79,6 @@ import Shrun.Configuration.Toml (TomlConfig, argsToTomlConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
-import Shrun.Logging.Queue (LogTextQueue (..))
 import Shrun.Prelude
 
 -- | @since 0.5
@@ -193,8 +193,7 @@ fromToml onEnv cfg cmdsText = do
     Just (Undetected x) -> pure $ Just x
     Nothing -> pure Nothing
 
-  let disableLogging' = fromMaybe False (cfg ^. #disableLogging)
-      fileLogStripControl =
+  let fileLogStripControl =
         fromMaybe
           StripControlAll
           (cfg ^? (#fileLogging %? #stripControl % _Just))
@@ -209,28 +208,31 @@ fromToml onEnv cfg cmdsText = do
 
   completedCmds' <- newTVarM Seq.empty
 
-  let envWithFileLogging mfl =
+  let envWithLogging mFileLogging consoleLogging =
         MkEnv
           { timeout = cfg ^. #timeout,
-            disableLogging = disableLogging',
-            cmdDisplay = maybeOrMempty cfg (#cmdDisplay % _Just),
-            cmdNameTrunc = cfg ^. #cmdNameTrunc,
-            cmdLogging = case cfg ^. #cmdLogging of
-              Nothing -> Nothing
-              Just cmdLogging ->
-                Just
-                  MkCmdLogging
-                    { stripControl = maybeOrMempty cmdLogging (#stripControl % _Just),
-                      lineTrunc = cmdLogLineTrunc
-                    },
-            fileLogging = case mfl of
-              Nothing -> Nothing
-              Just log ->
-                Just
-                  MkFileLogging
-                    { log,
-                      stripControl = fileLogStripControl
-                    },
+            logging =
+              MkLogging
+                { cmdDisplay = maybeOrMempty cfg (#cmdDisplay % _Just),
+                  cmdNameTrunc = cfg ^. #cmdNameTrunc,
+                  cmdLogging = case cfg ^. #cmdLogging of
+                    Nothing -> Nothing
+                    Just cmdLogging ->
+                      Just
+                        MkCmdLogging
+                          { stripControl = maybeOrMempty cmdLogging (#stripControl % _Just),
+                            lineTrunc = cmdLogLineTrunc
+                          },
+                  consoleLogging,
+                  fileLogging = case mFileLogging of
+                    Nothing -> Nothing
+                    Just log ->
+                      Just
+                        MkFileLogging
+                          { log,
+                            stripControl = fileLogStripControl
+                          }
+                },
             completedCmds = completedCmds',
             commands = commands'
           }
@@ -239,22 +241,23 @@ fromToml onEnv cfg cmdsText = do
         FileModeAppend -> AppendMode
         FileModeWrite -> WriteMode
 
+  consoleQueue <- newTBQueueM 1000
   case cfg ^? (#fileLogging %? #path) of
-    Nothing -> onEnv (envWithFileLogging Nothing)
+    Nothing -> onEnv (envWithLogging Nothing consoleQueue)
     Just FPDefault -> do
       configDir <- getShrunXdgConfig
       let fp = configDir </> "log"
       handleLogFileSize fp
 
-      queue <- newTBQueueM 1000
+      fileQueue <- newTBQueueM 1000
 
       bracket (openFile fp ioMode) closeFile $ \h ->
-        onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
+        onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
     Just (FPManual fp) -> do
       handleLogFileSize fp
-      queue <- newTBQueueM 1000
+      fileQueue <- newTBQueueM 1000
       bracket (openFile fp ioMode) closeFile $ \h ->
-        onEnv (envWithFileLogging (Just (h, MkLogTextQueue queue)))
+        onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
   where
     maybeOrMempty :: (Is k An_AffineFold, Monoid a) => s -> Optic' k is s a -> a
     maybeOrMempty x = fromMaybe mempty . (`preview` x)

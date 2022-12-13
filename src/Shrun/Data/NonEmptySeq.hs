@@ -71,7 +71,7 @@ instance Traversable NonEmptySeq where
   traverse f = fmap unsafeFromSeq . traverse f . toSeq
   {-# INLINEABLE traverse #-}
 
--- | @since 0.6.1
+-- | @since 0.7
 instance IsList (NonEmptySeq a) where
   type Item (NonEmptySeq a) = a
   fromList = unsafeFromList

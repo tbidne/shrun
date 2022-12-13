@@ -35,7 +35,7 @@ newtype Timeout = MkTimeout
     )
     via Natural
 
--- | @since 0.6.1
+-- | @since 0.7
 makeFieldLabelsNoPrefix ''Timeout
 
 -- | @since 0.5

@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               shrun
-version:            0.6.1
+version:            0.7
 license:            MIT
 license-file:       LICENSE
 tested-with:        GHC ==9.2.4 || ==9.4.2
@@ -57,9 +57,9 @@ library
     Shrun.IO
     Shrun.Logging.Formatting
     Shrun.Logging.Log
-    Shrun.Logging.Queue
     Shrun.Logging.RegionLogger
     Shrun.Logging.Types
+    Shrun.Logging.Types.Internal
     Shrun.Prelude
     Shrun.ShellT
     Shrun.Utils
@@ -200,7 +200,6 @@ test-suite functional
     Functional.Success
     Functional.SuccessCommandLogging
     Functional.SuccessFileLogging
-    Functional.SuccessNoLogging
     Functional.SuccessShowKey
     Functional.TestArgs
     Functional.Timeout

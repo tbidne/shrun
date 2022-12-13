@@ -19,6 +19,7 @@ module Shrun.Utils
 
     -- * Misc Utils
     parseByteText,
+    whenJust,
   )
 where
 
@@ -307,3 +308,9 @@ parseByteText txt =
     Left _ -> case parse @(SomeSize Double) txt of
       Right b -> Right (truncate <$> convert (Proxy @B) b)
       Left err -> Left err
+
+-- | Runs the action when it is 'Just'.
+--
+-- @since 0.7
+whenJust :: Applicative f => Maybe a -> (a -> f ()) -> f ()
+whenJust m action = maybe (pure ()) action m

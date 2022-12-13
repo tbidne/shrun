@@ -9,14 +9,15 @@ module Unit.Props.Shrun.Logging.Formatting
   )
 where
 
-import Data.Functor.Identity (Identity (..))
 import Data.Text qualified as T
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
+    CmdLogging (..),
     HasLogging (..),
+    Logging (..),
     StripControl (..),
     TruncRegion (..),
     Truncation (..),
@@ -99,18 +100,22 @@ genMInt = HGen.choice [Just <$> genNat, pure Nothing]
     genNat = HGen.integral range
     range = HRange.exponential 0 100
 
-runMockApp :: ReaderT env Identity a -> env -> a
-runMockApp env = runIdentity . runReaderT env
-
 instance HasLogging Env where
-  getCmdDisplay = view #cmdDisplay
-  getDisableLogging = const False
-  getCmdLogging = const True
-  getCmdLogStripControl = const $ Just StripControlNone
-  getCmdLogNameTrunc = view #cmdTrunc
-  getCmdLogLineTrunc = view #lineTrunc
-  getFileLogging = const Nothing
-  getFileLogStripControl = const $ Just StripControlAll
+  getLogging env =
+    MkLogging
+      { cmdDisplay = env ^. #cmdDisplay,
+        cmdNameTrunc = env ^. #cmdTrunc,
+        cmdLogging =
+          Just
+            MkCmdLogging
+              { stripControl = StripControlNone,
+                lineTrunc = env ^. #lineTrunc
+              },
+        consoleLogging = error err,
+        fileLogging = Nothing
+      }
+    where
+      err = "[Unit.Props.Shrun.Logging.Formatting]: Unit tests should not be using consoleLogging"
 
 -- | Entry point for Shrun.Logging.Formatting property tests.
 props :: TestTree
@@ -131,7 +136,7 @@ messageProps =
     H.property $ do
       env <- H.forAll genEnv
       log@MkLog {msg} <- H.forAll LGens.genLog
-      let result = runMockApp (Formatting.formatConsoleLog log) env
+      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ T.strip msg `T.isInfixOf` result || "..." `T.isSuffixOf` result
 
@@ -141,7 +146,7 @@ prefixProps =
     H.property $ do
       env <- H.forAll genEnv
       log@MkLog {lvl} <- H.forAll LGens.genLog
-      let result = runMockApp (Formatting.formatConsoleLog log) env
+      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
       H.annotate $ "Result: " <> T.unpack result
       let pfx = Log.levelToPrefix lvl
       H.annotate $ T.unpack pfx
@@ -153,7 +158,7 @@ displayCmdProps =
     H.property $ do
       env <- H.forAll genEnvDispCmd
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- H.forAll LGens.genLogWithCmd
-      let result = runMockApp (Formatting.formatConsoleLog log) env
+      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ cmd' `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -163,7 +168,7 @@ displayKeyProps =
     H.property $ do
       env <- H.forAll genEnvDispKey
       log@MkLog {cmd = Just (MkCommand (Just key) _)} <- H.forAll LGens.genLogWithCmdKey
-      let result = runMockApp (Formatting.formatConsoleLog log) env
+      let result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ key `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -175,7 +180,7 @@ cmdTruncProps =
       cmd' <- MkCommand Nothing <$> H.forAll genLongCmdText
       log <- H.forAll LGens.genLog
       let log' = log {cmd = Just cmd'}
-          result = runMockApp (Formatting.formatConsoleLog log') env
+          result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log'
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ "...]" `T.isInfixOf` result
 
@@ -189,7 +194,7 @@ lineTruncProps =
 
       -- only perform line truncation for LevelSubCommand (also requires a command)
       let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelSubCommand}
-          result = runMockApp (Formatting.formatConsoleLog log') env
+          result = view #unConsoleLog $ Formatting.formatConsoleLog (getLogging env) log'
 
       H.annotate $ "Result: " <> T.unpack result
       H.assert $ "..." `T.isSuffixOf` result

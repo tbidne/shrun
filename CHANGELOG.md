@@ -22,6 +22,9 @@ the major/minor/patch definitions apply to the application's interface / usage
   with key-hide = false (the default) because multiple values would have the
   same key name. Now we only consider a value to have a key name when it is
   unique i.e. k = v.
+* File logging thread no longer polls when file logging is disabled.
+* Console logs now use a queue as well to prevent the rare but possible case
+  where console logs to the same region (e.g. final logs) overwrite each other.
 
 
 ## [0.6] -- 2022-12-07

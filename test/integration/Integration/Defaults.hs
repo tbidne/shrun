@@ -39,7 +39,6 @@ defaultEnv = testCase "No arguments and empty config path should return default 
           cmdLogLineTrunc = Nothing,
           fileLogging = False,
           fileLogStripControl = Nothing,
-          disableLogging = False,
           commands = NESeq.singleton "cmd1"
         }
 
@@ -54,7 +53,6 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     expected =
       MkSimpleEnv
         { timeout = Just 3_600,
-          disableLogging = True,
           cmdDisplay = HideKey,
           cmdLogging = True,
           cmdLogStripControl = Just StripControlAll,
@@ -93,13 +91,11 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         "60",
         "--cmd-log-strip-control",
         "none",
-        "--log-disable",
         "cmd"
       ]
     expected =
       MkSimpleEnv
         { timeout = Just 10,
-          disableLogging = True,
           cmdDisplay = HideKey,
           cmdLogging = True,
           cmdLogStripControl = Just StripControlNone,
@@ -121,7 +117,6 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          disableLogging = False,
           cmdDisplay = ShowKey,
           cmdLogging = False,
           cmdLogStripControl = Nothing,

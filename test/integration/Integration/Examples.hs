@@ -27,7 +27,6 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
     expected =
       MkSimpleEnv
         { timeout = Just 20,
-          disableLogging = False,
           cmdDisplay = ShowKey,
           cmdLogging = True,
           cmdLogNameTrunc = Just 80,
@@ -50,7 +49,6 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          disableLogging = False,
           cmdDisplay = ShowKey,
           cmdLogging = False,
           cmdLogStripControl = Nothing,

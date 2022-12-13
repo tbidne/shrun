@@ -32,7 +32,6 @@
     - [File Log](#file-log)
     - [File Log Mode](#file-log-mode)
     - [File Log Size Mode](#file-log-size-mode)
-    - [Disable Log](#disable-log)
   - [Log Formatting](#log-formatting)
     - [Key Hide](#key-hide)
     - [Strip Control](#strip-control)
@@ -236,12 +235,6 @@ Practically speaking, this does not have much effect, just that if a command die
 **Arg:** `--file-log-size-mode <warn SIZE | delete SIZE>`
 
 **Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`.
-
-### Disable Log
-
-**Arg:** `-d, --log-disable`
-
-**Description**: This option globally disables all logging i.e. ordinary logs and those created via `--cmd-log` and `--file-log`. As most uses will want at least the default success/error messages and timers, this option is primarily intended for debugging or testing where logging is undesirable.
 
 ## Log Formatting
 

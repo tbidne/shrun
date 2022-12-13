@@ -107,7 +107,6 @@ deriving via ConfigIO instance MonadTerminal NoConfigIO
 --   equality with a file handle or queue.
 data SimpleEnv = MkSimpleEnv
   { timeout :: !(Maybe Timeout),
-    disableLogging :: !Bool,
     cmdDisplay :: !CmdDisplay,
     cmdLogging :: !Bool,
     cmdLogNameTrunc :: !(Maybe (Truncation 'TCmdName)),
@@ -125,14 +124,13 @@ simplifyEnv :: Getter Env SimpleEnv
 simplifyEnv = to $ \env ->
   MkSimpleEnv
     { timeout = env ^. #timeout,
-      disableLogging = env ^. #disableLogging,
-      cmdDisplay = env ^. #cmdDisplay,
-      cmdLogging = is (#cmdLogging % _Just) env,
-      cmdLogNameTrunc = env ^. #cmdNameTrunc,
-      cmdLogLineTrunc = env ^? (#cmdLogging %? #lineTrunc % _Just),
-      cmdLogStripControl = env ^? (#cmdLogging %? #stripControl),
-      fileLogging = m2b (env ^. #fileLogging),
-      fileLogStripControl = env ^? (#fileLogging %? #stripControl),
+      cmdDisplay = env ^. (#logging % #cmdDisplay),
+      cmdLogging = is (#logging % #cmdLogging % _Just) env,
+      cmdLogNameTrunc = env ^. (#logging % #cmdNameTrunc),
+      cmdLogLineTrunc = env ^? (#logging % #cmdLogging %? #lineTrunc % _Just),
+      cmdLogStripControl = env ^? (#logging % #cmdLogging %? #stripControl),
+      fileLogging = m2b (env ^. (#logging % #fileLogging)),
+      fileLogStripControl = env ^? (#logging % #fileLogging %? #stripControl),
       commands = env ^. #commands
     }
 

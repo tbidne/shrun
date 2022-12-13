@@ -13,10 +13,12 @@ import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
+import Effects.MonadSTM (MonadTBQueue (tryReadTBQueueM))
 import Effects.MonadThread as X (MonadThread (microsleep), sleep)
-import Effects.MonadTime (MonadTime (..), withTiming)
+import Effects.MonadTime (MonadTime (..), TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
-  ( HasCommands (..),
+  ( FileLogging,
+    HasCommands (..),
     HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
@@ -28,10 +30,14 @@ import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Log qualified as Log
-import Shrun.Logging.Queue (LogText (..), LogTextQueue)
-import Shrun.Logging.Queue qualified as Queue
 import Shrun.Logging.RegionLogger (RegionLogger (..))
-import Shrun.Logging.Types (Log (..), LogDest (..), LogLevel (..), LogMode (..))
+import Shrun.Logging.Types
+  ( FileLog,
+    Log (..),
+    LogLevel (..),
+    LogMode (..),
+    LogRegion (..),
+  )
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
@@ -60,9 +66,10 @@ shrun ::
     RegionLogger m
   ) =>
   m ()
-shrun = asks getCommands >>= runCommands
+shrun = asks getCommands >>= initLogging
 
-runCommands ::
+-- | Initializes the loggers and runs the commands.
+initLogging ::
   ( HasCompletedCmds env,
     HasLogging env,
     HasTimeout env,
@@ -80,53 +87,40 @@ runCommands ::
   ) =>
   NonEmptySeq Command ->
   m ()
-runCommands commands = Regions.displayConsoleRegions $
-  Async.withAsync maybePollQueue $ \fileLogger -> do
-    (totalTime, result) <- withTiming $ do
-      let actions = Async.mapConcurrently_ runCommand commands
-          actionsWithTimer = Async.race_ actions (counter commands)
-      tryAny actionsWithTimer
+initLogging commands = Regions.displayConsoleRegions $ do
+  logging <- asks getLogging
 
-    Async.cancel fileLogger
+  -- always start console logger
+  Async.withAsync pollQueueToConsole $ \consoleLogger -> do
+    -- run commands, running file logger if requested
+    maybe
+      runCommands
+      runWithFileLogging
+      (logging ^. #fileLogging)
 
-    Regions.withConsoleRegion Linear $ \r -> do
-      case result of
-        Left ex -> do
-          let errMsg =
-                T.pack $
-                  "Encountered an exception. This is likely not an error in any of the "
-                    <> "commands run but rather an error in Shrun itself: "
-                    <> displayException ex
-              fatalLog =
-                MkLog
-                  { cmd = Nothing,
-                    msg = errMsg,
-                    lvl = LevelFatal,
-                    mode = LogModeFinish,
-                    dest = LogDestBoth
-                  }
-          Log.putRegionLog r fatalLog
-        Right _ -> pure ()
+    -- cancel consoleLogger, print remaining logs
+    Async.cancel consoleLogger
+    let consoleQueue = logging ^. #consoleLogging
+    flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
+  where
+    runWithFileLogging fileLogging =
+      Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
+        runCommands
 
-      let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
-          finalLog =
-            MkLog
-              { cmd = Nothing,
-                msg = T.pack totalTimeTxt,
-                lvl = LevelFinished,
-                mode = LogModeFinish,
-                dest = LogDestBoth
-              }
+        Async.cancel fileLoggerThread
 
-      Log.putRegionLog r finalLog
+        -- handle any remaining file logs
+        flushTBQueueM queue >>= traverse_ (logFile h)
+        hFlush h
+      where
+        (h, queue) = fileLogging ^. #log
 
-      fileLog <- asks getFileLogging
-      case fileLog of
-        Nothing -> pure ()
-        Just (h, queue) -> do
-          Queue.flushQueue queue >>= traverse_ (logFile h)
-          hFlush h
-{-# INLINEABLE runCommands #-}
+    runCommands = do
+      (totalTime, result) <- withTiming $ tryAny actionsWithTimer
+      printFinalResult totalTime result
+      where
+        actions = Async.mapConcurrently_ runCommand commands
+        actionsWithTimer = Async.race_ actions (counter commands)
 
 runCommand ::
   ( HasCompletedCmds env,
@@ -138,8 +132,7 @@ runCommand ::
     MonadTBQueue m,
     MonadTime m,
     MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m
+    MonadUnliftIO m
   ) =>
   Command ->
   m ()
@@ -155,10 +148,49 @@ runCommand cmd = do
         { cmd = Just cmd,
           msg = T.pack (formatRelativeTime t') <> msg',
           lvl = lvl',
-          mode = LogModeFinish,
-          dest = LogDestBoth
+          mode = LogModeFinish
         }
-{-# INLINEABLE runCommand #-}
+
+printFinalResult ::
+  ( Exception e,
+    HasLogging env,
+    MonadIO m,
+    MonadReader env m,
+    MonadMask m,
+    MonadTBQueue m,
+    MonadTime m
+  ) =>
+  TimeSpec ->
+  Either e b ->
+  m ()
+printFinalResult totalTime result = Regions.withConsoleRegion Linear $ \r -> do
+  case result of
+    Left ex -> do
+      let errMsg =
+            T.pack $
+              "Encountered an exception. This is likely not an error in any of the "
+                <> "commands run but rather an error in Shrun itself: "
+                <> displayException ex
+          fatalLog =
+            MkLog
+              { cmd = Nothing,
+                msg = errMsg,
+                lvl = LevelFatal,
+                mode = LogModeFinish
+              }
+      Log.putRegionLog r fatalLog
+    Right _ -> pure ()
+
+  let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
+      finalLog =
+        MkLog
+          { cmd = Nothing,
+            msg = T.pack totalTimeTxt,
+            lvl = LevelFinished,
+            mode = LogModeFinish
+          }
+
+  Log.putRegionLog r finalLog
 
 counter ::
   ( HasCompletedCmds env,
@@ -188,29 +220,25 @@ counter cmds = do
         modifyIORef' timer (+ 1)
         readIORef timer
       logCounter r elapsed
-{-# INLINEABLE counter #-}
 
 logCounter ::
   ( HasLogging env,
     MonadReader env m,
-    MonadTBQueue m,
-    RegionLogger m,
-    MonadTime m
+    MonadTBQueue m
   ) =>
   ConsoleRegion ->
   Natural ->
   m ()
 logCounter region elapsed = do
+  logging <- asks getLogging
   let lg =
         MkLog
           { cmd = Nothing,
             msg = T.pack (formatSeconds elapsed),
             lvl = LevelTimer,
-            mode = LogModeSet,
-            dest = LogDestConsole
+            mode = LogModeSet
           }
-  Log.putRegionLog region lg
-{-# INLINEABLE logCounter #-}
+  Log.regionLogToConsoleQueue region logging lg
 
 keepRunning ::
   ( HasCompletedCmds env,
@@ -219,8 +247,7 @@ keepRunning ::
     MonadReader env m,
     MonadTBQueue m,
     MonadTime m,
-    MonadTVar m,
-    RegionLogger m
+    MonadTVar m
   ) =>
   NonEmptySeq Command ->
   ConsoleRegion ->
@@ -231,14 +258,14 @@ keepRunning allCmds region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      cmdDisplay <- asks getCmdDisplay
+      cmdDisplay <- asks (view #cmdDisplay . getLogging)
       completedCmdsTVar <- asks getCompletedCmds
       completedCmds <- readTVarM completedCmdsTVar
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ NESeq.toList allCmds
           incompleteCmds = Set.difference allCmdsSet completedCmdsSet
-          toTxtList acc cmd = LFormat.displayCmd' cmd cmdDisplay : acc
+          toTxtList acc cmd = LFormat.displayCmd cmd cmdDisplay : acc
           unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
 
       Log.putRegionLog region $
@@ -246,42 +273,40 @@ keepRunning allCmds region timer mto = do
           { cmd = Nothing,
             msg = "Timed out, cancelling remaining commands: " <> unfinishedCmds,
             lvl = LevelWarn,
-            mode = LogModeFinish,
-            dest = LogDestBoth
+            mode = LogModeFinish
           }
       pure False
     else pure True
-{-# INLINEABLE keepRunning #-}
 
 timedOut :: Natural -> Maybe Timeout -> Bool
 timedOut _ Nothing = False
 timedOut timer (Just (MkTimeout t)) = timer > t
-{-# INLINEABLE timedOut #-}
 
-maybePollQueue ::
+pollQueueToConsole ::
   ( HasLogging env,
     MonadFsWriter m,
     MonadReader env m,
-    MonadTBQueue m
+    MonadTBQueue m,
+    RegionLogger m
   ) =>
-  m ()
-maybePollQueue = do
-  fileLog <- asks getFileLogging
-  case fileLog of
-    Nothing -> pure ()
-    Just (h, queue) -> writeQueueToFile h queue
-{-# INLINEABLE maybePollQueue #-}
+  m void
+pollQueueToConsole = do
+  queue <- asks (view #consoleLogging . getLogging)
+  forever $ tryReadTBQueueM queue >>= traverse_ printConsoleLog
 
-writeQueueToFile ::
+printConsoleLog :: RegionLogger m => LogRegion -> m ()
+printConsoleLog (LogNoRegion consoleLog) = logFn (consoleLog ^. #unConsoleLog)
+printConsoleLog (LogRegion m r consoleLog) = logModeToRegionFn m r (consoleLog ^. #unConsoleLog)
+
+pollQueueToFile ::
   ( MonadFsWriter m,
     MonadTBQueue m
   ) =>
-  Handle ->
-  LogTextQueue ->
+  FileLogging ->
   m void
-writeQueueToFile h queue = forever $ Queue.readQueue queue >>= traverse_ (logFile h)
-{-# INLINEABLE writeQueueToFile #-}
+pollQueueToFile fileLogging = forever $ tryReadTBQueueM queue >>= traverse_ (logFile h)
+  where
+    (h, queue) = fileLogging ^. #log
 
-logFile :: MonadFsWriter m => Handle -> LogText -> m ()
-logFile h = hPutUtf8 h . view #unLogText
-{-# INLINEABLE logFile #-}
+logFile :: MonadFsWriter m => Handle -> FileLog -> m ()
+logFile h = hPutUtf8 h . view #unFileLog

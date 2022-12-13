@@ -99,11 +99,6 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.5
     timeout :: !(Maybe Timeout),
-    -- | Overarching option for logging. If it is false then all logging is
-    -- disabled.
-    --
-    -- @since 0.5
-    disableLogging :: !(Maybe Bool),
     -- | Whether to display the command (key) names or the commands
     -- themselves.
     --
@@ -136,23 +131,21 @@ data TomlConfig = MkTomlConfig
 
 -- | @since 0.5
 instance Semigroup TomlConfig where
-  MkTomlConfig a b c d e f g <> MkTomlConfig a' b' c' d' e' f' g' =
+  MkTomlConfig a b c d e f <> MkTomlConfig a' b' c' d' e' f' =
     MkTomlConfig
       (a <|> a')
       (b <|> b')
       (c <|> c')
-      (d <|> d')
       -- NOTE: For aggregate types (i.e. cmd/file logging), use semigroup
       -- instance since we want decisions at the individual _field_ level.
+      (d <> d')
       (e <> e')
-      (f <> f')
-      (g <|> g')
+      (f <|> f')
 
 -- | @since 0.5
 instance Monoid TomlConfig where
   mempty =
     MkTomlConfig
-      empty
       empty
       empty
       empty
@@ -165,7 +158,6 @@ instance DecodeTOML TomlConfig where
   tomlDecoder =
     MkTomlConfig
       <$> decodeTimeout
-      <*> decodeDisableLogging
       <*> decodeCmdDisplay
       <*> decodeCmdNameTrunc
       <*> getFieldOptWith tomlDecoder "cmd-log"
@@ -209,10 +201,6 @@ decodeFileLogSizeMode :: Decoder (Maybe FileSizeMode)
 decodeFileLogSizeMode = getFieldOptWith tomlDecoder "size-mode"
 
 -- | @since 0.5
-decodeDisableLogging :: Decoder (Maybe Bool)
-decodeDisableLogging = getFieldOptWith tomlDecoder "log-disable"
-
--- | @since 0.5
 decodeLegend :: Decoder (Maybe (List KeyVal))
 decodeLegend = getFieldOptWith tomlDecoder "legend"
 
@@ -223,7 +211,6 @@ argsToTomlConfig = to a2c
     a2c args =
       MkTomlConfig
         { timeout = args ^. #timeout,
-          disableLogging = args ^. #disableLogging,
           cmdDisplay = args ^. #cmdDisplay,
           cmdNameTrunc = args ^. #cmdNameTrunc,
           cmdLogging = case args ^. #cmdLogging of

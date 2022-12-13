@@ -5,7 +5,6 @@ import Functional.Prelude
 import Functional.Success qualified as Success
 import Functional.SuccessCommandLogging qualified as SuccessCommandLogging
 import Functional.SuccessFileLogging qualified as SuccessFileLogging
-import Functional.SuccessNoLogging qualified as SuccessNoLogging
 import Functional.SuccessShowKey qualified as SuccessShowKey
 import Functional.TestArgs (TestArgs (..))
 import Functional.Timeout qualified as Timeout
@@ -27,7 +26,6 @@ specs args = do
     [ Success.spec args,
       SuccessCommandLogging.spec args,
       SuccessFileLogging.spec args,
-      SuccessNoLogging.spec,
       SuccessShowKey.spec args,
       Timeout.spec,
       Truncation.spec

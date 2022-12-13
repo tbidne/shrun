@@ -145,11 +145,6 @@ data Args = MkArgs
     --
     -- @since 0.1
     timeout :: !(Maybe Timeout),
-    -- | Global option for logging. If it is true then all logging is
-    -- disabled.
-    --
-    -- @since 0.1
-    disableLogging :: !(Maybe Bool),
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1
@@ -211,7 +206,6 @@ defaultArgs cmds =
     { timeout = empty,
       configPath = empty,
       noConfig = False,
-      disableLogging = empty,
       cmdDisplay = empty,
       cmdLogging = empty,
       cmdLogStripControl = empty,
@@ -255,7 +249,6 @@ argsParser =
     <$> configParser
     <*> noConfigParser
     <*> timeoutParser
-    <*> disableLoggingParser
     <*> commandDisplayParser
     <*> cmdTruncationParser
     <*> commandLoggingParser
@@ -597,21 +590,3 @@ commandsParser =
       ( T.pack
           <$> OA.argument OA.str (OA.metavar "Commands...")
       )
-
-disableLoggingParser :: Parser (Maybe Bool)
-disableLoggingParser =
-  OA.optional $
-    OA.flag'
-      True
-      ( mconcat
-          [ OA.short 'd',
-            OA.long "log-disable",
-            OA.help helpTxt
-          ]
-      )
-  where
-    helpTxt =
-      mconcat
-        [ "The option disables _all_ logging. This is primarily useful for ",
-          "debugging or testing where logging is undesirable."
-        ]
