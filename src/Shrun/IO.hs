@@ -27,7 +27,7 @@ import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Logging.Formatting qualified as LFormat
-import Shrun.Logging.RegionLogger (RegionLogger (Region, withConsoleRegion))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
 import Shrun.Logging.Types
   ( Log (..),
     LogLevel (..),
@@ -220,11 +220,11 @@ tryCommandLogging ::
     HasLogging env (Region m),
     MonadIORef m,
     MonadReader env m,
+    MonadRegionLogger m,
     MonadTBQueue m,
     MonadTime m,
     MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m
+    MonadUnliftIO m
   ) =>
   Command ->
   m (Either (RelativeTime, Stderr) RelativeTime)
@@ -240,7 +240,7 @@ tryCommandLogging command = do
         -- 3. CmdLogging: Create region and stream. Also stream to file if
         --    requested.
         (Just _, mFileLogging) -> \cmd ->
-          withConsoleRegion Linear $ \region ->
+          withRegion Linear $ \region ->
             tryCommandStream
               ( \log -> do
                   logConsole logging region log

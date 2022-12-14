@@ -11,7 +11,7 @@ where
 
 import Effects.MonadTime (MonadTime (..))
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Logging.RegionLogger (RegionLogger (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.Logging.Types (LogMode (..))
 import Shrun.Prelude
 import System.Console.Regions qualified as Regions
@@ -74,16 +74,16 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- | @since 0.1
 instance
   (MonadIO m, MonadMask m, MonadTerminal m) =>
-  RegionLogger (ShellT Env m)
+  MonadRegionLogger (ShellT Env m)
   where
   type Region (ShellT Env m) = ConsoleRegion
 
-  logFn = putTextLn
+  logGlobal = putTextLn
 
-  logModeToRegionFn LogModeSet cr = liftIO . Regions.setConsoleRegion cr
-  logModeToRegionFn LogModeAppend cr = liftIO . Regions.appendConsoleRegion cr
-  logModeToRegionFn LogModeFinish cr = liftIO . Regions.finishConsoleRegion cr
+  logRegion LogModeSet cr = liftIO . Regions.setConsoleRegion cr
+  logRegion LogModeAppend cr = liftIO . Regions.appendConsoleRegion cr
+  logRegion LogModeFinish cr = liftIO . Regions.finishConsoleRegion cr
 
-  withConsoleRegion = Regions.withConsoleRegion
+  withRegion = Regions.withConsoleRegion
 
-  displayConsoleRegions = Regions.displayConsoleRegions
+  displayRegions = Regions.displayConsoleRegions

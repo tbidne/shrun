@@ -29,7 +29,7 @@ import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Log qualified as Log
-import Shrun.Logging.RegionLogger (RegionLogger (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.Logging.Types
   ( FileLog,
     Log (..),
@@ -54,53 +54,34 @@ shrun ::
     MonadIORef m,
     MonadFsWriter m,
     MonadReader env m,
+    MonadRegionLogger m,
     MonadTBQueue m,
     MonadThread m,
     MonadTime m,
     MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m
+    MonadUnliftIO m
   ) =>
   m ()
-shrun = asks getCommands >>= initLogging
+shrun =
+  asks getCommands >>= \commands -> displayRegions $ do
+    logging <- asks getLogging
 
--- | Initializes the loggers and runs the commands.
-initLogging ::
-  ( HasCompletedCmds env,
-    HasLogging env (Region m),
-    HasTimeout env,
-    MonadCallStack m,
-    MonadFsWriter m,
-    MonadIORef m,
-    MonadReader env m,
-    MonadTBQueue m,
-    MonadThread m,
-    MonadTime m,
-    MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m
-  ) =>
-  NonEmptySeq Command ->
-  m ()
-initLogging commands = displayConsoleRegions $ do
-  logging <- asks getLogging
+    -- always start console logger
+    Async.withAsync pollQueueToConsole $ \consoleLogger -> do
+      -- run commands, running file logger if requested
+      maybe
+        (runCommands commands)
+        (runWithFileLogging commands)
+        (logging ^. #fileLogging)
 
-  -- always start console logger
-  Async.withAsync pollQueueToConsole $ \consoleLogger -> do
-    -- run commands, running file logger if requested
-    maybe
-      runCommands
-      runWithFileLogging
-      (logging ^. #fileLogging)
-
-    -- cancel consoleLogger, print remaining logs
-    Async.cancel consoleLogger
-    let consoleQueue = logging ^. #consoleLogging
-    flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
+      -- cancel consoleLogger, print remaining logs
+      Async.cancel consoleLogger
+      let consoleQueue = logging ^. #consoleLogging
+      flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
   where
-    runWithFileLogging fileLogging =
+    runWithFileLogging cmds fileLogging =
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
-        runCommands
+        runCommands cmds
 
         -- For both this and the consoleLogger, we want to ensure that
         -- all logs are handled i.e. we need to ensure the
@@ -113,12 +94,12 @@ initLogging commands = displayConsoleRegions $ do
       where
         (h, fileQueue) = fileLogging ^. #log
 
-    runCommands = do
+    runCommands cmds = do
       (totalTime, result) <- withTiming $ tryAny actionsWithTimer
       printFinalResult totalTime result
       where
-        actions = Async.mapConcurrently_ runCommand commands
-        actionsWithTimer = Async.race_ actions (counter commands)
+        actions = Async.mapConcurrently_ runCommand cmds
+        actionsWithTimer = Async.race_ actions (counter cmds)
 
 runCommand ::
   ( HasCompletedCmds env,
@@ -126,18 +107,18 @@ runCommand ::
     MonadCallStack m,
     MonadIORef m,
     MonadReader env m,
+    MonadRegionLogger m,
     MonadTBQueue m,
     MonadTime m,
     MonadTVar m,
-    MonadUnliftIO m,
-    RegionLogger m
+    MonadUnliftIO m
   ) =>
   Command ->
   m ()
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
 
-  withConsoleRegion Linear $ \r -> do
+  withRegion Linear $ \r -> do
     let (msg', lvl, timeElapsed) = case cmdResult of
           Left (t, MkStderr err) -> (": " <> err, LevelError, t)
           Right t -> ("", LevelSuccess, t)
@@ -154,14 +135,14 @@ printFinalResult ::
     HasLogging env (Region m),
     MonadIO m,
     MonadReader env m,
+    MonadRegionLogger m,
     MonadTBQueue m,
-    MonadTime m,
-    RegionLogger m
+    MonadTime m
   ) =>
   TimeSpec ->
   Either e b ->
   m ()
-printFinalResult totalTime result = withConsoleRegion Linear $ \r -> do
+printFinalResult totalTime result = withRegion Linear $ \r -> do
   case result of
     Left ex -> do
       let errMsg =
@@ -200,10 +181,10 @@ counter ::
     HasTimeout env,
     MonadIORef m,
     MonadReader env m,
+    MonadRegionLogger m,
     MonadTBQueue m,
     MonadThread m,
     MonadTVar m,
-    RegionLogger m,
     MonadTime m
   ) =>
   NonEmptySeq Command ->
@@ -213,7 +194,7 @@ counter cmds = do
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
   microsleep 100_000
-  withConsoleRegion Linear $ \r -> do
+  withRegion Linear $ \r -> do
     timeout <- asks getTimeout
     timer <- newIORef 0
     Loops.whileM_ (keepRunning cmds r timer timeout) $ do
@@ -289,8 +270,8 @@ pollQueueToConsole ::
   ( HasLogging env (Region m),
     MonadFsWriter m,
     MonadReader env m,
-    MonadTBQueue m,
-    RegionLogger m
+    MonadRegionLogger m,
+    MonadTBQueue m
   ) =>
   m void
 pollQueueToConsole = do
@@ -298,9 +279,9 @@ pollQueueToConsole = do
   -- FIXME: This needs to be atomic!
   forever $ tryReadTBQueueM queue >>= traverse_ printConsoleLog
 
-printConsoleLog :: RegionLogger m => LogRegion (Region m) -> m ()
-printConsoleLog (LogNoRegion consoleLog) = logFn (consoleLog ^. #unConsoleLog)
-printConsoleLog (LogRegion m r consoleLog) = logModeToRegionFn m r (consoleLog ^. #unConsoleLog)
+printConsoleLog :: MonadRegionLogger m => LogRegion (Region m) -> m ()
+printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
+printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
 
 pollQueueToFile ::
   ( MonadFsWriter m,

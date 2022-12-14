@@ -19,7 +19,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging.RegionLogger (RegionLogger (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.ShellT (ShellT)
 
 {-
@@ -79,15 +79,15 @@ instance HasCommands FuncEnv where
   getCommands = view #commands
 
 -- | @since 0.3
-instance RegionLogger (ShellT FuncEnv IO) where
+instance MonadRegionLogger (ShellT FuncEnv IO) where
   type Region (ShellT FuncEnv IO) = ()
 
-  logFn txt = do
+  logGlobal txt = do
     ls <- asks $ view #logs
     liftIO $ modifyIORef' ls (txt :)
 
-  logModeToRegionFn _ _ = logFn
+  logRegion _ _ = logGlobal
 
-  withConsoleRegion _layout regionToShell = regionToShell ()
+  withRegion _layout regionToShell = regionToShell ()
 
-  displayConsoleRegions = id
+  displayRegions = id

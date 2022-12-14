@@ -57,7 +57,7 @@ library
     Shrun.IO
     Shrun.Logging.Formatting
     Shrun.Logging.Log
-    Shrun.Logging.RegionLogger
+    Shrun.Logging.MonadRegionLogger
     Shrun.Logging.Types
     Shrun.Logging.Types.Internal
     Shrun.Prelude
