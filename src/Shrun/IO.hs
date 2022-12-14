@@ -14,7 +14,6 @@ module Shrun.IO
   )
 where
 
-import Control.Monad.Loops qualified as Loops
 import Data.ByteString qualified as BS
 import Data.Sequence ((<|))
 import Data.Text qualified as T
@@ -351,7 +350,7 @@ streamOutput ::
   m (Tuple2 ExitCode (Maybe ReadHandleResult))
 streamOutput logFn cmd recvH ph = do
   lastReadRef <- newIORef Nothing
-  exitCode <- Loops.untilJust $ do
+  exitCode <- U.untilJust $ do
     result <- readHandle recvH
     case result of
       ReadErr _ ->

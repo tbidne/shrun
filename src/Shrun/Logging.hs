@@ -1,16 +1,16 @@
 -- | Provides logging functionality. This is a high-level picture of how
--- logging works.
+-- logging works:
 --
--- 1. Shrun.IO sends logs per command based on the environment (i.e. is file
+-- 1. "Shrun.IO" sends logs per command based on the environment (i.e. is file
 --    logging on and/or do we log subcommands). If any logs are produced, they
 --    are formatted and sent directly to a queue.
 --
--- 2. Shrun also produces logs. These are "higher-level" e.g. success/failure
---    status of a given command, fatal errors, etc. Shrun uses the functions
+-- 2. "Shrun" also produces logs. These are "higher-level" e.g. success/failure
+--    status of a given command, fatal errors, etc. "Shrun" uses the functions
 --    here (e.g. putRegionLog) that handles deciding if a given log
 --    should be written to either/both of the console/file log queues.
 --
--- 3. Shrun has two threads -- one for each queue -- that poll their
+-- 3. "Shrun" has two threads -- one for each queue -- that poll their
 --    respective queues and writes logs as they are found. These do no
 --    environment checking; any logs that make it to the queue are eventually
 --    written.

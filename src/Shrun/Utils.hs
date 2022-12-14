@@ -19,7 +19,9 @@ module Shrun.Utils
 
     -- * Misc Utils
     parseByteText,
+    whileM_,
     whenJust,
+    untilJust,
   )
 where
 
@@ -56,7 +58,7 @@ diffTime :: TimeSpec -> TimeSpec -> Natural
 diffTime t1 t2 = view #sec $ diffTimeSpec t1 t2
 {-# INLINEABLE diffTime #-}
 
--- | Transforms a 'Timespec' into a 'RelativeTime'.
+-- | Transforms a 'TimeSpec' into a 'RelativeTime'.
 --
 -- @since 0.6
 timeSpecToRelTime :: TimeSpec -> RelativeTime
@@ -314,3 +316,26 @@ parseByteText txt =
 -- @since 0.7
 whenJust :: Applicative f => Maybe a -> (a -> f ()) -> f ()
 whenJust m action = maybe (pure ()) action m
+
+-- | @whileM_ mb ma@ executes @ma@ as long as @mb@ returns 'True'.
+--
+-- @since 0.1
+whileM_ :: Monad m => m Bool -> m a -> m ()
+whileM_ mb ma = go
+  where
+    go =
+      mb >>= \case
+        True -> ma *> go
+        False -> pure ()
+
+-- | Executes the monadic action until we receive a 'Just', returning the
+-- value.
+--
+-- @since 0.1
+untilJust :: Monad m => m (Maybe b) -> m b
+untilJust m = go
+  where
+    go =
+      m >>= \case
+        Nothing -> go
+        Just x -> pure x

@@ -9,7 +9,6 @@ module Shrun
   )
 where
 
-import Control.Monad.Loops qualified as Loops
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
@@ -200,7 +199,7 @@ counter = do
   withRegion Linear $ \r -> do
     timeout <- asks getTimeout
     timer <- newIORef 0
-    Loops.whileM_ (keepRunning r timer timeout) $ do
+    Utils.whileM_ (keepRunning r timer timeout) $ do
       elapsed <- do
         sleep 1
         modifyIORef' timer (+ 1)

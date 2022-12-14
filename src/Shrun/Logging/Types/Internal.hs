@@ -13,7 +13,7 @@ where
 
 import Shrun.Prelude
 
--- | 'FileLog' is a textual representation of a given 'Log' after it has
+-- | 'FileLog' is a textual representation of a given log after it has
 -- been formatted. No coloring is included, but we include the prefix
 -- (e.g. Warn) along with a timestamp.
 --
@@ -34,7 +34,7 @@ makeFieldLabelsWith
   (noPrefixFieldLabels & generateUpdateableOptics .~ False)
   ''FileLog
 
--- | 'ConsoleLog' is a textual representation of a given 'Log' after it has
+-- | 'ConsoleLog' is a textual representation of a given log after it has
 -- been formatted.
 --
 -- @since 0.7

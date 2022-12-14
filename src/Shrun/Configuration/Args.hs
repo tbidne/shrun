@@ -157,7 +157,7 @@ data Args = MkArgs
     -- @since 0.1
     cmdLogging :: !(Maybe Bool),
     -- | Determines to what extent we should remove control characters
-    -- from logs.
+    -- from command logs.
     --
     -- @since 0.3
     cmdLogStripControl :: !(Maybe StripControl),
@@ -169,7 +169,8 @@ data Args = MkArgs
     --
     -- @since 0.1
     fileLogging :: !(Maybe FilePathDefault),
-    -- | 'stripControl' for the log file.
+    -- | Determines to what extent we should remove control characters
+    -- from file logs.
     --
     -- @since 0.5
     fileLogStripControl :: !(Maybe StripControl),

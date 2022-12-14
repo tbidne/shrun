@@ -78,7 +78,6 @@ library
     , monad-callstack       ^>=0.1
     , monad-fs              ^>=0.1
     , monad-ioref           ^>=0.1
-    , monad-loops           >=0.3      && <0.5
     , monad-stm             ^>=0.1
     , monad-terminal        ^>=0.1
     , monad-thread          ^>=0.1

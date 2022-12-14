@@ -97,7 +97,7 @@ instance Exception CyclicKeyError where
 -- :}
 -- Right ("one" :|^ fromList ["two","other","blah"])
 --
--- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyErr'
+-- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyError'
 -- will be returned.
 --
 -- >>> :{
