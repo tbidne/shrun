@@ -18,7 +18,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command)
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Logging (MonadRegionLogger (..))
 import Shrun.ShellT (ShellT)
 
 {-

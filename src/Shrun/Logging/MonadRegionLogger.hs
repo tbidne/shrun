@@ -3,8 +3,7 @@
 --
 -- @since 0.1
 module Shrun.Logging.MonadRegionLogger
-  ( -- * Typeclass for logging
-    MonadRegionLogger (..),
+  ( MonadRegionLogger (..),
   )
 where
 
@@ -24,17 +23,17 @@ class Monad m => MonadRegionLogger m where
 
   -- | Pushes a log to the "global" region.
   --
-  -- @since 0.1
+  -- @since 0.7
   logGlobal :: Text -> m ()
 
   -- | Pushes a log to the region.
   --
-  -- @since 0.3
+  -- @since 0.7
   logRegion :: LogMode -> Region m -> Text -> m ()
 
   -- | Runs an @m a@ with a region.
   --
-  -- @since 0.5
+  -- @since 0.7
   withRegion :: RegionLayout -> (Region m -> m a) -> m a
 
   -- | Displays the regions. This should wrap whatever top-level logic

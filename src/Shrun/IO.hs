@@ -26,13 +26,14 @@ import GHC.IO.Handle qualified as Handle
 import Shrun.Configuration.Env.Types (HasCommands (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
-import Shrun.Logging.Formatting qualified as LFormat
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
-import Shrun.Logging.Types
+import Shrun.Logging
   ( Log (..),
     LogLevel (..),
     LogMode (..),
     LogRegion (LogRegion),
+    MonadRegionLogger (..),
+    formatConsoleLog,
+    formatFileLog,
   )
 import Shrun.Prelude
 import Shrun.Utils qualified as U
@@ -254,11 +255,11 @@ tryCommandLogging command = do
   where
     logConsole logging region log = do
       let consoleQueue = logging ^. #consoleLogging
-          formatted = LFormat.formatConsoleLog logging log
+          formatted = formatConsoleLog logging log
       writeTBQueueM consoleQueue (LogRegion (log ^. #mode) region formatted)
 
     logFile fileLogging log = do
-      formatted <- LFormat.formatFileLog fileLogging log
+      formatted <- formatFileLog fileLogging log
       writeTBQueueM (fileLogging ^. #log % _2) formatted
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output

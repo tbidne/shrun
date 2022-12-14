@@ -11,8 +11,7 @@ where
 
 import Effects.MonadTime (MonadTime (..))
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
-import Shrun.Logging.Types (LogMode (..))
+import Shrun.Logging (LogMode (..), MonadRegionLogger (..))
 import Shrun.Prelude
 import System.Console.Regions qualified as Regions
 

@@ -28,7 +28,6 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command (..))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types (Log (..), LogLevel (..))
-import Shrun.Logging.Types qualified as Log
 import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
 import Text.Read qualified as TR
@@ -162,7 +161,7 @@ prefixProps =
       log@MkLog {lvl} <- forAll LGens.genLog
       let result = formatConsoleLog env log
       annotate $ "Result: " <> T.unpack result
-      let pfx = Log.levelToPrefix lvl
+      let pfx = Formatting.levelToPrefix lvl
       annotate $ T.unpack pfx
       assert $ pfx `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -306,7 +305,7 @@ fileLogPrefixProps =
     property $ do
       log@MkLog {lvl} <- forAll LGens.genLog
       let result = formatFileLog log
-      let pfx = Log.levelToPrefix lvl
+      let pfx = Formatting.levelToPrefix lvl
       annotate $ T.unpack pfx
       assert $ T.isInfixOf pfx result
 
@@ -329,7 +328,7 @@ shapeProps =
           expected =
             mconcat
               [ Formatting.brackets False sysTime,
-                Formatting.brackets False (Log.logToPrefix log),
+                Formatting.brackets False (Formatting.logToPrefix log),
                 Formatting.brackets True (maybe "received Nothing" (view #command) cmd),
                 T.strip msg,
                 "\n"

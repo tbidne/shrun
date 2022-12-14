@@ -7,6 +7,12 @@ module Shrun.Logging.Formatting
     formatFileLog,
 
     -- * Low-level
+    logToColor,
+    logToPrefix,
+    levelToColor,
+    levelToPrefix,
+
+    -- ** Utils
     displayCmd,
     stripChars,
     brackets,
@@ -26,7 +32,6 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.Logging.Types (Log (..), LogLevel (..))
-import Shrun.Logging.Types qualified as Log
 import Shrun.Logging.Types.Internal
   ( ConsoleLog (UnsafeConsoleLog),
     FileLog (UnsafeFileLog),
@@ -34,6 +39,7 @@ import Shrun.Logging.Types.Internal
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 import Shrun.Utils qualified as Utils
+import System.Console.Pretty (Color (..))
 import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.
@@ -82,8 +88,8 @@ formatConsoleLog logging log =
       (LevelSubCommand, Just m) -> U.truncateIfNeeded m
       _ -> id
 
-    colorize = P.color $ Log.logToColor log
-    prefix = Log.logToPrefix log
+    colorize = P.color $ logToColor log
+    prefix = logToPrefix log
 
 maybeApply :: (a -> b -> b) -> Maybe a -> b -> b
 maybeApply = maybe id
@@ -117,7 +123,7 @@ formatFileLog fileLogging log = do
   where
     msgStripped = stripChars (log ^. #msg) (Just stripControl)
     stripControl = fileLogging ^. #stripControl
-    prefix = Log.logToPrefix log
+    prefix = logToPrefix log
 
 -- | Pretty show for 'Command'. If the command has a key, and 'CmdDisplay' is
 -- 'ShowKey' then we return the key. Otherwise we return the command itself.
@@ -169,3 +175,41 @@ stripChars txt = \case
 brackets :: Bool -> Text -> Text
 brackets False s = "[" <> s <> "]"
 brackets True s = "[" <> s <> "] "
+
+-- | Transforms log to a color based on its 'LogLevel'.
+--
+-- @since 0.1
+logToColor :: Log -> Color
+logToColor = levelToColor . view #lvl
+{-# INLINEABLE logToColor #-}
+
+-- | Transforms log to a prefix based on its 'LogLevel'.
+--
+-- @since 0.1
+logToPrefix :: Log -> Text
+logToPrefix = levelToPrefix . view #lvl
+{-# INLINEABLE logToPrefix #-}
+
+-- | Maps 'LogLevel' to 'Color'.
+--
+-- @since 0.1
+levelToColor :: LogLevel -> Color
+levelToColor LevelSubCommand = White
+levelToColor LevelFinished = Blue
+levelToColor LevelTimer = Cyan
+levelToColor LevelSuccess = Green
+levelToColor LevelWarn = Yellow
+levelToColor LevelError = Red
+levelToColor LevelFatal = Red
+
+-- | Maps 'LogLevel' to \'Prefix\'.
+--
+-- @since 0.1
+levelToPrefix :: LogLevel -> Text
+levelToPrefix LevelSubCommand = "Command"
+levelToPrefix LevelFinished = "Finished"
+levelToPrefix LevelTimer = "Timer"
+levelToPrefix LevelSuccess = "Success"
+levelToPrefix LevelWarn = "Warn"
+levelToPrefix LevelError = "Error"
+levelToPrefix LevelFatal = "Fatal"

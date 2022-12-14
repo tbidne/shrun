@@ -25,16 +25,23 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
-import Shrun.Logging.Formatting qualified as LFormat
-import Shrun.Logging.Log qualified as Log
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
-import Shrun.Logging.Types
+import Shrun.Logging
   ( FileLog,
-    Log (..),
-    LogLevel (..),
-    LogMode (..),
+    Log (MkLog, cmd, lvl, mode, msg),
+    LogLevel
+      ( LevelError,
+        LevelFatal,
+        LevelFinished,
+        LevelSuccess,
+        LevelTimer,
+        LevelWarn
+      ),
+    LogMode (LogModeFinish, LogModeSet),
     LogRegion (..),
+    MonadRegionLogger (..),
   )
+import Shrun.Logging qualified as Logging
+import Shrun.Logging.Formatting qualified as LogFmt
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
@@ -119,7 +126,7 @@ runCommand cmd = do
     let (msg', lvl, timeElapsed) = case cmdResult of
           Left (t, MkStderr err) -> (": " <> err, LevelError, t)
           Right t -> ("", LevelSuccess, t)
-    Log.putRegionLog r $
+    Logging.putRegionLog r $
       MkLog
         { cmd = Just cmd,
           msg = T.pack (formatRelativeTime timeElapsed) <> msg',
@@ -154,7 +161,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
                 lvl = LevelFatal,
                 mode = LogModeFinish
               }
-      Log.putRegionLog r fatalLog
+      Logging.putRegionLog r fatalLog
     Right _ -> pure ()
 
   -- FIXME: It appears this does not always make it to the file, possibly
@@ -170,7 +177,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
             mode = LogModeFinish
           }
 
-  Log.putRegionLog r finalLog
+  Logging.putRegionLog r finalLog
 
 counter ::
   ( HasCommands env,
@@ -217,7 +224,7 @@ logCounter region elapsed = do
             lvl = LevelTimer,
             mode = LogModeSet
           }
-  Log.regionLogToConsoleQueue region logging lg
+  Logging.regionLogToConsoleQueue region logging lg
 
 keepRunning ::
   forall m env.
@@ -245,10 +252,10 @@ keepRunning region timer mto = do
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ toList allCmds
           incompleteCmds = Set.difference allCmdsSet completedCmdsSet
-          toTxtList acc cmd = LFormat.displayCmd cmd cmdDisplay : acc
+          toTxtList acc cmd = LogFmt.displayCmd cmd cmdDisplay : acc
           unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
 
-      Log.putRegionLog region $
+      Logging.putRegionLog region $
         MkLog
           { cmd = Nothing,
             msg = "Timed out, cancelling remaining commands: " <> unfinishedCmds,

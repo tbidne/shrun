@@ -55,8 +55,8 @@ library
     Shrun.Data.Supremum
     Shrun.Data.Timeout
     Shrun.IO
+    Shrun.Logging
     Shrun.Logging.Formatting
-    Shrun.Logging.Log
     Shrun.Logging.MonadRegionLogger
     Shrun.Logging.Types
     Shrun.Logging.Types.Internal
