@@ -9,14 +9,15 @@ module Shrun.Logging.Log
 where
 
 import Effects.MonadTime (MonadTime (..))
-import Shrun.Configuration.Env.Types (HasLogging (..), Logging)
+import Shrun.Configuration.Env.Types (HasLogging (..), Logging, FileLogging)
 import Shrun.Logging.Formatting qualified as LFormat
 import Shrun.Logging.Types (Log (..), LogRegion (..))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 
--- | Conditionally writes a log to the console region and file, depending on
--- the 'HasLogging' environment.
+-- | Unconditionally writes a log to the console queue. Conditionally
+-- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
+-- present.
 --
 -- @since 0.3
 putRegionLog ::
@@ -30,12 +31,10 @@ putRegionLog ::
   m ()
 putRegionLog region lg =
   asks getLogging >>= \logging -> do
-    logToFileQueue logging lg
     regionLogToConsoleQueue region logging lg
-{-# INLINEABLE putRegionLog #-}
+    U.whenJust (logging ^. #fileLogging) (`logToFileQueue` lg)
 
--- | @maybePrintLog fn log@ applies @fn@ if the @log@ does __not__ have dest
--- 'LogDestFile'. Otherwise does nothing.
+-- | Writes the log to the console queue.
 --
 -- @since 0.7
 regionLogToConsoleQueue ::
@@ -51,18 +50,16 @@ regionLogToConsoleQueue region logging log =
     queue = logging ^. #consoleLogging
     formatted = LFormat.formatConsoleLog logging log
 
--- | Sends the log to the file queue as long as the dest is not 'LogDestConsole'.
+-- | Writes the log to the file queue.
 --
 -- @since 0.7
 logToFileQueue ::
   ( MonadTBQueue m,
     MonadTime m
   ) =>
-  Logging r ->
+  FileLogging ->
   Log ->
   m ()
-logToFileQueue logging log =
-  U.whenJust (logging ^. #fileLogging) $ \fl -> do
-    formatted <- LFormat.formatFileLog fl log
-    writeTBQueueM (fl ^. #log % _2) formatted
-{-# INLINEABLE logToFileQueue #-}
+logToFileQueue fileLogging log = do
+  formatted <- LFormat.formatFileLog fileLogging log
+  writeTBQueueM (fileLogging ^. #log % _2) formatted

@@ -13,8 +13,9 @@ where
 
 import Shrun.Prelude
 
--- | 'FileLog' is a textual representation of a given 'Log'. No coloring
--- is included, but we include the prefix (e.g. Warn) along with a timestamp.
+-- | 'FileLog' is a textual representation of a given 'Log' after it has
+-- been formatted. No coloring is included, but we include the prefix
+-- (e.g. Warn) along with a timestamp.
 --
 -- @since 0.7
 newtype FileLog = UnsafeFileLog
@@ -33,7 +34,8 @@ makeFieldLabelsWith
   (noPrefixFieldLabels & generateUpdateableOptics .~ False)
   ''FileLog
 
--- | 'ConsoleLog' is a textual representation of a given 'Log'.
+-- | 'ConsoleLog' is a textual representation of a given 'Log' after it has
+-- been formatted.
 --
 -- @since 0.7
 newtype ConsoleLog = UnsafeConsoleLog
@@ -55,7 +57,8 @@ makeFieldLabelsWith
 -- NOTE: LogMode exists here so we do not have cyclic dependencies w/
 -- RegionLogger
 
--- | Determines the logging behavior.
+-- | Determines the logging behavior. This option only affects console logs;
+-- File logs are unaffected.
 --
 -- @since 0.1
 data LogMode

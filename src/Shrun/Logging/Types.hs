@@ -5,21 +5,23 @@
 --
 -- @since 0.3
 module Shrun.Logging.Types
-  ( -- * Types for logging
+  ( -- * Basic Types
     Log (..),
     LogMode (..),
     LogLevel (..),
+
+    -- * Console Logs
+    ConsoleLog,
     LogRegion (..),
+
+    -- * File Logs
+    FileLog,
 
     -- * Utility functions for associate levels to colors/prefixes.
     logToColor,
     logToPrefix,
     levelToColor,
     levelToPrefix,
-
-    -- * Log Queue
-    FileLog,
-    ConsoleLog,
   )
 where
 
@@ -27,6 +29,22 @@ import Shrun.Data.Command (Command)
 import Shrun.Logging.Types.Internal (ConsoleLog, FileLog, LogMode (..))
 import Shrun.Prelude
 import System.Console.Pretty (Color (..))
+
+-- NOTE: High-level picture of how logging works.
+--
+-- 1. Shrun.IO sends logs per command based on the environment (i.e. is file
+--    logging on and/or do we log subcommands). If any logs are produced, they
+--    are formatted and sent directly to a queue.
+--
+-- 2. Shrun also produces logs. These are based on "higher-level" logs, e.g.
+--    success/failure status of a given command, fatal errors, etc. Shrun uses
+--    functions in Shrun.Logging.Log that handles deciding if a given log
+--    should be written to either/both of the console/file log queues.
+--
+-- 3. Shrun has two threads -- one for each queue -- that poll their
+--    respective queues and writes logs as they are found. These do no
+--    environment checking; any logs that make it to the queue are eventually
+--    written.
 
 -- | Determines the logging level.
 --
@@ -57,7 +75,7 @@ data LogLevel
       Show
     )
 
--- | Log with possible region.
+-- | 'ConsoleLog' with possible region.
 --
 -- @since 0.7
 data LogRegion r
@@ -71,7 +89,7 @@ data LogRegion r
     LogNoRegion ConsoleLog
 
 -- | Captures the relevant information concerning a specific log
--- (i.e. text, level, and mode).
+-- (i.e. command, text, level, and mode).
 --
 -- @since 0.1
 data Log = MkLog
