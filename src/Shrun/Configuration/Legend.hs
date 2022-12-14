@@ -90,9 +90,9 @@ instance Exception CyclicKeyError where
 --   let m = Map.fromList
 --         [ ("cmd1", singleton "one"),
 --           ("cmd2", singleton "two"),
---           ("all", unsafeFromList ["cmd1","cmd2","other"])
+--           ("all", ["cmd1","cmd2","other"])
 --         ]
---       cmds = translateCommands m (unsafeFromList ["all", "blah"])
+--       cmds = translateCommands m (["all", "blah"])
 --   in (fmap . fmap) (view #command) cmds
 -- :}
 -- Right ("one" :|^ fromList ["two","other","blah"])
@@ -156,7 +156,7 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           -- the first cycle)
           maybeCyclicVal = headMaybe $ Set.toList intersect
           path' = path <> LTBuilder.fromText line <> " -> "
-          neToSet = Set.fromList . NESeq.toList
+          neToSet = Set.fromList . toList
 
 builderToPath :: Builder -> Text -> Text -> Text
 builderToPath path l v =

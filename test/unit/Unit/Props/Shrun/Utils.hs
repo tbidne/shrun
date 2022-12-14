@@ -4,7 +4,6 @@ module Unit.Props.Shrun.Utils
   )
 where
 
-import Hedgehog qualified as H
 import Shrun.Utils qualified as U
 import Test.Tasty qualified as T
 import Unit.Prelude
@@ -17,8 +16,8 @@ props = T.testGroup "Shrun.Utils" [diffTimeProps]
 diffTimeProps :: TestTree
 diffTimeProps =
   testPropertyNamed "diffTime" "diffTimeProps" $
-    H.property $ do
-      t1 <- H.forAll PGens.genTimeSpec
-      t2 <- H.forAll PGens.genTimeSpec
+    property $ do
+      t1 <- forAll PGens.genTimeSpec
+      t2 <- forAll PGens.genTimeSpec
       let result = U.diffTime t1 t2
-      H.assert $ result >= 0
+      assert $ result >= 0

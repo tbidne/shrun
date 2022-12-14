@@ -39,8 +39,7 @@ import Shrun.Configuration.Env.Types
     Truncation (..),
   )
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
-import Shrun.Data.NonEmptySeq qualified as NESeq
+import Shrun.Data.NonEmptySeq (NonEmptySeq (..), unsafeFromList)
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
@@ -585,7 +584,7 @@ commandDisplayParser =
 
 commandsParser :: Parser (NonEmptySeq Text)
 commandsParser =
-  NESeq.unsafeFromList
+  unsafeFromList
     <$> OA.some
       ( T.pack
           <$> OA.argument OA.str (OA.metavar "Commands...")

@@ -9,12 +9,19 @@ module Unit.Props.Shrun.Logging.Formatting
   )
 where
 
+import Data.Functor.Identity (Identity (..))
+import Data.String (IsString)
 import Data.Text qualified as T
+import Data.Time (midday)
+import Data.Time.LocalTime (utc)
+import Effects.MonadTime (LocalTime (..), MonadTime (..), ZonedTime (..))
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
+import Refined qualified as R
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
+    FileLogging (..),
     HasLogging (..),
     Logging (..),
     StripControl (..),
@@ -25,7 +32,9 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types (Log (..), LogLevel (..))
 import Shrun.Logging.Types qualified as Log
+import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
+import Text.Read qualified as TR
 import Unit.Prelude
 import Unit.Props.Shrun.Logging.Generators qualified as LGens
 
@@ -121,6 +130,14 @@ props :: TestTree
 props =
   T.testGroup
     "Shrun.Logging.Formatting"
+    [ consoleLogProps,
+      fileLogProps
+    ]
+
+consoleLogProps :: TestTree
+consoleLogProps =
+  T.testGroup
+    "Console logs"
     [ messageProps,
       prefixProps,
       displayCmdProps,
@@ -135,7 +152,7 @@ messageProps =
     property $ do
       env <- forAll genEnv
       log@MkLog {msg} <- forAll LGens.genLog
-      let result = formatLog env log
+      let result = formatConsoleLog env log
       annotate $ T.unpack result
       assert $ T.strip msg `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -145,7 +162,7 @@ prefixProps =
     property $ do
       env <- forAll genEnv
       log@MkLog {lvl} <- forAll LGens.genLog
-      let result = formatLog env log
+      let result = formatConsoleLog env log
       annotate $ "Result: " <> T.unpack result
       let pfx = Log.levelToPrefix lvl
       annotate $ T.unpack pfx
@@ -157,7 +174,7 @@ displayCmdProps =
     property $ do
       env <- forAll genEnvDispCmd
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
-      let result = formatLog env log
+      let result = formatConsoleLog env log
       annotate $ "Result: " <> T.unpack result
       assert $ cmd' `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -167,7 +184,7 @@ displayKeyProps =
     property $ do
       env <- forAll genEnvDispKey
       log@MkLog {cmd = Just (MkCommand (Just key) _)} <- forAll LGens.genLogWithCmdKey
-      let result = formatLog env log
+      let result = formatConsoleLog env log
       annotate $ "Result: " <> T.unpack result
       assert $ key `T.isInfixOf` result || "..." `T.isInfixOf` result
 
@@ -179,7 +196,7 @@ cmdTruncProps =
       cmd' <- MkCommand Nothing <$> forAll genLongCmdText
       log <- forAll LGens.genLog
       let log' = log {cmd = Just cmd'}
-          result = formatLog env log'
+          result = formatConsoleLog env log'
       annotate $ "Result: " <> T.unpack result
       assert $ "...]" `T.isInfixOf` result
 
@@ -193,14 +210,14 @@ lineTruncProps =
 
       -- only perform line truncation for LevelSubCommand (also requires a command)
       let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelSubCommand}
-          result = formatLog env log'
+          result = formatConsoleLog env log'
 
       annotate $ "Result: " <> T.unpack result
       assert $ "..." `T.isInfixOf` result
       diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
 
-formatLog :: forall env. HasLogging env () => env -> Log -> Text
-formatLog env =
+formatConsoleLog :: forall env. HasLogging env () => env -> Log -> Text
+formatConsoleLog env =
   view #unConsoleLog
     . Formatting.formatConsoleLog (getLogging @env @() env)
 
@@ -216,3 +233,119 @@ formatLog env =
 -- https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
 colorLen :: Int
 colorLen = 10
+
+-- The mock time our 'MonadTime' returns.
+sysTime :: IsString a => a
+sysTime = "2022-02-20 23:47:39"
+
+-- Refined variant of 'sysTime'. Includes brackets around the string
+-- for use when checking formatting.
+sysTimeNE :: Refined R.NonEmpty Text
+sysTimeNE = $$(R.refineTH "[2022-02-20 23:47:39]")
+
+newtype MockEnv = MkMockEnv ()
+
+instance HasLogging MockEnv () where
+  getLogging _ =
+    MkLogging
+      { cmdDisplay = ShowKey,
+        cmdNameTrunc = Nothing,
+        cmdLogging = Nothing,
+        consoleLogging = error err,
+        fileLogging = Nothing
+      }
+    where
+      err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using consoleLogging"
+
+-- Monad with mock implementation for 'MonadTime'.
+newtype MockTime a = MkMockTime
+  { runMockTime :: a
+  }
+  deriving stock (Eq, Generic, Show)
+  deriving (Applicative, Functor, Monad) via Identity
+
+instance MonadTime MockTime where
+  getSystemTime = pure $ TR.read sysTime
+  getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
+  getMonotonicTime = pure 0
+
+instance MonadReader MockEnv MockTime where
+  ask = pure $ MkMockEnv ()
+  local _ = id
+
+fileLogProps :: TestTree
+fileLogProps =
+  T.testGroup
+    "File logs"
+    [ timestampProps,
+      fileLogMessageProps,
+      fileLogPrefixProps,
+      commandProps,
+      shapeProps
+    ]
+
+timestampProps :: TestTree
+timestampProps =
+  testPropertyNamed "Starts with timestamp" "timestampProps" $
+    property $ do
+      log <- forAll LGens.genLog
+      let result = formatFileLog log
+          (res, _) = Utils.breakStripPoint sysTimeNE result
+      "" === res
+
+fileLogMessageProps :: TestTree
+fileLogMessageProps =
+  testPropertyNamed "Includes message" "messageProps" $
+    property $ do
+      log@MkLog {msg} <- forAll LGens.genLog
+      let result = formatFileLog log
+      annotate $ T.unpack result
+      assert $ T.isInfixOf (T.strip msg) result
+
+fileLogPrefixProps :: TestTree
+fileLogPrefixProps =
+  testPropertyNamed "Formats prefix" "prefixProps" $
+    property $ do
+      log@MkLog {lvl} <- forAll LGens.genLog
+      let result = formatFileLog log
+      let pfx = Log.levelToPrefix lvl
+      annotate $ T.unpack pfx
+      assert $ T.isInfixOf pfx result
+
+commandProps :: TestTree
+commandProps =
+  testPropertyNamed "Formats command" "commandProps" $
+    property $ do
+      log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
+      let cmdTxt = "[" <> cmd' <> "]"
+          result = formatFileLog log
+      annotate $ T.unpack result
+      assert $ T.isInfixOf cmdTxt result
+
+shapeProps :: TestTree
+shapeProps =
+  testPropertyNamed "Formats shape" "shapeProps" $
+    property $ do
+      log@MkLog {cmd, msg} <- forAll LGens.genLogWithCmd
+      let result = formatFileLog log
+          expected =
+            mconcat
+              [ Formatting.brackets False sysTime,
+                Formatting.brackets False (Log.logToPrefix log),
+                Formatting.brackets True (maybe "received Nothing" (view #command) cmd),
+                T.strip msg,
+                "\n"
+              ]
+      annotate $ T.unpack expected
+      annotate $ T.unpack result
+      expected === result
+
+formatFileLog :: Log -> Text
+formatFileLog log =
+  view #unFileLog $
+    Formatting.formatFileLog @MockTime fileLogging log ^. #runMockTime
+
+fileLogging :: FileLogging
+fileLogging = MkFileLogging StripControlNone (error err)
+  where
+    err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLogging"

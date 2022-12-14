@@ -155,6 +155,17 @@ stripChars txt = \case
   _ -> Utils.stripControlSmart txt
 {-# INLINE stripChars #-}
 
+-- | Surrounds text with brackets, appending a space if the boolean is 'True'.
+--
+-- ==== __Examples__
+--
+-- >>> brackets False "text"
+-- "[text]"
+--
+-- >>> brackets True "text"
+-- "[text] "
+--
+-- @since 0.7
 brackets :: Bool -> Text -> Text
 brackets False s = "[" <> s <> "]"
 brackets True s = "[" <> s <> "] "

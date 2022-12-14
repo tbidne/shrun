@@ -25,7 +25,6 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
-import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
 import Shrun.Logging.Formatting qualified as LFormat
@@ -139,14 +138,14 @@ runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
 
   withConsoleRegion Linear $ \r -> do
-    let (msg', lvl', t') = case cmdResult of
+    let (msg', lvl, timeElapsed) = case cmdResult of
           Left (t, MkStderr err) -> (": " <> err, LevelError, t)
           Right t -> ("", LevelSuccess, t)
     Log.putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = T.pack (formatRelativeTime t') <> msg',
-          lvl = lvl',
+          msg = T.pack (formatRelativeTime timeElapsed) <> msg',
+          lvl,
           mode = LogModeFinish
         }
 
@@ -267,7 +266,7 @@ keepRunning allCmds region timer mto = do
       completedCmds <- readTVarM completedCmdsTVar
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
-          allCmdsSet = Set.fromList $ NESeq.toList allCmds
+          allCmdsSet = Set.fromList $ toList allCmds
           incompleteCmds = Set.difference allCmdsSet completedCmdsSet
           toTxtList acc cmd = LFormat.displayCmd cmd cmdDisplay : acc
           unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
@@ -296,6 +295,7 @@ pollQueueToConsole ::
   m void
 pollQueueToConsole = do
   queue <- asks (view #consoleLogging . getLogging)
+  -- FIXME: This needs to be atomic!
   forever $ tryReadTBQueueM queue >>= traverse_ printConsoleLog
 
 printConsoleLog :: RegionLogger m => LogRegion (Region m) -> m ()
@@ -308,6 +308,7 @@ pollQueueToFile ::
   ) =>
   FileLogging ->
   m void
+-- FIXME: This needs to be atomic!
 pollQueueToFile fileLogging = forever $ tryReadTBQueueM queue >>= traverse_ (logFile h)
   where
     (h, queue) = fileLogging ^. #log

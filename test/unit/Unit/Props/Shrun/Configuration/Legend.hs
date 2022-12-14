@@ -6,13 +6,11 @@ import Data.HashMap.Strict qualified as Map
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
-import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Shrun.Configuration.Legend (LegendMap, linesToMap, translateCommands)
 import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
-import Shrun.Data.NonEmptySeq (NonEmptySeq)
-import Shrun.Data.NonEmptySeq qualified as NESeq
+import Shrun.Data.NonEmptySeq (NonEmptySeq, unsafeFromList)
 import Unit.Prelude
 
 -- | Entry point for Shrun.Legend.Internal property tests.
@@ -34,27 +32,27 @@ linesToMapProps =
 successProps :: TestTree
 successProps =
   testPropertyNamed "linesToMap success props" "successProps" $
-    H.property $ do
-      commands <- H.forAll genGoodLines
+    property $ do
+      commands <- forAll genGoodLines
       let result = linesToMap commands
       case result of
         Left err -> do
-          H.footnoteShow err
-          H.failure
+          footnoteShow err
+          failure
         Right legend -> do
-          H.annotate "Unique keys in original list should match legend"
+          annotate "Unique keys in original list should match legend"
           verifySize commands legend
 
 verifySize :: List KeyVal -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do
-  H.annotateShow commands
+  annotateShow commands
   let numUniqueKeys = length $ Set.fromList (fmap (view #key) commands)
       numLegendKeys = length $ Map.keys legend
 
-  H.annotate $ "Commands: " <> show commands
-  H.annotate $ "Legend: " <> show legend
-  H.annotate $ "numUniqueKeys: " <> show numUniqueKeys
-  H.annotate $ "numLegendKeys: " <> show numLegendKeys
+  annotate $ "Commands: " <> show commands
+  annotate $ "Legend: " <> show legend
+  annotate $ "numUniqueKeys: " <> show numUniqueKeys
+  annotate $ "numLegendKeys: " <> show numLegendKeys
   numLegendKeys === numUniqueKeys
 
 genGoodLines :: MonadGen m => m (List KeyVal)
@@ -92,21 +90,21 @@ genVal = Gen.text range Gen.latin1
 translateProps :: TestTree
 translateProps =
   testPropertyNamed "translateCommands includes everything" "translateProps" $
-    H.property $ do
-      (legend, origCmds) <- H.forAll genLegendCommands
+    property $ do
+      (legend, origCmds) <- forAll genLegendCommands
       let legendKeySet = Set.fromList $ Map.keys legend
           maybeFinalCmds = translateCommands legend origCmds
 
       case maybeFinalCmds of
         Left err -> do
-          H.footnote $ "Received a LegendErr: " <> show err
-          H.failure
+          footnote $ "Received a LegendErr: " <> show err
+          failure
         Right finalCmds -> do
-          let finalCmdsSet = Set.fromList $ NESeq.toList $ fmap (view #command) finalCmds
+          let finalCmdsSet = Set.fromList $ toList $ fmap (view #command) finalCmds
               combinedKeySet = Set.union legendKeySet finalCmdsSet
 
-          H.footnote $ "Final commands: " <> show finalCmdsSet
-          H.footnote $ "Legend: " <> show legendKeySet
+          footnote $ "Final commands: " <> show finalCmdsSet
+          footnote $ "Legend: " <> show legendKeySet
           noCommandsMissing combinedKeySet origCmds
 
 -- Verify all of our original commands exist in the union:
@@ -117,8 +115,8 @@ noCommandsMissing allKeys = void . traverse failIfMissing
     failIfMissing cmd
       | Set.member cmd allKeys = pure ()
       | otherwise = do
-          H.footnote $ "Missing command: " <> show cmd
-          H.failure
+          footnote $ "Missing command: " <> show cmd
+          failure
 
 genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMap, NonEmptySeq Text)
 genLegendCommands = (,) <$> genLegend <*> genCommands
@@ -158,7 +156,7 @@ genKeyVal = do
   pure $ unsafeKeyVal k [v]
 
 genCommands :: MonadGen m => m (NonEmptySeq Text)
-genCommands = NESeq.unsafeFromList <$> Gen.list range genCommand
+genCommands = unsafeFromList <$> Gen.list range genCommand
   where
     range = Range.linearFrom 1 1 50
 

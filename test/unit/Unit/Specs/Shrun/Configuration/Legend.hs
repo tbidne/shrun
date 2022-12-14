@@ -13,7 +13,7 @@ import Shrun.Configuration.Legend
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Legend (unsafeKeyVal)
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..), singleton, unsafeFromList)
+import Shrun.Data.NonEmptySeq (NonEmptySeq (..), singleton)
 import Shrun.Data.NonEmptySeq qualified as NESeq
 import Unit.Prelude
 
@@ -90,16 +90,16 @@ legend =
     [ ("one", singleton "cmd1"),
       ("two", singleton "cmd2"),
       ("three", singleton "cmd3"),
-      ("oneAndTwo", unsafeFromList ["one", "two"]),
-      ("all", unsafeFromList ["oneAndTwo", "cmd3"])
+      ("oneAndTwo", ["one", "two"]),
+      ("all", ["oneAndTwo", "cmd3"])
     ]
 
 cyclicLegend :: LegendMap
 cyclicLegend =
   Map.fromList
-    [ ("a", unsafeFromList ["b", "x"]),
-      ("b", unsafeFromList ["c", "x"]),
-      ("c", unsafeFromList ["a", "x"])
+    [ ("a", ["b", "x"]),
+      ("b", ["c", "x"]),
+      ("c", ["a", "x"])
     ]
 
 linesToMapSpecs :: TestTree
@@ -120,7 +120,7 @@ parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
       expected =
         Right
           ( Map.fromList
-              [ ("a", unsafeFromList ["b", "k"]),
+              [ ("a", ["b", "k"]),
                 ("b", singleton "c")
               ]
           )

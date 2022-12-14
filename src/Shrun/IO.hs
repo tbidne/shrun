@@ -168,29 +168,49 @@ blockSize :: Int
 blockSize = 1024
 {-# INLINEABLE blockSize #-}
 
--- | Version of 'sh' that returns ('ExitCode', 'Stdout', 'Stderr')
+-- | Runs the command, returns ('ExitCode', 'Stdout', 'Stderr')
 --
 -- @since 0.1
-shExitCode :: Command -> Maybe FilePath -> IO (ExitCode, Stdout, Stderr)
-shExitCode (MkCommand _ cmd) path = do
-  (exitCode, stdout, stderr) <- P.readCreateProcessWithExitCode proc ""
+shExitCode :: Command -> IO (ExitCode, Stdout, Stderr)
+shExitCode (MkCommand _ cmd) = do
+  (exitCode, stdout, stderr) <- P.readCreateProcessWithExitCode process ""
   pure (exitCode, wrap MkStdout stdout, wrap MkStderr stderr)
   where
-    proc = (P.shell (T.unpack cmd)) {P.cwd = path}
+    process = P.shell (T.unpack cmd)
     wrap f = f . T.strip . T.pack
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
 --
 -- @since 0.1
-tryShExitCode :: Command -> Maybe FilePath -> IO (Either Stderr Stdout)
-tryShExitCode cmd path = do
-  (code, stdout, MkStderr err) <- shExitCode cmd path
+tryShExitCode :: Command -> IO (Either Stderr Stdout)
+tryShExitCode cmd = do
+  (code, stdout, MkStderr err) <- shExitCode cmd
   pure $ case code of
     ExitSuccess -> Right stdout
     ExitFailure _ -> Left $ makeStdErr err
 
--- | Runs the command, returning either the time elapsed along with a possible
+-- | Version of 'tryShExitCode' that updated the completed commands.
+-- On success, stdout is not returned.
+--
+-- @since 0.1
+tryCommand ::
+  ( HasCompletedCmds env,
+    MonadIO m,
+    MonadReader env m,
+    MonadTVar m
+  ) =>
+  Command ->
+  m (Maybe Stderr)
+tryCommand cmd = do
+  res <- liftIO $ tryShExitCode cmd
+
+  completedCmds <- asks getCompletedCmds
+  modifyTVarM' completedCmds (cmd <|)
+
+  pure $ res ^? _Left
+
+-- | Runs the command, returning the time elapsed along with a possible
 -- error.
 --
 -- @since 0.7
@@ -207,7 +227,7 @@ tryCommandLogging ::
     RegionLogger m
   ) =>
   Command ->
-  m (Either (Tuple2 RelativeTime Stderr) RelativeTime)
+  m (Either (RelativeTime, Stderr) RelativeTime)
 tryCommandLogging command = do
   logging <- asks getLogging
 
@@ -241,26 +261,6 @@ tryCommandLogging command = do
       formatted <- LFormat.formatFileLog fileLogging log
       writeTBQueueM (fileLogging ^. #log % _2) formatted
 
--- | Version of 'tryShExitCode' with MonadTime. On success, stdout is not
--- returned.
---
--- @since 0.1
-tryCommand ::
-  ( HasCompletedCmds env,
-    MonadIO m,
-    MonadReader env m,
-    MonadTVar m
-  ) =>
-  Command ->
-  m (Maybe Stderr)
-tryCommand cmd = do
-  res <- liftIO $ tryShExitCode cmd Nothing
-
-  completedCmds <- asks getCompletedCmds
-  modifyTVarM' completedCmds (cmd <|)
-
-  pure $ res ^? _Left
-
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- instead of the usual swallowing.
 --
@@ -292,7 +292,7 @@ tryCommandStream logFn cmd@(MkCommand _ cmdTxt) = do
 
   -- We use the same pipe for std_out and std_err. The reason is that many
   -- programs will redirect stdout to stderr (e.g. echo ... >&2), and we
-  -- will miss this if we don't check b Because this "collapses" stdout
+  -- will miss this if we don't check. Because this "collapses" stdout
   -- and stderr to the same file descriptor, there isn't much of a reason to
   -- use two different handles.
   let pr =
@@ -316,7 +316,7 @@ tryCommandStream logFn cmd@(MkCommand _ cmdTxt) = do
   modifyTVarM' completedCmds (cmd <|)
 
   result <- case exitCode of
-    ExitSuccess -> pure $ Right ()
+    ExitSuccess -> pure Nothing
     ExitFailure _ -> do
       -- Attempt a final read in case there is more data.
       remainingData <- readHandle recvH
@@ -328,11 +328,11 @@ tryCommandStream logFn cmd@(MkCommand _ cmdTxt) = do
             Nothing -> remainingData
             Just r -> remainingData <> r
 
-      pure $ Left $ readHandleResultToStderr lastData
+      pure $ Just $ readHandleResultToStderr lastData
   liftIO $ do
     Handle.hClose sendH
     Handle.hClose recvH
-  pure $ result ^? _Left
+  pure result
 
 streamOutput ::
   ( MonadIO m,

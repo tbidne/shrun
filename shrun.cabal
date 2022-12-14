@@ -137,7 +137,6 @@ test-suite unit
     Unit.Props.Shrun.Configuration.Legend
     Unit.Props.Shrun.Logging.Formatting
     Unit.Props.Shrun.Logging.Generators
-    Unit.Props.Shrun.Logging.Queue
     Unit.Props.Shrun.Utils
     Unit.Specs
     Unit.Specs.Shrun.Configuration.Args

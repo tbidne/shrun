@@ -28,7 +28,7 @@ import Data.Char (isControl, isLetter)
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.MonadTime (TimeSpec, diffTimeSpec)
-import GHC.Exts (IsList (..))
+import GHC.Exts (IsList (fromList))
 import Refined qualified as R
 import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Prelude

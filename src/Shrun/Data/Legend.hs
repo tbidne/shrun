@@ -73,7 +73,7 @@ instance DecodeTOML KeyVal where
 mkKeyVal :: Text -> List Text -> Maybe KeyVal
 mkKeyVal "" _ = Nothing
 mkKeyVal _ [] = Nothing
-mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.fromList vals
+mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.mFromList vals
 
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
 --

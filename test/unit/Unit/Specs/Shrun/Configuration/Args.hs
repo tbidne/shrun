@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | Specs for Shrun.Args.
 module Unit.Specs.Shrun.Configuration.Args (specs) where
 
@@ -13,7 +15,6 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
-import Shrun.Data.NonEmptySeq qualified as NESeq
 import Unit.Prelude
 
 -- | Entry point for Shrun.Args specs.
@@ -60,7 +61,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               fileLogMode = Nothing,
               fileLogStripControl = Nothing,
               fileLogSizeMode = Nothing,
-              commands = NESeq.singleton "command"
+              commands = ["command"]
             }
   verifyResult argList expected
 
@@ -480,7 +481,7 @@ parseCommands =
   where
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) defArgs
-    cmds = NESeq.unsafeFromList ["one", "two", "three"]
+    cmds = ["one", "two", "three"]
 
 verifyResult :: List String -> Maybe Args -> Assertion
 verifyResult argList expected = do
@@ -491,7 +492,7 @@ prefs :: ParserPrefs
 prefs = OptApp.prefs mempty
 
 defCommand :: NonEmptySeq Text
-defCommand = NESeq.unsafeFromList ["command"]
+defCommand = ["command"]
 
 defArgs :: Maybe Args
 defArgs = Just $ Args.defaultArgs defCommand
