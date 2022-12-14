@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
-
 -- | Provides the 'NonEmptySeq' type.
 --
 -- @since 0.1
@@ -22,6 +20,10 @@ import Data.Sequence (Seq (..))
 import GHC.Exts (IsList (Item))
 import GHC.Exts qualified as Exts
 import Shrun.Prelude hiding (toList)
+
+-- $setup
+-- >>> import Data.List.NonEmpty (NonEmpty ((:|)))
+-- >>> import GHC.Exts qualified as Exts
 
 -- | Represents a non-empty sequence. This is useful for when we want a
 -- non-empty, finite list.
@@ -120,7 +122,7 @@ mFromList (x : xs) = Just $ x :|^ Exts.fromList xs
 -- empty list.
 --
 -- ==== __Examples__
--- >>> [1,2,3]
+-- >>> unsafeFromList [1,2,3]
 -- 1 :|^ fromList [2,3]
 --
 -- @since 0.1

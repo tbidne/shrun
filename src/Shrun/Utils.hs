@@ -40,15 +40,19 @@ import Shrun.Prelude
 -- >>> :set -XTemplateHaskell
 -- >>> import Data.List.NonEmpty (NonEmpty (..))
 -- >>> import Data.Semigroup (Sum (..))
+-- >>> import Data.Text qualified as T
+-- >>> import Effects.MonadTime (TimeSpec (..))
+-- >>> import Refined qualified as R
+-- >>> import Shrun.Prelude
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
 -- in seconds.
 --
 -- ==== __Examples__
 -- >>> :{
---   let t1 = TimeSpec 5 0
+--   let t1 = MkTimeSpec 5 0
 --       -- 20 s + 1 billion ns = 21 s
---       t2 = TimeSpec 20 1_000_000_000
+--       t2 = MkTimeSpec 20 1_000_000_000
 --   in diffTime t1 t2
 -- :}
 -- 16
@@ -239,8 +243,9 @@ stripControlSmart =
 --
 -- ==== __Examples__
 --
--- >>> stripAnsiAll "foo\ESC[0;3Abar"
--- "foobar"
+-- @
+-- stripAnsiAll "foo\ESC[0;3Abar"
+-- @
 --
 -- @since 0.5
 stripAnsiAll :: Text -> Text
@@ -250,11 +255,13 @@ stripAnsiAll = T.concat . fmap (view _1) . splitAnsi
 --
 -- ==== __Examples__
 --
--- >>> stripAnsiControl "foo\ESC[0;3Abar"
+-- @
+-- stripAnsiControl "foo\ESC[0;3Abar"
 -- "foobar"
 --
--- >>> stripAnsiControl "foo\ESC[0;3mbar"
+-- stripAnsiControl "foo\ESC[0;3mbar"
 -- "foo\ESC[0;3mbar"
+-- @
 --
 -- @since 0.5
 stripAnsiControl :: Text -> Text

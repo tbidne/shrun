@@ -9,5 +9,5 @@ main =
   guardOrElse'
     "RUN_DOCTEST"
     ExpectEnvSet
-    (DocTest.mainFromCabal "byte-types" [])
+    (DocTest.mainFromCabal "shrun" [])
     (putStrLn "*** Doc Tests disabled. Enable with RUN_DOCTEST=1")

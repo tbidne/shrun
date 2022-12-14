@@ -27,6 +27,11 @@ import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 
+-- $setup
+-- >>> import Shrun.Prelude
+-- >>> import Data.HashMap.Strict qualified as Map
+-- >>> import Shrun.Data.NonEmptySeq (unsafeFromList, singleton)
+
 -- | Errors when parsing the legend.
 --
 -- @since 0.5
@@ -85,7 +90,7 @@ instance Exception CyclicKeyError where
 -- map.
 --
 -- ==== __Examples__
--- >>> import Shrun.Data.NonEmptySeq (unsafeFromList, singleton)
+-- >>> :set -XOverloadedLists
 -- >>> :{
 --   let m = Map.fromList
 --         [ ("cmd1", singleton "one"),

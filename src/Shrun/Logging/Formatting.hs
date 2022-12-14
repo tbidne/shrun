@@ -42,6 +42,11 @@ import Shrun.Utils qualified as Utils
 import System.Console.Pretty (Color (..))
 import System.Console.Pretty qualified as P
 
+-- $setup
+-- >>> import Shrun.Prelude
+-- >>> import Shrun.Data.Command (Command (..))
+-- >>> import Shrun.Configuration.Env.Types (CmdDisplay (..))
+
 -- | Formats a log to be printed to the console.
 --
 -- @since 0.1
