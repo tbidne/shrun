@@ -1,17 +1,20 @@
 -- | Runs unit tests.
 module Main (main) where
 
-import Test.Tasty qualified as Tasty
 import Unit.Prelude
-import Unit.Props qualified
-import Unit.Specs qualified
+import Unit.Shrun.Configuration.Args qualified
+import Unit.Shrun.Configuration.Legend qualified
+import Unit.Shrun.Logging.Formatting qualified
+import Unit.Shrun.Utils qualified
 
 -- | Entry point for unit tests.
 main :: IO ()
 main =
-  Tasty.defaultMain $
+  defaultMain $
     testGroup
       "Unit tests"
-      [ Unit.Specs.specs,
-        Unit.Props.props
+      [ Unit.Shrun.Configuration.Args.tests,
+        Unit.Shrun.Configuration.Legend.tests,
+        Unit.Shrun.Logging.Formatting.tests,
+        Unit.Shrun.Utils.tests
       ]

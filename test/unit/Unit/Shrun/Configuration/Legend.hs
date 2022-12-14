@@ -1,5 +1,7 @@
--- | Property tests for Shrun.Legend.Internal.
-module Unit.Props.Shrun.Configuration.Legend (props) where
+{-# LANGUAGE OverloadedLists #-}
+
+-- | Tests for Shrun.Configuration.Legend.
+module Unit.Shrun.Configuration.Legend (tests) where
 
 import Data.Functor.Identity (Identity)
 import Data.HashMap.Strict qualified as Map
@@ -8,29 +10,31 @@ import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import Shrun.Configuration.Legend (LegendMap, linesToMap, translateCommands)
+import Shrun.Configuration.Legend
+  ( CyclicKeyError (..),
+    DuplicateKeyError (..),
+    LegendMap,
+    linesToMap,
+    translateCommands,
+  )
+import Shrun.Data.Command (Command (..))
 import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
-import Shrun.Data.NonEmptySeq (NonEmptySeq, unsafeFromList)
+import Shrun.Data.NonEmptySeq (NonEmptySeq (..), unsafeFromList)
 import Unit.Prelude
 
 -- | Entry point for Shrun.Legend.Internal property tests.
-props :: TestTree
-props =
+tests :: TestTree
+tests =
   testGroup
     "Shrun.Configuration.Legend"
-    [ linesToMapProps,
-      translateProps
+    [ linesToMapSuccessProps,
+      linesToMapSpecs,
+      translateProps,
+      translateSpecs
     ]
 
-linesToMapProps :: TestTree
-linesToMapProps =
-  testGroup
-    "linesToMap"
-    [ successProps
-    ]
-
-successProps :: TestTree
-successProps =
+linesToMapSuccessProps :: TestTree
+linesToMapSuccessProps =
   testPropertyNamed "linesToMap success props" "successProps" $
     property $ do
       commands <- forAll genGoodLines
@@ -164,3 +168,114 @@ genCommand :: MonadGen m => m Text
 genCommand = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 1 1 50
+
+translateSpecs :: TestTree
+translateSpecs =
+  testGroup
+    "translateCommands"
+    [ translateOneCmd,
+      returnsNonMapCmd,
+      returnsRecursiveCmds,
+      returnsRecursiveAndOtherCmds,
+      noSplitNonKeyCmd,
+      cycleCmdFail
+    ]
+
+translateOneCmd :: TestTree
+translateOneCmd = testCase "Should translate one command" $ do
+  let result = translateCommands legendMap ["one"]
+      expected = Right [MkCommand (Just "one") "cmd1"]
+  expected @=? result
+
+returnsNonMapCmd :: TestTree
+returnsNonMapCmd = testCase "Should return non-map command" $ do
+  let result = translateCommands legendMap ["other"]
+      expected = Right [MkCommand Nothing "other"]
+  expected @=? result
+
+returnsRecursiveCmds :: TestTree
+returnsRecursiveCmds = testCase "Should return recursive commands" $ do
+  let result = translateCommands legendMap ["all"]
+      expected =
+        Right $
+          MkCommand (Just "one") "cmd1"
+            :|^ [ MkCommand (Just "two") "cmd2",
+                  MkCommand Nothing "cmd3"
+                ]
+  expected @=? result
+
+returnsRecursiveAndOtherCmds :: TestTree
+returnsRecursiveAndOtherCmds = testCase "Should return recursive commands and other" $ do
+  let result = translateCommands legendMap ("all" :|^ ["other"])
+      expected =
+        Right $
+          MkCommand (Just "one") "cmd1"
+            :|^ [ MkCommand (Just "two") "cmd2",
+                  MkCommand Nothing "cmd3",
+                  MkCommand Nothing "other"
+                ]
+  expected @=? result
+
+noSplitNonKeyCmd :: TestTree
+noSplitNonKeyCmd = testCase "Should not split non-key commands" $ do
+  let result = translateCommands legendMap ["echo ,,"]
+      expected = Right [MkCommand Nothing "echo ,,"]
+  expected @=? result
+
+cycleCmdFail :: TestTree
+cycleCmdFail = testCase "Should fail on cycle" $ do
+  let result = translateCommands cyclicLegend ["a"]
+  Left (MkCyclicKeyError "a -> b -> c -> a") @=? result
+
+legendMap :: LegendMap
+legendMap =
+  Map.fromList
+    [ ("one", ["cmd1"]),
+      ("two", ["cmd2"]),
+      ("three", ["cmd3"]),
+      ("oneAndTwo", ["one", "two"]),
+      ("all", ["oneAndTwo", "cmd3"])
+    ]
+
+cyclicLegend :: LegendMap
+cyclicLegend =
+  Map.fromList
+    [ ("a", ["b", "x"]),
+      ("b", ["c", "x"]),
+      ("c", ["a", "x"])
+    ]
+
+linesToMapSpecs :: TestTree
+linesToMapSpecs =
+  testGroup
+    "linesToMap"
+    [ parseMapAndSkip,
+      duplicateKeysThrowErr
+    ]
+
+parseMapAndSkip :: TestTree
+parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
+  let result =
+        linesToMap
+          [ unsafeKeyVal "a" ["b", "k"],
+            unsafeKeyVal "b" ["c"]
+          ]
+      expected =
+        Right
+          ( Map.fromList
+              [ ("a", ["b", "k"]),
+                ("b", ["c"])
+              ]
+          )
+  expected @=? result
+
+duplicateKeysThrowErr :: TestTree
+duplicateKeysThrowErr =
+  testCase "Duplicate keys should throw error" $
+    Left (MkDuplicateKeyError "a") @=? linesToMap result
+  where
+    result =
+      [ unsafeKeyVal "a" ["b"],
+        unsafeKeyVal "b" ["c"],
+        unsafeKeyVal "a" ["d"]
+      ]

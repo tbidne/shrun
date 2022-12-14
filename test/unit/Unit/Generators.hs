@@ -1,5 +1,5 @@
 -- | Provides various generators for property tests.
-module Unit.Props.Generators
+module Unit.Generators
   ( genNonNegative,
     genPositive,
     genTimeSpec,

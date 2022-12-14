@@ -131,18 +131,13 @@ test-suite unit
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
+    Unit.Generators
     Unit.Prelude
-    Unit.Props
-    Unit.Props.Generators
-    Unit.Props.Shrun.Configuration.Legend
-    Unit.Props.Shrun.Logging.Formatting
-    Unit.Props.Shrun.Logging.Generators
-    Unit.Props.Shrun.Utils
-    Unit.Specs
-    Unit.Specs.Shrun.Configuration.Args
-    Unit.Specs.Shrun.Configuration.Legend
-    Unit.Specs.Shrun.Logging.Formatting
-    Unit.Specs.Shrun.Utils
+    Unit.Shrun.Configuration.Args
+    Unit.Shrun.Configuration.Legend
+    Unit.Shrun.Logging.Formatting
+    Unit.Shrun.Logging.Generators
+    Unit.Shrun.Utils
 
   build-depends:
     , algebra-simple

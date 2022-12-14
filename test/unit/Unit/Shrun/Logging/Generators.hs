@@ -1,5 +1,5 @@
 -- | Provides various generators for property tests.
-module Unit.Props.Shrun.Logging.Generators
+module Unit.Shrun.Logging.Generators
   ( -- * Log
     genLog,
     genLogWithCmd,
@@ -15,8 +15,8 @@ where
 import Hedgehog.Gen qualified as HGen
 import Shrun.Data.Command (Command (..))
 import Shrun.Logging.Types (Log (..), LogLevel (..), LogMode (..))
+import Unit.Generators qualified as PGens
 import Unit.Prelude
-import Unit.Props.Generators qualified as PGens
 
 genLog :: Gen Log
 genLog = do

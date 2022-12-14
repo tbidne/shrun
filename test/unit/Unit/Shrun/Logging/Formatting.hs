@@ -1,13 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | Property tests for Shrun.Logging.Formatting.
+-- | Tests for Shrun.Logging.Formatting.
 --
 -- @since 0.1
-module Unit.Props.Shrun.Logging.Formatting
-  ( props,
-  )
-where
+module Unit.Shrun.Logging.Formatting (tests) where
 
 import Data.Functor.Identity (Identity (..))
 import Data.String (IsString)
@@ -36,7 +33,7 @@ import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
 import Text.Read qualified as TR
 import Unit.Prelude
-import Unit.Props.Shrun.Logging.Generators qualified as LGens
+import Unit.Shrun.Logging.Generators qualified as LGens
 
 data Env = MkEnv
   { cmdDisplay :: CmdDisplay,
@@ -126,12 +123,13 @@ instance HasLogging Env () where
       err = "[Unit.Props.Shrun.Logging.Formatting]: Unit tests should not be using consoleLogging"
 
 -- | Entry point for Shrun.Logging.Formatting property tests.
-props :: TestTree
-props =
+tests :: TestTree
+tests =
   T.testGroup
     "Shrun.Logging.Formatting"
     [ consoleLogProps,
-      fileLogProps
+      fileLogProps,
+      stripCharsSpecs
     ]
 
 consoleLogProps :: TestTree
@@ -349,3 +347,36 @@ fileLogging :: FileLogging
 fileLogging = MkFileLogging StripControlNone (error err)
   where
     err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLogging"
+
+stripCharsSpecs :: TestTree
+stripCharsSpecs =
+  testGroup
+    "stripChars"
+    [ stripNone,
+      stripAll,
+      stripSmart
+    ]
+
+stripNone :: TestTree
+stripNone =
+  testCase "StripControlNone should only strip external whitespace" $ do
+    "" @=? stripNone' ""
+    "\ESC[ foo \ESC[A  bar \n baz" @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
+  where
+    stripNone' = flip Formatting.stripChars (Just StripControlNone)
+
+stripAll :: TestTree
+stripAll =
+  testCase "StripControlAll should strip whitespace + all control" $ do
+    "" @=? stripAll' ""
+    "oo    bar  baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
+  where
+    stripAll' = flip Formatting.stripChars (Just StripControlAll)
+
+stripSmart :: TestTree
+stripSmart =
+  testCase "StripControlSmart should strip whitespace + some control" $ do
+    "" @=? stripSmart' ""
+    "foo \ESC[m   bar  baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
+  where
+    stripSmart' = flip Formatting.stripChars (Just StripControlSmart)

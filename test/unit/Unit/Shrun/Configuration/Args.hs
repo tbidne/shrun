@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 
--- | Specs for Shrun.Args.
-module Unit.Specs.Shrun.Configuration.Args (specs) where
+-- | Tests for Shrun.Args
+module Unit.Shrun.Configuration.Args (tests) where
 
 import Data.Bytes (Bytes (..))
 import Options.Applicative (ParserPrefs)
@@ -18,8 +18,8 @@ import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Unit.Prelude
 
 -- | Entry point for Shrun.Args specs.
-specs :: TestTree
-specs =
+tests :: TestTree
+tests =
   testGroup
     "Shrun.Args"
     [ defaultSpec,
