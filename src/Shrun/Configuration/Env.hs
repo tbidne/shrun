@@ -8,7 +8,6 @@
 module Shrun.Configuration.Env
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
 
@@ -65,7 +64,6 @@ import Shrun.Configuration.Env.Types
     Env (..),
     FileLogging (..),
     HasCommands (..),
-    HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
     LineTruncation (..),

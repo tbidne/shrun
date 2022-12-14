@@ -23,7 +23,7 @@ import Effects.MonadFs (decodeUtf8Lenient)
 import Effects.MonadTime (MonadTime (..), withTiming)
 import GHC.IO.Handle (BufferMode (..))
 import GHC.IO.Handle qualified as Handle
-import Shrun.Configuration.Env.Types (HasCompletedCmds (..), HasLogging (..))
+import Shrun.Configuration.Env.Types (HasCommands (..), HasLogging (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Logging.Formatting qualified as LFormat
@@ -195,7 +195,7 @@ tryShExitCode cmd = do
 --
 -- @since 0.1
 tryCommand ::
-  ( HasCompletedCmds env,
+  ( HasCommands env,
     MonadIO m,
     MonadReader env m,
     MonadTVar m
@@ -216,7 +216,7 @@ tryCommand cmd = do
 -- @since 0.7
 tryCommandLogging ::
   forall m env.
-  ( HasCompletedCmds env,
+  ( HasCommands env,
     HasLogging env (Region m),
     MonadIORef m,
     MonadReader env m,
@@ -266,7 +266,7 @@ tryCommandLogging command = do
 --
 -- @since 0.1
 tryCommandStream ::
-  ( HasCompletedCmds env,
+  ( HasCommands env,
     MonadIORef m,
     MonadReader env m,
     MonadTVar m,

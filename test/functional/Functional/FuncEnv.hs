@@ -11,7 +11,6 @@ import Data.Sequence (Seq)
 import Functional.Prelude
 import Shrun.Configuration.Env.Types
   ( HasCommands (..),
-    HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
     Logging,
@@ -71,12 +70,9 @@ instance HasLogging FuncEnv () where
   getLogging = view #logging
 
 -- | @since 0.3
-instance HasCompletedCmds FuncEnv where
-  getCompletedCmds = view #completedCmds
-
--- | @since 0.3
 instance HasCommands FuncEnv where
   getCommands = view #commands
+  getCompletedCmds = view #completedCmds
 
 -- | @since 0.3
 instance MonadRegionLogger (ShellT FuncEnv IO) where

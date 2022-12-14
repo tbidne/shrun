@@ -8,7 +8,6 @@ module Shrun.Configuration.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
     HasLogging (..),
-    HasCompletedCmds (..),
     HasTimeout (..),
 
     -- * Types
@@ -314,6 +313,9 @@ class HasCommands env where
   -- | @since 0.1
   getCommands :: env -> NonEmptySeq Command
 
+  -- | @since 0.1
+  getCompletedCmds :: env -> TVar (Seq Command)
+
 -- | Timeout, if any.
 --
 -- @since 0.1
@@ -329,13 +331,6 @@ class HasLogging env r where
   --
   -- @since 0.1
   getLogging :: env -> Logging r
-
--- | Determines command line truncation behavior.
---
--- @since 0.1
-class HasCompletedCmds env where
-  -- | @since 0.1
-  getCompletedCmds :: env -> TVar (Seq Command)
 
 -- | The main 'Env' type used by Shrun. Intended to be used with
 -- 'Shrun.Effects.MonadReader'.
@@ -380,18 +375,12 @@ instance Show Env where
 -- | @since 0.1
 instance HasTimeout Env where
   getTimeout = view #timeout
-  {-# INLINE getTimeout #-}
 
 -- | @since 0.3
 instance HasLogging Env ConsoleRegion where
   getLogging = view #logging
 
 -- | @since 0.1
-instance HasCompletedCmds Env where
-  getCompletedCmds = view #completedCmds
-  {-# INLINE getCompletedCmds #-}
-
--- | @since 0.1
 instance HasCommands Env where
   getCommands = view #commands
-  {-# INLINE getCommands #-}
+  getCompletedCmds = view #completedCmds

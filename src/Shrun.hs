@@ -19,12 +19,10 @@ import Effects.MonadTime (MonadTime (..), TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
     HasCommands (..),
-    HasCompletedCmds (..),
     HasLogging (..),
     HasTimeout (..),
   )
 import Shrun.Data.Command (Command (..))
-import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
 import Shrun.Logging.Formatting qualified as LFormat
@@ -47,7 +45,6 @@ import UnliftIO.Async qualified as Async
 -- @since 0.1
 shrun ::
   ( HasCommands env,
-    HasCompletedCmds env,
     HasLogging env (Region m),
     HasTimeout env,
     MonadCallStack m,
@@ -62,26 +59,25 @@ shrun ::
     MonadUnliftIO m
   ) =>
   m ()
-shrun =
-  asks getCommands >>= \commands -> displayRegions $ do
-    logging <- asks getLogging
+shrun = displayRegions $ do
+  logging <- asks getLogging
 
-    -- always start console logger
-    Async.withAsync pollQueueToConsole $ \consoleLogger -> do
-      -- run commands, running file logger if requested
-      maybe
-        (runCommands commands)
-        (runWithFileLogging commands)
-        (logging ^. #fileLogging)
+  -- always start console logger
+  Async.withAsync pollQueueToConsole $ \consoleLogger -> do
+    -- run commands, running file logger if requested
+    maybe
+      runCommands
+      runWithFileLogging
+      (logging ^. #fileLogging)
 
-      -- cancel consoleLogger, print remaining logs
-      Async.cancel consoleLogger
-      let consoleQueue = logging ^. #consoleLogging
-      flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
+    -- cancel consoleLogger, print remaining logs
+    Async.cancel consoleLogger
+    let consoleQueue = logging ^. #consoleLogging
+    flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
   where
-    runWithFileLogging cmds fileLogging =
+    runWithFileLogging fileLogging =
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
-        runCommands cmds
+        runCommands
 
         -- For both this and the consoleLogger, we want to ensure that
         -- all logs are handled i.e. we need to ensure the
@@ -94,15 +90,16 @@ shrun =
       where
         (h, fileQueue) = fileLogging ^. #log
 
-    runCommands cmds = do
+    runCommands = do
+      cmds <- asks getCommands
+      let actions = Async.mapConcurrently_ runCommand cmds
+          actionsWithTimer = Async.race_ actions counter
+
       (totalTime, result) <- withTiming $ tryAny actionsWithTimer
       printFinalResult totalTime result
-      where
-        actions = Async.mapConcurrently_ runCommand cmds
-        actionsWithTimer = Async.race_ actions (counter cmds)
 
 runCommand ::
-  ( HasCompletedCmds env,
+  ( HasCommands env,
     HasLogging env (Region m),
     MonadCallStack m,
     MonadIORef m,
@@ -176,7 +173,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   Log.putRegionLog r finalLog
 
 counter ::
-  ( HasCompletedCmds env,
+  ( HasCommands env,
     HasLogging env (Region m),
     HasTimeout env,
     MonadIORef m,
@@ -187,9 +184,8 @@ counter ::
     MonadTVar m,
     MonadTime m
   ) =>
-  NonEmptySeq Command ->
   m ()
-counter cmds = do
+counter = do
   -- This brief delay is so that our timer starts "last" i.e. after each individual
   -- command. This way the running timer console region is below all the commands'
   -- in the console.
@@ -197,7 +193,7 @@ counter cmds = do
   withRegion Linear $ \r -> do
     timeout <- asks getTimeout
     timer <- newIORef 0
-    Loops.whileM_ (keepRunning cmds r timer timeout) $ do
+    Loops.whileM_ (keepRunning r timer timeout) $ do
       elapsed <- do
         sleep 1
         modifyIORef' timer (+ 1)
@@ -225,7 +221,7 @@ logCounter region elapsed = do
 
 keepRunning ::
   forall m env.
-  ( HasCompletedCmds env,
+  ( HasCommands env,
     HasLogging env (Region m),
     MonadIORef m,
     MonadReader env m,
@@ -233,16 +229,16 @@ keepRunning ::
     MonadTime m,
     MonadTVar m
   ) =>
-  NonEmptySeq Command ->
   Region m ->
   IORef Natural ->
   Maybe Timeout ->
   m Bool
-keepRunning allCmds region timer mto = do
+keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
       cmdDisplay <- asks (view #cmdDisplay . getLogging @env @(Region m))
+      allCmds <- asks getCommands
       completedCmdsTVar <- asks getCompletedCmds
       completedCmds <- readTVarM completedCmdsTVar
 
