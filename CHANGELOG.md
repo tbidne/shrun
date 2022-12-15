@@ -28,6 +28,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 * File logging thread no longer polls when file logging is disabled.
 * File logging no longer crashes if the log file does not already exist.
 * Final log message now consistently show up in the log file.
+* Fixed bug where ansi control chars could "bleed" over into other logs
 
 
 ## [0.6] -- 2022-12-07
