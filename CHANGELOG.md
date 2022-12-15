@@ -18,17 +18,19 @@ the major/minor/patch definitions apply to the application's interface / usage
 * Logs
   * Slightly more compact now (spaces between labels removed)
   * Success/Finished message now have specific labels
+  * Timer logs not sent to file
 
 ### Fixed
-* Fixed bug where legend key with multiple values i.e. k = [v1, v2, ...] would
-  consider each vi to have key name k. This meant output could be ambiguous
-  with key-hide = false (the default) because multiple values would have the
-  same key name. Now we only consider a value to have a key name when it is
-  unique i.e. k = v.
+* Fixed bug where legend key with multiple values i.e. `k = [v1, v2, ...]`
+  would consider each `vi` to have key name `k`. This meant output could be
+  ambiguous with `key-hide = false` (the default) because multiple values
+  would have the same key name. Now we only consider a value to have a key
+  name when it is unique i.e. `k = v`.
 * File logging thread no longer polls when file logging is disabled.
 * File logging no longer crashes if the log file does not already exist.
 * Final log message now consistently show up in the log file.
 * Fixed bug where ansi control chars could "bleed" over into other logs
+* Control chars stripped from command names every time.
 
 
 ## [0.6] -- 2022-12-07
@@ -105,6 +107,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.6...main
 [0.6]: https://github.com/tbidne/shrun/compare/0.5...0.6
 [0.5]: https://github.com/tbidne/shrun/compare/0.4..0.5
 [0.4]: https://github.com/tbidne/shrun/compare/0.3..0.4
