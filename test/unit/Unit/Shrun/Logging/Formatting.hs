@@ -156,8 +156,7 @@ messageProps =
       env <- forAll genEnv
       log@MkLog {msg} <- forAll LGens.genLog
       let result = formatConsoleLog env log
-      annotate $ T.unpack result
-      assert $ T.strip msg `T.isInfixOf` result || "..." `T.isInfixOf` result
+      includesOrTruncated msg result
 
 prefixProps :: TestTree
 prefixProps =
@@ -166,10 +165,8 @@ prefixProps =
       env <- forAll genEnv
       log@MkLog {lvl} <- forAll LGens.genLog
       let result = formatConsoleLog env log
-      annotate $ "Result: " <> T.unpack result
       let pfx = Formatting.levelToPrefix lvl
-      annotate $ T.unpack pfx
-      assert $ pfx `T.isInfixOf` result || "..." `T.isInfixOf` result
+      includesOrTruncated pfx result
 
 displayCmdProps :: TestTree
 displayCmdProps =
@@ -178,8 +175,7 @@ displayCmdProps =
       env <- forAll genEnvDispCmd
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
       let result = formatConsoleLog env log
-      annotate $ "Result: " <> T.unpack result
-      assert $ Utils.stripControlAll cmd' `T.isInfixOf` result || "..." `T.isInfixOf` result
+      includesOrTruncated (Utils.stripControlAll cmd') result
 
 displayKeyProps :: TestTree
 displayKeyProps =
@@ -188,20 +184,24 @@ displayKeyProps =
       env <- forAll genEnvDispKey
       log@MkLog {cmd = Just (MkCommand (Just key) _)} <- forAll LGens.genLogWithCmdKey
       let result = formatConsoleLog env log
-      annotate $ "Result: " <> T.unpack result
-      assert $ Utils.stripControlAll key `T.isInfixOf` result || "..." `T.isInfixOf` result
+      includesOrTruncated (Utils.stripControlAll key) result
 
 cmdTruncProps :: TestTree
 cmdTruncProps =
   testPropertyNamed "Truncates long command" "cmdTruncProps" $
     property $ do
       env <- forAll genEnvCmdTrunc
-      cmd'@(MkCommand _ cmdTxt) <- MkCommand Nothing <$> forAll genLongCmdText
+      cmdTxt <- forAll genLongCmdText
       log <- forAll LGens.genLog
-      let log' = log {cmd = Just cmd'}
+      let -- log' = log {cmd = Just cmd'}
+          log' = set' (#cmd % _Just % #command) cmdTxt log
           result = formatConsoleLog env log'
-      annotate $ "Result: " <> T.unpack result
-      -- if we have any control chars, give up...
+      annotate $ T.unpack result
+      -- If we have control chars, we might not be doing any truncation
+      -- as the stripping happens before truncation. In which case,
+      -- just bail, nothing to test.
+      --
+      -- Ideally we'd not generate these in the first place.
       assert $ "...]" `T.isInfixOf` result || T.any Ch.isControl cmdTxt
 
 lineTruncProps :: TestTree
@@ -387,3 +387,13 @@ stripSmart =
     "foo \ESC[m   bar  baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
     stripSmart' = flip Formatting.stripChars (Just StripControlSmart)
+
+includesOrTruncated :: Text -> Text -> PropertyT IO ()
+includesOrTruncated expected result = do
+  annotate (T.unpack expected)
+  annotate (T.unpack result)
+  assert $
+    T.strip expected
+      `T.isInfixOf` result
+      || "..."
+      `T.isInfixOf` result
