@@ -109,6 +109,7 @@ import Effects.MonadFs as X
     hFlush,
     hPutUtf8,
     readFileUtf8Lenient,
+    readFileUtf8ThrowM,
     removeDirectoryIfExists,
     removeFileIfExists,
     writeFileUtf8,

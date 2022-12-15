@@ -35,7 +35,6 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
-import Data.Text.Encoding qualified as TEnc
 import Effects.MonadFs
   ( MonadFsReader
       ( doesFileExist,
@@ -162,13 +161,7 @@ withEnv onEnv = do
   fromToml onEnv finalConfig (args ^. #commands)
   where
     readConfig fp = do
-      contents <-
-        readFile fp
-          >>= ( \case
-                  Left ex -> throwWithCallStack ex
-                  Right c -> pure c
-              )
-            . TEnc.decodeUtf8'
+      contents <- readFileUtf8ThrowM fp
       case decode contents of
         Right cfg -> pure cfg
         Left tomlErr -> throwIO $ MkTomlError tomlErr
@@ -263,16 +256,18 @@ fromToml onEnv cfg cmdsText = do
     handleLogFileSize fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
       Nothing -> pure ()
       Just fileSizeMode -> do
-        fileSize <- MkBytes @B <$> getFileSize fp
-        case fileSizeMode of
-          FileSizeModeWarn warnSize ->
-            when (fileSize > warnSize) $
-              putTextLn $
-                sizeWarning warnSize fp fileSize
-          FileSizeModeDelete delSize ->
-            when (fileSize > delSize) $ do
-              putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
-              removeFile fp
+        exists <- doesFileExist fp
+        when exists $ do
+          fileSize <- MkBytes @B <$> getFileSize fp
+          case fileSizeMode of
+            FileSizeModeWarn warnSize ->
+              when (fileSize > warnSize) $
+                putTextLn $
+                  sizeWarning warnSize fp fileSize
+            FileSizeModeDelete delSize ->
+              when (fileSize > delSize) $ do
+                putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
+                removeFile fp
 
     sizeWarning warnSize fp fileSize =
       mconcat
