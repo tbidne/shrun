@@ -181,7 +181,7 @@ Note: When commands have complicated output, the logs can interfere with each ot
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
-<span style="color:">[Command] [for i in {1..10}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
@@ -247,13 +247,13 @@ Practically speaking, this does not have much effect, just that if a command die
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --key-hide --cmd-log --config=examples/config.toml skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --key-hide --config=examples/config.toml skynet</span>
 <span style="color:">[Command][echo "preparing nuclear missil-- i mean gift baskets"; sleep 13] preparing nuclear missil-- i mean gift baskets</span>
 <span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --key-hide --cmd-log --config=examples/config.toml skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --key-hide --config=examples/config.toml skynet</span>
 <span style="color: #69ff94">[Success][echo "preparing nuclear missil-- i mean gift baskets"; sleep 13] 13 seconds</span>
 <span style="color: #d6acff">[Finished] 13 seconds</span></code>
 </pre>
@@ -346,7 +346,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
-<span style="color:">[Command][echo 'some ridiculously long command i mean is this really ne...</span>
+<span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessar...</span>
 <span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 

@@ -4,7 +4,6 @@ module Functional.SuccessShowKey (spec) where
 
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
-import Functional.Utils qualified as U
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
 import Test.Shrun.Verifier qualified as V
 
@@ -34,7 +33,7 @@ withShowKey legendPath addShowKey = do
   let legendArg = "--config=" <> legendPath
       argList = [legendArg, showKeyArg] <> commands
 
-  results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
+  results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs argList)
 
   V.verifyExpectedUnexpected results expected unexpected
   where
@@ -47,27 +46,27 @@ withShowKey legendPath addShowKey = do
 showKeyExpected :: List ExpectedText
 showKeyExpected =
   MkExpectedText
-    <$> [ U.infoSuccessPrefix "one",
-          U.infoSuccessPrefix "long"
+    <$> [ withSuccessPrefix "one",
+          withSuccessPrefix "long"
         ]
 
 showKeyUnexpected :: List UnexpectedText
 showKeyUnexpected =
   MkUnexpectedText
-    <$> [ U.infoSuccessPrefix "sleep 1 && echo 1",
-          U.infoSuccessPrefix "sleep 2 && echo long"
+    <$> [ withSuccessPrefix "sleep 1 && echo 1",
+          withSuccessPrefix "sleep 2 && echo long"
         ]
 
 noShowKeyExpected :: List ExpectedText
 noShowKeyExpected =
   MkExpectedText
-    <$> [ U.infoSuccessPrefix "sleep 1 && echo 1",
-          U.infoSuccessPrefix "sleep 2 && echo long"
+    <$> [ withSuccessPrefix "sleep 1 && echo 1",
+          withSuccessPrefix "sleep 2 && echo long"
         ]
 
 noShowKeyUnexpected :: List UnexpectedText
 noShowKeyUnexpected =
   MkUnexpectedText
-    <$> [ U.infoSuccessPrefix "one",
-          U.infoSuccessPrefix "long"
+    <$> [ withSuccessPrefix "one",
+          withSuccessPrefix "long"
         ]

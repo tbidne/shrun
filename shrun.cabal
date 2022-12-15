@@ -188,8 +188,8 @@ test-suite functional
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
-    Functional.FuncEnv
     Functional.Prelude
+    Functional.Readme
     Functional.Success
     Functional.SuccessCommandLogging
     Functional.SuccessFileLogging
@@ -197,7 +197,6 @@ test-suite functional
     Functional.TestArgs
     Functional.Timeout
     Functional.Truncation
-    Functional.Utils
 
   build-depends:
     , base

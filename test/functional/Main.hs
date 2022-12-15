@@ -2,6 +2,7 @@
 module Main (main) where
 
 import Functional.Prelude
+import Functional.Readme qualified as Readme
 import Functional.Success qualified as Success
 import Functional.SuccessCommandLogging qualified as SuccessCommandLogging
 import Functional.SuccessFileLogging qualified as SuccessFileLogging
@@ -28,7 +29,8 @@ specs args = do
       SuccessFileLogging.spec args,
       SuccessShowKey.spec args,
       Timeout.spec,
-      Truncation.spec
+      Truncation.spec,
+      Readme.specs
     ]
 
 setup :: IO TestArgs

@@ -2,7 +2,6 @@
 module Functional.Truncation (spec) where
 
 import Functional.Prelude
-import Functional.Utils qualified as U
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
 import Test.Shrun.Verifier qualified as V
 
@@ -12,7 +11,7 @@ spec =
   testGroup
     "Truncation tests"
     [ testCase "Should truncate command name" $ do
-        results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
+        results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs argList)
         V.verifyExpected results expected
     ]
   where
@@ -28,5 +27,5 @@ spec =
 expected :: List ExpectedText
 expected =
   MkExpectedText
-    <$> [ U.infoSuccessPrefix "echo \"a..."
+    <$> [ withSuccessPrefix "echo \"a..."
         ]

@@ -5,7 +5,6 @@ module Functional.SuccessFileLogging (spec) where
 import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
-import Functional.Utils qualified as U
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
 import Test.Shrun.Verifier qualified as V
 
@@ -28,7 +27,7 @@ fileLog args =
     let outpath = tmpDir </> outfile
         argList = ["--no-config", "-f" <> outpath, "sleep 2"]
 
-    _ <- U.runAndGetLogs argList
+    _ <- runAndGetLogs argList
     fileResult <- readFileUtf8Lenient outpath
 
     let results = MkResultText <$> T.lines fileResult
@@ -37,7 +36,7 @@ fileLog args =
 expected :: List ExpectedText
 expected =
   MkExpectedText
-    <$> [ U.infoSuccessPrefix "sleep 2"
+    <$> [ withSuccessPrefix "sleep 2"
         ]
 
 outfile :: String

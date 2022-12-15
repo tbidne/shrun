@@ -2,14 +2,13 @@
 module Functional.Timeout (spec) where
 
 import Functional.Prelude
-import Functional.Utils qualified as U
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
 import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should timeout.
 spec :: TestTree
 spec = testCase "Should time out" $ do
-  results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
+  results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs argList)
 
   V.verifyExpected results allExpected
   where
@@ -20,6 +19,6 @@ spec = testCase "Should time out" $ do
 allExpected :: List ExpectedText
 allExpected =
   MkExpectedText
-    <$> [ U.cancelled,
-          U.totalTime
+    <$> [ withTimeoutPrefix "sleep 10",
+          finishedPrefix
         ]

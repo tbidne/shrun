@@ -25,19 +25,19 @@ import Prelude
 
 -- | Newtype wrapper for 'Text' results.
 newtype ResultText = MkResultText {getResultText :: Text}
-  deriving (IsString, Show) via Text
+  deriving (IsString, Monoid, Semigroup, Show) via Text
 
 makeFieldLabelsNoPrefix ''ResultText
 
 -- | Newtype wrapper for expected 'Text' results.
 newtype ExpectedText = MkExpectedText {getExpectedText :: Text}
-  deriving (IsString, Show) via Text
+  deriving (IsString, Monoid, Semigroup, Show) via Text
 
 makeFieldLabelsNoPrefix ''ExpectedText
 
 -- | Newtype wrapper for unexpected 'Text' results.
 newtype UnexpectedText = MkUnexpectedText {getUnexpectedText :: Text}
-  deriving (IsString, Show) via Text
+  deriving (IsString, Monoid, Semigroup, Show) via Text
 
 makeFieldLabelsNoPrefix ''UnexpectedText
 

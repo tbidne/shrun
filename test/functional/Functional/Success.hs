@@ -3,7 +3,6 @@ module Functional.Success (spec) where
 
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
-import Functional.Utils qualified as U
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
 import Test.Shrun.Verifier qualified as V
 
@@ -14,7 +13,7 @@ spec args =
     MkTestArgs {configPath} <- args
     let argList = ["--config", configPath, "--key-hide", "--timeout", "5"] <> commands
 
-    results <- fmap MkResultText <$> (readIORef =<< U.runAndGetLogs argList)
+    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs argList)
 
     V.verifyExpectedUnexpected results allExpected allUnexpected
   where
@@ -27,7 +26,7 @@ allExpected =
           cmdEcho1,
           cmdEchoLong,
           cmdBad,
-          U.totalTime
+          finishedPrefix
         ]
 
 allUnexpected :: List UnexpectedText
@@ -36,17 +35,17 @@ allUnexpected =
     <$> [ cmdEchoHiStdout
         ]
 
-cmdBad :: Text
-cmdBad = U.errPrefix "some nonsense"
+cmdBad :: (IsString s, Semigroup s) => s
+cmdBad = withErrorPrefix "some nonsense" ""
 
 cmdEchoHi :: Text
-cmdEchoHi = U.infoSuccessPrefix "echo hi"
+cmdEchoHi = withSuccessPrefix "echo hi"
 
 cmdEcho1 :: Text
-cmdEcho1 = U.infoSuccessPrefix "sleep 1 && echo 1"
+cmdEcho1 = withSuccessPrefix "sleep 1 && echo 1"
 
 cmdEchoLong :: Text
-cmdEchoLong = U.infoSuccessPrefix "sleep 2 && echo long"
+cmdEchoLong = withSuccessPrefix "sleep 2 && echo long"
 
 cmdEchoHiStdout :: Text
 cmdEchoHiStdout = "echo hi: hi"

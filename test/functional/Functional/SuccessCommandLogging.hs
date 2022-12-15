@@ -4,7 +4,6 @@ module Functional.SuccessCommandLogging (spec) where
 import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
-import Functional.Utils qualified as U
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
 import Test.Shrun.Verifier qualified as V
 
@@ -25,7 +24,7 @@ spec args = withResource (pure ()) (teardown args) $ \_ ->
               ]
                 <> commands
 
-        _ <- U.runAndGetLogs argList
+        _ <- runAndGetLogs argList
 
         fileResult <- readFileUtf8Lenient outpath
         let results = MkResultText <$> T.lines fileResult
@@ -40,7 +39,7 @@ spec args = withResource (pure ()) (teardown args) $ \_ ->
 expected :: List ExpectedText
 expected =
   MkExpectedText
-    <$> [ U.subCommandPrefix "echo hi && sleep 1" "hi"
+    <$> [ withCommandPrefix "echo hi && sleep 1" "hi"
         ]
 
 outfile :: String
