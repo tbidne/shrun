@@ -55,8 +55,10 @@ formatConsoleLog logging log =
   let line = case log ^. #cmd of
         Nothing -> brackets True prefix <> msgStripped
         Just com ->
-          -- get cmd name to display
-          let cmdName = displayCmd com (logging ^. #cmdDisplay)
+          -- Get cmd name to display. Always strip control sequences.
+          let cmdName =
+                Utils.stripControlAll $
+                  displayCmd com (logging ^. #cmdDisplay)
               -- truncate cmd/name if necessary
               cmdName' = brackets True (truncateNameFn cmdName)
            in -- truncate entire line if necessary
@@ -115,7 +117,7 @@ formatFileLog fileLogging log = do
         Just com ->
           mconcat
             [ brackets False prefix,
-              brackets True (com ^. #command),
+              brackets True (Utils.stripControlAll $ com ^. #command),
               msgStripped
             ]
       withTimestamp =

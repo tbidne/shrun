@@ -205,7 +205,7 @@ Practically speaking, this does not have much effect, just that if a command die
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --file-log=out.log --cmd-log "sleep 2" "bad" "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log=out.log "sleep 2" "bad" "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #ff6e6e">[Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #69ff94">[Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>

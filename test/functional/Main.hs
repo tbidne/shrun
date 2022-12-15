@@ -30,7 +30,7 @@ specs args = do
       SuccessShowKey.spec args,
       Timeout.spec,
       Truncation.spec,
-      Readme.specs
+      Readme.specs args
     ]
 
 setup :: IO TestArgs

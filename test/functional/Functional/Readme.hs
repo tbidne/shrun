@@ -1,15 +1,17 @@
 -- | Functional tests for readme examples.
 module Functional.Readme (specs) where
 
+import Data.Text qualified as T
 import Functional.Prelude
+import Functional.TestArgs (TestArgs (..))
 import Test.Shrun.Verifier (ResultText (..))
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update the README!
 
 -- | Specs from readme
-specs :: TestTree
-specs =
+specs :: IO TestArgs -> TestTree
+specs args =
   testGroup
     "README examples"
     [ gif,
@@ -17,11 +19,16 @@ specs =
       timeout,
       cmdlogOn,
       cmdlogOff,
+      fileLog args,
       keyHideOn,
       keyHideOff,
+      stripControlAlwaysCmdNames,
       stripControlAll,
       stripControlNone,
       stripControlSmart,
+      fileLogStripControlAll args,
+      fileLogStripControlNone args,
+      fileLogStripControlSmart args,
       cmdNameTruncN,
       cmdLogLineTruncN,
       cmdLogLineTruncDetect
@@ -121,7 +128,37 @@ cmdlogOff =
         ]
     unexpected = [commandPrefix]
 
--- TODO: file logging
+fileLog :: IO TestArgs -> TestTree
+fileLog testArgs = testCase "Runs file-log example" $ do
+  outFile <- (</> "readme-file-out.log") . view #tmpDir <$> testArgs
+  let args =
+        withNoConfig
+          [ "--file-log",
+            outFile,
+            "sleep 2",
+            "bad",
+            "for i in {1..3}; do echo hi; sleep 1; done"
+          ]
+
+  resultsConsole <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+  V.verifyExpected resultsConsole expectedConsole
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedConsole =
+      [ withErrorPrefix "bad",
+        withSuccessPrefix "sleep 2",
+        withSuccessPrefix "for i in {1..3}; do echo hi; sleep 1; done",
+        finishedPrefix
+      ]
+    expectedFile =
+      expectedConsole
+        ++ [ withCommandPrefix "for i in {1..3}; do echo hi; sleep 1; done" "hi"
+           ]
+
+-- TODO: file log mode
+-- TODO: file log mode delete
 
 keyHideOn :: TestTree
 keyHideOn =
@@ -185,6 +222,27 @@ stripControlAll = testCase "Runs --cmd-log-strip-control all example" $ do
       [ withCommandPrefix "printf ..." "foo  hello  bye"
       ]
 
+-- NOTE: Not strictly a README test, but this is valuable to have and as it
+-- is a slight variation on the ones here, we leave it in.
+stripControlAlwaysCmdNames :: TestTree
+stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
+  results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+  V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "-l",
+          "--cmd-log-strip-control",
+          "none",
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+        ]
+    -- i.e. ansi codes are not being stripped (because =none), yet they are
+    -- gone from the command names
+    expected =
+      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 5" "foo \ESC[35m hello \ESC[3D bye",
+        withSuccessPrefix "printf ' foo  hello  bye '; sleep 5"
+      ]
+
 stripControlNone :: TestTree
 stripControlNone = testCase "Runs --cmd-log-strip-control none example" $ do
   results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
@@ -216,7 +274,72 @@ stripControlSmart = testCase "Runs --cmd-log-strip-control smart example" $ do
       [ withCommandPrefix "printf ..." "foo \ESC[35m hello  bye"
       ]
 
--- TODO: file log strip control
+fileLogStripControlAll :: IO TestArgs -> TestTree
+fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all example" $ do
+  outFile <- (</> "readme-file-out-strip-control-all.log") . view #tmpDir <$> testArgs
+  let args =
+        withNoConfig
+          [ "--file-log",
+            outFile,
+            "--file-log-strip-control",
+            "all",
+            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          ]
+
+  _ <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedFile =
+      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 5" "foo  hello  bye"
+      ]
+
+fileLogStripControlNone :: IO TestArgs -> TestTree
+fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none example" $ do
+  outFile <- (</> "readme-file-out-strip-control-none.log") . view #tmpDir <$> testArgs
+  let args =
+        withNoConfig
+          [ "--file-log",
+            outFile,
+            "--file-log-strip-control",
+            "none",
+            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          ]
+
+  _ <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedFile =
+      [ withCommandPrefix
+          "printf ' foo  hello  bye '; sleep 5"
+          "foo \ESC[35m hello \ESC[3D bye"
+      ]
+
+fileLogStripControlSmart :: IO TestArgs -> TestTree
+fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart example" $ do
+  outFile <- (</> "readme-file-out-strip-control-smart.log") . view #tmpDir <$> testArgs
+  let args =
+        withNoConfig
+          [ "--file-log",
+            outFile,
+            "--file-log-strip-control",
+            "smart",
+            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          ]
+
+  _ <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedFile =
+      [ withCommandPrefix
+          "printf ' foo  hello  bye '; sleep 5"
+          "foo \ESC[35m hello  bye"
+      ]
 
 cmdNameTruncN :: TestTree
 cmdNameTruncN = testCase "Runs --cmd-name-trunc 10 example" $ do
