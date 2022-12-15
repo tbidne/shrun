@@ -32,8 +32,8 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
           cmdLogNameTrunc = Just 80,
           cmdLogLineTrunc = Just 150,
           cmdLogStripControl = Just StripControlSmart,
-          fileLogging = True,
-          fileLogStripControl = Just StripControlAll,
+          fileLogging = False,
+          fileLogStripControl = Nothing,
           commands = NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\"")
         }
 

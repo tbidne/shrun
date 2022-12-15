@@ -90,21 +90,21 @@ strip-control = "smart"
 # in which we attempt to detect the terminal width.
 line-trunc = 150
 
-[file-log]
+#[file-log]
 # Writes all logs to a file. The "default" option writes to the Xdg direction
 # e.g. ~/.config/shrun/log. Any other string is interpreted as
 # a PATH.
-path = "default"
+#path = "default"
 
 # Mode in which to open the log file. Can be "write" (the default) or
 # "append".
-mode = "write"
+#mode = "write"
 
 # Like strip-control, but for file logs. Defaults to all.
-strip-control = "all"
+#strip-control = "all"
 
 # Sets a threshold for the file log size, upon which we either print a
 # warning or delete the file, if it is exceeded. Format is value and units
 # e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to no warnings
 # nor deletions.
-size-mode = "warn 1 g"
+#size-mode = "warn 1 g"
