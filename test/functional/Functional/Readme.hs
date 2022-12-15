@@ -30,8 +30,7 @@ specs args =
       fileLogStripControlNone args,
       fileLogStripControlSmart args,
       cmdNameTruncN,
-      cmdLogLineTruncN,
-      cmdLogLineTruncDetect
+      cmdLogLineTruncN
     ]
 
 gif :: TestTree
@@ -372,25 +371,6 @@ cmdLogLineTruncN = testCase "Runs --cmd-log-line-trunc 80 example" $ do
         ]
     expected =
       [ "[Command][echo 'some ridiculously long command i mean is this really necessar..."
-      ]
-
-cmdLogLineTruncDetect :: TestTree
-cmdLogLineTruncDetect = testCase "Runs --cmd-log-line-trunc detect example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
-  V.verifyExpected results expected
-  where
-    args =
-      withNoConfig
-        [ "-l",
-          "--cmd-log-line-trunc",
-          "detect",
-          "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"
-        ]
-    -- NOTE: This test is based on the terminal size, which obviously varies
-    -- per machine. Thus we only test a really low limit so that CI is likely
-    -- to pass.
-    expected =
-      [ "[Command][echo 'some ridiculously"
       ]
 
 withBaseArgs :: [String] -> [String]
