@@ -271,7 +271,7 @@ pollQueueToConsole ::
   ) =>
   m void
 pollQueueToConsole = do
-  sem <- liftIO $ newQSem 0
+  sem <- liftIO $ newQSem 1
   queue <- asks (view #consoleLogging . getLogging)
   forever $ do
     -- NOTE: Applying the same semaphore logic from pollQueueToFile here.
@@ -291,7 +291,7 @@ pollQueueToFile ::
   FileLogging ->
   m void
 pollQueueToFile fileLogging = do
-  sem <- liftIO $ newQSem 0
+  sem <- liftIO $ newQSem 1
   forever $ do
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
