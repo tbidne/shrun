@@ -42,11 +42,7 @@ gif =
       [ withFinishedPrefix "13 seconds",
         withSuccessPrefix "skynet",
         withSuccessPrefix "ui",
-        -- FIXME: Race condition means this line is sometimes:
-        -- [Error][sign-peace-treaty] 5 seconds: play it cool...
-        --
-        -- We actually want:
-        -- "[Error][sign-peace-treaty] 5 seconds: /bin/sh: line 1: lol psyche: command not found",
+        withErrorPrefix "sign-peace-treaty" "5 seconds: /bin/sh: line 1: lol psyche: command not found",
         withCommandPrefix "skynet" "preparing nuclear missil-- i mean gift baskets",
         withCommandPrefix "ui" "adding emojis. we like to have fun :-)",
         withCommandPrefix "querying-targets" "finding targets...",

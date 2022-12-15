@@ -9,6 +9,7 @@ module Shrun
   )
 where
 
+import Control.Concurrent.QSem (newQSem, signalQSem, waitQSem)
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
@@ -163,10 +164,6 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
       Logging.putRegionLog r fatalLog
     Right _ -> pure ()
 
-  -- FIXME: It appears this does not always make it to the file, possibly
-  -- due to a race condition. It is probably possible that the fileLoggerThread
-  -- reads this message from the queue and is then cancelled before it
-  -- can print it. This would make the message disappear.
   let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
       finalLog =
         MkLog
@@ -271,15 +268,29 @@ timedOut timer (Just (MkTimeout t)) = timer > t
 pollQueueToConsole ::
   ( HasLogging env (Region m),
     MonadFsWriter m,
+    MonadIO m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadTBQueue m
   ) =>
   m void
 pollQueueToConsole = do
+  sem <- liftIO $ newQSem 0
   queue <- asks (view #consoleLogging . getLogging)
-  -- FIXME: This needs to be atomic!
-  forever $ tryReadTBQueueM queue >>= traverse_ printConsoleLog
+  forever $ do
+    -- NOTE: Applying the same semaphore logic from pollQueueToFile here.
+    -- This hopefully addresses a bug where final success/error command logs
+    -- can overwrite each other. Unfortunately this bug is very hard; the
+    -- gif example (and functional test) very occasionally reproduces it,
+    -- with the error message being erroneously overwritten with
+    -- 'play it cool...'. But it is very, hence it is unclear if this
+    -- is an actual fix.
+    --
+    -- Nevertheless, we probably want to enforce atomicity anyway, so this is
+    -- likely the Right Thing To Do.
+    liftIO $ waitQSem sem
+    tryReadTBQueueM queue >>= traverse_ printConsoleLog
+    liftIO $ signalQSem sem
 
 printConsoleLog :: MonadRegionLogger m => LogRegion (Region m) -> m ()
 printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
@@ -287,12 +298,23 @@ printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unCon
 
 pollQueueToFile ::
   ( MonadFsWriter m,
+    MonadIO m,
     MonadTBQueue m
   ) =>
   FileLogging ->
   m void
--- FIXME: This needs to be atomic!
-pollQueueToFile fileLogging = forever $ tryReadTBQueueM queue >>= traverse_ (logFile h)
+pollQueueToFile fileLogging = do
+  sem <- liftIO $ newQSem 0
+  forever $ do
+    -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
+    -- (i.e. thread reads the log and is cancelled before it can write it).
+    --
+    -- Testing shows that the QSem here appears to work as advertized:
+    -- Without it, the final "Finished" log rarely shows up in the file logs.
+    -- With it, it consistently shows up.
+    liftIO $ waitQSem sem
+    tryReadTBQueueM queue >>= traverse_ (logFile h)
+    liftIO $ signalQSem sem
   where
     (h, queue) = fileLogging ^. #log
 
