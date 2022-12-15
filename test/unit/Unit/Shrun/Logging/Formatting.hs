@@ -6,6 +6,7 @@
 -- @since 0.1
 module Unit.Shrun.Logging.Formatting (tests) where
 
+import Data.Char qualified as Ch
 import Data.Functor.Identity (Identity (..))
 import Data.String (IsString)
 import Data.Text qualified as T
@@ -34,11 +35,6 @@ import Text.Read qualified as TR
 import Unit.Prelude
 import Unit.Shrun.Logging.Generators qualified as LGens
 
--- TODO: Some of the test in this module are pretty fragile, especially
--- wrt control chars (e.g. null bytes) that get generated. It would be great
--- to reexamine which tests, if any, should be generating null bytes, and
--- adapting the tests as necessary.
-
 data Env = MkEnv
   { cmdDisplay :: CmdDisplay,
     cmdTrunc :: Maybe (Truncation 'TCmdName),
@@ -58,20 +54,26 @@ genEnv =
 cmdTruncLimit :: Integral a => a
 cmdTruncLimit = 30
 
-genEnvCmdTrunc :: Gen Env
+genEnvCmdTrunc :: Gen (Env, Truncation TCmdName)
 genEnvCmdTrunc =
-  MkEnv
-    <$> HGen.enumBounded
-    <*> fmap (Just . MkTruncation) genNat
-    <*> pure Nothing
+  (,)
+    <$> ( MkEnv
+            <$> HGen.enumBounded
+            <*> pure Nothing
+            <*> pure Nothing
+        )
+    <*> fmap MkTruncation genNat
   where
     genNat = HGen.integral range
     range = HRange.linear 0 cmdTruncLimit
 
 genLongCmdText :: Gen Text
-genLongCmdText = HGen.text range HGen.latin1
+genLongCmdText = HGen.text range HGen.unicode
   where
     range = HRange.linearFrom (cmdTruncLimit + 1) (cmdTruncLimit + 1) 100
+
+genNoControl :: Gen Char
+genNoControl = HGen.filter (not . Ch.isControl) HGen.unicode
 
 lineTruncLimit :: Integral a => a
 lineTruncLimit = 80
@@ -87,7 +89,7 @@ genEnvLineTrunc =
     range = HRange.linear 0 lineTruncLimit
 
 genLongLineText :: Gen Text
-genLongLineText = HGen.text range HGen.latin1
+genLongLineText = HGen.text range HGen.unicode
   where
     range = HRange.linearFrom (lineTruncLimit + 1) (lineTruncLimit + 1) 120
 
@@ -144,7 +146,7 @@ consoleLogProps =
       prefixProps,
       displayCmdProps,
       displayKeyProps,
-      -- cmdTruncProps,
+      cmdTruncProps,
       lineTruncProps
     ]
 
@@ -185,25 +187,31 @@ displayKeyProps =
       let result = formatConsoleLog env log
       includesOrTruncated (Utils.stripControlAll key) result
 
--- TODO: Fix these tests
-
-{-cmdTruncProps :: TestTree
+cmdTruncProps :: TestTree
 cmdTruncProps =
   testPropertyNamed "Truncates long command" "cmdTruncProps" $
     property $ do
-      env <- forAll genEnvCmdTrunc
+      (env, cmdNameTrunc) <- forAll genEnvCmdTrunc
+      let env' = set' #cmdTrunc (Just cmdNameTrunc) env
       cmdTxt <- forAll genLongCmdText
       log <- forAll LGens.genLog
-      let -- log' = log {cmd = Just cmd'}
-          log' = set' (#cmd % _Just % #command) cmdTxt log
-          result = formatConsoleLog env log'
+
+      let log' = set' #cmd (Just (MkCommand Nothing cmdTxt)) log
+          result = formatConsoleLog env' log'
+          cmdNameTruncInt = fromIntegral $ cmdNameTrunc ^. #unTruncation
+
       annotate $ T.unpack result
-      -- If we have control chars, we might not be doing any truncation
-      -- as the stripping happens before truncation. In which case,
-      -- just bail, nothing to test.
-      --
-      -- Ideally we'd not generate these in the first place.
-      assert $ "...]" `T.isInfixOf` result || T.any Ch.isControl cmdTxt-}
+
+      -- NOTE: This probably seems weird. We are generating a string s and
+      -- truncation t such that length s > t, so why do this check? This is due
+      -- to truncation occurring _after_ we strip control chars from the
+      -- command name. We only perform truncation if we have
+      -- length (stripped s) > t.
+      if T.length (Utils.stripControlAll cmdTxt) > cmdNameTruncInt
+        then -- violated trunc limit, should be truncated
+          assert $ "...]" `T.isInfixOf` result
+        else -- under trunc limit, text should be preserved exactly
+          assert $ cmdTxt `T.isInfixOf` result
 
 lineTruncProps :: TestTree
 lineTruncProps =
@@ -217,7 +225,7 @@ lineTruncProps =
       let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelSubCommand}
           result = formatConsoleLog env log'
 
-      annotate $ "Result: " <> T.unpack result
+      annotate $ T.unpack result
       assert $ "..." `T.isInfixOf` result
       diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
 
@@ -300,7 +308,7 @@ timestampProps =
 
 fileLogMessageProps :: TestTree
 fileLogMessageProps =
-  testPropertyNamed "Includes message" "messageProps" $
+  testPropertyNamed "Includes message" "fileLogMessageProps" $
     property $ do
       log@MkLog {msg} <- forAll LGens.genLog
       let result = formatFileLog log
@@ -309,7 +317,7 @@ fileLogMessageProps =
 
 fileLogPrefixProps :: TestTree
 fileLogPrefixProps =
-  testPropertyNamed "Formats prefix" "prefixProps" $
+  testPropertyNamed "Formats prefix" "fileLogPrefixProps" $
     property $ do
       log@MkLog {lvl} <- forAll LGens.genLog
       let result = formatFileLog log
@@ -389,6 +397,8 @@ stripSmart =
   where
     stripSmart' = flip Formatting.stripChars (Just StripControlSmart)
 
+-- Tests that either the expected string is in the result, or we have
+-- done some truncation
 includesOrTruncated :: Text -> Text -> PropertyT IO ()
 includesOrTruncated expected result = do
   annotate (T.unpack expected)
