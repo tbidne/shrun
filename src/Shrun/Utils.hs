@@ -21,12 +21,14 @@ module Shrun.Utils
     parseByteText,
     whileM_,
     whenJust,
+    whenLeft,
     untilJust,
   )
 where
 
 import Data.Bytes (Bytes, Conversion (convert), Size (B), SomeSize, parse)
 import Data.Char (isControl, isLetter)
+import Data.Either (either)
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.MonadTime (TimeSpec, diffTimeSpec)
@@ -323,6 +325,12 @@ parseByteText txt =
 -- @since 0.7
 whenJust :: Applicative f => Maybe a -> (a -> f ()) -> f ()
 whenJust m action = maybe (pure ()) action m
+
+-- | Runs the action when it is 'Left'.
+--
+-- @since 0.7
+whenLeft :: Applicative f => Either a b -> (a -> f ()) -> f ()
+whenLeft e action = either action (const (pure ())) e
 
 -- | @whileM_ mb ma@ executes @ma@ as long as @mb@ returns 'True'.
 --

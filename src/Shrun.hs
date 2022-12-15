@@ -86,9 +86,6 @@ shrun = displayRegions $ do
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
         runCommands
 
-        -- For both this and the consoleLogger, we want to ensure that
-        -- all logs are handled i.e. we need to ensure the
-        -- read + write action is atomic. How to ensure?
         Async.cancel fileLoggerThread
 
         -- handle any remaining file logs
@@ -147,22 +144,21 @@ printFinalResult ::
   Either e b ->
   m ()
 printFinalResult totalTime result = withRegion Linear $ \r -> do
-  case result of
-    Left ex -> do
-      let errMsg =
-            T.pack $
-              "Encountered an exception. This is likely not an error in any of the "
-                <> "commands run but rather an error in Shrun itself: "
-                <> displayException ex
-          fatalLog =
-            MkLog
-              { cmd = Nothing,
-                msg = errMsg,
-                lvl = LevelFatal,
-                mode = LogModeFinish
-              }
-      Logging.putRegionLog r fatalLog
-    Right _ -> pure ()
+  Utils.whenLeft result $ \ex ->
+    let errMsg =
+          mconcat
+            [ "Encountered an exception. This is likely not an error in any ",
+              "of the commands run but rather an error in Shrun itself: ",
+              T.pack (displayException ex)
+            ]
+        fatalLog =
+          MkLog
+            { cmd = Nothing,
+              msg = errMsg,
+              lvl = LevelFatal,
+              mode = LogModeFinish
+            }
+     in Logging.putRegionLog r fatalLog
 
   let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
       finalLog =
