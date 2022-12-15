@@ -36,7 +36,7 @@ allUnexpected =
         ]
 
 cmdBad :: (IsString s, Semigroup s) => s
-cmdBad = withErrorPrefix "some nonsense" ""
+cmdBad = withErrorPrefix "some nonsense"
 
 cmdEchoHi :: Text
 cmdEchoHi = withSuccessPrefix "echo hi"

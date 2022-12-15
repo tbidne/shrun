@@ -279,15 +279,6 @@ pollQueueToConsole = do
   queue <- asks (view #consoleLogging . getLogging)
   forever $ do
     -- NOTE: Applying the same semaphore logic from pollQueueToFile here.
-    -- This hopefully addresses a bug where final success/error command logs
-    -- can overwrite each other. Unfortunately this bug is very hard; the
-    -- gif example (and functional test) very occasionally reproduces it,
-    -- with the error message being erroneously overwritten with
-    -- 'play it cool...'. But it is very, hence it is unclear if this
-    -- is an actual fix.
-    --
-    -- Nevertheless, we probably want to enforce atomicity anyway, so this is
-    -- likely the Right Thing To Do.
     liftIO $ waitQSem sem
     tryReadTBQueueM queue >>= traverse_ printConsoleLog
     liftIO $ signalQSem sem

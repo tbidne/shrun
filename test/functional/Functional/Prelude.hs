@@ -135,8 +135,8 @@ withSuccessPrefix :: (IsString s, Semigroup s) => s -> s
 withSuccessPrefix txt = "[Success][" <> txt <> "] "
 
 -- | Expected error text.
-withErrorPrefix :: (IsString s, Semigroup s) => s -> s -> s
-withErrorPrefix cmd txt = "[Error][" <> cmd <> "] " <> txt
+withErrorPrefix :: (IsString s, Semigroup s) => s -> s
+withErrorPrefix cmd = "[Error][" <> cmd <> "] "
 
 -- | Expected timing text.
 withTimerPrefix :: (Semigroup a, IsString a) => a -> a

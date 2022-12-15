@@ -42,7 +42,12 @@ gif =
       [ withFinishedPrefix "13 seconds",
         withSuccessPrefix "skynet",
         withSuccessPrefix "ui",
-        withErrorPrefix "sign-peace-treaty" "5 seconds: /bin/sh: line 1: lol psyche: command not found",
+        -- NOTE: The final error message is unreliable, so we would occasionally
+        -- run into an error where we received a different message. This led
+        -- to the mistaken belief that there was a concurrency bug, which is
+        -- perhaps technically true, but it is regarding messages we receive,
+        -- not from any output getting mangled.
+        withErrorPrefix "sign-peace-treaty",
         withCommandPrefix "skynet" "preparing nuclear missil-- i mean gift baskets",
         withCommandPrefix "ui" "adding emojis. we like to have fun :-)",
         withCommandPrefix "querying-targets" "finding targets...",
@@ -65,7 +70,7 @@ core =
       [ withSuccessPrefix "echo cat",
         withSuccessPrefix "echo hi",
         withSuccessPrefix "cmd1",
-        withErrorPrefix "cmd4" "0 seconds: /bin/sh: line 1: four: command not found",
+        withErrorPrefix "cmd4",
         withFinishedPrefix "0 seconds"
       ]
 
