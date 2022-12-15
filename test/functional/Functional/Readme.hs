@@ -176,10 +176,13 @@ stripControlAll = testCase "Runs --cmd-log-strip-control all example" $ do
         [ "-lx10",
           "--cmd-log-strip-control",
           "all",
-          "echo -e ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
+    -- NOTE: printf over echo -e for portability (echo fails on CI). Also to
+    -- try these out manually, note that \ESC will have to be substituted with
+    -- \033.
     expected =
-      [ withCommandPrefix "echo -e..." "foo  hello  bye"
+      [ withCommandPrefix "printf ..." "foo  hello  bye"
       ]
 
 stripControlNone :: TestTree
@@ -192,10 +195,10 @@ stripControlNone = testCase "Runs --cmd-log-strip-control none example" $ do
         [ "-lx10",
           "--cmd-log-strip-control",
           "none",
-          "echo -e ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
     expected =
-      [ withCommandPrefix "echo -e..." "foo \ESC[35m hello \ESC[3D bye"
+      [ withCommandPrefix "printf ..." "foo \ESC[35m hello \ESC[3D bye"
       ]
 
 stripControlSmart :: TestTree
@@ -207,10 +210,10 @@ stripControlSmart = testCase "Runs --cmd-log-strip-control smart example" $ do
       withNoConfig
         [ "-lx10",
           "--cmd-log-strip-control=smart",
-          "echo -e ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
     expected =
-      [ withCommandPrefix "echo -e..." "foo \ESC[35m hello  bye"
+      [ withCommandPrefix "printf ..." "foo \ESC[35m hello  bye"
       ]
 
 -- TODO: file log strip control
