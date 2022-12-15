@@ -20,14 +20,14 @@ the major/minor/patch definitions apply to the application's interface / usage
   * Success/Finished message now have specific labels
 
 ### Fixed
-* Bug fixed where legend key with multiple values i.e. k = [v1, v2, ...] would
+* Fixed bug where legend key with multiple values i.e. k = [v1, v2, ...] would
   consider each vi to have key name k. This meant output could be ambiguous
   with key-hide = false (the default) because multiple values would have the
   same key name. Now we only consider a value to have a key name when it is
   unique i.e. k = v.
 * File logging thread no longer polls when file logging is disabled.
-* Console logs now use a queue as well to prevent the rare but possible case
-  where console logs to the same region (e.g. final logs) overwrite each other.
+* File logging no longer crashes if the log file does not already exist.
+* Final log message now consistently show up in the log file.
 
 
 ## [0.6] -- 2022-12-07
