@@ -144,7 +144,7 @@ consoleLogProps =
       prefixProps,
       displayCmdProps,
       displayKeyProps,
-      --cmdTruncProps,
+      -- cmdTruncProps,
       lineTruncProps
     ]
 

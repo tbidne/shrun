@@ -6,11 +6,6 @@
 # e.g. "1d2h3m4s", "2h30s".
 #timeout = 20
 
-# If true, _all_ logging is disabled. This is almost never what you want, as
-# most usages will at least want to know which commands succeeded/failed.
-# This option is primarily here to help testing.
-log-disable = false
-
 # By default (key-hide = false), logs will refer to the key name, as defined in
 # legend section. If set to true, logs will instead reference the literal
 # command.
