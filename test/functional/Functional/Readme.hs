@@ -156,9 +156,6 @@ fileLog testArgs = testCase "Runs file-log example" $ do
         ++ [ withCommandPrefix "for i in {1..3}; do echo hi; sleep 1; done" "hi"
            ]
 
--- TODO: file log mode
--- TODO: file log mode delete
-
 keyHideOn :: TestTree
 keyHideOn =
   testCase "Runs key hide example with --key-hide" $ do
