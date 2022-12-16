@@ -76,6 +76,12 @@
           ];
           ghc-version = "ghc925";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
+            # 2022-12-17
+            all-cabal-hashes = builtins.fetchurl {
+              url = "https://github.com/commercialhaskell/all-cabal-hashes/archive/3a7b64a88d317ddd369445717fde18cfffce62cb.tar.gz";
+              sha256 = "0cj8whjcq6z7yz1gj76yqr5ifp88zb217m26jz4nw4y9fyxbc5ip";
+            };
+
             overrides = final: prev: {
               # https://github.com/ddssff/listlike/issues/23
               ListLike = hlib.dontCheck prev.ListLike;
@@ -127,6 +133,7 @@
                 package-version = pkgs.haskell.lib.doJailbreak prev.package-version;
                 relative-time = final.callCabal2nix "relative-time" relative-time { };
                 tasty-hedgehog = prev.tasty-hedgehog_1_4_0_0;
+                toml-reader = final.callHackage "toml-reader" "0.2.0.0" { };
               };
             };
         in
