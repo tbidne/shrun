@@ -107,6 +107,7 @@ makeEnvAndShrun ::
     MonadFsWriter m,
     MonadIORef m,
     MonadMask m,
+    MonadQSem m,
     MonadTBQueue m,
     MonadTerminal m,
     MonadTVar m,

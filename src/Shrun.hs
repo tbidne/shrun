@@ -9,12 +9,15 @@ module Shrun
   )
 where
 
-import Control.Concurrent.QSem (newQSem, signalQSem, waitQSem)
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
 import Effects.MonadSTM (MonadTBQueue (tryReadTBQueueM))
-import Effects.MonadThread as X (MonadThread (microsleep), sleep)
+import Effects.MonadThread as X
+  ( MonadQSem (newQSem, signalQSem, waitQSem),
+    MonadThread (microsleep),
+    sleep,
+  )
 import Effects.MonadTime (MonadTime (..), TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
@@ -57,6 +60,7 @@ shrun ::
     MonadCallStack m,
     MonadIORef m,
     MonadFsWriter m,
+    MonadQSem m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadTBQueue m,
@@ -264,20 +268,20 @@ timedOut timer (Just (MkTimeout t)) = timer > t
 pollQueueToConsole ::
   ( HasLogging env (Region m),
     MonadFsWriter m,
-    MonadIO m,
+    MonadQSem m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadTBQueue m
   ) =>
   m void
 pollQueueToConsole = do
-  sem <- liftIO $ newQSem 1
+  sem <- newQSem 1
   queue <- asks (view #consoleLogging . getLogging)
   forever $ do
     -- NOTE: Applying the same semaphore logic from pollQueueToFile here.
-    liftIO $ waitQSem sem
+    waitQSem sem
     tryReadTBQueueM queue >>= traverse_ printConsoleLog
-    liftIO $ signalQSem sem
+    signalQSem sem
 
 printConsoleLog :: MonadRegionLogger m => LogRegion (Region m) -> m ()
 printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
@@ -285,13 +289,13 @@ printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unCon
 
 pollQueueToFile ::
   ( MonadFsWriter m,
-    MonadIO m,
+    MonadQSem m,
     MonadTBQueue m
   ) =>
   FileLogging ->
   m void
 pollQueueToFile fileLogging = do
-  sem <- liftIO $ newQSem 1
+  sem <- newQSem 1
   forever $ do
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
@@ -299,9 +303,9 @@ pollQueueToFile fileLogging = do
     -- Testing shows that the QSem here appears to work as advertized:
     -- Without it, the final "Finished" log rarely shows up in the file logs.
     -- With it, it consistently shows up.
-    liftIO $ waitQSem sem
+    waitQSem sem
     tryReadTBQueueM queue >>= traverse_ (logFile h)
-    liftIO $ signalQSem sem
+    signalQSem sem
   where
     (h, queue) = fileLogging ^. #log
 

@@ -43,6 +43,8 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadIORef,
       -- | @since 0.1
       MonadMask,
+      -- | @since 0.7
+      MonadQSem,
       -- | @since 0.6
       MonadTBQueue,
       -- | @since 0.6
