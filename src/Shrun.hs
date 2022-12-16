@@ -9,15 +9,12 @@ module Shrun
   )
 where
 
+import Control.Monad.Catch (uninterruptibleMask_)
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
 import Effects.MonadSTM (MonadTBQueue (tryReadTBQueueM))
-import Effects.MonadThread as X
-  ( MonadQSem (newQSem, signalQSem, waitQSem),
-    MonadThread (microsleep),
-    sleep,
-  )
+import Effects.MonadThread as X (MonadThread (microsleep), sleep)
 import Effects.MonadTime (MonadTime (..), TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
@@ -60,7 +57,7 @@ shrun ::
     MonadCallStack m,
     MonadIORef m,
     MonadFsWriter m,
-    MonadQSem m,
+    MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadTBQueue m,
@@ -268,20 +265,16 @@ timedOut timer (Just (MkTimeout t)) = timer > t
 pollQueueToConsole ::
   ( HasLogging env (Region m),
     MonadFsWriter m,
-    MonadQSem m,
+    MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadTBQueue m
   ) =>
   m void
 pollQueueToConsole = do
-  sem <- newQSem 1
   queue <- asks (view #consoleLogging . getLogging)
-  forever $ do
-    -- NOTE: Applying the same semaphore logic from pollQueueToFile here.
-    waitQSem sem
-    tryReadTBQueueM queue >>= traverse_ printConsoleLog
-    signalQSem sem
+  -- NOTE: Same masking behavior as pollQueueToFile.
+  forever $ atomicReadWrite queue printConsoleLog
 
 printConsoleLog :: MonadRegionLogger m => LogRegion (Region m) -> m ()
 printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
@@ -289,25 +282,44 @@ printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unCon
 
 pollQueueToFile ::
   ( MonadFsWriter m,
-    MonadQSem m,
+    MonadMask m,
     MonadTBQueue m
   ) =>
   FileLogging ->
   m void
 pollQueueToFile fileLogging = do
-  sem <- newQSem 1
-  forever $ do
+  forever $
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
+    -- Hence the mask.
     --
-    -- Testing shows that the QSem here appears to work as advertized:
-    -- Without it, the final "Finished" log rarely shows up in the file logs.
-    -- With it, it consistently shows up.
-    waitQSem sem
-    tryReadTBQueueM queue >>= traverse_ (logFile h)
-    signalQSem sem
+    -- atomicReadWrite masks async exceptions, but this is safe to do
+    -- _inside_ the forever, as long as reading from the queue and
+    -- logging to the file do not block for a long time.
+    atomicReadWrite queue (logFile h)
   where
     (h, queue) = fileLogging ^. #log
 
 logFile :: MonadFsWriter m => Handle -> FileLog -> m ()
 logFile h = hPutUtf8 h . view #unFileLog
+
+-- | Reads from a queue and applies the function, if we receive a value.
+-- Atomic in the sense that if a read is successful, then we will apply the
+-- given function, even if an async exception is raised.
+--
+-- __WARNING:__ Because we are temporarily blocking exceptions, take care that
+-- the supplied function does _not_ block for a long time, otherwise we could
+-- encounter deadlocks.
+atomicReadWrite ::
+  ( MonadMask m,
+    MonadTBQueue m
+  ) =>
+  -- | Queue from which to read.
+  TBQueue a ->
+  -- | Function to apply.
+  (a -> m b) ->
+  m ()
+atomicReadWrite queue logAction =
+  -- NOTE: We need uninterruptibleMask_ as mask_ does not stop ThreadKilled.
+  uninterruptibleMask_ $
+    tryReadTBQueueM queue >>= traverse_ logAction

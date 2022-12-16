@@ -136,7 +136,7 @@ import Effects.MonadTerminal as X
     putText,
     putTextLn,
   )
-import Effects.MonadThread as X (MonadQSem, MonadThread)
+import Effects.MonadThread as X (MonadThread)
 import GHC.Enum as X (Bounded (..), Enum (..))
 import GHC.Err as X (undefined)
 import GHC.Float as X (Double (..), Float (..))
