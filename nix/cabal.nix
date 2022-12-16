@@ -1,4 +1,4 @@
-{ ghc-vers ? "ghc942"
+{ ghc-vers ? "ghc943"
 , dev ? false
 }:
 
