@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Module that provides env types and requisite typeclasses, along with
@@ -18,7 +17,6 @@ module Shrun.Configuration.Env
     Truncation (..),
     TruncRegion (..),
     StripControl (..),
-    TomlError (..),
 
     -- * Functions
     withEnv,
@@ -77,26 +75,6 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Prelude
-
--- | @since 0.5
-newtype TomlError = MkTomlError
-  { -- | @since 0.5
-    unTomlError :: TOMLError
-  }
-  deriving stock
-    ( -- | @since 0.5
-      Eq,
-      -- | @since 0.5
-      Show
-    )
-
--- | @since 0.5
-makeFieldLabelsNoPrefix ''TomlError
-
--- | @since 0.5
-instance Exception TomlError where
-  displayException err =
-    "TOML error: " <> unpack (renderTOMLError $ err ^. #unTomlError)
 
 -- | 'withEnv' with 'shrun'.
 --
@@ -164,7 +142,7 @@ withEnv onEnv = do
       contents <- readFileUtf8ThrowM fp
       case decode contents of
         Right cfg -> pure cfg
-        Left tomlErr -> throwIO $ MkTomlError tomlErr
+        Left tomlErr -> throwIO tomlErr
 
 fromToml ::
   ( MonadFsReader m,

@@ -3,7 +3,7 @@ module Integration.Failures (specs) where
 import Data.IORef qualified as IORef
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
-import Shrun.Configuration.Env (TomlError (..), withEnv)
+import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
 
 specs :: TestTree
@@ -60,16 +60,16 @@ emptyKey = testCase "Empty key throws exception" $ do
   result <-
     flip runConfigIO logsRef $
       withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
-        `catch` \e -> pure $ Just e
+        `catch` \(e :: TOMLError) -> pure $ Just e
 
   case result of
-    Just err@(MkTomlError _) -> expectedErr @=? displayException err
+    Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
   logs <- IORef.readIORef logsRef
   logs @=? []
   where
-    expectedErr = "TOML error: Decode error at '.legend[0].key': Unexpected empty text"
+    expectedErr = "Decode error at '.legend[0].key': Unexpected empty text"
 
 emptyValue :: TestTree
 emptyValue = testCase "Empty value throws exception" $ do
@@ -78,16 +78,16 @@ emptyValue = testCase "Empty value throws exception" $ do
   result <-
     flip runConfigIO logsRef $
       withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
-        `catch` \e -> pure $ Just e
+        `catch` \(e :: TOMLError) -> pure $ Just e
 
   case result of
-    Just err@(MkTomlError _) -> expectedErr @=? displayException err
+    Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Exception exception"
 
   logs <- IORef.readIORef logsRef
   logs @=? []
   where
-    expectedErr = "TOML error: Decode error at '.legend[0].val': Unexpected empty text"
+    expectedErr = "Decode error at '.legend[0].val': Unexpected empty text"
 
 cyclicKeys :: TestTree
 cyclicKeys = testCase "Cyclic keys throws exception" $ do
@@ -113,13 +113,13 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
   result <-
     flip runConfigIO logsRef $
       withRunInIO (\runner -> withArgs args (runner (withEnv pure)) $> Nothing)
-        `catch` \e -> pure $ Just e
+        `catch` \(e :: TOMLError) -> pure $ Just e
 
   case result of
-    Just err@(MkTomlError _) -> expectedErr @=? displayException err
+    Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
   logs <- IORef.readIORef logsRef
   logs @=? []
   where
-    expectedErr = "TOML error: Decode error at '.file-log.path': Empty path given for --file-log"
+    expectedErr = "Decode error at '.file-log.path': Empty path given for --file-log"

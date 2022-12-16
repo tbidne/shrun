@@ -93,7 +93,7 @@ library
     , relative-time         ^>=0.1
     , template-haskell      >=2.17.0.0 && <2.20
     , text                  >=1.2.3.2  && <2.1
-    , toml-reader           >=0.1.0.0  && <0.3.0.0
+    , toml-reader           >=0.2.0.0  && <0.3.0.0
     , unix                  >=2.7.2    && <2.9
     , unliftio              ^>=0.2.0.0
     , unordered-containers  ^>=0.2.9.0
