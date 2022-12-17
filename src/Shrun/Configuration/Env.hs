@@ -70,7 +70,7 @@ import Shrun.Configuration.Env.Types
     Truncation (..),
   )
 import Shrun.Configuration.Legend (linesToMap, translateCommands)
-import Shrun.Configuration.Toml (TomlConfig, argsToTomlConfig)
+import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
@@ -115,7 +115,7 @@ withEnv onEnv = do
   tomlConfig <-
     if args ^. #noConfig
       then -- 1. If noConfig is true then we ignore all toml config
-        pure mempty
+        pure defaultTomlConfig
       else case args ^. #configPath of
         -- 2. noConfig is false and toml config explicitly set: try reading
         --    (all errors rethrown)
@@ -132,9 +132,9 @@ withEnv onEnv = do
             then readConfig path
             else do
               putTextLn ("No default config found at: " <> pack path)
-              pure mempty
+              pure defaultTomlConfig
 
-  let finalConfig = args ^. argsToTomlConfig <> tomlConfig
+  let finalConfig = mergeConfig args tomlConfig
 
   fromToml onEnv finalConfig (args ^. #commands)
   where

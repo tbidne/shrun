@@ -6,12 +6,14 @@
 -- @since 0.5
 module Shrun.Configuration.Toml
   ( TomlConfig (..),
+    defaultTomlConfig,
     CmdLoggingToml (..),
     FileLoggingToml (..),
-    argsToTomlConfig,
+    mergeConfig,
   )
 where
 
+import Optics.Core (NoIx)
 import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
 import Shrun.Configuration.Env.Types
   ( CmdDisplay,
@@ -42,15 +44,6 @@ data CmdLoggingToml = MkCmdLoggingToml
     )
 
 -- | @since 0.6
-instance Semigroup CmdLoggingToml where
-  MkCmdLoggingToml a b <> MkCmdLoggingToml a' b' =
-    MkCmdLoggingToml (a <|> a') (b <|> b')
-
--- | @since 0.6
-instance Monoid CmdLoggingToml where
-  mempty = MkCmdLoggingToml empty empty
-
--- | @since 0.6
 instance DecodeTOML CmdLoggingToml where
   tomlDecoder =
     MkCmdLoggingToml
@@ -74,13 +67,6 @@ data FileLoggingToml = MkFileLoggingToml
       -- | @since 0.6
       Show
     )
-
--- | @since 0.6
-instance Semigroup FileLoggingToml where
-  -- NOTE: for the path, always take the LHS for consistency w/ other
-  -- Alternatives.
-  MkFileLoggingToml a b c d <> MkFileLoggingToml _ b' c' d' =
-    MkFileLoggingToml a (b <|> b') (c <|> c') (d <|> d')
 
 -- | @since 0.6
 instance DecodeTOML FileLoggingToml where
@@ -129,29 +115,11 @@ data TomlConfig = MkTomlConfig
       Show
     )
 
--- | @since 0.5
-instance Semigroup TomlConfig where
-  MkTomlConfig a b c d e f <> MkTomlConfig a' b' c' d' e' f' =
-    MkTomlConfig
-      (a <|> a')
-      (b <|> b')
-      (c <|> c')
-      -- NOTE: For aggregate types (i.e. cmd/file logging), use semigroup
-      -- instance since we want decisions at the individual _field_ level.
-      (d <> d')
-      (e <> e')
-      (f <|> f')
-
--- | @since 0.5
-instance Monoid TomlConfig where
-  mempty =
-    MkTomlConfig
-      empty
-      empty
-      empty
-      mempty
-      mempty
-      empty
+-- | Returns an empty 'TomlConfig'.
+--
+-- @since 0.7
+defaultTomlConfig :: TomlConfig
+defaultTomlConfig = MkTomlConfig Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- | @since 0.5
 instance DecodeTOML TomlConfig where
@@ -204,36 +172,6 @@ decodeFileLogSizeMode = getFieldOptWith tomlDecoder "size-mode"
 decodeLegend :: Decoder (Maybe (List KeyVal))
 decodeLegend = getFieldOptWith tomlDecoder "legend"
 
--- | @since 0.5
-argsToTomlConfig :: Getter Args TomlConfig
-argsToTomlConfig = to a2c
-  where
-    a2c args =
-      MkTomlConfig
-        { timeout = args ^. #timeout,
-          cmdDisplay = args ^. #cmdDisplay,
-          cmdNameTrunc = args ^. #cmdNameTrunc,
-          cmdLogging = case args ^. #cmdLogging of
-            Just True ->
-              Just
-                MkCmdLoggingToml
-                  { stripControl = args ^. #cmdLogStripControl,
-                    lineTrunc = args ^. #cmdLogLineTrunc
-                  }
-            _ -> Nothing,
-          fileLogging = case args ^. #fileLogging of
-            Just f ->
-              Just
-                MkFileLoggingToml
-                  { path = f,
-                    mode = args ^. #fileLogMode,
-                    stripControl = args ^. #fileLogStripControl,
-                    sizeMode = args ^. #fileLogSizeMode
-                  }
-            _ -> Nothing,
-          legend = Nothing
-        }
-
 -- | @since 0.6
 makeFieldLabelsNoPrefix ''CmdLoggingToml
 
@@ -242,3 +180,84 @@ makeFieldLabelsNoPrefix ''FileLoggingToml
 
 -- | @since 0.5
 makeFieldLabelsNoPrefix ''TomlConfig
+
+-- | Merges an 'Args' and 'TomlConfig' together to produce a single config.
+-- In general, if both configurations specify a value, the CLI 'Args'
+-- takes precedence.
+--
+-- @since 0.1
+mergeConfig :: Args -> TomlConfig -> TomlConfig
+mergeConfig args tomlConfig =
+  MkTomlConfig
+    { timeout = combine #timeout #timeout,
+      cmdDisplay = combine #cmdDisplay #cmdDisplay,
+      cmdNameTrunc = combine #cmdNameTrunc #cmdNameTrunc,
+      cmdLogging =
+        combineCmdLogging argsCmdLogging (tomlConfig ^. #cmdLogging),
+      fileLogging =
+        combineFileLogging argsFileLogging (tomlConfig ^. #fileLogging),
+      legend = tomlConfig ^. #legend
+    }
+  where
+    combine ::
+      ( Alternative f,
+        Is k A_Getter
+      ) =>
+      Optic' k NoIx Args (f b) ->
+      Optic' k NoIx TomlConfig (f b) ->
+      f b
+    combine argsGetter tomlGetter =
+      args ^. argsGetter <|> tomlConfig ^. tomlGetter
+
+    argsCmdLogging =
+      ( args ^. #cmdLogging,
+        args ^. #cmdLogStripControl,
+        args ^. #cmdLogLineTrunc
+      )
+    argsFileLogging =
+      ( args ^. #fileLogging,
+        args ^. #fileLogStripControl,
+        args ^. #fileLogMode,
+        args ^. #fileLogSizeMode
+      )
+
+combineCmdLogging ::
+  -- | Args
+  (Maybe Bool, Maybe StripControl, Maybe LineTruncation) ->
+  -- | Toml
+  Maybe CmdLoggingToml ->
+  -- | Result
+  Maybe CmdLoggingToml
+-- 1. If neither CLI nor toml specifies cmd logging, return no logging
+combineCmdLogging (Just False, _, _) Nothing = Nothing
+combineCmdLogging (Nothing, _, _) Nothing = Nothing
+-- 2. If only the CLI specifies cmd logging, use its config
+combineCmdLogging (Just True, sc, lt) Nothing = Just $ MkCmdLoggingToml sc lt
+-- 3. If toml specifies cmd logging, combine args, favoring CLI as usual
+combineCmdLogging (_, mStripControl, mlineTrunc) (Just toml) =
+  Just $
+    MkCmdLoggingToml
+      { stripControl = mStripControl <|> toml ^. #stripControl,
+        lineTrunc = mlineTrunc <|> toml ^. #lineTrunc
+      }
+
+combineFileLogging ::
+  -- | Args
+  (Maybe FilePathDefault, Maybe StripControl, Maybe FileMode, Maybe FileSizeMode) ->
+  -- | Toml
+  Maybe FileLoggingToml ->
+  -- | Result
+  Maybe FileLoggingToml
+-- 1. If neither CLI nor toml specifies file logging, return no logging
+combineFileLogging (Nothing, _, _, _) Nothing = Nothing
+-- 2. If only the CLI specifies file logging, use its config
+combineFileLogging (Just f, sc, m, sm) Nothing = Just $ MkFileLoggingToml f sc m sm
+-- 3. If toml specifies file logging, combine args, favoring CLI as usual
+combineFileLogging (mpath, mStripControl, mMode, mSizeMode) (Just toml) =
+  Just $
+    MkFileLoggingToml
+      { path = fromMaybe (toml ^. #path) mpath,
+        stripControl = mStripControl <|> toml ^. #stripControl,
+        mode = mMode <|> toml ^. #mode,
+        sizeMode = mSizeMode <|> toml ^. #sizeMode
+      }

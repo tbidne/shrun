@@ -18,6 +18,7 @@ specs testArgs =
     [ defaultEnv,
       usesDefaultConfigFile,
       cliOverridesConfigFile testArgs,
+      cliOverridesConfigFileCmdLog,
       ignoresDefaultConfigFile
     ]
 
@@ -103,6 +104,40 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
           cmdLogLineTrunc = Just 60,
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
+          commands = NESeq.singleton "cmd"
+        }
+
+cliOverridesConfigFileCmdLog :: TestTree
+cliOverridesConfigFileCmdLog = testCase desc $ do
+  logsRef <- newIORef []
+
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- readIORef logsRef
+  logs @=? []
+  where
+    desc = "CLI overrides config file cmd-log fields even when CLI --cmd-log is not specified"
+    args =
+      [ "--config",
+        "test/integration/toml/overridden.toml",
+        "--cmd-log-line-trunc",
+        "60",
+        "--cmd-log-strip-control",
+        "none",
+        "cmd"
+      ]
+    expected =
+      MkSimpleEnv
+        { -- These two params we care about
+          cmdLogStripControl = Just StripControlNone,
+          cmdLogLineTrunc = Just 60,
+          -- These are just the rest
+          timeout = Just 3_600,
+          cmdDisplay = ShowKey,
+          cmdLogging = True,
+          cmdLogNameTrunc = Just 80,
+          fileLogging = True,
+          fileLogStripControl = Just StripControlAll,
           commands = NESeq.singleton "cmd"
         }
 

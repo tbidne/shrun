@@ -31,6 +31,9 @@ the major/minor/patch definitions apply to the application's interface / usage
 * Final log message now consistently show up in the log file.
 * Fixed bug where ansi control chars could "bleed" over into other logs
 * Control chars stripped from command names every time.
+* Fixed bug where the toml file's `cmd-log.line-trunc` and
+  `strip-control.cmd-log` were not overridden by the CLI unless the CLI also
+  specified `--cmd-log`.
 
 
 ## [0.6] -- 2022-12-07
