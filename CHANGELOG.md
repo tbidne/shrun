@@ -10,7 +10,7 @@ Note that PVP is applied to the _application_, not the _library_. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
-## [0.7]
+## [0.7] -- 2022-12-19
 ### Removed
 * `log-disable` option removed from CLI and TOML.
 
