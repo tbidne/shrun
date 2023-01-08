@@ -33,16 +33,20 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadCatch,
       -- | @since 0.6
       MonadCallStack,
-      -- | @since 0.6
-      MonadFsReader,
-      -- | @since 0.6
-      MonadFsWriter,
+      -- | @since X-X-X
+      MonadFileReader,
+      -- | @since X-X-X
+      MonadFileWriter,
+      -- | @since X-X-X
+      MonadHandleWriter,
       -- | @since 0.1
       MonadIO,
       -- | @since 0.6
       MonadIORef,
       -- | @since 0.1
       MonadMask,
+      -- @since X-X-X
+      MonadPathWriter,
       -- | @since 0.6
       MonadTBQueue,
       -- | @since 0.6

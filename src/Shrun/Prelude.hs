@@ -96,23 +96,36 @@ import Data.Tuple as X (fst, snd)
 import Data.Type.Equality as X (type (~))
 #endif
 import Data.Void as X (Void, absurd)
+import Effects.FileSystem.MonadFileReader as X
+  ( MonadFileReader,
+    decodeUtf8Lenient,
+    readFileUtf8Lenient,
+    readFileUtf8ThrowM,
+  )
+import Effects.FileSystem.MonadFileWriter as X
+  ( MonadFileWriter,
+    appendFileUtf8,
+    writeFileUtf8,
+  )
+import Effects.FileSystem.MonadHandleWriter as X
+  ( MonadHandleWriter (hClose, hFlush, openBinaryFile),
+    hPutUtf8,
+  )
+import Effects.FileSystem.MonadPathReader as X
+  ( MonadPathReader (doesFileExist, getFileSize),
+    getXdgConfig,
+  )
+import Effects.FileSystem.MonadPathWriter as X
+  ( MonadPathWriter,
+    removeDirectoryIfExists,
+    removeFile,
+    removeFileIfExists,
+  )
 import Effects.MonadCallStack as X
   ( MonadCallStack (throwWithCallStack),
     catch,
     displayCallStack,
     try,
-  )
-import Effects.MonadFs as X
-  ( MonadFsReader (readFile),
-    MonadFsWriter,
-    appendFileUtf8,
-    hFlush,
-    hPutUtf8,
-    readFileUtf8Lenient,
-    readFileUtf8ThrowM,
-    removeDirectoryIfExists,
-    removeFileIfExists,
-    writeFileUtf8,
   )
 import Effects.MonadIORef as X
   ( MonadIORef

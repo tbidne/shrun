@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Integration.Utils
   ( ConfigIO (..),
@@ -12,7 +13,7 @@ module Integration.Utils
 where
 
 import Data.Text qualified as T
-import Effects.MonadFs (MonadFsReader (..))
+import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
 import Effects.MonadTerminal (MonadTerminal (..))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
@@ -34,7 +35,9 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
       Functor,
       Monad,
       MonadCallStack,
-      MonadFsWriter,
+      MonadFileReader,
+      MonadHandleWriter,
+      MonadPathWriter,
       MonadIO,
       MonadIORef,
       MonadReader (IORef [Text]),
@@ -47,16 +50,14 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
 runConfigIO :: ConfigIO a -> IORef [Text] -> IO a
 runConfigIO (MkConfigIO rdr) = runReaderT rdr
 
-instance MonadFsReader ConfigIO where
+-- HACK: Listing all the MonadPathReader methods is tedious and unnecessary,
+-- so rather than list all of them like @foo = error "todo"@, we simply
+-- disable the warning with -Wno-missing-methods
+
+instance MonadPathReader ConfigIO where
   getFileSize = liftIO . getFileSize
-  getHomeDirectory = liftIO getHomeDirectory
-  getXdgConfig _ = pure "test/integration/toml"
-  readFile = liftIO . readFile
+  getXdgDirectory _ _ = pure "test/integration/toml"
   doesFileExist = liftIO . doesFileExist
-  doesDirectoryExist = liftIO . doesDirectoryExist
-  doesPathExist = liftIO . doesPathExist
-  canonicalizePath = liftIO . canonicalizePath
-  listDirectory = liftIO . listDirectory
 
 instance MonadTerminal ConfigIO where
   putStr = error "putStr: unimplemented"
@@ -73,10 +74,12 @@ instance MonadTerminal ConfigIO where
 newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
   deriving
     ( Applicative,
-      MonadFsWriter,
+      MonadPathWriter,
       Functor,
       Monad,
       MonadCallStack,
+      MonadFileReader,
+      MonadHandleWriter,
       MonadIO,
       MonadTBQueue,
       MonadTVar,
@@ -87,16 +90,10 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
 runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
 
-instance MonadFsReader NoConfigIO where
-  getXdgConfig _ = pure "./"
+instance MonadPathReader NoConfigIO where
+  getXdgDirectory _ _ = pure "./"
   getHomeDirectory = error "getHomeDirectory: unimplemented"
-  readFile = liftIO . readFile
-  getFileSize = liftIO . getFileSize
   doesFileExist = liftIO . doesFileExist
-  doesDirectoryExist = liftIO . doesDirectoryExist
-  doesPathExist = liftIO . doesPathExist
-  canonicalizePath = liftIO . canonicalizePath
-  listDirectory = liftIO . listDirectory
 
 deriving via ConfigIO instance MonadTerminal NoConfigIO
 
@@ -139,8 +136,10 @@ simplifyEnv = to $ \env ->
 makeEnvAndVerify ::
   forall m.
   ( MonadCallStack m,
-    MonadFsReader m,
-    MonadFsWriter m,
+    MonadFileReader m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadPathWriter m,
     MonadTBQueue m,
     MonadTerminal m,
     MonadTVar m,

@@ -33,19 +33,6 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
-import Effects.MonadFs
-  ( MonadFsReader
-      ( doesFileExist,
-        getFileSize,
-        getXdgConfig
-      ),
-    MonadFsWriter
-      ( hClose,
-        openFile,
-        removeFile
-      ),
-  )
-import Effects.MonadSTM
 import Effects.MonadTerminal (getTerminalWidth)
 import Effects.MonadTime (MonadTime)
 import Options.Applicative qualified as OA
@@ -81,9 +68,11 @@ import Shrun.Prelude
 -- @since 0.1
 makeEnvAndShrun ::
   ( MonadCallStack m,
-    MonadFsReader m,
-    MonadFsWriter m,
+    MonadFileReader m,
+    MonadHandleWriter m,
     MonadIORef m,
+    MonadPathReader m,
+    MonadPathWriter m,
     MonadMask m,
     MonadTBQueue m,
     MonadTerminal m,
@@ -101,8 +90,10 @@ makeEnvAndShrun = withEnv (runShellT shrun)
 -- @since 0.5
 withEnv ::
   ( MonadCallStack m,
-    MonadFsReader m,
-    MonadFsWriter m,
+    MonadFileReader m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadPathWriter m,
     MonadTBQueue m,
     MonadTerminal m,
     MonadTVar m,
@@ -145,8 +136,10 @@ withEnv onEnv = do
         Left tomlErr -> throwIO tomlErr
 
 fromToml ::
-  ( MonadFsReader m,
-    MonadFsWriter m,
+  ( MonadFileReader m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadPathWriter m,
     MonadTBQueue m,
     MonadTerminal m,
     MonadTVar m,
@@ -220,12 +213,12 @@ fromToml onEnv cfg cmdsText = do
 
       fileQueue <- newTBQueueM 1000
 
-      bracket (openFile fp ioMode) closeFile $ \h ->
+      bracket (openBinaryFile fp ioMode) closeFile $ \h ->
         onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
     Just (FPManual fp) -> do
       handleLogFileSize fp
       fileQueue <- newTBQueueM 1000
-      bracket (openFile fp ioMode) closeFile $ \h ->
+      bracket (openBinaryFile fp ioMode) closeFile $ \h ->
         onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
   where
     maybeOrMempty :: (Is k An_AffineFold, Monoid a) => s -> Optic' k is s a -> a
@@ -266,8 +259,8 @@ fromToml onEnv cfg cmdsText = do
         -- truncate (i.e. greater precision loss).
         . fmap (fromIntegral @Natural @Double)
 
-getShrunXdgConfig :: (HasCallStack, MonadFsReader m) => m FilePath
+getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m FilePath
 getShrunXdgConfig = getXdgConfig "shrun"
 
-closeFile :: MonadFsWriter f => Handle -> f ()
+closeFile :: MonadHandleWriter f => Handle -> f ()
 closeFile f = hFlush f *> hClose f

@@ -79,9 +79,9 @@ library
     , monad-fs              ^>=0.1
     , monad-ioref           ^>=0.1
     , monad-stm             ^>=0.1
+    , monad-system-time     ^>=0.1
     , monad-terminal        ^>=0.1
     , monad-thread          ^>=0.1
-    , monad-time            ^>=0.1
     , mtl                   >=2.2.1    && <2.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
@@ -143,7 +143,7 @@ test-suite unit
     , base
     , byte-types
     , hedgehog              >=1.0.2   && <1.3
-    , monad-time
+    , monad-system-time
     , optparse-applicative
     , refined
     , shrun

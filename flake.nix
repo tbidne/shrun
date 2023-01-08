@@ -118,6 +118,10 @@
                   final.callCabal2nix "monad-stm"
                     "${monad-effects}/monad-stm"
                     { };
+                monad-system-time =
+                  final.callCabal2nix "monad-system-time"
+                    "${monad-effects}/monad-system-time"
+                    { };
                 monad-terminal =
                   final.callCabal2nix "monad-terminal"
                     "${monad-effects}/monad-terminal"
@@ -125,10 +129,6 @@
                 monad-thread =
                   final.callCabal2nix "monad-thread"
                     "${monad-effects}/monad-thread"
-                    { };
-                monad-time =
-                  final.callCabal2nix "monad-time"
-                    "${monad-effects}/monad-time"
                     { };
                 package-version = pkgs.haskell.lib.doJailbreak prev.package-version;
                 relative-time = final.callCabal2nix "relative-time" relative-time { };

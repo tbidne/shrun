@@ -35,15 +35,15 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: b24c1b85952fba1cde225e21cba04b585174b1d0
+    tag: 82d1b943ce285bef14c8598d4401f80079baffb3
     subdir:
       monad-callstack
       monad-fs
       monad-ioref
       monad-stm
+      monad-system-time
       monad-terminal
       monad-thread
-      monad-time
 
 source-repository-package
     type: git

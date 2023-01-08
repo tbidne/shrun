@@ -4,7 +4,6 @@ module Integration.Miscellaneous (specs) where
 
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import Effects.MonadFs (MonadFsReader (getFileSize))
 import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Numeric.Algebra (zero)

@@ -56,7 +56,7 @@ shrun ::
     HasTimeout env,
     MonadCallStack m,
     MonadIORef m,
-    MonadFsWriter m,
+    MonadHandleWriter m,
     MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -264,7 +264,6 @@ timedOut timer (Just (MkTimeout t)) = timer > t
 
 pollQueueToConsole ::
   ( HasLogging env (Region m),
-    MonadFsWriter m,
     MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -281,7 +280,7 @@ printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLo
 printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
 
 pollQueueToFile ::
-  ( MonadFsWriter m,
+  ( MonadHandleWriter m,
     MonadMask m,
     MonadTBQueue m
   ) =>
@@ -300,7 +299,7 @@ pollQueueToFile fileLogging = do
   where
     (h, queue) = fileLogging ^. #log
 
-logFile :: MonadFsWriter m => Handle -> FileLog -> m ()
+logFile :: MonadHandleWriter m => Handle -> FileLog -> m ()
 logFile h = hPutUtf8 h . view #unFileLog
 
 -- | Reads from a queue and applies the function, if we receive a value.

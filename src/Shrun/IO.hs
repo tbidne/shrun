@@ -18,7 +18,6 @@ import Data.ByteString qualified as BS
 import Data.Sequence ((<|))
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
-import Effects.MonadFs (decodeUtf8Lenient)
 import Effects.MonadTime (MonadTime (..), withTiming)
 import GHC.IO.Handle (BufferMode (..))
 import GHC.IO.Handle qualified as Handle
