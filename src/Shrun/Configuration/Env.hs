@@ -34,8 +34,6 @@ import Data.Bytes
   )
 import Data.Sequence qualified as Seq
 import Effects.MonadTerminal (getTerminalWidth)
-import Effects.MonadTime (MonadTime)
-import Options.Applicative qualified as OA
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
   ( FileMode (..),
@@ -61,25 +59,31 @@ import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.NonEmptySeq (NonEmptySeq)
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Prelude
+import Shrun.ShellT (ShellT)
 
 -- | 'withEnv' with 'shrun'.
 --
 -- @since 0.1
 makeEnvAndShrun ::
-  ( MonadCallStack m,
+  ( HasLogging Env (Region (ShellT Env m)),
+    MonadCallStack m,
+    MonadAsync m,
     MonadFileReader m,
+    MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadProcess m,
     MonadMask m,
-    MonadTBQueue m,
+    MonadSTM m,
+    MonadRegionLogger m,
     MonadTerminal m,
-    MonadTVar m,
     MonadThread m,
-    MonadTime m,
-    MonadUnliftIO m
+    MonadTime m
   ) =>
   m ()
 makeEnvAndShrun = withEnv (runShellT shrun)
@@ -92,17 +96,17 @@ withEnv ::
   ( MonadCallStack m,
     MonadFileReader m,
     MonadHandleWriter m,
+    MonadMask m,
+    MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadTBQueue m,
-    MonadTerminal m,
-    MonadTVar m,
-    MonadUnliftIO m
+    MonadSTM m,
+    MonadTerminal m
   ) =>
   (Env -> m a) ->
   m a
 withEnv onEnv = do
-  args <- liftIO $ OA.execParser parserInfoArgs
+  args <- execParser parserInfoArgs
   tomlConfig <-
     if args ^. #noConfig
       then -- 1. If noConfig is true then we ignore all toml config
@@ -138,12 +142,11 @@ withEnv onEnv = do
 fromToml ::
   ( MonadFileReader m,
     MonadHandleWriter m,
+    MonadMask m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadTBQueue m,
-    MonadTerminal m,
-    MonadTVar m,
-    MonadUnliftIO m
+    MonadSTM m,
+    MonadTerminal m
   ) =>
   (Env -> m a) ->
   TomlConfig ->
@@ -229,7 +232,7 @@ fromToml onEnv cfg cmdsText = do
       Just fileSizeMode -> do
         exists <- doesFileExist fp
         when exists $ do
-          fileSize <- MkBytes @B <$> getFileSize fp
+          fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
           case fileSizeMode of
             FileSizeModeWarn warnSize ->
               when (fileSize > warnSize) $

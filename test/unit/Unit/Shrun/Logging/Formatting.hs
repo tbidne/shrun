@@ -31,7 +31,6 @@ import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types (Log (..), LogLevel (..))
 import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
-import Text.Read qualified as TR
 import Unit.Prelude
 import Unit.Shrun.Logging.Generators qualified as LGens
 
@@ -247,14 +246,15 @@ formatConsoleLog env =
 colorLen :: Int
 colorLen = 10
 
--- The mock time our 'MonadTime' returns.
+-- The mock time our 'MonadTime' returns. Needs to be kept in sync with
+-- getSystemZonedTime below.
 sysTime :: IsString a => a
-sysTime = "2022-02-20 23:47:39"
+sysTime = "2020-05-31 12:00:00"
 
 -- Refined variant of 'sysTime'. Includes brackets around the string
 -- for use when checking formatting.
 sysTimeNE :: Refined R.NonEmpty Text
-sysTimeNE = $$(R.refineTH "[2022-02-20 23:47:39]")
+sysTimeNE = $$(R.refineTH "[2020-05-31 12:00:00]")
 
 newtype MockEnv = MkMockEnv ()
 
@@ -278,7 +278,6 @@ newtype MockTime a = MkMockTime
   deriving (Applicative, Functor, Monad) via Identity
 
 instance MonadTime MockTime where
-  getSystemTime = pure $ TR.read sysTime
   getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
   getMonotonicTime = pure 0
 
@@ -303,7 +302,9 @@ timestampProps =
     property $ do
       log <- forAll LGens.genLog
       let result = formatFileLog log
-          (res, _) = Utils.breakStripPoint sysTimeNE result
+          (res, rest) = Utils.breakStripPoint sysTimeNE result
+      annotate $ T.unpack result
+      annotate $ T.unpack rest
       "" === res
 
 fileLogMessageProps :: TestTree

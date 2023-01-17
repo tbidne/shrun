@@ -39,9 +39,19 @@
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
+      inputs.smart-math.follows = "smart-math";
     };
     relative-time = {
       url = "github:tbidne/relative-time";
+      inputs.flake-compat.follows = "flake-compat";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.nixpkgs.follows = "nixpkgs";
+
+      inputs.algebra-simple.follows = "algebra-simple";
+      inputs.bounds.follows = "bounds";
+    };
+    smart-math = {
+      url = "github:tbidne/smart-math";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -60,6 +70,7 @@
     , nixpkgs
     , relative-time
     , self
+    , smart-math
     }:
     flake-parts.lib.mkFlake { inherit self; } {
       perSystem = { pkgs, ... }:
@@ -102,9 +113,17 @@
                 bounds = final.callCabal2nix "bounds" bounds { };
                 byte-types = final.callCabal2nix "byte-types" byte-types { };
                 hedgehog = prev.hedgehog_1_2;
+                monad-async =
+                  final.callCabal2nix "monad-async"
+                    "${monad-effects}/monad-async"
+                    { };
                 monad-callstack =
                   final.callCabal2nix "monad-callstack"
                     "${monad-effects}/monad-callstack"
+                    { };
+                monad-env =
+                  final.callCabal2nix "monad-env"
+                    "${monad-effects}/monad-env"
                     { };
                 monad-fs =
                   final.callCabal2nix "monad-fs"
@@ -113,6 +132,10 @@
                 monad-ioref =
                   final.callCabal2nix "monad-ioref"
                     "${monad-effects}/monad-ioref"
+                    { };
+                monad-optparse =
+                  final.callCabal2nix "monad-optparse"
+                    "${monad-effects}/monad-optparse"
                     { };
                 monad-stm =
                   final.callCabal2nix "monad-stm"
@@ -130,8 +153,13 @@
                   final.callCabal2nix "monad-thread"
                     "${monad-effects}/monad-thread"
                     { };
+                monad-typed-process =
+                  final.callCabal2nix "monad-typed-process"
+                    "${monad-effects}/monad-typed-process"
+                    { };
                 package-version = pkgs.haskell.lib.doJailbreak prev.package-version;
                 relative-time = final.callCabal2nix "relative-time" relative-time { };
+                smart-math = final.callCabal2nix "smart-math" smart-math { };
                 tasty-hedgehog = prev.tasty-hedgehog_1_4_0_0;
                 toml-reader = final.callHackage "toml-reader" "0.2.0.0" { };
               };

@@ -9,13 +9,12 @@ module Shrun
   )
 where
 
-import Control.Monad.Catch (uninterruptibleMask_)
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
-import Effects.MonadSTM (MonadTBQueue (tryReadTBQueueM))
-import Effects.MonadThread as X (MonadThread (microsleep), sleep)
-import Effects.MonadTime (MonadTime (..), TimeSpec, withTiming)
+import Effects.MonadAsync qualified as Async
+import Effects.MonadThread as X (microsleep, sleep)
+import Effects.MonadTime (TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
     HasCommands (..),
@@ -45,7 +44,6 @@ import Shrun.Logging.Formatting qualified as LogFmt
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
-import UnliftIO.Async qualified as Async
 
 -- | Entry point
 --
@@ -55,16 +53,17 @@ shrun ::
     HasLogging env (Region m),
     HasTimeout env,
     MonadCallStack m,
-    MonadIORef m,
+    MonadAsync m,
+    MonadHandleReader m,
     MonadHandleWriter m,
+    MonadIORef m,
+    MonadProcess m,
     MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTBQueue m,
+    MonadSTM m,
     MonadThread m,
-    MonadTime m,
-    MonadTVar m,
-    MonadUnliftIO m
+    MonadTime m
   ) =>
   m ()
 shrun = displayRegions $ do
@@ -107,13 +106,14 @@ runCommand ::
   ( HasCommands env,
     HasLogging env (Region m),
     MonadCallStack m,
+    MonadHandleReader m,
     MonadIORef m,
+    MonadMask m,
+    MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTBQueue m,
-    MonadTime m,
-    MonadTVar m,
-    MonadUnliftIO m
+    MonadSTM m,
+    MonadTime m
   ) =>
   Command ->
   m ()
@@ -135,10 +135,9 @@ runCommand cmd = do
 printFinalResult ::
   ( Exception e,
     HasLogging env (Region m),
-    MonadIO m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTBQueue m,
+    MonadSTM m,
     MonadTime m
   ) =>
   TimeSpec ->
@@ -179,9 +178,8 @@ counter ::
     MonadIORef m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTBQueue m,
+    MonadSTM m,
     MonadThread m,
-    MonadTVar m,
     MonadTime m
   ) =>
   m ()
@@ -203,7 +201,7 @@ counter = do
 logCounter ::
   ( HasLogging env (Region m),
     MonadReader env m,
-    MonadTBQueue m
+    MonadSTM m
   ) =>
   Region m ->
   Natural ->
@@ -225,9 +223,8 @@ keepRunning ::
     HasLogging env (Region m),
     MonadIORef m,
     MonadReader env m,
-    MonadTBQueue m,
-    MonadTime m,
-    MonadTVar m
+    MonadSTM m,
+    MonadTime m
   ) =>
   Region m ->
   IORef Natural ->
@@ -267,7 +264,7 @@ pollQueueToConsole ::
     MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTBQueue m
+    MonadSTM m
   ) =>
   m void
 pollQueueToConsole = do
@@ -282,7 +279,7 @@ printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unCon
 pollQueueToFile ::
   ( MonadHandleWriter m,
     MonadMask m,
-    MonadTBQueue m
+    MonadSTM m
   ) =>
   FileLogging ->
   m void
@@ -291,10 +288,6 @@ pollQueueToFile fileLogging = do
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
     -- Hence the mask.
-    --
-    -- atomicReadWrite masks async exceptions, but this is safe to do
-    -- _inside_ the forever, as long as reading from the queue and
-    -- logging to the file do not block for a long time.
     atomicReadWrite queue (logFile h)
   where
     (h, queue) = fileLogging ^. #log
@@ -305,13 +298,9 @@ logFile h = hPutUtf8 h . view #unFileLog
 -- | Reads from a queue and applies the function, if we receive a value.
 -- Atomic in the sense that if a read is successful, then we will apply the
 -- given function, even if an async exception is raised.
---
--- __WARNING:__ Because we are temporarily blocking exceptions, take care that
--- the supplied function does _not_ block for a long time, otherwise we could
--- encounter deadlocks.
 atomicReadWrite ::
   ( MonadMask m,
-    MonadTBQueue m
+    MonadSTM m
   ) =>
   -- | Queue from which to read.
   TBQueue a ->
@@ -319,6 +308,4 @@ atomicReadWrite ::
   (a -> m b) ->
   m ()
 atomicReadWrite queue logAction =
-  -- NOTE: We need uninterruptibleMask_ as mask_ does not stop ThreadKilled.
-  uninterruptibleMask_ $
-    tryReadTBQueueM queue >>= traverse_ logAction
+  mask $ \restore -> restore (readTBQueueM queue) >>= void . logAction

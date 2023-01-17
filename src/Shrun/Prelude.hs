@@ -16,6 +16,9 @@ module Shrun.Prelude
   ( -- * Total versions of partial functions
     headMaybe,
 
+    -- * Exceptions
+    tryAny,
+
     -- * Misc utilities
     (<<$>>),
     (.>),
@@ -42,6 +45,18 @@ import Control.Applicative as X
     (<**>),
   )
 import Control.Concurrent as X (threadDelay)
+import Control.Exception.Safe as X
+  ( Exception (..),
+    MonadCatch,
+    MonadMask,
+    MonadThrow,
+    SomeException,
+    bracket,
+    finally,
+    mask,
+    throwIO,
+    throwM,
+  )
 import Control.Monad as X
   ( Monad (..),
     forever,
@@ -52,7 +67,6 @@ import Control.Monad as X
     (=<<),
     (>=>),
   )
-import Control.Monad.Catch as X (MonadCatch, MonadMask (..), MonadThrow, throwM)
 import Control.Monad.Fail as X (MonadFail (..))
 import Control.Monad.IO.Class as X (MonadIO (..))
 import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
@@ -107,6 +121,7 @@ import Effects.FileSystem.MonadFileWriter as X
     appendFileUtf8,
     writeFileUtf8,
   )
+import Effects.FileSystem.MonadHandleReader as X (MonadHandleReader)
 import Effects.FileSystem.MonadHandleWriter as X
   ( MonadHandleWriter (hClose, hFlush, openBinaryFile),
     hPutUtf8,
@@ -121,12 +136,14 @@ import Effects.FileSystem.MonadPathWriter as X
     removeFile,
     removeFileIfExists,
   )
+import Effects.MonadAsync as X (MonadAsync)
 import Effects.MonadCallStack as X
   ( MonadCallStack (throwWithCallStack),
     catch,
     displayCallStack,
     try,
   )
+import Effects.MonadEnv as X (MonadEnv (withArgs))
 import Effects.MonadIORef as X
   ( MonadIORef
       ( modifyIORef',
@@ -135,12 +152,21 @@ import Effects.MonadIORef as X
         writeIORef
       ),
   )
+import Effects.MonadOptparse as X (MonadOptparse (execParser))
+import Effects.MonadProcess as X
+  ( MonadProcess (..),
+  )
 import Effects.MonadSTM as X
   ( MonadSTM,
-    MonadTBQueue (flushTBQueueM, newTBQueueM, readTBQueueM, writeTBQueueM),
-    MonadTVar (modifyTVarM', newTVarM, readTVarM),
     TBQueue,
     TVar,
+    flushTBQueueM,
+    modifyTVarM',
+    newTBQueueM,
+    newTVarM,
+    readTBQueueM,
+    readTVarM,
+    writeTBQueueM,
   )
 import Effects.MonadTerminal as X
   ( MonadTerminal,
@@ -150,6 +176,7 @@ import Effects.MonadTerminal as X
     putTextLn,
   )
 import Effects.MonadThread as X (MonadThread)
+import Effects.MonadTime as X (MonadTime)
 import GHC.Enum as X (Bounded (..), Enum (..))
 import GHC.Err as X (undefined)
 import GHC.Float as X (Double (..), Float (..))
@@ -227,27 +254,16 @@ import TOML as X
     runDecoder,
     typeMismatch,
   )
-import UnliftIO as X (MonadUnliftIO (..))
-import UnliftIO.Environment as X (withArgs)
-import UnliftIO.Exception as X
-  ( Exception (..),
-    IOException,
-    SomeException,
-    bracket,
-    catchAny,
-    catchIO,
-    finally,
-    onException,
-    throwIO,
-    throwString,
-    tryAny,
-  )
 import Prelude as X (seq)
 import Prelude qualified as P
 
 -- $setup
 -- >>> import Data.String (String)
 -- >>> :set -XNoOverloadedLists
+
+-- | @since 0.1
+tryAny :: MonadCatch m => m a -> m (Either SomeException a)
+tryAny = try @SomeException
 
 -- | 'Text' version of 'P.show'.
 --

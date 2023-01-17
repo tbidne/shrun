@@ -45,7 +45,6 @@ module Shrun.Logging
   )
 where
 
-import Effects.MonadTime (MonadTime (..))
 import Shrun.Configuration.Env.Types (FileLogging, HasLogging (..), Logging)
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
@@ -68,7 +67,7 @@ import Shrun.Utils qualified as U
 putRegionLog ::
   ( HasLogging env r,
     MonadReader env m,
-    MonadTBQueue m,
+    MonadSTM m,
     MonadTime m
   ) =>
   r ->
@@ -83,7 +82,7 @@ putRegionLog region lg =
 --
 -- @since 0.7
 regionLogToConsoleQueue ::
-  ( MonadTBQueue m
+  ( MonadSTM m
   ) =>
   r ->
   Logging r ->
@@ -99,7 +98,7 @@ regionLogToConsoleQueue region logging log =
 --
 -- @since 0.7
 logToFileQueue ::
-  ( MonadTBQueue m,
+  ( MonadSTM m,
     MonadTime m
   ) =>
   FileLogging ->

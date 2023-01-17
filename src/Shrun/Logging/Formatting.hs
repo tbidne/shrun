@@ -20,10 +20,7 @@ module Shrun.Logging.Formatting
 where
 
 import Data.Text qualified as T
-import Effects.MonadTime
-  ( MonadTime (getSystemTime),
-    formatLocalTime,
-  )
+import Effects.MonadTime (getSystemTimeString)
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     FileLogging,
@@ -111,7 +108,7 @@ formatFileLog ::
   Log ->
   m FileLog
 formatFileLog fileLogging log = do
-  currTime <- formatLocalTime <$> getSystemTime
+  currTime <- getSystemTimeString
   let formatted = case log ^. #cmd of
         Nothing -> brackets True prefix <> msgStripped
         Just com ->

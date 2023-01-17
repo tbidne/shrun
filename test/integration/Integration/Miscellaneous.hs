@@ -35,8 +35,7 @@ logFileWarn testArgs = testCase "Large log file should print warning" $ do
       run = do
         writeFileUtf8 logPath contents
 
-        flip runConfigIO logsRef $
-          withRunInIO (\runner -> withArgs (args logPath) (runner (withEnv pure)))
+        flip runConfigIO logsRef $ withArgs (args logPath) (withEnv pure)
 
   run `finally` removeFileIfExists logPath
 
@@ -68,8 +67,7 @@ logFileDelete testArgs =
         run = do
           writeFileUtf8 logPath contents
 
-          flip runConfigIO logsRef $
-            withRunInIO (\runner -> withArgs (args logPath) (runner (withEnv pure)))
+          flip runConfigIO logsRef $ withArgs (args logPath) (withEnv pure)
 
           -- file should have been deleted then recreated with a file size of 0.
           getFileSize logPath

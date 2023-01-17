@@ -9,11 +9,9 @@ module Shrun.ShellT
   )
 where
 
-import Effects.MonadTime (MonadTime (..))
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Logging (LogMode (..), MonadRegionLogger (..))
+import Shrun.Logging (MonadRegionLogger (..))
 import Shrun.Prelude
-import System.Console.Regions qualified as Regions
 
 -- | `ShellT` is the main application type that runs shell commands.
 --
@@ -27,6 +25,8 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       Applicative,
       -- | @since 0.1
       Monad,
+      -- | @since X-X-X
+      MonadAsync,
       -- | @since 0.1
       MonadReader env,
       -- | @since 0.1
@@ -38,6 +38,8 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since X-X-X
       MonadFileWriter,
       -- | @since X-X-X
+      MonadHandleReader,
+      -- | @since X-X-X
       MonadHandleWriter,
       -- | @since 0.1
       MonadIO,
@@ -47,8 +49,10 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadMask,
       -- @since X-X-X
       MonadPathWriter,
-      -- | @since 0.6
-      MonadTBQueue,
+      -- @since X-X-X
+      MonadProcess,
+      -- | @since X-X-X
+      MonadSTM,
       -- | @since 0.6
       MonadTerminal,
       -- | @since 0.6
@@ -56,11 +60,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.5
       MonadTime,
       -- | @since 0.1
-      MonadThrow,
-      -- | @since 0.6
-      MonadTVar,
-      -- | @since 0.1
-      MonadUnliftIO
+      MonadThrow
     )
     via (ReaderT env m)
 
@@ -74,19 +74,8 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- Concrete Env here so we can vary our logging logic with other envs
 -- (i.e. in tests).
 
+-- Can't use @deriving via m@ due to a bug: @HC version 9.2.5: No skolem info:@.
+-- https://gitlab.haskell.org/ghc/ghc/-/issues/15376
+
 -- | @since 0.1
-instance
-  (MonadIO m, MonadMask m, MonadTerminal m) =>
-  MonadRegionLogger (ShellT Env m)
-  where
-  type Region (ShellT Env m) = ConsoleRegion
-
-  logGlobal = putTextLn
-
-  logRegion LogModeSet cr = liftIO . Regions.setConsoleRegion cr
-  logRegion LogModeAppend cr = liftIO . Regions.appendConsoleRegion cr
-  logRegion LogModeFinish cr = liftIO . Regions.finishConsoleRegion cr
-
-  withRegion = Regions.withConsoleRegion
-
-  displayRegions = Regions.displayConsoleRegions
+deriving newtype instance MonadRegionLogger m => MonadRegionLogger (ShellT Env m)

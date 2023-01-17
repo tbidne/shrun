@@ -55,6 +55,7 @@ library
     Shrun.Data.Supremum
     Shrun.Data.Timeout
     Shrun.IO
+    Shrun.IO.Types
     Shrun.Logging
     Shrun.Logging.Formatting
     Shrun.Logging.MonadRegionLogger
@@ -71,31 +72,32 @@ library
     , bytestring            >=0.10.12  && <0.12
     , concurrent-output     ^>=1.10.7
     , containers            ^>=0.6.2.1
-    , exceptions            ^>=0.10.4
     , filepath              ^>=1.4.2.1
     , gitrev                >=1.2.0    && <1.4
     , hashable              >=1.3.0.0  && <1.5
+    , monad-async           ^>=0.1
     , monad-callstack       ^>=0.1
+    , monad-env             ^>=0.1
     , monad-fs              ^>=0.1
     , monad-ioref           ^>=0.1
+    , monad-optparse        ^>=0.1
     , monad-stm             ^>=0.1
     , monad-system-time     ^>=0.1
     , monad-terminal        ^>=0.1
     , monad-thread          ^>=0.1
+    , monad-typed-process   ^>=0.1
     , mtl                   >=2.2.1    && <2.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
     , optparse-applicative  >=0.15     && <0.18
     , package-version       >=0.1.0.0  && <0.4
     , pretty-terminal       ^>=0.1
-    , process               ^>=1.6.9.0
     , refined               >=0.6      && <0.9
     , relative-time         ^>=0.1
+    , safe-exceptions       ^>=0.1.7.0
     , template-haskell      >=2.17.0.0 && <2.20
     , text                  >=1.2.3.2  && <2.1
     , toml-reader           >=0.2.0.0  && <0.3.0.0
-    , unix                  >=2.7.2    && <2.9
-    , unliftio              ^>=0.2.0.0
     , unordered-containers  ^>=0.2.9.0
 
   hs-source-dirs:   src

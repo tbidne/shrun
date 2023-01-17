@@ -35,15 +35,18 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
       Functor,
       Monad,
       MonadCallStack,
+      MonadCatch,
+      MonadEnv,
       MonadFileReader,
       MonadHandleWriter,
-      MonadPathWriter,
       MonadIO,
+      MonadMask,
+      MonadOptparse,
+      MonadPathWriter,
       MonadIORef,
       MonadReader (IORef [Text]),
-      MonadTBQueue,
-      MonadTVar,
-      MonadUnliftIO
+      MonadSTM,
+      MonadThrow
     )
     via (ReaderT (IORef [Text])) IO
 
@@ -78,12 +81,15 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
       Functor,
       Monad,
       MonadCallStack,
+      MonadCatch,
+      MonadEnv,
       MonadFileReader,
       MonadHandleWriter,
       MonadIO,
-      MonadTBQueue,
-      MonadTVar,
-      MonadUnliftIO
+      MonadMask,
+      MonadOptparse,
+      MonadSTM,
+      MonadThrow
     )
     via (ReaderT (IORef [Text])) IO
 
@@ -136,14 +142,15 @@ simplifyEnv = to $ \env ->
 makeEnvAndVerify ::
   forall m.
   ( MonadCallStack m,
+    MonadEnv m,
     MonadFileReader m,
     MonadHandleWriter m,
+    MonadMask m,
+    MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadTBQueue m,
-    MonadTerminal m,
-    MonadTVar m,
-    MonadUnliftIO m
+    MonadSTM m,
+    MonadTerminal m
   ) =>
   -- | List of CLI arguments.
   List String ->

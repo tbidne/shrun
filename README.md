@@ -10,7 +10,6 @@
 
 [![nix](http://img.shields.io/github/actions/workflow/status/tbidne/shrun/nix.yaml?branch=main&label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/nix.yaml)
 [![cabal](http://img.shields.io/github/actions/workflow/status/tbidne/shrun/cabal.yaml?branch=main&label=cabal&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/cabal.yaml)
-[![stack](http://img.shields.io/github/actions/workflow/status/tbidne/shrun/stack.yaml?branch=main&label=stack&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/stack.yaml)
 [![style](http://img.shields.io/github/actions/workflow/status/tbidne/shrun/style.yaml?branch=main&label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/style.yaml)
 
 ![demo](./examples/demo.gif)
@@ -42,7 +41,6 @@
     - [Default Config](#default-config)
 - [Building](#building)
   - [Cabal](#cabal)
-  - [Stack](#stack)
   - [Nix](#nix)
 
 # Motivation
@@ -373,7 +371,6 @@ You will need one of:
 * [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and:
   * [ghc 9.2](https://www.haskell.org/ghcup/)
   * [ghc 9.4](https://www.haskell.org/ghcup/)
-* [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
 * [nix](https://nixos.org/download.html)
 
 If you have never built a haskell program before, `cabal` + `ghcup` is probably the best choice.
@@ -381,10 +378,6 @@ If you have never built a haskell program before, `cabal` + `ghcup` is probably 
 ## Cabal
 
 You will need `ghc` and `cabal-install`. From there `shrun` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
-
-## Stack
-
-Like `cabal`, `shrun` can be built locally or installed globally (e.g. `~/.local/bin/`) with `stack build` and `stack install`, respectively.
 
 ## Nix
 
