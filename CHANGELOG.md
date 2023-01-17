@@ -10,6 +10,10 @@ Note that PVP is applied to the _application_, not the _library_. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
+## [Unreleased]
+### Removed
+* `stack` support removed.
+
 ## [0.7] -- 2022-12-19
 ### Removed
 * `log-disable` option removed from CLI and TOML.
@@ -110,6 +114,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.7...main
 [0.7]: https://github.com/tbidne/shrun/compare/0.6...0.7
 [0.6]: https://github.com/tbidne/shrun/compare/0.5...0.6
 [0.5]: https://github.com/tbidne/shrun/compare/0.4..0.5
