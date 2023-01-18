@@ -33,7 +33,7 @@ withShowKey legendPath addShowKey = do
   let legendArg = "--config=" <> legendPath
       argList = [legendArg, showKeyArg] <> commands
 
-  results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs argList)
+  results <- fmap MkResultText <$> (readIORef =<< run argList)
 
   V.verifyExpectedUnexpected results expected unexpected
   where

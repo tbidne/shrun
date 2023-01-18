@@ -6,9 +6,9 @@ module Functional.Prelude
   ( module X,
 
     -- * Running tests
-    runAndGetLogs,
-    runAndGetLogsException,
-    runAndGetLogsExitFailure,
+    run,
+    runException,
+    runExitFailure,
 
     -- * Expectations
 
@@ -100,34 +100,34 @@ instance MonadRegionLogger (ShellT FuncEnv IO) where
   displayRegions = id
 
 -- | Runs the args and retrieves the logs.
-runAndGetLogs :: List String -> IO (IORef (List Text))
-runAndGetLogs = runAndGetLogsMaybeException ExNothing
+run :: List String -> IO (IORef (List Text))
+run = runMaybeException ExNothing
 
--- | 'runAndGetLogsException' specialized to ExitFailure.
-runAndGetLogsExitFailure :: List String -> IO (IORef (List Text))
-runAndGetLogsExitFailure =
-  runAndGetLogsMaybeException
+-- | 'runException' specialized to ExitFailure.
+runExitFailure :: List String -> IO (IORef (List Text))
+runExitFailure =
+  runMaybeException
     (ExJust $ Proxy @(AnnotatedException ExitCode))
 
--- | Like 'runAndGetLogsException', exception it expects an exception.
-runAndGetLogsException ::
+-- | Like 'runException', except it expects an exception.
+runException ::
   forall e.
   Exception e =>
   List String ->
   IO (IORef (List Text))
-runAndGetLogsException = runAndGetLogsMaybeException (ExJust (Proxy @e))
+runException = runMaybeException (ExJust (Proxy @e))
 
--- | So we can hide the exception type and make it so runAndGetLogs does not
--- have to pass in a dummy var to runAndGetLogsMaybeException.
+-- | So we can hide the exception type and make it so run does not
+-- have to pass in a dummy var to runMaybeException.
 data MaybeException where
   ExNothing :: MaybeException
   ExJust :: Exception e => Proxy e -> MaybeException
 
-runAndGetLogsMaybeException ::
+runMaybeException ::
   MaybeException ->
   List String ->
   IO (IORef (List Text))
-runAndGetLogsMaybeException mException argList = do
+runMaybeException mException argList = do
   SysEnv.withArgs argList $ Env.withEnv $ \env -> do
     ls <- newIORef []
     consoleQueue <- newTBQueueM 1_000

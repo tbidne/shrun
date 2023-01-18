@@ -3,7 +3,6 @@ module Main (main) where
 import Control.DeepSeq (force)
 import Shrun.Configuration.Env (makeEnvAndShrun)
 import Shrun.Prelude hiding (IO)
-import Prelude (IO)
 import Test.Tasty.Bench
   ( Benchmark,
     bench,
@@ -11,6 +10,7 @@ import Test.Tasty.Bench
     defaultMain,
     nfIO,
   )
+import Prelude (IO)
 
 main :: IO ()
 main =

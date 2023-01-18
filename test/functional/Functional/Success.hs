@@ -13,7 +13,7 @@ spec args =
     MkTestArgs {configPath} <- args
     let argList = ["--config", configPath, "--key-hide", "--timeout", "5"] <> commands
 
-    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogsExitFailure argList)
+    results <- fmap MkResultText <$> (readIORef =<< runExitFailure argList)
 
     V.verifyExpectedUnexpected results allExpected allUnexpected
   where

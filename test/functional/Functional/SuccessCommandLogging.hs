@@ -24,7 +24,7 @@ spec args = withResource (pure ()) (teardown args) $ \_ ->
               ]
                 <> commands
 
-        _ <- runAndGetLogs argList
+        _ <- run argList
 
         fileResult <- readFileUtf8Lenient outpath
         let results = MkResultText <$> T.lines fileResult

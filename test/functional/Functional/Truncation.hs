@@ -11,7 +11,7 @@ spec =
   testGroup
     "Truncation tests"
     [ testCase "Should truncate command name" $ do
-        results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs argList)
+        results <- fmap MkResultText <$> (readIORef =<< run argList)
         V.verifyExpected results expected
     ]
   where

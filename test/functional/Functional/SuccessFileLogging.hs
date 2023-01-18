@@ -27,7 +27,7 @@ fileLog args =
     let outpath = tmpDir </> outfile
         argList = ["--no-config", "-f" <> outpath, "sleep 2"]
 
-    _ <- runAndGetLogs argList
+    _ <- run argList
     fileResult <- readFileUtf8Lenient outpath
 
     let results = MkResultText <$> T.lines fileResult
