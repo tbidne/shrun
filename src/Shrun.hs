@@ -68,6 +68,7 @@ shrun ::
     MonadThread m,
     MonadTime m
   ) =>
+  -- | .
   m ()
 shrun = displayRegions $ do
   logging <- asks getLogging
@@ -143,6 +144,7 @@ runCommand cmd = do
 
 printFinalResult ::
   ( Exception e,
+    HasAnyError env,
     HasLogging env (Region m),
     MonadReader env m,
     MonadRegionLogger m,
@@ -153,7 +155,7 @@ printFinalResult ::
   Either e b ->
   m ()
 printFinalResult totalTime result = withRegion Linear $ \r -> do
-  Utils.whenLeft result $ \ex ->
+  Utils.whenLeft result $ \ex -> do
     let errMsg =
           mconcat
             [ "Encountered an exception. This is likely not an error in any ",
@@ -167,7 +169,11 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
               lvl = LevelFatal,
               mode = LogModeFinish
             }
-     in Logging.putRegionLog r fatalLog
+    Logging.putRegionLog r fatalLog
+
+    -- update anyError
+    anyError <- asks getAnyError
+    writeTVarM anyError True
 
   let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
       finalLog =
@@ -202,9 +208,8 @@ counter = do
     timeout <- asks getTimeout
     timer <- newIORef 0
     Utils.whileM_ (keepRunning r timer timeout) $ do
-      elapsed <- do
-        sleep 1
-        atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
+      sleep 1
+      elapsed <- atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
       logCounter r elapsed
 
 logCounter ::

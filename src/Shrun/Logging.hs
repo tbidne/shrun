@@ -70,7 +70,9 @@ putRegionLog ::
     MonadSTM m,
     MonadTime m
   ) =>
+  -- | Region.
   r ->
+  -- | Log to send.
   Log ->
   m ()
 putRegionLog region lg =
@@ -84,8 +86,11 @@ putRegionLog region lg =
 regionLogToConsoleQueue ::
   ( MonadSTM m
   ) =>
+  -- | Region.
   r ->
+  -- | Logging config.
   Logging r ->
+  -- | Log to send.
   Log ->
   m ()
 regionLogToConsoleQueue region logging log =
@@ -101,7 +106,9 @@ logToFileQueue ::
   ( MonadSTM m,
     MonadTime m
   ) =>
+  -- | FileLogging config.
   FileLogging ->
+  -- | Log to send.
   Log ->
   m ()
 logToFileQueue fileLogging log = do

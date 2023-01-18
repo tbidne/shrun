@@ -101,7 +101,10 @@ tryCommandLogging ::
     MonadSTM m,
     MonadTime m
   ) =>
+  -- | Command to run.
   Command ->
+  -- | @'Left' (timeElapsed, error)@ if the command fails.
+  -- @'Right' timeElapsed@ otherwise.
   m (Either (RelativeTime, Stderr) RelativeTime)
 tryCommandLogging command = do
   logging <- asks getLogging
