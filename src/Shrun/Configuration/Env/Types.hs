@@ -333,11 +333,11 @@ class HasLogging env r where
   -- @since 0.1
   getLogging :: env -> Logging r
 
--- | @since X-X-X
+-- | @since 0.8
 class HasAnyError env where
   -- | Retrieves the anyError flag.
   --
-  -- @since X-X-X
+  -- @since 0.8
   getAnyError :: env -> TVar Bool
 
 -- | The main 'Env' type used by Shrun. Intended to be used with
@@ -361,7 +361,7 @@ data Env = MkEnv
     -- | Holds the anyError flag, signaling if any command exited with an
     -- error.
     --
-    -- @since X-X-X
+    -- @since 0.8
     anyError :: !(TVar Bool),
     -- | The commands to run.
     --
@@ -399,6 +399,6 @@ instance HasCommands Env where
   getCommands = view #commands
   getCompletedCmds = view #completedCmds
 
--- | @since X-X-X
+-- | @since 0.8
 instance HasAnyError Env where
   getAnyError = view #anyError

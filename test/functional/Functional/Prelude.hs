@@ -81,7 +81,7 @@ instance HasCommands FuncEnv where
   getCommands = view #commands
   getCompletedCmds = view #completedCmds
 
--- | @since X-X-X
+-- | @since 0.8
 instance HasAnyError FuncEnv where
   getAnyError = view #anyError
 

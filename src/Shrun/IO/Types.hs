@@ -1,6 +1,6 @@
 -- | Provides types for typical "IO" processes.
 --
--- @since X-X-X
+-- @since 0.8
 module Shrun.IO.Types
   ( Stdout (..),
     Stderr (..),

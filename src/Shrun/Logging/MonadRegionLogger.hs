@@ -43,7 +43,7 @@ class Monad m => MonadRegionLogger m where
   -- @since 0.7
   displayRegions :: m a -> m a
 
--- | @since X-X-X
+-- | @since 0.8
 instance MonadRegionLogger IO where
   type Region IO = ConsoleRegion
 
@@ -61,7 +61,7 @@ instance MonadRegionLogger IO where
   displayRegions = Regions.displayConsoleRegions
   {-# INLINEABLE displayRegions #-}
 
--- | @since X-X-X
+-- | @since 0.8
 instance MonadRegionLogger m => MonadRegionLogger (ReaderT env m) where
   type Region (ReaderT env m) = Region m
 
