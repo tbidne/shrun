@@ -27,7 +27,6 @@ import Shrun.Utils qualified as U
 -- $setup
 -- >>> import Shrun.Prelude
 -- >>> import Data.HashMap.Strict qualified as Map
--- >>> import Shrun.Data.NESeq (unsafeFromList, singleton)
 
 -- | Errors when parsing the legend.
 --
@@ -90,25 +89,25 @@ instance Exception CyclicKeyError where
 -- >>> :set -XOverloadedLists
 -- >>> :{
 --   let m = Map.fromList
---         [ ("cmd1", singleton "one"),
---           ("cmd2", singleton "two"),
---           ("all", ["cmd1","cmd2","other"])
+--         [ ("cmd1", "one" :<|| []),
+--           ("cmd2", "two" :<|| []),
+--           ("all", "cmd1" :<|| ["cmd2","other"])
 --         ]
---       cmds = translateCommands m (["all", "blah"])
+--       cmds = translateCommands m ("all" :<|| ["blah"])
 --   in (fmap . fmap) (view #command) cmds
 -- :}
--- Right ("one" :|^ fromList ["two","other","blah"])
+-- Right (fromList ("one" :| ["two","other","blah"]))
 --
 -- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyError'
 -- will be returned.
 --
 -- >>> :{
 --   let m = Map.fromList
---         [ ("a", singleton "b"),
---           ("b", singleton "c"),
---           ("c", singleton "a")
+--         [ ("a", "b" :<|| []),
+--           ("b", "c" :<|| []),
+--           ("c", "a" :<|| [])
 --         ]
---   in translateCommands m (singleton "a")
+--   in translateCommands m ("a" :<|| [])
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 --

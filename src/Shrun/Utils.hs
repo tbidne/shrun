@@ -138,13 +138,13 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
 --
 -- ==== __Examples__
 -- >>> splitOn $$(R.refineTH ",,") "hey,,listen"
--- "hey" :|^ fromList ["listen"]
+-- fromList ("hey" :| ["listen"])
 --
 -- >>> splitOn $$(R.refineTH ",,") "heylisten"
--- "heylisten" :|^ fromList []
+-- fromList ("heylisten" :| [])
 --
 -- >>> splitOn $$(R.refineTH ",") ""
--- "" :|^ fromList []
+-- fromList ("" :| [])
 --
 -- @since 0.1
 splitOn :: HasCallStack => Refined R.NonEmpty Text -> Text -> NESeq Text

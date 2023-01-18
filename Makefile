@@ -80,7 +80,7 @@ haddock:
 	cabal haddock --haddock-hyperlink-source --haddock-quickjump ;\
 	mkdir -p docs/ ;\
 	find docs/ -type f | xargs -I % sh -c "rm -r %" ;\
-	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.5/shrun-0.7/opt/doc/html/shrun/* docs/
+	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.5/shrun-0.8/opt/doc/html/shrun/* docs/
 
 haddockc:
 	nix run github:tbidne/nix-hs-tools/0.7#haddock-cov -- \
