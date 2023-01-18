@@ -28,11 +28,11 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since X-X-X
       MonadAsync,
       -- | @since 0.1
-      MonadReader env,
-      -- | @since 0.1
       MonadCatch,
       -- | @since 0.6
       MonadCallStack,
+      -- | @since X-X-X
+      MonadExit,
       -- | @since X-X-X
       MonadFileReader,
       -- | @since X-X-X
@@ -51,6 +51,8 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadPathWriter,
       -- @since X-X-X
       MonadProcess,
+      -- | @since 0.1
+      MonadReader env,
       -- | @since X-X-X
       MonadSTM,
       -- | @since 0.6

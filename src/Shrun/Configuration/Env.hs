@@ -33,7 +33,7 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
-import Effects.MonadTerminal (getTerminalWidth)
+import Effects.System.MonadTerminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
   ( FileMode (..),
@@ -70,6 +70,7 @@ makeEnvAndShrun ::
   ( HasLogging Env (Region (ShellT Env m)),
     MonadCallStack m,
     MonadAsync m,
+    MonadExit m,
     MonadFileReader m,
     MonadHandleReader m,
     MonadHandleWriter m,
@@ -172,6 +173,7 @@ fromToml onEnv cfg cmdsText = do
       Left err -> throwIO err
 
   completedCmds' <- newTVarM Seq.empty
+  anyError <- newTVarM False
 
   let envWithLogging mFileLogging consoleLogging =
         MkEnv
@@ -198,6 +200,7 @@ fromToml onEnv cfg cmdsText = do
                             stripControl = fileLogStripControl
                           }
                 },
+            anyError,
             completedCmds = completedCmds',
             commands = commands'
           }

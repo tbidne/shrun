@@ -12,11 +12,12 @@ where
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
-import Effects.MonadAsync qualified as Async
-import Effects.MonadThread as X (microsleep, sleep)
+import Effects.Concurrent.MonadAsync qualified as Async
+import Effects.Concurrent.MonadThread as X (microsleep, sleep)
 import Effects.MonadTime (TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
+    HasAnyError (..),
     HasCommands (..),
     HasLogging (..),
     HasTimeout (..),
@@ -49,11 +50,13 @@ import Shrun.Utils qualified as Utils
 --
 -- @since 0.1
 shrun ::
-  ( HasCommands env,
+  ( HasAnyError env,
+    HasCommands env,
     HasLogging env (Region m),
     HasTimeout env,
     MonadCallStack m,
     MonadAsync m,
+    MonadExit m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -81,6 +84,11 @@ shrun = displayRegions $ do
     Async.cancel consoleLogger
     let consoleQueue = logging ^. #consoleLogging
     flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
+
+    -- if any processes have failed, exit with an error
+    anyErrorRef <- asks getAnyError
+    anyError <- readTVarM anyErrorRef
+    when anyError exitFailure
   where
     runWithFileLogging fileLogging =
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
@@ -103,7 +111,8 @@ shrun = displayRegions $ do
       printFinalResult totalTime result
 
 runCommand ::
-  ( HasCommands env,
+  ( HasAnyError env,
+    HasCommands env,
     HasLogging env (Region m),
     MonadCallStack m,
     MonadHandleReader m,
@@ -172,7 +181,8 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   Logging.putRegionLog r finalLog
 
 counter ::
-  ( HasCommands env,
+  ( HasAnyError env,
+    HasCommands env,
     HasLogging env (Region m),
     HasTimeout env,
     MonadIORef m,
@@ -184,9 +194,9 @@ counter ::
   ) =>
   m ()
 counter = do
-  -- This brief delay is so that our timer starts "last" i.e. after each individual
-  -- command. This way the running timer console region is below all the commands'
-  -- in the console.
+  -- HACK: This brief delay is so that our timer starts "last" i.e. after each
+  -- individual command. This way the running timer console region is below all
+  -- the commands' in the console.
   microsleep 100_000
   withRegion Linear $ \r -> do
     timeout <- asks getTimeout
@@ -194,8 +204,7 @@ counter = do
     Utils.whileM_ (keepRunning r timer timeout) $ do
       elapsed <- do
         sleep 1
-        modifyIORef' timer (+ 1)
-        readIORef timer
+        atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
       logCounter r elapsed
 
 logCounter ::
@@ -219,7 +228,8 @@ logCounter region elapsed = do
 
 keepRunning ::
   forall m env.
-  ( HasCommands env,
+  ( HasAnyError env,
+    HasCommands env,
     HasLogging env (Region m),
     MonadIORef m,
     MonadReader env m,
@@ -238,6 +248,10 @@ keepRunning region timer mto = do
       allCmds <- asks getCommands
       completedCmdsTVar <- asks getCompletedCmds
       completedCmds <- readTVarM completedCmdsTVar
+
+      -- update anyError
+      anyError <- asks getAnyError
+      writeTVarM anyError True
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ toList allCmds

@@ -87,4 +87,4 @@ haddockc:
 	. \
 	-m Shrun.Configuration.Env.Types 75 \
 	-m Shrun.Data.FilePathDefault 70 \
-	-m Shrun.Prelude 80 \
+	-m Shrun.Prelude 75 \

@@ -14,6 +14,12 @@ the major/minor/patch definitions apply to the application's interface / usage
 ### Removed
 * `stack` support removed.
 
+### Changed
+* If any commands fail, shrun now exits with an error code. Previously, shrun
+  would exit successfully in this scenario, returning an exit code only when
+  shrun _itself_ died.
+* Similarly, error code is now set if any commands time out.
+
 ## [0.7] -- 2022-12-19
 ### Removed
 * `log-disable` option removed from CLI and TOML.

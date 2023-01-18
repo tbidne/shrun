@@ -148,7 +148,7 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
 -- @since 0.1
 splitOn :: HasCallStack => Refined R.NonEmpty Text -> Text -> NonEmptySeq Text
 splitOn rs txt = case T.splitOn s txt of
-  [] -> error err
+  [] -> error $ T.unpack err
   (t : ts) -> t :|^ fromList ts
   where
     err =

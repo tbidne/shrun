@@ -15,13 +15,13 @@ import Data.ByteString.Lazy qualified as BSL
 import Data.Sequence ((<|))
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
-import Effects.FileSystem.MonadHandleReader
-import Effects.MonadProcess
-  ( Process,
-  )
-import Effects.MonadProcess qualified as P
 import Effects.MonadTime (withTiming)
-import Shrun.Configuration.Env.Types (HasCommands (..), HasLogging (..))
+import Effects.System.MonadProcess qualified as P
+import Shrun.Configuration.Env.Types
+  ( HasAnyError (getAnyError),
+    HasCommands (..),
+    HasLogging (..),
+  )
 import Shrun.Data.Command (Command (..))
 import Shrun.IO.Types
   ( ReadHandleResult (..),
@@ -76,20 +76,12 @@ tryShExitCode cmd = do
 --
 -- @since 0.1
 tryCommand ::
-  ( HasCommands env,
-    MonadProcess m,
-    MonadReader env m,
+  ( MonadProcess m,
     MonadSTM m
   ) =>
   Command ->
   m (Maybe Stderr)
-tryCommand cmd = do
-  res <- tryShExitCode cmd
-
-  completedCmds <- asks getCompletedCmds
-  modifyTVarM' completedCmds (cmd <|)
-
-  pure $ res ^? _Left
+tryCommand cmd = preview _Left <$> tryShExitCode cmd
 
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
@@ -97,7 +89,8 @@ tryCommand cmd = do
 -- @since 0.7
 tryCommandLogging ::
   forall m env.
-  ( HasCommands env,
+  ( HasAnyError env,
+    HasCommands env,
     HasLogging env (Region m),
     MonadHandleReader m,
     MonadIORef m,
@@ -131,8 +124,22 @@ tryCommandLogging command = do
               cmd
 
   withTiming (cmdFn command) >>= \case
-    (rt, Nothing) -> pure $ Right $ U.timeSpecToRelTime rt
-    (rt, Just err) -> pure $ Left (U.timeSpecToRelTime rt, err)
+    (rt, Nothing) -> do
+      -- update completed commands
+      completedCmds <- asks getCompletedCmds
+      modifyTVarM' completedCmds (command <|)
+
+      pure $ Right $ U.timeSpecToRelTime rt
+    (rt, Just err) -> do
+      -- update completed commands
+      completedCmds <- asks getCompletedCmds
+      modifyTVarM' completedCmds (command <|)
+
+      -- update anyError
+      anyError <- asks getAnyError
+      writeTVarM anyError True
+
+      pure $ Left (U.timeSpecToRelTime rt, err)
   where
     logConsole logging region log = do
       let consoleQueue = logging ^. #consoleLogging
@@ -148,12 +155,10 @@ tryCommandLogging command = do
 --
 -- @since 0.1
 tryCommandStream ::
-  ( HasCommands env,
-    MonadHandleReader m,
+  ( MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
     MonadProcess m,
-    MonadReader env m,
     MonadSTM m
   ) =>
   -- | Function to apply to streamed logs.
@@ -173,9 +178,6 @@ tryCommandStream logFn cmd@(MkCommand _ cmdTxt) = do
 
   (exitCode, lastReadErr) <-
     P.withProcessWait procConfig $ \p -> streamOutput logFn cmd p
-
-  completedCmds <- asks getCompletedCmds
-  modifyTVarM' completedCmds (cmd <|)
 
   pure $ case exitCode of
     ExitSuccess -> Nothing

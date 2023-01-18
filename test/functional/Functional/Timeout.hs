@@ -8,7 +8,7 @@ import Test.Shrun.Verifier qualified as V
 -- | Spec that should timeout.
 spec :: TestTree
 spec = testCase "Should time out" $ do
-  results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs argList)
+  results <- fmap MkResultText <$> (readIORef =<< runAndGetLogsExitFailure argList)
 
   V.verifyExpected results allExpected
   where

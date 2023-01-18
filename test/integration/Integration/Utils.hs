@@ -14,7 +14,7 @@ where
 
 import Data.Text qualified as T
 import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
-import Effects.MonadTerminal (MonadTerminal (..))
+import Effects.System.MonadTerminal (MonadTerminal (..))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types

@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -6,6 +7,8 @@ module Functional.Prelude
 
     -- * Running tests
     runAndGetLogs,
+    runAndGetLogsException,
+    runAndGetLogsExitFailure,
 
     -- * Expectations
 
@@ -27,10 +30,13 @@ where
 
 import Data.Sequence (Seq)
 import Data.String as X (IsString)
+import Data.Typeable (typeRep)
+import Effects.MonadCallStack (AnnotatedException)
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
-  ( HasCommands (..),
+  ( HasAnyError (..),
+    HasCommands (..),
     HasLogging (..),
     HasTimeout (..),
     Logging (..),
@@ -42,6 +48,7 @@ import Shrun.Logging (MonadRegionLogger (..))
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
 import System.Environment qualified as SysEnv
+import System.Exit (ExitCode)
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
 import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))
 
@@ -54,7 +61,8 @@ data FuncEnv = MkFuncEnv
     logging :: !(Logging ()),
     completedCmds :: !(TVar (Seq Command)),
     commands :: !(NonEmptySeq Command),
-    logs :: !(IORef (List Text))
+    logs :: !(IORef (List Text)),
+    anyError :: !(TVar Bool)
   }
 
 -- | @since 0.1
@@ -73,6 +81,10 @@ instance HasCommands FuncEnv where
   getCommands = view #commands
   getCompletedCmds = view #completedCmds
 
+-- | @since X-X-X
+instance HasAnyError FuncEnv where
+  getAnyError = view #anyError
+
 -- | @since 0.3
 instance MonadRegionLogger (ShellT FuncEnv IO) where
   type Region (ShellT FuncEnv IO) = ()
@@ -87,8 +99,35 @@ instance MonadRegionLogger (ShellT FuncEnv IO) where
 
   displayRegions = id
 
+-- | Runs the args and retrieves the logs.
 runAndGetLogs :: List String -> IO (IORef (List Text))
-runAndGetLogs argList = do
+runAndGetLogs = runAndGetLogsMaybeException ExNothing
+
+-- | 'runAndGetLogsException' specialized to ExitFailure.
+runAndGetLogsExitFailure :: List String -> IO (IORef (List Text))
+runAndGetLogsExitFailure =
+  runAndGetLogsMaybeException
+    (ExJust $ Proxy @(AnnotatedException ExitCode))
+
+-- | Like 'runAndGetLogsException', exception it expects an exception.
+runAndGetLogsException ::
+  forall e.
+  Exception e =>
+  List String ->
+  IO (IORef (List Text))
+runAndGetLogsException = runAndGetLogsMaybeException (ExJust (Proxy @e))
+
+-- | So we can hide the exception type and make it so runAndGetLogs does not
+-- have to pass in a dummy var to runAndGetLogsMaybeException.
+data MaybeException where
+  ExNothing :: MaybeException
+  ExJust :: Exception e => Proxy e -> MaybeException
+
+runAndGetLogsMaybeException ::
+  MaybeException ->
+  List String ->
+  IO (IORef (List Text))
+runAndGetLogsMaybeException mException argList = do
   SysEnv.withArgs argList $ Env.withEnv $ \env -> do
     ls <- newIORef []
     consoleQueue <- newTBQueueM 1_000
@@ -105,11 +144,23 @@ runAndGetLogs argList = do
                     fileLogging = env ^. (#logging % #fileLogging)
                   },
               completedCmds = env ^. #completedCmds,
+              anyError = env ^. #anyError,
               commands = env ^. #commands,
               logs = ls
             }
-    SR.runShellT SR.shrun funcEnv
-    pure $ funcEnv ^. #logs
+
+    case mException of
+      ExNothing -> SR.runShellT SR.shrun funcEnv $> funcEnv ^. #logs
+      ExJust (proxy :: Proxy e) ->
+        try @e (SR.runShellT SR.shrun funcEnv) >>= \case
+          Left _ -> pure $ funcEnv ^. #logs
+          Right _ ->
+            error $
+              mconcat
+                [ "Expected exception <",
+                  show (typeRep proxy),
+                  ">, received none"
+                ]
 
 commandPrefix :: IsString s => s
 commandPrefix = "[Command]"

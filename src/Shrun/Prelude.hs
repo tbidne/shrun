@@ -26,7 +26,6 @@ module Shrun.Prelude
     m2b,
 
     -- * 'Text' replacements for 'P.String' functions.
-    error,
     showt,
 
     -- * Anti-punning aliases
@@ -91,7 +90,6 @@ import Data.Functor as X
     (<$>),
     (<&>),
   )
-import Data.IORef as X (IORef)
 import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter, replicate, zip, (++))
@@ -110,6 +108,21 @@ import Data.Tuple as X (fst, snd)
 import Data.Type.Equality as X (type (~))
 #endif
 import Data.Void as X (Void, absurd)
+import Effects.Concurrent.MonadAsync as X (MonadAsync)
+import Effects.Concurrent.MonadSTM as X
+  ( MonadSTM,
+    TBQueue,
+    TVar,
+    flushTBQueueM,
+    modifyTVarM',
+    newTBQueueM,
+    newTVarM,
+    readTBQueueM,
+    readTVarM,
+    writeTBQueueM,
+    writeTVarM,
+  )
+import Effects.Concurrent.MonadThread as X (MonadThread)
 import Effects.FileSystem.MonadFileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,
@@ -136,49 +149,39 @@ import Effects.FileSystem.MonadPathWriter as X
     removeFile,
     removeFileIfExists,
   )
-import Effects.MonadAsync as X (MonadAsync)
 import Effects.MonadCallStack as X
   ( MonadCallStack (throwWithCallStack),
     catch,
     displayCallStack,
     try,
   )
-import Effects.MonadEnv as X (MonadEnv (withArgs))
 import Effects.MonadIORef as X
-  ( MonadIORef
-      ( modifyIORef',
+  ( IORef,
+    MonadIORef
+      ( atomicModifyIORef',
+        modifyIORef',
         newIORef,
         readIORef,
         writeIORef
       ),
   )
 import Effects.MonadOptparse as X (MonadOptparse (execParser))
-import Effects.MonadProcess as X
+import Effects.MonadTime as X (MonadTime)
+import Effects.System.MonadEnv as X (MonadEnv (withArgs))
+import Effects.System.MonadExit as X (MonadExit, exitFailure)
+import Effects.System.MonadProcess as X
   ( MonadProcess (..),
+    Process,
   )
-import Effects.MonadSTM as X
-  ( MonadSTM,
-    TBQueue,
-    TVar,
-    flushTBQueueM,
-    modifyTVarM',
-    newTBQueueM,
-    newTVarM,
-    readTBQueueM,
-    readTVarM,
-    writeTBQueueM,
-  )
-import Effects.MonadTerminal as X
+import Effects.System.MonadTerminal as X
   ( MonadTerminal,
     putStr,
     putStrLn,
     putText,
     putTextLn,
   )
-import Effects.MonadThread as X (MonadThread)
-import Effects.MonadTime as X (MonadTime)
 import GHC.Enum as X (Bounded (..), Enum (..))
-import GHC.Err as X (undefined)
+import GHC.Err as X (error, undefined)
 import GHC.Float as X (Double (..), Float (..))
 import GHC.Generics as X (Generic)
 import GHC.Integer as X (Integer)
@@ -271,13 +274,6 @@ tryAny = try @SomeException
 showt :: P.Show a => a -> Text
 showt = T.pack . P.show
 {-# INLINEABLE showt #-}
-
--- | 'Text' version of 'error'.
---
--- @since 0.1
-error :: HasCallStack => Text -> a
-error = P.error . T.unpack
-{-# INLINEABLE error #-}
 
 -- | Safe @head@.
 --

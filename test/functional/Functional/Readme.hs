@@ -36,7 +36,7 @@ specs args =
 gif :: TestTree
 gif =
   testCase "Runs gif example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogsExitFailure args)
     V.verifyExpected results expected
   where
     args =
@@ -64,7 +64,7 @@ gif =
 core :: TestTree
 core =
   testCase "Runs core example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogsExitFailure args)
     V.verifyExpected results expected
   where
     args =
@@ -83,7 +83,7 @@ core =
 timeout :: TestTree
 timeout =
   testCase "Runs timeout example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+    results <- fmap MkResultText <$> (readIORef =<< runAndGetLogsExitFailure args)
     V.verifyExpected results expected
   where
     args =
@@ -139,7 +139,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
             "for i in {1..3}; do echo hi; sleep 1; done"
           ]
 
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< runAndGetLogs args)
+  resultsConsole <- fmap MkResultText <$> (readIORef =<< runAndGetLogsExitFailure args)
   V.verifyExpected resultsConsole expectedConsole
 
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile

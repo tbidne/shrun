@@ -78,6 +78,7 @@ library
     , monad-async           ^>=0.1
     , monad-callstack       ^>=0.1
     , monad-env             ^>=0.1
+    , monad-exit            ^>=0.1
     , monad-fs              ^>=0.1
     , monad-ioref           ^>=0.1
     , monad-optparse        ^>=0.1
@@ -121,6 +122,7 @@ executable shrun
   main-is:          Main.hs
   build-depends:
     , base
+    , monad-callstack
     , shrun
 
   hs-source-dirs:   app
@@ -204,6 +206,7 @@ test-suite functional
     , base
     , containers
     , directory
+    , monad-callstack
     , shrun
     , shrun-verifier
     , tasty

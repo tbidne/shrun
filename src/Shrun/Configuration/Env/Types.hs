@@ -9,6 +9,7 @@ module Shrun.Configuration.Env.Types
     HasCommands (..),
     HasLogging (..),
     HasTimeout (..),
+    HasAnyError (..),
 
     -- * Types
     Env (..),
@@ -332,6 +333,13 @@ class HasLogging env r where
   -- @since 0.1
   getLogging :: env -> Logging r
 
+-- | @since X-X-X
+class HasAnyError env where
+  -- | Retrieves the anyError flag.
+  --
+  -- @since X-X-X
+  getAnyError :: env -> TVar Bool
+
 -- | The main 'Env' type used by Shrun. Intended to be used with
 -- 'Shrun.Effects.MonadReader'.
 --
@@ -350,6 +358,11 @@ data Env = MkEnv
     --
     -- @since 0.1
     completedCmds :: !(TVar (Seq Command)),
+    -- | Holds the anyError flag, signaling if any command exited with an
+    -- error.
+    --
+    -- @since X-X-X
+    anyError :: !(TVar Bool),
     -- | The commands to run.
     --
     -- @since 0.1
@@ -368,6 +381,7 @@ instance Show Env where
         . showString ", logging = "
         . showsPrec appPrec1 (env ^. #logging)
         . showString ", completedCmds = <TVar>"
+        . showString ", anyError = <TVar>"
         . showString ", commands = "
         . showsPrec appPrec1 (env ^. #commands)
         . showString "}"
@@ -384,3 +398,7 @@ instance HasLogging Env ConsoleRegion where
 instance HasCommands Env where
   getCommands = view #commands
   getCompletedCmds = view #completedCmds
+
+-- | @since X-X-X
+instance HasAnyError Env where
+  getAnyError = view #anyError
