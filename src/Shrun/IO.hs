@@ -27,7 +27,6 @@ import Shrun.IO.Types
   ( ReadHandleResult (..),
     Stderr (..),
     Stdout (..),
-    makeStdErr,
     readHandle,
     readHandleResultToStderr,
   )
@@ -67,10 +66,10 @@ tryShExitCode ::
   Command ->
   m (Either Stderr Stdout)
 tryShExitCode cmd = do
-  (code, stdout, MkStderr err) <- shExitCode cmd
+  (code, stdout, stderr) <- shExitCode cmd
   pure $ case code of
     ExitSuccess -> Right stdout
-    ExitFailure _ -> Left $ makeStdErr err
+    ExitFailure _ -> Left stderr
 
 -- | Version of 'tryShExitCode' that updated the completed commands.
 -- On success, stdout is not returned.
@@ -199,23 +198,23 @@ streamOutput ::
 streamOutput logFn cmd p = do
   -- lastReadRef stores the last message in case it is the final error
   -- message.
-  lastReadRef <- newIORef Nothing
+  lastReadErrRef <- newIORef Nothing
   exitCode <- U.untilJust $ do
     -- We need to read from both stdout and stderr -- regardless of if we
     -- created a single pipe in tryCommandStream -- or else we will miss
     -- messages
     outResult <- readHandle (P.getStdout p)
     errResult <- readHandle (P.getStderr p)
-    writeLog logFn cmd lastReadRef outResult
-    writeLog logFn cmd lastReadRef errResult
+    writeLog logFn cmd lastReadErrRef outResult
+    writeLog logFn cmd lastReadErrRef errResult
 
     P.getExitCode p
 
   -- try to get final data (stderr)
-  lastRead <- readIORef lastReadRef
+  lastReadErr <- readIORef lastReadErrRef
   remainingData <- readHandle (P.getStdout p)
 
-  pure $ (exitCode,) $ case lastRead of
+  pure $ (exitCode,) $ case lastReadErr of
     Nothing -> remainingData
     Just r -> remainingData <> r
 

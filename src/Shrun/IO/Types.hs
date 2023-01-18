@@ -1,13 +1,9 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
-
 -- | Provides types for typical "IO" processes.
 --
 -- @since X-X-X
 module Shrun.IO.Types
   ( Stdout (..),
     Stderr (..),
-    makeStdErr,
     ReadHandleResult (..),
     readHandleResultToStderr,
     readHandle,
@@ -27,9 +23,6 @@ newtype Stdout = MkStdout
     getStdout :: Text
   }
 
--- | @since 0.7
-makeFieldLabelsNoPrefix ''Stdout
-
 -- | Newtype wrapper for stderr.
 --
 -- @since 0.1
@@ -37,14 +30,6 @@ newtype Stderr = MkStderr
   { -- | @since 0.1
     getStderr :: Text
   }
-
--- | @since 0.7
-makeFieldLabelsNoPrefix ''Stderr
-
--- | @since 0.1
-makeStdErr :: Text -> Stderr
-makeStdErr err = MkStderr $ "Error: '" <> T.strip err
-{-# INLINE makeStdErr #-}
 
 -- | Result from reading a handle. The ordering is based on:
 --
@@ -114,29 +99,21 @@ readHandleResultToStderr (ReadSuccess err) = MkStderr err
 -- @since 0.1
 readHandle :: (MonadCatch m, MonadHandleReader m) => Handle -> m ReadHandleResult
 readHandle handle = do
-  let displayEx :: Show a => Text -> a -> Text
-      displayEx prefix =
-        view #getStderr
-          . makeStdErr
-          . (<>) prefix
-          . showt
-      readEx = displayEx "Handle exception: "
-
   (isClosed, canRead) <-
     (,)
       <$> hIsClosed handle
       <*> hIsReadable handle
   if
       | isClosed ->
-          pure $ ReadErr $ displayEx @String "Handle closed" ""
+          pure $ ReadErr "Handle closed"
       | not canRead ->
-          pure $ ReadErr $ displayEx @String "Cannot read from handle" ""
+          pure $ ReadErr "Cannot read from handle"
       | otherwise -> do
           output :: Either SomeException ByteString <-
             tryAny $ hGetNonBlocking handle blockSize
           let outDecoded = fmap decodeUtf8Lenient output
           case outDecoded of
-            Left ex -> pure $ ReadErr $ readEx ex
+            Left ex -> pure $ ReadErr $ "Handle exception:" <> T.pack (displayException ex)
             Right "" -> pure ReadNoData
             Right o -> pure $ ReadSuccess o
 {-# INLINEABLE readHandle #-}
