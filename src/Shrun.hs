@@ -307,7 +307,7 @@ pollQueueToFile fileLogging = do
     (h, queue) = fileLogging ^. #log
 
 logFile :: MonadHandleWriter m => Handle -> FileLog -> m ()
-logFile h = hPutUtf8 h . view #unFileLog
+logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 
 -- | Reads from a queue and applies the function, if we receive a value.
 -- Atomic in the sense that if a read is successful, then we will apply the

@@ -20,6 +20,9 @@ the major/minor/patch definitions apply to the application's interface / usage
   shrun _itself_ died.
 * Similarly, error code is now set if any commands time out.
 
+### Fixed
+* File logs are now streamed, do not buffer.
+
 ## [0.7] -- 2022-12-19
 ### Removed
 * `log-disable` option removed from CLI and TOML.
