@@ -58,7 +58,6 @@ import Shrun.Configuration.Legend (linesToMap, translateCommands)
 import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
@@ -151,7 +150,7 @@ fromToml ::
   ) =>
   (Env -> m a) ->
   TomlConfig ->
-  NonEmptySeq Text ->
+  NESeq Text ->
   m a
 fromToml onEnv cfg cmdsText = do
   cmdLogLineTrunc <- case cfg ^? (#cmdLogging %? #lineTrunc % _Just) of

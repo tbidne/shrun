@@ -13,14 +13,14 @@ module Shrun.Data.Legend
 where
 
 import Data.HashMap.Strict (HashMap)
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
-import Shrun.Data.NonEmptySeq qualified as NESeq
+import Data.Sequence qualified as Seq
+import Data.Sequence.NonEmpty qualified as NESeq
 import Shrun.Prelude
 
 -- | Alias for our legend map.
 --
 -- @since 0.1
-type LegendMap = HashMap Text (NonEmptySeq Text)
+type LegendMap = HashMap Text (NESeq Text)
 
 -- | Holds a map key/val pair. The maintained invariants are:
 --
@@ -33,7 +33,7 @@ data KeyVal = UnsafeKeyVal
   { -- | @since 0.5
     key :: !Text,
     -- | @since 0.5
-    val :: !(NonEmptySeq Text)
+    val :: !(NESeq Text)
   }
   deriving stock
     ( -- | @since 0.5
@@ -45,7 +45,7 @@ data KeyVal = UnsafeKeyVal
 -- | Unidirectional pattern synonym for 'KeyVal'.
 --
 -- @since 0.5
-pattern MkKeyVal :: Text -> NonEmptySeq Text -> KeyVal
+pattern MkKeyVal :: Text -> NESeq Text -> KeyVal
 pattern MkKeyVal k v <- UnsafeKeyVal k v
 
 {-# COMPLETE MkKeyVal #-}
@@ -73,7 +73,7 @@ instance DecodeTOML KeyVal where
 mkKeyVal :: Text -> List Text -> Maybe KeyVal
 mkKeyVal "" _ = Nothing
 mkKeyVal _ [] = Nothing
-mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.mFromList vals
+mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.nonEmptySeq (Seq.fromList vals)
 
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
 --
@@ -87,13 +87,13 @@ unsafeKeyVal k vals = case mkKeyVal k vals of
 decodeKey :: Decoder Text
 decodeKey = getFieldWith decodeNonEmptyText "key"
 
-decodeVal :: Decoder (NonEmptySeq Text)
+decodeVal :: Decoder (NESeq Text)
 decodeVal = getFieldWith (decodeArray <|> fmap NESeq.singleton decodeNonEmptyText) "val"
 
-decodeArray :: Decoder (NonEmptySeq Text)
+decodeArray :: Decoder (NESeq Text)
 decodeArray =
   tomlDecoder >>= traverse testNE .> \case
-    Just xs -> pure xs
+    Just xs -> pure $ NESeq.fromList xs
     Nothing -> fail "Unexpected empty val"
 
 decodeNonEmptyText :: Decoder Text

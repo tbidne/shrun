@@ -42,7 +42,6 @@ import Shrun.Configuration.Env.Types
     Logging (..),
   )
 import Shrun.Data.Command (Command)
-import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging (MonadRegionLogger (..))
 import Shrun.Prelude as X
@@ -60,7 +59,7 @@ data FuncEnv = MkFuncEnv
   { timeout :: !(Maybe Timeout),
     logging :: !(Logging ()),
     completedCmds :: !(TVar (Seq Command)),
-    commands :: !(NonEmptySeq Command),
+    commands :: !(NESeq Command),
     logs :: !(IORef (List Text)),
     anyError :: !(TVar Bool)
   }

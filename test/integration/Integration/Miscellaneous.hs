@@ -113,10 +113,10 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
           commands =
-            [ MkCommand (Just "m1") "m1val",
-              "m2",
-              "m3"
-            ]
+            MkCommand (Just "m1") "m1val"
+              :<|| [ "m2",
+                     "m3"
+                   ]
         }
 
 usesRecursiveCmd :: TestTree
@@ -139,9 +139,9 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
           fileLogging = False,
           fileLogStripControl = Nothing,
           commands =
-            [ MkCommand (Just "cmd1") "echo \"command one\"",
-              MkCommand (Just "cmd4") "command four",
-              "echo hi",
-              "echo cat"
-            ]
+            MkCommand (Just "cmd1") "echo \"command one\""
+              :<|| [ MkCommand (Just "cmd4") "command four",
+                     "echo hi",
+                     "echo cat"
+                   ]
         }

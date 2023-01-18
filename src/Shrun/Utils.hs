@@ -23,18 +23,19 @@ module Shrun.Utils
     whenJust,
     whenLeft,
     untilJust,
+    unsafeListToNESeq,
   )
 where
 
 import Data.Bytes (Bytes, Conversion (convert), Size (B), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Either (either)
+import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.MonadTime (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
 import Refined qualified as R
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
 import Shrun.Prelude
 
 -- $setup
@@ -133,7 +134,7 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
 -- 'T.splitOn' is partial exactly when the first parameter is empty, which we
 -- reject. Unfortunately we have to perform a partial pattern match on the
 -- result since 'T.splitOn' returns a list, even though the result should
--- always be 'NonEmptySeq'. Hence 'HasCallStack'.
+-- always be 'NESeq'. Hence 'HasCallStack'.
 --
 -- ==== __Examples__
 -- >>> splitOn $$(R.refineTH ",,") "hey,,listen"
@@ -146,10 +147,10 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
 -- "" :|^ fromList []
 --
 -- @since 0.1
-splitOn :: HasCallStack => Refined R.NonEmpty Text -> Text -> NonEmptySeq Text
+splitOn :: HasCallStack => Refined R.NonEmpty Text -> Text -> NESeq Text
 splitOn rs txt = case T.splitOn s txt of
   [] -> error $ T.unpack err
-  (t : ts) -> t :|^ fromList ts
+  (t : ts) -> t :<|| fromList ts
   where
     err =
       "[Shrun.Utils] Impossible: Text.splitOn returned empty list. Split: "
@@ -354,3 +355,8 @@ untilJust m = go
       m >>= \case
         Nothing -> go
         Just x -> pure x
+
+-- | @since 0.1
+unsafeListToNESeq :: HasCallStack => List a -> NESeq a
+unsafeListToNESeq [] = error "[Shrun.Utils]: empty list"
+unsafeListToNESeq xs = NESeq.fromList $ fromList xs

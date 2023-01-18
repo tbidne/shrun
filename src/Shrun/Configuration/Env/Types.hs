@@ -38,7 +38,6 @@ where
 import Data.Sequence (Seq)
 import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (Command)
-import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.Types (FileLog, LogRegion)
@@ -312,7 +311,7 @@ instance Show (Logging r) where
 -- @since 0.1
 class HasCommands env where
   -- | @since 0.1
-  getCommands :: env -> NonEmptySeq Command
+  getCommands :: env -> NESeq Command
 
   -- | @since 0.1
   getCompletedCmds :: env -> TVar (Seq Command)
@@ -366,7 +365,7 @@ data Env = MkEnv
     -- | The commands to run.
     --
     -- @since 0.1
-    commands :: !(NonEmptySeq Command)
+    commands :: !(NESeq Command)
   }
 
 -- | @since 0.1

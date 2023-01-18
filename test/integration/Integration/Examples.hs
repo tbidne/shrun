@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module Integration.Examples (specs) where
 
 import Data.IORef qualified as IORef
@@ -5,7 +7,6 @@ import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
 import Shrun.Data.Command (Command (MkCommand))
-import Shrun.Data.NonEmptySeq qualified as NESeq
 
 specs :: TestTree
 specs =
@@ -34,7 +35,7 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
           cmdLogStripControl = Just StripControlSmart,
           fileLogging = False,
           fileLogStripControl = Nothing,
-          commands = NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\"")
+          commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
 examplesDefault :: TestTree
@@ -56,5 +57,5 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
           cmdLogLineTrunc = Nothing,
           fileLogging = False,
           fileLogStripControl = Nothing,
-          commands = NESeq.singleton "cmd"
+          commands = "cmd" :<|| []
         }

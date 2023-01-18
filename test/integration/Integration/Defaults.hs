@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module Integration.Defaults (specs) where
 
 import Integration.Prelude
@@ -9,7 +11,6 @@ import Integration.Utils
   )
 import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
-import Shrun.Data.NonEmptySeq qualified as NESeq
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -40,7 +41,7 @@ defaultEnv = testCase "No arguments and empty config path should return default 
           cmdLogLineTrunc = Nothing,
           fileLogging = False,
           fileLogStripControl = Nothing,
-          commands = NESeq.singleton "cmd1"
+          commands = "cmd1" :<|| []
         }
 
 usesDefaultConfigFile :: TestTree
@@ -61,7 +62,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
           cmdLogLineTrunc = Just 150,
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
-          commands = NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\"")
+          commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
@@ -104,7 +105,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
           cmdLogLineTrunc = Just 60,
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
-          commands = NESeq.singleton "cmd"
+          commands = "cmd" :<|| []
         }
 
 cliOverridesConfigFileCmdLog :: TestTree
@@ -138,7 +139,7 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           cmdLogNameTrunc = Just 80,
           fileLogging = True,
           fileLogStripControl = Just StripControlAll,
-          commands = NESeq.singleton "cmd"
+          commands = "cmd" :<|| []
         }
 
 ignoresDefaultConfigFile :: TestTree
@@ -159,5 +160,5 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
           cmdLogLineTrunc = Nothing,
           fileLogging = False,
           fileLogStripControl = Nothing,
-          commands = NESeq.singleton "cmd1"
+          commands = "cmd1" :<|| []
         }

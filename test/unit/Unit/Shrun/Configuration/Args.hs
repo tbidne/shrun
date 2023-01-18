@@ -14,7 +14,7 @@ import Shrun.Configuration.Env.Types
     StripControl (..),
   )
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.NonEmptySeq (NonEmptySeq)
+import Shrun.Utils qualified as U
 import Unit.Prelude
 
 -- | Entry point for Shrun.Args specs.
@@ -61,7 +61,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               fileLogMode = Nothing,
               fileLogStripControl = Nothing,
               fileLogSizeMode = Nothing,
-              commands = ["command"]
+              commands = "command" :<|| []
             }
   verifyResult argList expected
 
@@ -481,7 +481,7 @@ parseCommands =
   where
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) defArgs
-    cmds = ["one", "two", "three"]
+    cmds = U.unsafeListToNESeq ["one", "two", "three"]
 
 verifyResult :: List String -> Maybe Args -> Assertion
 verifyResult argList expected = do
@@ -491,8 +491,8 @@ verifyResult argList expected = do
 prefs :: ParserPrefs
 prefs = OptApp.prefs mempty
 
-defCommand :: NonEmptySeq Text
-defCommand = ["command"]
+defCommand :: NESeq Text
+defCommand = "command" :<|| []
 
 defArgs :: Maybe Args
 defArgs = Just $ Args.defaultArgs defCommand

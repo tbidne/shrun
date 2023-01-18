@@ -51,7 +51,6 @@ library
     Shrun.Data.Command
     Shrun.Data.FilePathDefault
     Shrun.Data.Legend
-    Shrun.Data.NonEmptySeq
     Shrun.Data.Supremum
     Shrun.Data.Timeout
     Shrun.IO
@@ -87,6 +86,7 @@ library
     , monad-thread          ^>=0.1
     , monad-typed-process   ^>=0.1
     , mtl                   >=2.2.1    && <2.4
+    , nonempty-containers   >=0.3.4.2  && <0.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
     , optparse-applicative  >=0.15     && <0.18

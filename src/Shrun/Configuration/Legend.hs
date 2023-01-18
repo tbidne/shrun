@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedLists #-}
-
 -- | Provides types for the legend functionality.
 --
 -- @since 0.5
@@ -17,20 +15,19 @@ where
 
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as Set
+import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Legend (KeyVal (..), LegendMap)
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..))
-import Shrun.Data.NonEmptySeq qualified as NESeq
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 
 -- $setup
 -- >>> import Shrun.Prelude
 -- >>> import Data.HashMap.Strict qualified as Map
--- >>> import Shrun.Data.NonEmptySeq (unsafeFromList, singleton)
+-- >>> import Shrun.Data.NESeq (unsafeFromList, singleton)
 
 -- | Errors when parsing the legend.
 --
@@ -116,10 +113,10 @@ instance Exception CyclicKeyError where
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 --
 -- @since 0.1
-translateCommands :: LegendMap -> NonEmptySeq Text -> Either CyclicKeyError (NonEmptySeq Command)
-translateCommands mp (t :|^ ts) = sequenceA $ U.foldMap1 (lineToCommands mp) t ts
+translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq Command)
+translateCommands mp (t :<|| ts) = sequenceA $ U.foldMap1 (lineToCommands mp) t ts
 
-lineToCommands :: LegendMap -> Text -> NonEmptySeq (Either CyclicKeyError Command)
+lineToCommands :: LegendMap -> Text -> NESeq (Either CyclicKeyError Command)
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
@@ -148,7 +145,7 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           -- name, hence the output would be ambiguous. To prevent this, only
           -- pass the name in when it is guaranteed we have a unique
           -- key = val mapping.
-          [x] -> go (Just line) foundKeys' path' x
+          (x :<|| IsEmpty) -> go (Just line) foundKeys' path' x
           xs -> xs >>= go Nothing foundKeys' path'
         where
           foundKeys' = Set.insert line foundKeys

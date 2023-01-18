@@ -25,7 +25,6 @@ import Shrun.Configuration.Env.Types
     Truncation,
   )
 import Shrun.Data.Command (Command)
-import Shrun.Data.NonEmptySeq (NonEmptySeq)
 import Shrun.Data.Timeout (Timeout)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
@@ -117,7 +116,7 @@ data SimpleEnv = MkSimpleEnv
     cmdLogStripControl :: !(Maybe StripControl),
     fileLogging :: !Bool,
     fileLogStripControl :: !(Maybe StripControl),
-    commands :: !(NonEmptySeq Command)
+    commands :: !(NESeq Command)
   }
   deriving stock (Eq, Show)
 

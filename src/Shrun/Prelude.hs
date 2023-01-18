@@ -99,6 +99,7 @@ import Data.Monoid as X (Monoid (..))
 import Data.Ord as X (Ord (..), Ordering (..))
 import Data.Proxy as X (Proxy (..))
 import Data.Semigroup as X (Semigroup (..))
+import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.String as X (String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T

@@ -39,7 +39,6 @@ import Shrun.Configuration.Env.Types
     Truncation (..),
   )
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..), unsafeFromList)
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
@@ -185,7 +184,7 @@ data Args = MkArgs
     -- | List of commands.
     --
     -- @since 0.1
-    commands :: !(NonEmptySeq Text)
+    commands :: !(NESeq Text)
   }
   deriving stock
     ( -- | @since 0.1
@@ -200,7 +199,7 @@ makeFieldLabelsNoPrefix ''Args
 -- | Default configuration.
 --
 -- @since 0.1
-defaultArgs :: NonEmptySeq Text -> Args
+defaultArgs :: NESeq Text -> Args
 defaultArgs cmds =
   MkArgs
     { timeout = empty,
@@ -583,9 +582,9 @@ commandDisplayParser =
           "unaffected."
         ]
 
-commandsParser :: Parser (NonEmptySeq Text)
+commandsParser :: Parser (NESeq Text)
 commandsParser =
-  unsafeFromList
+  U.unsafeListToNESeq
     <$> OA.some
       ( T.pack
           <$> OA.argument OA.str (OA.metavar "Commands...")

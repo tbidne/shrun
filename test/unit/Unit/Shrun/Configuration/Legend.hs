@@ -19,7 +19,7 @@ import Shrun.Configuration.Legend
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
-import Shrun.Data.NonEmptySeq (NonEmptySeq (..), unsafeFromList)
+import Shrun.Utils (unsafeListToNESeq)
 import Unit.Prelude
 
 -- | Entry point for Shrun.Legend.Internal property tests.
@@ -113,7 +113,7 @@ translateProps =
 
 -- Verify all of our original commands exist in the union:
 --   LegendKeys \cup FinalCommands
-noCommandsMissing :: HashSet Text -> NonEmptySeq Text -> PropertyT IO ()
+noCommandsMissing :: HashSet Text -> NESeq Text -> PropertyT IO ()
 noCommandsMissing allKeys = void . traverse failIfMissing
   where
     failIfMissing cmd
@@ -122,7 +122,7 @@ noCommandsMissing allKeys = void . traverse failIfMissing
           footnote $ "Missing command: " <> show cmd
           failure
 
-genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMap, NonEmptySeq Text)
+genLegendCommands :: (GenBase m ~ Identity, MonadGen m) => m (LegendMap, NESeq Text)
 genLegendCommands = (,) <$> genLegend <*> genCommands
 
 -- In order to avoid cycles -- e.g. a -> b -> a -- we disallow all recursive
@@ -159,8 +159,8 @@ genKeyVal = do
   v <- Gen.filter (/= k) genVal
   pure $ unsafeKeyVal k [v]
 
-genCommands :: MonadGen m => m (NonEmptySeq Text)
-genCommands = unsafeFromList <$> Gen.list range genCommand
+genCommands :: MonadGen m => m (NESeq Text)
+genCommands = unsafeListToNESeq <$> Gen.list range genCommand
   where
     range = Range.linearFrom 1 1 50
 
@@ -183,66 +183,66 @@ translateSpecs =
 
 translateOneCmd :: TestTree
 translateOneCmd = testCase "Should translate one command" $ do
-  let result = translateCommands legendMap ["one"]
-      expected = Right [MkCommand (Just "one") "cmd1"]
+  let result = translateCommands legendMap ("one" :<|| [])
+      expected = Right (MkCommand (Just "one") "cmd1" :<|| [])
   expected @=? result
 
 returnsNonMapCmd :: TestTree
 returnsNonMapCmd = testCase "Should return non-map command" $ do
-  let result = translateCommands legendMap ["other"]
-      expected = Right [MkCommand Nothing "other"]
+  let result = translateCommands legendMap ("other" :<|| [])
+      expected = Right (MkCommand Nothing "other" :<|| [])
   expected @=? result
 
 returnsRecursiveCmds :: TestTree
 returnsRecursiveCmds = testCase "Should return recursive commands" $ do
-  let result = translateCommands legendMap ["all"]
+  let result = translateCommands legendMap ("all" :<|| [])
       expected =
         Right $
           MkCommand (Just "one") "cmd1"
-            :|^ [ MkCommand (Just "two") "cmd2",
-                  MkCommand Nothing "cmd3"
-                ]
+            :<|| [ MkCommand (Just "two") "cmd2",
+                   MkCommand Nothing "cmd3"
+                 ]
   expected @=? result
 
 returnsRecursiveAndOtherCmds :: TestTree
 returnsRecursiveAndOtherCmds = testCase "Should return recursive commands and other" $ do
-  let result = translateCommands legendMap ("all" :|^ ["other"])
+  let result = translateCommands legendMap ("all" :<|| ["other"])
       expected =
         Right $
           MkCommand (Just "one") "cmd1"
-            :|^ [ MkCommand (Just "two") "cmd2",
-                  MkCommand Nothing "cmd3",
-                  MkCommand Nothing "other"
-                ]
+            :<|| [ MkCommand (Just "two") "cmd2",
+                   MkCommand Nothing "cmd3",
+                   MkCommand Nothing "other"
+                 ]
   expected @=? result
 
 noSplitNonKeyCmd :: TestTree
 noSplitNonKeyCmd = testCase "Should not split non-key commands" $ do
-  let result = translateCommands legendMap ["echo ,,"]
-      expected = Right [MkCommand Nothing "echo ,,"]
+  let result = translateCommands legendMap ("echo ,," :<|| [])
+      expected = Right (MkCommand Nothing "echo ,," :<|| [])
   expected @=? result
 
 cycleCmdFail :: TestTree
 cycleCmdFail = testCase "Should fail on cycle" $ do
-  let result = translateCommands cyclicLegend ["a"]
+  let result = translateCommands cyclicLegend ("a" :<|| [])
   Left (MkCyclicKeyError "a -> b -> c -> a") @=? result
 
 legendMap :: LegendMap
 legendMap =
   Map.fromList
-    [ ("one", ["cmd1"]),
-      ("two", ["cmd2"]),
-      ("three", ["cmd3"]),
-      ("oneAndTwo", ["one", "two"]),
-      ("all", ["oneAndTwo", "cmd3"])
+    [ ("one", "cmd1" :<|| []),
+      ("two", "cmd2" :<|| []),
+      ("three", "cmd3" :<|| []),
+      ("oneAndTwo", "one" :<|| ["two"]),
+      ("all", "oneAndTwo" :<|| ["cmd3"])
     ]
 
 cyclicLegend :: LegendMap
 cyclicLegend =
   Map.fromList
-    [ ("a", ["b", "x"]),
-      ("b", ["c", "x"]),
-      ("c", ["a", "x"])
+    [ ("a", "b" :<|| ["x"]),
+      ("b", "c" :<|| ["x"]),
+      ("c", "a" :<|| ["x"])
     ]
 
 linesToMapSpecs :: TestTree
@@ -263,8 +263,8 @@ parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
       expected =
         Right
           ( Map.fromList
-              [ ("a", ["b", "k"]),
-                ("b", ["c"])
+              [ ("a", "b" :<|| ["k"]),
+                ("b", "c" :<|| [])
               ]
           )
   expected @=? result
