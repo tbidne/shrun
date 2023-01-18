@@ -9,5 +9,4 @@ cabal.project.local
 result*
 
 # profiling
-bench.csv
 *prof

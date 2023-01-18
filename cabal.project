@@ -9,7 +9,7 @@ package shrun
     -Wno-unticked-promoted-constructors
 
   benchmark-options:
-    +RTS -T --nonmoving-gc -RTS --csv bench.csv
+    +RTS -T --nonmoving-gc -RTS --csv ./benchmarks/bench.csv
 
 optimization: 2
 test-show-details: direct

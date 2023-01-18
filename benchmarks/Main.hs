@@ -2,8 +2,8 @@ module Main (main) where
 
 import Control.DeepSeq (force)
 import Shrun.Configuration.Env (makeEnvAndShrun)
-import Shrun.Prelude
-import System.Environment (withArgs)
+import Shrun.Prelude hiding (IO)
+import Prelude (IO)
 import Test.Tasty.Bench
   ( Benchmark,
     bench,
@@ -16,15 +16,11 @@ main :: IO ()
 main =
   do
     defaultMain
-      [ noLogs,
-        basicLogs,
+      [ basicLogs,
         cmdLogs,
         fileLogs
       ]
     `finally` removeFileIfExists "bench.log"
-
-noLogs :: Benchmark
-noLogs = bgroup "No Logging" (runLoops ["-d", "--no-config"])
 
 basicLogs :: Benchmark
 basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
