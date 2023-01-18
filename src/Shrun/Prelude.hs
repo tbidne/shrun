@@ -149,6 +149,7 @@ import Effects.FileSystem.MonadPathWriter as X
     removeFile,
     removeFileIfExists,
   )
+import Effects.FileSystem.Path as X ((</>))
 import Effects.MonadCallStack as X
   ( MonadCallStack (throwWithCallStack),
     catch,
@@ -237,7 +238,6 @@ import Optics.TH as X
   )
 import Refined as X (Refined)
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
-import System.FilePath as X ((</>))
 import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
 import TOML as X
   ( DecodeTOML (..),

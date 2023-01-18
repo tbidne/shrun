@@ -72,7 +72,6 @@ library
     , bytestring            >=0.10.12  && <0.12
     , concurrent-output     ^>=1.10.7
     , containers            ^>=0.6.2.1
-    , filepath              ^>=1.4.2.1
     , gitrev                >=1.2.0    && <1.4
     , hashable              >=1.3.0.0  && <1.5
     , monad-async           ^>=0.1
@@ -176,7 +175,6 @@ test-suite integration
   build-depends:
     , algebra-simple
     , base
-    , directory
     , monad-fs
     , monad-terminal
     , shrun
@@ -205,8 +203,8 @@ test-suite functional
   build-depends:
     , base
     , containers
-    , directory
     , monad-callstack
+    , monad-fs
     , shrun
     , shrun-verifier
     , tasty

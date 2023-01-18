@@ -1,12 +1,13 @@
 -- | Runs integration tests.
 module Main (main) where
 
+import Effects.FileSystem.MonadPathReader qualified as Dir
+import Effects.FileSystem.MonadPathWriter qualified as Dir
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
 import Integration.Failures qualified as Failures
 import Integration.Miscellaneous qualified as Miscellaneous
 import Integration.Prelude
-import System.Directory qualified as Dir
 
 -- | Entry point for integration tests.
 main :: IO ()

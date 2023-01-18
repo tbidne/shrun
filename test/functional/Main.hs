@@ -1,6 +1,8 @@
 -- | Runs functional tests.
 module Main (main) where
 
+import Effects.FileSystem.MonadPathReader qualified as Dir
+import Effects.FileSystem.MonadPathWriter qualified as Dir
 import Functional.Prelude
 import Functional.Readme qualified as Readme
 import Functional.Success qualified as Success
@@ -11,7 +13,6 @@ import Functional.TestArgs (TestArgs (..))
 import Functional.Timeout qualified as Timeout
 import Functional.Truncation qualified as Truncation
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import System.Directory qualified as Dir
 import Test.Tasty qualified as Tasty
 
 -- | Entry point for functional tests.
