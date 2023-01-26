@@ -33,7 +33,7 @@ import Data.Either (either)
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime, fromSeconds)
-import Effects.MonadTime (TimeSpec, diffTimeSpec)
+import Effects.Time (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
 import Refined qualified as R
 import Shrun.Prelude
@@ -44,7 +44,7 @@ import Shrun.Prelude
 -- >>> import Data.List.NonEmpty (NonEmpty (..))
 -- >>> import Data.Semigroup (Sum (..))
 -- >>> import Data.Text qualified as T
--- >>> import Effects.MonadTime (TimeSpec (..))
+-- >>> import Effects.Time (TimeSpec (..))
 -- >>> import Refined qualified as R
 -- >>> import Shrun.Prelude
 

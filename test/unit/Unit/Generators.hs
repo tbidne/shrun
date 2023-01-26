@@ -9,7 +9,7 @@ module Unit.Generators
   )
 where
 
-import Effects.MonadTime (TimeSpec (..))
+import Effects.Time (TimeSpec (..))
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Numeric.Algebra qualified as Alg

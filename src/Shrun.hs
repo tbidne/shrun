@@ -12,9 +12,9 @@ where
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
-import Effects.Concurrent.MonadAsync qualified as Async
-import Effects.Concurrent.MonadThread as X (microsleep, sleep)
-import Effects.MonadTime (TimeSpec, withTiming)
+import Effects.Concurrent.Async qualified as Async
+import Effects.Concurrent.Thread as X (microsleep, sleep)
+import Effects.Time (TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
     HasAnyError (..),
@@ -54,7 +54,6 @@ shrun ::
     HasCommands env,
     HasLogging env (Region m),
     HasTimeout env,
-    MonadCallStack m,
     MonadAsync m,
     MonadExit m,
     MonadHandleReader m,
@@ -115,7 +114,6 @@ runCommand ::
   ( HasAnyError env,
     HasCommands env,
     HasLogging env (Region m),
-    MonadCallStack m,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,

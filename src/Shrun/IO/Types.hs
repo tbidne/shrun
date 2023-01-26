@@ -11,7 +11,11 @@ module Shrun.IO.Types
 where
 
 import Data.Text qualified as T
-import Effects.FileSystem.MonadHandleReader (MonadHandleReader (hIsClosed), hGetNonBlocking, hIsReadable)
+import Effects.FileSystem.HandleReader
+  ( MonadHandleReader (hIsClosed),
+    hGetNonBlocking,
+    hIsReadable,
+  )
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Prelude
 

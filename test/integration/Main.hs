@@ -1,8 +1,8 @@
 -- | Runs integration tests.
 module Main (main) where
 
-import Effects.FileSystem.MonadPathReader qualified as Dir
-import Effects.FileSystem.MonadPathWriter qualified as Dir
+import Effects.FileSystem.PathReader qualified as Dir
+import Effects.FileSystem.PathWriter qualified as Dir
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
 import Integration.Failures qualified as Failures

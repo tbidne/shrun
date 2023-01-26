@@ -20,7 +20,7 @@ module Shrun.Logging.Formatting
 where
 
 import Data.Text qualified as T
-import Effects.MonadTime (getSystemTimeString)
+import Effects.Time (getSystemTimeString)
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     FileLogging,

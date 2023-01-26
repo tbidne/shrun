@@ -1,6 +1,5 @@
 module Main (main) where
 
-import Effects.MonadCallStack (AnnotatedException (..))
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Shrun.Configuration.Env (makeEnvAndShrun)
 import Shrun.Prelude
@@ -21,16 +20,16 @@ main = do
     -- is just unhelpful noise.
     case fromException ex of
       -- should be impossible due to doNothingOnSuccess...
-      Just (AnnotatedException _ ExitSuccess) -> pure ()
+      Just (MkExceptionCS ExitSuccess _) -> pure ()
       -- for subcommand failures
-      Just (AnnotatedException _ (ExitFailure _)) -> pure ()
-      Nothing -> putStrLn $ displayCallStack ex
+      Just (MkExceptionCS (ExitFailure _) _) -> pure ()
+      Nothing -> putStrLn $ displayException ex
 
-  makeEnvAndShrun `catch` doNothingOnSuccess
+  makeEnvAndShrun `catchWithCS` doNothingOnSuccess
   where
-    -- We need to catch ExitCode so that optparse applicative's --help
+    -- We need to catchWithCS ExitCode so that optparse applicative's --help
     -- does not set the error code to failure...but then we need to rethrow
     -- failures.
     doNothingOnSuccess :: ExitCode -> IO ()
     doNothingOnSuccess ExitSuccess = pure ()
-    doNothingOnSuccess ex@(ExitFailure _) = throwIO ex
+    doNothingOnSuccess ex@(ExitFailure _) = throwM ex

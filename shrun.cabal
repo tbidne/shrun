@@ -74,8 +74,8 @@ library
     , gitrev                >=1.2.0    && <1.4
     , hashable              >=1.3.0.0  && <1.5
     , monad-async           ^>=0.1
-    , monad-callstack       ^>=0.1
     , monad-env             ^>=0.1
+    , monad-exceptions      ^>=0.1
     , monad-exit            ^>=0.1
     , monad-fs              ^>=0.1
     , monad-ioref           ^>=0.1
@@ -94,7 +94,6 @@ library
     , pretty-terminal       ^>=0.1
     , refined               >=0.6      && <0.9
     , relative-time         ^>=0.1
-    , safe-exceptions       ^>=0.1.7.0
     , template-haskell      >=2.17.0.0 && <2.20
     , text                  >=1.2.3.2  && <2.1
     , toml-reader           >=0.2.0.0  && <0.3.0.0
@@ -121,7 +120,6 @@ executable shrun
   main-is:          Main.hs
   build-depends:
     , base
-    , monad-callstack
     , shrun
 
   hs-source-dirs:   app
@@ -203,7 +201,6 @@ test-suite functional
   build-depends:
     , base
     , containers
-    , monad-callstack
     , monad-fs
     , shrun
     , shrun-verifier

@@ -13,8 +13,8 @@ module Integration.Utils
 where
 
 import Data.Text qualified as T
-import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
-import Effects.System.MonadTerminal (MonadTerminal (..))
+import Effects.FileSystem.PathReader (MonadPathReader (..))
+import Effects.System.Terminal (MonadTerminal (..))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types
@@ -33,7 +33,6 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
     ( Applicative,
       Functor,
       Monad,
-      MonadCallStack,
       MonadCatch,
       MonadEnv,
       MonadFileReader,
@@ -79,7 +78,6 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
       MonadPathWriter,
       Functor,
       Monad,
-      MonadCallStack,
       MonadCatch,
       MonadEnv,
       MonadFileReader,
@@ -140,8 +138,7 @@ simplifyEnv = to $ \env ->
 -- expected params.
 makeEnvAndVerify ::
   forall m.
-  ( MonadCallStack m,
-    MonadEnv m,
+  ( MonadEnv m,
     MonadFileReader m,
     MonadHandleWriter m,
     MonadMask m,

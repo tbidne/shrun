@@ -15,8 +15,8 @@ import Data.ByteString.Lazy qualified as BSL
 import Data.Sequence ((<|))
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
-import Effects.MonadTime (withTiming)
-import Effects.System.MonadProcess qualified as P
+import Effects.System.Process qualified as P
+import Effects.Time (withTiming)
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
     HasCommands (..),

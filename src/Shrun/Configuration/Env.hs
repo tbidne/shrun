@@ -33,7 +33,7 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
-import Effects.System.MonadTerminal (getTerminalWidth)
+import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
   ( FileMode (..),
@@ -67,7 +67,6 @@ import Shrun.ShellT (ShellT)
 -- @since 0.1
 makeEnvAndShrun ::
   ( HasLogging Env (Region (ShellT Env m)),
-    MonadCallStack m,
     MonadAsync m,
     MonadExit m,
     MonadFileReader m,
@@ -93,8 +92,7 @@ makeEnvAndShrun = withEnv (runShellT shrun)
 --
 -- @since 0.5
 withEnv ::
-  ( MonadCallStack m,
-    MonadFileReader m,
+  ( MonadFileReader m,
     MonadHandleWriter m,
     MonadMask m,
     MonadOptparse m,
@@ -137,7 +135,7 @@ withEnv onEnv = do
       contents <- readFileUtf8ThrowM fp
       case decode contents of
         Right cfg -> pure cfg
-        Left tomlErr -> throwIO tomlErr
+        Left tomlErr -> throwM tomlErr
 
 fromToml ::
   ( MonadFileReader m,
@@ -168,8 +166,8 @@ fromToml onEnv cfg cmdsText = do
     Just aliases -> case linesToMap aliases of
       Right mp -> case translateCommands mp cmdsText of
         Right cmds -> pure cmds
-        Left err -> throwIO err
-      Left err -> throwIO err
+        Left err -> throwM err
+      Left err -> throwM err
 
   completedCmds' <- newTVarM Seq.empty
   anyError <- newTVarM False

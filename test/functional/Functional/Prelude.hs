@@ -31,7 +31,6 @@ where
 import Data.Sequence (Seq)
 import Data.String as X (IsString)
 import Data.Typeable (typeRep)
-import Effects.MonadCallStack (AnnotatedException)
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
@@ -106,7 +105,7 @@ run = runMaybeException ExNothing
 runExitFailure :: List String -> IO (IORef (List Text))
 runExitFailure =
   runMaybeException
-    (ExJust $ Proxy @(AnnotatedException ExitCode))
+    (ExJust $ Proxy @(ExceptionCS ExitCode))
 
 -- | Like 'runException', except it expects an exception.
 runException ::
@@ -151,7 +150,7 @@ runMaybeException mException argList = do
     case mException of
       ExNothing -> SR.runShellT SR.shrun funcEnv $> funcEnv ^. #logs
       ExJust (proxy :: Proxy e) ->
-        try @e (SR.runShellT SR.shrun funcEnv) >>= \case
+        try @_ @e (SR.runShellT SR.shrun funcEnv) >>= \case
           Left _ -> pure $ funcEnv ^. #logs
           Right _ ->
             error $

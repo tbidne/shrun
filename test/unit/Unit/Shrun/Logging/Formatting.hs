@@ -12,7 +12,7 @@ import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Time (midday)
 import Data.Time.LocalTime (utc)
-import Effects.MonadTime (LocalTime (..), MonadTime (..), ZonedTime (..))
+import Effects.Time (LocalTime (..), MonadTime (..), ZonedTime (..))
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
 import Refined qualified as R

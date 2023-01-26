@@ -1,8 +1,8 @@
 -- | Runs functional tests.
 module Main (main) where
 
-import Effects.FileSystem.MonadPathReader qualified as Dir
-import Effects.FileSystem.MonadPathWriter qualified as Dir
+import Effects.FileSystem.PathReader qualified as Dir
+import Effects.FileSystem.PathWriter qualified as Dir
 import Functional.Prelude
 import Functional.Readme qualified as Readme
 import Functional.Success qualified as Success
@@ -18,7 +18,7 @@ import Test.Tasty qualified as Tasty
 -- | Entry point for functional tests.
 main :: IO ()
 main = do
-  setUncaughtExceptionHandler (putStrLn . displayCallStack)
+  setUncaughtExceptionHandler (putStrLn . displayException)
   defaultMain $ Tasty.withResource setup teardown specs
 
 specs :: IO TestArgs -> TestTree

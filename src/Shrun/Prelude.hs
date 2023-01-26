@@ -16,9 +16,6 @@ module Shrun.Prelude
   ( -- * Total versions of partial functions
     headMaybe,
 
-    -- * Exceptions
-    tryAny,
-
     -- * Misc utilities
     (<<$>>),
     (.>),
@@ -44,18 +41,6 @@ import Control.Applicative as X
     (<**>),
   )
 import Control.Concurrent as X (threadDelay)
-import Control.Exception.Safe as X
-  ( Exception (..),
-    MonadCatch,
-    MonadMask,
-    MonadThrow,
-    SomeException,
-    bracket,
-    finally,
-    mask,
-    throwIO,
-    throwM,
-  )
 import Control.Monad as X
   ( Monad (..),
     forever,
@@ -109,8 +94,8 @@ import Data.Tuple as X (fst, snd)
 import Data.Type.Equality as X (type (~))
 #endif
 import Data.Void as X (Void, absurd)
-import Effects.Concurrent.MonadAsync as X (MonadAsync)
-import Effects.Concurrent.MonadSTM as X
+import Effects.Concurrent.Async as X (MonadAsync)
+import Effects.Concurrent.STM as X
   ( MonadSTM,
     TBQueue,
     TVar,
@@ -123,41 +108,52 @@ import Effects.Concurrent.MonadSTM as X
     writeTBQueueM,
     writeTVarM,
   )
-import Effects.Concurrent.MonadThread as X (MonadThread)
-import Effects.FileSystem.MonadFileReader as X
+import Effects.Concurrent.Thread as X (MonadThread)
+import Effects.Exception as X
+  ( Exception (..),
+    ExceptionCS (..),
+    MonadCatch,
+    MonadMask,
+    MonadThrow,
+    SomeException,
+    bracket,
+    catchWithCS,
+    displayException,
+    finally,
+    mask,
+    throwM,
+    throwWithCS,
+    try,
+    tryAny,
+  )
+import Effects.FileSystem.FileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,
     readFileUtf8Lenient,
     readFileUtf8ThrowM,
   )
-import Effects.FileSystem.MonadFileWriter as X
+import Effects.FileSystem.FileWriter as X
   ( MonadFileWriter,
     appendFileUtf8,
     writeFileUtf8,
   )
-import Effects.FileSystem.MonadHandleReader as X (MonadHandleReader)
-import Effects.FileSystem.MonadHandleWriter as X
+import Effects.FileSystem.HandleReader as X (MonadHandleReader)
+import Effects.FileSystem.HandleWriter as X
   ( MonadHandleWriter (hClose, hFlush, openBinaryFile),
     hPutUtf8,
   )
-import Effects.FileSystem.MonadPathReader as X
+import Effects.FileSystem.Path as X ((</>))
+import Effects.FileSystem.PathReader as X
   ( MonadPathReader (doesFileExist, getFileSize),
     getXdgConfig,
   )
-import Effects.FileSystem.MonadPathWriter as X
+import Effects.FileSystem.PathWriter as X
   ( MonadPathWriter,
     removeDirectoryIfExists,
     removeFile,
     removeFileIfExists,
   )
-import Effects.FileSystem.Path as X ((</>))
-import Effects.MonadCallStack as X
-  ( MonadCallStack (throwWithCallStack),
-    catch,
-    displayCallStack,
-    try,
-  )
-import Effects.MonadIORef as X
+import Effects.IORef as X
   ( IORef,
     MonadIORef
       ( atomicModifyIORef',
@@ -167,21 +163,21 @@ import Effects.MonadIORef as X
         writeIORef
       ),
   )
-import Effects.MonadOptparse as X (MonadOptparse (execParser))
-import Effects.MonadTime as X (MonadTime)
-import Effects.System.MonadEnv as X (MonadEnv (withArgs))
-import Effects.System.MonadExit as X (MonadExit, exitFailure)
-import Effects.System.MonadProcess as X
+import Effects.Optparse as X (MonadOptparse (execParser))
+import Effects.System.Environment as X (MonadEnv (withArgs))
+import Effects.System.Exit as X (MonadExit, exitFailure)
+import Effects.System.Process as X
   ( MonadProcess (..),
     Process,
   )
-import Effects.System.MonadTerminal as X
+import Effects.System.Terminal as X
   ( MonadTerminal,
     putStr,
     putStrLn,
     putText,
     putTextLn,
   )
+import Effects.Time as X (MonadTime)
 import GHC.Enum as X (Bounded (..), Enum (..))
 import GHC.Err as X (error, undefined)
 import GHC.Float as X (Double (..), Float (..))
@@ -264,10 +260,6 @@ import Prelude qualified as P
 -- $setup
 -- >>> import Data.String (String)
 -- >>> :set -XNoOverloadedLists
-
--- | @since 0.1
-tryAny :: MonadCatch m => m a -> m (Either SomeException a)
-tryAny = try @SomeException
 
 -- | 'Text' version of 'P.show'.
 --
