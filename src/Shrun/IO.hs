@@ -12,15 +12,16 @@ module Shrun.IO
 where
 
 import Data.ByteString.Lazy qualified as BSL
-import Data.Sequence ((<|))
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
 import Effects.System.Process qualified as P
 import Effects.Time (withTiming)
 import Shrun.Configuration.Env.Types
-  ( HasAnyError (getAnyError),
+  ( HasAnyError,
     HasCommands (..),
     HasLogging (..),
+    prependCompletedCommand,
+    setAnyErrorTrue,
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.IO.Types
@@ -129,18 +130,15 @@ tryCommandLogging command = do
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
       -- update completed commands
-      completedCmds <- asks getCompletedCmds
-      modifyTVarM' completedCmds (command <|)
+      prependCompletedCommand command
 
       pure $ Right $ U.timeSpecToRelTime rt
     (rt, Just err) -> do
       -- update completed commands
-      completedCmds <- asks getCompletedCmds
-      modifyTVarM' completedCmds (command <|)
+      prependCompletedCommand command
 
       -- update anyError
-      anyError <- asks getAnyError
-      writeTVarM anyError True
+      setAnyErrorTrue
 
       pure $ Left (U.timeSpecToRelTime rt, err)
   where

@@ -200,7 +200,6 @@ test-suite functional
 
   build-depends:
     , base
-    , containers
     , monad-fs
     , shrun
     , shrun-verifier

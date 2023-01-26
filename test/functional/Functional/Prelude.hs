@@ -28,7 +28,6 @@ module Functional.Prelude
   )
 where
 
-import Data.Sequence (Seq)
 import Data.String as X (IsString)
 import Data.Typeable (typeRep)
 import Shrun qualified as SR

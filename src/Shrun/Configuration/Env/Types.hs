@@ -7,9 +7,11 @@
 module Shrun.Configuration.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
+    prependCompletedCommand,
     HasLogging (..),
     HasTimeout (..),
     HasAnyError (..),
+    setAnyErrorTrue,
 
     -- * Types
     Env (..),
@@ -35,7 +37,6 @@ module Shrun.Configuration.Env.Types
   )
 where
 
-import Data.Sequence (Seq)
 import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (Command)
 import Shrun.Data.Supremum (Supremum (..))
@@ -398,6 +399,33 @@ instance HasCommands Env where
   getCommands = view #commands
   getCompletedCmds = view #completedCmds
 
+-- | Prepends a completed command.
+--
+-- @since 0.1
+prependCompletedCommand ::
+  ( HasCallStack,
+    HasCommands env,
+    MonadReader env m,
+    MonadSTM m
+  ) =>
+  Command ->
+  m ()
+prependCompletedCommand command = do
+  completedCmds <- asks getCompletedCmds
+  modifyTVarM' completedCmds (command :<|)
+
 -- | @since 0.8
 instance HasAnyError Env where
   getAnyError = view #anyError
+
+-- | Set anyError to 'True'.
+--
+-- @since 0.1
+setAnyErrorTrue ::
+  ( HasAnyError env,
+    HasCallStack,
+    MonadReader env m,
+    MonadSTM m
+  ) =>
+  m ()
+setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarM ref True

@@ -21,6 +21,7 @@ import Shrun.Configuration.Env.Types
     HasCommands (..),
     HasLogging (..),
     HasTimeout (..),
+    setAnyErrorTrue,
   )
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.Timeout (Timeout (..))
@@ -170,8 +171,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
     Logging.putRegionLog r fatalLog
 
     -- update anyError
-    anyError <- asks getAnyError
-    writeTVarM anyError True
+    setAnyErrorTrue
 
   let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
       finalLog =
@@ -253,8 +253,7 @@ keepRunning region timer mto = do
       completedCmds <- readTVarM completedCmdsTVar
 
       -- update anyError
-      anyError <- asks getAnyError
-      writeTVarM anyError True
+      setAnyErrorTrue
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ toList allCmds

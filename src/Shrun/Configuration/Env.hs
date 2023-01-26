@@ -7,8 +7,11 @@
 module Shrun.Configuration.Env
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
+    prependCompletedCommand,
     HasLogging (..),
     HasTimeout (..),
+    HasAnyError (..),
+    setAnyErrorTrue,
 
     -- * Types
     Env (..),
@@ -45,6 +48,7 @@ import Shrun.Configuration.Env.Types
     CmdLogging (..),
     Env (..),
     FileLogging (..),
+    HasAnyError (..),
     HasCommands (..),
     HasLogging (..),
     HasTimeout (..),
@@ -53,6 +57,8 @@ import Shrun.Configuration.Env.Types
     StripControl (..),
     TruncRegion (..),
     Truncation (..),
+    prependCompletedCommand,
+    setAnyErrorTrue,
   )
 import Shrun.Configuration.Legend (linesToMap, translateCommands)
 import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
