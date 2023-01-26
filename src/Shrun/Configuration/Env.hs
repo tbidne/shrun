@@ -74,7 +74,6 @@ import Shrun.ShellT (ShellT)
 makeEnvAndShrun ::
   ( HasLogging Env (Region (ShellT Env m)),
     MonadAsync m,
-    MonadExit m,
     MonadFileReader m,
     MonadHandleReader m,
     MonadHandleWriter m,

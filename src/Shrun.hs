@@ -56,7 +56,6 @@ shrun ::
     HasLogging env (Region m),
     HasTimeout env,
     MonadAsync m,
-    MonadExit m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,

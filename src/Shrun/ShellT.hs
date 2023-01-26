@@ -30,8 +30,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       -- | @since 0.1
       MonadCatch,
       -- | @since 0.8
-      MonadExit,
-      -- | @since 0.8
       MonadFileReader,
       -- | @since 0.8
       MonadFileWriter,

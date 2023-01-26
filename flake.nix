@@ -125,10 +125,6 @@
                   final.callCabal2nix "monad-env"
                     "${monad-effects}/monad-env"
                     { };
-                monad-exit =
-                  final.callCabal2nix "monad-exit"
-                    "${monad-effects}/monad-exit"
-                    { };
                 monad-fs =
                   final.callCabal2nix "monad-fs"
                     "${monad-effects}/monad-fs"

@@ -76,7 +76,6 @@ library
     , monad-async           ^>=0.1
     , monad-env             ^>=0.1
     , monad-exceptions      ^>=0.1
-    , monad-exit            ^>=0.1
     , monad-fs              ^>=0.1
     , monad-ioref           ^>=0.1
     , monad-optparse        ^>=0.1

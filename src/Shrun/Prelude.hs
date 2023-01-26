@@ -120,6 +120,7 @@ import Effects.Exception as X
     bracket,
     catchWithCS,
     displayException,
+    exitFailure,
     finally,
     mask,
     throwM,
@@ -166,7 +167,6 @@ import Effects.IORef as X
   )
 import Effects.Optparse as X (MonadOptparse (execParser))
 import Effects.System.Environment as X (MonadEnv (withArgs))
-import Effects.System.Exit as X (MonadExit, exitFailure)
 import Effects.System.Process as X
   ( MonadProcess (..),
     Process,
