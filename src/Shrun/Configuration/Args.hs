@@ -624,9 +624,8 @@ pollIntervalParser =
 
     prettyPollInterval =
       unpack
+        . T.reverse
         . T.intercalate ","
-        . L.reverse
-        . fmap T.reverse
         . T.chunksOf 3
         . T.reverse
         . showt
