@@ -25,6 +25,7 @@ import Shrun.Configuration.Env.Types
     Truncation,
   )
 import Shrun.Data.Command (Command)
+import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
@@ -108,6 +109,7 @@ deriving via ConfigIO instance MonadTerminal NoConfigIO
 data SimpleEnv = MkSimpleEnv
   { timeout :: !(Maybe Timeout),
     cmdDisplay :: !CmdDisplay,
+    pollInterval :: !PollInterval,
     cmdLogging :: !Bool,
     cmdLogNameTrunc :: !(Maybe (Truncation 'TCmdName)),
     cmdLogLineTrunc :: !(Maybe (Truncation 'TCmdLine)),
@@ -125,6 +127,7 @@ simplifyEnv = to $ \env ->
   MkSimpleEnv
     { timeout = env ^. #timeout,
       cmdDisplay = env ^. (#logging % #cmdDisplay),
+      pollInterval = env ^. (#logging % #pollInterval),
       cmdLogging = is (#logging % #cmdLogging % _Just) env,
       cmdLogNameTrunc = env ^. (#logging % #cmdNameTrunc),
       cmdLogLineTrunc = env ^? (#logging % #cmdLogging %? #lineTrunc % _Just),

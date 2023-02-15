@@ -64,6 +64,7 @@ import Shrun.Configuration.Legend (linesToMap, translateCommands)
 import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
+import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
@@ -183,6 +184,7 @@ fromToml onEnv cfg cmdsText = do
             logging =
               MkLogging
                 { cmdDisplay = maybeOrMempty cfg (#cmdDisplay % _Just),
+                  pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
                   cmdNameTrunc = cfg ^. #cmdNameTrunc,
                   cmdLogging = case cfg ^. #cmdLogging of
                     Nothing -> Nothing

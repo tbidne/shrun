@@ -27,6 +27,7 @@
     - [No Config](#no-config)
     - [Timeout](#timeout)
   - [Logging](#logging)
+    - [Poll Interval](#poll-interval)
     - [Command Log](#command-log)
     - [File Log](#file-log)
     - [File Log Mode](#file-log-mode)
@@ -72,7 +73,7 @@ All well and good, but this approach has several deficiencies:
 
 1. It does not scale. Imagine we have variations of `cmd3` we want to run under different circumstances. We could create multiple aliases:
 
-        
+
         alias run_commands_cmd3a="cmd1 && cmd2 && cmd3a"
         alias run_commands_cmd3b="cmd1 && cmd2 && cmd3b"
 
@@ -166,6 +167,22 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 </pre>
 
 ## Logging
+
+### Poll Interval
+
+**Arg:** `-p, --poll-interval`
+
+**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll subcommands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
+
+Note that lower values will increase CPU usage. In particular, 0 will max out the CPU.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --poll-interval 100 --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
+<span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
+<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
+</pre>
 
 ### Command Log
 

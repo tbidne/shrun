@@ -39,6 +39,7 @@ where
 
 import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (Command)
+import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.Types (FileLog, LogRegion)
@@ -270,6 +271,10 @@ data Logging r = MkLogging
     --
     -- @since 0.7
     cmdDisplay :: !CmdDisplay,
+    -- | How often to poll subcommands for logs, in microseconds.
+    --
+    -- @since 0.8
+    pollInterval :: !PollInterval,
     -- | Truncates command names in the logs.
     --
     -- @since 0.7

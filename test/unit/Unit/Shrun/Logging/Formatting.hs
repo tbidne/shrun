@@ -114,6 +114,7 @@ instance HasLogging Env () where
   getLogging env =
     MkLogging
       { cmdDisplay = env ^. #cmdDisplay,
+        pollInterval = 100,
         cmdNameTrunc = env ^. #cmdTrunc,
         cmdLogging =
           Just
@@ -262,6 +263,7 @@ instance HasLogging MockEnv () where
   getLogging _ =
     MkLogging
       { cmdDisplay = ShowKey,
+        pollInterval = 10,
         cmdNameTrunc = Nothing,
         cmdLogging = Nothing,
         consoleLogging = error err,

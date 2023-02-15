@@ -39,9 +39,11 @@ import Shrun.Configuration.Env.Types
     Truncation (..),
   )
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
+import Shrun.Data.PollInterval (PollInterval (..), defaultPollInterval)
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import Text.Read qualified as TR
 
 -- | File mode.
 --
@@ -147,6 +149,10 @@ data Args = MkArgs
     --
     -- @since 0.1
     cmdDisplay :: !(Maybe CmdDisplay),
+    -- | How often to poll subcommands for logs, in microseconds.
+    --
+    -- @since 0.8
+    pollInterval :: !(Maybe PollInterval),
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1
@@ -206,6 +212,7 @@ defaultArgs cmds =
       configPath = empty,
       noConfig = False,
       cmdDisplay = empty,
+      pollInterval = empty,
       cmdLogging = empty,
       cmdLogStripControl = empty,
       cmdNameTrunc = empty,
@@ -249,6 +256,7 @@ argsParser =
     <*> noConfigParser
     <*> timeoutParser
     <*> commandDisplayParser
+    <*> pollIntervalParser
     <*> cmdTruncationParser
     <*> commandLoggingParser
     <*> stripControlParser
@@ -581,6 +589,48 @@ commandDisplayParser =
           "instead shows the literal command. Commands without keys are ",
           "unaffected."
         ]
+
+pollIntervalParser :: Parser (Maybe PollInterval)
+pollIntervalParser =
+  OA.optional $
+    OA.option
+      readPI
+      ( mconcat
+          [ OA.long "poll-interval",
+            OA.short 'p',
+            OA.help helpTxt,
+            OA.metavar "NATURAL"
+          ]
+      )
+  where
+    readPI = do
+      s <- OA.str
+      case TR.readMaybe s of
+        Nothing ->
+          OA.readerAbort $
+            ErrorMsg $
+              "Could not parse poll-interval: " <> s
+        Just n -> pure $ MkPollInterval n
+    helpTxt =
+      mconcat
+        [ "Non-negative integer used in conjunction with --cmd-log and ",
+          "--file-log that determines how quickly we poll subcommands for ",
+          "logs, in microseconds. A value of 0 is interpreted as infinite ",
+          "i.e. limited only by the CPU. Defaults to ",
+          prettyPollInterval defaultPollInterval,
+          ". Note that lower values will increase CPU usage. In particular, ",
+          "0 will max out the CPU."
+        ]
+
+    prettyPollInterval =
+      unpack
+        . T.intercalate ","
+        . L.reverse
+        . fmap T.reverse
+        . T.chunksOf 3
+        . T.reverse
+        . showt
+        . view #unPollInterval
 
 commandsParser :: Parser (NESeq Text)
 commandsParser =

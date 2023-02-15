@@ -121,6 +121,7 @@ runCommand ::
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
+    MonadThread m,
     MonadTime m
   ) =>
   Command ->

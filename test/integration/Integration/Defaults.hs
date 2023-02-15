@@ -36,6 +36,7 @@ defaultEnv = testCase "No arguments and empty config path should return default 
         { timeout = Nothing,
           cmdLogging = False,
           cmdDisplay = ShowKey,
+          pollInterval = 10_000,
           cmdLogStripControl = Nothing,
           cmdLogNameTrunc = Nothing,
           cmdLogLineTrunc = Nothing,
@@ -56,6 +57,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
       MkSimpleEnv
         { timeout = Just 3_600,
           cmdDisplay = HideKey,
+          pollInterval = 127,
           cmdLogging = True,
           cmdLogStripControl = Just StripControlAll,
           cmdLogNameTrunc = Just 80,
@@ -87,6 +89,8 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         "none",
         "--cmd-log",
         "--key-hide",
+        "--poll-interval",
+        "127",
         "--cmd-name-trunc",
         "10",
         "--cmd-log-line-trunc",
@@ -99,6 +103,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
       MkSimpleEnv
         { timeout = Just 10,
           cmdDisplay = HideKey,
+          pollInterval = 127,
           cmdLogging = True,
           cmdLogStripControl = Just StripControlNone,
           cmdLogNameTrunc = Just 10,
@@ -135,6 +140,7 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           -- These are just the rest
           timeout = Just 3_600,
           cmdDisplay = ShowKey,
+          pollInterval = 10_000,
           cmdLogging = True,
           cmdLogNameTrunc = Just 80,
           fileLogging = True,
@@ -154,6 +160,7 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
       MkSimpleEnv
         { timeout = Nothing,
           cmdDisplay = ShowKey,
+          pollInterval = 10_000,
           cmdLogging = False,
           cmdLogStripControl = Nothing,
           cmdLogNameTrunc = Nothing,

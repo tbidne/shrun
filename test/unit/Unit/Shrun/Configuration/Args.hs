@@ -31,6 +31,7 @@ tests =
       fileLogSizeModeSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
+      pollIntervalSpecs,
       stripControlSpecs,
       cmdNameTruncSpecs,
       cmdLineTruncSpecs,
@@ -53,6 +54,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               noConfig = False,
               timeout = Nothing,
               cmdDisplay = Nothing,
+              pollInterval = Nothing,
               cmdNameTrunc = Nothing,
               cmdLogging = Nothing,
               cmdLogStripControl = Nothing,
@@ -353,6 +355,30 @@ parseLongShowKey =
   where
     argList = ["--key-hide", "command"]
     expected = updateDefArgs #cmdDisplay HideKey
+
+pollIntervalSpecs :: TestTree
+pollIntervalSpecs =
+  testGroup
+    "CmdDisplay arg parsing"
+    [ parseShortPollInterval,
+      parseLongPollInterval
+    ]
+
+parseShortPollInterval :: TestTree
+parseShortPollInterval =
+  testCase "Should parse -p as poll-interval" $
+    verifyResult argList expected
+  where
+    argList = ["-p", "100", "command"]
+    expected = updateDefArgs #pollInterval 100
+
+parseLongPollInterval :: TestTree
+parseLongPollInterval =
+  testCase "Should parse --poll-interval as poll-interval" $
+    verifyResult argList expected
+  where
+    argList = ["--poll-interval", "1000", "command"]
+    expected = updateDefArgs #pollInterval 1000
 
 stripControlSpecs :: TestTree
 stripControlSpecs =

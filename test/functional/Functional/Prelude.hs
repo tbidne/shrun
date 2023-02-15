@@ -135,6 +135,7 @@ runMaybeException mException argList = do
               logging =
                 MkLogging
                   { cmdDisplay = env ^. (#logging % #cmdDisplay),
+                    pollInterval = env ^. (#logging % #pollInterval),
                     cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
                     cmdLogging = env ^. (#logging % #cmdLogging),
                     consoleLogging = consoleQueue,

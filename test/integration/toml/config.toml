@@ -3,6 +3,7 @@
 timeout = "1h"
 log-disable = true
 key-hide = true
+poll-interval = 127
 cmd-name-trunc = 80
 
 legend = [

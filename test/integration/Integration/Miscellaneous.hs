@@ -106,6 +106,7 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
       MkSimpleEnv
         { timeout = Just (MkTimeout {unTimeout = 3600}),
           cmdDisplay = HideKey,
+          pollInterval = 127,
           cmdLogging = True,
           cmdLogStripControl = Just StripControlAll,
           cmdLogNameTrunc = Just (MkTruncation {unTruncation = 80}),
@@ -132,6 +133,7 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
       MkSimpleEnv
         { timeout = Nothing,
           cmdDisplay = ShowKey,
+          pollInterval = 10_000,
           cmdLogging = False,
           cmdLogStripControl = Nothing,
           cmdLogNameTrunc = Nothing,

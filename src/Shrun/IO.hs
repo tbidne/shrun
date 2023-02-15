@@ -14,6 +14,7 @@ where
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
+import Effects.Concurrent.Thread (microsleep)
 import Effects.System.Process qualified as P
 import Effects.Time (withTiming)
 import Shrun.Configuration.Env.Types
@@ -100,6 +101,7 @@ tryCommandLogging ::
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
+    MonadThread m,
     MonadTime m
   ) =>
   -- | Command to run.
@@ -156,11 +158,14 @@ tryCommandLogging command = do
 --
 -- @since 0.1
 tryCommandStream ::
-  ( MonadHandleReader m,
+  ( HasLogging env (Region m),
+    MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
     MonadProcess m,
-    MonadSTM m
+    MonadReader env m,
+    MonadSTM m,
+    MonadThread m
   ) =>
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->
@@ -185,10 +190,14 @@ tryCommandStream logFn cmd@(MkCommand _ cmdTxt) = do
     ExitFailure _ -> Just $ readHandleResultToStderr lastReadErr
 
 streamOutput ::
-  ( MonadCatch m,
+  forall m env.
+  ( HasLogging env (Region m),
+    MonadCatch m,
     MonadHandleReader m,
     MonadIORef m,
-    MonadSTM m
+    MonadReader env m,
+    MonadSTM m,
+    MonadThread m
   ) =>
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->
@@ -202,6 +211,12 @@ streamOutput logFn cmd p = do
   -- lastReadRef stores the last message in case it is the final error
   -- message.
   lastReadErrRef <- newIORef Nothing
+  logging <- asks (getLogging @env @(Region m))
+  let pollInterval = logging ^. (#pollInterval % #unPollInterval)
+      sleepFn =
+        if pollInterval == 0
+          then pure ()
+          else microsleep pollInterval
   exitCode <- U.untilJust $ do
     -- We need to read from both stdout and stderr -- regardless of if we
     -- created a single pipe in tryCommandStream -- or else we will miss
@@ -210,6 +225,10 @@ streamOutput logFn cmd p = do
     errResult <- readHandle (P.getStderr p)
     writeLog logFn cmd lastReadErrRef outResult
     writeLog logFn cmd lastReadErrRef errResult
+
+    -- NOTE: IF we do not have a sleep here then the CPU blows up. Adding
+    -- a delay helps keep the CPU reasonable.
+    sleepFn
 
     P.getExitCode p
 

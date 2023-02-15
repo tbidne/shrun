@@ -24,6 +24,7 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.FilePathDefault (FilePathDefault)
 import Shrun.Data.Legend (KeyVal)
+import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Prelude
 
@@ -90,6 +91,10 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.5
     cmdDisplay :: !(Maybe CmdDisplay),
+    -- | How often to poll subcommands for logs, in microseconds.
+    --
+    -- @since 0.8
+    pollInterval :: !(Maybe PollInterval),
     -- | Truncates command names in the logs.
     --
     -- @since 0.6
@@ -119,7 +124,15 @@ data TomlConfig = MkTomlConfig
 --
 -- @since 0.7
 defaultTomlConfig :: TomlConfig
-defaultTomlConfig = MkTomlConfig Nothing Nothing Nothing Nothing Nothing Nothing
+defaultTomlConfig =
+  MkTomlConfig
+    Nothing
+    Nothing
+    Nothing
+    Nothing
+    Nothing
+    Nothing
+    Nothing
 
 -- | @since 0.5
 instance DecodeTOML TomlConfig where
@@ -127,6 +140,7 @@ instance DecodeTOML TomlConfig where
     MkTomlConfig
       <$> decodeTimeout
       <*> decodeCmdDisplay
+      <*> decodePollInterval
       <*> decodeCmdNameTrunc
       <*> getFieldOptWith tomlDecoder "cmd-log"
       <*> getFieldOptWith tomlDecoder "file-log"
@@ -135,6 +149,10 @@ instance DecodeTOML TomlConfig where
 -- | @since 0.5
 decodeTimeout :: Decoder (Maybe Timeout)
 decodeTimeout = getFieldOptWith tomlDecoder "timeout"
+
+-- | @since 0.8
+decodePollInterval :: Decoder (Maybe PollInterval)
+decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
 
 -- | @since 0.5
 decodeFileLogging :: Decoder FilePathDefault
@@ -191,6 +209,7 @@ mergeConfig args tomlConfig =
   MkTomlConfig
     { timeout = combine #timeout #timeout,
       cmdDisplay = combine #cmdDisplay #cmdDisplay,
+      pollInterval = combine #pollInterval #pollInterval,
       cmdNameTrunc = combine #cmdNameTrunc #cmdNameTrunc,
       cmdLogging =
         combineCmdLogging argsCmdLogging (tomlConfig ^. #cmdLogging),
