@@ -1,53 +1,39 @@
 .PHONY: build clean repl watch ;\
-	test unit integration functional ;\
+	doctest ;\
 	cic ci formatc format lint lintc ;\
 	haddock haddockc hackage
 
 # core
 
-ARGS = ""
+T = ""
 
 clean:
 	cabal clean
 
 build:
-	if [ -z "$(ARGS)" ]; then \
+	if [ -z "$(T)" ]; then \
 		cabal build; \
 	else \
-		cabal build $(ARGS); \
-	fi
-
-test:
-	if [ -z "$(ARGS)" ]; then \
-		RUN_DOCTEST=1 cabal test; \
-	else \
-		RUN_DOCTEST=1 cabal test; \
+		cabal build $(T); \
 	fi
 
 doctest:
-	RUN_DOCTEST=1 cabal test doctest
-
-unit:
-	cabal test unit
-
-integration:
-	cabal test integration
-
-functional:
-	cabal test functional
+	cabal build --write-ghc-environment-files=always; \
+	RUN_DOCTEST=1 cabal test doctest; \
+	rm .ghc.environment.*
 
 repl:
-	if [ -z "$(ARGS)" ]; then \
+	if [ -z "$(T)" ]; then \
 		cabal repl shrun; \
 	else \
-		cabal repl $(ARGS); \
+		cabal repl $(T); \
 	fi
 
 watch:
-	if [ -z "$(ARGS)" ]; then \
+	if [ -z "$(T)" ]; then \
 		ghcid --command "cabal repl shrun"; \
 	else \
-		ghcid --command "cabal repl $(ARGS)"; \
+		ghcid --command "cabal repl $(T)"; \
 	fi
 
 # ci

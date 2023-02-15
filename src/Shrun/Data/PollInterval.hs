@@ -35,6 +35,11 @@ instance DecodeTOML PollInterval where
             (Integer i)
     badTy -> typeMismatch badTy
 
--- | @since 0.8
+-- | Default 'PollInterval'.
+--
+-- >>> defaultPollInterval
+-- MkPollInterval {unPollInterval = 10000}
+--
+-- @since 0.8
 defaultPollInterval :: PollInterval
 defaultPollInterval = MkPollInterval 10_000
