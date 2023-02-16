@@ -619,7 +619,7 @@ pollIntervalParser =
           "i.e. limited only by the CPU. Defaults to ",
           prettyPollInterval defaultPollInterval,
           ". Note that lower values will increase CPU usage. In particular, ",
-          "0 will max out the CPU."
+          "0 will max out a CPU thread."
         ]
 
     prettyPollInterval =

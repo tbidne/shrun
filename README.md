@@ -149,7 +149,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Arg:** `--no-config`
 
-**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit --config or implicit reading of the Xdg config file. This is useful when a config file exists at the expected Xdg location, but we wish to ignore it.
+**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit `--config` or implicit reading of the Xdg config file. This is useful when a config file exists at the expected Xdg location, but we wish to ignore it.
 
 ### Timeout
 
@@ -174,7 +174,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll subcommands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
 
-Note that lower values will increase CPU usage. In particular, 0 will max out the CPU.
+Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
 
 **Example:**
 
@@ -385,12 +385,10 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 You will need one of:
 
-* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and:
-  * [ghc 9.2](https://www.haskell.org/ghcup/)
-  * [ghc 9.4](https://www.haskell.org/ghcup/)
+* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 9.2+](https://www.haskell.org/ghc/).
 * [nix](https://nixos.org/download.html)
 
-If you have never built a haskell program before, `cabal` + `ghcup` is probably the best choice.
+If you have never built a haskell program before, `cabal` + `ghc` is probably the best choice. These can be easily obtained with the [`ghcup`](https://www.haskell.org/ghcup/) tool.
 
 ## Cabal
 

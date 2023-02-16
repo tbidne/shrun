@@ -22,10 +22,10 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 ### Fixed
 * File logs are now streamed, do not buffer.
-* Previously, if `--cmd-log` or `--file-log` were specified, then the CPU would be
-  maxed out polling commands for logs. We have now set a delay, defaulting
-  to 10,000 microseconds, to keep the CPU reasonable. This value can be
-  configured through the new `--poll-interval` option.
+* Previously, if `--cmd-log` or `--file-log` were specified, then a CPU thread
+  would be maxed out polling commands for logs. We have now set a delay,
+  defaulting to 10,000 microseconds, to keep the CPU reasonable. This value
+  can be configured through the new `--poll-interval` option.
 
 ## [0.7] -- 2022-12-19
 ### Removed

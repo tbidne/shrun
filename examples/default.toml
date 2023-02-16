@@ -21,7 +21,7 @@ key-hide = false
 # infinite i.e. limited only by the CPU. Defaults to 10,000.
 #
 # Note that lower values will increase CPU usage. In particular, 0 will max
-# out the CPU.
+# out a CPU thread.
 #poll-interval = 100
 
 # If set, this truncates command names in the logs to the specified number of
