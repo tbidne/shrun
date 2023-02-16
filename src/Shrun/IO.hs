@@ -232,9 +232,13 @@ streamOutput logFn cmd p = do
 
     P.getExitCode p
 
-  -- try to get final data (stderr)
+  -- Try to get final data. The semigroup prioritize errors and then the LHS
+  -- for equal data constructors.
   lastReadErr <- readIORef lastReadErrRef
-  remainingData <- readHandle (P.getStdout p)
+  remainingData <-
+    (<>)
+      <$> readHandle (P.getStderr p)
+      <*> readHandle (P.getStdout p)
 
   pure $ (exitCode,) $ case lastReadErr of
     Nothing -> remainingData

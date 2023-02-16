@@ -16,7 +16,6 @@ import Effects.FileSystem.HandleReader
     hGetNonBlocking,
     hIsReadable,
   )
-import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Prelude
 
 -- | Newtype wrapper for stdout.
@@ -64,30 +63,18 @@ data ReadHandleResult
       -- | @since 0.1
       Show
     )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via Supremum ReadHandleResult
 
 -- | @since 0.1
-instance Bounded ReadHandleResult where
-  minBound = ReadErr ""
-  {-# INLINEABLE minBound #-}
-  maxBound = ReadSuccess ""
-  {-# INLINEABLE maxBound #-}
+instance Semigroup ReadHandleResult where
+  ReadErr l <> _ = ReadErr l
+  _ <> ReadErr r = ReadErr r
+  ReadSuccess l <> _ = ReadSuccess l
+  _ <> ReadSuccess r = ReadSuccess r
+  _ <> _ = ReadNoData
 
 -- | @since 0.1
-instance Ord ReadHandleResult where
-  compare x y | x == y = EQ
-  compare (ReadSuccess _) _ = GT
-  compare _ (ReadSuccess _) = LT
-  compare ReadNoData _ = GT
-  compare _ ReadNoData = LT
-  compare (ReadErr _) _ = GT
-  {-# INLINEABLE compare #-}
+instance Monoid ReadHandleResult where
+  mempty = ReadNoData
 
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
 --
