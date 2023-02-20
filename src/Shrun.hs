@@ -288,7 +288,7 @@ pollQueueToConsole = do
   -- NOTE: Same masking behavior as pollQueueToFile.
   forever $ atomicReadWrite queue printConsoleLog
 
-printConsoleLog :: MonadRegionLogger m => LogRegion (Region m) -> m ()
+printConsoleLog :: (MonadRegionLogger m) => LogRegion (Region m) -> m ()
 printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
 printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
 
@@ -308,7 +308,7 @@ pollQueueToFile fileLogging = do
   where
     (h, queue) = fileLogging ^. #log
 
-logFile :: MonadHandleWriter m => Handle -> FileLog -> m ()
+logFile :: (MonadHandleWriter m) => Handle -> FileLog -> m ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 
 -- | Reads from a queue and applies the function, if we receive a value.

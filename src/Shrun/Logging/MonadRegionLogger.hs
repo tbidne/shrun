@@ -15,7 +15,7 @@ import System.Console.Regions qualified as Regions
 --
 -- @since 0.1
 type MonadRegionLogger :: (Type -> Type) -> Constraint
-class Monad m => MonadRegionLogger m where
+class (Monad m) => MonadRegionLogger m where
   -- | The type of the region. This will be ConsoleRegion for production
   -- code and () for tests.
   --
@@ -62,7 +62,7 @@ instance MonadRegionLogger IO where
   {-# INLINEABLE displayRegions #-}
 
 -- | @since 0.8
-instance MonadRegionLogger m => MonadRegionLogger (ReaderT env m) where
+instance (MonadRegionLogger m) => MonadRegionLogger (ReaderT env m) where
   type Region (ReaderT env m) = Region m
 
   logGlobal = lift . logGlobal

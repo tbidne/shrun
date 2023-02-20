@@ -78,7 +78,7 @@ mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.nonEmptySeq (Seq.fromList vals)
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
 --
 -- @since 0.5
-unsafeKeyVal :: HasCallStack => Text -> List Text -> KeyVal
+unsafeKeyVal :: (HasCallStack) => Text -> List Text -> KeyVal
 unsafeKeyVal "" _ = error "[Shrun.Data.Legend.unsafeKeyVal]: empty key"
 unsafeKeyVal k vals = case mkKeyVal k vals of
   Just kv -> kv

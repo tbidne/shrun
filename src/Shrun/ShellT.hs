@@ -76,4 +76,4 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- https://gitlab.haskell.org/ghc/ghc/-/issues/15376
 
 -- | @since 0.1
-deriving newtype instance MonadRegionLogger m => MonadRegionLogger (ShellT Env m)
+deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT Env m)

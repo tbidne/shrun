@@ -265,7 +265,7 @@ import Prelude qualified as P
 -- | 'Text' version of 'P.show'.
 --
 -- @since 0.1
-showt :: P.Show a => a -> Text
+showt :: (P.Show a) => a -> Text
 showt = T.pack . P.show
 {-# INLINEABLE showt #-}
 
@@ -291,7 +291,7 @@ headMaybe (x : _) = Just x
 -- (3,6)
 --
 -- @since 0.1
-monoBimap :: Bifunctor p => (a -> b) -> p a a -> p b b
+monoBimap :: (Bifunctor p) => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
 {-# INLINEABLE monoBimap #-}
 

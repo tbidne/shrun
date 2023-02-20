@@ -78,7 +78,7 @@ instance DecodeTOML FileMode where
       "write" -> pure FileModeWrite
       bad -> fail $ "Unrecognized file-mode: " <> unpack bad
 
-parseFileSizeMode :: MonadFail m => Text -> m FileSizeMode
+parseFileSizeMode :: (MonadFail m) => Text -> m FileSizeMode
 parseFileSizeMode txt = do
   let (m, byteTxt) = T.break Ch.isSpace txt
   cons <- case m of
@@ -124,7 +124,7 @@ instance Monoid FileSizeMode where
 instance DecodeTOML FileSizeMode where
   tomlDecoder = tomlDecoder >>= parseFileSizeMode
 
-takeGt :: Ord n => Bytes s n -> Bytes s n -> Bytes s n
+takeGt :: (Ord n) => Bytes s n -> Bytes s n -> Bytes s n
 takeGt l r
   | l >= r = l
   | otherwise = r

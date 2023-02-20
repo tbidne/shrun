@@ -147,7 +147,7 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
 -- fromList ("" :| [])
 --
 -- @since 0.1
-splitOn :: HasCallStack => Refined R.NonEmpty Text -> Text -> NESeq Text
+splitOn :: (HasCallStack) => Refined R.NonEmpty Text -> Text -> NESeq Text
 splitOn rs txt = case T.splitOn s txt of
   [] -> error $ T.unpack err
   (t : ts) -> t :<|| fromList ts
@@ -324,19 +324,19 @@ parseByteText txt =
 -- | Runs the action when it is 'Just'.
 --
 -- @since 0.7
-whenJust :: Applicative f => Maybe a -> (a -> f ()) -> f ()
+whenJust :: (Applicative f) => Maybe a -> (a -> f ()) -> f ()
 whenJust m action = maybe (pure ()) action m
 
 -- | Runs the action when it is 'Left'.
 --
 -- @since 0.7
-whenLeft :: Applicative f => Either a b -> (a -> f ()) -> f ()
+whenLeft :: (Applicative f) => Either a b -> (a -> f ()) -> f ()
 whenLeft e action = either action (const (pure ())) e
 
 -- | @whileM_ mb ma@ executes @ma@ as long as @mb@ returns 'True'.
 --
 -- @since 0.1
-whileM_ :: Monad m => m Bool -> m a -> m ()
+whileM_ :: (Monad m) => m Bool -> m a -> m ()
 whileM_ mb ma = go
   where
     go =
@@ -348,7 +348,7 @@ whileM_ mb ma = go
 -- value.
 --
 -- @since 0.1
-untilJust :: Monad m => m (Maybe b) -> m b
+untilJust :: (Monad m) => m (Maybe b) -> m b
 untilJust m = go
   where
     go =
@@ -357,6 +357,6 @@ untilJust m = go
         Just x -> pure x
 
 -- | @since 0.1
-unsafeListToNESeq :: HasCallStack => List a -> NESeq a
+unsafeListToNESeq :: (HasCallStack) => List a -> NESeq a
 unsafeListToNESeq [] = error "[Shrun.Utils]: empty list"
 unsafeListToNESeq xs = NESeq.fromList $ fromList xs

@@ -59,7 +59,7 @@ verifySize commands legend = do
   annotate $ "numLegendKeys: " <> show numLegendKeys
   numLegendKeys === numUniqueKeys
 
-genGoodLines :: MonadGen m => m (List KeyVal)
+genGoodLines :: (MonadGen m) => m (List KeyVal)
 genGoodLines = do
   keyVals <- Gen.list range genGoodLine
   let (_, unique) = foldl' takeUnique (Set.empty, []) keyVals
@@ -77,16 +77,16 @@ data GoodLine = MkGoodLine
   }
   deriving stock (Show)
 
-genGoodLine :: MonadGen m => m GoodLine
+genGoodLine :: (MonadGen m) => m GoodLine
 genGoodLine = MkGoodLine <$> genKey <*> genVal
 
-genKey :: MonadGen m => m Text
+genKey :: (MonadGen m) => m Text
 genKey = Gen.filterT noSpaceOrEquals $ Gen.text range Gen.latin1
   where
     range = Range.linearFrom 5 1 10
     noSpaceOrEquals = T.all (\c -> c /= ' ' && c /= '=')
 
-genVal :: MonadGen m => m Text
+genVal :: (MonadGen m) => m Text
 genVal = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 10 1 30
@@ -159,12 +159,12 @@ genKeyVal = do
   v <- Gen.filter (/= k) genVal
   pure $ unsafeKeyVal k [v]
 
-genCommands :: MonadGen m => m (NESeq Text)
+genCommands :: (MonadGen m) => m (NESeq Text)
 genCommands = unsafeListToNESeq <$> Gen.list range genCommand
   where
     range = Range.linearFrom 1 1 50
 
-genCommand :: MonadGen m => m Text
+genCommand :: (MonadGen m) => m Text
 genCommand = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 1 1 50

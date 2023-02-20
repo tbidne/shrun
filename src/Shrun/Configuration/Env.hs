@@ -272,5 +272,5 @@ fromToml onEnv cfg cmdsText = do
 getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m FilePath
 getShrunXdgConfig = getXdgConfig "shrun"
 
-closeFile :: MonadHandleWriter f => Handle -> f ()
+closeFile :: (MonadHandleWriter f) => Handle -> f ()
 closeFile f = hFlush f *> hClose f

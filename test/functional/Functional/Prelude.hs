@@ -109,7 +109,7 @@ runExitFailure =
 -- | Like 'runException', except it expects an exception.
 runException ::
   forall e.
-  Exception e =>
+  (Exception e) =>
   List String ->
   IO (IORef (List Text))
 runException = runMaybeException (ExJust (Proxy @e))
@@ -118,7 +118,7 @@ runException = runMaybeException (ExJust (Proxy @e))
 -- have to pass in a dummy var to runMaybeException.
 data MaybeException where
   ExNothing :: MaybeException
-  ExJust :: Exception e => Proxy e -> MaybeException
+  ExJust :: (Exception e) => Proxy e -> MaybeException
 
 runMaybeException ::
   MaybeException ->
@@ -160,19 +160,19 @@ runMaybeException mException argList = do
                   ">, received none"
                 ]
 
-commandPrefix :: IsString s => s
+commandPrefix :: (IsString s) => s
 commandPrefix = "[Command]"
 
 -- | Expected timer text.
-timerPrefix :: IsString s => s
+timerPrefix :: (IsString s) => s
 timerPrefix = "[Timer] "
 
 -- | Expected timeout text.
-timeoutPrefix :: IsString s => s
+timeoutPrefix :: (IsString s) => s
 timeoutPrefix = "[Warn] Timed out, cancelling remaining commands: "
 
 -- | Expected finished prefix.
-finishedPrefix :: IsString s => s
+finishedPrefix :: (IsString s) => s
 finishedPrefix = "[Finished] "
 
 -- | Expected command text.

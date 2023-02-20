@@ -50,7 +50,7 @@ genEnv =
     <*> (fmap . fmap) MkTruncation genMInt
     <*> (fmap . fmap) MkTruncation genMInt
 
-cmdTruncLimit :: Integral a => a
+cmdTruncLimit :: (Integral a) => a
 cmdTruncLimit = 30
 
 genEnvCmdTrunc :: Gen (Env, Truncation TCmdName)
@@ -74,7 +74,7 @@ genLongCmdText = HGen.text range HGen.unicode
 genNoControl :: Gen Char
 genNoControl = HGen.filter (not . Ch.isControl) HGen.unicode
 
-lineTruncLimit :: Integral a => a
+lineTruncLimit :: (Integral a) => a
 lineTruncLimit = 80
 
 genEnvLineTrunc :: Gen Env
@@ -229,7 +229,7 @@ lineTruncProps =
       assert $ "..." `T.isInfixOf` result
       diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
 
-formatConsoleLog :: forall env. HasLogging env () => env -> Log -> Text
+formatConsoleLog :: forall env. (HasLogging env ()) => env -> Log -> Text
 formatConsoleLog env =
   view #unConsoleLog
     . Formatting.formatConsoleLog (getLogging @env @() env)
@@ -249,7 +249,7 @@ colorLen = 10
 
 -- The mock time our 'MonadTime' returns. Needs to be kept in sync with
 -- getSystemZonedTime below.
-sysTime :: IsString a => a
+sysTime :: (IsString a) => a
 sysTime = "2020-05-31 12:00:00"
 
 -- Refined variant of 'sysTime'. Includes brackets around the string
@@ -410,4 +410,4 @@ includesOrTruncated expected result = do
     T.strip expected
       `T.isInfixOf` result
       || "..."
-      `T.isInfixOf` result
+        `T.isInfixOf` result

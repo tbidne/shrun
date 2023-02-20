@@ -252,7 +252,7 @@ streamOutput logFn cmd p = do
 -- EDIT: Possibly fixed by switch to typed-process and
 -- https://github.com/fpco/typed-process/issues/25?
 writeLog ::
-  MonadIORef m =>
+  (MonadIORef m) =>
   (Log -> m ()) ->
   Command ->
   IORef (Maybe ReadHandleResult) ->
