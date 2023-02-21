@@ -31,7 +31,10 @@ jobs:
 
       - name: Doc Tests
         run : |
-          cabal build --write-ghc-environment-files=always
+          cabal configure \
+            --enable-tests true \
+            --write-ghc-environment-files always
+          cabal build
           RUN_DOCTEST=1 cabal test doctest
 
       - name: Unit Tests
