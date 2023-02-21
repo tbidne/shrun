@@ -45,6 +45,7 @@ import Control.Monad as X
   ( Monad (..),
     forever,
     join,
+    unless,
     void,
     when,
     (<=<),
@@ -118,13 +119,13 @@ import Effects.Exception as X
     MonadThrow,
     SomeException,
     bracket,
-    catchWithCS,
+    catchCS,
     displayException,
     exitFailure,
     finally,
     mask,
+    throwCS,
     throwM,
-    throwWithCS,
     try,
     tryAny,
   )
@@ -146,8 +147,9 @@ import Effects.FileSystem.HandleWriter as X
   )
 import Effects.FileSystem.Path as X ((</>))
 import Effects.FileSystem.PathReader as X
-  ( MonadPathReader (doesFileExist, getFileSize),
+  ( MonadPathReader (doesDirectoryExist, doesFileExist, getFileSize),
     getXdgConfig,
+    getXdgState,
   )
 import Effects.FileSystem.PathWriter as X
   ( MonadPathWriter,

@@ -61,7 +61,7 @@
     };
   };
   outputs =
-    { algebra-simple
+    inputs@{ algebra-simple
     , bounds
     , byte-types
     , flake-compat
@@ -72,7 +72,7 @@
     , self
     , smart-math
     }:
-    flake-parts.lib.mkFlake { inherit self; } {
+    flake-parts.lib.mkFlake { inherit inputs; } {
       perSystem = { pkgs, ... }:
         let
           buildTools = c: with c; [
@@ -82,10 +82,18 @@
             pkgs.zlib
           ];
           devTools = c: with c; [
-            ghcid
-            haskell-language-server
+            (pkgs.haskell.lib.dontCheck ghcid)
+            (hlib.overrideCabal haskell-language-server (old: {
+              configureFlags = (old.configureFlags or [ ]) ++
+                [
+                  "-f -brittany"
+                  "-f -floskell"
+                  "-f -fourmolu"
+                  "-f -stylishhaskell"
+                ];
+            }))
           ];
-          ghc-version = "ghc925";
+          ghc-version = "ghc944";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             # 2022-12-17
             all-cabal-hashes = builtins.fetchurl {
@@ -99,7 +107,7 @@
             };
           };
           hlib = pkgs.haskell.lib;
-          mkPkg = returnShellEnv: withDevTools:
+          mkPkg = returnShellEnv:
             compiler.developPackage {
               inherit returnShellEnv;
               name = "shrun";
@@ -107,7 +115,7 @@
               modifier = drv:
                 pkgs.haskell.lib.addBuildTools drv
                   (buildTools compiler ++
-                    (if withDevTools then devTools compiler else [ ]));
+                    (if returnShellEnv then devTools compiler else [ ]));
               overrides = final: prev: with compiler; {
                 algebra-simple = final.callCabal2nix "algebra-simple" algebra-simple { };
                 bounds = final.callCabal2nix "bounds" bounds { };
@@ -166,9 +174,8 @@
             };
         in
         {
-          packages.default = mkPkg false false;
-          devShells.default = mkPkg true true;
-          devShells.ci = mkPkg true false;
+          packages.default = mkPkg false;
+          devShells.default = mkPkg true;
         };
       systems = [
         "x86_64-linux"

@@ -130,6 +130,8 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
     point = R.unrefine rpoint
 {-# INLINEABLE breakStripPoint #-}
 
+{- HLINT ignore splitOn "Redundant bracket" -}
+
 -- | Wrapper around "Text"\'s 'T.splitOn'. This /should/ be total, as
 -- 'T.splitOn' is partial exactly when the first parameter is empty, which we
 -- reject. Unfortunately we have to perform a partial pattern match on the
@@ -355,6 +357,8 @@ untilJust m = go
       m >>= \case
         Nothing -> go
         Just x -> pure x
+
+{- HLINT ignore unsafeListToNESeq "Redundant bracket" -}
 
 -- | @since 0.1
 unsafeListToNESeq :: (HasCallStack) => List a -> NESeq a

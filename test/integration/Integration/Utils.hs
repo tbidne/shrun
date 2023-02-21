@@ -37,6 +37,7 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
       MonadCatch,
       MonadEnv,
       MonadFileReader,
+      MonadFileWriter,
       MonadHandleWriter,
       MonadIO,
       MonadMask,
@@ -60,6 +61,7 @@ instance MonadPathReader ConfigIO where
   getFileSize = liftIO . getFileSize
   getXdgDirectory _ _ = pure "test/integration/toml"
   doesFileExist = liftIO . doesFileExist
+  doesDirectoryExist = liftIO . doesDirectoryExist
 
 instance MonadTerminal ConfigIO where
   putStr = error "putStr: unimplemented"
@@ -82,6 +84,7 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
       MonadCatch,
       MonadEnv,
       MonadFileReader,
+      MonadFileWriter,
       MonadHandleWriter,
       MonadIO,
       MonadMask,
@@ -143,6 +146,7 @@ makeEnvAndVerify ::
   forall m.
   ( MonadEnv m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadHandleWriter m,
     MonadMask m,
     MonadOptparse m,

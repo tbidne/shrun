@@ -35,7 +35,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: b374b172eccbaf240aff424b20422f1566544ef3
+    tag: be76809b9ec7e1fba4e003c1c8784f1d3382d4d2
     subdir:
       monad-async
       monad-exceptions
@@ -57,4 +57,4 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: 0a8a6a741c999be1183b810ea8b1cd9438cb0d8e
+    tag: 1b84af8a57a27a8919f73d3b5376c26c120410b6

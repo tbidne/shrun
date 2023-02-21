@@ -1,7 +1,7 @@
 .PHONY: build clean repl watch ;\
 	doctest ;\
 	cic ci formatc format lint lintc ;\
-	haddock haddockc hackage
+	haddock hackage
 
 # core
 
@@ -38,9 +38,9 @@ watch:
 
 # ci
 
-cic: formatc lintc haddockc
+cic: formatc lintc
 
-ci: lint format haddockc
+ci: lint format
 
 # formatting
 
@@ -66,11 +66,4 @@ haddock:
 	cabal haddock --haddock-hyperlink-source --haddock-quickjump ;\
 	mkdir -p docs/ ;\
 	find docs/ -type f | xargs -I % sh -c "rm -r %" ;\
-	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.5/shrun-0.8/opt/doc/html/shrun/* docs/
-
-haddockc:
-	nix run github:tbidne/nix-hs-tools/0.8#haddock-cov -- \
-	. \
-	-m Shrun.Configuration.Env.Types 75 \
-	-m Shrun.Data.FilePathDefault 70 \
-	-m Shrun.Prelude 75 \
+	cp -r dist-newstyle/build/x86_64-linux/ghc-9.4.4/shrun-0.8/opt/doc/html/shrun/* docs/

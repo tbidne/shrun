@@ -25,9 +25,9 @@ main = do
       Just (MkExceptionCS (ExitFailure _) _) -> pure ()
       Nothing -> putStrLn $ displayException ex
 
-  makeEnvAndShrun `catchWithCS` doNothingOnSuccess
+  makeEnvAndShrun `catchCS` doNothingOnSuccess
   where
-    -- We need to catchWithCS ExitCode so that optparse applicative's --help
+    -- We need to catchCS ExitCode so that optparse applicative's --help
     -- does not set the error code to failure...but then we need to rethrow
     -- failures.
     doNothingOnSuccess :: ExitCode -> IO ()

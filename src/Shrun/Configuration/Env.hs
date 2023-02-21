@@ -36,6 +36,7 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
+import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
@@ -76,6 +77,7 @@ makeEnvAndShrun ::
   ( HasLogging Env (Region (ShellT Env m)),
     MonadAsync m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -99,6 +101,7 @@ makeEnvAndShrun = withEnv (runShellT shrun)
 -- @since 0.5
 withEnv ::
   ( MonadFileReader m,
+    MonadFileWriter m,
     MonadHandleWriter m,
     MonadMask m,
     MonadOptparse m,
@@ -145,6 +148,7 @@ withEnv onEnv = do
 
 fromToml ::
   ( MonadFileReader m,
+    MonadFileWriter m,
     MonadHandleWriter m,
     MonadMask m,
     MonadPathReader m,
@@ -217,8 +221,12 @@ fromToml onEnv cfg cmdsText = do
   case cfg ^? (#fileLogging %? #path) of
     Nothing -> onEnv (envWithLogging Nothing consoleQueue)
     Just FPDefault -> do
-      configDir <- getShrunXdgConfig
-      let fp = configDir </> "log"
+      stateDir <- getShrunXdgState
+      let fp = stateDir </> "log"
+      stateExists <- doesDirectoryExist stateDir
+      unless stateExists (createDirectoryIfMissing True stateDir)
+
+      ensureFileExists fp
       handleLogFileSize fp
 
       fileQueue <- newTBQueueM 1000
@@ -226,6 +234,7 @@ fromToml onEnv cfg cmdsText = do
       bracket (openBinaryFile fp ioMode) closeFile $ \h ->
         onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
     Just (FPManual fp) -> do
+      ensureFileExists fp
       handleLogFileSize fp
       fileQueue <- newTBQueueM 1000
       bracket (openBinaryFile fp ioMode) closeFile $ \h ->
@@ -237,18 +246,16 @@ fromToml onEnv cfg cmdsText = do
     handleLogFileSize fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
       Nothing -> pure ()
       Just fileSizeMode -> do
-        exists <- doesFileExist fp
-        when exists $ do
-          fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
-          case fileSizeMode of
-            FileSizeModeWarn warnSize ->
-              when (fileSize > warnSize) $
-                putTextLn $
-                  sizeWarning warnSize fp fileSize
-            FileSizeModeDelete delSize ->
-              when (fileSize > delSize) $ do
-                putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
-                removeFile fp
+        fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
+        case fileSizeMode of
+          FileSizeModeWarn warnSize ->
+            when (fileSize > warnSize) $
+              putTextLn $
+                sizeWarning warnSize fp fileSize
+          FileSizeModeDelete delSize ->
+            when (fileSize > delSize) $ do
+              putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
+              removeFile fp
 
     sizeWarning warnSize fp fileSize =
       mconcat
@@ -269,8 +276,22 @@ fromToml onEnv cfg cmdsText = do
         -- truncate (i.e. greater precision loss).
         . fmap (fromIntegral @Natural @Double)
 
+ensureFileExists ::
+  ( HasCallStack,
+    MonadFileWriter m,
+    MonadPathReader m
+  ) =>
+  FilePath ->
+  m ()
+ensureFileExists fp = do
+  exists <- doesFileExist fp
+  unless exists $ writeFileUtf8 fp ""
+
 getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m FilePath
 getShrunXdgConfig = getXdgConfig "shrun"
+
+getShrunXdgState :: (HasCallStack, MonadPathReader m) => m FilePath
+getShrunXdgState = getXdgState "shrun"
 
 closeFile :: (MonadHandleWriter f) => Handle -> f ()
 closeFile f = hFlush f *> hClose f

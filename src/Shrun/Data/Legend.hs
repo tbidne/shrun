@@ -75,6 +75,8 @@ mkKeyVal "" _ = Nothing
 mkKeyVal _ [] = Nothing
 mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.nonEmptySeq (Seq.fromList vals)
 
+{- HLINT ignore unsafeKeyVal "Redundant bracket" -}
+
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
 --
 -- @since 0.5

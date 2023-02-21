@@ -111,4 +111,4 @@ runCaptureError :: (Exception e) => [String] -> IORef [Text] -> IO (Maybe e)
 runCaptureError args logsRef =
   flip runConfigIO logsRef $
     withArgs args (withEnv pure $> Nothing)
-      `catchWithCS` \(ex :: e) -> pure (Just ex)
+      `catchCS` \(ex :: e) -> pure (Just ex)

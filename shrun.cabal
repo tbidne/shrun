@@ -3,8 +3,8 @@ name:               shrun
 version:            0.8
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==9.2.4 || ==9.4.2
-copyright:          2021-2022 Thomas Bidne
+tested-with:        GHC ==9.4.4
+copyright:          2021-2023 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
 homepage:           https://github.com/tbidne/shrun/
@@ -67,7 +67,7 @@ library
 
   build-depends:
     , algebra-simple        ^>=0.1
-    , base                  >=4.16     && <4.18
+    , base                  ^>=4.17
     , byte-types            ^>=0.1
     , bytestring            >=0.10.12  && <0.12
     , concurrent-output     ^>=1.10.7
