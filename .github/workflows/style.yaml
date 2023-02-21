@@ -29,6 +29,3 @@ jobs:
 
       - name: Lint
         run: make lintc
-
-      - name: Haddock
-        run: nix develop .#devShells.x86_64-linux.ci -c bash -c "make haddockc"
