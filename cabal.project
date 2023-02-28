@@ -35,19 +35,19 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: be76809b9ec7e1fba4e003c1c8784f1d3382d4d2
+    tag: fdae8d71d67e490aeeaaf9207ffcad8e3914189d
     subdir:
-      monad-async
-      monad-exceptions
-      monad-env
-      monad-fs
-      monad-ioref
-      monad-optparse
-      monad-stm
-      monad-system-time
-      monad-terminal
-      monad-thread
-      monad-typed-process
+      effects-async
+      effects-exceptions
+      effects-env
+      effects-fs
+      effects-ioref
+      effects-optparse
+      effects-stm
+      effects-time
+      effects-terminal
+      effects-thread
+      effects-typed-process
 
 source-repository-package
     type: git

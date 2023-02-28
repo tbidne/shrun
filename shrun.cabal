@@ -66,38 +66,38 @@ library
     Shrun.Utils
 
   build-depends:
-    , algebra-simple        ^>=0.1
-    , base                  ^>=4.17
-    , byte-types            ^>=0.1
-    , bytestring            >=0.10.12  && <0.12
-    , concurrent-output     ^>=1.10.7
-    , containers            ^>=0.6.2.1
-    , gitrev                >=1.2.0    && <1.4
-    , hashable              >=1.3.0.0  && <1.5
-    , monad-async           ^>=0.1
-    , monad-env             ^>=0.1
-    , monad-exceptions      ^>=0.1
-    , monad-fs              ^>=0.1
-    , monad-ioref           ^>=0.1
-    , monad-optparse        ^>=0.1
-    , monad-stm             ^>=0.1
-    , monad-system-time     ^>=0.1
-    , monad-terminal        ^>=0.1
-    , monad-thread          ^>=0.1
-    , monad-typed-process   ^>=0.1
-    , mtl                   >=2.2.1    && <2.4
-    , nonempty-containers   >=0.3.4.2  && <0.4
-    , optics-core           ^>=0.4
-    , optics-th             ^>=0.4
-    , optparse-applicative  >=0.15     && <0.18
-    , package-version       >=0.1.0.0  && <0.4
-    , pretty-terminal       ^>=0.1
-    , refined               >=0.6      && <0.9
-    , relative-time         ^>=0.1
-    , template-haskell      >=2.17.0.0 && <2.20
-    , text                  >=1.2.3.2  && <2.1
-    , toml-reader           >=0.2.0.0  && <0.3.0.0
-    , unordered-containers  ^>=0.2.9.0
+    , algebra-simple         ^>=0.1
+    , base                   ^>=4.17
+    , byte-types             ^>=0.1
+    , bytestring             >=0.10.12  && <0.12
+    , concurrent-output      ^>=1.10.7
+    , containers             ^>=0.6.2.1
+    , effects-async          ^>=0.1
+    , effects-env            ^>=0.1
+    , effects-exceptions     ^>=0.1
+    , effects-fs             ^>=0.1
+    , effects-ioref          ^>=0.1
+    , effects-optparse       ^>=0.1
+    , effects-stm            ^>=0.1
+    , effects-terminal       ^>=0.1
+    , effects-thread         ^>=0.1
+    , effects-time           ^>=0.1
+    , effects-typed-process  ^>=0.1
+    , gitrev                 >=1.2.0    && <1.4
+    , hashable               >=1.3.0.0  && <1.5
+    , mtl                    >=2.2.1    && <2.4
+    , nonempty-containers    >=0.3.4.2  && <0.4
+    , optics-core            ^>=0.4
+    , optics-th              ^>=0.4
+    , optparse-applicative   >=0.15     && <0.18
+    , package-version        >=0.1.0.0  && <0.4
+    , pretty-terminal        ^>=0.1
+    , refined                >=0.6      && <0.9
+    , relative-time          ^>=0.1
+    , template-haskell       >=2.17.0.0 && <2.20
+    , text                   >=1.2.3.2  && <2.1
+    , toml-reader            >=0.2.0.0  && <0.3.0.0
+    , unordered-containers   ^>=0.2.9.0
 
   hs-source-dirs:   src
   default-language: GHC2021
@@ -143,8 +143,8 @@ test-suite unit
     , algebra-simple
     , base
     , byte-types
+    , effects-time
     , hedgehog              >=1.0.2   && <1.3
-    , monad-system-time
     , optparse-applicative
     , refined
     , shrun
@@ -173,8 +173,8 @@ test-suite integration
   build-depends:
     , algebra-simple
     , base
-    , monad-fs
-    , monad-terminal
+    , effects-fs
+    , effects-terminal
     , shrun
     , tasty
     , tasty-hunit
@@ -200,7 +200,7 @@ test-suite functional
 
   build-depends:
     , base
-    , monad-fs
+    , effects-fs
     , shrun
     , shrun-verifier
     , tasty
