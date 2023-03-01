@@ -145,6 +145,10 @@ data Args = MkArgs
     --
     -- @since 0.1
     timeout :: !(Maybe Timeout),
+    -- | Shell logic to run before each command.
+    --
+    -- @since 0.8
+    shellInit :: !(Maybe Text),
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1
@@ -213,6 +217,7 @@ defaultArgs cmds =
       noConfig = False,
       cmdDisplay = empty,
       pollInterval = empty,
+      shellInit = empty,
       cmdLogging = empty,
       cmdLogStripControl = empty,
       cmdNameTrunc = empty,
@@ -255,6 +260,7 @@ argsParser =
     <$> configParser
     <*> noConfigParser
     <*> timeoutParser
+    <*> shellInitParser
     <*> commandDisplayParser
     <*> pollIntervalParser
     <*> cmdTruncationParser
@@ -630,6 +636,24 @@ pollIntervalParser =
         . T.reverse
         . showt
         . view #unPollInterval
+
+shellInitParser :: Parser (Maybe Text)
+shellInitParser =
+  OA.optional $
+    OA.option OA.str $
+      mconcat
+        [ OA.long "shell-init",
+          OA.short 'i',
+          OA.help helpTxt,
+          OA.metavar "STRING"
+        ]
+  where
+    helpTxt =
+      mconcat
+        [ "If given, shell-init is run before each command. That is, ",
+          "'shrun --shell-init \". ~/.bashrc\" foo bar' is equivalent ",
+          "to 'shrun \". ~/.bashrc && foo\" \". ~/.bashrc && bar\"'."
+        ]
 
 commandsParser :: Parser (NESeq Text)
 commandsParser =

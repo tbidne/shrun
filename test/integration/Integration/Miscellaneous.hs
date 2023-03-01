@@ -9,12 +9,10 @@ import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Numeric.Algebra (zero)
 import Shrun.Configuration.Env
   ( CmdDisplay (..),
-    Truncation (..),
     withEnv,
   )
 import Shrun.Configuration.Env.Types (StripControl (..))
 import Shrun.Data.Command (Command (..))
-import Shrun.Data.Timeout (Timeout (..))
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -104,13 +102,14 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
     args = ["multi1"]
     expected =
       MkSimpleEnv
-        { timeout = Just (MkTimeout {unTimeout = 3600}),
+        { timeout = Just 3600,
+          shellInit = Just ". some file",
           cmdDisplay = HideKey,
           pollInterval = 127,
           cmdLogging = True,
           cmdLogStripControl = Just StripControlAll,
-          cmdLogNameTrunc = Just (MkTruncation {unTruncation = 80}),
-          cmdLogLineTrunc = Just (MkTruncation {unTruncation = 150}),
+          cmdLogNameTrunc = Just 80,
+          cmdLogLineTrunc = Just 150,
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
           commands =
@@ -132,6 +131,7 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
+          shellInit = Nothing,
           cmdDisplay = ShowKey,
           pollInterval = 10_000,
           cmdLogging = False,

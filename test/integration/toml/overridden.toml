@@ -5,6 +5,7 @@
 # be overridden (e.g. cmd-log = true cannot be overriden from cli)
 
 timeout = "1h"
+shell-init = "blah"
 log-disable = false
 key-hide = false
 cmd-name-trunc = 80

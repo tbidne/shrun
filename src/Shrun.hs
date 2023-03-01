@@ -20,10 +20,11 @@ import Shrun.Configuration.Env.Types
     HasAnyError (..),
     HasCommands (..),
     HasLogging (..),
+    HasShellInit,
     HasTimeout (..),
     setAnyErrorTrue,
   )
-import Shrun.Data.Command (Command (..))
+import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
 import Shrun.Logging
@@ -54,6 +55,7 @@ shrun ::
   ( HasAnyError env,
     HasCommands env,
     HasLogging env (Region m),
+    HasShellInit env,
     HasTimeout env,
     MonadAsync m,
     MonadHandleReader m,
@@ -114,6 +116,7 @@ runCommand ::
   ( HasAnyError env,
     HasCommands env,
     HasLogging env (Region m),
+    HasShellInit env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
@@ -124,7 +127,7 @@ runCommand ::
     MonadThread m,
     MonadTime m
   ) =>
-  Command ->
+  CommandP1 ->
   m ()
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd

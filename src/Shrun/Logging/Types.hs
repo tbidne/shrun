@@ -19,7 +19,7 @@ module Shrun.Logging.Types
   )
 where
 
-import Shrun.Data.Command (Command)
+import Shrun.Data.Command (CommandP1)
 import Shrun.Logging.Types.Internal (ConsoleLog, FileLog, LogMode (..))
 import Shrun.Prelude
 
@@ -73,7 +73,7 @@ data Log = MkLog
   { -- | Optional command that produced this log.
     --
     -- @since 0.1
-    cmd :: Maybe Command,
+    cmd :: Maybe CommandP1,
     -- | The 'Text' for a given log.
     --
     -- @since 0.1

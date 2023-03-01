@@ -26,6 +26,7 @@
     - [Config](#config)
     - [No Config](#no-config)
     - [Timeout](#timeout)
+    - [Shell-Init](#shell-init)
   - [Logging](#logging)
     - [Poll Interval](#poll-interval)
     - [Command Log](#command-log)
@@ -165,6 +166,28 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 <span style="color: #69ff94">[Success][sleep 5] 5 seconds</span>
 <span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 10, sleep 15</span>
 <span style="color: #d6acff">[Finished] 9 seconds</span></code>
+</pre>
+
+### Shell-Init
+
+**Arg:** `-i,--shell-init STRING`
+
+**Description:** If given, `shell-init` is run before each command. That is, `shrun --shell-init ". ~/.bashrc" foo bar` is equivalent to `shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"`.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --shell-init ". examples/bashrc" foo</span>
+<span style="color: #69ff94">[Success][foo] 0 seconds</span>
+<span style="color: #d6acff">[Finished] 0 seconds</span></code>
+</pre>
+
+vs.
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun foo</span>
+<span style="color: #ff6e6e">[Error][foo] 0 seconds: /bin/sh: line 1: foo: command not found</span>
+<span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
 
 ## Logging
@@ -472,7 +495,7 @@ $ shrun ...
 
 ## What if my command relies on interactive shell e.g. loading ~/.bashrc?
 
-Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc`. This can be annoying if one uses their bashrc to define functions/aliases and then wants to run these via `shrun`.
+Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc`. This can be annoying if one uses their `bashrc` to define functions/aliases and then wants to run these via `shrun`.
 
 ```sh
 # ~/.bashrc
@@ -487,10 +510,16 @@ $ shrun foo
 [Finished] 0 seconds
 ```
 
-As a workaround, the file can be manually sourced:
+Fortunately, the [Shell-Init](#shell-init) option exists exactly for this purpose:
 
 ```
-$ shrun "source ~/.bashrc && foo"
+$ shrun --shell-init ". ~/.bashrc" foo
+```
+
+This is equivalent to running:
+
+```
+$ shrun ". ~/.bashrc && foo"
 ```
 
 There is one complication. Many `bashrc` files include logic like:
@@ -506,15 +535,15 @@ Instead, one can split out the desired bash functions into a separate file:
 
 ```sh
 # ~/.bash_functions.sh
-function foo() {
+foo () {
   ...
 }
 
 # ~/.bashrc
-source ~/.bash_functions.sh
+. ~/.bash_functions.sh
 ```
 
 ```
 # Now we can source it without problems
-$ shrun "source ~/.bash_functions.sh && foo"
+$ shrun --shell-init ". ~/.bash_functions.sh" foo
 ```

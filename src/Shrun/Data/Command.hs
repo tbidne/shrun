@@ -7,12 +7,18 @@
 -- @since 0.1
 module Shrun.Data.Command
   ( Command (..),
+    CommandP1,
+    CommandP2,
+    commandToProcess,
   )
 where
 
 import Data.Hashable (Hashable)
 import Data.String (IsString (..))
 import Data.Text qualified as T
+import Effects.System.Process (ProcessConfig)
+import Effects.System.Process qualified as P
+import Shrun.Data.Phase (AdvancePhase (..), Phase (..))
 import Shrun.Prelude
 
 -- $setup
@@ -21,7 +27,8 @@ import Shrun.Prelude
 -- | Wrapper for shell commands.
 --
 -- @since 0.1
-data Command = MkCommand
+type Command :: Phase -> Type
+data Command p = MkCommand
   { -- | The key name for the command, for display purposes.
     --
     -- @since 0.1
@@ -47,6 +54,40 @@ data Command = MkCommand
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''Command
 
-instance IsString Command where
+instance IsString (Command Phase1) where
   fromString = MkCommand Nothing . T.pack
   {-# INLINEABLE fromString #-}
+
+-- | Phase1 commands.
+--
+-- @since 0.8
+type CommandP1 = Command Phase1
+
+-- | Phase2 commands.
+--
+-- @since 0.8
+type CommandP2 = Command Phase2
+
+-- | @since 0.1
+instance AdvancePhase (Command Phase1) where
+  type NextPhase (Command Phase1) = Command Phase2
+  type ExtraData (Command Phase1) = Maybe Text
+
+  advancePhase (MkCommand k cmd) Nothing = MkCommand k cmd
+  advancePhase (MkCommand k cmd) (Just shellInit) =
+    MkCommand k (shellInit <> " && " <> cmd)
+
+-- | Transforms a command into its text to be executed by the shell.
+--
+-- @since 0.8
+commandToShell :: Command Phase2 -> String
+commandToShell = T.unpack . view #command
+
+-- Transforms a command into a 'ProcessConfig'.
+--
+-- @since 0.8
+commandToProcess :: Command Phase1 -> Maybe Text -> ProcessConfig () () ()
+commandToProcess command =
+  P.shell
+    . commandToShell
+    . advancePhase command

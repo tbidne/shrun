@@ -1,6 +1,7 @@
 # All values are non-defaults so we can test that this file is being used
 
 timeout = "1h"
+shell-init = ". some file"
 log-disable = true
 key-hide = true
 poll-interval = 127

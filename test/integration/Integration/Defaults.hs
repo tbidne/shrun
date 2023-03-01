@@ -34,6 +34,7 @@ defaultEnv = testCase "No arguments and empty config path should return default 
     expected =
       MkSimpleEnv
         { timeout = Nothing,
+          shellInit = Nothing,
           cmdLogging = False,
           cmdDisplay = ShowKey,
           pollInterval = 10_000,
@@ -56,6 +57,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
     expected =
       MkSimpleEnv
         { timeout = Just 3_600,
+          shellInit = Just ". some file",
           cmdDisplay = HideKey,
           pollInterval = 127,
           cmdLogging = True,
@@ -83,6 +85,8 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         "test/integration/toml/overridden.toml",
         "--timeout",
         "10",
+        "--shell-init",
+        ". another file",
         "--file-log",
         logPath,
         "--file-log-strip-control",
@@ -102,6 +106,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
     expected =
       MkSimpleEnv
         { timeout = Just 10,
+          shellInit = Just ". another file",
           cmdDisplay = HideKey,
           pollInterval = 127,
           cmdLogging = True,
@@ -139,6 +144,7 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           cmdLogLineTrunc = Just 60,
           -- These are just the rest
           timeout = Just 3_600,
+          shellInit = Just "blah",
           cmdDisplay = ShowKey,
           pollInterval = 10_000,
           cmdLogging = True,
@@ -159,6 +165,7 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
+          shellInit = Nothing,
           cmdDisplay = ShowKey,
           pollInterval = 10_000,
           cmdLogging = False,

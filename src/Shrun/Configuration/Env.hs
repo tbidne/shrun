@@ -185,6 +185,7 @@ fromToml onEnv cfg cmdsText = do
   let envWithLogging mFileLogging consoleLogging =
         MkEnv
           { timeout = cfg ^. #timeout,
+            shellInit = cfg ^. #shellInit,
             logging =
               MkLogging
                 { cmdDisplay = maybeOrMempty cfg (#cmdDisplay % _Just),

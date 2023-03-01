@@ -22,6 +22,11 @@ the major/minor/patch definitions apply to the application's interface / usage
 * We now default logging to the XDG State directory rather than XDG config
   i.e. `~/.local/state/shrun/log`.
 
+### Added
+* `--shell-init` (toml: `shell-init`) option that allows one to specify some
+  logic that should be run before each command. This can be useful when we want
+  to load functions/aliases e.g. `shrun --shell-init ". ~/.bashrc" foo`.
+
 ### Fixed
 * File logs are now streamed, do not buffer.
 * Previously, if `--cmd-log` or `--file-log` were specified, then a CPU thread

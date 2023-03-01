@@ -27,7 +27,7 @@ import Shrun.Configuration.Env.Types
     Logging (..),
     StripControl (..),
   )
-import Shrun.Data.Command (Command (..))
+import Shrun.Data.Command (Command (..), CommandP1)
 import Shrun.Logging.Types (Log (..), LogLevel (..))
 import Shrun.Logging.Types.Internal
   ( ConsoleLog (UnsafeConsoleLog),
@@ -38,11 +38,6 @@ import Shrun.Utils qualified as U
 import Shrun.Utils qualified as Utils
 import System.Console.Pretty (Color (..))
 import System.Console.Pretty qualified as P
-
--- $setup
--- >>> import Shrun.Prelude
--- >>> import Shrun.Data.Command (Command (..))
--- >>> import Shrun.Configuration.Env.Types (CmdDisplay (..))
 
 -- | Formats a log to be printed to the console.
 --
@@ -145,7 +140,7 @@ formatFileLog fileLogging log = do
 -- "long"
 --
 -- @since 0.1
-displayCmd :: Command -> CmdDisplay -> Text
+displayCmd :: CommandP1 -> CmdDisplay -> Text
 displayCmd (MkCommand (Just key) _) ShowKey = key
 displayCmd (MkCommand _ cmd) _ = cmd
 

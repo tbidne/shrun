@@ -51,6 +51,7 @@ library
     Shrun.Data.Command
     Shrun.Data.FilePathDefault
     Shrun.Data.Legend
+    Shrun.Data.Phase
     Shrun.Data.PollInterval
     Shrun.Data.Supremum
     Shrun.Data.Timeout

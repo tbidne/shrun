@@ -86,6 +86,10 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.5
     timeout :: !(Maybe Timeout),
+    -- | Shell logic to run before each command.
+    --
+    -- @since 0.8
+    shellInit :: !(Maybe Text),
     -- | Whether to display the command (key) names or the commands
     -- themselves.
     --
@@ -133,12 +137,14 @@ defaultTomlConfig =
     Nothing
     Nothing
     Nothing
+    Nothing
 
 -- | @since 0.5
 instance DecodeTOML TomlConfig where
   tomlDecoder =
     MkTomlConfig
       <$> decodeTimeout
+      <*> decodeInit
       <*> decodeCmdDisplay
       <*> decodePollInterval
       <*> decodeCmdNameTrunc
@@ -149,6 +155,10 @@ instance DecodeTOML TomlConfig where
 -- | @since 0.5
 decodeTimeout :: Decoder (Maybe Timeout)
 decodeTimeout = getFieldOptWith tomlDecoder "timeout"
+
+-- | @since 0.8
+decodeInit :: Decoder (Maybe Text)
+decodeInit = getFieldOptWith tomlDecoder "shell-init"
 
 -- | @since 0.8
 decodePollInterval :: Decoder (Maybe PollInterval)
@@ -208,6 +218,7 @@ mergeConfig :: Args -> TomlConfig -> TomlConfig
 mergeConfig args tomlConfig =
   MkTomlConfig
     { timeout = combine #timeout #timeout,
+      shellInit = combine #shellInit #shellInit,
       cmdDisplay = combine #cmdDisplay #cmdDisplay,
       pollInterval = combine #pollInterval #pollInterval,
       cmdNameTrunc = combine #cmdNameTrunc #cmdNameTrunc,

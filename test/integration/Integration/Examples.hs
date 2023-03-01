@@ -28,6 +28,7 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
     expected =
       MkSimpleEnv
         { timeout = Just 20,
+          shellInit = Just ". examples/bashrc",
           cmdDisplay = ShowKey,
           pollInterval = 100,
           cmdLogging = True,
@@ -51,6 +52,7 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
+          shellInit = Nothing,
           cmdDisplay = ShowKey,
           pollInterval = 10_000,
           cmdLogging = False,

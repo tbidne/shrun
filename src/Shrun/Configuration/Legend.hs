@@ -19,7 +19,7 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
-import Shrun.Data.Command (Command (..))
+import Shrun.Data.Command (Command (..), CommandP1)
 import Shrun.Data.Legend (KeyVal (..), LegendMap)
 import Shrun.Prelude
 import Shrun.Utils qualified as U
@@ -112,10 +112,10 @@ instance Exception CyclicKeyError where
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 --
 -- @since 0.1
-translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq Command)
+translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq CommandP1)
 translateCommands mp (t :<|| ts) = sequenceA $ U.foldMap1 (lineToCommands mp) t ts
 
-lineToCommands :: LegendMap -> Text -> NESeq (Either CyclicKeyError Command)
+lineToCommands :: LegendMap -> Text -> NESeq (Either CyclicKeyError CommandP1)
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path

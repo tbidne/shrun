@@ -17,6 +17,8 @@ specs args =
     [ gif,
       core,
       timeout,
+      shellInitOn,
+      shellInitOff,
       cmdlogOn,
       cmdlogOff,
       fileLog args,
@@ -97,6 +99,38 @@ timeout =
     expected =
       [ withSuccessPrefix "sleep 5",
         withTimeoutPrefix "sleep 10, sleep 15",
+        finishedPrefix
+      ]
+
+shellInitOn :: TestTree
+shellInitOn =
+  testCase "Runs shell-init successful example" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--shell-init",
+          ". examples/bashrc",
+          "foo"
+        ]
+    expected =
+      [ withSuccessPrefix "foo",
+        finishedPrefix
+      ]
+
+shellInitOff :: TestTree
+shellInitOff =
+  testCase "Runs shell-init failure example" $ do
+    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "foo"
+        ]
+    expected =
+      [ withErrorPrefix "foo",
         finishedPrefix
       ]
 

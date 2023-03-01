@@ -21,10 +21,11 @@ import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommands (..),
     HasLogging (..),
+    HasShellInit (..),
     prependCompletedCommand,
     setAnyErrorTrue,
   )
-import Shrun.Data.Command (Command (..))
+import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.IO.Types
   ( ReadHandleResult (..),
     Stderr (..),
@@ -49,14 +50,18 @@ import System.Exit (ExitCode (..))
 --
 -- @since 0.1
 shExitCode ::
-  (MonadProcess m, MonadSTM m) =>
-  Command ->
+  ( HasShellInit env,
+    MonadProcess m,
+    MonadReader env m,
+    MonadSTM m
+  ) =>
+  CommandP1 ->
   m (ExitCode, Stdout, Stderr)
-shExitCode (MkCommand _ cmd) = do
+shExitCode cmd = do
+  process <- commandToProcess cmd <$> asks getShellInit
   (exitCode, stdout, stderr) <- P.readProcess process
   pure (exitCode, wrap MkStdout stdout, wrap MkStderr stderr)
   where
-    process = P.shell (T.unpack cmd)
     wrap f = f . T.strip . decodeUtf8Lenient . BSL.toStrict
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
@@ -64,8 +69,12 @@ shExitCode (MkCommand _ cmd) = do
 --
 -- @since 0.1
 tryShExitCode ::
-  (MonadProcess m, MonadSTM m) =>
-  Command ->
+  ( HasShellInit env,
+    MonadProcess m,
+    MonadReader env m,
+    MonadSTM m
+  ) =>
+  CommandP1 ->
   m (Either Stderr Stdout)
 tryShExitCode cmd = do
   (code, stdout, stderr) <- shExitCode cmd
@@ -78,10 +87,12 @@ tryShExitCode cmd = do
 --
 -- @since 0.1
 tryCommand ::
-  ( MonadProcess m,
+  ( HasShellInit env,
+    MonadProcess m,
+    MonadReader env m,
     MonadSTM m
   ) =>
-  Command ->
+  CommandP1 ->
   m (Maybe Stderr)
 tryCommand cmd = preview _Left <$> tryShExitCode cmd
 
@@ -94,6 +105,7 @@ tryCommandLogging ::
   ( HasAnyError env,
     HasCommands env,
     HasLogging env (Region m),
+    HasShellInit env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
@@ -105,7 +117,7 @@ tryCommandLogging ::
     MonadTime m
   ) =>
   -- | Command to run.
-  Command ->
+  CommandP1 ->
   -- | @'Left' (timeElapsed, error)@ if the command fails.
   -- @'Right' timeElapsed@ otherwise.
   m (Either (RelativeTime, Stderr) RelativeTime)
@@ -159,6 +171,7 @@ tryCommandLogging command = do
 -- @since 0.1
 tryCommandStream ::
   ( HasLogging env (Region m),
+    HasShellInit env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
@@ -170,17 +183,19 @@ tryCommandStream ::
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->
   -- | Command to run.
-  Command ->
+  CommandP1 ->
   -- | Error, if any. Note that this will be 'Just' iff the command exited
   -- with an error, even if the error message itself is blank.
   m (Maybe Stderr)
-tryCommandStream logFn cmd@(MkCommand _ cmdTxt) = do
+tryCommandStream logFn cmd = do
   let outSpec = P.createPipe
       errSpec = P.createPipe
-      procConfig =
-        P.setStderr outSpec $
-          P.setStdout errSpec $
-            P.shell (T.unpack cmdTxt)
+
+  procConfig <-
+    asks getShellInit
+      <&> P.setStderr outSpec
+        . P.setStdout errSpec
+        . commandToProcess cmd
 
   (exitCode, lastReadErr) <-
     P.withProcessWait procConfig $ \p -> streamOutput logFn cmd p
@@ -201,8 +216,8 @@ streamOutput ::
   ) =>
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->
-  -- | Command to run.
-  Command ->
+  -- | Command that was run.
+  CommandP1 ->
   -- | Process handle.
   Process () Handle Handle ->
   -- | Exit code along w/ any leftover data.
@@ -254,7 +269,7 @@ streamOutput logFn cmd p = do
 writeLog ::
   (MonadIORef m) =>
   (Log -> m ()) ->
-  Command ->
+  CommandP1 ->
   IORef (Maybe ReadHandleResult) ->
   ReadHandleResult ->
   m ()

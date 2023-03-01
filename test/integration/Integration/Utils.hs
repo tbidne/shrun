@@ -24,7 +24,7 @@ import Shrun.Configuration.Env.Types
     TruncRegion (..),
     Truncation,
   )
-import Shrun.Data.Command (Command)
+import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
 
@@ -111,6 +111,7 @@ deriving via ConfigIO instance MonadTerminal NoConfigIO
 --   equality with a file handle or queue.
 data SimpleEnv = MkSimpleEnv
   { timeout :: !(Maybe Timeout),
+    shellInit :: !(Maybe Text),
     cmdDisplay :: !CmdDisplay,
     pollInterval :: !PollInterval,
     cmdLogging :: !Bool,
@@ -119,7 +120,7 @@ data SimpleEnv = MkSimpleEnv
     cmdLogStripControl :: !(Maybe StripControl),
     fileLogging :: !Bool,
     fileLogStripControl :: !(Maybe StripControl),
-    commands :: !(NESeq Command)
+    commands :: !(NESeq CommandP1)
   }
   deriving stock (Eq, Show)
 
@@ -129,6 +130,7 @@ simplifyEnv :: Getter Env SimpleEnv
 simplifyEnv = to $ \env ->
   MkSimpleEnv
     { timeout = env ^. #timeout,
+      shellInit = env ^. #shellInit,
       cmdDisplay = env ^. (#logging % #cmdDisplay),
       pollInterval = env ^. (#logging % #pollInterval),
       cmdLogging = is (#logging % #cmdLogging % _Just) env,

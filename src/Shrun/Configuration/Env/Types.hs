@@ -10,6 +10,7 @@ module Shrun.Configuration.Env.Types
     prependCompletedCommand,
     HasLogging (..),
     HasTimeout (..),
+    HasShellInit (..),
     HasAnyError (..),
     setAnyErrorTrue,
 
@@ -38,7 +39,7 @@ module Shrun.Configuration.Env.Types
 where
 
 import GHC.Show (appPrec, appPrec1)
-import Shrun.Data.Command (Command)
+import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Data.Timeout (Timeout)
@@ -317,10 +318,10 @@ instance Show (Logging r) where
 -- @since 0.1
 class HasCommands env where
   -- | @since 0.1
-  getCommands :: env -> NESeq Command
+  getCommands :: env -> NESeq CommandP1
 
   -- | @since 0.1
-  getCompletedCmds :: env -> TVar (Seq Command)
+  getCompletedCmds :: env -> TVar (Seq CommandP1)
 
 -- | Timeout, if any.
 --
@@ -328,6 +329,13 @@ class HasCommands env where
 class HasTimeout env where
   -- | @since 0.1
   getTimeout :: env -> Maybe Timeout
+
+-- | Shell init, if any.
+--
+-- @since 0.8
+class HasShellInit env where
+  -- | @since 0.8
+  getShellInit :: env -> Maybe Text
 
 -- | Holds logging configuration.
 --
@@ -354,6 +362,10 @@ data Env = MkEnv
     --
     -- @since 0.1
     timeout :: !(Maybe Timeout),
+    -- | Shell logic to run before each command.
+    --
+    -- @since 0.8
+    shellInit :: !(Maybe Text),
     -- | Logging env.
     --
     -- @since 0.7
@@ -362,7 +374,7 @@ data Env = MkEnv
     -- determine which commands have /not/ completed if we time out.
     --
     -- @since 0.1
-    completedCmds :: !(TVar (Seq Command)),
+    completedCmds :: !(TVar (Seq CommandP1)),
     -- | Holds the anyError flag, signaling if any command exited with an
     -- error.
     --
@@ -371,7 +383,7 @@ data Env = MkEnv
     -- | The commands to run.
     --
     -- @since 0.1
-    commands :: !(NESeq Command)
+    commands :: !(NESeq CommandP1)
   }
 
 -- | @since 0.1
@@ -395,6 +407,10 @@ instance Show Env where
 instance HasTimeout Env where
   getTimeout = view #timeout
 
+-- | @since 0.8
+instance HasShellInit Env where
+  getShellInit = view #shellInit
+
 -- | @since 0.3
 instance HasLogging Env ConsoleRegion where
   getLogging = view #logging
@@ -413,7 +429,7 @@ prependCompletedCommand ::
     MonadReader env m,
     MonadSTM m
   ) =>
-  Command ->
+  CommandP1 ->
   m ()
 prependCompletedCommand command = do
   completedCmds <- asks getCompletedCmds
