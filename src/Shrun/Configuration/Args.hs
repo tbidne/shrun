@@ -313,7 +313,7 @@ configParser =
     helpTxt =
       mconcat
         [ "Path to TOML config file. If this argument is not given ",
-          "we automatically look in the Xdg config directory ",
+          "we automatically look in the XDG config directory ",
           "e.g. ~/.config/shrun/config.toml"
         ]
 
@@ -331,8 +331,8 @@ noConfigParser =
     helpTxt =
       mconcat
         [ "Overrides toml file config regardless of how it was obtained i.e. ",
-          "explicit --config or implicit reading of the Xdg config file. ",
-          "Used for when a config file exists at the expected Xdg ",
+          "explicit --config or implicit reading of the XDG config file. ",
+          "Used for when a config file exists at the expected XDG ",
           "location, but we want to ignore it."
         ]
 
@@ -478,7 +478,7 @@ fileLoggingParser =
           "the supplied file. Furthermore, command logs will be written to ",
           "the file irrespective of --cmd-log. Console logging is unaffected. ",
           "This can be useful for investigating command failures. ",
-          "If the string 'default' is given, then we write to the Xdg config ",
+          "If the string 'default' is given, then we write to the XDG config ",
           "directory e.g. ~/.config/shrun/log."
         ]
 

@@ -108,7 +108,7 @@ strip-control = "smart"
 line-trunc = 150
 
 #[file-log]
-# Writes all logs to a file. The "default" option writes to the Xdg config
+# Writes all logs to a file. The "default" option writes to the XDG config
 # directory e.g. ~/.config/shrun/log. Any other string is interpreted as
 # a PATH.
 #path = "default"

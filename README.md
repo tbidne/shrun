@@ -107,7 +107,7 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 **Arg:** `-c, --config PATH`
 
-**Description**: Path to TOML config file. If this argument is not given we automatically look in the Xdg config directory e.g. `~/.config/shrun/config.toml`.
+**Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`.
 
 Examples can be found in [examples](./examples).
 
@@ -151,7 +151,7 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Arg:** `--no-config`
 
-**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit `--config` or implicit reading of the Xdg config file. This is useful when a config file exists at the expected Xdg location, but we wish to ignore it.
+**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit `--config` or implicit reading of the XDG config file. This is useful when a config file exists at the expected XDG location, but we wish to ignore it.
 
 ### Timeout
 
@@ -239,7 +239,7 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Arg:** `-f, --file-log <default | PATH>`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the Xdg state directory e.g. `~/.local/state/shrun/log`.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the XDG state directory e.g. `~/.local/state/shrun/log`.
 
 **Example:**
 
