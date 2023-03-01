@@ -269,7 +269,6 @@ import Prelude qualified as P
 -- @since 0.1
 showt :: (P.Show a) => a -> Text
 showt = T.pack . P.show
-{-# INLINEABLE showt #-}
 
 -- | Safe @head@.
 --
@@ -283,7 +282,6 @@ showt = T.pack . P.show
 headMaybe :: List a -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
-{-# INLINEABLE headMaybe #-}
 
 -- | Convenience function for mapping @(a -> b)@ over a monomorphic bifunctor.
 --
@@ -295,7 +293,6 @@ headMaybe (x : _) = Just x
 -- @since 0.1
 monoBimap :: (Bifunctor p) => (a -> b) -> p a a -> p b b
 monoBimap f = bimap f f
-{-# INLINEABLE monoBimap #-}
 
 -- | Lifted fmap.
 --
@@ -305,7 +302,6 @@ monoBimap f = bimap f f
 -- @since 0.1
 (<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 (<<$>>) = fmap . fmap
-{-# INLINEABLE (<<$>>) #-}
 
 infixl 4 <<$>>
 

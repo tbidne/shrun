@@ -180,14 +180,12 @@ brackets True s = "[" <> s <> "] "
 -- @since 0.1
 logToColor :: Log -> Color
 logToColor = levelToColor . view #lvl
-{-# INLINEABLE logToColor #-}
 
 -- | Transforms log to a prefix based on its 'LogLevel'.
 --
 -- @since 0.1
 logToPrefix :: Log -> Text
 logToPrefix = levelToPrefix . view #lvl
-{-# INLINEABLE logToPrefix #-}
 
 -- | Maps 'LogLevel' to 'Color'.
 --

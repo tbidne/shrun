@@ -275,7 +275,6 @@ argsParser =
     <**> OA.helper
     <**> version
     <**> defaultConfig
-{-# INLINEABLE argsParser #-}
 
 version :: Parser (a -> a)
 version = OA.infoOption txt (OA.long "version" <> OA.short 'v')
@@ -388,7 +387,6 @@ cmdTruncationParser =
           "final success/error message); File logs created via --file-log ",
           "are unaffected."
         ]
-{-# INLINEABLE cmdTruncationParser #-}
 
 lineTruncationParser :: Parser (Maybe LineTruncation)
 lineTruncationParser =
@@ -415,7 +413,6 @@ lineTruncationParser =
 
 readTruncation :: ReadM (Truncation a)
 readTruncation = MkTruncation <$> OA.auto
-{-# INLINEABLE readTruncation #-}
 
 readDetectTruncation :: ReadM LineTruncation
 readDetectTruncation =

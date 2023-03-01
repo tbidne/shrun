@@ -83,7 +83,6 @@ readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess err) = MkStderr err
-{-# INLINEABLE readHandleResultToStderr #-}
 
 -- | Attempts to read from the handle.
 --
@@ -107,8 +106,6 @@ readHandle handle = do
             Left ex -> pure $ ReadErr $ "Handle exception:" <> T.pack (displayException ex)
             Right "" -> pure ReadNoData
             Right o -> pure $ ReadSuccess o
-{-# INLINEABLE readHandle #-}
 
 blockSize :: Int
 blockSize = 1024
-{-# INLINEABLE blockSize #-}

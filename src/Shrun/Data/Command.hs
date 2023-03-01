@@ -56,7 +56,6 @@ makeFieldLabelsNoPrefix ''Command
 
 instance IsString (Command Phase1) where
   fromString = MkCommand Nothing . T.pack
-  {-# INLINEABLE fromString #-}
 
 -- | Phase1 commands.
 --
