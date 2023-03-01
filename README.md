@@ -43,6 +43,7 @@
 - [Building](#building)
   - [Cabal](#cabal)
   - [Nix](#nix)
+- [FAQ](#faq)
 
 # Motivation
 
@@ -385,7 +386,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 You will need one of:
 
-* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 9.2+](https://www.haskell.org/ghc/).
+* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 9.4+](https://www.haskell.org/ghc/).
 * [nix](https://nixos.org/download.html)
 
 If you have never built a haskell program before, `cabal` + `ghc` is probably the best choice. These can be easily obtained with the [`ghcup`](https://www.haskell.org/ghcup/) tool.
@@ -448,4 +449,72 @@ Then in `configuration.nix` you can simply have:
     shrun
   ];
 }
+```
+
+# FAQ
+
+## What if a command needs sudo?
+
+Commands _can_ receive `stdin`, so running e.g. `shrun "sudo some command"` will launch the sudo prompt. From there one can type in their password and hit enter as usual.
+
+However this is a bit clunky as the timer text will overwrite the `[sudo] password for ...` prompt, and multiple commands add more complication.
+
+It is therefore easiest to run sudo first to elevate privileges, then execute `shrun` as normal e.g.
+
+```
+# Run sudo with some dummy command
+$ sudo ls
+...
+
+# shrun can now execute sudo without requiring stdin
+$ shrun ...
+```
+
+## What if my command relies on interactive shell e.g. loading ~/.bashrc?
+
+Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc`. This can be annoying if one uses their bashrc to define functions/aliases and then wants to run these via `shrun`.
+
+```sh
+# ~/.bashrc
+function foo() {
+  ...
+}
+```
+
+```
+$ shrun foo
+[Error][foo] 0 seconds: /bin/sh: line 1: foo: command not found
+[Finished] 0 seconds
+```
+
+As a workaround, the file can be manually sourced:
+
+```
+$ shrun "source ~/.bashrc && foo"
+```
+
+There is one complication. Many `bashrc` files include logic like:
+
+```sh
+# Commands that should be applied only for interactive shells.
+[[ $- == *i* ]] || return
+```
+
+This explicitly prohibits us from loading anything after this line, and can cause an error when trying to `source` it.
+
+Instead, one can split out the desired bash functions into a separate file:
+
+```sh
+# ~/.bash_functions.sh
+function foo() {
+  ...
+}
+
+# ~/.bashrc
+source ~/.bash_functions.sh
+```
+
+```
+# Now we can source it without problems
+$ shrun "source ~/.bash_functions.sh && foo"
 ```
