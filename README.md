@@ -28,8 +28,8 @@
     - [Timeout](#timeout)
     - [Shell-Init](#shell-init)
   - [Logging](#logging)
-    - [Poll Interval](#poll-interval)
     - [Command Log](#command-log)
+    - [Poll Interval](#poll-interval)
     - [File Log](#file-log)
     - [File Log Mode](#file-log-mode)
     - [File Log Size Mode](#file-log-size-mode)
@@ -192,22 +192,6 @@ vs.
 
 ## Logging
 
-### Poll Interval
-
-**Arg:** `-p, --poll-interval`
-
-**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll subcommands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
-
-Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
-
-**Example:**
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --poll-interval 100 --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
-<span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
-<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
-</pre>
-
 ### Command Log
 
 **Arg:** `-l, --cmd-log`
@@ -234,6 +218,22 @@ vs.
 Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 
 Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File Log](#file-log) for details on investigating command failure.
+
+### Poll Interval
+
+**Arg:** `-p, --poll-interval`
+
+**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll subcommands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
+
+Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --poll-interval 100 --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
+<span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
+<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
+</pre>
 
 ### File Log
 
