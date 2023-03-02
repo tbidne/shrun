@@ -1,12 +1,8 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 -- | Provides the 'FilePathDefault' type.
 --
 -- @since 0.1
 module Shrun.Data.FilePathDefault
   ( FilePathDefault (..),
-    _FPDefault,
-    _FPManual,
   )
 where
 
@@ -27,9 +23,6 @@ data FilePathDefault
       -- | @since 0.1
       Show
     )
-
--- | @since 0.5
-makePrisms ''FilePathDefault
 
 -- | @since 0.5
 instance DecodeTOML FilePathDefault where

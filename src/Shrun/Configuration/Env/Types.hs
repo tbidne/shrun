@@ -24,17 +24,6 @@ module Shrun.Configuration.Env.Types
     LineTruncation (..),
     TruncRegion (..),
     StripControl (..),
-
-    -- * Optics
-    _HideKey,
-    _ShowKey,
-    _TCmdName,
-    _TCmdLine,
-    _StripControlSmart,
-    _StripControlAll,
-    _StripControlNone,
-    _Undetected,
-    _Detected,
   )
 where
 
@@ -83,9 +72,6 @@ data CmdDisplay
     via Supremum CmdDisplay
 
 -- | @since 0.5
-makePrisms ''CmdDisplay
-
--- | @since 0.5
 instance DecodeTOML CmdDisplay where
   tomlDecoder =
     tomlDecoder <&> \case
@@ -110,9 +96,6 @@ data TruncRegion
       -- | @since 0.1
       Show
     )
-
--- | @since 0.5
-makePrisms ''TruncRegion
 
 -- | The maximum number of command characters to display in the logs.
 --
@@ -161,9 +144,6 @@ data LineTruncation
     )
 
 -- | @since 0.5
-makePrisms ''LineTruncation
-
--- | @since 0.5
 instance DecodeTOML LineTruncation where
   tomlDecoder = makeDecoder $ \case
     String "detect" -> pure Detected
@@ -210,9 +190,6 @@ data StripControl
       Monoid
     )
     via Supremum StripControl
-
--- | @since 0.5
-makePrisms ''StripControl
 
 -- | @since 0.5
 instance DecodeTOML StripControl where
