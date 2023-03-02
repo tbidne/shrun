@@ -7,11 +7,11 @@
 module Shrun.Configuration.Env
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    prependCompletedCommand,
+    Env.prependCompletedCommand,
     HasLogging (..),
     HasTimeout (..),
     HasAnyError (..),
-    setAnyErrorTrue,
+    Env.setAnyErrorTrue,
 
     -- * Types
     Env (..),
@@ -58,9 +58,8 @@ import Shrun.Configuration.Env.Types
     StripControl (..),
     TruncRegion (..),
     Truncation (..),
-    prependCompletedCommand,
-    setAnyErrorTrue,
   )
+import Shrun.Configuration.Env.Types qualified as Env
 import Shrun.Configuration.Legend (linesToMap, translateCommands)
 import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
 import Shrun.Data.Command (Command (..))
@@ -188,7 +187,7 @@ fromToml onEnv cfg cmdsText = do
             shellInit = cfg ^. #shellInit,
             logging =
               MkLogging
-                { cmdDisplay = maybeOrMempty cfg (#cmdDisplay % _Just),
+                { cmdDisplay = fromMaybe ShowKey (cfg ^? (#cmdDisplay % _Just)),
                   pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
                   cmdNameTrunc = cfg ^. #cmdNameTrunc,
                   cmdLogging = case cfg ^. #cmdLogging of
@@ -196,7 +195,8 @@ fromToml onEnv cfg cmdsText = do
                     Just cmdLogging ->
                       Just
                         MkCmdLogging
-                          { stripControl = maybeOrMempty cmdLogging (#stripControl % _Just),
+                          { stripControl =
+                              fromMaybe StripControlSmart (cmdLogging ^? (#stripControl % _Just)),
                             lineTrunc = cmdLogLineTrunc
                           },
                   consoleLogging,
@@ -214,7 +214,7 @@ fromToml onEnv cfg cmdsText = do
             commands = commands'
           }
 
-      ioMode = case maybeOrMempty cfg (#fileLogging %? #mode % _Just) of
+      ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLogging %? #mode % _Just)) of
         FileModeAppend -> AppendMode
         FileModeWrite -> WriteMode
 
@@ -241,9 +241,6 @@ fromToml onEnv cfg cmdsText = do
       bracket (openBinaryFile fp ioMode) closeFile $ \h ->
         onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
   where
-    maybeOrMempty :: (Is k An_AffineFold, Monoid a) => s -> Optic' k is s a -> a
-    maybeOrMempty x = fromMaybe mempty . (`preview` x)
-
     handleLogFileSize fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
       Nothing -> pure ()
       Just fileSizeMode -> do

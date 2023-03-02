@@ -30,7 +30,6 @@ where
 import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
-import Shrun.Data.Supremum (Supremum (..))
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Prelude
@@ -63,13 +62,6 @@ data CmdDisplay
       -- | @since 0.1
       Show
     )
-  deriving
-    ( -- | @since 0.1
-      Semigroup,
-      -- | @since 0.1
-      Monoid
-    )
-    via Supremum CmdDisplay
 
 -- | @since 0.5
 instance DecodeTOML CmdDisplay where
@@ -183,13 +175,6 @@ data StripControl
       -- | @since 0.3
       Show
     )
-  deriving
-    ( -- | @since 0.3
-      Semigroup,
-      -- | @since 0.3
-      Monoid
-    )
-    via Supremum StripControl
 
 -- | @since 0.5
 instance DecodeTOML StripControl where

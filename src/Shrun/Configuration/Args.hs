@@ -61,16 +61,6 @@ data FileMode
     )
 
 -- | @since 0.5
-instance Semigroup FileMode where
-  FileModeAppend <> _ = FileModeAppend
-  _ <> FileModeAppend = FileModeAppend
-  l <> _ = l
-
--- | @since 0.5
-instance Monoid FileMode where
-  mempty = FileModeWrite
-
--- | @since 0.5
 instance DecodeTOML FileMode where
   tomlDecoder =
     tomlDecoder @Text >>= \case
