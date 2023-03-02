@@ -66,8 +66,10 @@ import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
+import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
+import Shrun.Utils qualified as U
 
 -- | 'withEnv' with 'shrun'.
 --
@@ -181,7 +183,17 @@ fromToml onEnv cfg cmdsText = do
   completedCmds' <- newTVarM Seq.empty
   anyError <- newTVarM False
 
-  let envWithLogging mFileLogging consoleLogging =
+  -- get functions that need to be run with bracket
+  let (acquireFileLogging, closeFileLogging) = fileLoggingBracketFns cfg
+
+      -- make environment
+      envWithLogging ::
+        -- optional file logging
+        Maybe (Tuple2 Handle (TBQueue FileLog)) ->
+        -- console logging
+        TBQueue (LogRegion ConsoleRegion) ->
+        Env
+      envWithLogging mFileLogging consoleLogging =
         MkEnv
           { timeout = cfg ^. #timeout,
             shellInit = cfg ^. #shellInit,
@@ -190,72 +202,117 @@ fromToml onEnv cfg cmdsText = do
                 { cmdDisplay = fromMaybe ShowKey (cfg ^? (#cmdDisplay % _Just)),
                   pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
                   cmdNameTrunc = cfg ^. #cmdNameTrunc,
-                  cmdLogging = case cfg ^. #cmdLogging of
-                    Nothing -> Nothing
-                    Just cmdLogging ->
-                      Just
-                        MkCmdLogging
-                          { stripControl =
-                              fromMaybe StripControlSmart (cmdLogging ^? (#stripControl % _Just)),
-                            lineTrunc = cmdLogLineTrunc
-                          },
+                  cmdLogging =
+                    cfg ^. #cmdLogging <&> \cmdLogging ->
+                      MkCmdLogging
+                        { stripControl =
+                            fromMaybe StripControlSmart (cmdLogging ^? (#stripControl % _Just)),
+                          lineTrunc = cmdLogLineTrunc
+                        },
                   consoleLogging,
-                  fileLogging = case mFileLogging of
-                    Nothing -> Nothing
-                    Just log ->
-                      Just
-                        MkFileLogging
-                          { log,
-                            stripControl = fileLogStripControl
-                          }
+                  fileLogging =
+                    mFileLogging <&> \log ->
+                      MkFileLogging
+                        { log,
+                          stripControl = fileLogStripControl
+                        }
                 },
             anyError,
             completedCmds = completedCmds',
             commands = commands'
           }
 
-      ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLogging %? #mode % _Just)) of
-        FileModeAppend -> AppendMode
-        FileModeWrite -> WriteMode
-
   consoleQueue <- newTBQueueM 1000
-  case cfg ^? (#fileLogging %? #path) of
-    Nothing -> onEnv (envWithLogging Nothing consoleQueue)
-    Just FPDefault -> do
-      stateDir <- getShrunXdgState
-      let fp = stateDir </> "log"
-      stateExists <- doesDirectoryExist stateDir
-      unless stateExists (createDirectoryIfMissing True stateDir)
 
-      ensureFileExists fp
-      handleLogFileSize fp
+  bracket
+    acquireFileLogging
+    closeFileLogging
+    (\mLogging -> onEnv (envWithLogging mLogging consoleQueue))
 
-      fileQueue <- newTBQueueM 1000
+type BracketFns m a = Tuple2 (m a) (a -> m ())
 
-      bracket (openBinaryFile fp ioMode) closeFile $ \h ->
-        onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
-    Just (FPManual fp) -> do
-      ensureFileExists fp
-      handleLogFileSize fp
-      fileQueue <- newTBQueueM 1000
-      bracket (openBinaryFile fp ioMode) closeFile $ \h ->
-        onEnv (envWithLogging (Just (h, fileQueue)) consoleQueue)
+-- Return (acquire, cleanup) functions for file logging
+fileLoggingBracketFns ::
+  forall m.
+  ( HasCallStack,
+    MonadFileWriter m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadPathWriter m,
+    MonadSTM m,
+    MonadTerminal m
+  ) =>
+  TomlConfig ->
+  BracketFns m (Maybe (Tuple2 Handle (TBQueue FileLog)))
+fileLoggingBracketFns cfg = (acquireFileLogging, closeFileLogging)
   where
-    handleLogFileSize fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
-      Nothing -> pure ()
-      Just fileSizeMode -> do
-        fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
-        case fileSizeMode of
-          FileSizeModeWarn warnSize ->
-            when (fileSize > warnSize) $
-              putTextLn $
-                sizeWarning warnSize fp fileSize
-          FileSizeModeDelete delSize ->
-            when (fileSize > delSize) $ do
-              putTextLn $ sizeWarning delSize fp fileSize <> " Deleting log."
-              removeFile fp
+    acquireFileLogging :: m (Maybe (Tuple2 Handle (TBQueue FileLog)))
+    closeFileLogging :: Maybe (Tuple2 Handle (TBQueue FileLog)) -> m ()
 
-    sizeWarning warnSize fp fileSize =
+    (acquireFileLogging, closeFileLogging) = case cfg ^? (#fileLogging %? #path) of
+      -- 1. No file logging: Do nothing
+      Nothing -> (pure Nothing, \_ -> pure ())
+      -- 2. Use the default path.
+      --      Acquire: Create the dirs/queue, open the file.
+      --      Cleanup: Close the file.
+      Just FPDefault ->
+        let acquire = do
+              stateDir <- getShrunXdgState
+              let fp = stateDir </> "log"
+              stateExists <- doesDirectoryExist stateDir
+              unless stateExists (createDirectoryIfMissing True stateDir)
+
+              ensureFileExists fp
+              handleLogFileSize cfg fp
+
+              fileQueue <- newTBQueueM 1000
+
+              Just . (,fileQueue) <$> openBinaryFile fp ioMode
+
+            cleanup = flip U.whenJust (closeFile . fst)
+         in (acquire, cleanup)
+      -- 3. Use the given path.
+      --      Acquire: Create the queue, open the file.
+      --      Cleanup: Close the file.
+      Just (FPManual fp) ->
+        let acquire = do
+              ensureFileExists fp
+              handleLogFileSize cfg fp
+              fileQueue <- newTBQueueM 1000
+
+              Just . (,fileQueue) <$> openBinaryFile fp ioMode
+
+            cleanup = flip U.whenJust (closeFile . fst)
+         in (acquire, cleanup)
+
+    ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLogging %? #mode % _Just)) of
+      FileModeAppend -> AppendMode
+      FileModeWrite -> WriteMode
+
+handleLogFileSize ::
+  ( HasCallStack,
+    MonadPathReader m,
+    MonadPathWriter m,
+    MonadTerminal m
+  ) =>
+  TomlConfig ->
+  FilePath ->
+  m ()
+handleLogFileSize cfg fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
+  Nothing -> pure ()
+  Just fileSizeMode -> do
+    fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
+    case fileSizeMode of
+      FileSizeModeWarn warnSize ->
+        when (fileSize > warnSize) $
+          putTextLn $
+            sizeWarning warnSize fileSize
+      FileSizeModeDelete delSize ->
+        when (fileSize > delSize) $ do
+          putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
+          removeFile fp
+  where
+    sizeWarning warnSize fileSize =
       mconcat
         [ "Warning: log file '",
           pack fp,
