@@ -137,7 +137,7 @@ tryCommandLogging command = do
             tryCommandStream
               ( \log -> do
                   logConsole logging region log
-                  U.whenJust mFileLogging (`logFile` log)
+                  for_ mFileLogging (`logFile` log)
               )
               cmd
 

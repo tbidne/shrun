@@ -66,6 +66,7 @@ import Data.Eq as X (Eq (..))
 import Data.Foldable as X
   ( Foldable (..),
     any,
+    for_,
     length,
     traverse_,
   )

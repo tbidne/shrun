@@ -69,7 +69,6 @@ import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
-import Shrun.Utils qualified as U
 
 -- | 'withEnv' with 'shrun'.
 --
@@ -269,7 +268,7 @@ fileLoggingBracketFns cfg = (acquireFileLogging, closeFileLogging)
 
               Just . (,fileQueue) <$> openBinaryFile fp ioMode
 
-            cleanup = flip U.whenJust (closeFile . fst)
+            cleanup = traverse_ (closeFile . fst)
          in (acquire, cleanup)
       -- 3. Use the given path.
       --      Acquire: Create the queue, open the file.
@@ -282,7 +281,7 @@ fileLoggingBracketFns cfg = (acquireFileLogging, closeFileLogging)
 
               Just . (,fileQueue) <$> openBinaryFile fp ioMode
 
-            cleanup = flip U.whenJust (closeFile . fst)
+            cleanup = traverse_ (closeFile . fst)
          in (acquire, cleanup)
 
     ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLogging %? #mode % _Just)) of
@@ -298,7 +297,7 @@ handleLogFileSize ::
   TomlConfig ->
   FilePath ->
   m ()
-handleLogFileSize cfg fp = U.whenJust mfileSizeMode $ \fileSizeMode -> do
+handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
   fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
   case fileSizeMode of
     FileSizeModeWarn warnSize ->

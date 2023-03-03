@@ -57,7 +57,6 @@ import Shrun.Logging.Types
     LogRegion (..),
   )
 import Shrun.Prelude
-import Shrun.Utils qualified as U
 
 -- | Unconditionally writes a log to the console queue. Conditionally
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
@@ -78,7 +77,7 @@ putRegionLog ::
 putRegionLog region lg =
   asks getLogging >>= \logging -> do
     regionLogToConsoleQueue region logging lg
-    U.whenJust (logging ^. #fileLogging) (`logToFileQueue` lg)
+    for_ (logging ^. #fileLogging) (`logToFileQueue` lg)
 
 -- | Writes the log to the console queue.
 --

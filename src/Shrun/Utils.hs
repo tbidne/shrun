@@ -20,7 +20,6 @@ module Shrun.Utils
     -- * Misc Utils
     parseByteText,
     whileM_,
-    whenJust,
     whenLeft,
     untilJust,
     unsafeListToNESeq,
@@ -315,12 +314,6 @@ parseByteText txt =
     Left _ -> case parse @(SomeSize Double) txt of
       Right b -> Right (truncate <$> convert (Proxy @B) b)
       Left err -> Left err
-
--- | Runs the action when it is 'Just'.
---
--- @since 0.7
-whenJust :: (Applicative f) => Maybe a -> (a -> f ()) -> f ()
-whenJust m action = maybe (pure ()) action m
 
 -- | Runs the action when it is 'Left'.
 --
