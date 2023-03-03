@@ -298,20 +298,20 @@ handleLogFileSize ::
   TomlConfig ->
   FilePath ->
   m ()
-handleLogFileSize cfg fp = case cfg ^? (#fileLogging %? #sizeMode % _Just) of
-  Nothing -> pure ()
-  Just fileSizeMode -> do
-    fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
-    case fileSizeMode of
-      FileSizeModeWarn warnSize ->
-        when (fileSize > warnSize) $
-          putTextLn $
-            sizeWarning warnSize fileSize
-      FileSizeModeDelete delSize ->
-        when (fileSize > delSize) $ do
-          putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
-          removeFile fp
+handleLogFileSize cfg fp = U.whenJust mfileSizeMode $ \fileSizeMode -> do
+  fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
+  case fileSizeMode of
+    FileSizeModeWarn warnSize ->
+      when (fileSize > warnSize) $
+        putTextLn $
+          sizeWarning warnSize fileSize
+    FileSizeModeDelete delSize ->
+      when (fileSize > delSize) $ do
+        putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
+        removeFile fp
   where
+    mfileSizeMode = cfg ^? (#fileLogging %? #sizeMode % _Just)
+
     sizeWarning warnSize fileSize =
       mconcat
         [ "Warning: log file '",
