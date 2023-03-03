@@ -521,29 +521,3 @@ This is equivalent to running:
 ```
 $ shrun ". ~/.bashrc && foo"
 ```
-
-There is one complication. Many `bashrc` files include logic like:
-
-```sh
-# Commands that should be applied only for interactive shells.
-[[ $- == *i* ]] || return
-```
-
-This explicitly prohibits us from loading anything after this line, and can cause an error when trying to `source` it.
-
-Instead, one can split out the desired bash functions into a separate file:
-
-```sh
-# ~/.bash_functions.sh
-foo () {
-  ...
-}
-
-# ~/.bashrc
-. ~/.bash_functions.sh
-```
-
-```
-# Now we can source it without problems
-$ shrun --shell-init ". ~/.bash_functions.sh" foo
-```
