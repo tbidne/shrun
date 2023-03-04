@@ -101,6 +101,9 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 `shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [default.toml](./examples/default.toml) for a description of the `toml` file.
 
+<details>
+<summary>Expand configuration</summary>
+
 ## Core Functionality
 
 ### Config
@@ -403,7 +406,12 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 **Description:** Writes a default configuration to `stdout`.
 
+</details>
+
 # Building
+
+<details>
+<summary>Expand building</summary>
 
 ## Prerequisites
 
@@ -474,7 +482,12 @@ Then in `configuration.nix` you can simply have:
 }
 ```
 
+</details>
+
 # FAQ
+
+<details>
+<summary>Expand FAQ</summary>
 
 ## What if a command needs sudo?
 
@@ -521,3 +534,5 @@ This is equivalent to running:
 ```
 $ shrun ". ~/.bashrc && foo"
 ```
+
+</details>
