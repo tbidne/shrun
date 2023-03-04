@@ -104,13 +104,13 @@ timeout =
 
 shellInitOn :: TestTree
 shellInitOn =
-  testCase "Runs shell-init successful example" $ do
+  testCase "Runs init successful example" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--shell-init",
+        [ "--init",
           ". examples/bashrc",
           "foo"
         ]
@@ -121,7 +121,7 @@ shellInitOn =
 
 shellInitOff :: TestTree
 shellInitOff =
-  testCase "Runs shell-init failure example" $ do
+  testCase "Runs init failure example" $ do
     results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
     V.verifyExpected results expected
   where

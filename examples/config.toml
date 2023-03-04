@@ -6,9 +6,9 @@
 # e.g. "1d2h3m4s", "2h30s".
 timeout = 20
 
-# If given, shell-init is run before each command. That is,
+# If given, init is run before each command. That is,
 #
-#     shrun --shell-init ". ~/.bashrc" foo bar
+#     shrun --init ". ~/.bashrc" foo bar
 #
 # is equivalent to
 #
@@ -17,7 +17,7 @@ timeout = 20
 # This is useful when we want to run shrun with functions / aliases that
 # normally only exist in _interactive_ shells e.g. those loaded by
 # .bashrc.
-shell-init = ". examples/bashrc"
+init = ". examples/bashrc"
 
 # By default (key-hide = false), logs will refer to the key name, as defined in
 # legend section. If set to true, logs will instead reference the literal

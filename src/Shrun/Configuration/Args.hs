@@ -629,7 +629,7 @@ shellInitParser =
   OA.optional $
     OA.option OA.str $
       mconcat
-        [ OA.long "shell-init",
+        [ OA.long "init",
           OA.short 'i',
           OA.help helpTxt,
           OA.metavar "STRING"
@@ -637,8 +637,8 @@ shellInitParser =
   where
     helpTxt =
       mconcat
-        [ "If given, shell-init is run before each command. That is, ",
-          "'shrun --shell-init \". ~/.bashrc\" foo bar' is equivalent ",
+        [ "If given, init is run before each command. That is, ",
+          "'shrun --init \". ~/.bashrc\" foo bar' is equivalent ",
           "to 'shrun \". ~/.bashrc && foo\" \". ~/.bashrc && bar\"'."
         ]
 

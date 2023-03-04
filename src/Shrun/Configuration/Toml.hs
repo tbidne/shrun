@@ -158,7 +158,7 @@ decodeTimeout = getFieldOptWith tomlDecoder "timeout"
 
 -- | @since 0.8
 decodeInit :: Decoder (Maybe Text)
-decodeInit = getFieldOptWith tomlDecoder "shell-init"
+decodeInit = getFieldOptWith tomlDecoder "init"
 
 -- | @since 0.8
 decodePollInterval :: Decoder (Maybe PollInterval)

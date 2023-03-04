@@ -171,7 +171,7 @@ shellInitSpecs =
 
 parseShortTShellInit :: TestTree
 parseShortTShellInit =
-  testCase "Should parse short shell-init" $
+  testCase "Should parse short init" $
     verifyResult argList expected
   where
     argList = ["-i. ~/.bashrc", "command"]
@@ -179,18 +179,18 @@ parseShortTShellInit =
 
 parseLongTShellInit1 :: TestTree
 parseLongTShellInit1 =
-  testCase "Should parse long shell-init" $
+  testCase "Should parse long init" $
     verifyResult argList expected
   where
-    argList = ["--shell-init=. ~/.bashrc", "command"]
+    argList = ["--init=. ~/.bashrc", "command"]
     expected = updateDefArgs #shellInit ". ~/.bashrc"
 
 parseLongTShellInit2 :: TestTree
 parseLongTShellInit2 =
-  testCase "Should parse long shell-init" $
+  testCase "Should parse long init" $
     verifyResult argList expected
   where
-    argList = ["--shell-init", ". ~/.bashrc", "command"]
+    argList = ["--init", ". ~/.bashrc", "command"]
     expected = updateDefArgs #shellInit ". ~/.bashrc"
 
 fileLoggingSpecs :: TestTree

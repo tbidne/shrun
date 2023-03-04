@@ -85,7 +85,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         "test/integration/toml/overridden.toml",
         "--timeout",
         "10",
-        "--shell-init",
+        "--init",
         ". another file",
         "--file-log",
         logPath,

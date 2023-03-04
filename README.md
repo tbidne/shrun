@@ -26,7 +26,7 @@
     - [Config](#config)
     - [No Config](#no-config)
     - [Timeout](#timeout)
-    - [Shell-Init](#shell-init)
+    - [init](#init)
   - [Logging](#logging)
     - [Command Log](#command-log)
     - [Poll Interval](#poll-interval)
@@ -168,16 +168,16 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 <span style="color: #d6acff">[Finished] 9 seconds</span></code>
 </pre>
 
-### Shell-Init
+### Init
 
-**Arg:** `-i,--shell-init STRING`
+**Arg:** `-i,--init STRING`
 
-**Description:** If given, `shell-init` is run before each command. That is, `shrun --shell-init ". ~/.bashrc" foo bar` is equivalent to `shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"`.
+**Description:** If given, `init` is run before each command. That is, `shrun --init ". ~/.bashrc" foo bar` is equivalent to `shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"`.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --shell-init ". examples/bashrc" foo</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --init ". examples/bashrc" foo</span>
 <span style="color: #69ff94">[Success][foo] 0 seconds</span>
 <span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
@@ -510,10 +510,10 @@ $ shrun foo
 [Finished] 0 seconds
 ```
 
-Fortunately, the [Shell-Init](#shell-init) option exists exactly for this purpose:
+Fortunately, the [Init](#init) option exists exactly for this purpose:
 
 ```
-$ shrun --shell-init ". ~/.bashrc" foo
+$ shrun --init ". ~/.bashrc" foo
 ```
 
 This is equivalent to running:
