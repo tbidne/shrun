@@ -499,7 +499,7 @@ Shrun executes shell commands non-interactively, which means we do not have acce
 
 ```sh
 # ~/.bashrc
-function foo() {
+foo () {
   ...
 }
 ```
