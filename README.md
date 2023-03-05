@@ -26,7 +26,7 @@
     - [Config](#config)
     - [No Config](#no-config)
     - [Timeout](#timeout)
-    - [init](#init)
+    - [Init](#init)
   - [Logging](#logging)
     - [Command Log](#command-log)
     - [Poll Interval](#poll-interval)
