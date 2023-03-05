@@ -49,32 +49,68 @@ key-hide = false
 # (e.g. bash expression) or a recursive reference to another alias.
 #
 # Cycles are not allowed, nor are duplicate keys.
-legend = [
-  # Examples
-  { key = 'cmd1', val = 'echo "command one"' },
+#
+# Examples
+[[legend]]
+key = 'cmd1'
+val = 'echo "command one"'
 
-  # recursive references
-  { key = 'cmd2', val = 'cmd1' },
-  { key = 'cmd3', val = 'cmd2' },
+[[legend]]
+key = 'bash_expr'
+val = """
+set -e
 
-  # this will error when run
-  { key = 'cmd4', val = 'command four' },
+echo hi
 
-  # runs 3, 4 and echo
-  { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
+ls
 
-  # Bad Examples
+echo bye
+"""
 
-  # duplicates will cause an error when reading this file.
-  #{ key = 'dup_key', val = 'echo duplicate 1'},
-  #{ key = 'dup_key', val = 'echo duplicate 2'},
+# recursive reference cmd2 -> cmd1
+[[legend]]
+key = 'cmd2'
+val = 'cmd1'
 
-  # cyclic keys will cause an error when _actually used_ e.g. try running
-  # shrun -c examples/config.toml a
-  { key = 'a', val = 'c'},
-  { key = 'b', val = 'a'},
-  { key = 'c', val = 'b'},
-]
+# recursive reference cmd3 -> cmd2
+[[legend]]
+key = 'cmd3'
+val = 'cmd2'
+
+# this will error when run as bash will not understand 'command four'
+[[legend]]
+key = 'cmd4'
+val = 'command four'
+
+# runs 3, 4 and echo
+[[legend]]
+key = 'all'
+val = ['cmd3', 'cmd4', 'echo hi']
+
+# Bad examples
+
+# duplicates will cause an error when reading this file.
+#[[legend]]
+#key = 'dup_key'
+#val = 'echo duplicate 1'
+
+#[[legend]]
+#key = 'dup_key'
+#val = 'echo duplicate 2'
+
+# cyclic keys will cause an error when _actually used_ e.g. try running
+# shrun -c examples/config.toml a
+[[legend]]
+key = 'a'
+val = 'c'
+
+[[legend]]
+key = 'b'
+val = 'a'
+
+[[legend]]
+key = 'c'
+val = 'b'
 
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.
