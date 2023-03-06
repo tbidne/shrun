@@ -19,8 +19,8 @@ import Shrun.Configuration.Env.Types
   ( FileLogging,
     HasAnyError (..),
     HasCommands (..),
+    HasInit,
     HasLogging (..),
-    HasShellInit,
     HasTimeout (..),
     setAnyErrorTrue,
   )
@@ -54,8 +54,8 @@ import Shrun.Utils qualified as Utils
 shrun ::
   ( HasAnyError env,
     HasCommands env,
+    HasInit env,
     HasLogging env (Region m),
-    HasShellInit env,
     HasTimeout env,
     MonadAsync m,
     MonadHandleReader m,
@@ -115,8 +115,8 @@ shrun = displayRegions $ do
 runCommand ::
   ( HasAnyError env,
     HasCommands env,
+    HasInit env,
     HasLogging env (Region m),
-    HasShellInit env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,

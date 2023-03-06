@@ -54,7 +54,7 @@ parseDefaultArgs = testCase "Should parse default args" $ do
             { configPath = Nothing,
               noConfig = False,
               timeout = Nothing,
-              shellInit = Nothing,
+              init = Nothing,
               cmdDisplay = Nothing,
               pollInterval = Nothing,
               cmdNameTrunc = Nothing,
@@ -175,7 +175,7 @@ parseShortTShellInit =
     verifyResult argList expected
   where
     argList = ["-i. ~/.bashrc", "command"]
-    expected = updateDefArgs #shellInit ". ~/.bashrc"
+    expected = updateDefArgs #init ". ~/.bashrc"
 
 parseLongTShellInit1 :: TestTree
 parseLongTShellInit1 =
@@ -183,7 +183,7 @@ parseLongTShellInit1 =
     verifyResult argList expected
   where
     argList = ["--init=. ~/.bashrc", "command"]
-    expected = updateDefArgs #shellInit ". ~/.bashrc"
+    expected = updateDefArgs #init ". ~/.bashrc"
 
 parseLongTShellInit2 :: TestTree
 parseLongTShellInit2 =
@@ -191,7 +191,7 @@ parseLongTShellInit2 =
     verifyResult argList expected
   where
     argList = ["--init", ". ~/.bashrc", "command"]
-    expected = updateDefArgs #shellInit ". ~/.bashrc"
+    expected = updateDefArgs #init ". ~/.bashrc"
 
 fileLoggingSpecs :: TestTree
 fileLoggingSpecs =

@@ -89,7 +89,7 @@ data TomlConfig = MkTomlConfig
     -- | Shell logic to run before each command.
     --
     -- @since 0.8
-    shellInit :: !(Maybe Text),
+    init :: !(Maybe Text),
     -- | Whether to display the command (key) names or the commands
     -- themselves.
     --
@@ -218,7 +218,7 @@ mergeConfig :: Args -> TomlConfig -> TomlConfig
 mergeConfig args tomlConfig =
   MkTomlConfig
     { timeout = combine #timeout #timeout,
-      shellInit = combine #shellInit #shellInit,
+      init = combine #init #init,
       cmdDisplay = combine #cmdDisplay #cmdDisplay,
       pollInterval = combine #pollInterval #pollInterval,
       cmdNameTrunc = combine #cmdNameTrunc #cmdNameTrunc,

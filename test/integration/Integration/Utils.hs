@@ -111,7 +111,7 @@ deriving via ConfigIO instance MonadTerminal NoConfigIO
 --   equality with a file handle or queue.
 data SimpleEnv = MkSimpleEnv
   { timeout :: !(Maybe Timeout),
-    shellInit :: !(Maybe Text),
+    init :: !(Maybe Text),
     cmdDisplay :: !CmdDisplay,
     pollInterval :: !PollInterval,
     cmdLogging :: !Bool,
@@ -130,7 +130,7 @@ simplifyEnv :: Getter Env SimpleEnv
 simplifyEnv = to $ \env ->
   MkSimpleEnv
     { timeout = env ^. #timeout,
-      shellInit = env ^. #shellInit,
+      init = env ^. #init,
       cmdDisplay = env ^. (#logging % #cmdDisplay),
       pollInterval = env ^. (#logging % #pollInterval),
       cmdLogging = is (#logging % #cmdLogging % _Just) env,

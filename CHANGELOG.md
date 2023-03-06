@@ -23,9 +23,9 @@ the major/minor/patch definitions apply to the application's interface / usage
   i.e. `~/.local/state/shrun/log`.
 
 ### Added
-* `--init` (toml: `init`) option that allows one to specify some
-  logic that should be run before each command. This can be useful when we want
-  to load functions/aliases e.g. `shrun --init ". ~/.bashrc" foo`.
+* `--init` (toml: `init`) option that allows one to specify logic that should
+  be run before each command. This can be useful when we want to load
+  functions/aliases e.g. `shrun --init ". ~/.bashrc" foo`.
 
 ### Fixed
 * File logs are now streamed, do not buffer.

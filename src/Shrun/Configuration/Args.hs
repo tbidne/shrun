@@ -138,7 +138,7 @@ data Args = MkArgs
     -- | Shell logic to run before each command.
     --
     -- @since 0.8
-    shellInit :: !(Maybe Text),
+    init :: !(Maybe Text),
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1
@@ -207,7 +207,7 @@ defaultArgs cmds =
       noConfig = False,
       cmdDisplay = empty,
       pollInterval = empty,
-      shellInit = empty,
+      init = empty,
       cmdLogging = empty,
       cmdLogStripControl = empty,
       cmdNameTrunc = empty,

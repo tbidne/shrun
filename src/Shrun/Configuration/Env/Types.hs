@@ -10,7 +10,7 @@ module Shrun.Configuration.Env.Types
     prependCompletedCommand,
     HasLogging (..),
     HasTimeout (..),
-    HasShellInit (..),
+    HasInit (..),
     HasAnyError (..),
     setAnyErrorTrue,
 
@@ -292,12 +292,12 @@ class HasTimeout env where
   -- | @since 0.1
   getTimeout :: env -> Maybe Timeout
 
--- | Shell init, if any.
+-- | Init, if any.
 --
 -- @since 0.8
-class HasShellInit env where
+class HasInit env where
   -- | @since 0.8
-  getShellInit :: env -> Maybe Text
+  getInit :: env -> Maybe Text
 
 -- | Holds logging configuration.
 --
@@ -327,7 +327,7 @@ data Env = MkEnv
     -- | Shell logic to run before each command.
     --
     -- @since 0.8
-    shellInit :: !(Maybe Text),
+    init :: !(Maybe Text),
     -- | Logging env.
     --
     -- @since 0.7
@@ -370,8 +370,8 @@ instance HasTimeout Env where
   getTimeout = view #timeout
 
 -- | @since 0.8
-instance HasShellInit Env where
-  getShellInit = view #shellInit
+instance HasInit Env where
+  getInit = view #init
 
 -- | @since 0.3
 instance HasLogging Env ConsoleRegion where

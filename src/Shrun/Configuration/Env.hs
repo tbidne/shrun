@@ -193,7 +193,7 @@ fromToml onEnv cfg cmdsText = do
       envWithLogging mFileLogging consoleLogging =
         MkEnv
           { timeout = cfg ^. #timeout,
-            shellInit = cfg ^. #shellInit,
+            init = cfg ^. #init,
             logging =
               MkLogging
                 { cmdDisplay = fromMaybe ShowKey (cfg ^? (#cmdDisplay % _Just)),

@@ -103,7 +103,7 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
     expected =
       MkSimpleEnv
         { timeout = Just 3600,
-          shellInit = Just ". some file",
+          init = Just ". some file",
           cmdDisplay = HideKey,
           pollInterval = 127,
           cmdLogging = True,
@@ -131,7 +131,7 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
     expected =
       MkSimpleEnv
         { timeout = Nothing,
-          shellInit = Nothing,
+          init = Nothing,
           cmdDisplay = ShowKey,
           pollInterval = 10_000,
           cmdLogging = False,

@@ -35,8 +35,8 @@ import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
   ( HasAnyError (..),
     HasCommands (..),
+    HasInit (..),
     HasLogging (..),
-    HasShellInit (..),
     HasTimeout (..),
     Logging (..),
   )
@@ -56,7 +56,7 @@ import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))
 -- | @since 0.3
 data FuncEnv = MkFuncEnv
   { timeout :: !(Maybe Timeout),
-    shellInit :: !(Maybe Text),
+    init :: !(Maybe Text),
     logging :: !(Logging ()),
     completedCmds :: !(TVar (Seq CommandP1)),
     commands :: !(NESeq CommandP1),
@@ -72,8 +72,8 @@ instance HasTimeout FuncEnv where
   getTimeout = view #timeout
 
 -- | @since 0.8
-instance HasShellInit FuncEnv where
-  getShellInit = view #shellInit
+instance HasInit FuncEnv where
+  getInit = view #init
 
 -- | @since 0.3
 instance HasLogging FuncEnv () where
@@ -137,7 +137,7 @@ runMaybeException mException argList = do
     let funcEnv =
           MkFuncEnv
             { timeout = env ^. #timeout,
-              shellInit = env ^. #shellInit,
+              init = env ^. #init,
               -- doing this by hand since we need a different consoleLogging
               logging =
                 MkLogging

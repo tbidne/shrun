@@ -20,8 +20,8 @@ import Effects.Time (withTiming)
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommands (..),
+    HasInit (..),
     HasLogging (..),
-    HasShellInit (..),
     prependCompletedCommand,
     setAnyErrorTrue,
   )
@@ -50,7 +50,7 @@ import System.Exit (ExitCode (..))
 --
 -- @since 0.1
 shExitCode ::
-  ( HasShellInit env,
+  ( HasInit env,
     MonadProcess m,
     MonadReader env m,
     MonadSTM m
@@ -58,7 +58,7 @@ shExitCode ::
   CommandP1 ->
   m (ExitCode, Stdout, Stderr)
 shExitCode cmd = do
-  process <- commandToProcess cmd <$> asks getShellInit
+  process <- commandToProcess cmd <$> asks getInit
   (exitCode, stdout, stderr) <- P.readProcess process
   pure (exitCode, wrap MkStdout stdout, wrap MkStderr stderr)
   where
@@ -69,7 +69,7 @@ shExitCode cmd = do
 --
 -- @since 0.1
 tryShExitCode ::
-  ( HasShellInit env,
+  ( HasInit env,
     MonadProcess m,
     MonadReader env m,
     MonadSTM m
@@ -87,7 +87,7 @@ tryShExitCode cmd = do
 --
 -- @since 0.1
 tryCommand ::
-  ( HasShellInit env,
+  ( HasInit env,
     MonadProcess m,
     MonadReader env m,
     MonadSTM m
@@ -104,8 +104,8 @@ tryCommandLogging ::
   forall m env.
   ( HasAnyError env,
     HasCommands env,
+    HasInit env,
     HasLogging env (Region m),
-    HasShellInit env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
@@ -170,8 +170,8 @@ tryCommandLogging command = do
 --
 -- @since 0.1
 tryCommandStream ::
-  ( HasLogging env (Region m),
-    HasShellInit env,
+  ( HasInit env,
+    HasLogging env (Region m),
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
@@ -192,7 +192,7 @@ tryCommandStream logFn cmd = do
       errSpec = P.createPipe
 
   procConfig <-
-    asks getShellInit
+    asks getInit
       <&> P.setStderr outSpec
         . P.setStdout errSpec
         . commandToProcess cmd

@@ -73,8 +73,8 @@ instance AdvancePhase (Command Phase1) where
   type ExtraData (Command Phase1) = Maybe Text
 
   advancePhase (MkCommand k cmd) Nothing = MkCommand k cmd
-  advancePhase (MkCommand k cmd) (Just shellInit) =
-    MkCommand k (shellInit <> " && " <> cmd)
+  advancePhase (MkCommand k cmd) (Just init) =
+    MkCommand k (init <> " && " <> cmd)
 
 -- | Transforms a command into its text to be executed by the shell.
 --
