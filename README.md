@@ -154,21 +154,21 @@ Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic 
 
 **Arg:** `-i,--init STRING`
 
-**Description:** If given, `init` is run before each command. That is, `shrun --init ". ~/.bashrc" foo bar` is equivalent to `shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"`.
+**Description:** If given, `init` is run before each command. That is, `shrun --init "some logic" foo bar` is equivalent to `shrun "some logic && foo" "some logic && bar"`.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --init ". examples/bashrc" foo</span>
-<span style="color: #69ff94">[Success][foo] 0 seconds</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --init ". examples/bashrc" bash_function</span>
+<span style="color: #69ff94">[Success][bash_function] 0 seconds</span>
 <span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
 
 vs.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun foo</span>
-<span style="color: #ff6e6e">[Error][foo] 0 seconds: /bin/sh: line 1: foo: command not found</span>
+<code><span style="color: #ff79c6">$</span><span> shrun bash_function</span>
+<span style="color: #ff6e6e">[Error][bash_function] 0 seconds: /bin/sh: line 1: bash_function: command not found</span>
 <span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
 

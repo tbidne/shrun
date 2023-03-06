@@ -2,6 +2,6 @@
 
 # Example using sourced file with shrun
 
-foo () {
-  echo "foo"
+bash_function () {
+  echo "bash_function"
 }

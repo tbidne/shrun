@@ -112,10 +112,10 @@ shellInitOn =
       withNoConfig
         [ "--init",
           ". examples/bashrc",
-          "foo"
+          "bash_function"
         ]
     expected =
-      [ withSuccessPrefix "foo",
+      [ withSuccessPrefix "bash_function",
         finishedPrefix
       ]
 
@@ -127,10 +127,10 @@ shellInitOff =
   where
     args =
       withNoConfig
-        [ "foo"
+        [ "bash_function"
         ]
     expected =
-      [ withErrorPrefix "foo",
+      [ withErrorPrefix "bash_function",
         finishedPrefix
       ]
 
