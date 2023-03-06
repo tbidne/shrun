@@ -104,11 +104,11 @@ withEnv ::
   ( MonadFileReader m,
     MonadFileWriter m,
     MonadHandleWriter m,
-    MonadMask m,
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadSTM m,
+    MonadThrow m,
     MonadTerminal m
   ) =>
   (Env -> m a) ->
@@ -151,11 +151,11 @@ fromToml ::
   ( MonadFileReader m,
     MonadFileWriter m,
     MonadHandleWriter m,
-    MonadMask m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadSTM m,
-    MonadTerminal m
+    MonadTerminal m,
+    MonadThrow m
   ) =>
   (Env -> m a) ->
   TomlConfig ->
