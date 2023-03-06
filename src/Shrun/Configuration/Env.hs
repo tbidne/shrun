@@ -36,6 +36,7 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
+import Effects.FileSystem.HandleWriter (withBinaryFile)
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
@@ -182,10 +183,7 @@ fromToml onEnv cfg cmdsText = do
   completedCmds' <- newTVarM Seq.empty
   anyError <- newTVarM False
 
-  -- get functions that need to be run with bracket
-  let (acquireFileLogging, closeFileLogging) = fileLoggingBracketFns cfg
-
-      -- make environment
+  let -- make environment
       envWithLogging ::
         -- optional file logging
         Maybe (Tuple2 Handle (TBQueue FileLog)) ->
@@ -223,16 +221,12 @@ fromToml onEnv cfg cmdsText = do
 
   consoleQueue <- newTBQueueM 1000
 
-  bracket
-    acquireFileLogging
-    closeFileLogging
-    (\mLogging -> onEnv (envWithLogging mLogging consoleQueue))
+  withMLogging cfg $ \h -> onEnv (envWithLogging h consoleQueue)
 
-type BracketFns m a = Tuple2 (m a) (a -> m ())
+type MLogging = Maybe (Tuple2 Handle (TBQueue FileLog))
 
--- Return (acquire, cleanup) functions for file logging
-fileLoggingBracketFns ::
-  forall m.
+withMLogging ::
+  forall m a.
   ( HasCallStack,
     MonadFileWriter m,
     MonadHandleWriter m,
@@ -242,48 +236,32 @@ fileLoggingBracketFns ::
     MonadTerminal m
   ) =>
   TomlConfig ->
-  BracketFns m (Maybe (Tuple2 Handle (TBQueue FileLog)))
-fileLoggingBracketFns cfg = (acquireFileLogging, closeFileLogging)
+  ((MLogging -> m a) -> m a)
+withMLogging cfg onLogging = case cfg ^? (#fileLogging %? #path) of
+  -- 1. No file logging
+  Nothing -> onLogging Nothing
+  -- 2. Use the default path.
+  Just FPDefault -> do
+    stateDir <- getShrunXdgState
+    let fp = stateDir </> "log"
+    stateExists <- doesDirectoryExist stateDir
+    unless stateExists (createDirectoryIfMissing True stateDir)
+
+    ensureFileExists fp
+    handleLogFileSize cfg fp
+
+    fileQueue <- newTBQueueM 1000
+
+    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
+
+  -- 3. Use the given path.
+  Just (FPManual fp) -> do
+    ensureFileExists fp
+    handleLogFileSize cfg fp
+    fileQueue <- newTBQueueM 1000
+
+    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
   where
-    acquireFileLogging :: m (Maybe (Tuple2 Handle (TBQueue FileLog)))
-    closeFileLogging :: Maybe (Tuple2 Handle (TBQueue FileLog)) -> m ()
-
-    (acquireFileLogging, closeFileLogging) = case cfg ^? (#fileLogging %? #path) of
-      -- 1. No file logging: Do nothing
-      Nothing -> (pure Nothing, \_ -> pure ())
-      -- 2. Use the default path.
-      --      Acquire: Create the dirs/queue, open the file.
-      --      Cleanup: Close the file.
-      Just FPDefault ->
-        let acquire = do
-              stateDir <- getShrunXdgState
-              let fp = stateDir </> "log"
-              stateExists <- doesDirectoryExist stateDir
-              unless stateExists (createDirectoryIfMissing True stateDir)
-
-              ensureFileExists fp
-              handleLogFileSize cfg fp
-
-              fileQueue <- newTBQueueM 1000
-
-              Just . (,fileQueue) <$> openBinaryFile fp ioMode
-
-            cleanup = traverse_ (closeFile . fst)
-         in (acquire, cleanup)
-      -- 3. Use the given path.
-      --      Acquire: Create the queue, open the file.
-      --      Cleanup: Close the file.
-      Just (FPManual fp) ->
-        let acquire = do
-              ensureFileExists fp
-              handleLogFileSize cfg fp
-              fileQueue <- newTBQueueM 1000
-
-              Just . (,fileQueue) <$> openBinaryFile fp ioMode
-
-            cleanup = traverse_ (closeFile . fst)
-         in (acquire, cleanup)
-
     ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLogging %? #mode % _Just)) of
       FileModeAppend -> AppendMode
       FileModeWrite -> WriteMode
@@ -346,6 +324,3 @@ getShrunXdgConfig = getXdgConfig "shrun"
 
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m FilePath
 getShrunXdgState = getXdgState "shrun"
-
-closeFile :: (MonadHandleWriter f) => Handle -> f ()
-closeFile f = hFlush f *> hClose f
