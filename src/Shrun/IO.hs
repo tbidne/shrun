@@ -228,10 +228,7 @@ streamOutput logFn cmd p = do
   lastReadErrRef <- newIORef Nothing
   logging <- asks (getLogging @env @(Region m))
   let pollInterval = logging ^. (#pollInterval % #unPollInterval)
-      sleepFn =
-        if pollInterval == 0
-          then pure ()
-          else microsleep pollInterval
+      sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
   exitCode <- U.untilJust $ do
     -- We need to read from both stdout and stderr -- regardless of if we
     -- created a single pipe in tryCommandStream -- or else we will miss
