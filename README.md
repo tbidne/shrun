@@ -42,6 +42,9 @@
   - [Miscellaneous](#miscellaneous)
     - [Default Config](#default-config)
 - [Building](#building)
+  - [Prerequisites](#prerequisites)
+  - [Cabal](#cabal)
+  - [Nix](#nix)
 - [FAQ](#faq)
 
 # Motivation
