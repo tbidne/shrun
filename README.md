@@ -18,16 +18,66 @@
 
 ---
 
+<style>
+@media screen and (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Style the button */
+.top-link {
+  transition:       all .25s ease-in-out;
+  position:         fixed;
+  bottom:           0;
+  right:            0;
+  display:          inline-flex;
+  color:            #000000;
+
+  cursor:           pointer;
+  align-items:      center;
+  justify-content:  center;
+  margin:           0 2em 2em 0;
+  border-radius:    50%;
+  padding:          .25em;
+  width:            1em;
+  height:           1em;
+  background-color: #F8F8F8;
+}
+</style>
+
+<a class="top-link hide" href="#top">↑</a>
+<a name="top"></a>
+
 ### Table of Contents
 - [Motivation](#motivation)
 - [Introduction](#introduction)
 - [Configuration](#configuration)
+  - [Core Functionality](#core-functionality)
+    - [Config](#config)
+    - [No Config](#no-config)
+    - [Timeout](#timeout)
+    - [Init](#init)
+  - [Logging](#logging)
+    - [Command Log](#command-log)
+    - [Poll Interval](#poll-interval)
+    - [File Log](#file-log)
+    - [File Log Mode](#file-log-mode)
+    - [File Log Size Mode](#file-log-size-mode)
+  - [Log Formatting](#log-formatting)
+    - [Key Hide](#key-hide)
+    - [Strip Control](#strip-control)
+    - [File Log Strip Control](#file-log-strip-control)
+    - [Command Name Truncation](#command-name-truncation)
+    - [Command Line Truncation](#command-line-truncation)
+  - [Miscellaneous](#miscellaneous)
+    - [Default Config](#default-config)
 - [Building](#building)
 - [FAQ](#faq)
 
 # Motivation
 
-`shrun` was borne of frustration. Suppose one needs to run several shell commands on a regular basis e.g. a developer running updates after pulling the latest code. These can be run manually in separate terminals:
+`shrun` was borne of frustration. Suppose we need to run several shell commands on a regular basis e.g. updates after pulling the latest code. These can be run manually in separate terminals:
 
 ```sh
 cmd1
@@ -44,7 +94,7 @@ alias run_commands="cmd1 && cmd2 && cmd3 ..."
 
 All well and good, but this approach has several deficiencies:
 
-1. There is no information about how long the commands have been running. If any of the commands are long-lived, how would we know when it has been "too long" and the commands should be cancelled? One could use a wall clock or a stopwatch, but that is imprecise and requires remembering every time the commands are run, which is certainly unsatisfying.
+1. There is no information about how long the commands have been running. If any of the commands are long-lived, how would we know when it has been "too long" and the commands should be cancelled? We could use a wall clock or a stopwatch, but that is imprecise and requires remembering every time the commands are run, which is certainly unsatisfying.
 
 1. These commands are all run synchronously even though there may be no relation between them. For example, three commands that each take 5 minutes will combine to take 15 minutes. This is usually unnecessary.
 
@@ -80,9 +130,6 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 `shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [default.toml](./examples/default.toml) for a description of the `toml` file.
 
-<details>
-<summary>Expand configuration</summary>
-
 ## Core Functionality
 
 ### Config
@@ -96,7 +143,7 @@ Examples can be found in [examples](./examples).
 
 #### Legend
 
-In addition to providing an alternative to CLI args, the config file has a `legend` section. This allows one to define aliases for commands. Each alias has a key and a value. The value can either be a single unit or a list of units, where a unit is either a command literal (e.g. bash expression) or a recursive reference to another alias.
+In addition to providing an alternative to CLI args, the config file has a `legend` section. This allows us to define aliases for commands. Each alias has a key and a value. The value can either be a single unit or a list of units, where a unit is either a command literal (e.g. bash expression) or a recursive reference to another alias.
 
 **Example:** For instance, given the section
 
@@ -385,12 +432,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 **Description:** Writes a default configuration to `stdout`.
 
-</details>
-
 # Building
-
-<details>
-<summary>Expand building</summary>
 
 ## Prerequisites
 
@@ -411,7 +453,7 @@ You will need `ghc` and `cabal-install`. From there `shrun` can be built with `c
 
 Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shrun` can be built with `nix build`, which will compile and run the tests.
 
-To launch a shell with various tools (e.g. `cabal`, `hls`), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code. At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `nixpkgs`.
+To launch a shell with various tools (e.g. `cabal`, `hls`), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code. At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `hackage`.
 
 ### Via nix
 
@@ -461,16 +503,11 @@ Then in `configuration.nix` you can simply have:
 }
 ```
 
-</details>
-
 # FAQ
-
-<details>
-<summary>Expand FAQ</summary>
 
 ## What if a command needs sudo?
 
-Commands _can_ receive `stdin`, so running e.g. `shrun "sudo some command"` will launch the sudo prompt. From there one can type in their password and hit enter as usual.
+Commands _can_ receive `stdin`, so running e.g. `shrun "sudo some command"` will launch the sudo prompt. From there we can type the password and hit `enter` as usual.
 
 However this is a bit clunky as the timer text will overwrite the `[sudo] password for ...` prompt, and multiple commands add more complication.
 
@@ -487,7 +524,7 @@ $ shrun ...
 
 ## What if my command relies on interactive shell e.g. loading ~/.bashrc?
 
-Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc`. This can be annoying if one uses their `bashrc` to define functions/aliases and then wants to run these via `shrun`.
+Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc`. This can be annoying if we want to run any of these functions/aliases.
 
 ```sh
 # ~/.bashrc
@@ -513,5 +550,3 @@ This is equivalent to running:
 ```
 $ shrun ". ~/.bashrc && foo"
 ```
-
-</details>
