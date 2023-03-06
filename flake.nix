@@ -81,9 +81,9 @@
             pkgs.gnumake
             pkgs.zlib
           ];
-          devTools = c: with c; [
-            (pkgs.haskell.lib.dontCheck ghcid)
-            (hlib.overrideCabal haskell-language-server (old: {
+          devTools = c: [
+            (pkgs.haskell.lib.dontCheck c.ghcid)
+            (hlib.overrideCabal c.haskell-language-server (old: {
               configureFlags = (old.configureFlags or [ ]) ++
                 [
                   "-f -brittany"
