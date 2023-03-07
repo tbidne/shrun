@@ -81,8 +81,7 @@ shrun = displayRegions $ do
     flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
 
     -- if any processes have failed, exit with an error
-    anyErrorRef <- asks getAnyError
-    anyError <- readTVarM anyErrorRef
+    anyError <- readTVarM =<< asks getAnyError
     when anyError exitFailure
   where
     runWithFileLogging fileLogging =
