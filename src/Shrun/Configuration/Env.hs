@@ -1,28 +1,10 @@
 {-# LANGUAGE UndecidableInstances #-}
 
--- | Module that provides env types and requisite typeclasses, along with
--- parsing functionality.
+-- | Provides functions for creating 'Env' from CLI/Toml configuration.
 --
 -- @since 0.1
 module Shrun.Configuration.Env
-  ( -- * \"HasX\" style typeclasses
-    HasCommands (..),
-    Env.prependCompletedCommand,
-    HasLogging (..),
-    HasTimeout (..),
-    HasAnyError (..),
-    Env.setAnyErrorTrue,
-
-    -- * Types
-    Env (..),
-    CmdDisplay (..),
-    CmdLogging (..),
-    Truncation (..),
-    TruncRegion (..),
-    StripControl (..),
-
-    -- * Functions
-    withEnv,
+  ( withEnv,
     makeEnvAndShrun,
   )
 where
@@ -50,17 +32,12 @@ import Shrun.Configuration.Env.Types
     CmdLogging (..),
     Env (..),
     FileLogging (..),
-    HasAnyError (..),
-    HasCommands (..),
     HasLogging (..),
-    HasTimeout (..),
     LineTruncation (..),
     Logging (..),
     StripControl (..),
-    TruncRegion (..),
     Truncation (..),
   )
-import Shrun.Configuration.Env.Types qualified as Env
 import Shrun.Configuration.Legend (linesToMap, translateCommands)
 import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
 import Shrun.Data.Command (Command (..))

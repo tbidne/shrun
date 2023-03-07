@@ -33,14 +33,13 @@ import Shrun.IO.Types
     readHandle,
     readHandleResultToStderr,
   )
-import Shrun.Logging
+import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Logging.Types
   ( Log (..),
     LogLevel (..),
     LogMode (..),
     LogRegion (LogRegion),
-    MonadRegionLogger (..),
-    formatConsoleLog,
-    formatFileLog,
   )
 import Shrun.Prelude
 import Shrun.Utils qualified as U

@@ -7,11 +7,8 @@ import Data.Text qualified as T
 import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Numeric.Algebra (zero)
-import Shrun.Configuration.Env
-  ( CmdDisplay (..),
-    withEnv,
-  )
-import Shrun.Configuration.Env.Types (StripControl (..))
+import Shrun.Configuration.Env (withEnv)
+import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
 
 specs :: IO TestArgs -> TestTree

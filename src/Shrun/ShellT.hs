@@ -10,7 +10,7 @@ module Shrun.ShellT
 where
 
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Logging (MonadRegionLogger (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.

@@ -17,43 +17,17 @@
 --
 -- @since 0.7
 module Shrun.Logging
-  ( -- * Types
-
-    -- ** Core
-    Log (..),
-    LogMode (..),
-    LogLevel (..),
-
-    -- ** Console Logs
-    ConsoleLog,
-    LogRegion (..),
-
-    -- ** File Logs
-    FileLog,
-
-    -- ** Class
-    MonadRegionLogger (..),
-
-    -- * Writing logs
+  ( -- * Writing logs
     putRegionLog,
     regionLogToConsoleQueue,
     logToFileQueue,
-
-    -- * Formatting
-    formatConsoleLog,
-    formatFileLog,
   )
 where
 
 import Shrun.Configuration.Env.Types (FileLogging, HasLogging (..), Logging)
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.Logging.Types
-  ( ConsoleLog,
-    FileLog,
-    Log (..),
-    LogLevel (..),
-    LogMode (..),
+  ( Log (..),
     LogRegion (..),
   )
 import Shrun.Prelude

@@ -27,23 +27,16 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
-import Shrun.Logging
-  ( FileLog,
-    Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel
-      ( LevelError,
-        LevelFatal,
-        LevelFinished,
-        LevelSuccess,
-        LevelTimer,
-        LevelWarn
-      ),
-    LogMode (LogModeFinish, LogModeSet),
-    LogRegion (..),
-    MonadRegionLogger (..),
-  )
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as LogFmt
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Logging.Types
+  ( FileLog,
+    Log (..),
+    LogLevel (..),
+    LogMode (LogModeFinish, LogModeSet),
+    LogRegion (..),
+  )
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils

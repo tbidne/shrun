@@ -42,7 +42,7 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging (MonadRegionLogger (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
 import System.Environment qualified as SysEnv
