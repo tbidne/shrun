@@ -84,7 +84,7 @@ formatConsoleLog logging log =
     truncateCmdLineFn = case ( log ^. #lvl,
                                mCmdLogging ^? (_Just % #lineTrunc %? #unTruncation)
                              ) of
-      (LevelSubCommand, Just m) -> U.truncateIfNeeded m
+      (LevelCommand, Just m) -> U.truncateIfNeeded m
       _ -> id
 
     colorize = P.color $ logToColor log
@@ -191,7 +191,7 @@ logToPrefix = levelToPrefix . view #lvl
 --
 -- @since 0.1
 levelToColor :: LogLevel -> Color
-levelToColor LevelSubCommand = White
+levelToColor LevelCommand = White
 levelToColor LevelFinished = Blue
 levelToColor LevelTimer = Cyan
 levelToColor LevelSuccess = Green
@@ -203,7 +203,7 @@ levelToColor LevelFatal = Red
 --
 -- @since 0.1
 levelToPrefix :: LogLevel -> Text
-levelToPrefix LevelSubCommand = "Command"
+levelToPrefix LevelCommand = "Command"
 levelToPrefix LevelFinished = "Finished"
 levelToPrefix LevelTimer = "Timer"
 levelToPrefix LevelSuccess = "Success"

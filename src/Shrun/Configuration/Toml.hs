@@ -95,7 +95,7 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.5
     cmdDisplay :: !(Maybe CmdDisplay),
-    -- | How often to poll subcommands for logs, in microseconds.
+    -- | How often to poll commands for logs, in microseconds.
     --
     -- @since 0.8
     pollInterval :: !(Maybe PollInterval),

@@ -143,7 +143,7 @@ data Args = MkArgs
     --
     -- @since 0.1
     cmdDisplay :: !(Maybe CmdDisplay),
-    -- | How often to poll subcommands for logs, in microseconds.
+    -- | How often to poll commands for logs, in microseconds.
     --
     -- @since 0.8
     pollInterval :: !(Maybe PollInterval),
@@ -607,7 +607,7 @@ pollIntervalParser =
     helpTxt =
       mconcat
         [ "Non-negative integer used in conjunction with --cmd-log and ",
-          "--file-log that determines how quickly we poll subcommands for ",
+          "--file-log that determines how quickly we poll commands for ",
           "logs, in microseconds. A value of 0 is interpreted as infinite ",
           "i.e. limited only by the CPU. Defaults to ",
           prettyPollInterval defaultPollInterval,

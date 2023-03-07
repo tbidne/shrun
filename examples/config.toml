@@ -29,7 +29,7 @@ init = ". examples/bashrc"
 key-hide = false
 
 # Non-negative integer used in conjunction with cmd-log and file-log
-# that determines how quickly we poll subcommands for logs, in microseconds.
+# that determines how quickly we poll commands for logs, in microseconds.
 # A value of 0 is interpreted as infinite i.e. limited only by the CPU.
 # Defaults to 10,000.
 #

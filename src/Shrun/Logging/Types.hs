@@ -28,7 +28,7 @@ import Shrun.Prelude
 -- @since 0.1
 data LogLevel
   = -- | @since 0.1
-    LevelSubCommand
+    LevelCommand
   | -- | @since 0.7
     LevelFinished
   | -- | @since 0.1

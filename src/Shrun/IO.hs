@@ -278,6 +278,6 @@ writeLog logFn cmd lastReadRef (ReadSuccess msg) = do
     MkLog
       { cmd = Just cmd,
         msg,
-        lvl = LevelSubCommand,
+        lvl = LevelCommand,
         mode = LogModeSet
       }

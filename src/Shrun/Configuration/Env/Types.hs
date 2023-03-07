@@ -234,7 +234,7 @@ data Logging r = MkLogging
     --
     -- @since 0.7
     cmdDisplay :: !CmdDisplay,
-    -- | How often to poll subcommands for logs, in microseconds.
+    -- | How often to poll commands for logs, in microseconds.
     --
     -- @since 0.8
     pollInterval :: !PollInterval,

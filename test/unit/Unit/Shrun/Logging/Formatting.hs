@@ -221,8 +221,8 @@ lineTruncProps =
       msg' <- forAll genLongLineText
       log <- forAll LGens.genLog
 
-      -- only perform line truncation for LevelSubCommand (also requires a command)
-      let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelSubCommand}
+      -- only perform line truncation for LevelCommand (also requires a command)
+      let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelCommand}
           result = formatConsoleLog env log'
 
       annotate $ T.unpack result

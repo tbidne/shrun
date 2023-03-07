@@ -224,7 +224,7 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Arg:** `-p, --poll-interval`
 
-**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll subcommands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
+**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
 
 Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
 

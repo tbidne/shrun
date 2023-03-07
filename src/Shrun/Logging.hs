@@ -2,7 +2,7 @@
 -- logging works:
 --
 -- 1. "Shrun.IO" sends logs per command based on the environment (i.e. is file
---    logging on and/or do we log subcommands). If any logs are produced, they
+--    logging on and/or do we log commands). If any logs are produced, they
 --    are formatted and sent directly to a queue.
 --
 -- 2. "Shrun" also produces logs. These are "higher-level" e.g. success/failure

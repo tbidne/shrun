@@ -16,12 +16,12 @@ main = do
     -- the failure.
     --
     -- Moreover, we don't really want to print a CallStack for ExitFailure,
-    -- as we are throwing that whenever a subcommand fails, and the CallStack
+    -- as we are throwing that whenever a command fails, and the CallStack
     -- is just unhelpful noise.
     case fromException ex of
       -- should be impossible due to doNothingOnSuccess...
       Just (MkExceptionCS ExitSuccess _) -> pure ()
-      -- for subcommand failures
+      -- for command failures
       Just (MkExceptionCS (ExitFailure _) _) -> pure ()
       Nothing -> putStrLn $ displayException ex
 
