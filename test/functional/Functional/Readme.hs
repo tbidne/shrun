@@ -17,8 +17,8 @@ specs args =
     [ gif,
       core,
       timeout,
-      shellInitOn,
-      shellInitOff,
+      initOn,
+      initOff,
       cmdlogOn,
       cmdlogOff,
       fileLog args,
@@ -102,8 +102,8 @@ timeout =
         finishedPrefix
       ]
 
-shellInitOn :: TestTree
-shellInitOn =
+initOn :: TestTree
+initOn =
   testCase "Runs init successful example" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
@@ -119,8 +119,8 @@ shellInitOn =
         finishedPrefix
       ]
 
-shellInitOff :: TestTree
-shellInitOff =
+initOff :: TestTree
+initOff =
   testCase "Runs init failure example" $ do
     results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
     V.verifyExpected results expected

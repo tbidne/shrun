@@ -250,7 +250,7 @@ argsParser =
     <$> configParser
     <*> noConfigParser
     <*> timeoutParser
-    <*> shellInitParser
+    <*> initParser
     <*> commandDisplayParser
     <*> pollIntervalParser
     <*> cmdTruncationParser
@@ -624,8 +624,8 @@ pollIntervalParser =
         . showt
         . view #unPollInterval
 
-shellInitParser :: Parser (Maybe Text)
-shellInitParser =
+initParser :: Parser (Maybe Text)
+initParser =
   OA.optional $
     OA.option OA.str $
       mconcat

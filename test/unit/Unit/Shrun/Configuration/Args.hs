@@ -25,7 +25,7 @@ tests =
     [ defaultSpec,
       configSpecs,
       timeoutSpecs,
-      shellInitSpecs,
+      initSpecs,
       fileLoggingSpecs,
       fileLogModeSpecs,
       fileLogStripControlSpecs,
@@ -160,33 +160,33 @@ parseNegativeTimeoutFail =
   where
     argList = ["--timeout=-7", "command"]
 
-shellInitSpecs :: TestTree
-shellInitSpecs =
+initSpecs :: TestTree
+initSpecs =
   testGroup
-    "ShellInit arg parsing"
-    [ parseShortTShellInit,
-      parseLongTShellInit1,
-      parseLongTShellInit2
+    "Init arg parsing"
+    [ parseShortInit,
+      parseLongInit1,
+      parseLongInit2
     ]
 
-parseShortTShellInit :: TestTree
-parseShortTShellInit =
+parseShortInit :: TestTree
+parseShortInit =
   testCase "Should parse short init" $
     verifyResult argList expected
   where
     argList = ["-i. ~/.bashrc", "command"]
     expected = updateDefArgs #init ". ~/.bashrc"
 
-parseLongTShellInit1 :: TestTree
-parseLongTShellInit1 =
+parseLongInit1 :: TestTree
+parseLongInit1 =
   testCase "Should parse long init" $
     verifyResult argList expected
   where
     argList = ["--init=. ~/.bashrc", "command"]
     expected = updateDefArgs #init ". ~/.bashrc"
 
-parseLongTShellInit2 :: TestTree
-parseLongTShellInit2 =
+parseLongInit2 :: TestTree
+parseLongInit2 =
   testCase "Should parse long init" $
     verifyResult argList expected
   where
