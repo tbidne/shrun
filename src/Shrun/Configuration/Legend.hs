@@ -14,6 +14,7 @@ module Shrun.Configuration.Legend
 where
 
 import Data.HashMap.Strict qualified as Map
+import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text.Lazy qualified as LazyT
@@ -22,7 +23,6 @@ import Data.Text.Lazy.Builder qualified as LTBuilder
 import Shrun.Data.Command (Command (..), CommandP1)
 import Shrun.Data.Legend (KeyVal (..), LegendMap)
 import Shrun.Prelude
-import Shrun.Utils qualified as U
 
 -- $setup
 -- >>> import Shrun.Prelude
@@ -113,22 +113,23 @@ instance Exception CyclicKeyError where
 --
 -- @since 0.1
 translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq CommandP1)
-translateCommands mp (t :<|| ts) = sequenceA $ U.foldMap1 (lineToCommands mp) t ts
+translateCommands mp ts = join <$> traverse (lineToCommands mp) ts
 
-lineToCommands :: LegendMap -> Text -> NESeq (Either CyclicKeyError CommandP1)
+lineToCommands :: LegendMap -> Text -> Either CyclicKeyError (NESeq CommandP1)
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
     -- we have traversed so far, e.g., a -> b -> c
+    go :: Maybe Text -> HashSet Text -> Builder -> Text -> Either CyclicKeyError (NESeq CommandP1)
     go prevKey foundKeys path line = case Map.lookup line mp of
       -- The line isn't a key, return it.
-      Nothing -> NESeq.singleton (Right (MkCommand prevKey line))
+      Nothing -> Right $ NESeq.singleton (MkCommand prevKey line)
       -- The line is a key, check for cycles and recursively
       -- call.
       Just val -> case maybeCyclicVal of
         Just cyclicVal ->
           let pathTxt = builderToPath path line cyclicVal
-           in NESeq.singleton $ Left (MkCyclicKeyError pathTxt)
+           in Left $ MkCyclicKeyError pathTxt
         Nothing -> case val of
           -- NOTE: We have to split these cases up due to handling the prevKey
           -- differently. We want to pass along the key name (i.e. line)
@@ -145,7 +146,7 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           -- pass the name in when it is guaranteed we have a unique
           -- key = val mapping.
           (x :<|| IsEmpty) -> go (Just line) foundKeys' path' x
-          xs -> xs >>= go Nothing foundKeys' path'
+          xs -> join <$> traverse (go Nothing foundKeys' path') xs
         where
           foundKeys' = Set.insert line foundKeys
           -- Detect if we have an intersection between previously found
