@@ -122,13 +122,14 @@ tryCommandLogging ::
   m (Either (RelativeTime, Stderr) RelativeTime)
 tryCommandLogging command = do
   logging <- asks getLogging
+  let cmdDisplay = logging ^. #cmdDisplay
 
   let cmdFn = case (logging ^. #cmdLogging, logging ^. #fileLogging) of
         -- 1. No CmdLogging and no FileLogging: No streaming at all.
         (Nothing, Nothing) -> tryCommand
         -- 2. No CmdLogging but FileLogging: Stream (to file) but no console
         --    region.
-        (Nothing, Just fileLogging) -> tryCommandStream (logFile fileLogging)
+        (Nothing, Just fileLogging) -> tryCommandStream (logFile cmdDisplay fileLogging)
         -- 3. CmdLogging: Create region and stream. Also stream to file if
         --    requested.
         (Just _, mFileLogging) -> \cmd ->
@@ -136,7 +137,7 @@ tryCommandLogging command = do
             tryCommandStream
               ( \log -> do
                   logConsole logging region log
-                  for_ mFileLogging (`logFile` log)
+                  for_ mFileLogging (\fl -> logFile cmdDisplay fl log)
               )
               cmd
 
@@ -160,8 +161,8 @@ tryCommandLogging command = do
           formatted = formatConsoleLog logging log
       writeTBQueueM consoleQueue (LogRegion (log ^. #mode) region formatted)
 
-    logFile fileLogging log = do
-      formatted <- formatFileLog fileLogging log
+    logFile cmdDisplay fileLogging log = do
+      formatted <- formatFileLog cmdDisplay fileLogging log
       writeTBQueueM (fileLogging ^. #log % _2) formatted
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output

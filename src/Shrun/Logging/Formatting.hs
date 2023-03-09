@@ -26,6 +26,8 @@ import Shrun.Configuration.Env.Types
     FileLogging,
     Logging (..),
     StripControl (..),
+    TruncRegion (..),
+    Truncation,
   )
 import Shrun.Data.Command (Command (..), CommandP1)
 import Shrun.Logging.Types (Log (..), LogLevel (..))
@@ -46,18 +48,17 @@ formatConsoleLog :: Logging r -> Log -> ConsoleLog
 formatConsoleLog logging log =
   let line = case log ^. #cmd of
         Nothing -> brackets True prefix <> msgStripped
-        Just com ->
-          -- Get cmd name to display. Always strip control sequences.
-          let cmdName =
-                Utils.stripControlAll $
-                  displayCmd com (logging ^. #cmdDisplay)
-              -- truncate cmd/name if necessary
-              cmdName' = brackets True (truncateNameFn cmdName)
+        Just cmd ->
+          let cmd' =
+                displayCommand
+                  (logging ^. #cmdDisplay)
+                  (logging ^. #cmdNameTrunc)
+                  cmd
            in -- truncate entire line if necessary
               truncateCmdLineFn $
                 mconcat
                   [ brackets False prefix,
-                    cmdName',
+                    cmd',
                     msgStripped
                   ]
    in -- NOTE: We want colorize on the outside for two reasons:
@@ -74,11 +75,6 @@ formatConsoleLog logging log =
     msgStripped = stripChars (log ^. #msg) mStripControl
     mCmdLogging = logging ^. #cmdLogging
     mStripControl = mCmdLogging ^? _Just % #stripControl
-
-    truncateNameFn =
-      maybeApply
-        U.truncateIfNeeded
-        (logging ^? (#cmdNameTrunc %? #unTruncation))
 
     -- truncate entire line if necessary (flag on and command log only)
     truncateCmdLineFn = case ( log ^. #lvl,
@@ -99,19 +95,25 @@ maybeApply = maybe id
 formatFileLog ::
   ( MonadTime m
   ) =>
+  CmdDisplay ->
   FileLogging ->
   Log ->
   m FileLog
-formatFileLog fileLogging log = do
+formatFileLog cmdDisplay fileLogging log = do
   currTime <- getSystemTimeString
   let formatted = case log ^. #cmd of
         Nothing -> brackets True prefix <> msgStripped
-        Just com ->
-          mconcat
-            [ brackets False prefix,
-              brackets True (Utils.stripControlAll $ com ^. #command),
-              msgStripped
-            ]
+        Just cmd ->
+          let cmd' =
+                displayCommand
+                  cmdDisplay
+                  Nothing
+                  cmd
+           in mconcat
+                [ brackets False prefix,
+                  cmd',
+                  msgStripped
+                ]
       withTimestamp =
         mconcat
           [ brackets False (pack currTime),
@@ -123,6 +125,23 @@ formatFileLog fileLogging log = do
     msgStripped = stripChars (log ^. #msg) (Just stripControl)
     stripControl = fileLogging ^. #stripControl
     prefix = logToPrefix log
+
+displayCommand ::
+  CmdDisplay ->
+  Maybe (Truncation TCmdName) ->
+  CommandP1 ->
+  Text
+displayCommand cmdDisplay cmdNameTrunc com = brackets True (truncateNameFn cmdName)
+  where
+    -- Get cmd name to display. Always strip control sequences.
+    cmdName =
+      Utils.stripControlAll $ displayCmd com cmdDisplay
+
+    -- truncate cmd/name if necessary
+    truncateNameFn =
+      maybeApply
+        U.truncateIfNeeded
+        (cmdNameTrunc ^? (_Just % #unTruncation))
 
 -- | Pretty show for 'Command'. If the command has a key, and 'CmdDisplay' is
 -- 'ShowKey' then we return the key. Otherwise we return the command itself.

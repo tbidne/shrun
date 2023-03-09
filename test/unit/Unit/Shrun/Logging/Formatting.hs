@@ -295,6 +295,7 @@ fileLogProps =
       fileLogMessageProps,
       fileLogPrefixProps,
       commandProps,
+      commandPropsShowKey,
       shapeProps
     ]
 
@@ -303,7 +304,7 @@ timestampProps =
   testPropertyNamed "Starts with timestamp" "timestampProps" $
     property $ do
       log <- forAll LGens.genLog
-      let result = formatFileLog log
+      let result = formatFileLog HideKey log
           (res, rest) = Utils.breakStripPoint sysTimeNE result
       annotate $ T.unpack result
       annotate $ T.unpack rest
@@ -314,7 +315,7 @@ fileLogMessageProps =
   testPropertyNamed "Includes message" "fileLogMessageProps" $
     property $ do
       log@MkLog {msg} <- forAll LGens.genLog
-      let result = formatFileLog log
+      let result = formatFileLog HideKey log
       annotate $ T.unpack result
       assert $ T.isInfixOf (T.strip msg) result
 
@@ -323,7 +324,7 @@ fileLogPrefixProps =
   testPropertyNamed "Formats prefix" "fileLogPrefixProps" $
     property $ do
       log@MkLog {lvl} <- forAll LGens.genLog
-      let result = formatFileLog log
+      let result = formatFileLog HideKey log
       let pfx = Formatting.levelToPrefix lvl
       annotate $ T.unpack pfx
       assert $ T.isInfixOf pfx result
@@ -334,7 +335,20 @@ commandProps =
     property $ do
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
       let cmdTxt = "[" <> Utils.stripControlAll cmd' <> "]"
-          result = formatFileLog log
+          result = formatFileLog HideKey log
+      annotate $ T.unpack cmdTxt
+      annotate $ T.unpack result
+      assert $ T.isInfixOf cmdTxt result
+
+commandPropsShowKey :: TestTree
+commandPropsShowKey =
+  testPropertyNamed "Formats command with ShowKey" "commandProps" $
+    property $ do
+      log@MkLog {cmd = Just (MkCommand mk cmd')} <- forAll LGens.genLogWithCmd
+      let cmdTxt = case mk of
+            Nothing -> "[" <> Utils.stripControlAll cmd' <> "]"
+            Just k -> "[" <> Utils.stripControlAll k <> "]"
+          result = formatFileLog ShowKey log
       annotate $ T.unpack cmdTxt
       annotate $ T.unpack result
       assert $ T.isInfixOf cmdTxt result
@@ -344,7 +358,7 @@ shapeProps =
   testPropertyNamed "Formats shape" "shapeProps" $
     property $ do
       log@MkLog {cmd, msg} <- forAll LGens.genLogWithCmd
-      let result = formatFileLog log
+      let result = formatFileLog HideKey log
           expected =
             mconcat
               [ Formatting.brackets False sysTime,
@@ -357,10 +371,10 @@ shapeProps =
       annotate $ T.unpack result
       expected === result
 
-formatFileLog :: Log -> Text
-formatFileLog log =
+formatFileLog :: CmdDisplay -> Log -> Text
+formatFileLog cmdDisplay log =
   view #unFileLog $
-    Formatting.formatFileLog @MockTime fileLogging log ^. #runMockTime
+    Formatting.formatFileLog @MockTime cmdDisplay fileLogging log ^. #runMockTime
 
 fileLogging :: FileLogging
 fileLogging = MkFileLogging StripControlNone (error err)

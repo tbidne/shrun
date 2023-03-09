@@ -2,6 +2,7 @@
 -- than the command.
 module Functional.SuccessShowKey (spec) where
 
+import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Test.Shrun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
@@ -9,7 +10,7 @@ import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should run commands displaying the key in the logs.
 spec :: IO TestArgs -> TestTree
-spec args = do
+spec args = withResource (pure ()) (teardown args) $ \_ ->
   testGroup
     "Show Key tests"
     [ showKey args,
@@ -19,23 +20,30 @@ spec args = do
 showKey :: IO TestArgs -> TestTree
 showKey args =
   testCase "Should show key rather than command" $ do
-    MkTestArgs {configPath} <- args
-    withShowKey configPath True
+    withShowKey args True
 
 noShowKey :: IO TestArgs -> TestTree
 noShowKey args =
   testCase "Should show command rather than key" $ do
-    MkTestArgs {configPath} <- args
-    withShowKey configPath False
+    withShowKey args False
 
-withShowKey :: FilePath -> Bool -> Assertion
-withShowKey legendPath addShowKey = do
-  let legendArg = "--config=" <> legendPath
-      argList = [legendArg, showKeyArg] <> commands
+withShowKey :: IO TestArgs -> Bool -> Assertion
+withShowKey args addShowKey = do
+  MkTestArgs {configPath, tmpDir} <- args
+  let outpath = tmpDir </> outfile
+      argList =
+        [ "--config=" <> configPath,
+          showKeyArg,
+          "-f" <> outpath
+        ]
+          <> commands
 
   results <- fmap MkResultText <$> (readIORef =<< run argList)
+  fileContents <- readFileUtf8Lenient outpath
+  let fileResults = MkResultText <$> T.lines fileContents
 
   V.verifyExpectedUnexpected results expected unexpected
+  V.verifyExpectedUnexpected fileResults expected unexpected
   where
     commands = ["both"]
     (showKeyArg, expected, unexpected) =
@@ -70,3 +78,11 @@ noShowKeyUnexpected =
     <$> [ withSuccessPrefix "one",
           withSuccessPrefix "long"
         ]
+
+outfile :: FilePath
+outfile = "show-key.log"
+
+teardown :: IO TestArgs -> () -> IO ()
+teardown args _ = do
+  MkTestArgs {tmpDir} <- args
+  void $ tryAny $ removeFileIfExists (tmpDir </> outfile)

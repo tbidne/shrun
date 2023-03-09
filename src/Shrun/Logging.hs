@@ -24,7 +24,12 @@ module Shrun.Logging
   )
 where
 
-import Shrun.Configuration.Env.Types (FileLogging, HasLogging (..), Logging)
+import Shrun.Configuration.Env.Types
+  ( CmdDisplay,
+    FileLogging,
+    HasLogging (..),
+    Logging,
+  )
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.Types
   ( Log (..),
@@ -50,8 +55,9 @@ putRegionLog ::
   m ()
 putRegionLog region lg =
   asks getLogging >>= \logging -> do
+    let cmdDisplay = logging ^. #cmdDisplay
     regionLogToConsoleQueue region logging lg
-    for_ (logging ^. #fileLogging) (`logToFileQueue` lg)
+    for_ (logging ^. #fileLogging) (\fl -> logToFileQueue cmdDisplay fl lg)
 
 -- | Writes the log to the console queue.
 --
@@ -79,11 +85,13 @@ logToFileQueue ::
   ( MonadSTM m,
     MonadTime m
   ) =>
+  -- | How to display the command.
+  CmdDisplay ->
   -- | FileLogging config.
   FileLogging ->
   -- | Log to send.
   Log ->
   m ()
-logToFileQueue fileLogging log = do
-  formatted <- formatFileLog fileLogging log
+logToFileQueue cmdDisplay fileLogging log = do
+  formatted <- formatFileLog cmdDisplay fileLogging log
   writeTBQueueM (fileLogging ^. #log % _2) formatted

@@ -125,7 +125,7 @@ instance DecodeTOML (Truncation a) where
 -- @since 0.1
 data LineTruncation
   = -- | @since 0.1
-    Undetected (Truncation 'TCmdLine)
+    Undetected (Truncation TCmdLine)
   | -- | @since 0.1
     Detected
   deriving stock

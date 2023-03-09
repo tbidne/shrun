@@ -19,6 +19,8 @@ the major/minor/patch definitions apply to the application's interface / usage
   would exit successfully in this scenario, returning an exit code only when
   shrun _itself_ died.
 * Similarly, error code is now set if any commands time out.
+* File logging now respects `--key-hide` i.e. default behavior matches
+  `--cmd-log` and prints the key name over the literal command.
 * We now default logging to the XDG State directory rather than XDG config
   i.e. `~/.local/state/shrun/log`.
 
