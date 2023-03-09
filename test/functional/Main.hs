@@ -26,7 +26,7 @@ specs args = do
   testGroup
     "Functional Tests"
     [ Success.spec args,
-      SuccessCommandLogging.spec args,
+      SuccessCommandLogging.spec,
       SuccessFileLogging.spec args,
       SuccessShowKey.spec args,
       Timeout.spec,
