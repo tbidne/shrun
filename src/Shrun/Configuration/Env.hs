@@ -116,7 +116,7 @@ withEnv onEnv = do
 
   let finalConfig = mergeConfig args tomlConfig
 
-  fromToml onEnv finalConfig (args ^. #commands)
+  fromToml finalConfig (args ^. #commands) onEnv
   where
     readConfig fp = do
       contents <- readFileUtf8ThrowM fp
@@ -134,11 +134,11 @@ fromToml ::
     MonadTerminal m,
     MonadThrow m
   ) =>
-  (Env -> m a) ->
   TomlConfig ->
   NESeq Text ->
+  (Env -> m a) ->
   m a
-fromToml onEnv cfg cmdsText = do
+fromToml cfg cmdsText onEnv = do
   cmdLogLineTrunc <- case cfg ^? (#cmdLogging %? #lineTrunc % _Just) of
     Just Detected -> Just . MkTruncation <$> getTerminalWidth
     Just (Undetected x) -> pure $ Just x
@@ -213,7 +213,8 @@ withMLogging ::
     MonadTerminal m
   ) =>
   TomlConfig ->
-  ((MLogging -> m a) -> m a)
+  (MLogging -> m a) ->
+  m a
 withMLogging cfg onLogging = case cfg ^? (#fileLogging %? #path) of
   -- 1. No file logging
   Nothing -> onLogging Nothing
