@@ -50,7 +50,7 @@ formatConsoleLog logging log =
         Nothing -> brackets True prefix <> msgStripped
         Just cmd ->
           let cmd' =
-                displayCommand
+                formatCommand
                   (logging ^. #cmdDisplay)
                   (logging ^. #cmdNameTrunc)
                   cmd
@@ -105,7 +105,7 @@ formatFileLog cmdDisplay fileLogging log = do
         Nothing -> brackets True prefix <> msgStripped
         Just cmd ->
           let cmd' =
-                displayCommand
+                formatCommand
                   cmdDisplay
                   Nothing
                   cmd
@@ -126,12 +126,12 @@ formatFileLog cmdDisplay fileLogging log = do
     stripControl = fileLogging ^. #stripControl
     prefix = logToPrefix log
 
-displayCommand ::
+formatCommand ::
   CmdDisplay ->
   Maybe (Truncation TCmdName) ->
   CommandP1 ->
   Text
-displayCommand cmdDisplay cmdNameTrunc com = brackets True (truncateNameFn cmdName)
+formatCommand cmdDisplay cmdNameTrunc com = brackets True (truncateNameFn cmdName)
   where
     -- Get cmd name to display. Always strip control sequences.
     cmdName =
