@@ -32,6 +32,7 @@ exts =
     "-XApplicativeDo",
     "-XBangPatterns",
     "-XDataKinds",
+    "-XDeriveAnyClass",
     "-XDeriveGeneric",
     "-XDerivingVia",
     "-XDuplicateRecordFields",

@@ -102,7 +102,7 @@ data TomlConfig = MkTomlConfig
     -- | Truncates command names in the logs.
     --
     -- @since 0.6
-    cmdNameTrunc :: !(Maybe (Truncation 'TCmdName)),
+    cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     -- | Whether to log commands.
     --
     -- @since 0.6
@@ -177,7 +177,7 @@ decodeCmdDisplay :: Decoder (Maybe CmdDisplay)
 decodeCmdDisplay = getFieldOptWith tomlDecoder "key-hide"
 
 -- | @since 0.5
-decodeCmdNameTrunc :: Decoder (Maybe (Truncation 'TCmdName))
+decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
 decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
 
 -- | @since 0.5

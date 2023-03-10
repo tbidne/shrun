@@ -193,7 +193,7 @@ data CmdLogging = MkCmdLogging
   { -- | @since 0.6
     stripControl :: !StripControl,
     -- | @since 0.6
-    lineTrunc :: !(Maybe (Truncation 'TCmdLine))
+    lineTrunc :: !(Maybe (Truncation TCmdLine))
   }
   deriving stock
     ( -- | @since 0.6
@@ -241,7 +241,7 @@ data Logging r = MkLogging
     -- | Truncates command names in the logs.
     --
     -- @since 0.7
-    cmdNameTrunc :: !(Maybe (Truncation 'TCmdName)),
+    cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     -- | Whether to log commands.
     --
     -- @since 0.7

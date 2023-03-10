@@ -29,6 +29,7 @@ common common-exts
     NoStarIsType
     ApplicativeDo
     DataKinds
+    DeriveAnyClass
     DerivingVia
     DuplicateRecordFields
     LambdaCase

@@ -150,7 +150,7 @@ data Args = MkArgs
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1
-    cmdNameTrunc :: !(Maybe (Truncation 'TCmdName)),
+    cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     -- | Whether to log commands.
     --
     -- @since 0.1
@@ -356,7 +356,7 @@ readTimeout = do
           "Could not parse timeout: " <> s
     Right t -> pure $ MkTimeout $ RelativeTime.toSeconds t
 
-cmdTruncationParser :: Parser (Maybe (Truncation 'TCmdName))
+cmdTruncationParser :: Parser (Maybe (Truncation TCmdName))
 cmdTruncationParser =
   OA.optional $
     OA.option

@@ -36,8 +36,8 @@ import Unit.Shrun.Logging.Generators qualified as LGens
 
 data Env = MkEnv
   { cmdDisplay :: CmdDisplay,
-    cmdTrunc :: Maybe (Truncation 'TCmdName),
-    lineTrunc :: Maybe (Truncation 'TCmdLine)
+    cmdTrunc :: Maybe (Truncation TCmdName),
+    lineTrunc :: Maybe (Truncation TCmdLine)
   }
   deriving stock (Eq, Show)
 
