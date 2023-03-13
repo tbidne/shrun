@@ -13,16 +13,19 @@ on:
 
 jobs:
   cabal:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         ghc:
-        - "9.4.4"
+          - "9.4.4"
+        os:
+          - "macos-latest"
+          - "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3.0.2
+      - uses: actions/checkout@v3.3.0
 
-      - uses: haskell/actions/setup@v2.0.0
+      - uses: haskell/actions/setup@v2.3.4
         with:
           ghc-version: ${{ matrix.ghc }}
 
@@ -32,7 +35,7 @@ jobs:
       - name: Doc Tests
         run : |
           cabal configure \
-            --enable-tests true \
+            --enable-tests \
             --write-ghc-environment-files always
           cabal build
           RUN_DOCTEST=1 cabal test doctest
