@@ -22,22 +22,17 @@ package refined
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: 2c8a79e8d3bf67c99e4851c557bf68a44c512307
+    tag: 63f86638145baa32fdd21d87344701b9c8c93c23
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/bounds.git
-    tag: 004f03aec46f29069fd0bf5115a384cd2b3141b3
-
-source-repository-package
-    type: git
-    location: https://github.com/tbidne/byte-types.git
-    tag: be3e764d76c530fd3641c133ed2d53adfc8f046d
+    tag: aeb822deb5593a0e774105f94e65527e63931cfa
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: fdae8d71d67e490aeeaaf9207ffcad8e3914189d
+    tag: 9df7564a3eeeaf8270bcab5c15982e96395872f2
     subdir:
       effects-async
       effects-exceptions
@@ -54,9 +49,14 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/relative-time.git
-    tag: 3bd5549074da8b6dba1660e6d01f92812cefb9c2
+    tag: 6513dcf83f323c1f61dfc3edaaf77393d525320c
+
+source-repository-package
+    type: git
+    location: https://github.com/tbidne/si-bytes.git
+    tag: 7bf9c2d125fe80a42996715063204f87f57dc8fa
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: 1b84af8a57a27a8919f73d3b5376c26c120410b6
+    tag: 3deb61a9862dc56b56fb6d7ce3fef93faa24d278

@@ -395,7 +395,7 @@ prependCompletedCommand ::
   m ()
 prependCompletedCommand command = do
   completedCmds <- asks getCompletedCmds
-  modifyTVarM' completedCmds (command :<|)
+  modifyTVarA' completedCmds (command :<|)
 
 -- | @since 0.8
 instance HasAnyError Env where
@@ -411,4 +411,4 @@ setAnyErrorTrue ::
     MonadSTM m
   ) =>
   m ()
-setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarM ref True
+setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA ref True

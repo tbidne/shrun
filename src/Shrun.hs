@@ -78,10 +78,10 @@ shrun = displayRegions $ do
     -- cancel consoleLogger, print remaining logs
     Async.cancel consoleLogger
     let consoleQueue = logging ^. #consoleLogging
-    flushTBQueueM consoleQueue >>= traverse_ printConsoleLog
+    flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
 
     -- if any processes have failed, exit with an error
-    anyError <- readTVarM =<< asks getAnyError
+    anyError <- readTVarA =<< asks getAnyError
     when anyError exitFailure
   where
     runWithFileLogging fileLogging =
@@ -91,7 +91,7 @@ shrun = displayRegions $ do
         Async.cancel fileLoggerThread
 
         -- handle any remaining file logs
-        flushTBQueueM fileQueue >>= traverse_ (logFile h)
+        flushTBQueueA fileQueue >>= traverse_ (logFile h)
         hFlush h
       where
         (h, fileQueue) = fileLogging ^. #log
@@ -245,7 +245,7 @@ keepRunning region timer mto = do
       cmdDisplay <- asks (view #cmdDisplay . getLogging @env @(Region m))
       allCmds <- asks getCommands
       completedCmdsTVar <- asks getCompletedCmds
-      completedCmds <- readTVarM completedCmdsTVar
+      completedCmds <- readTVarA completedCmdsTVar
 
       -- update anyError
       setAnyErrorTrue
@@ -319,4 +319,4 @@ atomicReadWrite ::
   (a -> m b) ->
   m ()
 atomicReadWrite queue logAction =
-  mask $ \restore -> restore (readTBQueueM queue) >>= void . logAction
+  mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction

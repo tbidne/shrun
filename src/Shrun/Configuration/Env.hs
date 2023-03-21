@@ -157,8 +157,8 @@ fromToml cfg cmdsText onEnv = do
         Left err -> throwM err
       Left err -> throwM err
 
-  completedCmds' <- newTVarM Seq.empty
-  anyError <- newTVarM False
+  completedCmds' <- newTVarA Seq.empty
+  anyError <- newTVarA False
 
   let -- make environment
       envWithLogging ::
@@ -196,7 +196,7 @@ fromToml cfg cmdsText onEnv = do
             commands = commands'
           }
 
-  consoleQueue <- newTBQueueM 1000
+  consoleQueue <- newTBQueueA 1000
 
   withMLogging cfg $ \h -> onEnv (envWithLogging h consoleQueue)
 
@@ -228,7 +228,7 @@ withMLogging cfg onLogging = case cfg ^? (#fileLogging %? #path) of
     ensureFileExists fp
     handleLogFileSize cfg fp
 
-    fileQueue <- newTBQueueM 1000
+    fileQueue <- newTBQueueA 1000
 
     withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
 
@@ -236,7 +236,7 @@ withMLogging cfg onLogging = case cfg ^? (#fileLogging %? #path) of
   Just (FPManual fp) -> do
     ensureFileExists fp
     handleLogFileSize cfg fp
-    fileQueue <- newTBQueueM 1000
+    fileQueue <- newTBQueueA 1000
 
     withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
   where

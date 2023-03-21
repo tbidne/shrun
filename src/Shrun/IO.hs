@@ -159,11 +159,11 @@ tryCommandLogging command = do
     logConsole logging region log = do
       let consoleQueue = logging ^. #consoleLogging
           formatted = formatConsoleLog logging log
-      writeTBQueueM consoleQueue (LogRegion (log ^. #mode) region formatted)
+      writeTBQueueA consoleQueue (LogRegion (log ^. #mode) region formatted)
 
     logFile cmdDisplay fileLogging log = do
       formatted <- formatFileLog cmdDisplay fileLogging log
-      writeTBQueueM (fileLogging ^. #log % _2) formatted
+      writeTBQueueA (fileLogging ^. #log % _2) formatted
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- instead of the usual swallowing.

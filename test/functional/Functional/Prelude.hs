@@ -133,7 +133,7 @@ runMaybeException ::
 runMaybeException mException argList = do
   SysEnv.withArgs argList $ Env.withEnv $ \env -> do
     ls <- newIORef []
-    consoleQueue <- newTBQueueM 1_000
+    consoleQueue <- newTBQueueA 1_000
     let funcEnv =
           MkFuncEnv
             { timeout = env ^. #timeout,

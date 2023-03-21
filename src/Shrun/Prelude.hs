@@ -102,14 +102,14 @@ import Effects.Concurrent.STM as X
   ( MonadSTM,
     TBQueue,
     TVar,
-    flushTBQueueM,
-    modifyTVarM',
-    newTBQueueM,
-    newTVarM,
-    readTBQueueM,
-    readTVarM,
-    writeTBQueueM,
-    writeTVarM,
+    flushTBQueueA,
+    modifyTVarA',
+    newTBQueueA,
+    newTVarA,
+    readTBQueueA,
+    readTVarA,
+    writeTBQueueA,
+    writeTVarA,
   )
 import Effects.Concurrent.Thread as X (MonadThread)
 import Effects.Exception as X

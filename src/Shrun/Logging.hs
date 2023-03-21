@@ -73,7 +73,7 @@ regionLogToConsoleQueue ::
   Log ->
   m ()
 regionLogToConsoleQueue region logging log =
-  writeTBQueueM queue (LogRegion (log ^. #mode) region formatted)
+  writeTBQueueA queue (LogRegion (log ^. #mode) region formatted)
   where
     queue = logging ^. #consoleLogging
     formatted = formatConsoleLog logging log
@@ -94,4 +94,4 @@ logToFileQueue ::
   m ()
 logToFileQueue cmdDisplay fileLogging log = do
   formatted <- formatFileLog cmdDisplay fileLogging log
-  writeTBQueueM (fileLogging ^. #log % _2) formatted
+  writeTBQueueA (fileLogging ^. #log % _2) formatted
