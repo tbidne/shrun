@@ -4,10 +4,12 @@
 
 ## Run Shell Commands Concurrently
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shrun?include_prereleases&sort=semver)](https://github.com/tbidne/shrun/releases/)
-![haskell](https://img.shields.io/static/v1?label=&message=9.4&logo=haskell&logoColor=655889&labelColor=2f353e&color=655889)
-[![MIT](https://img.shields.io/github/license/tbidne/shrun?color=blue)](https://opensource.org/licenses/MIT)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/tbidne/shrun?include_prereleases&sort=semver&labelColor=2f353e)](https://github.com/tbidne/shrun/releases/)
+![linux](https://img.shields.io/static/v1?label=&message=linux&logo=linux&logoColor=white&labelColor=2f353e&color=blue)
+![apple](https://img.shields.io/static/v1?label=&message=osx&logo=apple&labelColor=2f353e&color=blue)
+[![MIT](https://img.shields.io/github/license/tbidne/shrun?color=blue&labelColor=2f353e)](https://opensource.org/licenses/MIT)
 
+![haskell](https://img.shields.io/static/v1?label=&message=9.4&logo=haskell&logoColor=655889&labelColor=2f353e&color=655889)
 [![nix](http://img.shields.io/github/actions/workflow/status/tbidne/shrun/nix.yaml?branch=main&label=nix&logo=nixos&logoColor=85c5e7&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/nix.yaml)
 [![cabal](http://img.shields.io/github/actions/workflow/status/tbidne/shrun/cabal.yaml?branch=main&label=cabal&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/cabal.yaml)
 [![style](http://img.shields.io/github/actions/workflow/status/tbidne/shrun/style.yaml?branch=main&label=style&logoColor=white&labelColor=2f353c)](https://github.com/tbidne/shrun/actions/workflows/style.yaml)
