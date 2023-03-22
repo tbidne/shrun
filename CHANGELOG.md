@@ -6,11 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to the
 [Haskell Package Versioning Policy](https://pvp.haskell.org/).
 
-Note that PVP is applied to the _application_, not the _library_. That is,
+Note that PVP is applied to the _application_, **not** the library. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
-## [Unreleased]
+## [0.8] -- 2023-03-22
 ### Removed
 * `stack` support removed.
 
@@ -28,6 +28,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 * `--init` (toml: `init`) option that allows one to specify logic that should
   be run before each command. This can be useful when we want to load
   functions/aliases e.g. `shrun --init ". ~/.bashrc" foo`.
+* `osx` support.
 
 ### Fixed
 * File logs are now streamed, do not buffer.
@@ -136,7 +137,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.7...main
+[0.8]: https://github.com/tbidne/shrun/compare/0.7...0.8
 [0.7]: https://github.com/tbidne/shrun/compare/0.6...0.7
 [0.6]: https://github.com/tbidne/shrun/compare/0.5...0.6
 [0.5]: https://github.com/tbidne/shrun/compare/0.4..0.5
