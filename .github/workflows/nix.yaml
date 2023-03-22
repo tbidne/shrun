@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
+      - release
 
   pull_request:
     branches:
       - main
-  
+
   workflow_dispatch:
 
 jobs:
@@ -29,6 +30,15 @@ jobs:
           nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/b39924fc7764c08ae3b51beef9a3518c414cdb7d.tar.gz
           extra_nix_config: |
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Build
-        run: nix build
+        run: |
+          nix build
+          cp ./result/bin/shrun ./shrun-${{ matrix.os }}
+
+      - name: Release
+        if: success() && github.ref == 'refs/heads/release'
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: ./shrun-${{ matrix.os }}
