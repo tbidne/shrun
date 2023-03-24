@@ -44,7 +44,6 @@
   - [Miscellaneous](#miscellaneous)
     - [Default Config](#default-config)
 - [Building](#building)
-  - [Prerequisites](#prerequisites)
   - [Cabal](#cabal)
   - [Nix](#nix)
 - [FAQ](#faq)
@@ -408,71 +407,48 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 # Building
 
-## Prerequisites
-
-You will need one of:
-
-* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and [ghc 9.4+](https://www.haskell.org/ghc/).
-* [nix](https://nixos.org/download.html)
-
-If you have never built a haskell program before, `cabal` + `ghc` is probably the best choice. These can be easily obtained with the [`ghcup`](https://www.haskell.org/ghcup/) tool.
+If you have never built a haskell program before, [Cabal](#cabal) is probably the best choice.
 
 ## Cabal
 
-You will need `ghc` and `cabal-install`. From there `shrun` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
+### Prerequisites
+
+* [`ghcup`](https://www.haskell.org/ghcup/)
+
+Using `ghcup`, install `cabal 2.4+` and `ghc 9.4`.
+
+### Build Shrun
+
+Once you have `cabal` and `ghc`, `shrun` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
 ## Nix
 
-### From source
+### Prerequisites
+
+* [nix](https://nixos.org/download.html)
+
+### Manually
 
 Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shrun` can be built with `nix build`, which will compile and run the tests.
 
-To launch a shell with various tools (e.g. `cabal`, `hls`), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code. At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `hackage`.
+### Nix expression
 
-### Via nix
-
-Because `shrun` is a flake, it be built as part of a nix expression. For instance, if you want to add `shrun` to `NixOS`, your `flake.nix` might look something like:
+Because `shrun` is a flake, it be built as part of a nix expression. For instance, if you want to add `shrun` to `NixOS`, your `flake.nix` should have:
 
 ```nix
+# flake.nix
 {
-  description = "My flake";
-
-  inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-    shrun-src.url= "github:tbidne/shrun/main";
-  };
-
-  outputs = { self, nixpkgs, shrun-src, ... }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        system = system;
-      };
-      shrun = shrun-src.packages."${system}".default;
-      # Alternative if you want tests disabled.
-      #shrun = pkgs.haskell.lib.dontCheck shrun-src.packages."${system}".default;
-    in
-    {
-      nixosConfigurations = {
-        nixos = nixpkgs.lib.nixosSystem {
-          system = system;
-          modules = [
-            (import ./configuration.nix { inherit pkgs shrun; })
-          ];
-        };
-      };
-    };
+  inputs.shrun.url = "github:tbidne/shrun/main";
 }
 ```
 
-Then in `configuration.nix` you can simply have:
+Then include this in the `systemPackages`:
 
 ```nix
-{ pkgs, shrun, ... }:
-
+# wherever your global packages are defined
 {
   environment.systemPackages = [
-    shrun
+    shrun.packages."${system}".default
   ];
 }
 ```
