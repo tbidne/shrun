@@ -99,7 +99,7 @@ val = ['cmd3', 'cmd4', 'echo hi']
 #val = 'echo duplicate 2'
 
 # cyclic keys will cause an error when _actually used_ e.g. try running
-# shrun -c examples/config.toml a
+# shrun -c examples/default.toml a
 [[legend]]
 key = 'a'
 val = 'c'
@@ -133,8 +133,8 @@ val = 'b'
 #line-trunc = "detect"
 
 #[file-log]
-# Writes all logs to a file. The "default" option writes to the XDG config
-# directory e.g. ~/.config/shrun/log. Any other string is interpreted as
+# Writes all logs to a file. The "default" option writes to the XDG state
+# directory e.g. ~/.local/state/shrun/log. Any other string is interpreted as
 # a PATH.
 #path = "default"
 
@@ -142,7 +142,7 @@ val = 'b'
 # "append".
 #mode = "write"
 
-# Like strip-control, but for file logs. Defaults to all.
+# Like cmd-log.strip-control, but for file logs. Defaults to all.
 #strip-control = "all"
 
 # Sets a threshold for the file log size, upon which we either print a
