@@ -9,6 +9,7 @@ module Shrun
   )
 where
 
+import DBus.Notify (UrgencyLevel (..))
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Data.Time.Relative (formatRelativeTime, formatSeconds)
@@ -21,7 +22,9 @@ import Shrun.Configuration.Env.Types
     HasCommands (..),
     HasInit,
     HasLogging (..),
+    HasNotifyConfig (..),
     HasTimeout (..),
+    Logging,
     setAnyErrorTrue,
   )
 import Shrun.Data.Command (CommandP1)
@@ -37,6 +40,9 @@ import Shrun.Logging.Types
     LogMode (LogModeFinish, LogModeSet),
     LogRegion (..),
   )
+import Shrun.Notify qualified as Notify
+import Shrun.Notify.MonadNotify (MonadNotify (..))
+import Shrun.Notify.Types (_NotifyCommand, _NotifyNone)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
@@ -49,11 +55,13 @@ shrun ::
     HasCommands env,
     HasInit env,
     HasLogging env (Region m),
+    HasNotifyConfig env,
     HasTimeout env,
     MonadAsync m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadNotify m,
     MonadProcess m,
     MonadMask m,
     MonadReader env m,
@@ -105,13 +113,16 @@ shrun = displayRegions $ do
       printFinalResult totalTime result
 
 runCommand ::
+  forall m env.
   ( HasAnyError env,
     HasCommands env,
     HasInit env,
     HasLogging env (Region m),
+    HasNotifyConfig env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
+    MonadNotify m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -124,22 +135,37 @@ runCommand ::
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
 
-  withRegion Linear $ \r -> do
-    let (msg', lvl, timeElapsed) = case cmdResult of
-          Left (t, MkStderr err) -> (": " <> err, LevelError, t)
-          Right t -> ("", LevelSuccess, t)
+  let (urgency, msg', lvl, timeElapsed) = case cmdResult of
+        Left (t, MkStderr err) -> (Critical, ": " <> err, LevelError, t)
+        Right t -> (Normal, "", LevelSuccess, t)
+      timeMsg = T.pack (formatRelativeTime timeElapsed) <> msg'
+
+  withRegion Linear $ \r ->
     Logging.putRegionLog r $
       MkLog
         { cmd = Just cmd,
-          msg = T.pack (formatRelativeTime timeElapsed) <> msg',
+          msg = timeMsg,
           lvl,
           mode = LogModeFinish
         }
+
+  logging :: Logging (Region m) <- asks getLogging
+  let cmdNameTrunc = logging ^. #cmdNameTrunc
+      cmdDisplay = logging ^. #cmdDisplay
+      formattedCmd = LogFmt.formatCommand cmdDisplay cmdNameTrunc cmd
+
+  -- Sent off notif if NotifyCommand is set
+  cfg <- asks getNotifyConfig
+  when (is (_Just % #action % _NotifyCommand) cfg) $
+    Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
 
 printFinalResult ::
   ( Exception e,
     HasAnyError env,
     HasLogging env (Region m),
+    HasNotifyConfig env,
+    MonadCatch m,
+    MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -176,6 +202,15 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
             lvl = LevelFinished,
             mode = LogModeFinish
           }
+
+  -- Send off a 'finished' notification
+  anyError <- readTVarA =<< asks getAnyError
+  let urgency = if anyError then Critical else Normal
+
+  -- Sent off notif unless NotifyNone is set
+  cfg <- asks getNotifyConfig
+  unless (is (_Just % #action % _NotifyNone) cfg) $
+    Notify.sendNotif "Shrun Finished" (T.pack totalTimeTxt) urgency
 
   Logging.putRegionLog r finalLog
 

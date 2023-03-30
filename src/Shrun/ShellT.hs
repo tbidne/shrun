@@ -9,8 +9,17 @@ module Shrun.ShellT
   )
 where
 
+import DBus.Notify (Hint (Urgency), Note (..), UrgencyLevel (..))
+import DBus.Notify qualified as DBusN
+import Data.Text qualified as T
 import Shrun.Configuration.Env.Types (Env)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Notify.MonadDBus (MonadDBus)
+import Shrun.Notify.MonadDBus qualified as MonadDBus
+import Shrun.Notify.MonadNotify (MonadNotify (..), ShrunNote)
+import Shrun.Notify.MonadNotifySend (MonadNotifySend)
+import Shrun.Notify.MonadNotifySend qualified as MonadNotifySend
+import Shrun.Notify.Types (NotifySystem (..), NotifyTimeout (..))
 import Shrun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.
@@ -27,6 +36,8 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       Monad,
       -- | @since 0.8
       MonadAsync,
+      -- | @since X.X
+      MonadDBus,
       -- | @since 0.1
       MonadCatch,
       -- | @since 0.8
@@ -43,6 +54,8 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadIORef,
       -- | @since 0.1
       MonadMask,
+      -- | @since X.X
+      MonadNotifySend,
       -- @since 0.8
       MonadPathWriter,
       -- @since 0.8
@@ -72,8 +85,58 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- Concrete Env here so we can vary our logging logic with other envs
 -- (i.e. in tests).
 
--- Can't use @deriving via m@ due to a bug: @HC version 9.2.5: No skolem info:@.
+-- Can't use @deriving via m@ due to a bug: GHC version 9.2.5: No skolem info:@.
 -- https://gitlab.haskell.org/ghc/ghc/-/issues/15376
 
 -- | @since 0.1
 deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT Env m)
+
+-- | @since X.X
+instance (MonadDBus m, MonadNotifySend m) => MonadNotify (ShellT Env m) where
+  notify note = asks (preview (#notifyEnv %? #system)) >>= traverse_ sendNote
+    where
+      sendNote (DBus client) = void $ MonadDBus.notify client (shrunToDBus note)
+      sendNote NotifySend = MonadNotifySend.notify (shrunToNotifySend note)
+
+shrunToDBus :: ShrunNote -> Note
+shrunToDBus shrunNote =
+  DBusN.Note
+    { appName = "Shrun",
+      summary = unpack $ shrunNote ^. #summary,
+      body = Just . DBusN.Text . T.unpack $ shrunNote ^. #body,
+      appImage = Nothing,
+      hints = [Urgency (shrunNote ^. #urgency)],
+      expiry,
+      actions = []
+    }
+  where
+    expiry = case shrunNote ^. #timeout of
+      NotifyTimeoutNever -> DBusN.Never
+      NotifyTimeoutSeconds s ->
+        DBusN.Milliseconds $ 1_000 * fromIntegral s
+
+shrunToNotifySend :: ShrunNote -> Text
+shrunToNotifySend shrunNote = txt
+  where
+    txt =
+      mconcat
+        [ "notify-send ",
+          " --app-name Shrun \"",
+          shrunNote ^. #summary,
+          "\" ",
+          (\b -> " \"" <> b <> "\" ") (shrunNote ^. #body),
+          ulToNS (shrunNote ^. #urgency),
+          timeout
+        ]
+
+    ulToNS Low = " --urgency low "
+    ulToNS Normal = " --urgency normal "
+    ulToNS Critical = " --urgency critical "
+
+    timeout = case shrunNote ^. #timeout of
+      NotifyTimeoutNever -> " --expire-time 0 "
+      NotifyTimeoutSeconds s ->
+        mconcat
+          [ " --expire-time ",
+            showt (fromIntegral @_ @Integer s * 1_000)
+          ]

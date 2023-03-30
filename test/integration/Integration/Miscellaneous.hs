@@ -1,4 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Integration.Miscellaneous (specs) where
 
@@ -10,6 +12,11 @@ import Numeric.Algebra (zero)
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
+import Shrun.Notify.Types
+  ( NotifyAction (..),
+    NotifySystem (..),
+    NotifyTimeout (..),
+  )
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -88,6 +95,8 @@ logFileDelete testArgs =
         "cmd"
       ]
 
+{- ORMOLU_DISABLE -}
+
 usesRecursiveCmdExample :: TestTree
 usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
   logsRef <- IORef.newIORef []
@@ -109,12 +118,23 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
           cmdLogLineTrunc = Just 150,
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
+#if OSX
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
+#else
+          notifySystem = Just (DBus ()),
+          notifyAction = Just NotifyCommand,
+          notifyTimeout = Just NotifyTimeoutNever,
+#endif
           commands =
             MkCommand (Just "m1") "m1val"
               :<|| [ "m2",
                      "m3"
                    ]
         }
+
+{- ORMOLU_ENABLE -}
 
 usesRecursiveCmd :: TestTree
 usesRecursiveCmd = testCase "Uses recursive commands" $ do
@@ -124,7 +144,7 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
   logs <- IORef.readIORef logsRef
   logs @=? []
   where
-    args = ["-c", "examples/default.toml", "all", "echo cat"]
+    args = ["-c", getExampleConfig "default", "all", "echo cat"]
     expected =
       MkSimpleEnv
         { timeout = Nothing,
@@ -137,6 +157,9 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
           cmdLogLineTrunc = Nothing,
           fileLogging = False,
           fileLogStripControl = Nothing,
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
           commands =
             MkCommand (Just "cmd1") "echo \"command one\""
               :<|| [ MkCommand (Just "cmd4") "command four",

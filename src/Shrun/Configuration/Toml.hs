@@ -9,6 +9,7 @@ module Shrun.Configuration.Toml
     defaultTomlConfig,
     CmdLoggingToml (..),
     FileLoggingToml (..),
+    NotifyToml (..),
     mergeConfig,
   )
 where
@@ -26,6 +27,7 @@ import Shrun.Data.FilePathDefault (FilePathDefault)
 import Shrun.Data.Legend (KeyVal)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
+import Shrun.Notify.Types (NotifyAction, NotifySystemP1, NotifyTimeout)
 import Shrun.Prelude
 
 -- | Logging that applies to command logs.
@@ -78,6 +80,38 @@ instance DecodeTOML FileLoggingToml where
       <*> decodeFileLogMode
       <*> decodeFileLogSizeMode
 
+-- | Holds notification settings.
+--
+-- @since X.X
+data NotifyToml = MkNotifyToml
+  { -- | Notification action.
+    --
+    -- @since X.X
+    action :: !NotifyAction,
+    -- | Notification system to use.
+    --
+    -- @since X.X
+    system :: !(Maybe NotifySystemP1),
+    -- | Timeout to use for notifications.
+    --
+    -- @since X.X
+    timeout :: !(Maybe NotifyTimeout)
+  }
+  deriving stock
+    ( -- | @since X.X
+      Eq,
+      -- | @since X.X
+      Show
+    )
+
+-- | @since X.X
+instance DecodeTOML NotifyToml where
+  tomlDecoder =
+    MkNotifyToml
+      <$> getFieldWith tomlDecoder "action"
+      <*> getFieldOptWith tomlDecoder "system"
+      <*> getFieldOptWith tomlDecoder "timeout"
+
 -- | 'TomlConfig' refers to TomlConfiguration we retrieve from the toml TomlConfig file.
 --
 -- @since 0.5
@@ -112,6 +146,10 @@ data TomlConfig = MkTomlConfig
     --
     -- @since 0.6
     fileLogging :: !(Maybe FileLoggingToml),
+    -- | Holds notification toml config.
+    --
+    -- @since X.X
+    notify :: !(Maybe NotifyToml),
     -- | Legend text containing command aliases.
     --
     -- @since 0.5
@@ -138,6 +176,7 @@ defaultTomlConfig =
     Nothing
     Nothing
     Nothing
+    Nothing
 
 -- | @since 0.5
 instance DecodeTOML TomlConfig where
@@ -150,6 +189,7 @@ instance DecodeTOML TomlConfig where
       <*> decodeCmdNameTrunc
       <*> getFieldOptWith tomlDecoder "cmd-log"
       <*> getFieldOptWith tomlDecoder "file-log"
+      <*> getFieldOptWith tomlDecoder "notify"
       <*> decodeLegend
 
 -- | @since 0.5
@@ -209,6 +249,9 @@ makeFieldLabelsNoPrefix ''FileLoggingToml
 -- | @since 0.5
 makeFieldLabelsNoPrefix ''TomlConfig
 
+-- | @since X.X
+makeFieldLabelsNoPrefix ''NotifyToml
+
 -- | Merges an 'Args' and 'TomlConfig' together to produce a single config.
 -- In general, if both configurations specify a value, the CLI 'Args'
 -- takes precedence.
@@ -226,6 +269,7 @@ mergeConfig args tomlConfig =
         combineCmdLogging argsCmdLogging (tomlConfig ^. #cmdLogging),
       fileLogging =
         combineFileLogging argsFileLogging (tomlConfig ^. #fileLogging),
+      notify = combineNotify argsNotify (tomlConfig ^. #notify),
       legend = tomlConfig ^. #legend
     }
   where
@@ -249,6 +293,11 @@ mergeConfig args tomlConfig =
         args ^. #fileLogStripControl,
         args ^. #fileLogMode,
         args ^. #fileLogSizeMode
+      )
+    argsNotify =
+      ( args ^. #notifyAction,
+        args ^. #notifySystem,
+        args ^. #notifyTimeout
       )
 
 combineCmdLogging ::
@@ -290,4 +339,24 @@ combineFileLogging (mpath, mStripControl, mMode, mSizeMode) (Just toml) =
         stripControl = mStripControl <|> toml ^. #stripControl,
         mode = mMode <|> toml ^. #mode,
         sizeMode = mSizeMode <|> toml ^. #sizeMode
+      }
+
+combineNotify ::
+  -- | Args
+  (Maybe NotifyAction, Maybe NotifySystemP1, Maybe NotifyTimeout) ->
+  -- | Toml
+  Maybe NotifyToml ->
+  -- | Result
+  Maybe NotifyToml
+-- 1. If neither CLI nor toml specifies the action, return nothing
+combineNotify (Nothing, _, _) Nothing = Nothing
+-- 2. If only the CLI specifies toml, use its config
+combineNotify (Just a, s, t) Nothing = Just $ MkNotifyToml a s t
+-- 3. If toml specifies notify, combine args, favoring CLI as usual
+combineNotify (a, s, t) (Just toml) =
+  Just $
+    MkNotifyToml
+      { action = fromMaybe (toml ^. #action) a,
+        system = s <|> toml ^. #system,
+        timeout = t <|> toml ^. #timeout
       }

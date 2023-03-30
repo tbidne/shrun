@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
@@ -12,6 +13,7 @@ module Integration.Utils
   )
 where
 
+import DBus.Client (Client (..))
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader (MonadPathReader (..))
 import Effects.System.Terminal (MonadTerminal (..))
@@ -27,6 +29,9 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
+import Shrun.Notify.MonadDBus (MonadDBus (..))
+import Shrun.Notify.MonadNotifySend (MonadNotifySend (..))
+import Shrun.Notify.Types (NotifyAction, NotifySystem (..), NotifySystemP1, NotifyTimeout)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
@@ -59,9 +64,14 @@ runConfigIO (MkConfigIO rdr) = runReaderT rdr
 
 instance MonadPathReader ConfigIO where
   getFileSize = liftIO . getFileSize
-  getXdgDirectory _ _ = pure "test/integration/toml"
   doesFileExist = liftIO . doesFileExist
   doesDirectoryExist = liftIO . doesDirectoryExist
+
+#if OSX
+  getXdgDirectory _ _ = pure (concatDirs ["test", "integration", "toml", "osx"])
+#else
+  getXdgDirectory _ _ = pure (concatDirs ["test", "integration", "toml"])
+#endif
 
 instance MonadTerminal ConfigIO where
   putStr = error "putStr: unimplemented"
@@ -73,6 +83,22 @@ instance MonadTerminal ConfigIO where
 
   -- hardcoded so we can test 'detect'
   getTerminalSize = liftIO getTerminalSize
+
+instance MonadDBus ConfigIO where
+  connectSession =
+    pure $
+      Client
+        { clientSocket = error "todo",
+          clientPendingCalls = error "todo",
+          clientSignalHandlers = error "todo",
+          clientObjects = error "todo",
+          clientThreadID = error "todo",
+          clientInterfaces = error "todo"
+        }
+  notify = error "notify: unimplemented"
+
+instance MonadNotifySend ConfigIO where
+  notify = error "notify: unimplemented"
 
 -- IO with no default config file
 newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
@@ -93,6 +119,9 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
       MonadThrow
     )
     via (ReaderT (IORef [Text])) IO
+  deriving
+    (MonadDBus, MonadNotifySend)
+    via ConfigIO
 
 runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
@@ -120,6 +149,9 @@ data SimpleEnv = MkSimpleEnv
     cmdLogStripControl :: !(Maybe StripControl),
     fileLogging :: !Bool,
     fileLogStripControl :: !(Maybe StripControl),
+    notifySystem :: !(Maybe NotifySystemP1),
+    notifyAction :: !(Maybe NotifyAction),
+    notifyTimeout :: !(Maybe NotifyTimeout),
     commands :: !(NESeq CommandP1)
   }
   deriving stock (Eq, Show)
@@ -139,14 +171,24 @@ simplifyEnv = to $ \env ->
       cmdLogStripControl = env ^? (#logging % #cmdLogging %? #stripControl),
       fileLogging = m2b (env ^. (#logging % #fileLogging)),
       fileLogStripControl = env ^? (#logging % #fileLogging %? #stripControl),
+      notifySystem = mkNotifySystem env,
+      notifyAction = env ^? (#notifyEnv %? #action),
+      notifyTimeout = env ^? (#notifyEnv %? #timeout),
       commands = env ^. #commands
     }
+  where
+    -- Convert Phase2 back to Phase1 for Eq
+    mkNotifySystem e = case e ^? (#notifyEnv %? #system) of
+      Nothing -> Nothing
+      Just NotifySend -> Just NotifySend
+      Just (DBus _) -> Just (DBus ())
 
 -- | Makes an 'Env' for the given monad and compares the result with the
 -- expected params.
 makeEnvAndVerify ::
   forall m.
-  ( MonadEnv m,
+  ( MonadDBus m,
+    MonadEnv m,
     MonadFileReader m,
     MonadFileWriter m,
     MonadHandleWriter m,

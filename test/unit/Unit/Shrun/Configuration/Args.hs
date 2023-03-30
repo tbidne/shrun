@@ -14,6 +14,7 @@ import Shrun.Configuration.Env.Types
     StripControl (..),
   )
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
+import Shrun.Notify.Types (NotifyAction (..), NotifySystem (..), NotifyTimeout (..))
 import Shrun.Utils qualified as U
 import Unit.Prelude
 
@@ -36,6 +37,9 @@ tests =
       stripControlSpecs,
       cmdNameTruncSpecs,
       cmdLineTruncSpecs,
+      notifySystemSpecs,
+      notifyActionSpecs,
+      notifyTimeoutSpecs,
       commandSpecs
     ]
 
@@ -65,6 +69,9 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               fileLogMode = Nothing,
               fileLogStripControl = Nothing,
               fileLogSizeMode = Nothing,
+              notifySystem = Nothing,
+              notifyAction = Nothing,
+              notifyTimeout = Nothing,
               commands = "command" :<|| []
             }
   verifyResult argList expected
@@ -521,6 +528,80 @@ parseDetectCmdLineTrunc =
     desc = "Should parse --cmd-log-line-trunc detect as detect command line truncation"
     argList = ["--cmd-log-line-trunc", "detect", "command"]
     expected = updateDefArgs #cmdLogLineTrunc Detected
+
+notifySystemSpecs :: TestTree
+notifySystemSpecs =
+  testGroup
+    "Notify system parsing"
+    [ parseNotifySystemDBus,
+      parseNotifySystemNotifySend
+    ]
+
+parseNotifySystemDBus :: TestTree
+parseNotifySystemDBus = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-system dbus"
+    argList = ["--notify-system", "dbus", "command"]
+    expected = updateDefArgs #notifySystem (DBus ())
+
+parseNotifySystemNotifySend :: TestTree
+parseNotifySystemNotifySend = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-system notify-send"
+    argList = ["--notify-system", "notify-send", "command"]
+    expected = updateDefArgs #notifySystem NotifySend
+
+notifyActionSpecs :: TestTree
+notifyActionSpecs =
+  testGroup
+    "Notify action parsing"
+    [ parseNotifyActionNone,
+      parseNotifyActionFinal,
+      parseNotifyActionCommand
+    ]
+
+parseNotifyActionNone :: TestTree
+parseNotifyActionNone = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-action none"
+    argList = ["--notify-action", "none", "command"]
+    expected = updateDefArgs #notifyAction NotifyNone
+
+parseNotifyActionFinal :: TestTree
+parseNotifyActionFinal = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-action final"
+    argList = ["--notify-action", "final", "command"]
+    expected = updateDefArgs #notifyAction NotifyFinal
+
+parseNotifyActionCommand :: TestTree
+parseNotifyActionCommand = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-action command"
+    argList = ["--notify-action", "command", "command"]
+    expected = updateDefArgs #notifyAction NotifyCommand
+
+notifyTimeoutSpecs :: TestTree
+notifyTimeoutSpecs =
+  testGroup
+    "Notify timeout parsing"
+    [ parseNotifyTimeoutSeconds,
+      parseNotifyTimeoutNever
+    ]
+
+parseNotifyTimeoutSeconds :: TestTree
+parseNotifyTimeoutSeconds = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-timeout 5"
+    argList = ["--notify-timeout", "5", "command"]
+    expected = updateDefArgs #notifyTimeout (NotifyTimeoutSeconds 5)
+
+parseNotifyTimeoutNever :: TestTree
+parseNotifyTimeoutNever = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-timeout never"
+    argList = ["--notify-timeout", "never", "command"]
+    expected = updateDefArgs #notifyTimeout NotifyTimeoutNever
 
 commandSpecs :: TestTree
 commandSpecs =

@@ -16,8 +16,8 @@ description:
 category:           Shell scripting, Utils, Concurrency
 extra-source-files:
   CHANGELOG.md
-  README.md
   examples/default.toml
+  README.md
 
 source-repository head
   type:     git
@@ -40,6 +40,9 @@ common common-lang
     PatternSynonyms
     TypeFamilies
 
+  if os(osx)
+    cpp-options: -DOSX
+
 library
   import:           common-lang
   exposed-modules:
@@ -47,6 +50,7 @@ library
     Shrun.Configuration.Args
     Shrun.Configuration.Args.TH
     Shrun.Configuration.Env
+    Shrun.Configuration.Env.Notify
     Shrun.Configuration.Env.Types
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
@@ -63,6 +67,11 @@ library
     Shrun.Logging.MonadRegionLogger
     Shrun.Logging.Types
     Shrun.Logging.Types.Internal
+    Shrun.Notify
+    Shrun.Notify.MonadDBus
+    Shrun.Notify.MonadNotify
+    Shrun.Notify.MonadNotifySend
+    Shrun.Notify.Types
     Shrun.Prelude
     Shrun.ShellT
     Shrun.Utils
@@ -73,6 +82,7 @@ library
     , bytestring             >=0.10.12  && <0.12
     , concurrent-output      ^>=1.10.7
     , containers             ^>=0.6.2.1
+    , dbus                   ^>=1.2.14
     , effects-async          ^>=0.1
     , effects-env            ^>=0.1
     , effects-exceptions     ^>=0.1
@@ -84,6 +94,7 @@ library
     , effects-thread         ^>=0.1
     , effects-time           ^>=0.1
     , effects-typed-process  ^>=0.1
+    , fdo-notify             ^>=0.3.1
     , gitrev                 >=1.2.0    && <1.4
     , hashable               >=1.3.0.0  && <1.5
     , mtl                    >=2.2.1    && <2.4
@@ -175,6 +186,8 @@ test-suite integration
   build-depends:
     , algebra-simple
     , base
+    , dbus
+    , effects-exceptions
     , effects-fs
     , effects-terminal
     , shrun
@@ -190,6 +203,7 @@ test-suite functional
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
+    Functional.Notify
     Functional.Prelude
     Functional.Readme
     Functional.Success
@@ -203,6 +217,7 @@ test-suite functional
   build-depends:
     , base
     , effects-fs
+    , fdo-notify
     , shrun
     , shrun-verifier
     , tasty

@@ -150,3 +150,23 @@ val = 'b'
 # e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to no warnings
 # nor deletions.
 #size-mode = "warn 1 g"
+
+# If enabled, sends off notifications when commands/shrun complete.
+# Linux only, requires either DBus or notify-send.
+#[notify]
+# Mandatory, turns on notifications.
+#
+# "none" -> disabled; no notifications are sent
+# "final" -> sends off a notification when all commands finish
+# "command" -> sends off a notification when each command finishes. Implies
+# "final"
+#action = "command"
+
+# Must be one of "dbus" or "notify-send". Defaults to "dbus".
+#system = "dbus"
+
+# Sets the timeout for non-error notifications. Defaults to 10
+#
+# "never" -> notifications never time out.
+# <natural> -> non-error notifications time out in <natural> seconds.
+#timeout = "never"

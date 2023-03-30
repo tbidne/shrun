@@ -43,6 +43,7 @@ teardown testArgs = do
     -- exists in the 'config' directory, and these tests test that default.
     -- Thus we cannot delete it until everything has finished.
     removeFileIfExists "test/integration/toml/log"
+    removeFileIfExists "test/integration/toml/osx/log"
 
     -- Ideally we want to clean up after ourselves in each test. These are for
     -- insurance.

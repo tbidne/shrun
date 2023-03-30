@@ -57,10 +57,7 @@ class AdvancePhase a where
   -- | The next phase.
   type NextPhase a
 
-  -- | Additional data
-  type ExtraData a
-
   -- | Advances the data.
   --
   -- @since 0.8
-  advancePhase :: a -> ExtraData a -> NextPhase a
+  advancePhase :: a -> NextPhase a

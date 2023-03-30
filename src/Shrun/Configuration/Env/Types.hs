@@ -13,12 +13,14 @@ module Shrun.Configuration.Env.Types
     HasInit (..),
     HasAnyError (..),
     setAnyErrorTrue,
+    HasNotifyConfig (..),
 
     -- * Types
     Env (..),
     Logging (..),
     CmdLogging (..),
     FileLogging (..),
+    NotifyEnv (..),
     CmdDisplay (..),
     Truncation (..),
     LineTruncation (..),
@@ -32,6 +34,12 @@ import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.Types (FileLog, LogRegion)
+import Shrun.Notify.Types
+  ( NotifyAction,
+    NotifyConfig (..),
+    NotifySystemP2,
+    NotifyTimeout,
+  )
 import Shrun.Prelude
 import TOML (Value (Integer, String))
 import Text.Show (showParen, showString)
@@ -275,6 +283,27 @@ instance Show (Logging r) where
         . showsPrec appPrec1 (env ^. #fileLogging)
         . showString "}"
 
+-- | Holds notification settings.
+--
+-- @since X.X
+data NotifyEnv = MkNotifyEnv
+  { -- | Notification system to use.
+    --
+    -- @since X.X
+    system :: !NotifySystemP2,
+    -- | Notification action.
+    --
+    -- @since X.X
+    action :: !NotifyAction,
+    -- | Timeout to use for notifications.
+    --
+    -- @since X.X
+    timeout :: !NotifyTimeout
+  }
+
+-- | @since X.X
+makeFieldLabelsNoPrefix ''NotifyEnv
+
 -- | The commands themselves.
 --
 -- @since 0.1
@@ -315,8 +344,7 @@ class HasAnyError env where
   -- @since 0.8
   getAnyError :: env -> TVar Bool
 
--- | The main 'Env' type used by Shrun. Intended to be used with
--- 'Shrun.Effects.MonadReader'.
+-- | The main 'Env' type used by Shrun.
 --
 -- @since 0.1
 data Env = MkEnv
@@ -342,6 +370,10 @@ data Env = MkEnv
     --
     -- @since 0.8
     anyError :: !(TVar Bool),
+    -- | Holds notification environment.
+    --
+    -- @since X.X
+    notifyEnv :: !(Maybe NotifyEnv),
     -- | The commands to run.
     --
     -- @since 0.1
@@ -412,3 +444,21 @@ setAnyErrorTrue ::
   ) =>
   m ()
 setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA ref True
+
+-- | Class for retrieving the notify config.
+--
+-- @since X.X
+class HasNotifyConfig env where
+  -- | Retrieves the notify config.
+  --
+  -- @since X.X
+  getNotifyConfig :: env -> Maybe NotifyConfig
+
+-- | @since X.X
+instance HasNotifyConfig Env where
+  getNotifyConfig env =
+    (env ^. #notifyEnv) <&> \notifyEnv ->
+      MkNotifyConfig
+        { action = notifyEnv ^. #action,
+          timeout = notifyEnv ^. #timeout
+        }

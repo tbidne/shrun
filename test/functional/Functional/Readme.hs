@@ -1,9 +1,15 @@
+{-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+
 -- | Functional tests for readme examples.
 module Functional.Readme (specs) where
 
+import DBus.Notify (UrgencyLevel (..))
 import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
+import Shrun.Notify.MonadNotify (ShrunNote (..))
+import Shrun.Notify.Types (NotifyTimeout (..))
 import Test.Shrun.Verifier (ResultText (..))
 import Test.Shrun.Verifier qualified as V
 
@@ -14,26 +20,28 @@ specs :: IO TestArgs -> TestTree
 specs args =
   testGroup
     "README examples"
-    [ gif,
-      core,
-      timeout,
-      initOn,
-      initOff,
-      cmdlogOn,
-      cmdlogOff,
-      fileLog args,
-      keyHideOn,
-      keyHideOff,
-      stripControlAlwaysCmdNames,
-      stripControlAll,
-      stripControlNone,
-      stripControlSmart,
-      fileLogStripControlAll args,
-      fileLogStripControlNone args,
-      fileLogStripControlSmart args,
-      cmdNameTruncN,
-      cmdLogLineTruncN
-    ]
+    ( [ gif,
+        core,
+        timeout,
+        initOn,
+        initOff,
+        cmdlogOn,
+        cmdlogOff,
+        fileLog args,
+        keyHideOn,
+        keyHideOff,
+        stripControlAlwaysCmdNames,
+        stripControlAll,
+        stripControlNone,
+        stripControlSmart,
+        fileLogStripControlAll args,
+        fileLogStripControlNone args,
+        fileLogStripControlSmart args,
+        cmdNameTruncN,
+        cmdLogLineTruncN
+      ]
+        <> notifyTests
+    )
 
 gif :: TestTree
 gif =
@@ -404,18 +412,75 @@ cmdLogLineTruncN = testCase "Runs --cmd-log-line-trunc 80 example" $ do
       [ "[Command][echo 'some ridiculously long command i mean is this really necessar..."
       ]
 
-withBaseArgs :: [String] -> [String]
-withBaseArgs as =
-  [ "-c",
-    configPath
+notifyTests :: [TestTree]
+#if OSX
+notifyTests = []
+#else
+notifyTests =
+  [ notifyActionFinal,
+    notifyTimeoutNever
   ]
-    <> as
 
-withNoConfig :: [String] -> [String]
-withNoConfig as =
-  [ "--no-config"
-  ]
-    <> as
+-- NOTE: There is no DBus test because that requires creating a real DBus
+-- connection, as we are running in IO.
 
-configPath :: String
-configPath = "./examples/config.toml"
+notifyActionFinal :: TestTree
+notifyActionFinal = testCase "Runs --notify-action final" $ do
+  results <- readIORef =<< runNotes args
+  expected @=? results
+  where
+    args =
+      withNoConfig
+        [ "--notify-system",
+          "notify-send",
+          "--notify-action",
+          "final",
+          "sleep 2",
+          "sleep 3"
+        ]
+    expected =
+      [ MkShrunNote
+          { summary = "Shrun Finished",
+            body = "3 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutSeconds 10
+          }
+      ]
+
+notifyTimeoutNever :: TestTree
+notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
+  results <- readIORef =<< runNotes args
+  expected @=? results
+  where
+    args =
+      withNoConfig
+        [ "--notify-system",
+          "notify-send",
+          "--notify-action",
+          "command",
+          "--notify-timeout",
+          "never",
+          "sleep 2",
+          "sleep 3"
+        ]
+    expected =
+      [ MkShrunNote
+          { summary = "Shrun Finished",
+            body = "3 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutNever
+          },
+        MkShrunNote
+          { summary = "[sleep 3]  Finished",
+            body = "3 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutNever
+          },
+        MkShrunNote
+          { summary = "[sleep 2]  Finished",
+            body = "2 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutNever
+          }
+      ]
+#endif

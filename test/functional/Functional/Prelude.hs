@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -7,6 +8,7 @@ module Functional.Prelude
 
     -- * Running tests
     run,
+    runNotes,
     runException,
     runExitFailure,
 
@@ -25,6 +27,10 @@ module Functional.Prelude
     withTimerPrefix,
     withTimeoutPrefix,
     withFinishedPrefix,
+
+    -- * Misc
+    withBaseArgs,
+    withNoConfig,
   )
 where
 
@@ -32,17 +38,12 @@ import Data.String as X (IsString)
 import Data.Typeable (typeRep)
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
-import Shrun.Configuration.Env.Types
-  ( HasAnyError (..),
-    HasCommands (..),
-    HasInit (..),
-    HasLogging (..),
-    HasTimeout (..),
-    Logging (..),
-  )
+import Shrun.Configuration.Env.Types (HasAnyError (..), HasCommands (..), HasInit (..), HasLogging (..), HasNotifyConfig (..), HasTimeout (..), Logging (..), NotifyEnv)
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Notify.MonadNotify
+import Shrun.Notify.Types
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
 import System.Environment qualified as SysEnv
@@ -61,6 +62,8 @@ data FuncEnv = MkFuncEnv
     completedCmds :: !(TVar (Seq CommandP1)),
     commands :: !(NESeq CommandP1),
     logs :: !(IORef (List Text)),
+    notifyEnv :: !(Maybe NotifyEnv),
+    shrunNotes :: !(IORef (List ShrunNote)),
     anyError :: !(TVar Bool)
   }
 
@@ -88,6 +91,14 @@ instance HasCommands FuncEnv where
 instance HasAnyError FuncEnv where
   getAnyError = view #anyError
 
+instance HasNotifyConfig FuncEnv where
+  getNotifyConfig env =
+    (env ^. #notifyEnv) <&> \notifyEnv ->
+      MkNotifyConfig
+        { action = notifyEnv ^. #action,
+          timeout = notifyEnv ^. #timeout
+        }
+
 -- | @since 0.3
 instance MonadRegionLogger (ShellT FuncEnv IO) where
   type Region (ShellT FuncEnv IO) = ()
@@ -102,15 +113,23 @@ instance MonadRegionLogger (ShellT FuncEnv IO) where
 
   displayRegions = id
 
+instance MonadNotify (ShellT FuncEnv IO) where
+  notify note = do
+    notesRef <- asks (view #shrunNotes)
+    modifyIORef' notesRef (note :)
+
 -- | Runs the args and retrieves the logs.
 run :: List String -> IO (IORef (List Text))
-run = runMaybeException ExNothing
+run = fmap fst . runMaybeException ExNothing
+
+-- | Runs the args and retrieves the sent notifications.
+runNotes :: List String -> IO (IORef (List ShrunNote))
+runNotes = fmap snd . runMaybeException ExNothing
 
 -- | 'runException' specialized to ExitFailure.
 runExitFailure :: List String -> IO (IORef (List Text))
 runExitFailure =
-  runMaybeException
-    (ExJust $ Proxy @(ExceptionCS ExitCode))
+  fmap fst . runMaybeException (ExJust $ Proxy @(ExceptionCS ExitCode))
 
 -- | Like 'runException', except it expects an exception.
 runException ::
@@ -118,7 +137,7 @@ runException ::
   (Exception e) =>
   List String ->
   IO (IORef (List Text))
-runException = runMaybeException (ExJust (Proxy @e))
+runException = fmap fst . runMaybeException (ExJust (Proxy @e))
 
 -- | So we can hide the exception type and make it so run does not
 -- have to pass in a dummy var to runMaybeException.
@@ -129,11 +148,12 @@ data MaybeException where
 runMaybeException ::
   MaybeException ->
   List String ->
-  IO (IORef (List Text))
+  IO (IORef (List Text), IORef (List ShrunNote))
 runMaybeException mException argList = do
   SysEnv.withArgs argList $ Env.withEnv $ \env -> do
     ls <- newIORef []
     consoleQueue <- newTBQueueA 1_000
+    shrunNotes <- newIORef []
     let funcEnv =
           MkFuncEnv
             { timeout = env ^. #timeout,
@@ -151,14 +171,17 @@ runMaybeException mException argList = do
               completedCmds = env ^. #completedCmds,
               anyError = env ^. #anyError,
               commands = env ^. #commands,
-              logs = ls
+              logs = ls,
+              notifyEnv = env ^. #notifyEnv,
+              shrunNotes
             }
 
     case mException of
-      ExNothing -> SR.runShellT SR.shrun funcEnv $> funcEnv ^. #logs
+      ExNothing -> do
+        SR.runShellT SR.shrun funcEnv $> (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
       ExJust (proxy :: Proxy e) ->
         try @_ @e (SR.runShellT SR.shrun funcEnv) >>= \case
-          Left _ -> pure $ funcEnv ^. #logs
+          Left _ -> pure (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
           Right _ ->
             error $
               mconcat
@@ -204,3 +227,23 @@ withTimeoutPrefix = (timeoutPrefix <>)
 
 withFinishedPrefix :: (Semigroup s, IsString s) => s -> s
 withFinishedPrefix = (finishedPrefix <>)
+
+withBaseArgs :: [String] -> [String]
+withBaseArgs as =
+  [ "-c",
+    configPath
+  ]
+    <> as
+
+withNoConfig :: [String] -> [String]
+withNoConfig as =
+  [ "--no-config"
+  ]
+    <> as
+
+configPath :: String
+#if OSX
+configPath = "examples" </> "config_osx.toml"
+#else
+configPath = "examples" </> "config.toml"
+#endif

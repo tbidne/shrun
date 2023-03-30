@@ -13,6 +13,7 @@ module Shrun.Logging.Formatting
     levelToPrefix,
 
     -- ** Utils
+    formatCommand,
     displayCmd,
     stripChars,
     brackets,

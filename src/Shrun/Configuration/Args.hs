@@ -41,6 +41,8 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.PollInterval (PollInterval (..), defaultPollInterval)
 import Shrun.Data.Timeout (Timeout (..))
+import Shrun.Notify.Types
+import Shrun.Notify.Types qualified as Notify
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 import Text.Read qualified as TR
@@ -181,6 +183,18 @@ data Args = MkArgs
     --
     -- @since 0.5
     fileLogSizeMode :: !(Maybe FileSizeMode),
+    -- | Actions for which to send notifications.
+    --
+    -- @since X.X
+    notifyAction :: !(Maybe NotifyAction),
+    -- | The notification system to use.
+    --
+    -- @since X.X
+    notifySystem :: !(Maybe NotifySystemP1),
+    -- | when to timeout successful notifications.
+    --
+    -- @since X.X
+    notifyTimeout :: !(Maybe NotifyTimeout),
     -- | List of commands.
     --
     -- @since 0.1
@@ -216,6 +230,9 @@ defaultArgs cmds =
       fileLogStripControl = empty,
       fileLogMode = empty,
       fileLogSizeMode = empty,
+      notifySystem = empty,
+      notifyAction = empty,
+      notifyTimeout = empty,
       commands = cmds
     }
 
@@ -261,6 +278,9 @@ argsParser =
     <*> fileLogStripControlParser
     <*> fileLogModeParser
     <*> fileLogSizeModeParser
+    <*> notifyActionParser
+    <*> notifySystemParser
+    <*> notifyTimeoutParser
     <*> commandsParser
     <**> OA.helper
     <**> version
@@ -641,6 +661,52 @@ initParser =
           "'shrun --init \". ~/.bashrc\" foo bar' is equivalent ",
           "to 'shrun \". ~/.bashrc && foo\" \". ~/.bashrc && bar\"'."
         ]
+
+notifySystemParser :: Parser (Maybe NotifySystemP1)
+notifySystemParser =
+  OA.optional $
+    OA.option readNotifySystem $
+      mconcat
+        [ OA.long "notify-system",
+          OA.help helpTxt,
+          OA.metavar Notify.notifySystemStr
+        ]
+  where
+    readNotifySystem = OA.str >>= Notify.parseNotifySystem
+    helpTxt =
+      "The system used for sending notifications. See --notify-action."
+
+notifyActionParser :: Parser (Maybe NotifyAction)
+notifyActionParser =
+  OA.optional $
+    OA.option readNotifyAction $
+      mconcat
+        [ OA.long "notify-action",
+          OA.help helpTxt,
+          OA.metavar Notify.notifyActionStr
+        ]
+  where
+    readNotifyAction = OA.str >>= Notify.parseNotifyAction
+    helpTxt =
+      mconcat
+        [ "Sends notifications for various actions if --notify-system is ",
+          "given and --notify-action is not 'none'. 'Final' sends off a ",
+          "notification when Shrun itself finishes whereas 'command' (which ",
+          "implies 'final') sends off one each time a command finishes."
+        ]
+
+notifyTimeoutParser :: Parser (Maybe NotifyTimeout)
+notifyTimeoutParser =
+  OA.optional $
+    OA.option readNotifySystem $
+      mconcat
+        [ OA.long "notify-timeout",
+          OA.help helpTxt,
+          OA.metavar Notify.notifyTimeoutStr
+        ]
+  where
+    readNotifySystem = OA.str >>= Notify.parseNotifyTimeout
+    helpTxt = "When to timeout success notifications. Defaults to 10 seconds."
 
 commandsParser :: Parser (NESeq Text)
 commandsParser =

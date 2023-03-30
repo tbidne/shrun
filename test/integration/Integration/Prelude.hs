@@ -1,9 +1,15 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Integration.Prelude
   ( module X,
     TestArgs (..),
+    getExampleConfig,
+    getExampleConfigOS,
+    getIntConfig,
+    getIntConfigOS,
+    concatDirs,
   )
 where
 
@@ -30,3 +36,39 @@ data TestArgs = MkTestArgs
   deriving stock (Eq, Show)
 
 makeFieldLabelsNoPrefix ''TestArgs
+
+-- | Retrieves file path from the examples directory, potentially appending
+-- the os onto the filename (e.g. osx).
+getExampleConfigOS :: FilePath -> FilePath
+getExampleConfigOS fileName =
+  concatDirs ["examples", osExt fileName]
+    <> ".toml"
+
+-- | Retrieves file path from the examples directory.
+getExampleConfig :: FilePath -> FilePath
+getExampleConfig fileName =
+  concatDirs ["examples", fileName]
+    <> ".toml"
+
+-- | Retrieves file path from the integration directory, potentially appending
+-- the os onto the filename (e.g. osx).
+getIntConfigOS :: FilePath -> FilePath
+getIntConfigOS fileName =
+  concatDirs ["test", "integration", "toml", osExt fileName]
+    <> ".toml"
+
+-- | Retrieves file path from the integration directory.
+getIntConfig :: FilePath -> FilePath
+getIntConfig fileName =
+  concatDirs ["test", "integration", "toml", fileName]
+    <> ".toml"
+
+concatDirs :: [FilePath] -> FilePath
+concatDirs = foldr (</>) []
+
+osExt :: FilePath -> FilePath
+#if OSX
+osExt = (<> "_osx")
+#else
+osExt = id
+#endif

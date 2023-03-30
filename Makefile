@@ -36,6 +36,9 @@ watch:
 		ghcid --command "cabal repl $(T)"; \
 	fi
 
+watcht:
+	find . -type f -name "*hs" | entr -s "cabal test $(T)"
+
 # ci
 
 cic: formatc lintc

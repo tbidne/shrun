@@ -10,6 +10,14 @@ Note that PVP is applied to the _application_, **not** the library. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
+## [Unreleased]
+### Added
+* Added linux feature for sending notifications upon command/shrun completion.
+  The new CLI options (`toml`) are:
+  * `--notify-system (notify.system)`
+  * `--notify-action (notify.action)`
+  * `--notify-timeout (notify.timeout)`
+
 ## [0.8] -- 2023-03-22
 ### Removed
 * `stack` support removed.
@@ -137,6 +145,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.8...main
 [0.8]: https://github.com/tbidne/shrun/compare/0.7...0.8
 [0.7]: https://github.com/tbidne/shrun/compare/0.6...0.7
 [0.6]: https://github.com/tbidne/shrun/compare/0.5...0.6

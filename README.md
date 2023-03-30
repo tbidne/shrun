@@ -41,6 +41,10 @@
     - [File Log Strip Control](#file-log-strip-control)
     - [Command Name Truncation](#command-name-truncation)
     - [Command Line Truncation](#command-line-truncation)
+  - [Notifications](#notifications)
+    - [Notify System](#notify-system)
+    - [Notify Action](#notify-action)
+    - [Notify Timeout](#notify-timeout)
   - [Miscellaneous](#miscellaneous)
     - [Default Config](#default-config)
 - [Building](#building)
@@ -395,6 +399,46 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-log-line-trunc detect "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
 <span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 5] some ridiculously long command...</span>
 <span style="color: #a3fefe">[Timer] 3 seconds</span></code>
+</pre>
+
+## Notifications
+
+These options configure `shrun` to send off desktop notifications for certain actions i.e. a command finishes or shrun itself finishes. This feature is available only for linux.
+
+### Notify System
+
+**Arg:** `--notify-system (dbus|notify-send)`
+
+**Description:** The system used for sending notifications. See [`--notify-action`](#notify-action).
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus "sleep 5"</span>
+</pre>
+
+### Notify Action
+
+**Arg:** `--notify-action (none|final|command)`
+
+**Description:** Sends notifications for various actions if `--notify-system` is given and `--notify-action` is not `none`. `final` sends off a notification when `shrun` itself finishes whereas the default `command` (which implies `final`) sends off one each time a command finishes.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action final "sleep 5"</span>
+</pre>
+
+### Notify Timeout
+
+**Arg:** `--notify-timeout (never|NAT)`
+
+**Description:** When to timeout success notifications. Defaults to 10 seconds.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-timeout never "sleep 5"</span>
 </pre>
 
 ## Miscellaneous

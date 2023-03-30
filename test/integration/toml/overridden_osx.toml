@@ -17,8 +17,3 @@ strip-control = "all"
 [file-log]
 path = "default"
 mode = "append"
-
-[notify]
-system = "dbus"
-action = "none"
-timeout = "never"

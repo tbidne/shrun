@@ -25,6 +25,9 @@ module Shrun.Prelude
     -- * 'Text' replacements for 'P.String' functions.
     showt,
 
+    -- * Optics
+    isNot,
+
     -- * Anti-punning aliases
     List,
     Tuple2,
@@ -120,6 +123,7 @@ import Effects.Exception as X
     MonadThrow,
     SomeException,
     bracket,
+    catchAny,
     catchCS,
     displayException,
     exitFailure,
@@ -337,3 +341,9 @@ type Tuple2 = (,)
 --
 -- @since 0.1
 type Tuple3 = (,,)
+
+-- | Negation of 'is'.
+--
+-- @since 0.1
+isNot :: (Is k An_AffineFold) => Optic' k is s a -> s -> Bool
+isNot optic = not . is optic

@@ -27,6 +27,7 @@ import Shrun.Configuration.Args
     FileSizeMode (..),
     parserInfoArgs,
   )
+import Shrun.Configuration.Env.Notify qualified as EnvNotify
 import Shrun.Configuration.Env.Types
   ( CmdDisplay (..),
     CmdLogging (..),
@@ -39,12 +40,18 @@ import Shrun.Configuration.Env.Types
     Truncation (..),
   )
 import Shrun.Configuration.Legend (linesToMap, translateCommands)
-import Shrun.Configuration.Toml (TomlConfig, defaultTomlConfig, mergeConfig)
+import Shrun.Configuration.Toml
+  ( TomlConfig,
+    defaultTomlConfig,
+    mergeConfig,
+  )
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (FileLog, LogRegion)
+import Shrun.Notify.MonadDBus (MonadDBus (..))
+import Shrun.Notify.MonadNotifySend (MonadNotifySend (..))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 
@@ -54,11 +61,13 @@ import Shrun.ShellT (ShellT)
 makeEnvAndShrun ::
   ( HasLogging Env (Region (ShellT Env m)),
     MonadAsync m,
+    MonadDBus m,
     MonadFileReader m,
     MonadFileWriter m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadNotifySend m,
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
@@ -78,7 +87,8 @@ makeEnvAndShrun = withEnv (runShellT shrun)
 --
 -- @since 0.5
 withEnv ::
-  ( MonadFileReader m,
+  ( MonadDBus m,
+    MonadFileReader m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadOptparse m,
@@ -125,7 +135,7 @@ withEnv onEnv = do
         Left tomlErr -> throwM tomlErr
 
 fromToml ::
-  ( MonadFileReader m,
+  ( MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadPathReader m,
@@ -160,6 +170,8 @@ fromToml cfg cmdsText onEnv = do
   completedCmds' <- newTVarA Seq.empty
   anyError <- newTVarA False
 
+  notifyEnv <- EnvNotify.tomlToNotifyEnv (cfg ^. #notify)
+
   let -- make environment
       envWithLogging ::
         -- optional file logging
@@ -171,6 +183,7 @@ fromToml cfg cmdsText onEnv = do
         MkEnv
           { timeout = cfg ^. #timeout,
             init = cfg ^. #init,
+            notifyEnv,
             logging =
               MkLogging
                 { cmdDisplay = fromMaybe ShowKey (cfg ^? (#cmdDisplay % _Just)),

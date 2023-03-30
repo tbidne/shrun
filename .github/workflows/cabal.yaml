@@ -31,14 +31,14 @@ jobs:
           ghc-version: ${{ matrix.ghc }}
 
       - name: Compile
-        run: cabal build
+        run: cabal build lib:shrun
 
       - name: Doc Tests
         run : |
           cabal configure \
             --enable-tests \
             --write-ghc-environment-files always
-          cabal build
+          cabal build lib:shrun
           RUN_DOCTEST=1 cabal test doctest
 
       - name: Unit Tests

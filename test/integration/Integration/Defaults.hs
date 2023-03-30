@@ -1,4 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Integration.Defaults (specs) where
 
@@ -11,6 +13,11 @@ import Integration.Utils
   )
 import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
+import Shrun.Notify.Types
+  ( NotifyAction (..),
+    NotifySystem (..),
+    NotifyTimeout (..),
+  )
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -43,8 +50,13 @@ defaultEnv = testCase "No arguments and empty config path should return default 
           cmdLogLineTrunc = Nothing,
           fileLogging = False,
           fileLogStripControl = Nothing,
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
           commands = "cmd1" :<|| []
         }
+
+{- ORMOLU_DISABLE -}
 
 usesDefaultConfigFile :: TestTree
 usesDefaultConfigFile = testCase "No arguments should use config from default file" $ do
@@ -66,6 +78,15 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
           cmdLogLineTrunc = Just 150,
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
+#if OSX
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
+#else
+          notifySystem = Just (DBus ()),
+          notifyAction = Just NotifyCommand,
+          notifyTimeout = Just NotifyTimeoutNever,
+#endif
           commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
@@ -82,7 +103,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
   where
     args logPath =
       [ "--config",
-        "test/integration/toml/overridden.toml",
+        getIntConfigOS "overridden",
         "--timeout",
         "10",
         "--init",
@@ -101,6 +122,14 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         "60",
         "--cmd-log-strip-control",
         "none",
+#if !OSX
+        "--notify-system",
+        "notify-send",
+        "--notify-action",
+        "final",
+        "--notify-timeout",
+        "10",
+#endif
         "cmd"
       ]
     expected =
@@ -115,8 +144,19 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
           cmdLogLineTrunc = Just 60,
           fileLogging = True,
           fileLogStripControl = Just StripControlNone,
+#if OSX
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
+#else
+          notifySystem = Just NotifySend,
+          notifyAction = Just NotifyFinal,
+          notifyTimeout = Just (NotifyTimeoutSeconds 10),
+#endif
           commands = "cmd" :<|| []
         }
+
+{- ORMOLU_ENABLE -}
 
 cliOverridesConfigFileCmdLog :: TestTree
 cliOverridesConfigFileCmdLog = testCase desc $ do
@@ -130,7 +170,7 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
     desc = "CLI overrides config file cmd-log fields even when CLI --cmd-log is not specified"
     args =
       [ "--config",
-        "test/integration/toml/overridden.toml",
+        getIntConfigOS "overridden",
         "--cmd-log-line-trunc",
         "60",
         "--cmd-log-strip-control",
@@ -151,6 +191,9 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           cmdLogNameTrunc = Just 80,
           fileLogging = True,
           fileLogStripControl = Just StripControlAll,
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
           commands = "cmd" :<|| []
         }
 
@@ -174,5 +217,8 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
           cmdLogLineTrunc = Nothing,
           fileLogging = False,
           fileLogStripControl = Nothing,
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
           commands = "cmd1" :<|| []
         }

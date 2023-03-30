@@ -68,8 +68,7 @@ type CommandP2 = Command Phase2
 
 -- | @since 0.1
 instance AdvancePhase (Command Phase1) where
-  type NextPhase (Command Phase1) = Command Phase2
-  type ExtraData (Command Phase1) = Maybe Text
+  type NextPhase (Command Phase1) = (Maybe Text -> Command Phase2)
 
   advancePhase (MkCommand k cmd) Nothing = MkCommand k cmd
   advancePhase (MkCommand k cmd) (Just init) =
