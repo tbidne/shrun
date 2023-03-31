@@ -137,64 +137,124 @@ data Args = MkArgs
     --
     -- @since 0.1
     timeout :: !(Maybe Timeout),
+    -- | Disables timeout.
+    --
+    -- @since X.X
+    noTimeout :: !Bool,
     -- | Shell logic to run before each command.
     --
     -- @since 0.8
     init :: !(Maybe Text),
+    -- | Disables init.
+    --
+    -- @since X.X
+    noInit :: !Bool,
     -- | Whether to display command by (key) name or command.
     --
     -- @since 0.1
-    cmdDisplay :: !(Maybe CmdDisplay),
+    keyHide :: !(Maybe CmdDisplay),
+    -- | Disables cmdDisplay.
+    --
+    -- @since X.X
+    noKeyHide :: !Bool,
     -- | How often to poll commands for logs, in microseconds.
     --
     -- @since 0.8
     pollInterval :: !(Maybe PollInterval),
+    -- | Disables pollInterval.
+    --
+    -- @since X.X
+    noPollInterval :: !Bool,
     -- | The max number of command characters to display in the logs.
     --
     -- @since 0.1
     cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
+    -- | Disables cmdNameTrunc.
+    --
+    -- @since X.X
+    noCmdNameTrunc :: !Bool,
     -- | Whether to log commands.
     --
     -- @since 0.1
-    cmdLogging :: !(Maybe Bool),
+    cmdLog :: !(Maybe Bool),
+    -- | Disables cmdLogging.
+    --
+    -- @since X.X
+    noCmdLog :: !Bool,
     -- | Determines to what extent we should remove control characters
     -- from command logs.
     --
     -- @since 0.3
     cmdLogStripControl :: !(Maybe StripControl),
+    -- | Disables cmdLogStripControl.
+    --
+    -- @since X.X
+    noCmdLogStripControl :: !Bool,
     -- | The max number of line characters to display in the logs.
     --
     -- @since 0.1
     cmdLogLineTrunc :: !(Maybe LineTruncation),
+    -- | Disables cmdLogLineTrunc.
+    --
+    -- @since X.X
+    noCmdLogLineTrunc :: !Bool,
     -- | Optional path to log file. Determines if we log to a file.
     --
     -- @since 0.1
-    fileLogging :: !(Maybe FilePathDefault),
+    fileLog :: !(Maybe FilePathDefault),
+    -- | Disable fileLog.
+    --
+    -- @since 0.1
+    noFileLog :: !Bool,
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     --
     -- @since 0.5
     fileLogStripControl :: !(Maybe StripControl),
+    -- | Disables fileLogStripControl.
+    --
+    -- @since X.X
+    noFileLogStripControl :: !Bool,
     -- | Mode to use with the file log.
     --
     -- since 0.5
     fileLogMode :: !(Maybe FileMode),
+    -- | Disables fileLogMode.
+    --
+    -- @since X.X
+    noFileLogMode :: !Bool,
     -- | Threshold for when we should warn about the log file size.
     --
     -- @since 0.5
     fileLogSizeMode :: !(Maybe FileSizeMode),
+    -- | Disables fileLogSizeMode.
+    --
+    -- @since X.X
+    noFileLogSizeMode :: !Bool,
     -- | Actions for which to send notifications.
     --
     -- @since X.X
     notifyAction :: !(Maybe NotifyAction),
+    -- | Disables notifyAction.
+    --
+    -- @since X.X
+    noNotifyAction :: !Bool,
     -- | The notification system to use.
     --
     -- @since X.X
     notifySystem :: !(Maybe NotifySystemP1),
+    -- | Disables notifySystem.
+    --
+    -- @since X.X
+    noNotifySystem :: !Bool,
     -- | when to timeout successful notifications.
     --
     -- @since X.X
     notifyTimeout :: !(Maybe NotifyTimeout),
+    -- | Disables notifyTimeout.
+    --
+    -- @since X.X
+    noNotifyTimeout :: !Bool,
     -- | List of commands.
     --
     -- @since 0.1
@@ -217,22 +277,37 @@ defaultArgs :: NESeq Text -> Args
 defaultArgs cmds =
   MkArgs
     { timeout = empty,
+      noTimeout = False,
       configPath = empty,
       noConfig = False,
-      cmdDisplay = empty,
+      keyHide = empty,
+      noKeyHide = False,
       pollInterval = empty,
+      noPollInterval = False,
       init = empty,
-      cmdLogging = empty,
+      noInit = False,
+      cmdLog = empty,
+      noCmdLog = False,
       cmdLogStripControl = empty,
+      noCmdLogStripControl = False,
       cmdNameTrunc = empty,
+      noCmdNameTrunc = False,
       cmdLogLineTrunc = empty,
-      fileLogging = empty,
+      noCmdLogLineTrunc = False,
+      fileLog = empty,
+      noFileLog = False,
       fileLogStripControl = empty,
+      noFileLogStripControl = False,
       fileLogMode = empty,
+      noFileLogMode = False,
       fileLogSizeMode = empty,
+      noFileLogSizeMode = False,
       notifySystem = empty,
+      noNotifySystem = False,
       notifyAction = empty,
+      noNotifyAction = False,
       notifyTimeout = empty,
+      noNotifyTimeout = False,
       commands = cmds
     }
 
@@ -267,20 +342,35 @@ argsParser =
     <$> configParser
     <*> noConfigParser
     <*> timeoutParser
+    <*> noTimeoutParser
     <*> initParser
+    <*> noInitParser
     <*> commandDisplayParser
+    <*> noKeyHideParser
     <*> pollIntervalParser
-    <*> cmdTruncationParser
-    <*> commandLoggingParser
-    <*> stripControlParser
-    <*> lineTruncationParser
-    <*> fileLoggingParser
+    <*> noPollIntervalParser
+    <*> cmdNameTruncParser
+    <*> noCmdNameTruncParser
+    <*> cmdLogParser
+    <*> noCmdLogParser
+    <*> cmdLogStripControlParser
+    <*> noCmdLogStripControlParser
+    <*> cmdLogLineTruncParser
+    <*> noCmdLogLineTruncParser
+    <*> fileLogParser
+    <*> noFileLogParser
     <*> fileLogStripControlParser
+    <*> noFileLogStripControlParser
     <*> fileLogModeParser
+    <*> noFileLogModeParser
     <*> fileLogSizeModeParser
+    <*> noFileLogSizeModeParser
     <*> notifyActionParser
+    <*> noNotifyActionParser
     <*> notifySystemParser
+    <*> noNotifySystemParser
     <*> notifyTimeoutParser
+    <*> noNotifyTimeoutParser
     <*> commandsParser
     <**> OA.helper
     <**> version
@@ -376,8 +466,16 @@ readTimeout = do
           "Could not parse timeout: " <> s
     Right t -> pure $ MkTimeout $ RelativeTime.toSeconds t
 
-cmdTruncationParser :: Parser (Maybe (Truncation TCmdName))
-cmdTruncationParser =
+noTimeoutParser :: Parser Bool
+noTimeoutParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-timeout",
+        OA.help "Disables --timeout."
+      ]
+
+cmdNameTruncParser :: Parser (Maybe (Truncation TCmdName))
+cmdNameTruncParser =
   OA.optional $
     OA.option
       readTruncation
@@ -398,8 +496,16 @@ cmdTruncationParser =
           "are unaffected."
         ]
 
-lineTruncationParser :: Parser (Maybe LineTruncation)
-lineTruncationParser =
+noCmdNameTruncParser :: Parser Bool
+noCmdNameTruncParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-cmd-name-trunc",
+        OA.help "Disables --cmd-name-trunc."
+      ]
+
+cmdLogLineTruncParser :: Parser (Maybe LineTruncation)
+cmdLogLineTruncParser =
   OA.optional $
     OA.option
       (defRead <|> readDetectTruncation)
@@ -421,6 +527,14 @@ lineTruncationParser =
           "not affect file logs with --file-log."
         ]
 
+noCmdLogLineTruncParser :: Parser Bool
+noCmdLogLineTruncParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-cmd-log-line-trunc",
+        OA.help "Disables --cmd-log-line-trunc."
+      ]
+
 readTruncation :: ReadM (Truncation a)
 readTruncation = MkTruncation <$> OA.auto
 
@@ -433,8 +547,8 @@ readDetectTruncation =
         ErrorMsg $
           "Unrecognized truncation option:" <> unpack bad
 
-stripControlParser :: Parser (Maybe StripControl)
-stripControlParser =
+cmdLogStripControlParser :: Parser (Maybe StripControl)
+cmdLogStripControlParser =
   OA.optional $
     OA.option
       readStripControl
@@ -469,8 +583,16 @@ readStripControl =
         ErrorMsg $
           "Unrecognized strip-control option: " <> unpack bad
 
-fileLoggingParser :: Parser (Maybe FilePathDefault)
-fileLoggingParser =
+noCmdLogStripControlParser :: Parser Bool
+noCmdLogStripControlParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-cmd-log-strip-control",
+        OA.help "Disables --cmd-log-strip-control."
+      ]
+
+fileLogParser :: Parser (Maybe FilePathDefault)
+fileLogParser =
   OA.optional $
     OA.option
       readLogFile
@@ -491,6 +613,14 @@ fileLoggingParser =
           "If the string 'default' is given, then we write to the XDG config ",
           "directory e.g. ~/.config/shrun/log."
         ]
+
+noFileLogParser :: Parser Bool
+noFileLogParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-file-log",
+        OA.help "Disables --file-log."
+      ]
 
 readLogFile :: ReadM FilePathDefault
 readLogFile = do
@@ -513,6 +643,14 @@ fileLogModeParser =
       )
   where
     helpTxt = "Mode in which to open the log file. Defaults to write."
+
+noFileLogModeParser :: Parser Bool
+noFileLogModeParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-file-log-mode",
+        OA.help "Disables --file-log-mode."
+      ]
 
 readFileMode :: ReadM FileMode
 readFileMode =
@@ -542,6 +680,14 @@ fileLogStripControlParser =
           "Defaults to all."
         ]
 
+noFileLogStripControlParser :: Parser Bool
+noFileLogStripControlParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-file-log-strip-control",
+        OA.help "Disables --file-log-strip-control."
+      ]
+
 fileLogSizeModeParser :: Parser (Maybe FileSizeMode)
 fileLogSizeModeParser =
   OA.optional $
@@ -563,8 +709,16 @@ fileLogSizeModeParser =
         ]
     readFileSize = OA.str >>= parseFileSizeMode
 
-commandLoggingParser :: Parser (Maybe Bool)
-commandLoggingParser =
+noFileLogSizeModeParser :: Parser Bool
+noFileLogSizeModeParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-file-log-size-mode",
+        OA.help "Disables --file-log-size-mode."
+      ]
+
+cmdLogParser :: Parser (Maybe Bool)
+cmdLogParser =
   OA.optional $
     OA.flag'
       True
@@ -582,6 +736,14 @@ commandLoggingParser =
           "which its logs will be printed. Only the latest log per region ",
           "is show at a given time."
         ]
+
+noCmdLogParser :: Parser Bool
+noCmdLogParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-cmd-log",
+        OA.help "Disables --cmd-log."
+      ]
 
 commandDisplayParser :: Parser (Maybe CmdDisplay)
 commandDisplayParser =
@@ -602,6 +764,14 @@ commandDisplayParser =
           "instead shows the literal command. Commands without keys are ",
           "unaffected."
         ]
+
+noKeyHideParser :: Parser Bool
+noKeyHideParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-key-hide",
+        OA.help "Disables --key-hide."
+      ]
 
 pollIntervalParser :: Parser (Maybe PollInterval)
 pollIntervalParser =
@@ -644,6 +814,14 @@ pollIntervalParser =
         . showt
         . view #unPollInterval
 
+noPollIntervalParser :: Parser Bool
+noPollIntervalParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-poll-interval",
+        OA.help "Disables --poll-interval."
+      ]
+
 initParser :: Parser (Maybe Text)
 initParser =
   OA.optional $
@@ -662,6 +840,14 @@ initParser =
           "to 'shrun \". ~/.bashrc && foo\" \". ~/.bashrc && bar\"'."
         ]
 
+noInitParser :: Parser Bool
+noInitParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-init",
+        OA.help "Disables --init."
+      ]
+
 notifySystemParser :: Parser (Maybe NotifySystemP1)
 notifySystemParser =
   OA.optional $
@@ -675,6 +861,14 @@ notifySystemParser =
     readNotifySystem = OA.str >>= Notify.parseNotifySystem
     helpTxt =
       "The system used for sending notifications. See --notify-action."
+
+noNotifySystemParser :: Parser Bool
+noNotifySystemParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-notify-system",
+        OA.help "Disables --notify-system."
+      ]
 
 notifyActionParser :: Parser (Maybe NotifyAction)
 notifyActionParser =
@@ -695,6 +889,14 @@ notifyActionParser =
           "implies 'final') sends off one each time a command finishes."
         ]
 
+noNotifyActionParser :: Parser Bool
+noNotifyActionParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-notify-action",
+        OA.help "Disables --notify-action."
+      ]
+
 notifyTimeoutParser :: Parser (Maybe NotifyTimeout)
 notifyTimeoutParser =
   OA.optional $
@@ -707,6 +909,14 @@ notifyTimeoutParser =
   where
     readNotifySystem = OA.str >>= Notify.parseNotifyTimeout
     helpTxt = "When to timeout success notifications. Defaults to 10 seconds."
+
+noNotifyTimeoutParser :: Parser Bool
+noNotifyTimeoutParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-notify-timeout",
+        OA.help "Disables --notify-timeout."
+      ]
 
 commandsParser :: Parser (NESeq Text)
 commandsParser =

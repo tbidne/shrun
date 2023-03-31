@@ -81,11 +81,11 @@ shrun = displayRegions $ do
     maybe
       runCommands
       runWithFileLogging
-      (logging ^. #fileLogging)
+      (logging ^. #fileLog)
 
     -- cancel consoleLogger, print remaining logs
     Async.cancel consoleLogger
-    let consoleQueue = logging ^. #consoleLogging
+    let consoleQueue = logging ^. #consoleLog
     flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
 
     -- if any processes have failed, exit with an error
@@ -151,7 +151,7 @@ runCommand cmd = do
 
   logging :: Logging (Region m) <- asks getLogging
   let cmdNameTrunc = logging ^. #cmdNameTrunc
-      cmdDisplay = logging ^. #cmdDisplay
+      cmdDisplay = logging ^. #keyHide
       formattedCmd = LogFmt.formatCommand cmdDisplay cmdNameTrunc cmd
 
   -- Sent off notif if NotifyCommand is set
@@ -277,7 +277,7 @@ keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      cmdDisplay <- asks (view #cmdDisplay . getLogging @env @(Region m))
+      cmdDisplay <- asks (view #keyHide . getLogging @env @(Region m))
       allCmds <- asks getCommands
       completedCmdsTVar <- asks getCompletedCmds
       completedCmds <- readTVarA completedCmdsTVar
@@ -314,7 +314,7 @@ pollQueueToConsole ::
   ) =>
   m void
 pollQueueToConsole = do
-  queue <- asks (view #consoleLogging . getLogging)
+  queue <- asks (view #consoleLog . getLogging)
   -- NOTE: Same masking behavior as pollQueueToFile.
   forever $ atomicReadWrite queue printConsoleLog
 

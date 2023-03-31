@@ -161,12 +161,12 @@ runMaybeException mException argList = do
               -- doing this by hand since we need a different consoleLogging
               logging =
                 MkLogging
-                  { cmdDisplay = env ^. (#logging % #cmdDisplay),
+                  { keyHide = env ^. (#logging % #keyHide),
                     pollInterval = env ^. (#logging % #pollInterval),
                     cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
-                    cmdLogging = env ^. (#logging % #cmdLogging),
-                    consoleLogging = consoleQueue,
-                    fileLogging = env ^. (#logging % #fileLogging)
+                    cmdLog = env ^. (#logging % #cmdLog),
+                    consoleLog = consoleQueue,
+                    fileLog = env ^. (#logging % #fileLog)
                   },
               completedCmds = env ^. #completedCmds,
               anyError = env ^. #anyError,

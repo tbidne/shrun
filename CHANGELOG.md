@@ -17,6 +17,8 @@ the major/minor/patch definitions apply to the application's interface / usage
   * `--notify-system (notify.system)`
   * `--notify-action (notify.action)`
   * `--notify-timeout (notify.timeout)`
+* Add `no-X` options to allow selectively disabling options (e.g. disable a
+  single field set by the toml file).
 
 ## [0.8] -- 2023-03-22
 ### Removed

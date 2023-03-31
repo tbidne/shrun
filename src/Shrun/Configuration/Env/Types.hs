@@ -241,7 +241,7 @@ data Logging r = MkLogging
     -- themselves.
     --
     -- @since 0.7
-    cmdDisplay :: !CmdDisplay,
+    keyHide :: !CmdDisplay,
     -- | How often to poll commands for logs, in microseconds.
     --
     -- @since 0.8
@@ -253,16 +253,16 @@ data Logging r = MkLogging
     -- | Whether to log commands.
     --
     -- @since 0.7
-    cmdLogging :: !(Maybe CmdLogging),
+    cmdLog :: !(Maybe CmdLogging),
     -- | Console log queue.
     --
     -- @since 0.7
-    consoleLogging :: TBQueue (LogRegion r),
+    consoleLog :: TBQueue (LogRegion r),
     -- | Optional file logging. If enabled, holds the path to the file
     -- and the log queue.
     --
     -- @since 0.7
-    fileLogging :: !(Maybe FileLogging)
+    fileLog :: !(Maybe FileLogging)
   }
 
 -- | @since 0.7
@@ -272,15 +272,15 @@ makeFieldLabelsNoPrefix ''Logging
 instance Show (Logging r) where
   showsPrec p env =
     showParen (p > appPrec) $
-      showString "MkEnv {cmdDisplay = "
-        . showsPrec appPrec1 (env ^. #cmdDisplay)
+      showString "MkEnv {keyHide = "
+        . showsPrec appPrec1 (env ^. #keyHide)
         . showString ", cmdNameTrunc = "
         . showsPrec appPrec1 (env ^. #cmdNameTrunc)
-        . showString ", cmdLogging = "
-        . showsPrec appPrec1 (env ^. #cmdLogging)
-        . showString ", consoleLogging = <TBQueue>"
-        . showString ", fileLogging = "
-        . showsPrec appPrec1 (env ^. #fileLogging)
+        . showString ", cmdLog = "
+        . showsPrec appPrec1 (env ^. #cmdLog)
+        . showString ", consoleLog = <TBQueue>"
+        . showString ", fileLog = "
+        . showsPrec appPrec1 (env ^. #fileLog)
         . showString "}"
 
 -- | Holds notification settings.

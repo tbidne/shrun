@@ -35,7 +35,7 @@ import Unit.Prelude
 import Unit.Shrun.Logging.Generators qualified as LGens
 
 data Env = MkEnv
-  { cmdDisplay :: CmdDisplay,
+  { keyHide :: CmdDisplay,
     cmdTrunc :: Maybe (Truncation TCmdName),
     lineTrunc :: Maybe (Truncation TCmdLine)
   }
@@ -113,20 +113,20 @@ genMInt = HGen.choice [Just <$> genNat, pure Nothing]
 instance HasLogging Env () where
   getLogging env =
     MkLogging
-      { cmdDisplay = env ^. #cmdDisplay,
+      { keyHide = env ^. #keyHide,
         pollInterval = 100,
         cmdNameTrunc = env ^. #cmdTrunc,
-        cmdLogging =
+        cmdLog =
           Just
             MkCmdLogging
               { stripControl = StripControlNone,
                 lineTrunc = env ^. #lineTrunc
               },
-        consoleLogging = error err,
-        fileLogging = Nothing
+        consoleLog = error err,
+        fileLog = Nothing
       }
     where
-      err = "[Unit.Props.Shrun.Logging.Formatting]: Unit tests should not be using consoleLogging"
+      err = "[Unit.Props.Shrun.Logging.Formatting]: Unit tests should not be using consoleLog"
 
 -- | Entry point for Shrun.Logging.Formatting property tests.
 tests :: TestTree
@@ -262,15 +262,15 @@ newtype MockEnv = MkMockEnv ()
 instance HasLogging MockEnv () where
   getLogging _ =
     MkLogging
-      { cmdDisplay = ShowKey,
+      { keyHide = ShowKey,
         pollInterval = 10,
         cmdNameTrunc = Nothing,
-        cmdLogging = Nothing,
-        consoleLogging = error err,
-        fileLogging = Nothing
+        cmdLog = Nothing,
+        consoleLog = error err,
+        fileLog = Nothing
       }
     where
-      err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using consoleLogging"
+      err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using consoleLog"
 
 -- Monad with mock implementation for 'MonadTime'.
 newtype MockTime a = MkMockTime
@@ -374,12 +374,12 @@ shapeProps =
 formatFileLog :: CmdDisplay -> Log -> Text
 formatFileLog cmdDisplay log =
   view #unFileLog $
-    Formatting.formatFileLog @MockTime cmdDisplay fileLogging log ^. #runMockTime
+    Formatting.formatFileLog @MockTime cmdDisplay fileLog log ^. #runMockTime
 
-fileLogging :: FileLogging
-fileLogging = MkFileLogging StripControlNone (error err)
+fileLog :: FileLogging
+fileLog = MkFileLogging StripControlNone (error err)
   where
-    err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLogging"
+    err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLog"
 
 stripCharsSpecs :: TestTree
 stripCharsSpecs =

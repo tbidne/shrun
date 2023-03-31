@@ -128,7 +128,7 @@ data TomlConfig = MkTomlConfig
     -- themselves.
     --
     -- @since 0.5
-    cmdDisplay :: !(Maybe CmdDisplay),
+    keyHide :: !(Maybe CmdDisplay),
     -- | How often to poll commands for logs, in microseconds.
     --
     -- @since 0.8
@@ -140,12 +140,12 @@ data TomlConfig = MkTomlConfig
     -- | Whether to log commands.
     --
     -- @since 0.6
-    cmdLogging :: !(Maybe CmdLoggingToml),
+    cmdLog :: !(Maybe CmdLoggingToml),
     -- | Optional file logging. If enabled, holds the path to the file
     -- and the log queue.
     --
     -- @since 0.6
-    fileLogging :: !(Maybe FileLoggingToml),
+    fileLog :: !(Maybe FileLoggingToml),
     -- | Holds notification toml config.
     --
     -- @since X.X
@@ -260,47 +260,102 @@ makeFieldLabelsNoPrefix ''NotifyToml
 mergeConfig :: Args -> TomlConfig -> TomlConfig
 mergeConfig args tomlConfig =
   MkTomlConfig
-    { timeout = combine #timeout #timeout,
-      init = combine #init #init,
-      cmdDisplay = combine #cmdDisplay #cmdDisplay,
-      pollInterval = combine #pollInterval #pollInterval,
-      cmdNameTrunc = combine #cmdNameTrunc #cmdNameTrunc,
-      cmdLogging =
-        combineCmdLogging argsCmdLogging (tomlConfig ^. #cmdLogging),
-      fileLogging =
-        combineFileLogging argsFileLogging (tomlConfig ^. #fileLogging),
-      notify = combineNotify argsNotify (tomlConfig ^. #notify),
+    { timeout = combineWithDisable #timeout #timeout #noTimeout,
+      init = combineWithDisable #init #init #noInit,
+      keyHide = combineWithDisable #keyHide #keyHide #noKeyHide,
+      pollInterval = combineWithDisable #pollInterval #pollInterval #noPollInterval,
+      cmdNameTrunc = combineWithDisable #cmdNameTrunc #cmdNameTrunc #noCmdNameTrunc,
+      cmdLog,
+      fileLog,
+      notify,
       legend = tomlConfig ^. #legend
     }
   where
-    combine ::
+    -- Combine LHS args and RHS toml, with the disable flag taking priority
+    combineWithDisable ::
       ( Alternative f,
         Is k A_Getter
       ) =>
       Optic' k NoIx Args (f b) ->
       Optic' k NoIx TomlConfig (f b) ->
+      Optic' k NoIx Args Bool ->
       f b
-    combine argsGetter tomlGetter =
-      args ^. argsGetter <|> tomlConfig ^. tomlGetter
+    combineWithDisable argsGetter tomlGetter argsDisable
+      | args ^. argsDisable = empty
+      | otherwise = args ^. argsGetter <|> tomlConfig ^. tomlGetter
 
-    argsCmdLogging =
-      ( args ^. #cmdLogging,
+    -- Either return the parameter or empty, depending on the disable flag
+    disabledOrResult ::
+      ( Alternative f,
+        Is k A_Getter
+      ) =>
+      Optic' k NoIx Args Bool ->
+      f b ->
+      f b
+    disabledOrResult argsDisable y
+      | args ^. argsDisable = empty
+      | otherwise = y
+
+    -- NOTE: The logic here is as follows:
+    --
+    -- 1. Combine LHS (args) and RHS (toml) into result r: i.e. args taking
+    --    priority.
+    -- 2. For each field, disable if the corresponding args disable field is
+    --    active. Otherwise take r.
+
+    argsCmdLog =
+      ( args ^. #cmdLog,
         args ^. #cmdLogStripControl,
         args ^. #cmdLogLineTrunc
       )
-    argsFileLogging =
-      ( args ^. #fileLogging,
+    cmdLog =
+      -- noCmdLog overrides all cmd logging
+      if args ^. #noCmdLog
+        then Nothing
+        else -- cmdLog might be active, combine args and toml and selectively
+        -- disable fields as necessary
+
+          combineCmdLog argsCmdLog (tomlConfig ^. #cmdLog) <&> \y ->
+            MkCmdLoggingToml
+              { stripControl = disabledOrResult #noCmdLogStripControl (y ^. #stripControl),
+                lineTrunc = disabledOrResult #noCmdLogLineTrunc (y ^. #lineTrunc)
+              }
+
+    argsFileLog =
+      ( args ^. #fileLog,
         args ^. #fileLogStripControl,
         args ^. #fileLogMode,
         args ^. #fileLogSizeMode
       )
+    fileLog =
+      if args ^. #noFileLog
+        then Nothing
+        else
+          combineFileLog argsFileLog (tomlConfig ^. #fileLog) <&> \y ->
+            MkFileLoggingToml
+              { path = y ^. #path,
+                stripControl = disabledOrResult #noFileLogStripControl (y ^. #stripControl),
+                mode = disabledOrResult #noFileLogMode (y ^. #mode),
+                sizeMode = disabledOrResult #noFileLogSizeMode (y ^. #sizeMode)
+              }
+
     argsNotify =
       ( args ^. #notifyAction,
         args ^. #notifySystem,
         args ^. #notifyTimeout
       )
+    notify =
+      if args ^. #noNotifyAction
+        then Nothing
+        else
+          combineNotify argsNotify (tomlConfig ^. #notify) <&> \y ->
+            MkNotifyToml
+              { action = y ^. #action,
+                system = disabledOrResult #noNotifySystem (y ^. #system),
+                timeout = disabledOrResult #noNotifyTimeout (y ^. #timeout)
+              }
 
-combineCmdLogging ::
+combineCmdLog ::
   -- | Args
   (Maybe Bool, Maybe StripControl, Maybe LineTruncation) ->
   -- | Toml
@@ -308,19 +363,19 @@ combineCmdLogging ::
   -- | Result
   Maybe CmdLoggingToml
 -- 1. If neither CLI nor toml specifies cmd logging, return no logging
-combineCmdLogging (Just False, _, _) Nothing = Nothing
-combineCmdLogging (Nothing, _, _) Nothing = Nothing
+combineCmdLog (Just False, _, _) Nothing = Nothing
+combineCmdLog (Nothing, _, _) Nothing = Nothing
 -- 2. If only the CLI specifies cmd logging, use its config
-combineCmdLogging (Just True, sc, lt) Nothing = Just $ MkCmdLoggingToml sc lt
+combineCmdLog (Just True, sc, lt) Nothing = Just $ MkCmdLoggingToml sc lt
 -- 3. If toml specifies cmd logging, combine args, favoring CLI as usual
-combineCmdLogging (_, mStripControl, mlineTrunc) (Just toml) =
+combineCmdLog (_, mStripControl, mlineTrunc) (Just toml) =
   Just $
     MkCmdLoggingToml
       { stripControl = mStripControl <|> toml ^. #stripControl,
         lineTrunc = mlineTrunc <|> toml ^. #lineTrunc
       }
 
-combineFileLogging ::
+combineFileLog ::
   -- | Args
   (Maybe FilePathDefault, Maybe StripControl, Maybe FileMode, Maybe FileSizeMode) ->
   -- | Toml
@@ -328,11 +383,11 @@ combineFileLogging ::
   -- | Result
   Maybe FileLoggingToml
 -- 1. If neither CLI nor toml specifies file logging, return no logging
-combineFileLogging (Nothing, _, _, _) Nothing = Nothing
+combineFileLog (Nothing, _, _, _) Nothing = Nothing
 -- 2. If only the CLI specifies file logging, use its config
-combineFileLogging (Just f, sc, m, sm) Nothing = Just $ MkFileLoggingToml f sc m sm
+combineFileLog (Just f, sc, m, sm) Nothing = Just $ MkFileLoggingToml f sc m sm
 -- 3. If toml specifies file logging, combine args, favoring CLI as usual
-combineFileLogging (mpath, mStripControl, mMode, mSizeMode) (Just toml) =
+combineFileLog (mpath, mStripControl, mMode, mSizeMode) (Just toml) =
   Just $
     MkFileLoggingToml
       { path = fromMaybe (toml ^. #path) mpath,

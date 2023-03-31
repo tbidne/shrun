@@ -122,9 +122,9 @@ tryCommandLogging ::
   m (Either (RelativeTime, Stderr) RelativeTime)
 tryCommandLogging command = do
   logging <- asks getLogging
-  let cmdDisplay = logging ^. #cmdDisplay
+  let cmdDisplay = logging ^. #keyHide
 
-  let cmdFn = case (logging ^. #cmdLogging, logging ^. #fileLogging) of
+  let cmdFn = case (logging ^. #cmdLog, logging ^. #fileLog) of
         -- 1. No CmdLogging and no FileLogging: No streaming at all.
         (Nothing, Nothing) -> tryCommand
         -- 2. No CmdLogging but FileLogging: Stream (to file) but no console
@@ -157,7 +157,7 @@ tryCommandLogging command = do
       pure $ Left (U.timeSpecToRelTime rt, err)
   where
     logConsole logging region log = do
-      let consoleQueue = logging ^. #consoleLogging
+      let consoleQueue = logging ^. #consoleLog
           formatted = formatConsoleLog logging log
       writeTBQueueA consoleQueue (LogRegion (log ^. #mode) region formatted)
 

@@ -52,7 +52,7 @@ formatConsoleLog logging log =
         Just cmd ->
           let cmd' =
                 formatCommand
-                  (logging ^. #cmdDisplay)
+                  (logging ^. #keyHide)
                   (logging ^. #cmdNameTrunc)
                   cmd
            in -- truncate entire line if necessary
@@ -74,7 +74,7 @@ formatConsoleLog logging log =
       UnsafeConsoleLog (colorize line)
   where
     msgStripped = stripChars (log ^. #msg) mStripControl
-    mCmdLogging = logging ^. #cmdLogging
+    mCmdLogging = logging ^. #cmdLog
     mStripControl = mCmdLogging ^? _Just % #stripControl
 
     -- truncate entire line if necessary (flag on and command log only)

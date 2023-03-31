@@ -55,9 +55,9 @@ putRegionLog ::
   m ()
 putRegionLog region lg =
   asks getLogging >>= \logging -> do
-    let cmdDisplay = logging ^. #cmdDisplay
+    let keyHide = logging ^. #keyHide
     regionLogToConsoleQueue region logging lg
-    for_ (logging ^. #fileLogging) (\fl -> logToFileQueue cmdDisplay fl lg)
+    for_ (logging ^. #fileLog) (\fl -> logToFileQueue keyHide fl lg)
 
 -- | Writes the log to the console queue.
 --
@@ -75,7 +75,7 @@ regionLogToConsoleQueue ::
 regionLogToConsoleQueue region logging log =
   writeTBQueueA queue (LogRegion (log ^. #mode) region formatted)
   where
-    queue = logging ^. #consoleLogging
+    queue = logging ^. #consoleLog
     formatted = formatConsoleLog logging log
 
 -- | Writes the log to the file queue.

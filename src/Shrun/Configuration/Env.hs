@@ -149,7 +149,7 @@ fromToml ::
   (Env -> m a) ->
   m a
 fromToml cfg cmdsText onEnv = do
-  cmdLogLineTrunc <- case cfg ^? (#cmdLogging %? #lineTrunc % _Just) of
+  cmdLogLineTrunc <- case cfg ^? (#cmdLog %? #lineTrunc % _Just) of
     Just Detected -> Just . MkTruncation <$> getTerminalWidth
     Just (Undetected x) -> pure $ Just x
     Nothing -> pure Nothing
@@ -157,7 +157,7 @@ fromToml cfg cmdsText onEnv = do
   let fileLogStripControl =
         fromMaybe
           StripControlAll
-          (cfg ^? (#fileLogging %? #stripControl % _Just))
+          (cfg ^? (#fileLog %? #stripControl % _Just))
 
   commands' <- case cfg ^. #legend of
     Nothing -> pure $ MkCommand Nothing <$> cmdsText
@@ -179,25 +179,25 @@ fromToml cfg cmdsText onEnv = do
         -- console logging
         TBQueue (LogRegion ConsoleRegion) ->
         Env
-      envWithLogging mFileLogging consoleLogging =
+      envWithLogging mFileLogging consoleLog =
         MkEnv
           { timeout = cfg ^. #timeout,
             init = cfg ^. #init,
             notifyEnv,
             logging =
               MkLogging
-                { cmdDisplay = fromMaybe ShowKey (cfg ^? (#cmdDisplay % _Just)),
+                { keyHide = fromMaybe ShowKey (cfg ^? (#keyHide % _Just)),
                   pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
                   cmdNameTrunc = cfg ^. #cmdNameTrunc,
-                  cmdLogging =
-                    cfg ^. #cmdLogging <&> \cmdLogging ->
+                  cmdLog =
+                    cfg ^. #cmdLog <&> \cmdLog ->
                       MkCmdLogging
                         { stripControl =
-                            fromMaybe StripControlSmart (cmdLogging ^? (#stripControl % _Just)),
+                            fromMaybe StripControlSmart (cmdLog ^? (#stripControl % _Just)),
                           lineTrunc = cmdLogLineTrunc
                         },
-                  consoleLogging,
-                  fileLogging =
+                  consoleLog,
+                  fileLog =
                     mFileLogging <&> \log ->
                       MkFileLogging
                         { log,
@@ -228,7 +228,7 @@ withMLogging ::
   TomlConfig ->
   (MLogging -> m a) ->
   m a
-withMLogging cfg onLogging = case cfg ^? (#fileLogging %? #path) of
+withMLogging cfg onLogging = case cfg ^? (#fileLog %? #path) of
   -- 1. No file logging
   Nothing -> onLogging Nothing
   -- 2. Use the default path.
@@ -253,7 +253,7 @@ withMLogging cfg onLogging = case cfg ^? (#fileLogging %? #path) of
 
     withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
   where
-    ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLogging %? #mode % _Just)) of
+    ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLog %? #mode % _Just)) of
       FileModeAppend -> AppendMode
       FileModeWrite -> WriteMode
 
@@ -278,7 +278,7 @@ handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
         putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
         removeFile fp
   where
-    mfileSizeMode = cfg ^? (#fileLogging %? #sizeMode % _Just)
+    mfileSizeMode = cfg ^? (#fileLog %? #sizeMode % _Just)
 
     sizeWarning warnSize fileSize =
       mconcat

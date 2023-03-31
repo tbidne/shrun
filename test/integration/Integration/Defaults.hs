@@ -27,7 +27,9 @@ specs testArgs =
       usesDefaultConfigFile,
       cliOverridesConfigFile testArgs,
       cliOverridesConfigFileCmdLog,
-      ignoresDefaultConfigFile
+      ignoresDefaultConfigFile,
+      noXOverridesToml,
+      noXOverridesArgs
     ]
 
 defaultEnv :: TestTree
@@ -42,13 +44,13 @@ defaultEnv = testCase "No arguments and empty config path should return default 
       MkSimpleEnv
         { timeout = Nothing,
           init = Nothing,
-          cmdLogging = False,
-          cmdDisplay = ShowKey,
+          cmdLog = False,
+          keyHide = ShowKey,
           pollInterval = 10_000,
+          cmdNameTrunc = Nothing,
           cmdLogStripControl = Nothing,
-          cmdLogNameTrunc = Nothing,
           cmdLogLineTrunc = Nothing,
-          fileLogging = False,
+          fileLog = False,
           fileLogStripControl = Nothing,
           notifySystem = Nothing,
           notifyAction = Nothing,
@@ -70,13 +72,13 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
       MkSimpleEnv
         { timeout = Just 3_600,
           init = Just ". some file",
-          cmdDisplay = HideKey,
+          keyHide = HideKey,
           pollInterval = 127,
-          cmdLogging = True,
+          cmdNameTrunc = Just 80,
+          cmdLog = True,
           cmdLogStripControl = Just StripControlAll,
-          cmdLogNameTrunc = Just 80,
           cmdLogLineTrunc = Just 150,
-          fileLogging = True,
+          fileLog = True,
           fileLogStripControl = Just StripControlNone,
 #if OSX
           notifySystem = Nothing,
@@ -136,13 +138,13 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
       MkSimpleEnv
         { timeout = Just 10,
           init = Just ". another file",
-          cmdDisplay = HideKey,
+          keyHide = HideKey,
           pollInterval = 127,
-          cmdLogging = True,
+          cmdNameTrunc = Just 10,
+          cmdLog = True,
           cmdLogStripControl = Just StripControlNone,
-          cmdLogNameTrunc = Just 10,
           cmdLogLineTrunc = Just 60,
-          fileLogging = True,
+          fileLog = True,
           fileLogStripControl = Just StripControlNone,
 #if OSX
           notifySystem = Nothing,
@@ -185,11 +187,11 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           -- These are just the rest
           timeout = Just 3_600,
           init = Just "blah",
-          cmdDisplay = ShowKey,
+          keyHide = ShowKey,
           pollInterval = 10_000,
-          cmdLogging = True,
-          cmdLogNameTrunc = Just 80,
-          fileLogging = True,
+          cmdNameTrunc = Just 80,
+          cmdLog = True,
+          fileLog = True,
           fileLogStripControl = Just StripControlAll,
           notifySystem = Nothing,
           notifyAction = Nothing,
@@ -209,16 +211,127 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
       MkSimpleEnv
         { timeout = Nothing,
           init = Nothing,
-          cmdDisplay = ShowKey,
+          keyHide = ShowKey,
           pollInterval = 10_000,
-          cmdLogging = False,
+          cmdNameTrunc = Nothing,
+          cmdLog = False,
           cmdLogStripControl = Nothing,
-          cmdLogNameTrunc = Nothing,
           cmdLogLineTrunc = Nothing,
-          fileLogging = False,
+          fileLog = False,
           fileLogStripControl = Nothing,
           notifySystem = Nothing,
           notifyAction = Nothing,
           notifyTimeout = Nothing,
           commands = "cmd1" :<|| []
+        }
+
+noXOverridesToml :: TestTree
+noXOverridesToml = testCase "--no-x disables toml options" $ do
+  logsRef <- newIORef []
+
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- readIORef logsRef
+  logs @=? []
+  where
+    args =
+      [ "--config",
+        getIntConfigOS "overridden",
+        "--no-timeout",
+        "--no-init",
+        "--no-key-hide",
+        "--no-cmd-name-trunc",
+        "--no-cmd-log",
+        "--no-cmd-log-strip-control",
+        "--no-cmd-log-line-trunc",
+        "--no-file-log",
+        "--no-file-log-strip-control",
+        "--no-notify-action",
+        "--no-notify-system",
+        "--no-notify-timeout",
+        "cmd"
+      ]
+    expected =
+      MkSimpleEnv
+        { timeout = Nothing,
+          init = Nothing,
+          keyHide = ShowKey,
+          pollInterval = 10_000,
+          cmdNameTrunc = Nothing,
+          cmdLog = False,
+          cmdLogStripControl = Nothing,
+          cmdLogLineTrunc = Nothing,
+          fileLog = False,
+          fileLogStripControl = Nothing,
+          notifyAction = Nothing,
+          notifySystem = Nothing,
+          notifyTimeout = Nothing,
+          commands = "cmd" :<|| []
+        }
+
+noXOverridesArgs :: TestTree
+noXOverridesArgs = testCase "--no-x disables args" $ do
+  logsRef <- newIORef []
+
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- readIORef logsRef
+  logs @=? []
+  where
+    args =
+      [ "--timeout",
+        "5",
+        "--no-timeout",
+        "--init",
+        "blah",
+        "--no-init",
+        "--poll-interval",
+        "555",
+        "--no-poll-interval",
+        "--key-hide",
+        "--no-key-hide",
+        "--cmd-name-trunc",
+        "80",
+        "--no-cmd-name-trunc",
+        "--cmd-log",
+        "--no-cmd-log",
+        "--cmd-log-strip-control",
+        "all",
+        "--no-cmd-log-strip-control",
+        "--cmd-log-line-trunc",
+        "100",
+        "--no-cmd-log-line-trunc",
+        "--file-log",
+        "path",
+        "--no-file-log",
+        "--file-log-strip-control",
+        "all",
+        "--no-file-log-strip-control",
+        "--notify-action",
+        "command",
+        "--no-notify-action",
+        "--notify-system",
+        "dbus",
+        "--no-notify-system",
+        "--notify-timeout",
+        "never",
+        "--no-notify-timeout",
+        "cmd"
+      ]
+    expected =
+      MkSimpleEnv
+        { timeout = Nothing,
+          init = Nothing,
+          keyHide = ShowKey,
+          pollInterval = 10_000,
+          cmdNameTrunc = Nothing,
+          cmdLog = False,
+          cmdLogStripControl = Nothing,
+          cmdLogLineTrunc = Nothing,
+          fileLog = False,
+          fileLogStripControl = Nothing,
+          notifyAction = Nothing,
+          notifySystem = Nothing,
+          notifyTimeout = Nothing,
+          commands = "cmd" :<|| []
         }

@@ -107,6 +107,8 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 `shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [default.toml](./examples/default.toml) for a description of the `toml` file.
 
+Most options have a `no-X` variant e.g. `--cmd-log` has a corresponding `--no-cmd-log`. These flags totally disable the corresponding options name make it as if the field was never specified i.e. the default behavior is used.
+
 ## Core Functionality
 
 ### Config

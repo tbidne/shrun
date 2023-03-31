@@ -58,20 +58,35 @@ parseDefaultArgs = testCase "Should parse default args" $ do
             { configPath = Nothing,
               noConfig = False,
               timeout = Nothing,
+              noTimeout = False,
               init = Nothing,
-              cmdDisplay = Nothing,
+              noInit = False,
+              keyHide = Nothing,
+              noKeyHide = False,
               pollInterval = Nothing,
+              noPollInterval = False,
               cmdNameTrunc = Nothing,
-              cmdLogging = Nothing,
+              noCmdNameTrunc = False,
+              cmdLog = Nothing,
+              noCmdLog = False,
               cmdLogStripControl = Nothing,
+              noCmdLogStripControl = False,
               cmdLogLineTrunc = Nothing,
-              fileLogging = Nothing,
+              noCmdLogLineTrunc = False,
+              fileLog = Nothing,
+              noFileLog = False,
               fileLogMode = Nothing,
+              noFileLogMode = False,
               fileLogStripControl = Nothing,
+              noFileLogStripControl = False,
               fileLogSizeMode = Nothing,
+              noFileLogSizeMode = False,
               notifySystem = Nothing,
+              noNotifySystem = False,
               notifyAction = Nothing,
+              noNotifyAction = False,
               notifyTimeout = Nothing,
+              noNotifyTimeout = False,
               commands = "command" :<|| []
             }
   verifyResult argList expected
@@ -118,7 +133,8 @@ timeoutSpecs =
       parseTimeString,
       parseLongTimeString,
       parseTimeoutWordFail,
-      parseNegativeTimeoutFail
+      parseNegativeTimeoutFail,
+      parseNoTimeout
     ]
 
 parseShortTimeout :: TestTree
@@ -167,13 +183,22 @@ parseNegativeTimeoutFail =
   where
     argList = ["--timeout=-7", "command"]
 
+parseNoTimeout :: TestTree
+parseNoTimeout =
+  testCase "Parse --no-timeout" $
+    verifyResult argList expected
+  where
+    argList = ["--no-timeout", "command"]
+    expected = updateDefArgsFlag #noTimeout True
+
 initSpecs :: TestTree
 initSpecs =
   testGroup
     "Init arg parsing"
     [ parseShortInit,
       parseLongInit1,
-      parseLongInit2
+      parseLongInit2,
+      parseNoInit
     ]
 
 parseShortInit :: TestTree
@@ -200,16 +225,25 @@ parseLongInit2 =
     argList = ["--init", ". ~/.bashrc", "command"]
     expected = updateDefArgs #init ". ~/.bashrc"
 
+parseNoInit :: TestTree
+parseNoInit =
+  testCase "Parse --no-init" $
+    verifyResult argList expected
+  where
+    argList = ["--no-init", "command"]
+    expected = updateDefArgsFlag #noInit True
+
 fileLoggingSpecs :: TestTree
 fileLoggingSpecs =
   testGroup
-    "FileLogging arg parsing"
+    "FileLog arg parsing"
     [ parseShortFileLogging,
       parseLongFileLogging,
       parseLongDefaultFileLogging,
       parseShortDefaultFileLogging,
       parseShortEmptyFileLoggingFails,
-      parseLongEmptyFileLoggingFails
+      parseLongEmptyFileLoggingFails,
+      parseNoFileLog
     ]
 
 parseShortFileLogging :: TestTree
@@ -218,7 +252,7 @@ parseShortFileLogging =
     verifyResult argList expected
   where
     argList = ["-flogfile", "command"]
-    expected = updateDefArgs #fileLogging (FPManual "logfile")
+    expected = updateDefArgs #fileLog (FPManual "logfile")
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging =
@@ -226,7 +260,7 @@ parseLongFileLogging =
     verifyResult argList expected
   where
     argList = ["--file-log=logfile", "command"]
-    expected = updateDefArgs #fileLogging (FPManual "logfile")
+    expected = updateDefArgs #fileLog (FPManual "logfile")
 
 parseLongDefaultFileLogging :: TestTree
 parseLongDefaultFileLogging =
@@ -234,7 +268,7 @@ parseLongDefaultFileLogging =
     verifyResult argList expected
   where
     argList = ["--file-log", "default", "command"]
-    expected = updateDefArgs #fileLogging FPDefault
+    expected = updateDefArgs #fileLog FPDefault
 
 parseShortDefaultFileLogging :: TestTree
 parseShortDefaultFileLogging =
@@ -242,7 +276,7 @@ parseShortDefaultFileLogging =
     verifyResult argList expected
   where
     argList = ["-f", "default", "command"]
-    expected = updateDefArgs #fileLogging FPDefault
+    expected = updateDefArgs #fileLog FPDefault
 
 parseShortEmptyFileLoggingFails :: TestTree
 parseShortEmptyFileLoggingFails =
@@ -259,12 +293,21 @@ parseLongEmptyFileLoggingFails =
     desc = "Should parse empty --file-log as failure"
     argList = ["--file-log=", "command"]
 
+parseNoFileLog :: TestTree
+parseNoFileLog =
+  testCase "Parse --no-file-log" $
+    verifyResult argList expected
+  where
+    argList = ["--no-file-log", "command"]
+    expected = updateDefArgsFlag #noFileLog True
+
 fileLogModeSpecs :: TestTree
 fileLogModeSpecs =
   testGroup
     "File log mode"
     [ parseFileLogModeAppend,
-      parseFileLogModeWrite
+      parseFileLogModeWrite,
+      parseNoFileLogMode
     ]
 
 parseFileLogModeAppend :: TestTree
@@ -285,13 +328,22 @@ parseFileLogModeWrite =
     argList = ["--file-log-mode", "write", "command"]
     expected = updateDefArgs #fileLogMode FileModeWrite
 
+parseNoFileLogMode :: TestTree
+parseNoFileLogMode =
+  testCase "Parse --no-file-log-mode" $
+    verifyResult argList expected
+  where
+    argList = ["--no-file-log-mode", "command"]
+    expected = updateDefArgsFlag #noFileLogMode True
+
 fileLogStripControlSpecs :: TestTree
 fileLogStripControlSpecs =
   testGroup
     "Strip control arg parsing"
     [ parseFileLogStripControlAll,
       parseFileLogStripControlNone,
-      parseFileLogStripControlSmart
+      parseFileLogStripControlSmart,
+      parseNoFileLogStripControl
     ]
 
 parseFileLogStripControlAll :: TestTree
@@ -321,12 +373,21 @@ parseFileLogStripControlSmart =
     argList = ["--file-log-strip-control", "smart", "command"]
     expected = updateDefArgs #fileLogStripControl StripControlSmart
 
+parseNoFileLogStripControl :: TestTree
+parseNoFileLogStripControl =
+  testCase "Parse --no-file-log-strip-control" $
+    verifyResult argList expected
+  where
+    argList = ["--no-file-log-strip-control", "command"]
+    expected = updateDefArgsFlag #noFileLogStripControl True
+
 fileLogSizeModeSpecs :: TestTree
 fileLogSizeModeSpecs =
   testGroup
     "File log size mode parsing"
     [ parseFileLogSizeWarn,
-      parseFileLogSizeDelete
+      parseFileLogSizeDelete,
+      parseNoFileLogSizeMode
     ]
 
 parseFileLogSizeWarn :: TestTree
@@ -351,12 +412,21 @@ parseFileLogSizeDelete =
         #fileLogSizeMode
         (FileSizeModeDelete $ MkBytes 2_400)
 
+parseNoFileLogSizeMode :: TestTree
+parseNoFileLogSizeMode =
+  testCase "Parse --no-file-log-size-mode" $
+    verifyResult argList expected
+  where
+    argList = ["--no-file-log-size-mode", "command"]
+    expected = updateDefArgsFlag #noFileLogSizeMode True
+
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =
   testGroup
-    "CmdLogging arg parsing"
+    "CmdLog arg parsing"
     [ parseShortCommandLogging,
-      parseLongCommandLogging
+      parseLongCommandLogging,
+      parseNoCmdLog
     ]
 
 parseShortCommandLogging :: TestTree
@@ -364,7 +434,7 @@ parseShortCommandLogging = testCase "Should parse -l as CmdLogging" $ do
   verifyResult argList expected
   where
     argList = ["-l", "command"]
-    expected = updateDefArgs #cmdLogging True
+    expected = updateDefArgs #cmdLog True
 
 parseLongCommandLogging :: TestTree
 parseLongCommandLogging =
@@ -372,14 +442,23 @@ parseLongCommandLogging =
     verifyResult argList expected
   where
     argList = ["--cmd-log", "command"]
-    expected = updateDefArgs #cmdLogging True
+    expected = updateDefArgs #cmdLog True
+
+parseNoCmdLog :: TestTree
+parseNoCmdLog =
+  testCase "Parse --no-cmd-log" $
+    verifyResult argList expected
+  where
+    argList = ["--no-cmd-log", "command"]
+    expected = updateDefArgsFlag #noCmdLog True
 
 commandDisplaySpecs :: TestTree
 commandDisplaySpecs =
   testGroup
     "CmdDisplay arg parsing"
     [ parseShortShowKey,
-      parseLongShowKey
+      parseLongShowKey,
+      parseNoKeyHide
     ]
 
 parseShortShowKey :: TestTree
@@ -388,7 +467,7 @@ parseShortShowKey =
     verifyResult argList expected
   where
     argList = ["-k", "command"]
-    expected = updateDefArgs #cmdDisplay HideKey
+    expected = updateDefArgs #keyHide HideKey
 
 parseLongShowKey :: TestTree
 parseLongShowKey =
@@ -396,14 +475,23 @@ parseLongShowKey =
     verifyResult argList expected
   where
     argList = ["--key-hide", "command"]
-    expected = updateDefArgs #cmdDisplay HideKey
+    expected = updateDefArgs #keyHide HideKey
+
+parseNoKeyHide :: TestTree
+parseNoKeyHide =
+  testCase "Parse --no-key-hide" $
+    verifyResult argList expected
+  where
+    argList = ["--no-key-hide", "command"]
+    expected = updateDefArgsFlag #noKeyHide True
 
 pollIntervalSpecs :: TestTree
 pollIntervalSpecs =
   testGroup
-    "CmdDisplay arg parsing"
+    "PollInterval arg parsing"
     [ parseShortPollInterval,
-      parseLongPollInterval
+      parseLongPollInterval,
+      parseNoPollInterval
     ]
 
 parseShortPollInterval :: TestTree
@@ -422,6 +510,14 @@ parseLongPollInterval =
     argList = ["--poll-interval", "1000", "command"]
     expected = updateDefArgs #pollInterval 1000
 
+parseNoPollInterval :: TestTree
+parseNoPollInterval =
+  testCase "Parse --no-poll-interval" $
+    verifyResult argList expected
+  where
+    argList = ["--no-poll-interval", "command"]
+    expected = updateDefArgsFlag #noPollInterval True
+
 stripControlSpecs :: TestTree
 stripControlSpecs =
   testGroup
@@ -429,7 +525,8 @@ stripControlSpecs =
     [ parseShortStripControlAll,
       parseShortStripControlNone,
       parseShortStripControlSmart,
-      parseLongStripControlSmart
+      parseLongStripControlSmart,
+      parseNoCmdLogStripControl
     ]
 
 parseShortStripControlAll :: TestTree
@@ -467,12 +564,21 @@ parseLongStripControlSmart =
     argList = ["--cmd-log-strip-control=smart", "command"]
     expected = updateDefArgs #cmdLogStripControl StripControlSmart
 
+parseNoCmdLogStripControl :: TestTree
+parseNoCmdLogStripControl =
+  testCase "Parse --no-cmd-log-strip-control" $
+    verifyResult argList expected
+  where
+    argList = ["--no-cmd-log-strip-control", "command"]
+    expected = updateDefArgsFlag #noCmdLogStripControl True
+
 cmdNameTruncSpecs :: TestTree
 cmdNameTruncSpecs =
   testGroup
     "Command name truncation arg parsing"
     [ parseShortCmdNameTrunc,
-      parseLongCmdNameTrunc
+      parseLongCmdNameTrunc,
+      parseNoCmdNameTrunc
     ]
 
 parseShortCmdNameTrunc :: TestTree
@@ -493,13 +599,22 @@ parseLongCmdNameTrunc =
     argList = ["--cmd-name-trunc", "15", "command"]
     expected = updateDefArgs #cmdNameTrunc 15
 
+parseNoCmdNameTrunc :: TestTree
+parseNoCmdNameTrunc =
+  testCase "Parse --no-cmd-name-trunc" $
+    verifyResult argList expected
+  where
+    argList = ["--no-cmd-name-trunc", "command"]
+    expected = updateDefArgsFlag #noCmdNameTrunc True
+
 cmdLineTruncSpecs :: TestTree
 cmdLineTruncSpecs =
   testGroup
     "Command line truncation arg parsing"
     [ parseShortCmdLineTrunc,
       parseLongCmdLineTrunc,
-      parseDetectCmdLineTrunc
+      parseDetectCmdLineTrunc,
+      parseNoCmdLogLineTrunc
     ]
 
 parseShortCmdLineTrunc :: TestTree
@@ -529,12 +644,21 @@ parseDetectCmdLineTrunc =
     argList = ["--cmd-log-line-trunc", "detect", "command"]
     expected = updateDefArgs #cmdLogLineTrunc Detected
 
+parseNoCmdLogLineTrunc :: TestTree
+parseNoCmdLogLineTrunc =
+  testCase "Parse --no-cmd-log-line-trunc" $
+    verifyResult argList expected
+  where
+    argList = ["--no-cmd-log-line-trunc", "command"]
+    expected = updateDefArgsFlag #noCmdLogLineTrunc True
+
 notifySystemSpecs :: TestTree
 notifySystemSpecs =
   testGroup
     "Notify system parsing"
     [ parseNotifySystemDBus,
-      parseNotifySystemNotifySend
+      parseNotifySystemNotifySend,
+      parseNoNotifySystem
     ]
 
 parseNotifySystemDBus :: TestTree
@@ -551,13 +675,22 @@ parseNotifySystemNotifySend = testCase desc $ verifyResult argList expected
     argList = ["--notify-system", "notify-send", "command"]
     expected = updateDefArgs #notifySystem NotifySend
 
+parseNoNotifySystem :: TestTree
+parseNoNotifySystem =
+  testCase "Parse --no-notify-system" $
+    verifyResult argList expected
+  where
+    argList = ["--no-notify-system", "command"]
+    expected = updateDefArgsFlag #noNotifySystem True
+
 notifyActionSpecs :: TestTree
 notifyActionSpecs =
   testGroup
     "Notify action parsing"
     [ parseNotifyActionNone,
       parseNotifyActionFinal,
-      parseNotifyActionCommand
+      parseNotifyActionCommand,
+      parseNoNotifyAction
     ]
 
 parseNotifyActionNone :: TestTree
@@ -581,12 +714,21 @@ parseNotifyActionCommand = testCase desc $ verifyResult argList expected
     argList = ["--notify-action", "command", "command"]
     expected = updateDefArgs #notifyAction NotifyCommand
 
+parseNoNotifyAction :: TestTree
+parseNoNotifyAction =
+  testCase "Parse --no-notify-action" $
+    verifyResult argList expected
+  where
+    argList = ["--no-notify-action", "command"]
+    expected = updateDefArgsFlag #noNotifyAction True
+
 notifyTimeoutSpecs :: TestTree
 notifyTimeoutSpecs =
   testGroup
     "Notify timeout parsing"
     [ parseNotifyTimeoutSeconds,
-      parseNotifyTimeoutNever
+      parseNotifyTimeoutNever,
+      parseNoNotifyTimeout
     ]
 
 parseNotifyTimeoutSeconds :: TestTree
@@ -602,6 +744,14 @@ parseNotifyTimeoutNever = testCase desc $ verifyResult argList expected
     desc = "Should parse --notify-timeout never"
     argList = ["--notify-timeout", "never", "command"]
     expected = updateDefArgs #notifyTimeout NotifyTimeoutNever
+
+parseNoNotifyTimeout :: TestTree
+parseNoNotifyTimeout =
+  testCase "Parse --no-notify-timeout" $
+    verifyResult argList expected
+  where
+    argList = ["--no-notify-timeout", "command"]
+    expected = updateDefArgsFlag #noNotifyTimeout True
 
 commandSpecs :: TestTree
 commandSpecs =
@@ -641,3 +791,6 @@ defArgs = Just $ Args.defaultArgs defCommand
 
 updateDefArgs :: Lens' Args (Maybe a) -> a -> Maybe Args
 updateDefArgs l x = ((_Just % l) ?~ x) defArgs
+
+updateDefArgsFlag :: Lens' Args a -> a -> Maybe Args
+updateDefArgsFlag l x = ((_Just % l) .~ x) defArgs
