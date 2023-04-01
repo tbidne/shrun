@@ -14,6 +14,7 @@ module Integration.Utils
 where
 
 import DBus.Client (Client (..))
+import Data.Maybe (isJust)
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader (MonadPathReader (..))
 import Effects.System.Terminal (MonadTerminal (..))
@@ -169,7 +170,7 @@ simplifyEnv = to $ \env ->
       cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
       cmdLogLineTrunc = env ^? (#logging % #cmdLog %? #lineTrunc % _Just),
       cmdLogStripControl = env ^? (#logging % #cmdLog %? #stripControl),
-      fileLog = m2b (env ^. (#logging % #fileLog)),
+      fileLog = isJust (env ^. (#logging % #fileLog)),
       fileLogStripControl = env ^? (#logging % #fileLog %? #stripControl),
       notifySystem = mkNotifySystem env,
       notifyAction = env ^? (#notifyEnv %? #action),

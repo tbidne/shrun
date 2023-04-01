@@ -104,24 +104,8 @@ data FileSizeMode
     )
 
 -- | @since 0.5
-instance Semigroup FileSizeMode where
-  FileSizeModeWarn l <> FileSizeModeWarn r = FileSizeModeWarn $ takeGt l r
-  l <> FileSizeModeWarn _ = l
-  FileSizeModeWarn _ <> r = r
-  FileSizeModeDelete l <> FileSizeModeDelete r = FileSizeModeDelete $ takeGt l r
-
--- | @since 0.5
-instance Monoid FileSizeMode where
-  mempty = FileSizeModeWarn $ MkBytes 0
-
--- | @since 0.5
 instance DecodeTOML FileSizeMode where
   tomlDecoder = tomlDecoder >>= parseFileSizeMode
-
-takeGt :: (Ord n) => Bytes s n -> Bytes s n -> Bytes s n
-takeGt l r
-  | l >= r = l
-  | otherwise = r
 
 -- | Type for parsing command line args.
 --

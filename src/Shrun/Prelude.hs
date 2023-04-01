@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 -- | Custom prelude. The idea is to:
 --
 -- * Re-export useful prelude functions/types
@@ -19,14 +17,9 @@ module Shrun.Prelude
     -- * Misc utilities
     (<<$>>),
     (.>),
-    monoBimap,
-    m2b,
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
-
-    -- * Optics
-    isNot,
 
     -- * Anti-punning aliases
     List,
@@ -96,9 +89,7 @@ import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
 import Data.Traversable as X (Traversable (..), for)
 import Data.Tuple as X (fst, snd)
-#if MIN_VERSION_base(4, 17, 0)
 import Data.Type.Equality as X (type (~))
-#endif
 import Data.Void as X (Void, absurd)
 import Effects.Concurrent.Async as X (MonadAsync)
 import Effects.Concurrent.STM as X
@@ -288,17 +279,6 @@ headMaybe :: List a -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
 
--- | Convenience function for mapping @(a -> b)@ over a monomorphic bifunctor.
---
--- Example:
---
--- >>> monoBimap length ("hey","listen")
--- (3,6)
---
--- @since 0.1
-monoBimap :: (Bifunctor p) => (a -> b) -> p a a -> p b b
-monoBimap f = bimap f f
-
 -- | Lifted fmap.
 --
 -- >>> not <<$>> [Just True, Nothing, Just False]
@@ -319,14 +299,6 @@ f .> g = g . f
 
 infixr 9 .>
 
--- | Transforms a maybe to a bool
---
--- @since 0.1
-m2b :: Maybe a -> Bool
-m2b (Just _) = True
-m2b Nothing = False
-{-# INLINE m2b #-}
-
 -- | Alias for [].
 --
 -- @since 0.1
@@ -341,9 +313,3 @@ type Tuple2 = (,)
 --
 -- @since 0.1
 type Tuple3 = (,,)
-
--- | Negation of 'is'.
---
--- @since 0.1
-isNot :: (Is k An_AffineFold) => Optic' k is s a -> s -> Bool
-isNot optic = not . is optic
