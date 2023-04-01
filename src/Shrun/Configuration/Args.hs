@@ -29,6 +29,8 @@ import Options.Applicative
   )
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (..))
+import Options.Applicative.Help.Chunk qualified as Chunk
+import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (..))
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
 import Shrun.Configuration.Env.Types
@@ -319,7 +321,7 @@ parserInfoArgs =
   ParserInfo
     { infoParser = argsParser,
       infoFullDesc = True,
-      infoProgDesc = Chunk desc,
+      infoProgDesc = desc,
       infoHeader = Chunk headerTxt,
       infoFooter = Chunk footerTxt,
       infoFailureCode = 1,
@@ -329,12 +331,14 @@ parserInfoArgs =
     headerTxt = Just "Shrun: A tool for running shell commands concurrently."
     footerTxt = Just $ fromString versNum
     desc =
-      Just $
-        "\nShrun runs shell commands concurrently. In addition to "
-          <> "providing basic timing and logging functionality, we also provide "
-          <> "the ability to pass in a config file that can be used to define "
-          <> "aliases for commands. See github.com/tbidne/shrun#README for "
-          <> "full documentation."
+      Chunk.paragraph $
+        mconcat
+          [ "Shrun runs shell commands concurrently. In addition to providing ",
+            "basic timing and logging functionality, we also provide the ",
+            "ability to pass in a config file that can be used to define ",
+            "aliases for commands. See github.com/tbidne/shrun#README for ",
+            "full documentation."
+          ]
 
 argsParser :: Parser Args
 argsParser =
@@ -392,7 +396,7 @@ versNum :: String
 versNum = "Version: " <> $$(PV.packageVersionStringTH "shrun.cabal")
 
 defaultConfig :: Parser (a -> a)
-defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config" <> OA.help help)
+defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config" <> mkHelp help)
   where
     txt = T.unlines $$(getDefaultConfigTH)
     help = "Writes a default config.toml file to stdout."
@@ -405,7 +409,7 @@ configParser =
       ( mconcat
           [ OA.long "config",
             OA.short 'c',
-            OA.help helpTxt,
+            mkHelp helpTxt,
             OA.metavar "PATH"
           ]
       )
@@ -424,7 +428,7 @@ noConfigParser =
     True
     ( mconcat
         [ OA.long "no-config",
-          OA.help helpTxt
+          mkHelp helpTxt
         ]
     )
   where
@@ -444,8 +448,8 @@ timeoutParser =
       ( mconcat
           [ OA.long "timeout",
             OA.short 't',
-            OA.help helpTxt,
-            OA.metavar "<NATURAL | STRING>"
+            mkHelp helpTxt,
+            OA.metavar "(NATURAL | STRING)"
           ]
       )
   where
@@ -471,7 +475,7 @@ noTimeoutParser =
   OA.switch $
     mconcat
       [ OA.long "no-timeout",
-        OA.help "Disables --timeout."
+        mkHelp "Disables --timeout."
       ]
 
 cmdNameTruncParser :: Parser (Maybe (Truncation TCmdName))
@@ -482,7 +486,7 @@ cmdNameTruncParser =
       ( mconcat
           [ OA.long "cmd-name-trunc",
             OA.short 'x',
-            OA.help helpTxt,
+            mkHelp helpTxt,
             OA.metavar "NATURAL"
           ]
       )
@@ -501,7 +505,7 @@ noCmdNameTruncParser =
   OA.switch $
     mconcat
       [ OA.long "no-cmd-name-trunc",
-        OA.help "Disables --cmd-name-trunc."
+        mkHelp "Disables --cmd-name-trunc."
       ]
 
 cmdLogLineTruncParser :: Parser (Maybe LineTruncation)
@@ -512,8 +516,8 @@ cmdLogLineTruncParser =
       ( mconcat
           [ OA.long "cmd-log-line-trunc",
             OA.short 'y',
-            OA.help helpTxt,
-            OA.metavar "<NATURAL | detect>"
+            mkHelp helpTxt,
+            OA.metavar "(NATURAL | detect)"
           ]
       )
   where
@@ -532,7 +536,7 @@ noCmdLogLineTruncParser =
   OA.switch $
     mconcat
       [ OA.long "no-cmd-log-line-trunc",
-        OA.help "Disables --cmd-log-line-trunc."
+        mkHelp "Disables --cmd-log-line-trunc."
       ]
 
 readTruncation :: ReadM (Truncation a)
@@ -555,8 +559,8 @@ cmdLogStripControlParser =
       ( mconcat
           [ OA.long "cmd-log-strip-control",
             OA.short 's',
-            OA.help helpTxt,
-            OA.metavar "<all | smart | none>"
+            mkHelp helpTxt,
+            OA.metavar "(all | smart | none)"
           ]
       )
   where
@@ -588,7 +592,7 @@ noCmdLogStripControlParser =
   OA.switch $
     mconcat
       [ OA.long "no-cmd-log-strip-control",
-        OA.help "Disables --cmd-log-strip-control."
+        mkHelp "Disables --cmd-log-strip-control."
       ]
 
 fileLogParser :: Parser (Maybe FilePathDefault)
@@ -599,8 +603,8 @@ fileLogParser =
       ( mconcat
           [ OA.long "file-log",
             OA.short 'f',
-            OA.help helpTxt,
-            OA.metavar "<default | PATH>"
+            mkHelp helpTxt,
+            OA.metavar "(default | PATH)"
           ]
       )
   where
@@ -619,7 +623,7 @@ noFileLogParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log",
-        OA.help "Disables --file-log."
+        mkHelp "Disables --file-log."
       ]
 
 readLogFile :: ReadM FilePathDefault
@@ -637,8 +641,8 @@ fileLogModeParser =
       readFileMode
       ( mconcat
           [ OA.long "file-log-mode",
-            OA.help helpTxt,
-            OA.metavar "<append | write>"
+            mkHelp helpTxt,
+            OA.metavar "(append | write)"
           ]
       )
   where
@@ -649,7 +653,7 @@ noFileLogModeParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log-mode",
-        OA.help "Disables --file-log-mode."
+        mkHelp "Disables --file-log-mode."
       ]
 
 readFileMode :: ReadM FileMode
@@ -669,8 +673,8 @@ fileLogStripControlParser =
       readStripControl
       ( mconcat
           [ OA.long "file-log-strip-control",
-            OA.help helpTxt,
-            OA.metavar "<all | smart | none>"
+            mkHelp helpTxt,
+            OA.metavar "(all | smart | none)"
           ]
       )
   where
@@ -685,7 +689,7 @@ noFileLogStripControlParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log-strip-control",
-        OA.help "Disables --file-log-strip-control."
+        mkHelp "Disables --file-log-strip-control."
       ]
 
 fileLogSizeModeParser :: Parser (Maybe FileSizeMode)
@@ -695,8 +699,8 @@ fileLogSizeModeParser =
       readFileSize
       ( mconcat
           [ OA.long "file-log-size-mode",
-            OA.help helpTxt,
-            OA.metavar "<warn SIZE | delete SIZE>"
+            mkHelp helpTxt,
+            OA.metavar "(warn SIZE | delete SIZE)"
           ]
       )
   where
@@ -714,7 +718,7 @@ noFileLogSizeModeParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log-size-mode",
-        OA.help "Disables --file-log-size-mode."
+        mkHelp "Disables --file-log-size-mode."
       ]
 
 cmdLogParser :: Parser (Maybe Bool)
@@ -725,7 +729,7 @@ cmdLogParser =
       ( mconcat
           [ OA.short 'l',
             OA.long "cmd-log",
-            OA.help helpTxt
+            mkHelp helpTxt
           ]
       )
   where
@@ -742,7 +746,7 @@ noCmdLogParser =
   OA.switch $
     mconcat
       [ OA.long "no-cmd-log",
-        OA.help "Disables --cmd-log."
+        mkHelp "Disables --cmd-log."
       ]
 
 commandDisplayParser :: Parser (Maybe CmdDisplay)
@@ -753,7 +757,7 @@ commandDisplayParser =
       ( mconcat
           [ OA.short 'k',
             OA.long "key-hide",
-            OA.help helpTxt
+            mkHelp helpTxt
           ]
       )
   where
@@ -770,7 +774,7 @@ noKeyHideParser =
   OA.switch $
     mconcat
       [ OA.long "no-key-hide",
-        OA.help "Disables --key-hide."
+        mkHelp "Disables --key-hide."
       ]
 
 pollIntervalParser :: Parser (Maybe PollInterval)
@@ -781,7 +785,7 @@ pollIntervalParser =
       ( mconcat
           [ OA.long "poll-interval",
             OA.short 'p',
-            OA.help helpTxt,
+            mkHelp helpTxt,
             OA.metavar "NATURAL"
           ]
       )
@@ -819,7 +823,7 @@ noPollIntervalParser =
   OA.switch $
     mconcat
       [ OA.long "no-poll-interval",
-        OA.help "Disables --poll-interval."
+        mkHelp "Disables --poll-interval."
       ]
 
 initParser :: Parser (Maybe Text)
@@ -829,7 +833,7 @@ initParser =
       mconcat
         [ OA.long "init",
           OA.short 'i',
-          OA.help helpTxt,
+          mkHelp helpTxt,
           OA.metavar "STRING"
         ]
   where
@@ -845,7 +849,7 @@ noInitParser =
   OA.switch $
     mconcat
       [ OA.long "no-init",
-        OA.help "Disables --init."
+        mkHelp "Disables --init."
       ]
 
 notifySystemParser :: Parser (Maybe NotifySystemP1)
@@ -854,7 +858,7 @@ notifySystemParser =
     OA.option readNotifySystem $
       mconcat
         [ OA.long "notify-system",
-          OA.help helpTxt,
+          mkHelp helpTxt,
           OA.metavar Notify.notifySystemStr
         ]
   where
@@ -867,7 +871,7 @@ noNotifySystemParser =
   OA.switch $
     mconcat
       [ OA.long "no-notify-system",
-        OA.help "Disables --notify-system."
+        mkHelp "Disables --notify-system."
       ]
 
 notifyActionParser :: Parser (Maybe NotifyAction)
@@ -876,7 +880,7 @@ notifyActionParser =
     OA.option readNotifyAction $
       mconcat
         [ OA.long "notify-action",
-          OA.help helpTxt,
+          mkHelp helpTxt,
           OA.metavar Notify.notifyActionStr
         ]
   where
@@ -894,7 +898,7 @@ noNotifyActionParser =
   OA.switch $
     mconcat
       [ OA.long "no-notify-action",
-        OA.help "Disables --notify-action."
+        mkHelp "Disables --notify-action."
       ]
 
 notifyTimeoutParser :: Parser (Maybe NotifyTimeout)
@@ -903,7 +907,7 @@ notifyTimeoutParser =
     OA.option readNotifySystem $
       mconcat
         [ OA.long "notify-timeout",
-          OA.help helpTxt,
+          mkHelp helpTxt,
           OA.metavar Notify.notifyTimeoutStr
         ]
   where
@@ -915,7 +919,7 @@ noNotifyTimeoutParser =
   OA.switch $
     mconcat
       [ OA.long "no-notify-timeout",
-        OA.help "Disables --notify-timeout."
+        mkHelp "Disables --notify-timeout."
       ]
 
 commandsParser :: Parser (NESeq Text)
@@ -925,3 +929,13 @@ commandsParser =
       ( T.pack
           <$> OA.argument OA.str (OA.metavar "Commands...")
       )
+
+-- Looks a bit convoluted, but this gets us what we want:
+-- 1. lines aligned (paragraph)
+-- 2. linebreak at the end (fmap hardline)
+mkHelp :: String -> OA.Mod f a
+mkHelp =
+  OA.helpDoc
+    . fmap (<> Pretty.hardline)
+    . Chunk.unChunk
+    . Chunk.paragraph
