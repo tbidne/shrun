@@ -42,8 +42,8 @@
     - [Command Name Truncation](#command-name-truncation)
     - [Command Line Truncation](#command-line-truncation)
   - [Notifications](#notifications)
-    - [Notify System](#notify-system)
     - [Notify Action](#notify-action)
+    - [Notify System](#notify-system)
     - [Notify Timeout](#notify-timeout)
   - [Miscellaneous](#miscellaneous)
     - [Default Config](#default-config)
@@ -407,6 +407,18 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 These options configure `shrun` to send off desktop notifications for certain actions i.e. a command finishes or shrun itself finishes. This feature is available only for linux.
 
+### Notify Action
+
+**Arg:** `--notify-action (none|final|command)`
+
+**Description:** Sends notifications for various actions if `--notify-system` is given and `--notify-action` is not `none`. `final` sends off a notification when `shrun` itself finishes whereas `command` (which implies `final`) sends one off each time a command finishes.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action final "sleep 5"</span>
+</pre>
+
 ### Notify System
 
 **Arg:** `--notify-system (dbus|notify-send)`
@@ -417,18 +429,6 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus "sleep 5"</span>
-</pre>
-
-### Notify Action
-
-**Arg:** `--notify-action (none|final|command)`
-
-**Description:** Sends notifications for various actions if `--notify-system` is given and `--notify-action` is not `none`. `final` sends off a notification when `shrun` itself finishes whereas the default `command` (which implies `final`) sends off one each time a command finishes.
-
-**Example:**
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action final "sleep 5"</span>
 </pre>
 
 ### Notify Timeout
