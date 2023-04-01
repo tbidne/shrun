@@ -119,17 +119,24 @@ tryCommandLogging command = do
         (Nothing, Nothing) -> tryCommand
         -- 2. No CmdLogging but FileLogging: Stream (to file) but no console
         --    region.
-        (Nothing, Just fileLogging) -> tryCommandStream (logFile cmdDisplay fileLogging)
+        (Nothing, Just fileLogging) -> \cmd -> do
+          let logFn :: Log -> m ()
+              logFn = logFile cmdDisplay fileLogging
+
+          logFn hello
+
+          tryCommandStream logFn cmd
         -- 3. CmdLogging: Create region and stream. Also stream to file if
         --    requested.
         (Just _, mFileLogging) -> \cmd ->
-          withRegion Linear $ \region ->
-            tryCommandStream
-              ( \log -> do
+          withRegion Linear $ \region -> do
+            let logFn log = do
                   logConsole logging region log
                   for_ mFileLogging (\fl -> logFile cmdDisplay fl log)
-              )
-              cmd
+
+            logFn hello
+
+            tryCommandStream logFn cmd
 
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
@@ -154,6 +161,14 @@ tryCommandLogging command = do
     logFile cmdDisplay fileLogging log = do
       formatted <- formatFileLog cmdDisplay fileLogging log
       writeTBQueueA (fileLogging ^. #log % _2) formatted
+
+    hello =
+      MkLog
+        { cmd = Just command,
+          msg = "Starting...",
+          lvl = LevelCommand,
+          mode = LogModeSet
+        }
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- instead of the usual swallowing.

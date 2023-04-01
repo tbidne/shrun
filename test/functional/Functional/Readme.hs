@@ -26,6 +26,7 @@ specs args =
         initOn,
         initOff,
         cmdlogOn,
+        cmdlogOnDefault,
         cmdlogOff,
         fileLog args,
         keyHideOn,
@@ -155,6 +156,21 @@ cmdlogOn =
         ]
     expected =
       [ withCommandPrefix "for i in {1..10}; do echo hi; sleep 1; done" "hi"
+      ]
+
+cmdlogOnDefault :: TestTree
+cmdlogOnDefault =
+  testCase "Runs --cmd-log with no output shows default message" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--cmd-log",
+          "for i in {1..3}; do sleep 1; done"
+        ]
+    expected =
+      [ withCommandPrefix "for i in {1..3}; do sleep 1; done" "Starting..."
       ]
 
 cmdlogOff :: TestTree
