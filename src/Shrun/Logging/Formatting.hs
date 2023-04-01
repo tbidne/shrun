@@ -1,6 +1,4 @@
 -- | Provides 'Log' formatting functionality.
---
--- @since 0.1
 module Shrun.Logging.Formatting
   ( -- * High-level
     formatConsoleLog,
@@ -43,8 +41,6 @@ import System.Console.Pretty (Color (..))
 import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.
---
--- @since 0.1
 formatConsoleLog :: Logging r -> Log -> ConsoleLog
 formatConsoleLog logging log =
   let line = case log ^. #cmd of
@@ -91,8 +87,6 @@ maybeApply :: (a -> b -> b) -> Maybe a -> b -> b
 maybeApply = maybe id
 
 -- | Formats a 'Log' into a 'FileLog'. Applies prefix and timestamp.
---
--- @since 0.7
 formatFileLog ::
   ( MonadTime m
   ) =>
@@ -158,8 +152,6 @@ formatCommand cmdDisplay cmdNameTrunc com = brackets True (truncateNameFn cmdNam
 --
 -- >>> displayCmd (MkCommand (Just "long") "some long command") ShowKey
 -- "long"
---
--- @since 0.1
 displayCmd :: CommandP1 -> CmdDisplay -> Text
 displayCmd (MkCommand (Just key) _) ShowKey = key
 displayCmd (MkCommand _ cmd) _ = cmd
@@ -169,8 +161,6 @@ displayCmd (MkCommand _ cmd) _ = cmd
 -- * 'StripControlAll': Strips whitespace + all control chars.
 -- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.
 -- * 'StripControlNone': Strips whitespace.
---
--- @since 0.3
 stripChars :: Text -> Maybe StripControl -> Text
 stripChars txt = \case
   Just StripControlAll -> Utils.stripControlAll txt
@@ -189,27 +179,19 @@ stripChars txt = \case
 --
 -- >>> brackets True "text"
 -- "[text] "
---
--- @since 0.7
 brackets :: Bool -> Text -> Text
 brackets False s = "[" <> s <> "]"
 brackets True s = "[" <> s <> "] "
 
 -- | Transforms log to a color based on its 'LogLevel'.
---
--- @since 0.1
 logToColor :: Log -> Color
 logToColor = levelToColor . view #lvl
 
 -- | Transforms log to a prefix based on its 'LogLevel'.
---
--- @since 0.1
 logToPrefix :: Log -> Text
 logToPrefix = levelToPrefix . view #lvl
 
 -- | Maps 'LogLevel' to 'Color'.
---
--- @since 0.1
 levelToColor :: LogLevel -> Color
 levelToColor LevelCommand = White
 levelToColor LevelFinished = Blue
@@ -220,8 +202,6 @@ levelToColor LevelError = Red
 levelToColor LevelFatal = Red
 
 -- | Maps 'LogLevel' to \'Prefix\'.
---
--- @since 0.1
 levelToPrefix :: LogLevel -> Text
 levelToPrefix LevelCommand = "Command"
 levelToPrefix LevelFinished = "Finished"

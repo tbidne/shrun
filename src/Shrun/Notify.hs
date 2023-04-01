@@ -3,8 +3,6 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 -- | Module for sending notifications.
---
--- @since X.X
 module Shrun.Notify
   ( sendNotif,
   )
@@ -25,8 +23,6 @@ import Shrun.Prelude
 
 -- | Sends a notification if they are enabled (linux only). Logs any failed
 -- sends.
---
--- @since X.X
 sendNotif ::
   ( HasLogging env (Region m),
     HasNotifyConfig env,

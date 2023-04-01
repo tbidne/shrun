@@ -2,8 +2,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Tests for Shrun.Logging.Formatting.
---
--- @since 0.1
 module Unit.Shrun.Logging.Formatting (tests) where
 
 import Data.Char qualified as Ch

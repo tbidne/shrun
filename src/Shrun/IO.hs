@@ -1,6 +1,4 @@
 -- | Provides the low-level `IO` functions for running shell commands.
---
--- @since 0.1
 module Shrun.IO
   ( -- * Stdout/stderr newtypes
     Stdout (..),
@@ -46,8 +44,6 @@ import Shrun.Utils qualified as U
 import System.Exit (ExitCode (..))
 
 -- | Runs the command, returns ('ExitCode', 'Stdout', 'Stderr')
---
--- @since 0.1
 shExitCode ::
   ( HasInit env,
     MonadProcess m,
@@ -65,8 +61,6 @@ shExitCode cmd = do
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
---
--- @since 0.1
 tryShExitCode ::
   ( HasInit env,
     MonadProcess m,
@@ -83,8 +77,6 @@ tryShExitCode cmd = do
 
 -- | Version of 'tryShExitCode' that updated the completed commands.
 -- On success, stdout is not returned.
---
--- @since 0.1
 tryCommand ::
   ( HasInit env,
     MonadProcess m,
@@ -97,8 +89,6 @@ tryCommand cmd = preview _Left <$> tryShExitCode cmd
 
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
---
--- @since 0.7
 tryCommandLogging ::
   forall m env.
   ( HasAnyError env,
@@ -167,8 +157,6 @@ tryCommandLogging command = do
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- instead of the usual swallowing.
---
--- @since 0.1
 tryCommandStream ::
   ( HasInit env,
     HasLogging env (Region m),

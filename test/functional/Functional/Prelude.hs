@@ -54,7 +54,6 @@ import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))
 -- NOTE: FuncEnv is essentially the real Env w/ an IORef for logs and a
 -- simplified logging
 
--- | @since 0.3
 data FuncEnv = MkFuncEnv
   { timeout :: !(Maybe Timeout),
     init :: !(Maybe Text),
@@ -67,27 +66,21 @@ data FuncEnv = MkFuncEnv
     anyError :: !(TVar Bool)
   }
 
--- | @since 0.1
 makeFieldLabelsNoPrefix ''FuncEnv
 
--- | @since 0.3
 instance HasTimeout FuncEnv where
   getTimeout = view #timeout
 
--- | @since 0.8
 instance HasInit FuncEnv where
   getInit = view #init
 
--- | @since 0.3
 instance HasLogging FuncEnv () where
   getLogging = view #logging
 
--- | @since 0.3
 instance HasCommands FuncEnv where
   getCommands = view #commands
   getCompletedCmds = view #completedCmds
 
--- | @since 0.8
 instance HasAnyError FuncEnv where
   getAnyError = view #anyError
 
@@ -99,7 +92,6 @@ instance HasNotifyConfig FuncEnv where
           timeout = notifyEnv ^. #timeout
         }
 
--- | @since 0.3
 instance MonadRegionLogger (ShellT FuncEnv IO) where
   type Region (ShellT FuncEnv IO) = ()
 

@@ -1,8 +1,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides functions for creating 'Env' from CLI/Toml configuration.
---
--- @since 0.1
 module Shrun.Configuration.Env
   ( withEnv,
     makeEnvAndShrun,
@@ -56,8 +54,6 @@ import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 
 -- | 'withEnv' with 'shrun'.
---
--- @since 0.1
 makeEnvAndShrun ::
   ( HasLogging Env (Region (ShellT Env m)),
     MonadAsync m,
@@ -84,8 +80,6 @@ makeEnvAndShrun = withEnv (runShellT shrun)
 
 -- | Creates an 'Env' from CLI args and TOML config to run with a monadic
 -- action.
---
--- @since 0.5
 withEnv ::
   ( MonadDBus m,
     MonadFileReader m,

@@ -2,8 +2,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'Timeout' type.
---
--- @since 0.1
 module Shrun.Data.Timeout
   ( Timeout (..),
   )
@@ -15,30 +13,14 @@ import TOML (Value (Integer, String))
 import Text.Read (readMaybe)
 
 -- | Represents a timeout, which is a non-negative integer.
---
--- @since 0.1
 newtype Timeout = MkTimeout
-  { -- | @since 0.1
-    unTimeout :: Natural
+  { unTimeout :: Natural
   }
-  deriving stock
-    ( -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Ord,
-      -- | @since 0.1
-      Show
-    )
-  deriving
-    ( -- | @since 0.5
-      Num
-    )
-    via Natural
+  deriving stock (Eq, Ord, Show)
+  deriving (Num) via Natural
 
--- | @since 0.7
 makeFieldLabelsNoPrefix ''Timeout
 
--- | @since 0.5
 instance DecodeTOML Timeout where
   tomlDecoder = makeDecoder $ \case
     -- Valid strings are "time string" e.g. "1d4h" only. If literal seconds

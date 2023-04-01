@@ -2,8 +2,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides type for notifications.
---
--- @since X.X
 module Shrun.Notify.Types
   ( -- * Main type
     NotifyConfig (..),
@@ -44,39 +42,22 @@ import TOML (Value (..))
 import Text.Read qualified as TR
 
 -- | Determines for which actions we should send notifications.
---
--- @since X.X
 data NotifyAction
   = -- | Do not send any notifications.
-    --
-    -- @since X.X
     NotifyNone
   | -- | Send a notification after all commands are completed.
-    --
-    -- @since X.X
     NotifyFinal
   | -- | Send notifications when each command completes. Implies
     -- 'NotifyFinal'.
-    --
-    -- @since X.X
     NotifyCommand
-  deriving stock
-    ( -- | @since X.X
-      Eq,
-      -- | @since X.X
-      Show
-    )
+  deriving stock (Eq, Show)
 
--- | @since X.X
 makePrisms ''NotifyAction
 
--- | @since X.X
 instance DecodeTOML NotifyAction where
   tomlDecoder = tomlDecoder >>= parseNotifyAction
 
 -- | Parses 'NotifyAction'.
---
--- @since X.X
 parseNotifyAction :: (MonadFail m) => Text -> m NotifyAction
 parseNotifyAction "none" = pure NotifyNone
 parseNotifyAction "final" = pure NotifyFinal
@@ -91,49 +72,33 @@ parseNotifyAction other =
       ]
 
 -- | Available 'NotifyAction' strings.
---
--- @since X.X
 notifyActionStr :: (IsString a) => a
 notifyActionStr = "(none|final|command)"
 
 -- | Maps DBus to its phased param.
---
--- @since X.X
 type family DBusF p where
   DBusF Phase1 = ()
   DBusF Phase2 = Client
 
--- | @since X.X
 type NotifySystemP1 = NotifySystem Phase1
 
--- | @since X.X
 type NotifySystemP2 = NotifySystem Phase2
 
 -- | Notification systems.
---
--- @since X.X
 type NotifySystem :: Phase -> Type
 data NotifySystem p
   = -- | Uses DBus.
-    --
-    -- @since X.X
     DBus !(DBusF p)
   | -- | Uses notify-send.
-    --
-    -- @since X.X
     NotifySend
 
--- | @since X.X
 deriving stock instance Eq (NotifySystem Phase1)
 
--- | @since X.X
 deriving stock instance Show (NotifySystem Phase1)
 
--- | @since X.X
 instance DecodeTOML (NotifySystem Phase1) where
   tomlDecoder = tomlDecoder >>= parseNotifySystem
 
--- | @since X.X
 instance AdvancePhase (NotifySystem Phase1) where
   type NextPhase (NotifySystem Phase1) = Either (NotifySystem Phase2) (Client -> NotifySystem Phase2)
   advancePhase NotifySend = Left NotifySend
@@ -158,8 +123,6 @@ instance AdvancePhase (NotifySystem Phase1) where
 -- _value_ of the first parameter.
 
 -- | Parses 'NotifySystem'.
---
--- @since X.X
 parseNotifySystem :: (MonadFail m) => Text -> m (NotifySystem Phase1)
 parseNotifySystem "dbus" = pure $ DBus ()
 parseNotifySystem "notify-send" = pure NotifySend
@@ -173,34 +136,20 @@ parseNotifySystem other =
       ]
 
 -- | Available 'NotifySystem' strings.
---
--- @since X.X
 notifySystemStr :: (IsString a) => a
 notifySystemStr = "(dbus|notify-send)"
 
 -- | Determines notification timeout.
---
--- @since X.X
 data NotifyTimeout
   = -- | Times out after the given seconds.
-    --
-    -- @since X.X
     NotifyTimeoutSeconds !Word16
   | -- | Never times out.
-    --
-    -- @since X.X
     NotifyTimeoutNever
-  deriving stock
-    ( -- | @since X.X
-      Eq,
-      -- | @since X.X
-      Show
-    )
+  deriving stock (Eq, Show)
 
 -- DecodeTOML instance does not reuse parseNotifyTimeout as we want to
 -- enforce the integer type.
 
--- | @since X.X
 instance DecodeTOML NotifyTimeout where
   tomlDecoder = makeDecoder $ \case
     String "never" -> pure NotifyTimeoutNever
@@ -215,8 +164,6 @@ instance DecodeTOML NotifyTimeout where
       maxW16 = maxBound @Word16
 
 -- | Parses 'NotifyTimeout'.
---
--- @since X.X
 parseNotifyTimeout :: (MonadFail m) => Text -> m NotifyTimeout
 parseNotifyTimeout "never" = pure NotifyTimeoutNever
 parseNotifyTimeout other = case TR.readMaybe other' of
@@ -233,30 +180,16 @@ parseNotifyTimeout other = case TR.readMaybe other' of
     other' = T.unpack other
 
 -- | Available 'NotifyTimeout' strings.
---
--- @since X.X
 notifyTimeoutStr :: (IsString a) => a
 notifyTimeoutStr = "(never|NAT)"
 
 -- | Holds notification config.
---
--- @since X.X
 data NotifyConfig = MkNotifyConfig
   { -- | Notification action.
-    --
-    -- @since X.X
     action :: !NotifyAction,
     -- | Timeout to use for notifications.
-    --
-    -- @since X.X
     timeout :: !NotifyTimeout
   }
-  deriving stock
-    ( -- | @since X.X
-      Eq,
-      -- | @since X.X
-      Show
-    )
+  deriving stock (Eq, Show)
 
--- | @since X.X
 makeFieldLabelsNoPrefix ''NotifyConfig

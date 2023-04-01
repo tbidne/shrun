@@ -8,8 +8,6 @@
 -- This is not a comprehensive replacement for Prelude, just the
 -- functionality needed for this application. Thus it is natural to
 -- add new functionality/exports here over time.
---
--- @since 0.1
 module Shrun.Prelude
   ( -- * Total versions of partial functions
     headMaybe,
@@ -261,8 +259,6 @@ import Prelude qualified as P
 -- >>> :set -XNoOverloadedLists
 
 -- | 'Text' version of 'P.show'.
---
--- @since 0.1
 showt :: (P.Show a) => a -> Text
 showt = T.pack . P.show
 
@@ -273,8 +269,6 @@ showt = T.pack . P.show
 --
 -- >>> headMaybe []
 -- Nothing
---
--- @since 0.1
 headMaybe :: List a -> Maybe a
 headMaybe [] = Nothing
 headMaybe (x : _) = Just x
@@ -283,16 +277,12 @@ headMaybe (x : _) = Just x
 --
 -- >>> not <<$>> [Just True, Nothing, Just False]
 -- [Just False,Nothing,Just True]
---
--- @since 0.1
 (<<$>>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 (<<$>>) = fmap . fmap
 
 infixl 4 <<$>>
 
 -- | Flipped '(.)'
---
--- @since 0.5
 (.>) :: (a -> b) -> (b -> c) -> a -> c
 f .> g = g . f
 {-# INLINE (.>) #-}
@@ -300,16 +290,10 @@ f .> g = g . f
 infixr 9 .>
 
 -- | Alias for [].
---
--- @since 0.1
 type List = []
 
 -- | Alias for (,).
---
--- @since 0.1
 type Tuple2 = (,)
 
 -- | Alias for (,,).
---
--- @since 0.1
 type Tuple3 = (,,)

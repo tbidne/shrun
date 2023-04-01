@@ -1,6 +1,4 @@
 -- | Provides types for the legend functionality.
---
--- @since 0.5
 module Shrun.Configuration.Legend
   ( -- * Parsing
     linesToMap,
@@ -29,24 +27,14 @@ import Shrun.Prelude
 -- >>> import Data.HashMap.Strict qualified as Map
 
 -- | Errors when parsing the legend.
---
--- @since 0.5
 newtype DuplicateKeyError = MkDuplicateKeyError Text
-  deriving stock
-    ( -- | @since 0.5
-      Eq,
-      -- | @since 0.5
-      Show
-    )
+  deriving stock (Eq, Show)
 
--- | @since 0.5
 instance Exception DuplicateKeyError where
   displayException (MkDuplicateKeyError k) = "Legend error: found duplicate key: " <> unpack k
 
 -- | Attempts to parse the given ['KeyVal'] into 'LegendMap'.
 -- Duplicate keys are not allowed.
---
--- @since 0.1
 linesToMap :: List KeyVal -> Either DuplicateKeyError LegendMap
 linesToMap = foldr f (Right Map.empty)
   where
@@ -56,16 +44,9 @@ linesToMap = foldr f (Right Map.empty)
         Just _ -> Left $ MkDuplicateKeyError key
         Nothing -> Right $ Map.insert key cmd mp
 
--- | @since 0.5
 newtype CyclicKeyError = MkCyclicKeyError Text
-  deriving stock
-    ( -- | @since 0.5
-      Eq,
-      -- | @since 0.5
-      Show
-    )
+  deriving stock (Eq, Show)
 
--- | @since 0.5
 instance Exception CyclicKeyError where
   displayException (MkCyclicKeyError path) =
     "Encountered cyclic definitions when translating commands: " <> unpack path
@@ -110,8 +91,6 @@ instance Exception CyclicKeyError where
 --   in translateCommands m ("a" :<|| [])
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
---
--- @since 0.1
 translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq CommandP1)
 translateCommands mp ts = join <$> traverse (lineToCommands mp) ts
 

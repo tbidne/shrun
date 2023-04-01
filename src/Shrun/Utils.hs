@@ -2,8 +2,6 @@
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 -- | Provides utilities.
---
--- @since 0.1
 module Shrun.Utils
   ( -- * Text Utils
     breakStripPoint,
@@ -58,14 +56,10 @@ import Shrun.Prelude
 --   in diffTime t1 t2
 -- :}
 -- 16
---
--- @since 0.1
 diffTime :: TimeSpec -> TimeSpec -> Natural
 diffTime t1 t2 = view #sec $ diffTimeSpec t1 t2
 
 -- | Transforms a 'TimeSpec' into a 'RelativeTime'.
---
--- @since 0.6
 timeSpecToRelTime :: TimeSpec -> RelativeTime
 timeSpecToRelTime = fromSeconds . view #sec
 
@@ -80,8 +74,6 @@ timeSpecToRelTime = fromSeconds . view #sec
 -- >>> -- Silly, but demonstrates usage i.e. with non-monoid NonEmpty.
 -- >>> foldMap1 @List (:| []) 1 [2,3,4]
 -- 1 :| [2,3,4]
---
--- @since 0.1
 foldMap1 :: (Foldable f, Semigroup s) => (a -> s) -> a -> f a -> s
 foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
 
@@ -116,8 +108,6 @@ foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
 --
 -- >>> breakStripPoint equals "HEY==LISTEN"
 -- ("HEY","=LISTEN")
---
--- @since 0.1
 breakStripPoint :: Refined R.NonEmpty Text -> Text -> Tuple2 Text Text
 breakStripPoint rpoint txt = case T.breakOn point txt of
   (x, T.stripPrefix point -> Just y) -> (x, y)
@@ -142,8 +132,6 @@ breakStripPoint rpoint txt = case T.breakOn point txt of
 --
 -- >>> splitOn $$(R.refineTH ",") ""
 -- fromList ("" :| [])
---
--- @since 0.1
 splitOn :: (HasCallStack) => Refined R.NonEmpty Text -> Text -> NESeq Text
 splitOn rs txt = case T.splitOn s txt of
   [] -> error $ T.unpack err
@@ -171,8 +159,6 @@ splitOn rs txt = case T.splitOn s txt of
 --
 -- >>> truncateIfNeeded 10 "This is 21 chars long"
 -- "This is..."
---
--- @since 0.1
 truncateIfNeeded :: Natural -> Text -> Text
 truncateIfNeeded n txt
   | T.length txt <= n' = txt
@@ -191,8 +177,6 @@ n2i = fromIntegral
 --
 -- >>> stripControlAll "foo\ESC[0;3Abar \n baz"
 -- "foobar  baz"
---
--- @since 0.5
 stripControlAll :: Text -> Text
 stripControlAll =
   -- The ansi stripping must come first. For example, if we strip control
@@ -216,8 +200,6 @@ stripControlAll =
 --
 -- >>> stripControlSmart "foo\ESC[0;3mbar \n baz"
 -- "foo\ESC[0;3mbar  baz"
---
--- @since 0.5
 stripControlSmart :: Text -> Text
 stripControlSmart =
   -- Like 'stripControlAll', we need to handle the ansi sequences first.
@@ -243,8 +225,6 @@ stripControlSmart =
 -- @
 -- stripAnsiAll "foo\ESC[0;3Abar"
 -- @
---
--- @since 0.5
 stripAnsiAll :: Text -> Text
 stripAnsiAll = T.concat . fmap (view _1) . splitAnsi
 
@@ -259,8 +239,6 @@ stripAnsiAll = T.concat . fmap (view _1) . splitAnsi
 -- stripAnsiControl "foo\ESC[0;3mbar"
 -- "foo\ESC[0;3mbar"
 -- @
---
--- @since 0.5
 stripAnsiControl :: Text -> Text
 stripAnsiControl txt =
   foldl' f "" splitTxt
@@ -305,8 +283,6 @@ splitAnsi t =
 --
 -- >>> parseByteText "4.5 terabytes"
 -- Right (MkBytes 4500000000000)
---
--- @since 0.5
 parseByteText :: Text -> Either Text (Bytes B Natural)
 parseByteText txt =
   case parse @(SomeSize Natural) txt of
@@ -316,14 +292,10 @@ parseByteText txt =
       Left err -> Left err
 
 -- | Runs the action when it is 'Left'.
---
--- @since 0.7
 whenLeft :: (Applicative f) => Either a b -> (a -> f ()) -> f ()
 whenLeft e action = either action (const (pure ())) e
 
 -- | @whileM_ mb ma@ executes @ma@ as long as @mb@ returns 'True'.
---
--- @since 0.1
 whileM_ :: (Monad m) => m Bool -> m a -> m ()
 whileM_ mb ma = go
   where
@@ -334,8 +306,6 @@ whileM_ mb ma = go
 
 -- | Executes the monadic action until we receive a 'Just', returning the
 -- value.
---
--- @since 0.1
 untilJust :: (Monad m) => m (Maybe b) -> m b
 untilJust m = go
   where
@@ -346,7 +316,6 @@ untilJust m = go
 
 {- HLINT ignore unsafeListToNESeq "Redundant bracket" -}
 
--- | @since 0.1
 unsafeListToNESeq :: (HasCallStack) => List a -> NESeq a
 unsafeListToNESeq [] = error "[Shrun.Utils]: empty list"
 unsafeListToNESeq xs = NESeq.fromList $ fromList xs

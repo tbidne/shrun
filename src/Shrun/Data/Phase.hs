@@ -27,8 +27,6 @@
 -- initially parse a data type as Foo1 (phase 1) but then further process
 -- this data type into Foo2 (phase 2). Using this phased approach avoids
 -- duplication of constructors and fields.
---
--- @since 0.8
 module Shrun.Data.Phase
   ( Phase (..),
     AdvancePhase (..),
@@ -38,26 +36,15 @@ where
 import Shrun.Prelude
 
 -- | Index for data that has a "phased" evolution.
---
--- @since 0.8
 data Phase
   = Phase1
   | Phase2
-  deriving stock
-    ( -- | @since 0.8
-      Eq,
-      -- | @since 0.8
-      Show
-    )
+  deriving stock (Eq, Show)
 
 -- | Advances phased data.
---
--- @since 0.8
 class AdvancePhase a where
   -- | The next phase.
   type NextPhase a
 
   -- | Advances the data.
-  --
-  -- @since 0.8
   advancePhase :: a -> NextPhase a

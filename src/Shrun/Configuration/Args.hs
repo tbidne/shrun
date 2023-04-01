@@ -2,8 +2,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides functionality for parsing command line arguments.
---
--- @since 0.5
 module Shrun.Configuration.Args
   ( Args (..),
     FileMode (..),
@@ -50,21 +48,11 @@ import Shrun.Utils qualified as U
 import Text.Read qualified as TR
 
 -- | File mode.
---
--- @since 0.5
 data FileMode
-  = -- | @since 0.5
-    FileModeAppend
-  | -- | @since 0.5
-    FileModeWrite
-  deriving stock
-    ( -- | @since 0.5
-      Eq,
-      -- | @since 0.5
-      Show
-    )
+  = FileModeAppend
+  | FileModeWrite
+  deriving stock (Eq, Show)
 
--- | @since 0.5
 instance DecodeTOML FileMode where
   tomlDecoder =
     tomlDecoder @Text >>= \case
@@ -85,180 +73,92 @@ parseFileSizeMode txt = do
 
 -- | Determines what to do if the log file surpasses the given size
 -- threshold.
---
--- @since 0.5
 data FileSizeMode
   = -- | Print a warning.
-    --
-    -- @since 0.5
     FileSizeModeWarn (Bytes B Natural)
   | -- | Delete the file.
-    --
-    -- @since 0.5
     FileSizeModeDelete (Bytes B Natural)
-  deriving stock
-    ( -- | @since 0.5
-      Eq,
-      -- | @since 0.5
-      Show
-    )
+  deriving stock (Eq, Show)
 
--- | @since 0.5
 instance DecodeTOML FileSizeMode where
   tomlDecoder = tomlDecoder >>= parseFileSizeMode
 
 -- | Type for parsing command line args.
---
--- @since 0.1
 data Args = MkArgs
   { -- | Optional config file.
-    --
-    -- @since 0.5
     configPath :: !(Maybe FilePath),
     -- | Ignores toml config file.
-    --
-    -- @since 0.5
     noConfig :: Bool,
     -- | Timeout.
-    --
-    -- @since 0.1
     timeout :: !(Maybe Timeout),
     -- | Disables timeout.
-    --
-    -- @since X.X
     noTimeout :: !Bool,
     -- | Shell logic to run before each command.
-    --
-    -- @since 0.8
     init :: !(Maybe Text),
     -- | Disables init.
-    --
-    -- @since X.X
     noInit :: !Bool,
     -- | Whether to display command by (key) name or command.
-    --
-    -- @since 0.1
     keyHide :: !(Maybe CmdDisplay),
     -- | Disables cmdDisplay.
-    --
-    -- @since X.X
     noKeyHide :: !Bool,
     -- | How often to poll commands for logs, in microseconds.
-    --
-    -- @since 0.8
     pollInterval :: !(Maybe PollInterval),
     -- | Disables pollInterval.
-    --
-    -- @since X.X
     noPollInterval :: !Bool,
     -- | The max number of command characters to display in the logs.
-    --
-    -- @since 0.1
     cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     -- | Disables cmdNameTrunc.
-    --
-    -- @since X.X
     noCmdNameTrunc :: !Bool,
     -- | Whether to log commands.
-    --
-    -- @since 0.1
     cmdLog :: !(Maybe Bool),
     -- | Disables cmdLogging.
-    --
-    -- @since X.X
     noCmdLog :: !Bool,
     -- | Determines to what extent we should remove control characters
     -- from command logs.
-    --
-    -- @since 0.3
     cmdLogStripControl :: !(Maybe StripControl),
     -- | Disables cmdLogStripControl.
-    --
-    -- @since X.X
     noCmdLogStripControl :: !Bool,
     -- | The max number of line characters to display in the logs.
-    --
-    -- @since 0.1
     cmdLogLineTrunc :: !(Maybe LineTruncation),
     -- | Disables cmdLogLineTrunc.
-    --
-    -- @since X.X
     noCmdLogLineTrunc :: !Bool,
     -- | Optional path to log file. Determines if we log to a file.
-    --
-    -- @since 0.1
     fileLog :: !(Maybe FilePathDefault),
     -- | Disable fileLog.
-    --
-    -- @since 0.1
     noFileLog :: !Bool,
     -- | Determines to what extent we should remove control characters
     -- from file logs.
-    --
-    -- @since 0.5
     fileLogStripControl :: !(Maybe StripControl),
     -- | Disables fileLogStripControl.
-    --
-    -- @since X.X
     noFileLogStripControl :: !Bool,
     -- | Mode to use with the file log.
-    --
-    -- since 0.5
     fileLogMode :: !(Maybe FileMode),
     -- | Disables fileLogMode.
-    --
-    -- @since X.X
     noFileLogMode :: !Bool,
     -- | Threshold for when we should warn about the log file size.
-    --
-    -- @since 0.5
     fileLogSizeMode :: !(Maybe FileSizeMode),
     -- | Disables fileLogSizeMode.
-    --
-    -- @since X.X
     noFileLogSizeMode :: !Bool,
     -- | Actions for which to send notifications.
-    --
-    -- @since X.X
     notifyAction :: !(Maybe NotifyAction),
     -- | Disables notifyAction.
-    --
-    -- @since X.X
     noNotifyAction :: !Bool,
     -- | The notification system to use.
-    --
-    -- @since X.X
     notifySystem :: !(Maybe NotifySystemP1),
     -- | Disables notifySystem.
-    --
-    -- @since X.X
     noNotifySystem :: !Bool,
     -- | when to timeout successful notifications.
-    --
-    -- @since X.X
     notifyTimeout :: !(Maybe NotifyTimeout),
     -- | Disables notifyTimeout.
-    --
-    -- @since X.X
     noNotifyTimeout :: !Bool,
     -- | List of commands.
-    --
-    -- @since 0.1
     commands :: !(NESeq Text)
   }
-  deriving stock
-    ( -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Show
-    )
+  deriving stock (Eq, Show)
 
--- | @since 0.1
 makeFieldLabelsNoPrefix ''Args
 
 -- | Default configuration.
---
--- @since 0.1
 defaultArgs :: NESeq Text -> Args
 defaultArgs cmds =
   MkArgs
@@ -298,8 +198,6 @@ defaultArgs cmds =
     }
 
 -- | 'ParserInfo' type for parsing 'Args'.
---
--- @since 0.1
 parserInfoArgs :: ParserInfo Args
 parserInfoArgs =
   ParserInfo

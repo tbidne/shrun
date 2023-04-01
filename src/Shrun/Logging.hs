@@ -14,8 +14,6 @@
 --    respective queues and writes logs as they are found. These do no
 --    environment checking; any logs that make it to the queue are eventually
 --    written.
---
--- @since 0.7
 module Shrun.Logging
   ( -- * Writing logs
     putRegionLog,
@@ -40,8 +38,6 @@ import Shrun.Prelude
 -- | Unconditionally writes a log to the console queue. Conditionally
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
---
--- @since 0.3
 putRegionLog ::
   ( HasLogging env r,
     MonadReader env m,
@@ -60,8 +56,6 @@ putRegionLog region lg =
     for_ (logging ^. #fileLog) (\fl -> logToFileQueue keyHide fl lg)
 
 -- | Writes the log to the console queue.
---
--- @since 0.7
 regionLogToConsoleQueue ::
   ( MonadSTM m
   ) =>
@@ -79,8 +73,6 @@ regionLogToConsoleQueue region logging log =
     formatted = formatConsoleLog logging log
 
 -- | Writes the log to the file queue.
---
--- @since 0.7
 logToFileQueue ::
   ( MonadSTM m,
     MonadTime m

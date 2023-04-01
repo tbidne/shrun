@@ -2,8 +2,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types for the legend.
---
--- @since 0.1
 module Shrun.Data.Legend
   ( LegendMap,
     KeyVal (MkKeyVal),
@@ -18,8 +16,6 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Shrun.Prelude
 
 -- | Alias for our legend map.
---
--- @since 0.1
 type LegendMap = HashMap Text (NESeq Text)
 
 -- | Holds a map key/val pair. The maintained invariants are:
@@ -27,30 +23,18 @@ type LegendMap = HashMap Text (NESeq Text)
 -- * @key@ is non-empty.
 -- * @val@ is non-empty.
 -- * all @v_i@ in @val@ are non-empty.
---
--- @since 0.5
 data KeyVal = UnsafeKeyVal
-  { -- | @since 0.5
-    key :: !Text,
-    -- | @since 0.5
+  { key :: !Text,
     val :: !(NESeq Text)
   }
-  deriving stock
-    ( -- | @since 0.5
-      Eq,
-      -- | @since 0.5
-      Show
-    )
+  deriving stock (Eq, Show)
 
 -- | Unidirectional pattern synonym for 'KeyVal'.
---
--- @since 0.5
 pattern MkKeyVal :: Text -> NESeq Text -> KeyVal
 pattern MkKeyVal k v <- UnsafeKeyVal k v
 
 {-# COMPLETE MkKeyVal #-}
 
--- | @since 0.7
 makeFieldLabelsWith
   (noPrefixFieldLabels & generateUpdateableOptics .~ False)
   ''KeyVal
@@ -67,9 +51,6 @@ instance DecodeTOML KeyVal where
 -- * @key@ is non-empty.
 -- * @vals@ is non-empty.
 -- * all @v_i@ in @vals@ are non-empty.
---
---
--- @since 0.5
 mkKeyVal :: Text -> List Text -> Maybe KeyVal
 mkKeyVal "" _ = Nothing
 mkKeyVal _ [] = Nothing
@@ -78,8 +59,6 @@ mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.nonEmptySeq (Seq.fromList vals)
 {- HLINT ignore unsafeKeyVal "Redundant bracket" -}
 
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
---
--- @since 0.5
 unsafeKeyVal :: (HasCallStack) => Text -> List Text -> KeyVal
 unsafeKeyVal "" _ = error "[Shrun.Data.Legend.unsafeKeyVal]: empty key"
 unsafeKeyVal k vals = case mkKeyVal k vals of

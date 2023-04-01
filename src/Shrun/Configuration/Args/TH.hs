@@ -1,6 +1,4 @@
 -- | Provides TH for CLI args.
---
--- @since 0.5
 module Shrun.Configuration.Args.TH
   ( getDefaultConfigTH,
   )
@@ -12,8 +10,6 @@ import Language.Haskell.TH.Syntax (Lift (..), bindCode, runIO)
 import Shrun.Prelude
 
 -- | Reads examples/default.toml at compile time.
---
--- @since 0.5
 getDefaultConfigTH :: Code Q (List Text)
 getDefaultConfigTH = bindCode (runIO getDefault) liftTyped
   where

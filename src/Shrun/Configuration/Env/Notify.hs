@@ -3,8 +3,6 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 -- | Transforms NotifyToml into NotifyEnv.
---
--- @since X.X
 module Shrun.Configuration.Env.Notify
   ( tomlToNotifyEnv,
   )
@@ -30,8 +28,6 @@ import Shrun.Prelude
 -- 2. NotifyNone is specified
 --
 -- On OSX, throws an exception for anything but @tomlToNotifyEnv Nothing@.
---
--- @since X.X
 tomlToNotifyEnv ::
   ( HasCallStack,
     MonadDBus m,

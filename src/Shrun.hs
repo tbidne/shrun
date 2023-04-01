@@ -1,7 +1,5 @@
 -- | This module is the entry point to the @Shrun@ library used by
 -- the @Shrun@ executable.
---
--- @since 0.1
 module Shrun
   ( ShellT,
     runShellT,
@@ -48,8 +46,6 @@ import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
 
 -- | Entry point
---
--- @since 0.1
 shrun ::
   ( HasAnyError env,
     HasCommands env,
