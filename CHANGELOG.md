@@ -20,6 +20,9 @@ the major/minor/patch definitions apply to the application's interface / usage
 * Add `no-X` options to allow selectively disabling options (e.g. disable a
   single field set by the toml file).
 
+### Fixed
+* Help page improved.
+
 ## [0.8] -- 2023-03-22
 ### Removed
 * `stack` support removed.
