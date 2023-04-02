@@ -21,8 +21,8 @@ where
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay (..),
-    FileLogging,
+  ( FileLogging,
+    KeyHide (..),
     Logging (..),
     StripControl (..),
     TruncRegion (..),
@@ -90,7 +90,7 @@ maybeApply = maybe id
 formatFileLog ::
   ( MonadTime m
   ) =>
-  CmdDisplay ->
+  KeyHide ->
   FileLogging ->
   Log ->
   m FileLog
@@ -122,7 +122,7 @@ formatFileLog cmdDisplay fileLogging log = do
     prefix = logToPrefix log
 
 formatCommand ::
-  CmdDisplay ->
+  KeyHide ->
   Maybe (Truncation TCmdName) ->
   CommandP1 ->
   Text
@@ -138,22 +138,22 @@ formatCommand cmdDisplay cmdNameTrunc com = brackets True (truncateNameFn cmdNam
         U.truncateIfNeeded
         (cmdNameTrunc ^? (_Just % #unTruncation))
 
--- | Pretty show for 'Command'. If the command has a key, and 'CmdDisplay' is
--- 'ShowKey' then we return the key. Otherwise we return the command itself.
+-- | Pretty show for 'Command'. If the command has a key, and 'KeyHide' is
+-- 'KeyHideOff' then we return the key. Otherwise we return the command itself.
 --
--- >>> displayCmd (MkCommand Nothing "some long command") HideKey
+-- >>> displayCmd (MkCommand Nothing "some long command") KeyHideOn
 -- "some long command"
 --
--- >>> displayCmd (MkCommand Nothing "some long command") ShowKey
+-- >>> displayCmd (MkCommand Nothing "some long command") KeyHideOff
 -- "some long command"
 --
--- >>> displayCmd (MkCommand (Just "long") "some long command") HideKey
+-- >>> displayCmd (MkCommand (Just "long") "some long command") KeyHideOn
 -- "some long command"
 --
--- >>> displayCmd (MkCommand (Just "long") "some long command") ShowKey
+-- >>> displayCmd (MkCommand (Just "long") "some long command") KeyHideOff
 -- "long"
-displayCmd :: CommandP1 -> CmdDisplay -> Text
-displayCmd (MkCommand (Just key) _) ShowKey = key
+displayCmd :: CommandP1 -> KeyHide -> Text
+displayCmd (MkCommand (Just key) _) KeyHideOff = key
 displayCmd (MkCommand _ cmd) _ = cmd
 
 -- | Applies the given 'StripControl' to the 'Text'.

@@ -7,7 +7,7 @@ module Integration.Examples (specs) where
 import Data.IORef qualified as IORef
 import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
-import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
+import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
 import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Notify.Types
   ( NotifyAction (..),
@@ -38,7 +38,7 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
       MkSimpleEnv
         { timeout = Just 20,
           init = Just ". examples/bashrc",
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 100,
           cmdNameTrunc = Just 80,
           cmdLog = True,
@@ -73,7 +73,7 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
       MkSimpleEnv
         { timeout = Nothing,
           init = Nothing,
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 10_000,
           cmdNameTrunc = Nothing,
           cmdLog = False,

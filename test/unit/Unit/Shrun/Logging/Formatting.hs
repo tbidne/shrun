@@ -15,10 +15,10 @@ import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
 import Refined qualified as R
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay (..),
-    CmdLogging (..),
+  ( CmdLogging (..),
     FileLogging (..),
     HasLogging (..),
+    KeyHide (..),
     Logging (..),
     StripControl (..),
     TruncRegion (..),
@@ -33,7 +33,7 @@ import Unit.Prelude
 import Unit.Shrun.Logging.Generators qualified as LGens
 
 data Env = MkEnv
-  { keyHide :: CmdDisplay,
+  { keyHide :: KeyHide,
     cmdTrunc :: Maybe (Truncation TCmdName),
     lineTrunc :: Maybe (Truncation TCmdLine)
   }
@@ -92,13 +92,13 @@ genLongLineText = HGen.text range HGen.unicode
 
 genEnvDispCmd :: Gen Env
 genEnvDispCmd =
-  MkEnv HideKey
+  MkEnv KeyHideOn
     <$> (fmap . fmap) MkTruncation genMInt
     <*> (fmap . fmap) MkTruncation genMInt
 
 genEnvDispKey :: Gen Env
 genEnvDispKey =
-  MkEnv ShowKey
+  MkEnv KeyHideOff
     <$> (fmap . fmap) MkTruncation genMInt
     <*> (fmap . fmap) MkTruncation genMInt
 
@@ -260,7 +260,7 @@ newtype MockEnv = MkMockEnv ()
 instance HasLogging MockEnv () where
   getLogging _ =
     MkLogging
-      { keyHide = ShowKey,
+      { keyHide = KeyHideOff,
         pollInterval = 10,
         cmdNameTrunc = Nothing,
         cmdLog = Nothing,
@@ -302,7 +302,7 @@ timestampProps =
   testPropertyNamed "Starts with timestamp" "timestampProps" $
     property $ do
       log <- forAll LGens.genLog
-      let result = formatFileLog HideKey log
+      let result = formatFileLog KeyHideOn log
           (res, rest) = Utils.breakStripPoint sysTimeNE result
       annotate $ T.unpack result
       annotate $ T.unpack rest
@@ -313,7 +313,7 @@ fileLogMessageProps =
   testPropertyNamed "Includes message" "fileLogMessageProps" $
     property $ do
       log@MkLog {msg} <- forAll LGens.genLog
-      let result = formatFileLog HideKey log
+      let result = formatFileLog KeyHideOn log
       annotate $ T.unpack result
       assert $ T.isInfixOf (T.strip msg) result
 
@@ -322,7 +322,7 @@ fileLogPrefixProps =
   testPropertyNamed "Formats prefix" "fileLogPrefixProps" $
     property $ do
       log@MkLog {lvl} <- forAll LGens.genLog
-      let result = formatFileLog HideKey log
+      let result = formatFileLog KeyHideOn log
       let pfx = Formatting.levelToPrefix lvl
       annotate $ T.unpack pfx
       assert $ T.isInfixOf pfx result
@@ -333,20 +333,20 @@ commandProps =
     property $ do
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
       let cmdTxt = "[" <> Utils.stripControlAll cmd' <> "]"
-          result = formatFileLog HideKey log
+          result = formatFileLog KeyHideOn log
       annotate $ T.unpack cmdTxt
       annotate $ T.unpack result
       assert $ T.isInfixOf cmdTxt result
 
 commandPropsShowKey :: TestTree
 commandPropsShowKey =
-  testPropertyNamed "Formats command with ShowKey" "commandProps" $
+  testPropertyNamed "Formats command with KeyHideOff" "commandProps" $
     property $ do
       log@MkLog {cmd = Just (MkCommand mk cmd')} <- forAll LGens.genLogWithCmd
       let cmdTxt = case mk of
             Nothing -> "[" <> Utils.stripControlAll cmd' <> "]"
             Just k -> "[" <> Utils.stripControlAll k <> "]"
-          result = formatFileLog ShowKey log
+          result = formatFileLog KeyHideOff log
       annotate $ T.unpack cmdTxt
       annotate $ T.unpack result
       assert $ T.isInfixOf cmdTxt result
@@ -356,7 +356,7 @@ shapeProps =
   testPropertyNamed "Formats shape" "shapeProps" $
     property $ do
       log@MkLog {cmd, msg} <- forAll LGens.genLogWithCmd
-      let result = formatFileLog HideKey log
+      let result = formatFileLog KeyHideOn log
           expected =
             mconcat
               [ Formatting.brackets False sysTime,
@@ -369,7 +369,7 @@ shapeProps =
       annotate $ T.unpack result
       expected === result
 
-formatFileLog :: CmdDisplay -> Log -> Text
+formatFileLog :: KeyHide -> Log -> Text
 formatFileLog cmdDisplay log =
   view #unFileLog $
     Formatting.formatFileLog @MockTime cmdDisplay fileLog log ^. #runMockTime

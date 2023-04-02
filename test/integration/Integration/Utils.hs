@@ -21,8 +21,8 @@ import Effects.System.Terminal (MonadTerminal (..))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay,
-    Env,
+  ( Env,
+    KeyHide,
     StripControl,
     TruncRegion (..),
     Truncation,
@@ -142,7 +142,7 @@ deriving via ConfigIO instance MonadTerminal NoConfigIO
 data SimpleEnv = MkSimpleEnv
   { timeout :: !(Maybe Timeout),
     init :: !(Maybe Text),
-    keyHide :: !CmdDisplay,
+    keyHide :: !KeyHide,
     pollInterval :: !PollInterval,
     cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     cmdLog :: !Bool,

@@ -10,7 +10,7 @@ import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Numeric.Algebra (zero)
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
+import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Notify.Types
   ( NotifyAction (..),
@@ -110,7 +110,7 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
       MkSimpleEnv
         { timeout = Just 3600,
           init = Just ". some file",
-          keyHide = HideKey,
+          keyHide = KeyHideOn,
           pollInterval = 127,
           cmdNameTrunc = Just 80,
           cmdLog = True,
@@ -149,7 +149,7 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
       MkSimpleEnv
         { timeout = Nothing,
           init = Nothing,
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 10_000,
           cmdNameTrunc = Nothing,
           cmdLog = False,

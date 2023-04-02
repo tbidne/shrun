@@ -15,7 +15,7 @@ where
 import Optics.Core (NoIx)
 import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay,
+  ( KeyHide,
     LineTruncation,
     StripControl,
     TruncRegion (..),
@@ -84,7 +84,7 @@ data TomlConfig = MkTomlConfig
     init :: !(Maybe Text),
     -- | Whether to display the command (key) names or the commands
     -- themselves.
-    keyHide :: !(Maybe CmdDisplay),
+    keyHide :: !(Maybe KeyHide),
     -- | How often to poll commands for logs, in microseconds.
     pollInterval :: !(Maybe PollInterval),
     -- | Truncates command names in the logs.
@@ -143,7 +143,7 @@ decodeFileLogging = getFieldWith tomlDecoder "path"
 decodeFileLogMode :: Decoder (Maybe FileMode)
 decodeFileLogMode = getFieldOptWith tomlDecoder "mode"
 
-decodeCmdDisplay :: Decoder (Maybe CmdDisplay)
+decodeCmdDisplay :: Decoder (Maybe KeyHide)
 decodeCmdDisplay = getFieldOptWith tomlDecoder "key-hide"
 
 decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))

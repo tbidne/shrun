@@ -27,11 +27,11 @@ import Shrun.Configuration.Args
   )
 import Shrun.Configuration.Env.Notify qualified as EnvNotify
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay (..),
-    CmdLogging (..),
+  ( CmdLogging (..),
     Env (..),
     FileLogging (..),
     HasLogging (..),
+    KeyHide (..),
     LineTruncation (..),
     Logging (..),
     StripControl (..),
@@ -180,7 +180,7 @@ fromToml cfg cmdsText onEnv = do
             notifyEnv,
             logging =
               MkLogging
-                { keyHide = fromMaybe ShowKey (cfg ^? (#keyHide % _Just)),
+                { keyHide = fromMaybe KeyHideOff (cfg ^? (#keyHide % _Just)),
                   pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
                   cmdNameTrunc = cfg ^. #cmdNameTrunc,
                   cmdLog =

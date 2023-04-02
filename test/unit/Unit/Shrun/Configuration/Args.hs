@@ -9,7 +9,7 @@ import Options.Applicative qualified as OptApp
 import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay (..),
+  ( KeyHide (..),
     LineTruncation (..),
     StripControl (..),
   )
@@ -455,7 +455,7 @@ parseNoCmdLog =
 commandDisplaySpecs :: TestTree
 commandDisplaySpecs =
   testGroup
-    "CmdDisplay arg parsing"
+    "KeyHide arg parsing"
     [ parseShortShowKey,
       parseLongShowKey,
       parseNoKeyHide
@@ -463,19 +463,19 @@ commandDisplaySpecs =
 
 parseShortShowKey :: TestTree
 parseShortShowKey =
-  testCase "Should parse -k as HideKey" $
+  testCase "Should parse -k as KeyHideOn" $
     verifyResult argList expected
   where
     argList = ["-k", "command"]
-    expected = updateDefArgs #keyHide HideKey
+    expected = updateDefArgs #keyHide KeyHideOn
 
 parseLongShowKey :: TestTree
 parseLongShowKey =
-  testCase "Should parse --key-hide as ShowKey" $
+  testCase "Should parse --key-hide as KeyHideOff" $
     verifyResult argList expected
   where
     argList = ["--key-hide", "command"]
-    expected = updateDefArgs #keyHide HideKey
+    expected = updateDefArgs #keyHide KeyHideOn
 
 parseNoKeyHide :: TestTree
 parseNoKeyHide =

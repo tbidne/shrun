@@ -23,9 +23,9 @@ module Shrun.Logging
 where
 
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay,
-    FileLogging,
+  ( FileLogging,
     HasLogging (..),
+    KeyHide,
     Logging,
   )
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
@@ -78,7 +78,7 @@ logToFileQueue ::
     MonadTime m
   ) =>
   -- | How to display the command.
-  CmdDisplay ->
+  KeyHide ->
   -- | FileLogging config.
   FileLogging ->
   -- | Log to send.

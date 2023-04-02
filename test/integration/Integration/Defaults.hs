@@ -11,7 +11,7 @@ import Integration.Utils
     runConfigIO,
     runNoConfigIO,
   )
-import Shrun.Configuration.Env.Types (CmdDisplay (..), StripControl (..))
+import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
 import Shrun.Notify.Types
   ( NotifyAction (..),
@@ -45,7 +45,7 @@ defaultEnv = testCase "No arguments and empty config path should return default 
         { timeout = Nothing,
           init = Nothing,
           cmdLog = False,
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 10_000,
           cmdNameTrunc = Nothing,
           cmdLogStripControl = Nothing,
@@ -72,7 +72,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
       MkSimpleEnv
         { timeout = Just 3_600,
           init = Just ". some file",
-          keyHide = HideKey,
+          keyHide = KeyHideOn,
           pollInterval = 127,
           cmdNameTrunc = Just 80,
           cmdLog = True,
@@ -138,7 +138,7 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
       MkSimpleEnv
         { timeout = Just 10,
           init = Just ". another file",
-          keyHide = HideKey,
+          keyHide = KeyHideOn,
           pollInterval = 127,
           cmdNameTrunc = Just 10,
           cmdLog = True,
@@ -185,7 +185,7 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           -- These are just the rest
           timeout = Just 3_600,
           init = Just "blah",
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 10_000,
           cmdNameTrunc = Just 80,
           cmdLog = True,
@@ -217,7 +217,7 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
       MkSimpleEnv
         { timeout = Nothing,
           init = Nothing,
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 10_000,
           cmdNameTrunc = Nothing,
           cmdLog = False,
@@ -261,7 +261,7 @@ noXOverridesToml = testCase "--no-x disables toml options" $ do
       MkSimpleEnv
         { timeout = Nothing,
           init = Nothing,
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 10_000,
           cmdNameTrunc = Nothing,
           cmdLog = False,
@@ -328,7 +328,7 @@ noXOverridesArgs = testCase "--no-x disables args" $ do
       MkSimpleEnv
         { timeout = Nothing,
           init = Nothing,
-          keyHide = ShowKey,
+          keyHide = KeyHideOff,
           pollInterval = 10_000,
           cmdNameTrunc = Nothing,
           cmdLog = False,

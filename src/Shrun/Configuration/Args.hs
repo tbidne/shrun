@@ -32,7 +32,7 @@ import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (..))
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
 import Shrun.Configuration.Env.Types
-  ( CmdDisplay (..),
+  ( KeyHide (..),
     LineTruncation (..),
     StripControl (..),
     TruncRegion (..),
@@ -98,7 +98,7 @@ data Args = MkArgs
     -- | Disables init.
     noInit :: !Bool,
     -- | Whether to display command by (key) name or command.
-    keyHide :: !(Maybe CmdDisplay),
+    keyHide :: !(Maybe KeyHide),
     -- | Disables cmdDisplay.
     noKeyHide :: !Bool,
     -- | How often to poll commands for logs, in microseconds.
@@ -631,11 +631,11 @@ noCmdLogParser =
         mkHelp "Disables --cmd-log."
       ]
 
-commandDisplayParser :: Parser (Maybe CmdDisplay)
+commandDisplayParser :: Parser (Maybe KeyHide)
 commandDisplayParser =
   OA.optional $
     OA.flag'
-      HideKey
+      KeyHideOn
       ( mconcat
           [ OA.short 'k',
             OA.long "key-hide",

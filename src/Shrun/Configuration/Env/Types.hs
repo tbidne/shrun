@@ -19,7 +19,7 @@ module Shrun.Configuration.Env.Types
     CmdLogging (..),
     FileLogging (..),
     NotifyEnv (..),
-    CmdDisplay (..),
+    KeyHide (..),
     Truncation (..),
     LineTruncation (..),
     TruncRegion (..),
@@ -44,19 +44,19 @@ import Text.Show (showParen, showString)
 
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
-data CmdDisplay
+data KeyHide
   = -- | Display the command's key, if it exists, rather
     -- than the key itself.
-    ShowKey
+    KeyHideOff
   | -- | Display the command itself, not the key.
-    HideKey
+    KeyHideOn
   deriving stock (Bounded, Enum, Eq, Ord, Show)
 
-instance DecodeTOML CmdDisplay where
+instance DecodeTOML KeyHide where
   tomlDecoder =
     tomlDecoder <&> \case
-      True -> HideKey
-      False -> ShowKey
+      True -> KeyHideOn
+      False -> KeyHideOff
 
 -- | The different regions to apply truncation rules.
 data TruncRegion
@@ -149,7 +149,7 @@ instance Show FileLogging where
 data Logging r = MkLogging
   { -- | Whether to display the command (key) names or the commands
     -- themselves.
-    keyHide :: !CmdDisplay,
+    keyHide :: !KeyHide,
     -- | How often to poll commands for logs, in microseconds.
     pollInterval :: !PollInterval,
     -- | Truncates command names in the logs.
