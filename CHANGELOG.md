@@ -21,6 +21,8 @@ the major/minor/patch definitions apply to the application's interface / usage
   single field set by the toml file).
 
 ### Fixed
+* Fixed bug where command logs with newlines in them were rendered in the same
+  log. These are now split across multiple logs.
 * Help page improved.
 
 ## [0.8] -- 2023-03-22

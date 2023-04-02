@@ -3,6 +3,7 @@ module Main (main) where
 
 import Effects.FileSystem.PathReader qualified as Dir
 import Effects.FileSystem.PathWriter qualified as Dir
+import Functional.Miscellaneous qualified as Miscellaneous
 import Functional.Notify qualified as Notify
 import Functional.Prelude
 import Functional.Readme qualified as Readme
@@ -26,7 +27,8 @@ specs :: IO TestArgs -> TestTree
 specs args = do
   testGroup
     "Functional Tests"
-    [ Notify.specs,
+    [ Miscellaneous.specs,
+      Notify.specs,
       Success.spec args,
       SuccessCommandLogging.spec,
       SuccessFileLogging.spec args,

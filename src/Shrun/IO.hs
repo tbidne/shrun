@@ -207,6 +207,16 @@ tryCommandStream logFn cmd = do
     ExitSuccess -> Nothing
     ExitFailure _ -> Just $ readHandleResultToStderr lastReadErr
 
+-- NOTE: This was an attempt to set the buffering so that we could use
+-- hGetLine. Unfortunately that failed, see Note
+-- [Blocking / Streaming output]. Leaving this here as documentation.
+--
+--  where
+--    -- copy of P.createPipe except we set the buffering
+--    createPipe' = P.mkPipeStreamSpec $ \_ h -> do
+--      hSetBuffering h NoBuffering
+--      pure (h, hClose h)
+
 streamOutput ::
   forall m env.
   ( HasLogging env (Region m),
@@ -266,6 +276,8 @@ streamOutput logFn cmd p = do
 --
 -- EDIT: Possibly fixed by switch to typed-process and
 -- https://github.com/fpco/typed-process/issues/25?
+--
+-- See Note [EOF / blocking error]
 writeLog ::
   (MonadIORef m) =>
   (Log -> m ()) ->
@@ -275,12 +287,13 @@ writeLog ::
   m ()
 writeLog _ _ _ (ReadErr _) = pure ()
 writeLog _ _ _ ReadNoData = pure ()
-writeLog logFn cmd lastReadRef (ReadSuccess msg) = do
-  writeIORef lastReadRef (Just (ReadSuccess msg))
-  logFn $
-    MkLog
-      { cmd = Just cmd,
-        msg,
-        lvl = LevelCommand,
-        mode = LogModeSet
-      }
+writeLog logFn cmd lastReadRef (ReadSuccess messages) = do
+  writeIORef lastReadRef (Just (ReadSuccess messages))
+  for_ messages $ \msg ->
+    logFn $
+      MkLog
+        { cmd = Just cmd,
+          msg,
+          lvl = LevelCommand,
+          mode = LogModeSet
+        }

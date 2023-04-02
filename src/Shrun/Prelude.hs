@@ -18,6 +18,7 @@ module Shrun.Prelude
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
+    displayExceptiont,
 
     -- * Anti-punning aliases
     List,
@@ -252,15 +253,18 @@ import TOML as X
     typeMismatch,
   )
 import Prelude as X (seq)
-import Prelude qualified as P
 
 -- $setup
 -- >>> import Data.String (String)
 -- >>> :set -XNoOverloadedLists
 
--- | 'Text' version of 'P.show'.
-showt :: (P.Show a) => a -> Text
-showt = T.pack . P.show
+-- | 'Text' version of 'show'.
+showt :: (Show a) => a -> Text
+showt = T.pack . show
+
+-- | 'Text' version of 'displayException'.
+displayExceptiont :: (Exception e) => e -> Text
+displayExceptiont = T.pack . displayException
 
 -- | Safe @head@.
 --
