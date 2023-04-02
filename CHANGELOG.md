@@ -14,10 +14,10 @@ the major/minor/patch definitions apply to the application's interface / usage
 ### Added
 * Added linux feature for sending notifications upon command/shrun completion.
   The new CLI options (`toml`) are:
-  * `--notify-system (notify.system)`
   * `--notify-action (notify.action)`
+  * `--notify-system (notify.system)`
   * `--notify-timeout (notify.timeout)`
-* Add `no-X` options to allow selectively disabling options (e.g. disable a
+* Add `no-x` options to allow selectively disabling options (e.g. disable a
   single field set by the toml file).
 
 ### Fixed
