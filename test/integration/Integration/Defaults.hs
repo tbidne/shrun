@@ -147,18 +147,16 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
           fileLog = True,
           fileLogStripControl = Just StripControlNone,
 #if OSX
-          notifySystem = Nothing,
           notifyAction = Nothing,
+          notifySystem = Nothing,
           notifyTimeout = Nothing,
 #else
-          notifySystem = Just NotifySend,
           notifyAction = Just NotifyFinal,
+          notifySystem = Just NotifySend,
           notifyTimeout = Just (NotifyTimeoutSeconds 10),
 #endif
           commands = "cmd" :<|| []
         }
-
-{- ORMOLU_ENABLE -}
 
 cliOverridesConfigFileCmdLog :: TestTree
 cliOverridesConfigFileCmdLog = testCase desc $ do
@@ -193,11 +191,19 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           cmdLog = True,
           fileLog = True,
           fileLogStripControl = Just StripControlAll,
-          notifySystem = Nothing,
+#if OSX
           notifyAction = Nothing,
+          notifySystem = Nothing,
           notifyTimeout = Nothing,
+#else
+          notifyAction = Just NotifyCommand,
+          notifySystem = Just (DBus ()),
+          notifyTimeout = Just NotifyTimeoutNever,
+#endif
           commands = "cmd" :<|| []
         }
+
+{- ORMOLU_ENABLE -}
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do

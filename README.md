@@ -107,7 +107,7 @@ Note: `shrun` colors its logs, and the examples shown here _should_ use these co
 
 `shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [default.toml](./examples/default.toml) for a description of the `toml` file.
 
-Most options have a `no-X` variant e.g. `--cmd-log` has a corresponding `--no-cmd-log`. These flags totally disable the corresponding options name make it as if the field was never specified i.e. the default behavior is used.
+Most options have a `no-X` variant e.g. `--cmd-log` has a corresponding `--no-cmd-log`. These flags totally disable the corresponding option and make it as if the field was never specified i.e. the default behavior is used.
 
 ## Core Functionality
 
@@ -118,7 +118,6 @@ Most options have a `no-X` variant e.g. `--cmd-log` has a corresponding `--no-cm
 **Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`.
 
 Examples can be found in [examples](./examples).
-
 
 #### Legend
 
@@ -409,9 +408,9 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify Action
 
-**Arg:** `--notify-action (none|final|command)`
+**Arg:** `--notify-action (final|command)`
 
-**Description:** Sends notifications for various actions if `--notify-system` is given and `--notify-action` is not `none`. `final` sends off a notification when `shrun` itself finishes whereas `command` (which implies `final`) sends one off each time a command finishes.
+**Description:** Sends notifications for various actions. `final` sends off a notification when `shrun` itself finishes whereas `command` (which implies `final`) sends one off each time a command finishes.
 
 **Example:**
 

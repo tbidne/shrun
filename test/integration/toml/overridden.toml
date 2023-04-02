@@ -19,6 +19,6 @@ path = "default"
 mode = "append"
 
 [notify]
-action = "none"
+action = "command"
 system = "dbus"
 timeout = "never"

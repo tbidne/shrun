@@ -769,8 +769,7 @@ notifyActionParser =
     readNotifyAction = OA.str >>= Notify.parseNotifyAction
     helpTxt =
       mconcat
-        [ "Sends notifications for various actions if --notify-system is ",
-          "given and --notify-action is not 'none'. 'Final' sends off a ",
+        [ "Sends notifications for various actions. 'Final' sends off a ",
           "notification when Shrun itself finishes whereas 'command' (which ",
           "implies 'final') sends off one each time a command finishes."
         ]

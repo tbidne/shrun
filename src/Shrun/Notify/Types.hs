@@ -59,7 +59,6 @@ instance DecodeTOML NotifyAction where
 
 -- | Parses 'NotifyAction'.
 parseNotifyAction :: (MonadFail m) => Text -> m NotifyAction
-parseNotifyAction "none" = pure NotifyNone
 parseNotifyAction "final" = pure NotifyFinal
 parseNotifyAction "command" = pure NotifyCommand
 parseNotifyAction other =
@@ -73,7 +72,7 @@ parseNotifyAction other =
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
-notifyActionStr = "(none|final|command)"
+notifyActionStr = "(final|command)"
 
 -- | Maps DBus to its phased param.
 type family DBusF p where

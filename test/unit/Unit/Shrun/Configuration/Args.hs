@@ -687,18 +687,10 @@ notifyActionSpecs :: TestTree
 notifyActionSpecs =
   testGroup
     "Notify action parsing"
-    [ parseNotifyActionNone,
-      parseNotifyActionFinal,
+    [ parseNotifyActionFinal,
       parseNotifyActionCommand,
       parseNoNotifyAction
     ]
-
-parseNotifyActionNone :: TestTree
-parseNotifyActionNone = testCase desc $ verifyResult argList expected
-  where
-    desc = "Should parse --notify-action none"
-    argList = ["--notify-action", "none", "command"]
-    expected = updateDefArgs #notifyAction NotifyNone
 
 parseNotifyActionFinal :: TestTree
 parseNotifyActionFinal = testCase desc $ verifyResult argList expected

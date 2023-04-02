@@ -18,7 +18,6 @@ notifyTests = []
 #else
 notifyTests =
   [ notifySystemNotifySend,
-    notifyActionNone,
     notifyActionCommand,
     notifyTimeout5
   ]
@@ -65,22 +64,6 @@ notifySystemNotifySend = testCase "Runs --notify-system notify-send" $ do
             timeout = NotifyTimeoutSeconds 10
           }
       ]
-
-notifyActionNone :: TestTree
-notifyActionNone = testCase "Runs --notify-action none" $ do
-  results <- readIORef =<< runNotes args
-  expected @=? results
-  where
-    args =
-      withNoConfig
-        [ "--notify-system",
-          "notify-send",
-          "--notify-action",
-          "none",
-          "sleep 2",
-          "sleep 3"
-        ]
-    expected = []
 
 notifyActionCommand :: TestTree
 notifyActionCommand = testCase "Runs --notify-action command" $ do
