@@ -176,7 +176,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
           mconcat
             [ "Encountered an exception. This is likely not an error in any ",
               "of the commands run but rather an error in Shrun itself: ",
-              T.pack (displayException ex)
+              displayExceptiont ex
             ]
         fatalLog =
           MkLog
