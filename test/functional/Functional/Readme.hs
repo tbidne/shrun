@@ -1,6 +1,3 @@
-{-# LANGUAGE CPP #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-
 -- | Functional tests for readme examples.
 module Functional.Readme (specs) where
 
@@ -20,29 +17,29 @@ specs :: IO TestArgs -> TestTree
 specs args =
   testGroup
     "README examples"
-    ( [ gif,
-        core,
-        timeout,
-        initOn,
-        initOff,
-        cmdlogOn,
-        cmdlogOnDefault,
-        cmdlogOff,
-        fileLog args,
-        keyHideOn,
-        keyHideOff,
-        stripControlAlwaysCmdNames,
-        stripControlAll,
-        stripControlNone,
-        stripControlSmart,
-        fileLogStripControlAll args,
-        fileLogStripControlNone args,
-        fileLogStripControlSmart args,
-        cmdNameTruncN,
-        cmdLogLineTruncN
-      ]
-        <> notifyTests
-    )
+    [ gif,
+      core,
+      timeout,
+      initOn,
+      initOff,
+      cmdlogOn,
+      cmdlogOnDefault,
+      cmdlogOff,
+      fileLog args,
+      keyHideOn,
+      keyHideOff,
+      stripControlAlwaysCmdNames,
+      stripControlAll,
+      stripControlNone,
+      stripControlSmart,
+      fileLogStripControlAll args,
+      fileLogStripControlNone args,
+      fileLogStripControlSmart args,
+      cmdNameTruncN,
+      cmdLogLineTruncN,
+      notifyActionFinal,
+      notifyTimeoutNever
+    ]
 
 gif :: TestTree
 gif =
@@ -428,15 +425,6 @@ cmdLogLineTruncN = testCase "Runs --cmd-log-line-trunc 80 example" $ do
       [ "[Command][echo 'some ridiculously long command i mean is this really necessar..."
       ]
 
-notifyTests :: [TestTree]
-#if OSX
-notifyTests = []
-#else
-notifyTests =
-  [ notifyActionFinal,
-    notifyTimeoutNever
-  ]
-
 -- NOTE: There is no DBus test because that requires creating a real DBus
 -- connection, as we are running in IO.
 
@@ -448,7 +436,7 @@ notifyActionFinal = testCase "Runs --notify-action final" $ do
     args =
       withNoConfig
         [ "--notify-system",
-          "notify-send",
+          notifySystemArg,
           "--notify-action",
           "final",
           "sleep 2",
@@ -471,7 +459,7 @@ notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
     args =
       withNoConfig
         [ "--notify-system",
-          "notify-send",
+          notifySystemArg,
           "--notify-action",
           "command",
           "--notify-timeout",
@@ -499,4 +487,3 @@ notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
             timeout = NotifyTimeoutNever
           }
       ]
-#endif

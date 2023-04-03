@@ -37,8 +37,8 @@ tests =
       stripControlSpecs,
       cmdNameTruncSpecs,
       cmdLineTruncSpecs,
-      notifySystemSpecs,
       notifyActionSpecs,
+      notifySystemSpecs,
       notifyTimeoutSpecs,
       commandSpecs
     ]
@@ -652,37 +652,6 @@ parseNoCmdLogLineTrunc =
     argList = ["--no-cmd-log-line-trunc", "command"]
     expected = updateDefArgsFlag #noCmdLogLineTrunc True
 
-notifySystemSpecs :: TestTree
-notifySystemSpecs =
-  testGroup
-    "Notify system parsing"
-    [ parseNotifySystemDBus,
-      parseNotifySystemNotifySend,
-      parseNoNotifySystem
-    ]
-
-parseNotifySystemDBus :: TestTree
-parseNotifySystemDBus = testCase desc $ verifyResult argList expected
-  where
-    desc = "Should parse --notify-system dbus"
-    argList = ["--notify-system", "dbus", "command"]
-    expected = updateDefArgs #notifySystem (DBus ())
-
-parseNotifySystemNotifySend :: TestTree
-parseNotifySystemNotifySend = testCase desc $ verifyResult argList expected
-  where
-    desc = "Should parse --notify-system notify-send"
-    argList = ["--notify-system", "notify-send", "command"]
-    expected = updateDefArgs #notifySystem NotifySend
-
-parseNoNotifySystem :: TestTree
-parseNoNotifySystem =
-  testCase "Parse --no-notify-system" $
-    verifyResult argList expected
-  where
-    argList = ["--no-notify-system", "command"]
-    expected = updateDefArgsFlag #noNotifySystem True
-
 notifyActionSpecs :: TestTree
 notifyActionSpecs =
   testGroup
@@ -713,6 +682,45 @@ parseNoNotifyAction =
   where
     argList = ["--no-notify-action", "command"]
     expected = updateDefArgsFlag #noNotifyAction True
+
+notifySystemSpecs :: TestTree
+notifySystemSpecs =
+  testGroup
+    "Notify system parsing"
+    [ parseNotifySystemDBus,
+      parseNotifySystemNotifySend,
+      parseNoNotifySystem,
+      parseNotifySystemAppleScript
+    ]
+
+parseNotifySystemDBus :: TestTree
+parseNotifySystemDBus = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-system dbus"
+    argList = ["--notify-system", "dbus", "command"]
+    expected = updateDefArgs #notifySystem (DBus ())
+
+parseNotifySystemNotifySend :: TestTree
+parseNotifySystemNotifySend = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-system notify-send"
+    argList = ["--notify-system", "notify-send", "command"]
+    expected = updateDefArgs #notifySystem NotifySend
+
+parseNotifySystemAppleScript :: TestTree
+parseNotifySystemAppleScript = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-system apple-script"
+    argList = ["--notify-system", "apple-script", "command"]
+    expected = updateDefArgs #notifySystem AppleScript
+
+parseNoNotifySystem :: TestTree
+parseNoNotifySystem =
+  testCase "Parse --no-notify-system" $
+    verifyResult argList expected
+  where
+    argList = ["--no-notify-system", "command"]
+    expected = updateDefArgsFlag #noNotifySystem True
 
 notifyTimeoutSpecs :: TestTree
 notifyTimeoutSpecs =

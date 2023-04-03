@@ -127,7 +127,6 @@ line-trunc = 150
 #size-mode = "warn 1 g"
 
 # If enabled, sends off notifications when commands/shrun complete.
-# Linux only, requires either DBus or notify-send.
 [notify]
 # Mandatory, turns on notifications.
 #
@@ -137,7 +136,8 @@ line-trunc = 150
 # "final"
 action = "command"
 
-# Must be one of "dbus" or "notify-send". Defaults to "dbus".
+# For linux, must be one of "dbus" or "notify-send". Defaults to "dbus".
+# OSX must be "apple-script" or unspecified.
 system = "notify-send"
 
 # Sets the timeout for non-error notifications. Defaults to 10

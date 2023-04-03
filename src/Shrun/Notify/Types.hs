@@ -90,6 +90,8 @@ data NotifySystem p
     DBus !(DBusF p)
   | -- | Uses notify-send.
     NotifySend
+  | -- | Uses apple-script.
+    AppleScript
 
 deriving stock instance Eq (NotifySystem Phase1)
 
@@ -101,6 +103,7 @@ instance DecodeTOML (NotifySystem Phase1) where
 instance AdvancePhase (NotifySystem Phase1) where
   type NextPhase (NotifySystem Phase1) = Either (NotifySystem Phase2) (Client -> NotifySystem Phase2)
   advancePhase NotifySend = Left NotifySend
+  advancePhase AppleScript = Left AppleScript
   advancePhase (DBus _) = Right DBus
 
 -- NOTE: It would be nice if we could guarantee that the above is "doing the
@@ -125,6 +128,7 @@ instance AdvancePhase (NotifySystem Phase1) where
 parseNotifySystem :: (MonadFail m) => Text -> m (NotifySystem Phase1)
 parseNotifySystem "dbus" = pure $ DBus ()
 parseNotifySystem "notify-send" = pure NotifySend
+parseNotifySystem "apple-script" = pure AppleScript
 parseNotifySystem other =
   fail $
     mconcat
@@ -136,7 +140,7 @@ parseNotifySystem other =
 
 -- | Available 'NotifySystem' strings.
 notifySystemStr :: (IsString a) => a
-notifySystemStr = "(dbus|notify-send)"
+notifySystemStr = "(dbus|notify-send|apple-script)"
 
 -- | Determines notification timeout.
 data NotifyTimeout

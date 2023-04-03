@@ -17,3 +17,8 @@ strip-control = "all"
 [file-log]
 path = "default"
 mode = "append"
+
+[notify]
+system = "apple-script"
+action = "command"
+timeout = "never"

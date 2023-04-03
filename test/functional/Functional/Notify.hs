@@ -1,6 +1,3 @@
-{-# LANGUAGE CPP #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-
 -- | Functional tests for notifications
 module Functional.Notify (specs) where
 
@@ -13,11 +10,8 @@ specs :: TestTree
 specs = testGroup "Notify" notifyTests
 
 notifyTests :: [TestTree]
-#if OSX
-notifyTests = []
-#else
 notifyTests =
-  [ notifySystemNotifySend,
+  [ notifySystem,
     notifyActionCommand,
     notifyTimeout5
   ]
@@ -30,8 +24,8 @@ notifyTests =
 --
 -- are part of the Readme module
 
-notifySystemNotifySend :: TestTree
-notifySystemNotifySend = testCase "Runs --notify-system notify-send" $ do
+notifySystem :: TestTree
+notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
   results <- readIORef =<< runNotes args
   expected @=? results
   where
@@ -40,7 +34,7 @@ notifySystemNotifySend = testCase "Runs --notify-system notify-send" $ do
         [ "--notify-action",
           "command",
           "--notify-system",
-          "notify-send",
+          notifySystemArg,
           "sleep 2",
           "sleep 3"
         ]
@@ -75,7 +69,7 @@ notifyActionCommand = testCase "Runs --notify-action command" $ do
         [ "--notify-action",
           "command",
           "--notify-system",
-          "notify-send",
+          notifySystemArg,
           "sleep 2",
           "sleep 3"
         ]
@@ -110,7 +104,7 @@ notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
         [ "--notify-action",
           "command",
           "--notify-system",
-          "notify-send",
+          notifySystemArg,
           "--notify-timeout",
           "5",
           "sleep 2",
@@ -136,4 +130,3 @@ notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
             timeout = NotifyTimeoutSeconds 5
           }
       ]
-#endif

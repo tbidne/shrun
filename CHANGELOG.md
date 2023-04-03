@@ -12,7 +12,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 ## [Unreleased]
 ### Added
-* Added linux feature for sending notifications upon command/shrun completion.
+* Added feature for sending notifications upon command/shrun completion.
   The new CLI options (`toml`) are:
   * `--notify-action (notify.action)`
   * `--notify-system (notify.system)`

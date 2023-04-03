@@ -80,15 +80,13 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
           cmdLogLineTrunc = Just 150,
           fileLog = True,
           fileLogStripControl = Just StripControlNone,
+          notifyAction = Just NotifyCommand,
 #if OSX
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
+          notifySystem = Just AppleScript,
 #else
           notifySystem = Just (DBus ()),
-          notifyAction = Just NotifyCommand,
-          notifyTimeout = Just NotifyTimeoutNever,
 #endif
+          notifyTimeout = Just NotifyTimeoutNever,
           commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
@@ -127,11 +125,11 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
 #if !OSX
         "--notify-system",
         "notify-send",
+#endif
         "--notify-action",
         "final",
         "--notify-timeout",
         "10",
-#endif
         "cmd"
       ]
     expected =
@@ -146,15 +144,13 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
           cmdLogLineTrunc = Just 60,
           fileLog = True,
           fileLogStripControl = Just StripControlNone,
-#if OSX
-          notifyAction = Nothing,
-          notifySystem = Nothing,
-          notifyTimeout = Nothing,
-#else
           notifyAction = Just NotifyFinal,
+#if OSX
+          notifySystem = Just AppleScript,
+#else
           notifySystem = Just NotifySend,
-          notifyTimeout = Just (NotifyTimeoutSeconds 10),
 #endif
+          notifyTimeout = Just (NotifyTimeoutSeconds 10),
           commands = "cmd" :<|| []
         }
 
@@ -191,15 +187,13 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           cmdLog = True,
           fileLog = True,
           fileLogStripControl = Just StripControlAll,
-#if OSX
-          notifyAction = Nothing,
-          notifySystem = Nothing,
-          notifyTimeout = Nothing,
-#else
           notifyAction = Just NotifyCommand,
+#if OSX
+          notifySystem = Just AppleScript,
+#else
           notifySystem = Just (DBus ()),
-          notifyTimeout = Just NotifyTimeoutNever,
 #endif
+          notifyTimeout = Just NotifyTimeoutNever,
           commands = "cmd" :<|| []
         }
 

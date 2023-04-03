@@ -183,6 +183,7 @@ simplifyEnv = to $ \env ->
       Nothing -> Nothing
       Just NotifySend -> Just NotifySend
       Just (DBus _) -> Just (DBus ())
+      Just AppleScript -> Just AppleScript
 
 -- | Makes an 'Env' for the given monad and compares the result with the
 -- expected params.

@@ -405,7 +405,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 ## Notifications
 
-These options configure `shrun` to send off desktop notifications for certain actions i.e. a command finishes or shrun itself finishes. This feature is available only for linux.
+These options configure `shrun` to send off desktop notifications for certain actions i.e. a command finishes or shrun itself finishes.
 
 ### Notify Action
 
@@ -421,9 +421,9 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify System
 
-**Arg:** `--notify-system (dbus|notify-send)`
+**Arg:** `--notify-system (dbus|notify-send|apple-script)`
 
-**Description:** The system used for sending notifications. See [`--notify-action`](#notify-action).
+**Description:** The system used for sending notifications. `dbus` and `notify-send` available on linux, whereas `apple-script` is available for osx.
 
 **Example:**
 

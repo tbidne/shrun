@@ -46,15 +46,13 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
           cmdLogStripControl = Just StripControlSmart,
           fileLog = False,
           fileLogStripControl = Nothing,
+          notifyAction = Just NotifyCommand,
 #if OSX
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
+          notifySystem = Just AppleScript,
 #else
           notifySystem = Just NotifySend,
-          notifyAction = Just NotifyCommand,
-          notifyTimeout = Just NotifyTimeoutNever,
 #endif
+          notifyTimeout = Just NotifyTimeoutNever,
           commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
         }
 

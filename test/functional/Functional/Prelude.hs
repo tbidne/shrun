@@ -31,6 +31,7 @@ module Functional.Prelude
     -- * Misc
     withBaseArgs,
     withNoConfig,
+    notifySystemArg,
   )
 where
 
@@ -238,4 +239,11 @@ configPath :: String
 configPath = "examples" </> "config_osx.toml"
 #else
 configPath = "examples" </> "config.toml"
+#endif
+
+notifySystemArg :: String
+#if OSX
+notifySystemArg = "apple-script"
+#else
+notifySystemArg = "notify-send"
 #endif

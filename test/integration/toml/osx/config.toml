@@ -29,3 +29,8 @@ strip-control = "all"
 path = "default"
 mode = "append"
 strip-control = "none"
+
+[notify]
+system = "apple-script"
+action = "command"
+timeout = "never"

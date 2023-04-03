@@ -48,6 +48,7 @@ import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (FileLog, LogRegion)
+import Shrun.Notify.MonadAppleScript (MonadAppleScript)
 import Shrun.Notify.MonadDBus (MonadDBus (..))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend (..))
 import Shrun.Prelude
@@ -56,6 +57,7 @@ import Shrun.ShellT (ShellT)
 -- | 'withEnv' with 'shrun'.
 makeEnvAndShrun ::
   ( HasLogging Env (Region (ShellT Env m)),
+    MonadAppleScript m,
     MonadAsync m,
     MonadDBus m,
     MonadFileReader m,

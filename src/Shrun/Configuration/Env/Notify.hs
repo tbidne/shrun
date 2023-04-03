@@ -26,8 +26,6 @@ import Shrun.Prelude
 --
 -- 1. NotifyToml is completely unspecified (i.e. Nothing)
 -- 2. NotifyNone is specified
---
--- On OSX, throws an exception for anything but @tomlToNotifyEnv Nothing@.
 tomlToNotifyEnv ::
   ( HasCallStack,
     MonadDBus m,
@@ -38,18 +36,24 @@ tomlToNotifyEnv ::
 tomlToNotifyEnv Nothing = pure Nothing
 tomlToNotifyEnv (Just (MkNotifyToml NotifyNone _ _)) = pure Nothing
 #if OSX
-tomlToNotifyEnv _ = throwString "Notifications are only available on linux!"
+tomlToNotifyEnv (Just (MkNotifyToml _ (Just (DBus _)) _)) = throwString "DBus is only available on linux!"
+tomlToNotifyEnv (Just (MkNotifyToml _ (Just NotifySend) _)) = throwString "NotifySend is only available on linux!"
 #else
+tomlToNotifyEnv (Just (MkNotifyToml _ (Just AppleScript) _)) = throwString "AppleScript is only available on osx!"
+#endif
 tomlToNotifyEnv (Just notifyToml) =
   case advancePhase systemP1 of
     Left sys -> pure $ Just $ mkNotify sys
     Right mkDBus -> Just . mkNotify . mkDBus <$> connectSession
   where
+#if OSX
+    systemP1 = fromMaybe AppleScript (notifyToml ^. #system)
+#else
     systemP1 = fromMaybe (DBus ()) (notifyToml ^. #system)
-    mkNotify systemP2 =
-        MkNotifyEnv
-          { system = systemP2,
-            action = notifyToml ^. #action,
-            timeout = fromMaybe (NotifyTimeoutSeconds 10) (notifyToml ^. #timeout)
-          }
 #endif
+    mkNotify systemP2 =
+      MkNotifyEnv
+        { system = systemP2,
+          action = notifyToml ^. #action,
+          timeout = fromMaybe (NotifyTimeoutSeconds 10) (notifyToml ^. #timeout)
+        }

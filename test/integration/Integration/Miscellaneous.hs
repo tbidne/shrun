@@ -118,15 +118,13 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
           cmdLogLineTrunc = Just 150,
           fileLog = True,
           fileLogStripControl = Just StripControlNone,
+          notifyAction = Just NotifyCommand,
 #if OSX
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
+          notifySystem = Just AppleScript,
 #else
           notifySystem = Just (DBus ()),
-          notifyAction = Just NotifyCommand,
-          notifyTimeout = Just NotifyTimeoutNever,
 #endif
+          notifyTimeout = Just NotifyTimeoutNever,
           commands =
             MkCommand (Just "m1") "m1val"
               :<|| [ "m2",

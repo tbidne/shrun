@@ -1,7 +1,3 @@
-{-# LANGUAGE CPP #-}
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-
 -- | Module for sending notifications.
 module Shrun.Notify
   ( sendNotif,
@@ -17,9 +13,6 @@ import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.Logging.Types (Log (..), LogLevel (..), LogMode (..))
 import Shrun.Notify.MonadNotify (MonadNotify (..), ShrunNote (..))
 import Shrun.Prelude
-
--- NOTE: This module exists partially so we can isolate unused warnings
--- (i.e. non-linux).
 
 -- | Sends a notification if they are enabled (linux only). Logs any failed
 -- sends.
@@ -40,18 +33,15 @@ sendNotif ::
   -- | Notif urgency
   UrgencyLevel ->
   m ()
-#if OSX
-sendNotif _ _ _ = pure ()
-#else
 sendNotif summary body urgency = do
   cfg <- asks getNotifyConfig
   traverse_ notifyWithErrorLogging (cfg ^? (_Just % #timeout))
   where
     notifyWithErrorLogging timeout =
       notify (mkNote timeout)
-      `catch` \((MkExceptionCS someEx _) :: ExceptionCS SomeException) ->
-        withRegion Linear (logEx someEx)
-          `catchAny` \ex -> withRegion Linear (logEx ex)
+        `catch` \((MkExceptionCS someEx _) :: ExceptionCS SomeException) ->
+          withRegion Linear (logEx someEx)
+            `catchAny` \ex -> withRegion Linear (logEx ex)
 
     logEx ex r =
       Logging.putRegionLog r $
@@ -68,4 +58,3 @@ sendNotif summary body urgency = do
           urgency,
           timeout
         }
-#endif

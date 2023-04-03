@@ -21,7 +21,7 @@ specs =
         cyclicKeys,
         emptyFileLog
       ]
-        <> osxTests
+        <> osTests
     )
 
 missingConfig :: TestTree
@@ -113,14 +113,15 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
     expectedErr = "Decode error at '.file-log.path': Empty path given for --file-log"
 
 #if OSX
-osxTests :: [TestTree]
-osxTests =
+osTests :: [TestTree]
+osTests =
   [ osxNotifyConfigError,
-    osxNotifyArgError
+    osxDBusError,
+    osxNotifySendError
   ]
 
 osxNotifyConfigError :: TestTree
-osxNotifyConfigError = testCase "OSX with notify config throws exception" $ do
+osxNotifyConfigError = testCase "OSX with linux notify config throws exception" $ do
   logsRef <- newIORef []
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
@@ -131,18 +132,53 @@ osxNotifyConfigError = testCase "OSX with notify config throws exception" $ do
     Just _ -> pure ()
     Nothing -> assertFailure "Expected exception"
 
-osxNotifyArgError :: TestTree
-osxNotifyArgError = testCase "OSX with notify arg throws exception" $ do
+osxDBusError :: TestTree
+osxDBusError = testCase "OSX with dbus throws exception" $ do
   logsRef <- newIORef []
-  let args = ["--notify-action", "final" ,"cmd"]
+  let args = ["--notify-system", "dbus" ,"cmd"]
+  result <- runCaptureError @StringException args logsRef
+
+  case result of
+    Just _ -> pure ()
+    Nothing -> assertFailure "Expected exception"
+
+osxNotifySendError :: TestTree
+osxNotifySendError = testCase "OSX with notify-send throws exception" $ do
+  logsRef <- newIORef []
+  let args = ["--notify-system", "notify-send" ,"cmd"]
   result <- runCaptureError @StringException args logsRef
 
   case result of
     Just _ -> pure ()
     Nothing -> assertFailure "Expected exception"
 #else
-osxTests :: [TestTree]
-osxTests = []
+osTests :: [TestTree]
+osTests =
+  [ linuxNotifyConfigError,
+    linuxAppleScriptError
+  ]
+
+linuxNotifyConfigError :: TestTree
+linuxNotifyConfigError = testCase "Linux with osx notify config throws exception" $ do
+  logsRef <- newIORef []
+  -- Not getExampleConfigOS since we want to use the linux one w/ notify
+  -- configuration
+  let args = ["-c", getExampleConfig "config_osx", "cmd"]
+  result <- runCaptureError @StringException args logsRef
+
+  case result of
+    Just _ -> pure ()
+    Nothing -> assertFailure "Expected exception"
+
+linuxAppleScriptError :: TestTree
+linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
+  logsRef <- newIORef []
+  let args = ["--notify-system", "apple-script" ,"cmd"]
+  result <- runCaptureError @StringException args logsRef
+
+  case result of
+    Just _ -> pure ()
+    Nothing -> assertFailure "Expected exception"
 #endif
 
 runCaptureError :: (Exception e) => [String] -> IORef [Text] -> IO (Maybe e)

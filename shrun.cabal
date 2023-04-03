@@ -68,6 +68,7 @@ library
     Shrun.Logging.Types
     Shrun.Logging.Types.Internal
     Shrun.Notify
+    Shrun.Notify.MonadAppleScript
     Shrun.Notify.MonadDBus
     Shrun.Notify.MonadNotify
     Shrun.Notify.MonadNotifySend

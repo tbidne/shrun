@@ -746,7 +746,10 @@ notifySystemParser =
   where
     readNotifySystem = OA.str >>= Notify.parseNotifySystem
     helpTxt =
-      "The system used for sending notifications. See --notify-action."
+      mconcat
+        [ "The system used for sending notifications. 'dbus' and 'notify-send' ",
+          "available on linux, whereas 'apple-script' is available for osx."
+        ]
 
 noNotifySystemParser :: Parser Bool
 noNotifySystemParser =
