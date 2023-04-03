@@ -14,6 +14,11 @@ module Shrun.Notify.Types
     NotifySystemP2,
     DBusF,
 
+    -- ** Optics
+    _DBus,
+    _NotifySend,
+    _AppleScript,
+
     -- * Notify actions
     NotifyAction (..),
     parseNotifyAction,
@@ -92,6 +97,8 @@ data NotifySystem p
     NotifySend
   | -- | Uses apple-script.
     AppleScript
+
+makePrisms ''NotifySystem
 
 deriving stock instance Eq (NotifySystem Phase1)
 

@@ -18,8 +18,13 @@ import Shrun.Notify.Types
     NotifySystem (..),
     NotifySystemP1,
     NotifyTimeout (..),
+    _AppleScript,
+    _DBus,
+    _NotifySend,
   )
 import Shrun.Prelude
+
+{- ORMOLU_DISABLE -}
 
 -- | Transforms NotifyToml into NotifyEnv. Notifications are off if one of
 -- the following is true:
@@ -35,14 +40,14 @@ tomlToNotifyEnv ::
   m (Maybe NotifyEnv)
 tomlToNotifyEnv Nothing = pure Nothing
 tomlToNotifyEnv (Just (MkNotifyToml NotifyNone _ _)) = pure Nothing
+tomlToNotifyEnv (Just notifyToml)
 #if OSX
-tomlToNotifyEnv (Just (MkNotifyToml _ (Just (DBus _)) _)) = throwString "DBus is only available on linux!"
-tomlToNotifyEnv (Just (MkNotifyToml _ (Just NotifySend) _)) = throwString "NotifySend is only available on linux!"
+  | is (#system %? _DBus) notifyToml = throwString "DBus is only available on linux!"
+  | is (#system %? _NotifySend) notifyToml = throwString "NotifySend is only available on linux!"
 #else
-tomlToNotifyEnv (Just (MkNotifyToml _ (Just AppleScript) _)) = throwString "AppleScript is only available on osx!"
+  | is (#system %? _AppleScript) notifyToml = throwString "AppleScript is only available on osx!"
 #endif
-tomlToNotifyEnv (Just notifyToml) =
-  case advancePhase systemP1 of
+  | otherwise = case advancePhase systemP1 of
     Left sys -> pure $ Just $ mkNotify sys
     Right mkDBus -> Just . mkNotify . mkDBus <$> connectSession
   where
@@ -57,3 +62,5 @@ tomlToNotifyEnv (Just notifyToml) =
           action = notifyToml ^. #action,
           timeout = fromMaybe (NotifyTimeoutSeconds 10) (notifyToml ^. #timeout)
         }
+
+{- ORMOLU_ENABLE -}
