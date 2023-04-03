@@ -416,7 +416,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action final "sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action final "sleep 5"</span></code>
 </pre>
 
 ### Notify System
@@ -428,7 +428,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus "sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus "sleep 5"</span></code>
 </pre>
 
 ### Notify Timeout
@@ -440,7 +440,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-timeout never "sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-timeout never "sleep 5"</span></code>
 </pre>
 
 ## Miscellaneous
