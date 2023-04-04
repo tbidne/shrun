@@ -3,7 +3,6 @@
 -- | Tests for Shrun.Utils
 module Unit.Shrun.Utils (tests) where
 
-import Refined qualified as R
 import Shrun.Utils qualified as U
 import Unit.Generators qualified as PGens
 import Unit.Prelude
@@ -62,8 +61,8 @@ trailingKey =
   testCase "Trailing key should return (str, \"\")" $
     ("ab", "") @=? U.breakStripPoint point "ab="
 
-point :: Refined R.NonEmpty Text
-point = $$(R.refineTH @R.NonEmpty @Text "=")
+point :: Text
+point = "="
 
 stripAnsiControlSpecs :: TestTree
 stripAnsiControlSpecs =

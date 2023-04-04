@@ -5,7 +5,6 @@
 module Shrun.Utils
   ( -- * Text Utils
     breakStripPoint,
-    splitOn,
     truncateIfNeeded,
     stripControlAll,
     stripControlSmart,
@@ -32,7 +31,6 @@ import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.Time (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
-import Refined qualified as R
 import Shrun.Prelude
 
 -- $setup
@@ -42,7 +40,6 @@ import Shrun.Prelude
 -- >>> import Data.Semigroup (Sum (..))
 -- >>> import Data.Text qualified as T
 -- >>> import Effects.Time (TimeSpec (..))
--- >>> import Refined qualified as R
 -- >>> import Shrun.Prelude
 
 -- | For given \(x, y\), returns the absolute difference \(|x - y|\)
@@ -77,72 +74,37 @@ timeSpecToRelTime = fromSeconds . view #sec
 foldMap1 :: (Foldable f, Semigroup s) => (a -> s) -> a -> f a -> s
 foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
 
--- | Wrapper for 'Text'\'s 'T.breakOn' that differs in two ways:
+-- | Wrapper for 'Text'\'s 'T.breakOn' that differs in that:
 --
--- 1. Total, since we restrict the @needle@ to 'R.NonEmpty'
--- ('Text' throws a pure exception here).
--- 2. If the @needle@ is found within the @haystack@, we do not include it
+-- 1. If the @needle@ is found within the @haystack@, we do not include it
 -- in the second part of the pair.
 --
 -- ==== __Examples__
--- >>> let equals = $$(R.refineTH @R.NonEmpty @Text "=")
---
 -- >>> -- Data.Text
 -- >>> T.breakOn "=" "HEY=LISTEN"
 -- ("HEY","=LISTEN")
 --
 -- >>> -- Shrun.Utils.Text
--- >>> breakStripPoint equals "HEY=LISTEN"
+-- >>> breakStripPoint "=" "HEY=LISTEN"
 -- ("HEY","LISTEN")
 --
 -- Other examples:
 --
--- >>> breakStripPoint equals "HEYLISTEN"
+-- >>> breakStripPoint "=" "HEYLISTEN"
 -- ("HEYLISTEN","")
 --
--- >>> breakStripPoint equals "=HEYLISTEN"
+-- >>> breakStripPoint "=" "=HEYLISTEN"
 -- ("","HEYLISTEN")
 --
--- >>> breakStripPoint equals "HEYLISTEN="
+-- >>> breakStripPoint "=" "HEYLISTEN="
 -- ("HEYLISTEN","")
 --
--- >>> breakStripPoint equals "HEY==LISTEN"
+-- >>> breakStripPoint "=" "HEY==LISTEN"
 -- ("HEY","=LISTEN")
-breakStripPoint :: Refined R.NonEmpty Text -> Text -> Tuple2 Text Text
-breakStripPoint rpoint txt = case T.breakOn point txt of
+breakStripPoint :: Text -> Text -> Tuple2 Text Text
+breakStripPoint point txt = case T.breakOn point txt of
   (x, T.stripPrefix point -> Just y) -> (x, y)
   pair -> pair
-  where
-    point = R.unrefine rpoint
-
-{- HLINT ignore splitOn "Redundant bracket" -}
-
--- | Wrapper around "Text"\'s 'T.splitOn'. This /should/ be total, as
--- 'T.splitOn' is partial exactly when the first parameter is empty, which we
--- reject. Unfortunately we have to perform a partial pattern match on the
--- result since 'T.splitOn' returns a list, even though the result should
--- always be 'NESeq'. Hence 'HasCallStack'.
---
--- ==== __Examples__
--- >>> splitOn $$(R.refineTH ",,") "hey,,listen"
--- fromList ("hey" :| ["listen"])
---
--- >>> splitOn $$(R.refineTH ",,") "heylisten"
--- fromList ("heylisten" :| [])
---
--- >>> splitOn $$(R.refineTH ",") ""
--- fromList ("" :| [])
-splitOn :: (HasCallStack) => Refined R.NonEmpty Text -> Text -> NESeq Text
-splitOn rs txt = case T.splitOn s txt of
-  [] -> error $ T.unpack err
-  (t : ts) -> t :<|| fromList ts
-  where
-    err =
-      "[Shrun.Utils] Impossible: Text.splitOn returned empty list. Split: "
-        <> s
-        <> ", text: "
-        <> txt
-    s = R.unrefine rs
 
 -- | For 'Natural' \(n\) and 'Text' \(t = t_0 t_1 \ldots t_m\), truncates
 -- \(t\) if \(m > n\). In this case, \(t\) is truncated to \(n - 3\), and an

@@ -4,7 +4,6 @@
 -- | Tests for Shrun.Logging.Formatting.
 module Unit.Shrun.Logging.Formatting (tests) where
 
-import Data.Char qualified as Ch
 import Data.Functor.Identity (Identity (..))
 import Data.String (IsString)
 import Data.Text qualified as T
@@ -13,7 +12,6 @@ import Data.Time.LocalTime (utc)
 import Effects.Time (LocalTime (..), MonadTime (..), ZonedTime (..))
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
-import Refined qualified as R
 import Shrun.Configuration.Env.Types
   ( CmdLogging (..),
     FileLogging (..),
@@ -68,9 +66,6 @@ genLongCmdText :: Gen Text
 genLongCmdText = HGen.text range HGen.unicode
   where
     range = HRange.linearFrom (cmdTruncLimit + 1) (cmdTruncLimit + 1) 100
-
-genNoControl :: Gen Char
-genNoControl = HGen.filter (not . Ch.isControl) HGen.unicode
 
 lineTruncLimit :: (Integral a) => a
 lineTruncLimit = 80
@@ -250,10 +245,9 @@ colorLen = 10
 sysTime :: (IsString a) => a
 sysTime = "2020-05-31 12:00:00"
 
--- Refined variant of 'sysTime'. Includes brackets around the string
--- for use when checking formatting.
-sysTimeNE :: Refined R.NonEmpty Text
-sysTimeNE = $$(R.refineTH "[2020-05-31 12:00:00]")
+-- Bracketed sysTime
+sysTimeNE :: Text
+sysTimeNE = "[" <> sysTime <> "]"
 
 newtype MockEnv = MkMockEnv ()
 

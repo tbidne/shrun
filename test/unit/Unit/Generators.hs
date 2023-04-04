@@ -13,8 +13,6 @@ import Effects.Time (TimeSpec (..))
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Numeric.Algebra qualified as Alg
-import Refined qualified as R
-import Refined.Unsafe qualified as R
 import Unit.Prelude
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
@@ -44,8 +42,8 @@ genText = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 0 0 30
 
--- | Generates latin1 'NonEmptyText' with 1-30 characters.
-getNonEmptyText :: Gen (Refined R.NonEmpty Text)
-getNonEmptyText = R.unsafeRefine <$> Gen.text range Gen.latin1
+-- | Generates latin1 text with 1-30 characters.
+getNonEmptyText :: Gen Text
+getNonEmptyText = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 1 1 30

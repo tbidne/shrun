@@ -231,7 +231,6 @@ import Optics.TH as X
     makePrisms,
     noPrefixFieldLabels,
   )
-import Refined as X (Refined)
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
 import TOML as X
