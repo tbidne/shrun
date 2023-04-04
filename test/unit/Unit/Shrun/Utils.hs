@@ -1,5 +1,3 @@
-
-
 -- | Tests for Shrun.Utils
 module Unit.Shrun.Utils (tests) where
 
