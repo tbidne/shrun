@@ -130,7 +130,6 @@ line-trunc = 150
 [notify]
 # Mandatory, turns on notifications.
 #
-# "none" -> disabled; no notifications are sent
 # "final" -> sends off a notification when all commands finish
 # "command" -> sends off a notification when each command finishes. Implies
 # "final"
