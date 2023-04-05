@@ -17,8 +17,7 @@ import Data.List qualified as L
 import Data.String (IsString (..))
 import Data.Text qualified as T
 import Data.Time.Relative qualified as RelativeTime
-import Data.Version.Package qualified as PV
-import Development.GitRev qualified as GitRev
+import Data.Version (Version (versionBranch))
 import Options.Applicative
   ( ParseError (ErrorMsg),
     Parser,
@@ -30,6 +29,7 @@ import Options.Applicative.Help.Chunk (Chunk (..))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (..))
+import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
 import Shrun.Configuration.Env.Types
   ( KeyHide (..),
@@ -263,19 +263,10 @@ argsParser =
     <**> defaultConfig
 
 version :: Parser (a -> a)
-version = OA.infoOption txt (OA.long "version" <> OA.short 'v')
-  where
-    txt =
-      L.intercalate
-        "\n"
-        [ "Shrun",
-          versNum,
-          "Revision: " <> $(GitRev.gitHash),
-          "Date: " <> $(GitRev.gitCommitDate)
-        ]
+version = OA.infoOption versNum (OA.long "version" <> OA.short 'v')
 
 versNum :: String
-versNum = "Version: " <> $$(PV.packageVersionStringTH "shrun.cabal")
+versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
 
 defaultConfig :: Parser (a -> a)
 defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config" <> mkHelp help)
