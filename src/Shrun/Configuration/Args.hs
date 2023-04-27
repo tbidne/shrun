@@ -257,10 +257,10 @@ argsParser =
     <*> noNotifySystemParser
     <*> notifyTimeoutParser
     <*> noNotifyTimeoutParser
-    <*> commandsParser
-    <**> OA.helper
-    <**> version
     <**> defaultConfig
+    <**> version
+    <**> OA.helper
+    <*> commandsParser
 
 version :: Parser (a -> a)
 version = OA.infoOption versNum (OA.long "version" <> OA.short 'v')
@@ -301,6 +301,7 @@ noConfigParser =
     True
     ( mconcat
         [ OA.long "no-config",
+          OA.hidden,
           mkHelp helpTxt
         ]
     )
@@ -348,6 +349,7 @@ noTimeoutParser =
   OA.switch $
     mconcat
       [ OA.long "no-timeout",
+        OA.hidden,
         mkHelp "Disables --timeout."
       ]
 
@@ -409,6 +411,7 @@ noCmdLogLineTruncParser =
   OA.switch $
     mconcat
       [ OA.long "no-cmd-log-line-trunc",
+        OA.hidden,
         mkHelp "Disables --cmd-log-line-trunc."
       ]
 
@@ -465,6 +468,7 @@ noCmdLogStripControlParser =
   OA.switch $
     mconcat
       [ OA.long "no-cmd-log-strip-control",
+        OA.hidden,
         mkHelp "Disables --cmd-log-strip-control."
       ]
 
@@ -496,6 +500,7 @@ noFileLogParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log",
+        OA.hidden,
         mkHelp "Disables --file-log."
       ]
 
@@ -526,6 +531,7 @@ noFileLogModeParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log-mode",
+        OA.hidden,
         mkHelp "Disables --file-log-mode."
       ]
 
@@ -562,6 +568,7 @@ noFileLogStripControlParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log-strip-control",
+        OA.hidden,
         mkHelp "Disables --file-log-strip-control."
       ]
 
@@ -591,6 +598,7 @@ noFileLogSizeModeParser =
   OA.switch $
     mconcat
       [ OA.long "no-file-log-size-mode",
+        OA.hidden,
         mkHelp "Disables --file-log-size-mode."
       ]
 
@@ -619,6 +627,7 @@ noCmdLogParser =
   OA.switch $
     mconcat
       [ OA.long "no-cmd-log",
+        OA.hidden,
         mkHelp "Disables --cmd-log."
       ]
 
@@ -647,6 +656,7 @@ noKeyHideParser =
   OA.switch $
     mconcat
       [ OA.long "no-key-hide",
+        OA.hidden,
         mkHelp "Disables --key-hide."
       ]
 
@@ -696,6 +706,7 @@ noPollIntervalParser =
   OA.switch $
     mconcat
       [ OA.long "no-poll-interval",
+        OA.hidden,
         mkHelp "Disables --poll-interval."
       ]
 
@@ -722,6 +733,7 @@ noInitParser =
   OA.switch $
     mconcat
       [ OA.long "no-init",
+        OA.hidden,
         mkHelp "Disables --init."
       ]
 
@@ -747,6 +759,7 @@ noNotifySystemParser =
   OA.switch $
     mconcat
       [ OA.long "no-notify-system",
+        OA.hidden,
         mkHelp "Disables --notify-system."
       ]
 
@@ -773,6 +786,7 @@ noNotifyActionParser =
   OA.switch $
     mconcat
       [ OA.long "no-notify-action",
+        OA.hidden,
         mkHelp "Disables --notify-action."
       ]
 
@@ -794,6 +808,7 @@ noNotifyTimeoutParser =
   OA.switch $
     mconcat
       [ OA.long "no-notify-timeout",
+        OA.hidden,
         mkHelp "Disables --notify-timeout."
       ]
 
