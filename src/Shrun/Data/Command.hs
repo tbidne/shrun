@@ -46,9 +46,11 @@ type CommandP2 = Command Phase2
 instance AdvancePhase (Command Phase1) where
   type NextPhase (Command Phase1) = (Maybe Text -> Command Phase2)
 
-  advancePhase (MkCommand k cmd) Nothing = MkCommand k cmd
-  advancePhase (MkCommand k cmd) (Just init) =
-    MkCommand k (init <> " && " <> cmd)
+  advancePhase cmd minit = over' #command f cmd
+    where
+      f = case minit of
+        Nothing -> id
+        Just init -> \c -> init <> " && " <> c
 
 -- | Transforms a command into its text to be executed by the shell.
 commandToShell :: Command Phase2 -> String
