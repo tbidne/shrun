@@ -121,6 +121,29 @@
         "type": "github"
       }
     },
+    "nix-hs-utils": {
+      "inputs": {
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1684036735,
+        "narHash": "sha256-vlzArNfrRRdXdtP1PBWzy9aIaT7kQ7EjSnzsdBfYsT8=",
+        "owner": "tbidne",
+        "repo": "nix-hs-utils",
+        "rev": "119ac7d1e462d6de3e4a57be164d7271dba38463",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "nix-hs-utils",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1676885936,
@@ -194,6 +217,7 @@
         "flake-compat": "flake-compat",
         "flake-parts": "flake-parts",
         "monad-effects": "monad-effects",
+        "nix-hs-utils": "nix-hs-utils",
         "nixpkgs": "nixpkgs",
         "relative-time": "relative-time",
         "si-bytes": "si-bytes",
