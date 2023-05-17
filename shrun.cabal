@@ -243,9 +243,12 @@ benchmark benchmarks
   import:           common-lang
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
+  other-modules:    Bench.Prelude
   build-depends:
     , base
     , deepseq      ^>=1.4.4.0
+    , effects-fs
+    , env-guard
     , shrun
     , tasty-bench  ^>=0.3
 

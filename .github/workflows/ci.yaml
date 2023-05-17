@@ -48,6 +48,25 @@ jobs:
 
       - name: Functional Tests
         run: cabal test functional
+
+      - name: Benchmarks
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        id: bench
+        run: |
+          cabal bench --benchmark-options '
+            --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+            --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+            --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+            --fail-if-slower 50
+            --fail-if-faster 50'
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() && steps.bench.conclusion == 'failure' }}
+        with:
+          name: build-artifacts
+          path: |
+            benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+            benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
   nix:
     strategy:
       fail-fast: false
