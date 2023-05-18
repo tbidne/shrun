@@ -40,7 +40,7 @@ import Shrun.Logging.Types
   )
 import Shrun.Notify qualified as Notify
 import Shrun.Notify.MonadNotify (MonadNotify (..))
-import Shrun.Notify.Types (_NotifyCommand, _NotifyNone)
+import Shrun.Notify.Types (_NotifyCommand)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
@@ -205,7 +205,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
   -- Sent off notif unless NotifyNone is set
   cfg <- asks getNotifyConfig
-  unless (is (_Just % #action % _NotifyNone) cfg) $
+  when (is _Just cfg) $
     Notify.sendNotif "Shrun Finished" (T.pack totalTimeTxt) urgency
 
   Logging.putRegionLog r finalLog

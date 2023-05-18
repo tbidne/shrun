@@ -25,7 +25,6 @@ module Shrun.Notify.Types
     notifyActionStr,
 
     -- ** Optics
-    _NotifyNone,
     _NotifyFinal,
     _NotifyCommand,
 
@@ -48,9 +47,7 @@ import Text.Read qualified as TR
 
 -- | Determines for which actions we should send notifications.
 data NotifyAction
-  = -- | Do not send any notifications.
-    NotifyNone
-  | -- | Send a notification after all commands are completed.
+  = -- | Send a notification after all commands are completed.
     NotifyFinal
   | -- | Send notifications when each command completes. Implies
     -- 'NotifyFinal'.

@@ -39,7 +39,6 @@ tomlToNotifyEnv ::
   Maybe NotifyToml ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnv Nothing = pure Nothing
-tomlToNotifyEnv (Just (MkNotifyToml NotifyNone _ _)) = pure Nothing
 tomlToNotifyEnv (Just notifyToml)
 #if OSX
   | is (#system %? _DBus) notifyToml = throwString "DBus is only available on linux!"
