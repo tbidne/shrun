@@ -4,6 +4,7 @@
 module Integration.Failures (specs) where
 
 import Control.Exception (IOException)
+import Data.Text qualified as T
 import Effects.Exception (StringException)
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
@@ -129,7 +130,7 @@ osxNotifyConfigError = testCase "OSX with linux notify config throws exception" 
   result <- runCaptureError @StringException args logsRef
 
   case result of
-    Just _ -> pure ()
+    Just ex -> exContains "NotifySend is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
 
 osxDBusError :: TestTree
@@ -139,7 +140,7 @@ osxDBusError = testCase "OSX with dbus throws exception" $ do
   result <- runCaptureError @StringException args logsRef
 
   case result of
-    Just _ -> pure ()
+    Just ex -> exContains "DBus is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
 
 osxNotifySendError :: TestTree
@@ -149,7 +150,7 @@ osxNotifySendError = testCase "OSX with notify-send throws exception" $ do
   result <- runCaptureError @StringException args logsRef
 
   case result of
-    Just _ -> pure ()
+    Just ex -> exContains "NotifySend is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
 #else
 osTests :: [TestTree]
@@ -167,7 +168,7 @@ linuxNotifyConfigError = testCase "Linux with osx notify config throws exception
   result <- runCaptureError @StringException args logsRef
 
   case result of
-    Just _ -> pure ()
+    Just ex -> exContains "AppleScript is only available on osx!" ex
     Nothing -> assertFailure "Expected exception"
 
 linuxAppleScriptError :: TestTree
@@ -177,7 +178,7 @@ linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
   result <- runCaptureError @StringException args logsRef
 
   case result of
-    Just _ -> pure ()
+    Just ex -> exContains "AppleScript is only available on osx!" ex
     Nothing -> assertFailure "Expected exception"
 #endif
 
@@ -186,3 +187,16 @@ runCaptureError args logsRef =
   flip runConfigIO logsRef $
     withArgs args (withEnv pure $> Nothing)
       `catchCS` \(ex :: e) -> pure (Just ex)
+
+exContains :: (Exception e) => Text -> e -> Assertion
+exContains txt ex = assertBool (T.unpack desc) . T.isInfixOf txt $ exTxt
+  where
+    desc =
+      mconcat
+        [ "Expected infix '",
+          txt,
+          "', received exception: '",
+          exTxt,
+          "'"
+        ]
+    exTxt = T.pack . displayException $ ex

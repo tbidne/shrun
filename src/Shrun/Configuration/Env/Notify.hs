@@ -17,14 +17,13 @@ import Shrun.Notify.Types
   ( NotifyAction (..),
     NotifySystem (..),
     NotifySystemP1,
+    NotifySystemP2,
     NotifyTimeout (..),
     _AppleScript,
     _DBus,
     _NotifySend,
   )
 import Shrun.Prelude
-
-{- ORMOLU_DISABLE -}
 
 -- | Transforms NotifyToml into NotifyEnv. Notifications are off if one of
 -- the following is true:
@@ -39,27 +38,49 @@ tomlToNotifyEnv ::
   Maybe NotifyToml ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnv Nothing = pure Nothing
-tomlToNotifyEnv (Just notifyToml)
+tomlToNotifyEnv (Just notifyToml) = tomlToNotifyEnvOS notifyToml
+
 #if OSX
+
+tomlToNotifyEnvOS ::
+  ( HasCallStack,
+    MonadDBus m,
+    MonadThrow m
+  ) =>
+  NotifyToml ->
+  m (Maybe NotifyEnv)
+tomlToNotifyEnvOS (notifyToml)
   | is (#system %? _DBus) notifyToml = throwString "DBus is only available on linux!"
   | is (#system %? _NotifySend) notifyToml = throwString "NotifySend is only available on linux!"
-#else
-  | is (#system %? _AppleScript) notifyToml = throwString "AppleScript is only available on osx!"
-#endif
   | otherwise = case advancePhase systemP1 of
-    Left sys -> pure $ Just $ mkNotify sys
-    Right mkDBus -> Just . mkNotify . mkDBus <$> connectSession
-  where
-#if OSX
-    systemP1 = fromMaybe AppleScript (notifyToml ^. #system)
-#else
-    systemP1 = fromMaybe (DBus ()) (notifyToml ^. #system)
-#endif
-    mkNotify systemP2 =
-      MkNotifyEnv
-        { system = systemP2,
-          action = notifyToml ^. #action,
-          timeout = fromMaybe (NotifyTimeoutSeconds 10) (notifyToml ^. #timeout)
-        }
+    Left sys -> pure $ Just $ mkNotify notifyToml sys
+    Right mkDBus -> Just . mkNotify notifyToml . mkDBus <$> connectSession
+    where
+      systemP1 = fromMaybe AppleScript (notifyToml ^. #system)
 
-{- ORMOLU_ENABLE -}
+#else
+
+tomlToNotifyEnvOS ::
+  ( HasCallStack,
+    MonadDBus m,
+    MonadThrow m
+  ) =>
+  NotifyToml ->
+  m (Maybe NotifyEnv)
+tomlToNotifyEnvOS notifyToml
+  | is (#system %? _AppleScript) notifyToml = throwString "AppleScript is only available on osx!"
+  | otherwise = case advancePhase systemP1 of
+    Left sys -> pure $ Just $ mkNotify notifyToml sys
+    Right mkDBus -> Just . mkNotify notifyToml . mkDBus <$> connectSession
+    where
+      systemP1 = fromMaybe (DBus ()) (notifyToml ^. #system)
+
+#endif
+
+mkNotify :: NotifyToml -> NotifySystemP2 -> NotifyEnv
+mkNotify notifyToml systemP2 =
+  MkNotifyEnv
+    { system = systemP2,
+      action = notifyToml ^. #action,
+      timeout = fromMaybe (NotifyTimeoutSeconds 10) (notifyToml ^. #timeout)
+    }
