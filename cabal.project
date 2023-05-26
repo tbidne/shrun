@@ -16,10 +16,12 @@ package shrun
 optimization: 2
 test-show-details: direct
 
+constraints: effects-fs -os_path
+
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: 63f86638145baa32fdd21d87344701b9c8c93c23
+    tag: a35d97449749cb1b52186ab5e962c1e85aaaccfd
 
 source-repository-package
     type: git
@@ -29,7 +31,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 9df7564a3eeeaf8270bcab5c15982e96395872f2
+    tag: 9bc579b32f7f00ab8fd1db6d78a6a646b0c87f84
     subdir:
       effects-async
       effects-exceptions
@@ -46,14 +48,14 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/relative-time.git
-    tag: 6513dcf83f323c1f61dfc3edaaf77393d525320c
+    tag: e5dee0d0b6a4fceeeb0087a8c23fc5fbc9130c72
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/si-bytes.git
-    tag: 7bf9c2d125fe80a42996715063204f87f57dc8fa
+    tag: ab74fed9eb69d85c59fa070188baea8001b48b9d
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: 3deb61a9862dc56b56fb6d7ce3fef93faa24d278
+    tag: 366b6e8587bd5e98a9c1ac82fac5b7db69547f22

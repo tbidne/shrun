@@ -8,7 +8,6 @@ import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
-import Numeric.Algebra (zero)
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
@@ -75,7 +74,7 @@ logFileDelete testArgs =
           getFileSize logPath
 
     size <- run `finally` removeFileIfExists logPath
-    zero @=? size
+    0 @=? size
 
     logs <- IORef.readIORef logsRef
     [warning logPath] @=? logs

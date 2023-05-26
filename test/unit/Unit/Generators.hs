@@ -12,7 +12,6 @@ where
 import Effects.Time (TimeSpec (..))
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import Numeric.Algebra qualified as Alg
 import Unit.Prelude
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
@@ -20,8 +19,8 @@ genNonNegative :: Gen Natural
 genNonNegative = Gen.integral (Range.constant 0 1_000_000)
 
 -- | Generates 'Positive' in [1, 1_000_000].
-genPositive :: Gen (NonZero Natural)
-genPositive = Alg.unsafeAMonoidNonZero <$> Gen.integral (Range.constant 1 1_000_000)
+genPositive :: Gen Natural
+genPositive = Gen.integral (Range.constant 1 1_000_000)
 
 -- | Generates 'TimeSpec' where 'sec' and 'nsec' are random 'Int64'.
 genTimeSpec :: Gen TimeSpec

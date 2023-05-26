@@ -186,7 +186,6 @@ import GHC.Num as X (Num (..))
 import GHC.Real as X (Integral (..), fromIntegral, truncate)
 import GHC.Show as X (Show (..))
 import GHC.Stack as X (HasCallStack)
-import Numeric.Algebra as X (NonZero (..))
 import Optics.Core as X
   ( A_Getter,
     AffineTraversal',

@@ -19,6 +19,7 @@
       url = "github:tbidne/algebra-simple";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     bounds = {
@@ -31,6 +32,7 @@
       url = "github:tbidne/monad-effects";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
 
       inputs.algebra-simple.follows = "algebra-simple";
@@ -41,6 +43,7 @@
       url = "github:tbidne/relative-time";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
 
       inputs.algebra-simple.follows = "algebra-simple";
@@ -50,6 +53,7 @@
       url = "github:tbidne/si-bytes";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
 
       inputs.algebra-simple.follows = "algebra-simple";
@@ -59,6 +63,7 @@
       url = "github:tbidne/smart-math";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
 
       inputs.algebra-simple.follows = "algebra-simple";
