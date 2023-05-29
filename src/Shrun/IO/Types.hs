@@ -1,7 +1,7 @@
 -- | Provides types for typical "IO" processes.
 module Shrun.IO.Types
-  ( Stdout (..),
-    Stderr (..),
+  ( Stderr (..),
+    CommandResult (..),
     ReadHandleResult (..),
     readHandleResultToStderr,
     readHandle,
@@ -9,6 +9,7 @@ module Shrun.IO.Types
 where
 
 import Data.Text qualified as T
+import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.HandleReader
   ( MonadHandleReader (hIsClosed),
     hGetNonBlocking,
@@ -16,15 +17,15 @@ import Effects.FileSystem.HandleReader
   )
 import Shrun.Prelude
 
--- | Newtype wrapper for stdout.
-newtype Stdout = MkStdout
-  { getStdout :: Text
-  }
-
 -- | Newtype wrapper for stderr.
-newtype Stderr = MkStderr
-  { getStderr :: Text
-  }
+newtype Stderr = MkStderr {getStderr :: Text}
+  deriving stock (Eq, Show)
+
+-- | Result of running a command.
+data CommandResult
+  = CommandSuccess !RelativeTime
+  | CommandFailure !RelativeTime !Stderr
+  deriving stock (Eq, Show)
 
 -- | Result from reading a handle. The ordering is based on:
 --
@@ -36,9 +37,9 @@ newtype Stderr = MkStderr
 -- element. For identical constructors, the left argument is taken.
 data ReadHandleResult
   = -- | Error encountered while trying to read a handle.
-    ReadErr Text
+    ReadErr !Text
   | -- | Successfully read data from the handle.
-    ReadSuccess [Text]
+    ReadSuccess ![Text]
   | -- | Successfully read no data from the handle.
     ReadNoData
   deriving stock (Eq, Show)
@@ -49,9 +50,6 @@ instance Semigroup ReadHandleResult where
   ReadSuccess l <> _ = ReadSuccess l
   _ <> ReadSuccess r = ReadSuccess r
   _ <> _ = ReadNoData
-
-instance Monoid ReadHandleResult where
-  mempty = ReadNoData
 
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
 readHandleResultToStderr :: ReadHandleResult -> Stderr

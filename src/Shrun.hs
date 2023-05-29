@@ -28,6 +28,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout (..))
 import Shrun.IO (Stderr (..), tryCommandLogging)
+import Shrun.IO.Types (CommandResult (..))
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as LogFmt
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
@@ -132,8 +133,8 @@ runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
 
   let (urgency, msg', lvl, timeElapsed) = case cmdResult of
-        Left (t, MkStderr err) -> (Critical, ": " <> err, LevelError, t)
-        Right t -> (Normal, "", LevelSuccess, t)
+        CommandFailure t (MkStderr err) -> (Critical, ": " <> err, LevelError, t)
+        CommandSuccess t -> (Normal, "", LevelSuccess, t)
       timeMsg = T.pack (formatRelativeTime timeElapsed) <> msg'
 
   withRegion Linear $ \r ->
@@ -203,7 +204,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   anyError <- readTVarA =<< asks getAnyError
   let urgency = if anyError then Critical else Normal
 
-  -- Sent off notif unless NotifyNone is set
+  -- Sent off notif if notifications are on
   cfg <- asks getNotifyConfig
   when (is _Just cfg) $
     Notify.sendNotif "Shrun Finished" (T.pack totalTimeTxt) urgency

@@ -1,7 +1,6 @@
 -- | Provides the low-level `IO` functions for running shell commands.
 module Shrun.IO
   ( -- * Stdout/stderr newtypes
-    Stdout (..),
     Stderr (..),
 
     -- * Running commands
@@ -11,7 +10,6 @@ where
 
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
-import Data.Time.Relative (RelativeTime)
 import Effects.Concurrent.Thread (microsleep)
 import Effects.System.Process qualified as P
 import Effects.Time (withTiming)
@@ -25,9 +23,9 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.IO.Types
-  ( ReadHandleResult (..),
+  ( CommandResult (..),
+    ReadHandleResult (..),
     Stderr (..),
-    Stdout (..),
     readHandle,
     readHandleResultToStderr,
   )
@@ -51,11 +49,11 @@ shExitCode ::
     MonadSTM m
   ) =>
   CommandP1 ->
-  m (ExitCode, Stdout, Stderr)
+  m (ExitCode, Stderr)
 shExitCode cmd = do
   process <- commandToProcess cmd <$> asks getInit
-  (exitCode, stdout, stderr) <- P.readProcess process
-  pure (exitCode, wrap MkStdout stdout, wrap MkStderr stderr)
+  (exitCode, _stdout, stderr) <- P.readProcess process
+  pure (exitCode, wrap MkStderr stderr)
   where
     wrap f = f . T.strip . decodeUtf8Lenient . BSL.toStrict
 
@@ -68,24 +66,11 @@ tryShExitCode ::
     MonadSTM m
   ) =>
   CommandP1 ->
-  m (Either Stderr Stdout)
-tryShExitCode cmd = do
-  (code, stdout, stderr) <- shExitCode cmd
-  pure $ case code of
-    ExitSuccess -> Right stdout
-    ExitFailure _ -> Left stderr
-
--- | Version of 'tryShExitCode' that updated the completed commands.
--- On success, stdout is not returned.
-tryCommand ::
-  ( HasInit env,
-    MonadProcess m,
-    MonadReader env m,
-    MonadSTM m
-  ) =>
-  CommandP1 ->
   m (Maybe Stderr)
-tryCommand cmd = preview _Left <$> tryShExitCode cmd
+tryShExitCode cmd =
+  shExitCode cmd <&> \case
+    (ExitSuccess, _) -> Nothing
+    (ExitFailure _, stderr) -> Just stderr
 
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
@@ -107,16 +92,15 @@ tryCommandLogging ::
   ) =>
   -- | Command to run.
   CommandP1 ->
-  -- | @'Left' (timeElapsed, error)@ if the command fails.
-  -- @'Right' timeElapsed@ otherwise.
-  m (Either (RelativeTime, Stderr) RelativeTime)
+  -- | Result.
+  m CommandResult
 tryCommandLogging command = do
   logging <- asks getLogging
   let cmdDisplay = logging ^. #keyHide
 
   let cmdFn = case (logging ^. #cmdLog, logging ^. #fileLog) of
         -- 1. No CmdLogging and no FileLogging: No streaming at all.
-        (Nothing, Nothing) -> tryCommand
+        (Nothing, Nothing) -> tryShExitCode
         -- 2. No CmdLogging but FileLogging: Stream (to file) but no console
         --    region.
         (Nothing, Just fileLogging) -> \cmd -> do
@@ -143,7 +127,7 @@ tryCommandLogging command = do
       -- update completed commands
       prependCompletedCommand command
 
-      pure $ Right $ U.timeSpecToRelTime rt
+      pure $ CommandSuccess $ U.timeSpecToRelTime rt
     (rt, Just err) -> do
       -- update completed commands
       prependCompletedCommand command
@@ -151,7 +135,7 @@ tryCommandLogging command = do
       -- update anyError
       setAnyErrorTrue
 
-      pure $ Left (U.timeSpecToRelTime rt, err)
+      pure $ CommandFailure (U.timeSpecToRelTime rt) err
   where
     logConsole logging region log = do
       let consoleQueue = logging ^. #consoleLog
