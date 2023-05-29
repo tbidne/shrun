@@ -148,8 +148,8 @@ runCommand cmd = do
 
   logging :: Logging (Region m) <- asks getLogging
   let cmdNameTrunc = logging ^. #cmdNameTrunc
-      cmdDisplay = logging ^. #keyHide
-      formattedCmd = LogFmt.formatCommand cmdDisplay cmdNameTrunc cmd
+      keyHide = logging ^. #keyHide
+      formattedCmd = LogFmt.formatCommand keyHide cmdNameTrunc cmd
 
   -- Sent off notif if NotifyCommand is set
   cfg <- asks getNotifyConfig
@@ -274,7 +274,7 @@ keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      cmdDisplay <- asks (view #keyHide . getLogging @env @(Region m))
+      keyHide <- asks (view #keyHide . getLogging @env @(Region m))
       allCmds <- asks getCommands
       completedCmdsTVar <- asks getCompletedCmds
       completedCmds <- readTVarA completedCmdsTVar
@@ -285,7 +285,7 @@ keepRunning region timer mto = do
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ toList allCmds
           incompleteCmds = Set.difference allCmdsSet completedCmdsSet
-          toTxtList acc cmd = LogFmt.displayCmd cmd cmdDisplay : acc
+          toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
           unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
 
       Logging.putRegionLog region $

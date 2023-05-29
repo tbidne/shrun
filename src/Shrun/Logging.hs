@@ -84,6 +84,6 @@ logToFileQueue ::
   -- | Log to send.
   Log ->
   m ()
-logToFileQueue cmdDisplay fileLogging log = do
-  formatted <- formatFileLog cmdDisplay fileLogging log
+logToFileQueue keyHide fileLogging log = do
+  formatted <- formatFileLog keyHide fileLogging log
   writeTBQueueA (fileLogging ^. #log % _2) formatted

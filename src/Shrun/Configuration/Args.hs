@@ -99,7 +99,7 @@ data Args = MkArgs
     noInit :: !Bool,
     -- | Whether to display command by (key) name or command.
     keyHide :: !(Maybe KeyHide),
-    -- | Disables cmdDisplay.
+    -- | Disables keyHide.
     noKeyHide :: !Bool,
     -- | How often to poll commands for logs, in microseconds.
     pollInterval :: !(Maybe PollInterval),

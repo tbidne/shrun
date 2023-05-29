@@ -364,9 +364,9 @@ shapeProps =
       expected === result
 
 formatFileLog :: KeyHide -> Log -> Text
-formatFileLog cmdDisplay log =
+formatFileLog keyHide log =
   view #unFileLog $
-    Formatting.formatFileLog @MockTime cmdDisplay fileLog log ^. #runMockTime
+    Formatting.formatFileLog @MockTime keyHide fileLog log ^. #runMockTime
 
 fileLog :: FileLogging
 fileLog = MkFileLogging StripControlNone (error err)

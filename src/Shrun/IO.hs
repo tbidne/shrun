@@ -96,7 +96,7 @@ tryCommandLogging ::
   m CommandResult
 tryCommandLogging command = do
   logging <- asks getLogging
-  let cmdDisplay = logging ^. #keyHide
+  let keyHide = logging ^. #keyHide
 
   let cmdFn = case (logging ^. #cmdLog, logging ^. #fileLog) of
         -- 1. No CmdLogging and no FileLogging: No streaming at all.
@@ -105,7 +105,7 @@ tryCommandLogging command = do
         --    region.
         (Nothing, Just fileLogging) -> \cmd -> do
           let logFn :: Log -> m ()
-              logFn = logFile cmdDisplay fileLogging
+              logFn = logFile keyHide fileLogging
 
           logFn hello
 
@@ -116,7 +116,7 @@ tryCommandLogging command = do
           withRegion Linear $ \region -> do
             let logFn log = do
                   logConsole logging region log
-                  for_ mFileLogging (\fl -> logFile cmdDisplay fl log)
+                  for_ mFileLogging (\fl -> logFile keyHide fl log)
 
             logFn hello
 
@@ -142,8 +142,8 @@ tryCommandLogging command = do
           formatted = formatConsoleLog logging log
       writeTBQueueA consoleQueue (LogRegion (log ^. #mode) region formatted)
 
-    logFile cmdDisplay fileLogging log = do
-      formatted <- formatFileLog cmdDisplay fileLogging log
+    logFile keyHide fileLogging log = do
+      formatted <- formatFileLog keyHide fileLogging log
       writeTBQueueA (fileLogging ^. #log % _2) formatted
 
     hello =

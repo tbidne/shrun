@@ -94,14 +94,14 @@ formatFileLog ::
   FileLogging ->
   Log ->
   m FileLog
-formatFileLog cmdDisplay fileLogging log = do
+formatFileLog keyHide fileLogging log = do
   currTime <- getSystemTimeString
   let formatted = case log ^. #cmd of
         Nothing -> brackets True prefix <> msgStripped
         Just cmd ->
           let cmd' =
                 formatCommand
-                  cmdDisplay
+                  keyHide
                   Nothing
                   cmd
            in mconcat
@@ -126,11 +126,11 @@ formatCommand ::
   Maybe (Truncation TCmdName) ->
   CommandP1 ->
   Text
-formatCommand cmdDisplay cmdNameTrunc com = brackets True (truncateNameFn cmdName)
+formatCommand keyHide cmdNameTrunc com = brackets True (truncateNameFn cmdName)
   where
     -- Get cmd name to display. Always strip control sequences.
     cmdName =
-      Utils.stripControlAll $ displayCmd com cmdDisplay
+      Utils.stripControlAll $ displayCmd com keyHide
 
     -- truncate cmd/name if necessary
     truncateNameFn =
