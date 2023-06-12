@@ -41,7 +41,7 @@ import Shrun.Prelude
 import Shrun.Utils qualified as U
 import System.Exit (ExitCode (..))
 
--- | Runs the command, returns ('ExitCode', 'Stdout', 'Stderr')
+-- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::
   ( HasInit env,
     MonadProcess m,
@@ -185,7 +185,7 @@ tryCommandStream logFn cmd = do
         . commandToProcess cmd
 
   (exitCode, lastReadErr) <-
-    P.withProcessWait procConfig $ \p -> streamOutput logFn cmd p
+    P.withProcessWait procConfig (streamOutput logFn cmd)
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
@@ -241,7 +241,7 @@ streamOutput logFn cmd p = do
 
     P.getExitCode p
 
-  -- Try to get final data. The semigroup prioritize errors and then the LHS
+  -- Try to get final data. The semigroup prioritizes errors and then the LHS
   -- for equal data constructors.
   lastReadErr <- readIORef lastReadErrRef
   remainingData <-

@@ -110,7 +110,7 @@ readHandle handle = do
             else pure Nothing
 
 -- NOTE: [EOF / blocking error] We would like to check hIsEOF (definitely
--- causes errors at the end) and probably hReady as well, but this both
+-- causes errors at the end) and probably hReady as well, but these both
 -- block and I have not found a way to invoke them while also streaming
 -- the process output (blocks until everything gets dumped at the end).
 

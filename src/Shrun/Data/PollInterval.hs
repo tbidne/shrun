@@ -11,7 +11,7 @@ where
 import Shrun.Prelude
 import TOML (Value (Integer))
 
--- | Represents how often to poll for service changes, in microseconds.
+-- | Represents how often to poll for command logs, in microseconds.
 -- Zero is interpreted as infinite i.e. limited only by the CPU.
 newtype PollInterval = MkPollInterval {unPollInterval :: Natural}
   deriving stock (Eq, Ord, Show)
