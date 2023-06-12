@@ -1,5 +1,4 @@
 {-# LANGUAGE ViewPatterns #-}
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 -- | Provides utilities.
 module Shrun.Utils
