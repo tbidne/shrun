@@ -95,6 +95,23 @@ tryCommandLogging ::
   -- | Result.
   m CommandResult
 tryCommandLogging command = do
+  -- NOTE: We do not want tryCommandLogging to throw sync exceptions, as that
+  -- will take down the whole app. tryCommandStream and tryShExitCode should be
+  -- total, but there are still a few functions here that can throw. To wit:
+  --
+  -- - atomically: Used in prependCompletedCommand, setAnyErrorTrue,
+  --               writeTBQueueA.
+  -- - getSystemTimeString: Used in formatFileLog.
+  --
+  -- We could catch these exceptions and simply print an error. However, both
+  -- of these errors have nothing to do with the actual command that is being
+  -- run and point to something wrong with shrun itself. Morever, "recovery"
+  -- in these instances is unclear, as we are either dropping logs (how do we
+  -- report these errors?) or failing to get the time (how should we log?).
+  --
+  -- Thus the most reasonable course of action is to let shrun die and print
+  -- the actual error so it can be fixed.
+
   logging <- asks getLogging
   let keyHide = logging ^. #keyHide
 
