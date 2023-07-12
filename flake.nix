@@ -7,14 +7,10 @@
       flake = false;
     };
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nix-hs-utils = {
-      url = "github:tbidne/nix-hs-utils";
-      inputs.flake-compat.follows = "flake-compat";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nix-hs-utils.url = "github:tbidne/nix-hs-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
-    #haskell
+    # haskell
     algebra-simple = {
       url = "github:tbidne/algebra-simple";
       inputs.flake-compat.follows = "flake-compat";
@@ -73,7 +69,6 @@
   outputs =
     inputs@{ flake-compat
     , flake-parts
-    , monad-effects
     , nix-hs-utils
     , nixpkgs
     , self
@@ -87,7 +82,7 @@
             overrides = final: prev: {
               apply-refact = prev.apply-refact_0_11_0_0;
               effects-fs = hlib.overrideCabal
-                (nix-hs-utils.mkRelLib monad-effects final "effects-fs")
+                (nix-hs-utils.mkRelLib inputs.monad-effects final "effects-fs")
                 (old: {
                   configureFlags = (old.configureFlags or [ ]) ++ [ "-f -os_path" ];
                 });
@@ -102,7 +97,7 @@
               "relative-time"
               "si-bytes"
               "smart-math"
-            ] // nix-hs-utils.mkRelLibs monad-effects final [
+            ] // nix-hs-utils.mkRelLibs inputs.monad-effects final [
               "effects-async"
               "effects-exceptions"
               "effects-env"
@@ -122,7 +117,7 @@
               name = "shrun";
               root = ./.;
             };
-          hs-dirs = "app benchmarks src test";
+          hsDirs = "app benchmarks src test";
         in
         {
           packages.default = mkPkg false;
@@ -130,13 +125,13 @@
 
           apps = {
             format = nix-hs-utils.format {
-              inherit compiler hs-dirs pkgs;
+              inherit compiler hsDirs pkgs;
             };
             lint = nix-hs-utils.lint {
-              inherit compiler hs-dirs pkgs;
+              inherit compiler hsDirs pkgs;
             };
             lint-refactor = nix-hs-utils.lint-refactor {
-              inherit compiler hs-dirs pkgs;
+              inherit compiler hsDirs pkgs;
             };
           };
         };
