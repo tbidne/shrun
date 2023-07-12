@@ -32,6 +32,10 @@ module Shrun.Notify.Types
     NotifyTimeout (..),
     parseNotifyTimeout,
     notifyTimeoutStr,
+
+    -- * Exceptions
+    OsxNotifySystemMismatch (..),
+    LinuxNotifySystemMismatch (..),
   )
 where
 
@@ -200,3 +204,21 @@ data NotifyConfig = MkNotifyConfig
   deriving stock (Eq, Show)
 
 makeFieldLabelsNoPrefix ''NotifyConfig
+
+data OsxNotifySystemMismatch
+  = OsxNotifySystemMismatchDBus
+  | OsxNotifySystemMismatchNotifySend
+  deriving stock (Eq, Show)
+
+instance Exception OsxNotifySystemMismatch where
+  displayException OsxNotifySystemMismatchDBus =
+    "Detected osx, but DBus is only available on linux!"
+  displayException OsxNotifySystemMismatchNotifySend =
+    "Detected osx, but NotifySend is only available on linux!"
+
+data LinuxNotifySystemMismatch = LinuxNotifySystemMismatchAppleScript
+  deriving stock (Eq, Show)
+
+instance Exception LinuxNotifySystemMismatch where
+  displayException LinuxNotifySystemMismatchAppleScript =
+    "Detected linux, but AppleScript is only available on osx!"

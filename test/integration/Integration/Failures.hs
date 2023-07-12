@@ -10,6 +10,10 @@ import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
+import Shrun.Notify.Types
+  ( LinuxNotifySystemMismatch (..),
+    OsxNotifySystemMismatch (..),
+  )
 
 specs :: TestTree
 specs =
@@ -127,30 +131,30 @@ osxNotifyConfigError = testCase "OSX with linux notify config throws exception" 
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", getExampleConfig "config", "cmd"]
-  result <- runCaptureError @StringException args logsRef
+  result <- runCaptureError @OsxNotifySystemMismatch args logsRef
 
   case result of
-    Just ex -> exContains "NotifySend is only available on linux!" ex
+    Just ex -> exContains "Detected osx, but NotifySend is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
 
 osxDBusError :: TestTree
 osxDBusError = testCase "OSX with dbus throws exception" $ do
   logsRef <- newIORef []
   let args = ["--notify-system", "dbus" ,"cmd"]
-  result <- runCaptureError @StringException args logsRef
+  result <- runCaptureError @OsxNotifySystemMismatch args logsRef
 
   case result of
-    Just ex -> exContains "DBus is only available on linux!" ex
+    Just ex -> exContains "Detected osx, but DBus is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
 
 osxNotifySendError :: TestTree
 osxNotifySendError = testCase "OSX with notify-send throws exception" $ do
   logsRef <- newIORef []
   let args = ["--notify-system", "notify-send" ,"cmd"]
-  result <- runCaptureError @StringException args logsRef
+  result <- runCaptureError @OsxNotifySystemMismatch args logsRef
 
   case result of
-    Just ex -> exContains "NotifySend is only available on linux!" ex
+    Just ex -> exContains "Detected osx, but NotifySend is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
 #else
 osTests :: [TestTree]
@@ -165,20 +169,20 @@ linuxNotifyConfigError = testCase "Linux with osx notify config throws exception
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", getExampleConfig "config_osx", "cmd"]
-  result <- runCaptureError @StringException args logsRef
+  result <- runCaptureError @LinuxNotifySystemMismatch args logsRef
 
   case result of
-    Just ex -> exContains "AppleScript is only available on osx!" ex
+    Just ex -> exContains "Detected linux, but AppleScript is only available on osx!" ex
     Nothing -> assertFailure "Expected exception"
 
 linuxAppleScriptError :: TestTree
 linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
   logsRef <- newIORef []
   let args = ["--notify-system", "apple-script" ,"cmd"]
-  result <- runCaptureError @StringException args logsRef
+  result <- runCaptureError @LinuxNotifySystemMismatch args logsRef
 
   case result of
-    Just ex -> exContains "AppleScript is only available on osx!" ex
+    Just ex -> exContains "Detected linux, but AppleScript is only available on osx!" ex
     Nothing -> assertFailure "Expected exception"
 #endif
 

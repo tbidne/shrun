@@ -14,22 +14,21 @@ import Shrun.Configuration.Toml (NotifyToml (..))
 import Shrun.Data.Phase (AdvancePhase (advancePhase))
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
 import Shrun.Notify.Types
-  ( NotifyAction (..),
+  ( LinuxNotifySystemMismatch (..),
+    NotifyAction (..),
     NotifySystem (..),
     NotifySystemP1,
     NotifySystemP2,
     NotifyTimeout (..),
+    OsxNotifySystemMismatch (..),
     _AppleScript,
     _DBus,
     _NotifySend,
   )
 import Shrun.Prelude
 
--- | Transforms NotifyToml into NotifyEnv. Notifications are off if one of
--- the following is true:
---
--- 1. NotifyToml is completely unspecified (i.e. Nothing)
--- 2. NotifyNone is specified
+-- | Transforms NotifyToml into NotifyEnv. Notifications are off if
+-- NotifyToml is completely unspecified (i.e. Nothing).
 tomlToNotifyEnv ::
   ( HasCallStack,
     MonadDBus m,
@@ -50,8 +49,8 @@ tomlToNotifyEnvOS ::
   NotifyToml ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnvOS (notifyToml)
-  | is (#system %? _DBus) notifyToml = throwString "DBus is only available on linux!"
-  | is (#system %? _NotifySend) notifyToml = throwString "NotifySend is only available on linux!"
+  | is (#system %? _DBus) notifyToml = throwM OsxNotifySystemMismatchDBus
+  | is (#system %? _NotifySend) notifyToml = throwM OsxNotifySystemMismatchNotifySend
   | otherwise = case advancePhase systemP1 of
     Left sys -> pure $ Just $ mkNotify notifyToml sys
     Right mkDBus -> Just . mkNotify notifyToml . mkDBus <$> connectSession
@@ -68,7 +67,7 @@ tomlToNotifyEnvOS ::
   NotifyToml ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnvOS notifyToml
-  | is (#system %? _AppleScript) notifyToml = throwString "AppleScript is only available on osx!"
+  | is (#system %? _AppleScript) notifyToml = throwM LinuxNotifySystemMismatchAppleScript
   | otherwise = case advancePhase systemP1 of
     Left sys -> pure $ Just $ mkNotify notifyToml sys
     Right mkDBus -> Just . mkNotify notifyToml . mkDBus <$> connectSession
