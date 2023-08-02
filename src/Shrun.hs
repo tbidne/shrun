@@ -10,7 +10,6 @@ where
 import DBus.Notify (UrgencyLevel (..))
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
-import Data.Time.Relative (formatRelativeTime, formatSeconds)
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
@@ -27,6 +26,7 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout (..))
+import Shrun.Data.TimerFormat qualified as TimerFormat
 import Shrun.IO (Stderr (..), tryCommandLogging)
 import Shrun.IO.Types (CommandResult (..))
 import Shrun.Logging qualified as Logging
@@ -131,11 +131,12 @@ runCommand ::
   m ()
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
+  timerFormat <- view #timerFormat <$> (asks getLogging :: m (Logging (Region m)))
 
   let (urgency, msg', lvl, timeElapsed) = case cmdResult of
         CommandFailure t (MkStderr err) -> (Critical, ": " <> err, LevelError, t)
         CommandSuccess t -> (Normal, "", LevelSuccess, t)
-      timeMsg = T.pack (formatRelativeTime timeElapsed) <> msg'
+      timeMsg = TimerFormat.formatRelativeTime timerFormat timeElapsed <> msg'
 
   withRegion Linear $ \r ->
     Logging.putRegionLog r $
@@ -157,6 +158,7 @@ runCommand cmd = do
     Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
 
 printFinalResult ::
+  forall m env e b.
   ( Exception e,
     HasAnyError env,
     HasLogging env (Region m),
@@ -191,11 +193,12 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
     -- update anyError
     setAnyErrorTrue
 
-  let totalTimeTxt = formatRelativeTime (Utils.timeSpecToRelTime totalTime)
+  timerFormat <- view #timerFormat <$> (asks getLogging :: m (Logging (Region m)))
+  let totalTimeTxt = TimerFormat.formatRelativeTime timerFormat (Utils.timeSpecToRelTime totalTime)
       finalLog =
         MkLog
           { cmd = Nothing,
-            msg = T.pack totalTimeTxt,
+            msg = totalTimeTxt,
             lvl = LevelFinished,
             mode = LogModeFinish
           }
@@ -207,7 +210,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   -- Sent off notif if notifications are on
   cfg <- asks getNotifyConfig
   when (is _Just cfg) $
-    Notify.sendNotif "Shrun Finished" (T.pack totalTimeTxt) urgency
+    Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
 
   Logging.putRegionLog r finalLog
 
@@ -247,10 +250,12 @@ logCounter ::
   m ()
 logCounter region elapsed = do
   logging <- asks getLogging
-  let lg =
+  let timerFormat = view #timerFormat logging
+      msg = TimerFormat.formatSeconds timerFormat elapsed
+      lg =
         MkLog
           { cmd = Nothing,
-            msg = T.pack (formatSeconds elapsed),
+            msg,
             lvl = LevelTimer,
             mode = LogModeSet
           }

@@ -23,6 +23,7 @@ import Shrun.Configuration.Env.Types
     Truncation (..),
   )
 import Shrun.Data.Command (Command (..))
+import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types (Log (..), LogLevel (..))
 import Shrun.Utils qualified as Utils
@@ -108,6 +109,7 @@ instance HasLogging Env () where
     MkLogging
       { keyHide = env ^. #keyHide,
         pollInterval = 100,
+        timerFormat = ProseCompact,
         cmdNameTrunc = env ^. #cmdTrunc,
         cmdLog =
           Just
@@ -256,6 +258,7 @@ instance HasLogging MockEnv () where
     MkLogging
       { keyHide = KeyHideOff,
         pollInterval = 10,
+        timerFormat = ProseCompact,
         cmdNameTrunc = Nothing,
         cmdLog = Nothing,
         consoleLog = error err,

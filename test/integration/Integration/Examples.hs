@@ -9,6 +9,7 @@ import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.TimerFormat (TimerFormat (..))
 import Shrun.Notify.Types
   ( NotifyAction (..),
     NotifySystem (..),
@@ -40,6 +41,7 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
           init = Just ". examples/bashrc",
           keyHide = KeyHideOff,
           pollInterval = 100,
+          timerFormat = ProseCompact,
           cmdNameTrunc = Just 80,
           cmdLog = True,
           cmdLogLineTrunc = Just 150,
@@ -73,6 +75,7 @@ examplesDefault = testCase "examples/default.toml is valid" $ do
           init = Nothing,
           keyHide = KeyHideOff,
           pollInterval = 10_000,
+          timerFormat = ProseCompact,
           cmdNameTrunc = Nothing,
           cmdLog = False,
           cmdLogStripControl = Nothing,

@@ -14,6 +14,7 @@ import Shrun.Configuration.Env.Types
     StripControl (..),
   )
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
+import Shrun.Data.TimerFormat (TimerFormat (..))
 import Shrun.Notify.Types (NotifyAction (..), NotifySystem (..), NotifyTimeout (..))
 import Shrun.Utils qualified as U
 import Unit.Prelude
@@ -34,6 +35,7 @@ tests =
       commandLoggingSpecs,
       commandDisplaySpecs,
       pollIntervalSpecs,
+      timerFormatSpecs,
       stripControlSpecs,
       cmdNameTruncSpecs,
       cmdLineTruncSpecs,
@@ -65,6 +67,8 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               noKeyHide = False,
               pollInterval = Nothing,
               noPollInterval = False,
+              timerFormat = Nothing,
+              noTimerFormat = False,
               cmdNameTrunc = Nothing,
               noCmdNameTrunc = False,
               cmdLog = Nothing,
@@ -517,6 +521,57 @@ parseNoPollInterval =
   where
     argList = ["--no-poll-interval", "command"]
     expected = updateDefArgsFlag #noPollInterval True
+
+timerFormatSpecs :: TestTree
+timerFormatSpecs =
+  testGroup
+    "TimerFormat arg parsing"
+    [ parseTimerFormatDigitalCompact,
+      parseTimerFormatDigitalFull,
+      parseTimerFormatProseCompact,
+      parseTimerFormatProseFull,
+      parseNoTimerFormat
+    ]
+
+parseTimerFormatDigitalCompact :: TestTree
+parseTimerFormatDigitalCompact =
+  testCase "Should parse --timer-format digital_compact as DigitalCompact" $
+    verifyResult argList expected
+  where
+    argList = ["--timer-format", "digital_compact", "command"]
+    expected = updateDefArgs #timerFormat DigitalCompact
+
+parseTimerFormatDigitalFull :: TestTree
+parseTimerFormatDigitalFull =
+  testCase "Should parse --timer-format digital_full as DigitalFull" $
+    verifyResult argList expected
+  where
+    argList = ["--timer-format", "digital_full", "command"]
+    expected = updateDefArgs #timerFormat DigitalFull
+
+parseTimerFormatProseCompact :: TestTree
+parseTimerFormatProseCompact =
+  testCase "Should parse --timer-format prose_compact as ProseCompact" $
+    verifyResult argList expected
+  where
+    argList = ["--timer-format", "prose_compact", "command"]
+    expected = updateDefArgs #timerFormat ProseCompact
+
+parseTimerFormatProseFull :: TestTree
+parseTimerFormatProseFull =
+  testCase "Should parse --timer-format prose_full as ProseFull" $
+    verifyResult argList expected
+  where
+    argList = ["--timer-format", "prose_full", "command"]
+    expected = updateDefArgs #timerFormat ProseFull
+
+parseNoTimerFormat :: TestTree
+parseNoTimerFormat =
+  testCase "Parse --no-timer-format" $
+    verifyResult argList expected
+  where
+    argList = ["--no-timer-format", "command"]
+    expected = updateDefArgsFlag #noTimerFormat True
 
 stripControlSpecs :: TestTree
 stripControlSpecs =

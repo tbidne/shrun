@@ -31,6 +31,7 @@ import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
+import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Notify.Types
   ( NotifyAction,
@@ -152,6 +153,8 @@ data Logging r = MkLogging
     keyHide :: !KeyHide,
     -- | How often to poll commands for logs, in microseconds.
     pollInterval :: !PollInterval,
+    -- | How to format the timer.
+    timerFormat :: !TimerFormat,
     -- | Truncates command names in the logs.
     cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     -- | Whether to log commands.
@@ -170,6 +173,10 @@ instance Show (Logging r) where
     showParen (p > appPrec) $
       showString "MkEnv {keyHide = "
         . showsPrec appPrec1 (env ^. #keyHide)
+        . showString ", pollInterval = "
+        . showsPrec appPrec1 (env ^. #pollInterval)
+        . showString ", timerFormat = "
+        . showsPrec appPrec1 (env ^. #timerFormat)
         . showString ", cmdNameTrunc = "
         . showsPrec appPrec1 (env ^. #cmdNameTrunc)
         . showString ", cmdLog = "

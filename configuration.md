@@ -13,6 +13,7 @@
     - [File Log Mode](#file-log-mode)
     - [File Log Size Mode](#file-log-size-mode)
   - [Log Formatting](#log-formatting)
+    - [Timer Format](#timer-format)
     - [Key Hide](#key-hide)
     - [Strip Control](#strip-control)
     - [File Log Strip Control](#file-log-strip-control)
@@ -205,6 +206,38 @@ Note that lower values will increase CPU usage. In particular, 0 will max out a 
 **Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`.
 
 ## Log Formatting
+
+### Timer Format
+
+**Arg:** `--timer-format (digital_compact|digital_full|prose_compact|prose_full)`
+
+**Description:** How to format the timer. Defaults to `prose_compact` e.g. `2 hours, 3 seconds`.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --timer-format digital_compact --cmd-log "sleep 2"</span>
+<span style="color:">[Command][sleep 2] hi</span>
+<span style="color: #a3fefe">[Timer] 01</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --timer-format digital_full --cmd-log "sleep 2"</span>
+<span style="color:">[Command][sleep 2] hi</span>
+<span style="color: #a3fefe">[Timer] 00:00:00:01</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --timer-format prose_compact --cmd-log "sleep 2"</span>
+<span style="color:">[Command][sleep 2] hi</span>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --timer-format prose_full --cmd-log "sleep 2"</span>
+<span style="color:">[Command][sleep 2] hi</span>
+<span style="color: #a3fefe">[Timer] 0 days, 0 hours, 0 minutes, 1 second</span></code>
+</pre>
 
 ### Key Hide
 

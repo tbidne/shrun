@@ -46,6 +46,7 @@ import Shrun.Configuration.Toml
 import Shrun.Data.Command (Command (..))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.PollInterval (defaultPollInterval)
+import Shrun.Data.TimerFormat (defaultTimerFormat)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
@@ -184,6 +185,7 @@ fromToml cfg cmdsText onEnv = do
               MkLogging
                 { keyHide = fromMaybe KeyHideOff (cfg ^? (#keyHide % _Just)),
                   pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
+                  timerFormat = fromMaybe defaultTimerFormat (cfg ^? (#timerFormat % _Just)),
                   cmdNameTrunc = cfg ^. #cmdNameTrunc,
                   cmdLog =
                     cfg ^. #cmdLog <&> \cmdLog ->

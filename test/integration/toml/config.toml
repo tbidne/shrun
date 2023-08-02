@@ -6,6 +6,7 @@ log-disable = true
 key-hide = true
 poll-interval = 127
 cmd-name-trunc = 80
+timer-format = "digital_full"
 
 legend = [
   { key = 'cmd1', val = 'echo "command one"' },

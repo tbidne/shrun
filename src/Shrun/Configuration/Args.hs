@@ -41,6 +41,8 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.PollInterval (PollInterval (..), defaultPollInterval)
 import Shrun.Data.Timeout (Timeout (..))
+import Shrun.Data.TimerFormat (TimerFormat (..))
+import Shrun.Data.TimerFormat qualified as TimerFormat
 import Shrun.Notify.Types
 import Shrun.Notify.Types qualified as Notify
 import Shrun.Prelude
@@ -105,6 +107,10 @@ data Args = MkArgs
     pollInterval :: !(Maybe PollInterval),
     -- | Disables pollInterval.
     noPollInterval :: !Bool,
+    -- | How to format the timer.
+    timerFormat :: !(Maybe TimerFormat),
+    -- | Disables timerFormat.
+    noTimerFormat :: !Bool,
     -- | The max number of command characters to display in the logs.
     cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     -- | Disables cmdNameTrunc.
@@ -170,6 +176,8 @@ defaultArgs cmds =
       noKeyHide = False,
       pollInterval = empty,
       noPollInterval = False,
+      timerFormat = empty,
+      noTimerFormat = False,
       init = empty,
       noInit = False,
       cmdLog = empty,
@@ -235,6 +243,8 @@ argsParser =
     <*> noKeyHideParser
     <*> pollIntervalParser
     <*> noPollIntervalParser
+    <*> timerFormatParser
+    <*> noTimerFormatParser
     <*> cmdNameTruncParser
     <*> noCmdNameTruncParser
     <*> cmdLogParser
@@ -708,6 +718,32 @@ noPollIntervalParser =
       [ OA.long "no-poll-interval",
         OA.hidden,
         mkHelp "Disables --poll-interval."
+      ]
+
+timerFormatParser :: Parser (Maybe TimerFormat)
+timerFormatParser =
+  OA.optional $
+    OA.option readTimerFormat $
+      mconcat
+        [ OA.long "timer-format",
+          mkHelp helpTxt,
+          OA.metavar TimerFormat.timerFormatStr
+        ]
+  where
+    readTimerFormat = OA.str >>= TimerFormat.parseTimerFormat
+    helpTxt =
+      mconcat
+        [ "How to format the timer. Defaults to prose_compact e.g. ",
+          "'2 hours, 3 seconds'."
+        ]
+
+noTimerFormatParser :: Parser Bool
+noTimerFormatParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-timer-format",
+        OA.hidden,
+        mkHelp "Disables --timer-format."
       ]
 
 initParser :: Parser (Maybe Text)

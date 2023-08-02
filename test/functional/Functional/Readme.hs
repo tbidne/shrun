@@ -26,6 +26,10 @@ specs args =
       cmdlogOnDefault,
       cmdlogOff,
       fileLog args,
+      timerFormatDigitalCompact,
+      timerFormatDigitalFull,
+      timerFormatProseCompact,
+      timerFormatProseFull,
       keyHideOn,
       keyHideOff,
       stripControlAlwaysCmdNames,
@@ -210,6 +214,70 @@ fileLog testArgs = testCase "Runs file-log example" $ do
       expectedConsole
         ++ [ withCommandPrefix "for i in {1..3}; do echo hi; sleep 1; done" "hi"
            ]
+
+timerFormatDigitalCompact :: TestTree
+timerFormatDigitalCompact =
+  testCase "Runs timer format with digital_compact" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withBaseArgs
+        [ "--timer-format",
+          "digital_compact",
+          "sleep 2"
+        ]
+    expected =
+      [ withTimerPrefix "01"
+      ]
+
+timerFormatDigitalFull :: TestTree
+timerFormatDigitalFull =
+  testCase "Runs timer format with digital_full" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withBaseArgs
+        [ "--timer-format",
+          "digital_full",
+          "sleep 2"
+        ]
+    expected =
+      [ withTimerPrefix "00:00:00:01"
+      ]
+
+timerFormatProseCompact :: TestTree
+timerFormatProseCompact =
+  testCase "Runs timer format with prose_compact" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withBaseArgs
+        [ "--timer-format",
+          "prose_compact",
+          "sleep 2"
+        ]
+    expected =
+      [ withTimerPrefix "1 second"
+      ]
+
+timerFormatProseFull :: TestTree
+timerFormatProseFull =
+  testCase "Runs timer format with prose_full" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withBaseArgs
+        [ "--timer-format",
+          "prose_full",
+          "sleep 2"
+        ]
+    expected =
+      [ withTimerPrefix "0 days, 0 hours, 0 minutes, 1 second"
+      ]
 
 keyHideOn :: TestTree
 keyHideOn =

@@ -89,6 +89,7 @@ runBench argList = do
               logging =
                 MkLogging
                   { keyHide = env ^. (#logging % #keyHide),
+                    timerFormat = env ^. (#logging % #timerFormat),
                     pollInterval = env ^. (#logging % #pollInterval),
                     cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
                     cmdLog = env ^. (#logging % #cmdLog),

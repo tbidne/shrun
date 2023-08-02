@@ -37,6 +37,17 @@ key-hide = false
 # out a CPU thread.
 poll-interval = 100
 
+# String that determines how the timers is formatted. Options (and examples)
+# are:
+#
+# digital_compact:   03:00:20
+# digital_full:      00:03:00:20
+# prose_compact:     3 hours, 20 seconds
+# prose_full:        0 days, 3 hours, 0 minutes, 20 seconds
+#
+# Defaults to prose_compact
+timer-format = "prose_compact"
+
 # If set, this truncates command names in the logs to the specified number of
 # characters. This setting is useful when:
 #

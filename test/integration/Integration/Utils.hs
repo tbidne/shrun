@@ -30,6 +30,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
+import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Notify.MonadDBus (MonadDBus (..))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend (..))
 import Shrun.Notify.Types (NotifyAction, NotifySystem (..), NotifySystemP1, NotifyTimeout)
@@ -144,6 +145,7 @@ data SimpleEnv = MkSimpleEnv
     init :: !(Maybe Text),
     keyHide :: !KeyHide,
     pollInterval :: !PollInterval,
+    timerFormat :: !TimerFormat,
     cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
     cmdLog :: !Bool,
     cmdLogLineTrunc :: !(Maybe (Truncation TCmdLine)),
@@ -166,6 +168,7 @@ simplifyEnv = to $ \env ->
       init = env ^. #init,
       keyHide = env ^. (#logging % #keyHide),
       pollInterval = env ^. (#logging % #pollInterval),
+      timerFormat = env ^. (#logging % #timerFormat),
       cmdLog = is (#logging % #cmdLog % _Just) env,
       cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
       cmdLogLineTrunc = env ^? (#logging % #cmdLog %? #lineTrunc % _Just),

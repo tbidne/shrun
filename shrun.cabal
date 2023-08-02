@@ -62,6 +62,7 @@ library
     Shrun.Data.Phase
     Shrun.Data.PollInterval
     Shrun.Data.Timeout
+    Shrun.Data.TimerFormat
     Shrun.IO
     Shrun.IO.Types
     Shrun.Logging

@@ -11,6 +11,7 @@ import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
 import Shrun.Data.Command (Command (..))
+import Shrun.Data.TimerFormat (TimerFormat (..))
 import Shrun.Notify.Types
   ( NotifyAction (..),
     NotifySystem (..),
@@ -111,6 +112,7 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
           init = Just ". some file",
           keyHide = KeyHideOn,
           pollInterval = 127,
+          timerFormat = DigitalFull,
           cmdNameTrunc = Just 80,
           cmdLog = True,
           cmdLogStripControl = Just StripControlAll,
@@ -148,6 +150,7 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
           init = Nothing,
           keyHide = KeyHideOff,
           pollInterval = 10_000,
+          timerFormat = ProseCompact,
           cmdNameTrunc = Nothing,
           cmdLog = False,
           cmdLogStripControl = Nothing,

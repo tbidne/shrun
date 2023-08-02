@@ -17,6 +17,12 @@ the major/minor/patch definitions apply to the application's interface / usage
   * `--notify-action (notify.action)`
   * `--notify-system (notify.system)`
   * `--notify-timeout (notify.timeout)`
+* Added new (`--timer-format` / `timer-format`) feature for formatting the
+  timer. Options are:
+  * `digital_compact`
+  * `digital_full`
+  * `prose_compact`
+  * `prose_full`
 * Add `no-x` options to allow selectively disabling options (e.g. disable a
   single field set by the toml file).
 
