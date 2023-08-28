@@ -6,6 +6,7 @@ module Integration.Miscellaneous (specs) where
 
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
+import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
 import Shrun.Configuration.Env (withEnv)
@@ -30,19 +31,20 @@ specs testArgs =
 
 logFileWarn :: IO TestArgs -> TestTree
 logFileWarn testArgs = testCase "Large log file should print warning" $ do
-  logPath <- (</> "large-file-warn") . view #workingTmpDir <$> testArgs
+  logPath <- (</>! "large-file-warn") . view #workingTmpDir <$> testArgs
   logsRef <- IORef.newIORef []
-  let contents = T.replicate 1_500 "test "
+  let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
+      contents = T.replicate 1_500 "test "
 
       run = do
         writeFileUtf8 logPath contents
 
-        flip runConfigIO logsRef $ withArgs (args logPath) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
 
   run `finally` removeFileIfExists logPath
 
   logs <- IORef.readIORef logsRef
-  [warning logPath] @=? logs
+  [warning logsPathStr] @=? logs
   where
     warning fp =
       mconcat
@@ -62,14 +64,15 @@ logFileWarn testArgs = testCase "Large log file should print warning" $ do
 logFileDelete :: IO TestArgs -> TestTree
 logFileDelete testArgs =
   testCase "Large log file should be deleted" $ do
-    logPath <- (</> "large-file-del") . view #workingTmpDir <$> testArgs
+    logPath <- (</>! "large-file-del") . view #workingTmpDir <$> testArgs
     logsRef <- IORef.newIORef []
-    let contents = T.replicate 1_500 "test "
+    let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
+        contents = T.replicate 1_500 "test "
 
         run = do
           writeFileUtf8 logPath contents
 
-          flip runConfigIO logsRef $ withArgs (args logPath) (withEnv pure)
+          flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
 
           -- file should have been deleted then recreated with a file size of 0.
           getFileSize logPath
@@ -78,7 +81,7 @@ logFileDelete testArgs =
     0 @=? size
 
     logs <- IORef.readIORef logsRef
-    [warning logPath] @=? logs
+    [warning logPathStr] @=? logs
   where
     warning fp =
       mconcat

@@ -198,8 +198,8 @@ tryCommandStream logFn cmd = do
   procConfig <-
     asks getInit
       <&> P.setStderr outSpec
-        . P.setStdout errSpec
-        . commandToProcess cmd
+      . P.setStdout errSpec
+      . commandToProcess cmd
 
   (exitCode, lastReadErr) <-
     P.withProcessWait procConfig (streamOutput logFn cmd)
@@ -291,8 +291,8 @@ writeLog _ _ _ ReadNoData = pure ()
 writeLog logFn cmd lastReadRef (ReadSuccess messages) = do
   writeIORef lastReadRef (Just (ReadSuccess messages))
   for_ messages $ \msg ->
-    logFn $
-      MkLog
+    logFn
+      $ MkLog
         { cmd = Just cmd,
           msg,
           lvl = LevelCommand,

@@ -91,7 +91,10 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 * [`ghcup`](https://www.haskell.org/ghcup/)
 
-Using `ghcup`, install `cabal 2.4+` and `ghc 9.4`.
+Using `ghcup`, install `cabal 2.4+` and one of:
+
+- `ghc 9.4`
+- `ghc 9.6`
 
 ### Build Shrun
 

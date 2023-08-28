@@ -9,9 +9,9 @@ where
 import Functional.Prelude
 
 data TestArgs = MkTestArgs
-  { rootDir :: FilePath,
-    tmpDir :: FilePath,
-    configPath :: FilePath
+  { rootDir :: OsPath,
+    tmpDir :: OsPath,
+    configPath :: OsPath
   }
   deriving stock (Show)
 

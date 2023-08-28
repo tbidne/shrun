@@ -139,8 +139,8 @@ runCommand cmd = do
       timeMsg = TimerFormat.formatRelativeTime timerFormat timeElapsed <> msg'
 
   withRegion Linear $ \r ->
-    Logging.putRegionLog r $
-      MkLog
+    Logging.putRegionLog r
+      $ MkLog
         { cmd = Just cmd,
           msg = timeMsg,
           lvl,
@@ -154,8 +154,8 @@ runCommand cmd = do
 
   -- Sent off notif if NotifyCommand is set
   cfg <- asks getNotifyConfig
-  when (is (_Just % #action % _NotifyCommand) cfg) $
-    Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
+  when (is (_Just % #action % _NotifyCommand) cfg)
+    $ Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
 
 printFinalResult ::
   forall m env e b.
@@ -209,8 +209,8 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
   -- Sent off notif if notifications are on
   cfg <- asks getNotifyConfig
-  when (is _Just cfg) $
-    Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
+  when (is _Just cfg)
+    $ Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
 
   Logging.putRegionLog r finalLog
 
@@ -293,8 +293,8 @@ keepRunning region timer mto = do
           toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
           unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
 
-      Logging.putRegionLog region $
-        MkLog
+      Logging.putRegionLog region
+        $ MkLog
           { cmd = Nothing,
             msg = "Timed out, cancelling remaining commands: " <> unfinishedCmds,
             lvl = LevelWarn,
@@ -332,7 +332,8 @@ pollQueueToFile ::
   FileLogging ->
   m void
 pollQueueToFile fileLogging = do
-  forever $
+  forever
+    $
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
     -- Hence the mask.

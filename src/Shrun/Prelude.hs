@@ -140,7 +140,6 @@ import Effects.FileSystem.HandleWriter as X
   ( MonadHandleWriter (hClose, hFlush, openBinaryFile),
     hPutUtf8,
   )
-import Effects.FileSystem.Path as X ((</>))
 import Effects.FileSystem.PathReader as X
   ( MonadPathReader (doesDirectoryExist, doesFileExist, getFileSize),
     getXdgConfig,
@@ -152,6 +151,7 @@ import Effects.FileSystem.PathWriter as X
     removeFile,
     removeFileIfExists,
   )
+import Effects.FileSystem.Utils as X (OsPath, osp, (</>))
 import Effects.IORef as X
   ( IORef,
     MonadIORef

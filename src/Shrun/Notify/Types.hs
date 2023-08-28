@@ -68,8 +68,8 @@ parseNotifyAction :: (MonadFail m) => Text -> m NotifyAction
 parseNotifyAction "final" = pure NotifyFinal
 parseNotifyAction "command" = pure NotifyCommand
 parseNotifyAction other =
-  fail $
-    mconcat
+  fail
+    $ mconcat
       [ "Unrecognized notify action: '",
         T.unpack other,
         "'. Expected one of ",
@@ -138,8 +138,8 @@ parseNotifySystem "dbus" = pure $ DBus ()
 parseNotifySystem "notify-send" = pure NotifySend
 parseNotifySystem "apple-script" = pure AppleScript
 parseNotifySystem other =
-  fail $
-    mconcat
+  fail
+    $ mconcat
       [ "Unrecognized notify system: '",
         T.unpack other,
         "'. Expected one of ",
@@ -180,8 +180,8 @@ parseNotifyTimeout "never" = pure NotifyTimeoutNever
 parseNotifyTimeout other = case TR.readMaybe other' of
   Just n -> pure $ NotifyTimeoutSeconds n
   Nothing ->
-    fail $
-      mconcat
+    fail
+      $ mconcat
         [ "Unrecognized notify timeout: '",
           other',
           "'. Expected one of ",

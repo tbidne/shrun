@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Functional test for a successful run that displays the key rather
 -- than the command.
 module Functional.SuccessShowKey (spec) where
@@ -32,9 +34,9 @@ withShowKey args addShowKey = do
   MkTestArgs {configPath, tmpDir} <- args
   let outpath = tmpDir </> outfile
       argList =
-        [ "--config=" <> configPath,
+        [ "--config=" <> unsafeDecodeOsToFp configPath,
           showKeyArg,
-          "-f" <> outpath
+          "-f" <> unsafeDecodeOsToFp outpath
         ]
           <> commands
 
@@ -79,8 +81,8 @@ noShowKeyUnexpected =
           withSuccessPrefix "long"
         ]
 
-outfile :: FilePath
-outfile = "show-key.log"
+outfile :: OsPath
+outfile = [osp|show-key.log"|]
 
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do

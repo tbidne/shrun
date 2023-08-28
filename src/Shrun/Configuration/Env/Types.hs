@@ -116,9 +116,9 @@ instance DecodeTOML StripControl where
       "smart" -> pure StripControlSmart
       "all" -> pure StripControlAll
       bad ->
-        fail $
-          "Unexpected strip-control. Expected one of none, smart, all: "
-            <> unpack bad
+        fail
+          $ "Unexpected strip-control. Expected one of none, smart, all: "
+          <> unpack bad
 
 data CmdLogging = MkCmdLogging
   { stripControl :: !StripControl,
@@ -140,11 +140,11 @@ makeFieldLabelsNoPrefix ''FileLogging
 
 instance Show FileLogging where
   showsPrec p fl =
-    showParen (p > appPrec) $
-      showString "MkFileLogging {stripControl = "
-        . showsPrec appPrec1 (fl ^. #stripControl)
-        . showString ", log = <(Handle, LogTextQueue)>"
-        . showString "}"
+    showParen (p > appPrec)
+      $ showString "MkFileLogging {stripControl = "
+      . showsPrec appPrec1 (fl ^. #stripControl)
+      . showString ", log = <(Handle, LogTextQueue)>"
+      . showString "}"
 
 -- | Holds logging data.
 data Logging r = MkLogging
@@ -170,21 +170,21 @@ makeFieldLabelsNoPrefix ''Logging
 
 instance Show (Logging r) where
   showsPrec p env =
-    showParen (p > appPrec) $
-      showString "MkEnv {keyHide = "
-        . showsPrec appPrec1 (env ^. #keyHide)
-        . showString ", pollInterval = "
-        . showsPrec appPrec1 (env ^. #pollInterval)
-        . showString ", timerFormat = "
-        . showsPrec appPrec1 (env ^. #timerFormat)
-        . showString ", cmdNameTrunc = "
-        . showsPrec appPrec1 (env ^. #cmdNameTrunc)
-        . showString ", cmdLog = "
-        . showsPrec appPrec1 (env ^. #cmdLog)
-        . showString ", consoleLog = <TBQueue>"
-        . showString ", fileLog = "
-        . showsPrec appPrec1 (env ^. #fileLog)
-        . showString "}"
+    showParen (p > appPrec)
+      $ showString "MkEnv {keyHide = "
+      . showsPrec appPrec1 (env ^. #keyHide)
+      . showString ", pollInterval = "
+      . showsPrec appPrec1 (env ^. #pollInterval)
+      . showString ", timerFormat = "
+      . showsPrec appPrec1 (env ^. #timerFormat)
+      . showString ", cmdNameTrunc = "
+      . showsPrec appPrec1 (env ^. #cmdNameTrunc)
+      . showString ", cmdLog = "
+      . showsPrec appPrec1 (env ^. #cmdLog)
+      . showString ", consoleLog = <TBQueue>"
+      . showString ", fileLog = "
+      . showsPrec appPrec1 (env ^. #fileLog)
+      . showString "}"
 
 -- | Holds notification settings.
 data NotifyEnv = MkNotifyEnv
@@ -245,16 +245,16 @@ makeFieldLabelsNoPrefix ''Env
 
 instance Show Env where
   showsPrec p env =
-    showParen (p > appPrec) $
-      showString "MkEnv {timeout = "
-        . showsPrec appPrec1 (env ^. #timeout)
-        . showString ", logging = "
-        . showsPrec appPrec1 (env ^. #logging)
-        . showString ", completedCmds = <TVar>"
-        . showString ", anyError = <TVar>"
-        . showString ", commands = "
-        . showsPrec appPrec1 (env ^. #commands)
-        . showString "}"
+    showParen (p > appPrec)
+      $ showString "MkEnv {timeout = "
+      . showsPrec appPrec1 (env ^. #timeout)
+      . showString ", logging = "
+      . showsPrec appPrec1 (env ^. #logging)
+      . showString ", completedCmds = <TVar>"
+      . showString ", anyError = <TVar>"
+      . showString ", commands = "
+      . showsPrec appPrec1 (env ^. #commands)
+      . showString "}"
 
 instance HasTimeout Env where
   getTimeout = view #timeout

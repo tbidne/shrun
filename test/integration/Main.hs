@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Runs integration tests.
 module Main (main) where
 
@@ -25,8 +27,8 @@ main = do
 
 setup :: IO TestArgs
 setup = do
-  rootTmpDir <- (</> "shrun") <$> Dir.getTemporaryDirectory
-  let workingTmpDir = rootTmpDir </> "test/integration"
+  rootTmpDir <- (</> [osp|shrun|]) <$> Dir.getTemporaryDirectory
+  let workingTmpDir = rootTmpDir </> [osp|test/integration|]
 
   Dir.createDirectoryIfMissing True workingTmpDir
   pure $ MkTestArgs rootTmpDir workingTmpDir
@@ -42,14 +44,14 @@ teardown testArgs = do
     -- There are several tests that rely on this log's existence, since it
     -- exists in the 'config' directory, and these tests test that default.
     -- Thus we cannot delete it until everything has finished.
-    removeFileIfExists "test/integration/toml/log"
-    removeFileIfExists "test/integration/toml/osx/log"
+    removeFileIfExists [osp|test/integration/toml/log|]
+    removeFileIfExists [osp|test/integration/toml/osx/log|]
 
     -- Ideally we want to clean up after ourselves in each test. These are for
     -- insurance.
-    removeFileIfExists $ cwd </> "log"
-    removeFileIfExists $ cwd </> "large-file-warn"
-    removeFileIfExists $ cwd </> "large-file-del"
-    removeFileIfExists $ root </> "test/integration"
-    removeFileIfExists $ root </> "test"
+    removeFileIfExists $ cwd </> [osp|log|]
+    removeFileIfExists $ cwd </> [osp|large-file-warn|]
+    removeFileIfExists $ cwd </> [osp|large-file-del|]
+    removeFileIfExists $ root </> [osp|test/integration|]
+    removeFileIfExists $ root </> [osp|test|]
     removeDirectoryIfExists root

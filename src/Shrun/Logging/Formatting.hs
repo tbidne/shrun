@@ -52,8 +52,8 @@ formatConsoleLog logging log =
                   (logging ^. #cmdNameTrunc)
                   cmd
            in -- truncate entire line if necessary
-              truncateCmdLineFn $
-                mconcat
+              truncateCmdLineFn
+                $ mconcat
                   [ brackets False prefix,
                     cmd',
                     msgStripped

@@ -296,8 +296,8 @@ combineCmdLog (Nothing, _, _) Nothing = Nothing
 combineCmdLog (Just True, sc, lt) Nothing = Just $ MkCmdLoggingToml sc lt
 -- 3. If toml specifies cmd logging, combine args, favoring CLI as usual
 combineCmdLog (_, mStripControl, mlineTrunc) (Just toml) =
-  Just $
-    MkCmdLoggingToml
+  Just
+    $ MkCmdLoggingToml
       { stripControl = mStripControl <|> toml ^. #stripControl,
         lineTrunc = mlineTrunc <|> toml ^. #lineTrunc
       }
@@ -315,8 +315,8 @@ combineFileLog (Nothing, _, _, _) Nothing = Nothing
 combineFileLog (Just f, sc, m, sm) Nothing = Just $ MkFileLoggingToml f sc m sm
 -- 3. If toml specifies file logging, combine args, favoring CLI as usual
 combineFileLog (mpath, mStripControl, mMode, mSizeMode) (Just toml) =
-  Just $
-    MkFileLoggingToml
+  Just
+    $ MkFileLoggingToml
       { path = fromMaybe (toml ^. #path) mpath,
         stripControl = mStripControl <|> toml ^. #stripControl,
         mode = mMode <|> toml ^. #mode,
@@ -336,8 +336,8 @@ combineNotify (Nothing, _, _) Nothing = Nothing
 combineNotify (Just a, s, t) Nothing = Just $ MkNotifyToml a s t
 -- 3. If toml specifies notify, combine args, favoring CLI as usual
 combineNotify (a, s, t) (Just toml) =
-  Just $
-    MkNotifyToml
+  Just
+    $ MkNotifyToml
       { action = fromMaybe (toml ^. #action) a,
         system = s <|> toml ^. #system,
         timeout = t <|> toml ^. #timeout

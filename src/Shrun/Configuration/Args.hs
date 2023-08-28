@@ -18,6 +18,8 @@ import Data.String (IsString (..))
 import Data.Text qualified as T
 import Data.Time.Relative qualified as RelativeTime
 import Data.Version (Version (versionBranch))
+import Effects.FileSystem.Utils qualified as FsUtils
+import Effects.Optparse (validOsPath)
 import Options.Applicative
   ( ParseError (ErrorMsg),
     Parser,
@@ -88,7 +90,7 @@ instance DecodeTOML FileSizeMode where
 -- | Type for parsing command line args.
 data Args = MkArgs
   { -- | Optional config file.
-    configPath :: !(Maybe FilePath),
+    configPath :: !(Maybe OsPath),
     -- | Ignores toml config file.
     noConfig :: Bool,
     -- | Timeout.
@@ -221,8 +223,8 @@ parserInfoArgs =
     headerTxt = Just "Shrun: A tool for running shell commands concurrently."
     footerTxt = Just $ fromString versNum
     desc =
-      Chunk.paragraph $
-        mconcat
+      Chunk.paragraph
+        $ mconcat
           [ "Shrun runs shell commands concurrently. In addition to providing ",
             "basic timing and logging functionality, we also provide the ",
             "ability to pass in a config file that can be used to define ",
@@ -281,14 +283,14 @@ versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version
 defaultConfig :: Parser (a -> a)
 defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config" <> mkHelp help)
   where
-    txt = T.unlines $$(getDefaultConfigTH)
+    txt = T.unlines $$getDefaultConfigTH
     help = "Writes a default config.toml file to stdout."
 
-configParser :: Parser (Maybe FilePath)
+configParser :: Parser (Maybe OsPath)
 configParser =
-  OA.optional $
-    OA.option
-      OA.str
+  OA.optional
+    $ OA.option
+      validOsPath
       ( mconcat
           [ OA.long "config",
             OA.short 'c',
@@ -326,8 +328,8 @@ noConfigParser =
 
 timeoutParser :: Parser (Maybe Timeout)
 timeoutParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readTimeout
       ( mconcat
           [ OA.long "timeout",
@@ -349,15 +351,16 @@ readTimeout = do
   s <- OA.str
   case RelativeTime.fromString s of
     Left _ ->
-      OA.readerAbort $
-        ErrorMsg $
-          "Could not parse timeout: " <> s
+      OA.readerAbort
+        $ ErrorMsg
+        $ "Could not parse timeout: "
+        <> s
     Right t -> pure $ MkTimeout $ RelativeTime.toSeconds t
 
 noTimeoutParser :: Parser Bool
 noTimeoutParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-timeout",
         OA.hidden,
         mkHelp "Disables --timeout."
@@ -365,8 +368,8 @@ noTimeoutParser =
 
 cmdNameTruncParser :: Parser (Maybe (Truncation TCmdName))
 cmdNameTruncParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readTruncation
       ( mconcat
           [ OA.long "cmd-name-trunc",
@@ -387,16 +390,16 @@ cmdNameTruncParser =
 
 noCmdNameTruncParser :: Parser Bool
 noCmdNameTruncParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-cmd-name-trunc",
         mkHelp "Disables --cmd-name-trunc."
       ]
 
 cmdLogLineTruncParser :: Parser (Maybe LineTruncation)
 cmdLogLineTruncParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       (defRead <|> readDetectTruncation)
       ( mconcat
           [ OA.long "cmd-log-line-trunc",
@@ -418,8 +421,8 @@ cmdLogLineTruncParser =
 
 noCmdLogLineTruncParser :: Parser Bool
 noCmdLogLineTruncParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-cmd-log-line-trunc",
         OA.hidden,
         mkHelp "Disables --cmd-log-line-trunc."
@@ -433,14 +436,15 @@ readDetectTruncation =
   OA.str >>= T.toCaseFold .> \case
     "detect" -> pure Detected
     bad ->
-      OA.readerAbort $
-        ErrorMsg $
-          "Unrecognized truncation option:" <> unpack bad
+      OA.readerAbort
+        $ ErrorMsg
+        $ "Unrecognized truncation option:"
+        <> unpack bad
 
 cmdLogStripControlParser :: Parser (Maybe StripControl)
 cmdLogStripControlParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readStripControl
       ( mconcat
           [ OA.long "cmd-log-strip-control",
@@ -469,14 +473,15 @@ readStripControl =
     "none" -> pure StripControlNone
     "smart" -> pure StripControlSmart
     bad ->
-      OA.readerAbort $
-        ErrorMsg $
-          "Unrecognized strip-control option: " <> unpack bad
+      OA.readerAbort
+        $ ErrorMsg
+        $ "Unrecognized strip-control option: "
+        <> unpack bad
 
 noCmdLogStripControlParser :: Parser Bool
 noCmdLogStripControlParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-cmd-log-strip-control",
         OA.hidden,
         mkHelp "Disables --cmd-log-strip-control."
@@ -484,8 +489,8 @@ noCmdLogStripControlParser =
 
 fileLogParser :: Parser (Maybe FilePathDefault)
 fileLogParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readLogFile
       ( mconcat
           [ OA.long "file-log",
@@ -507,8 +512,8 @@ fileLogParser =
 
 noFileLogParser :: Parser Bool
 noFileLogParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-file-log",
         OA.hidden,
         mkHelp "Disables --file-log."
@@ -520,12 +525,12 @@ readLogFile = do
   case fmap Ch.toLower f of
     "default" -> pure FPDefault
     "" -> fail "Empty path given for --file-log"
-    _ -> pure (FPManual f)
+    _ -> FPManual <$> FsUtils.encodeFpToOsFail f
 
 fileLogModeParser :: Parser (Maybe FileMode)
 fileLogModeParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readFileMode
       ( mconcat
           [ OA.long "file-log-mode",
@@ -538,8 +543,8 @@ fileLogModeParser =
 
 noFileLogModeParser :: Parser Bool
 noFileLogModeParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-file-log-mode",
         OA.hidden,
         mkHelp "Disables --file-log-mode."
@@ -551,14 +556,15 @@ readFileMode =
     "append" -> pure FileModeAppend
     "write" -> pure FileModeWrite
     bad ->
-      OA.readerAbort $
-        ErrorMsg $
-          "Unrecognized --file-log-mode option: " <> unpack bad
+      OA.readerAbort
+        $ ErrorMsg
+        $ "Unrecognized --file-log-mode option: "
+        <> unpack bad
 
 fileLogStripControlParser :: Parser (Maybe StripControl)
 fileLogStripControlParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readStripControl
       ( mconcat
           [ OA.long "file-log-strip-control",
@@ -575,8 +581,8 @@ fileLogStripControlParser =
 
 noFileLogStripControlParser :: Parser Bool
 noFileLogStripControlParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-file-log-strip-control",
         OA.hidden,
         mkHelp "Disables --file-log-strip-control."
@@ -584,8 +590,8 @@ noFileLogStripControlParser =
 
 fileLogSizeModeParser :: Parser (Maybe FileSizeMode)
 fileLogSizeModeParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readFileSize
       ( mconcat
           [ OA.long "file-log-size-mode",
@@ -605,8 +611,8 @@ fileLogSizeModeParser =
 
 noFileLogSizeModeParser :: Parser Bool
 noFileLogSizeModeParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-file-log-size-mode",
         OA.hidden,
         mkHelp "Disables --file-log-size-mode."
@@ -614,8 +620,8 @@ noFileLogSizeModeParser =
 
 cmdLogParser :: Parser (Maybe Bool)
 cmdLogParser =
-  OA.optional $
-    OA.flag'
+  OA.optional
+    $ OA.flag'
       True
       ( mconcat
           [ OA.short 'l',
@@ -634,8 +640,8 @@ cmdLogParser =
 
 noCmdLogParser :: Parser Bool
 noCmdLogParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-cmd-log",
         OA.hidden,
         mkHelp "Disables --cmd-log."
@@ -643,8 +649,8 @@ noCmdLogParser =
 
 commandDisplayParser :: Parser (Maybe KeyHide)
 commandDisplayParser =
-  OA.optional $
-    OA.flag'
+  OA.optional
+    $ OA.flag'
       KeyHideOn
       ( mconcat
           [ OA.short 'k',
@@ -663,8 +669,8 @@ commandDisplayParser =
 
 noKeyHideParser :: Parser Bool
 noKeyHideParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-key-hide",
         OA.hidden,
         mkHelp "Disables --key-hide."
@@ -672,8 +678,8 @@ noKeyHideParser =
 
 pollIntervalParser :: Parser (Maybe PollInterval)
 pollIntervalParser =
-  OA.optional $
-    OA.option
+  OA.optional
+    $ OA.option
       readPI
       ( mconcat
           [ OA.long "poll-interval",
@@ -687,9 +693,10 @@ pollIntervalParser =
       s <- OA.str
       case TR.readMaybe s of
         Nothing ->
-          OA.readerAbort $
-            ErrorMsg $
-              "Could not parse poll-interval: " <> s
+          OA.readerAbort
+            $ ErrorMsg
+            $ "Could not parse poll-interval: "
+            <> s
         Just n -> pure $ MkPollInterval n
     helpTxt =
       mconcat
@@ -713,8 +720,8 @@ pollIntervalParser =
 
 noPollIntervalParser :: Parser Bool
 noPollIntervalParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-poll-interval",
         OA.hidden,
         mkHelp "Disables --poll-interval."
@@ -722,13 +729,13 @@ noPollIntervalParser =
 
 timerFormatParser :: Parser (Maybe TimerFormat)
 timerFormatParser =
-  OA.optional $
-    OA.option readTimerFormat $
-      mconcat
-        [ OA.long "timer-format",
-          mkHelp helpTxt,
-          OA.metavar TimerFormat.timerFormatStr
-        ]
+  OA.optional
+    $ OA.option readTimerFormat
+    $ mconcat
+      [ OA.long "timer-format",
+        mkHelp helpTxt,
+        OA.metavar TimerFormat.timerFormatStr
+      ]
   where
     readTimerFormat = OA.str >>= TimerFormat.parseTimerFormat
     helpTxt =
@@ -739,8 +746,8 @@ timerFormatParser =
 
 noTimerFormatParser :: Parser Bool
 noTimerFormatParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-timer-format",
         OA.hidden,
         mkHelp "Disables --timer-format."
@@ -748,14 +755,14 @@ noTimerFormatParser =
 
 initParser :: Parser (Maybe Text)
 initParser =
-  OA.optional $
-    OA.option OA.str $
-      mconcat
-        [ OA.long "init",
-          OA.short 'i',
-          mkHelp helpTxt,
-          OA.metavar "STRING"
-        ]
+  OA.optional
+    $ OA.option OA.str
+    $ mconcat
+      [ OA.long "init",
+        OA.short 'i',
+        mkHelp helpTxt,
+        OA.metavar "STRING"
+      ]
   where
     helpTxt =
       mconcat
@@ -766,8 +773,8 @@ initParser =
 
 noInitParser :: Parser Bool
 noInitParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-init",
         OA.hidden,
         mkHelp "Disables --init."
@@ -775,13 +782,13 @@ noInitParser =
 
 notifySystemParser :: Parser (Maybe NotifySystemP1)
 notifySystemParser =
-  OA.optional $
-    OA.option readNotifySystem $
-      mconcat
-        [ OA.long "notify-system",
-          mkHelp helpTxt,
-          OA.metavar Notify.notifySystemStr
-        ]
+  OA.optional
+    $ OA.option readNotifySystem
+    $ mconcat
+      [ OA.long "notify-system",
+        mkHelp helpTxt,
+        OA.metavar Notify.notifySystemStr
+      ]
   where
     readNotifySystem = OA.str >>= Notify.parseNotifySystem
     helpTxt =
@@ -792,8 +799,8 @@ notifySystemParser =
 
 noNotifySystemParser :: Parser Bool
 noNotifySystemParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-notify-system",
         OA.hidden,
         mkHelp "Disables --notify-system."
@@ -801,13 +808,13 @@ noNotifySystemParser =
 
 notifyActionParser :: Parser (Maybe NotifyAction)
 notifyActionParser =
-  OA.optional $
-    OA.option readNotifyAction $
-      mconcat
-        [ OA.long "notify-action",
-          mkHelp helpTxt,
-          OA.metavar Notify.notifyActionStr
-        ]
+  OA.optional
+    $ OA.option readNotifyAction
+    $ mconcat
+      [ OA.long "notify-action",
+        mkHelp helpTxt,
+        OA.metavar Notify.notifyActionStr
+      ]
   where
     readNotifyAction = OA.str >>= Notify.parseNotifyAction
     helpTxt =
@@ -819,8 +826,8 @@ notifyActionParser =
 
 noNotifyActionParser :: Parser Bool
 noNotifyActionParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-notify-action",
         OA.hidden,
         mkHelp "Disables --notify-action."
@@ -828,21 +835,21 @@ noNotifyActionParser =
 
 notifyTimeoutParser :: Parser (Maybe NotifyTimeout)
 notifyTimeoutParser =
-  OA.optional $
-    OA.option readNotifySystem $
-      mconcat
-        [ OA.long "notify-timeout",
-          mkHelp helpTxt,
-          OA.metavar Notify.notifyTimeoutStr
-        ]
+  OA.optional
+    $ OA.option readNotifySystem
+    $ mconcat
+      [ OA.long "notify-timeout",
+        mkHelp helpTxt,
+        OA.metavar Notify.notifyTimeoutStr
+      ]
   where
     readNotifySystem = OA.str >>= Notify.parseNotifyTimeout
     helpTxt = "When to timeout success notifications. Defaults to 10 seconds."
 
 noNotifyTimeoutParser :: Parser Bool
 noNotifyTimeoutParser =
-  OA.switch $
-    mconcat
+  OA.switch
+    $ mconcat
       [ OA.long "no-notify-timeout",
         OA.hidden,
         mkHelp "Disables --notify-timeout."

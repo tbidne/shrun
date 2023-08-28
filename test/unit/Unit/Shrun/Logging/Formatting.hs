@@ -147,8 +147,9 @@ consoleLogProps =
 
 messageProps :: TestTree
 messageProps =
-  testPropertyNamed "Includes message" "messageProps" $
-    property $ do
+  testPropertyNamed "Includes message" "messageProps"
+    $ property
+    $ do
       env <- forAll genEnv
       log@MkLog {msg} <- forAll LGens.genLog
       let result = formatConsoleLog env log
@@ -156,8 +157,9 @@ messageProps =
 
 prefixProps :: TestTree
 prefixProps =
-  testPropertyNamed "Formats prefix" "prefixProps" $
-    property $ do
+  testPropertyNamed "Formats prefix" "prefixProps"
+    $ property
+    $ do
       env <- forAll genEnv
       log@MkLog {lvl} <- forAll LGens.genLog
       let result = formatConsoleLog env log
@@ -166,8 +168,9 @@ prefixProps =
 
 displayCmdProps :: TestTree
 displayCmdProps =
-  testPropertyNamed "Displays command literal" "displayCmdProps" $
-    property $ do
+  testPropertyNamed "Displays command literal" "displayCmdProps"
+    $ property
+    $ do
       env <- forAll genEnvDispCmd
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
       let result = formatConsoleLog env log
@@ -175,8 +178,9 @@ displayCmdProps =
 
 displayKeyProps :: TestTree
 displayKeyProps =
-  testPropertyNamed "Displays command lkey" "displayKeyProps" $
-    property $ do
+  testPropertyNamed "Displays command lkey" "displayKeyProps"
+    $ property
+    $ do
       env <- forAll genEnvDispKey
       log@MkLog {cmd = Just (MkCommand (Just key) _)} <- forAll LGens.genLogWithCmdKey
       let result = formatConsoleLog env log
@@ -184,8 +188,9 @@ displayKeyProps =
 
 cmdTruncProps :: TestTree
 cmdTruncProps =
-  testPropertyNamed "Truncates long command" "cmdTruncProps" $
-    property $ do
+  testPropertyNamed "Truncates long command" "cmdTruncProps"
+    $ property
+    $ do
       (env, cmdNameTrunc) <- forAll genEnvCmdTrunc
       let env' = set' #cmdTrunc (Just cmdNameTrunc) env
       cmdTxt <- forAll genLongCmdText
@@ -210,8 +215,9 @@ cmdTruncProps =
 
 lineTruncProps :: TestTree
 lineTruncProps =
-  testPropertyNamed "Truncates long line" "lineTruncProps" $
-    property $ do
+  testPropertyNamed "Truncates long line" "lineTruncProps"
+    $ property
+    $ do
       env <- forAll genEnvLineTrunc
       msg' <- forAll genLongLineText
       log <- forAll LGens.genLog
@@ -296,8 +302,9 @@ fileLogProps =
 
 timestampProps :: TestTree
 timestampProps =
-  testPropertyNamed "Starts with timestamp" "timestampProps" $
-    property $ do
+  testPropertyNamed "Starts with timestamp" "timestampProps"
+    $ property
+    $ do
       log <- forAll LGens.genLog
       let result = formatFileLog KeyHideOn log
           (res, rest) = Utils.breakStripPoint sysTimeNE result
@@ -307,8 +314,9 @@ timestampProps =
 
 fileLogMessageProps :: TestTree
 fileLogMessageProps =
-  testPropertyNamed "Includes message" "fileLogMessageProps" $
-    property $ do
+  testPropertyNamed "Includes message" "fileLogMessageProps"
+    $ property
+    $ do
       log@MkLog {msg} <- forAll LGens.genLog
       let result = formatFileLog KeyHideOn log
       annotate $ T.unpack result
@@ -316,8 +324,9 @@ fileLogMessageProps =
 
 fileLogPrefixProps :: TestTree
 fileLogPrefixProps =
-  testPropertyNamed "Formats prefix" "fileLogPrefixProps" $
-    property $ do
+  testPropertyNamed "Formats prefix" "fileLogPrefixProps"
+    $ property
+    $ do
       log@MkLog {lvl} <- forAll LGens.genLog
       let result = formatFileLog KeyHideOn log
       let pfx = Formatting.levelToPrefix lvl
@@ -326,8 +335,9 @@ fileLogPrefixProps =
 
 commandProps :: TestTree
 commandProps =
-  testPropertyNamed "Formats command" "commandProps" $
-    property $ do
+  testPropertyNamed "Formats command" "commandProps"
+    $ property
+    $ do
       log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
       let cmdTxt = "[" <> Utils.stripControlAll cmd' <> "]"
           result = formatFileLog KeyHideOn log
@@ -337,8 +347,9 @@ commandProps =
 
 commandPropsShowKey :: TestTree
 commandPropsShowKey =
-  testPropertyNamed "Formats command with KeyHideOff" "commandProps" $
-    property $ do
+  testPropertyNamed "Formats command with KeyHideOff" "commandProps"
+    $ property
+    $ do
       log@MkLog {cmd = Just (MkCommand mk cmd')} <- forAll LGens.genLogWithCmd
       let cmdTxt = case mk of
             Nothing -> "[" <> Utils.stripControlAll cmd' <> "]"
@@ -350,8 +361,9 @@ commandPropsShowKey =
 
 shapeProps :: TestTree
 shapeProps =
-  testPropertyNamed "Formats shape" "shapeProps" $
-    property $ do
+  testPropertyNamed "Formats shape" "shapeProps"
+    $ property
+    $ do
       log@MkLog {cmd, msg} <- forAll LGens.genLogWithCmd
       let result = formatFileLog KeyHideOn log
           expected =
@@ -368,8 +380,9 @@ shapeProps =
 
 formatFileLog :: KeyHide -> Log -> Text
 formatFileLog keyHide log =
-  view #unFileLog $
-    Formatting.formatFileLog @MockTime keyHide fileLog log ^. #runMockTime
+  view #unFileLog
+    $ Formatting.formatFileLog @MockTime keyHide fileLog log
+    ^. #runMockTime
 
 fileLog :: FileLogging
 fileLog = MkFileLogging StripControlNone (error err)
@@ -415,8 +428,8 @@ includesOrTruncated :: Text -> Text -> PropertyT IO ()
 includesOrTruncated expected result = do
   annotate (T.unpack expected)
   annotate (T.unpack result)
-  assert $
-    T.strip expected
-      `T.isInfixOf` result
-      || "..."
-        `T.isInfixOf` result
+  assert
+    $ T.strip expected
+    `T.isInfixOf` result
+    || "..."
+    `T.isInfixOf` result

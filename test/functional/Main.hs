@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Runs functional tests.
 module Main (main) where
 
@@ -40,15 +42,15 @@ specs args = do
 
 setup :: IO TestArgs
 setup = do
-  rootTmpDir <- (</> "shrun") <$> Dir.getTemporaryDirectory
-  let workingTmpDir = rootTmpDir </> "test/functional"
+  rootTmpDir <- (</> [osp|shrun|]) <$> Dir.getTemporaryDirectory
+  let workingTmpDir = rootTmpDir </> [osp|test/functional|]
 
-  cwd <- (</> "test/functional") <$> Dir.getCurrentDirectory
-  let lp = cwd </> "config.toml"
+  cwd <- (</> [osp|test/functional|]) <$> Dir.getCurrentDirectory
+  let lp = cwd </> [osp|config.toml|]
 
   Dir.createDirectoryIfMissing True workingTmpDir
-  pure $
-    MkTestArgs
+  pure
+    $ MkTestArgs
       { rootDir = rootTmpDir,
         tmpDir = workingTmpDir,
         configPath = lp
@@ -61,6 +63,6 @@ teardown testArgs = do
 
   void $ tryAny $ do
     removeDirectoryIfExists cwd
-    removeDirectoryIfExists $ root </> "test/functional"
-    removeDirectoryIfExists $ root </> "test"
+    removeDirectoryIfExists $ root </> [osp|test/functional|]
+    removeDirectoryIfExists $ root </> [osp|test|]
     removeDirectoryIfExists root

@@ -10,8 +10,8 @@ import Unit.Shrun.Utils qualified
 -- | Entry point for unit tests.
 main :: IO ()
 main =
-  defaultMain $
-    testGroup
+  defaultMain
+    $ testGroup
       "Unit tests"
       [ Unit.Shrun.Configuration.Args.tests,
         Unit.Shrun.Configuration.Legend.tests,

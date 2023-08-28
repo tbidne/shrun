@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 -- | Tests for Shrun.Args
 module Unit.Shrun.Configuration.Args (tests) where
@@ -55,8 +56,8 @@ parseDefaultArgs :: TestTree
 parseDefaultArgs = testCase "Should parse default args" $ do
   let argList = ["command"]
       expected =
-        Just $
-          MkArgs
+        Just
+          $ MkArgs
             { configPath = Nothing,
               noConfig = False,
               timeout = Nothing,
@@ -106,24 +107,24 @@ configSpecs =
 
 parseShortConfig :: TestTree
 parseShortConfig =
-  testCase "Should parse short config" $
-    verifyResult argList expected
+  testCase "Should parse short config"
+    $ verifyResult argList expected
   where
     argList = ["-c./path/config.toml", "command"]
-    expected = updateDefArgs #configPath "./path/config.toml"
+    expected = updateDefArgs #configPath [osp|./path/config.toml|]
 
 parseLongConfig :: TestTree
 parseLongConfig =
-  testCase "Should parse long config" $
-    verifyResult argList expected
+  testCase "Should parse long config"
+    $ verifyResult argList expected
   where
     argList = ["--config=./path/config.toml", "command"]
-    expected = updateDefArgs #configPath "./path/config.toml"
+    expected = updateDefArgs #configPath [osp|./path/config.toml|]
 
 parseNoConfig :: TestTree
 parseNoConfig =
-  testCase "Should parse no-config" $
-    verifyResult argList expected
+  testCase "Should parse no-config"
+    $ verifyResult argList expected
   where
     argList = ["--no-config", "command"]
     expected = ((_Just % #noConfig) .~ True) defArgs
@@ -143,54 +144,54 @@ timeoutSpecs =
 
 parseShortTimeout :: TestTree
 parseShortTimeout =
-  testCase "Should parse short timeout" $
-    verifyResult argList expected
+  testCase "Should parse short timeout"
+    $ verifyResult argList expected
   where
     argList = ["-t7", "command"]
     expected = updateDefArgs #timeout 7
 
 parseLongTimeout :: TestTree
 parseLongTimeout =
-  testCase "Should parse long timeout" $
-    verifyResult argList expected
+  testCase "Should parse long timeout"
+    $ verifyResult argList expected
   where
     argList = ["--timeout=7", "command"]
     expected = updateDefArgs #timeout 7
 
 parseTimeString :: TestTree
 parseTimeString =
-  testCase "Should parse time string" $
-    verifyResult argList expected
+  testCase "Should parse time string"
+    $ verifyResult argList expected
   where
     argList = ["-t2h4s", "command"]
     expected = updateDefArgs #timeout 7204
 
 parseLongTimeString :: TestTree
 parseLongTimeString =
-  testCase "Should parse full time string" $
-    verifyResult argList expected
+  testCase "Should parse full time string"
+    $ verifyResult argList expected
   where
     argList = ["--timeout=1d2h3m4s", "command"]
     expected = updateDefArgs #timeout 93784
 
 parseTimeoutWordFail :: TestTree
 parseTimeoutWordFail =
-  testCase "Word should fail" $
-    verifyResult argList Nothing
+  testCase "Word should fail"
+    $ verifyResult argList Nothing
   where
     argList = ["--timeout=cat", "command"]
 
 parseNegativeTimeoutFail :: TestTree
 parseNegativeTimeoutFail =
-  testCase "Negative should fail" $
-    verifyResult argList Nothing
+  testCase "Negative should fail"
+    $ verifyResult argList Nothing
   where
     argList = ["--timeout=-7", "command"]
 
 parseNoTimeout :: TestTree
 parseNoTimeout =
-  testCase "Parse --no-timeout" $
-    verifyResult argList expected
+  testCase "Parse --no-timeout"
+    $ verifyResult argList expected
   where
     argList = ["--no-timeout", "command"]
     expected = updateDefArgsFlag #noTimeout True
@@ -207,32 +208,32 @@ initSpecs =
 
 parseShortInit :: TestTree
 parseShortInit =
-  testCase "Should parse short init" $
-    verifyResult argList expected
+  testCase "Should parse short init"
+    $ verifyResult argList expected
   where
     argList = ["-i. ~/.bashrc", "command"]
     expected = updateDefArgs #init ". ~/.bashrc"
 
 parseLongInit1 :: TestTree
 parseLongInit1 =
-  testCase "Should parse long init" $
-    verifyResult argList expected
+  testCase "Should parse long init"
+    $ verifyResult argList expected
   where
     argList = ["--init=. ~/.bashrc", "command"]
     expected = updateDefArgs #init ". ~/.bashrc"
 
 parseLongInit2 :: TestTree
 parseLongInit2 =
-  testCase "Should parse long init" $
-    verifyResult argList expected
+  testCase "Should parse long init"
+    $ verifyResult argList expected
   where
     argList = ["--init", ". ~/.bashrc", "command"]
     expected = updateDefArgs #init ". ~/.bashrc"
 
 parseNoInit :: TestTree
 parseNoInit =
-  testCase "Parse --no-init" $
-    verifyResult argList expected
+  testCase "Parse --no-init"
+    $ verifyResult argList expected
   where
     argList = ["--no-init", "command"]
     expected = updateDefArgsFlag #noInit True
@@ -252,55 +253,55 @@ fileLoggingSpecs =
 
 parseShortFileLogging :: TestTree
 parseShortFileLogging =
-  testCase "Should parse filepath with -f" $
-    verifyResult argList expected
+  testCase "Should parse filepath with -f"
+    $ verifyResult argList expected
   where
     argList = ["-flogfile", "command"]
-    expected = updateDefArgs #fileLog (FPManual "logfile")
+    expected = updateDefArgs #fileLog (FPManual [osp|logfile|])
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging =
-  testCase "Should parse filepath with --file-log" $
-    verifyResult argList expected
+  testCase "Should parse filepath with --file-log"
+    $ verifyResult argList expected
   where
     argList = ["--file-log=logfile", "command"]
-    expected = updateDefArgs #fileLog (FPManual "logfile")
+    expected = updateDefArgs #fileLog (FPManual [osp|logfile|])
 
 parseLongDefaultFileLogging :: TestTree
 parseLongDefaultFileLogging =
-  testCase "Should parse default --file-log" $
-    verifyResult argList expected
+  testCase "Should parse default --file-log"
+    $ verifyResult argList expected
   where
     argList = ["--file-log", "default", "command"]
     expected = updateDefArgs #fileLog FPDefault
 
 parseShortDefaultFileLogging :: TestTree
 parseShortDefaultFileLogging =
-  testCase "Should parse default -f" $
-    verifyResult argList expected
+  testCase "Should parse default -f"
+    $ verifyResult argList expected
   where
     argList = ["-f", "default", "command"]
     expected = updateDefArgs #fileLog FPDefault
 
 parseShortEmptyFileLoggingFails :: TestTree
 parseShortEmptyFileLoggingFails =
-  testCase "Should parse empty -f as failure" $
-    verifyResult argList Nothing
+  testCase "Should parse empty -f as failure"
+    $ verifyResult argList Nothing
   where
     argList = ["-f", "command"]
 
 parseLongEmptyFileLoggingFails :: TestTree
 parseLongEmptyFileLoggingFails =
-  testCase desc $
-    verifyResult argList Nothing
+  testCase desc
+    $ verifyResult argList Nothing
   where
     desc = "Should parse empty --file-log as failure"
     argList = ["--file-log=", "command"]
 
 parseNoFileLog :: TestTree
 parseNoFileLog =
-  testCase "Parse --no-file-log" $
-    verifyResult argList expected
+  testCase "Parse --no-file-log"
+    $ verifyResult argList expected
   where
     argList = ["--no-file-log", "command"]
     expected = updateDefArgsFlag #noFileLog True
@@ -316,8 +317,8 @@ fileLogModeSpecs =
 
 parseFileLogModeAppend :: TestTree
 parseFileLogModeAppend =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse --file-log-mode append as FileModeAppend"
     argList = ["--file-log-mode", "append", "command"]
@@ -325,8 +326,8 @@ parseFileLogModeAppend =
 
 parseFileLogModeWrite :: TestTree
 parseFileLogModeWrite =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse --file-log-mode write as FileModeWrite"
     argList = ["--file-log-mode", "write", "command"]
@@ -334,8 +335,8 @@ parseFileLogModeWrite =
 
 parseNoFileLogMode :: TestTree
 parseNoFileLogMode =
-  testCase "Parse --no-file-log-mode" $
-    verifyResult argList expected
+  testCase "Parse --no-file-log-mode"
+    $ verifyResult argList expected
   where
     argList = ["--no-file-log-mode", "command"]
     expected = updateDefArgsFlag #noFileLogMode True
@@ -352,8 +353,8 @@ fileLogStripControlSpecs =
 
 parseFileLogStripControlAll :: TestTree
 parseFileLogStripControlAll =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse --file-log-strip-control all as StripControlAll"
     argList = ["--file-log-strip-control", "all", "command"]
@@ -361,8 +362,8 @@ parseFileLogStripControlAll =
 
 parseFileLogStripControlNone :: TestTree
 parseFileLogStripControlNone =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse --file-log-strip-control none as StripControlNone"
     argList = ["--file-log-strip-control", "none", "command"]
@@ -370,8 +371,8 @@ parseFileLogStripControlNone =
 
 parseFileLogStripControlSmart :: TestTree
 parseFileLogStripControlSmart =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse --file-log-strip-control smart as StripControlSmart"
     argList = ["--file-log-strip-control", "smart", "command"]
@@ -379,8 +380,8 @@ parseFileLogStripControlSmart =
 
 parseNoFileLogStripControl :: TestTree
 parseNoFileLogStripControl =
-  testCase "Parse --no-file-log-strip-control" $
-    verifyResult argList expected
+  testCase "Parse --no-file-log-strip-control"
+    $ verifyResult argList expected
   where
     argList = ["--no-file-log-strip-control", "command"]
     expected = updateDefArgsFlag #noFileLogStripControl True
@@ -396,8 +397,8 @@ fileLogSizeModeSpecs =
 
 parseFileLogSizeWarn :: TestTree
 parseFileLogSizeWarn =
-  testCase "Should parse --file-log-size-mode warn" $
-    verifyResult argList expected
+  testCase "Should parse --file-log-size-mode warn"
+    $ verifyResult argList expected
   where
     argList = ["--file-log-size-mode", "warn 10 gb", "command"]
     expected =
@@ -407,8 +408,8 @@ parseFileLogSizeWarn =
 
 parseFileLogSizeDelete :: TestTree
 parseFileLogSizeDelete =
-  testCase "Should parse --file-log-size-mode delete" $
-    verifyResult argList expected
+  testCase "Should parse --file-log-size-mode delete"
+    $ verifyResult argList expected
   where
     argList = ["--file-log-size-mode", "delete 2.4Kilobytes", "command"]
     expected =
@@ -418,8 +419,8 @@ parseFileLogSizeDelete =
 
 parseNoFileLogSizeMode :: TestTree
 parseNoFileLogSizeMode =
-  testCase "Parse --no-file-log-size-mode" $
-    verifyResult argList expected
+  testCase "Parse --no-file-log-size-mode"
+    $ verifyResult argList expected
   where
     argList = ["--no-file-log-size-mode", "command"]
     expected = updateDefArgsFlag #noFileLogSizeMode True
@@ -442,16 +443,16 @@ parseShortCommandLogging = testCase "Should parse -l as CmdLogging" $ do
 
 parseLongCommandLogging :: TestTree
 parseLongCommandLogging =
-  testCase "Should parse --cmd-log as CmdLogging" $
-    verifyResult argList expected
+  testCase "Should parse --cmd-log as CmdLogging"
+    $ verifyResult argList expected
   where
     argList = ["--cmd-log", "command"]
     expected = updateDefArgs #cmdLog True
 
 parseNoCmdLog :: TestTree
 parseNoCmdLog =
-  testCase "Parse --no-cmd-log" $
-    verifyResult argList expected
+  testCase "Parse --no-cmd-log"
+    $ verifyResult argList expected
   where
     argList = ["--no-cmd-log", "command"]
     expected = updateDefArgsFlag #noCmdLog True
@@ -467,24 +468,24 @@ commandDisplaySpecs =
 
 parseShortShowKey :: TestTree
 parseShortShowKey =
-  testCase "Should parse -k as KeyHideOn" $
-    verifyResult argList expected
+  testCase "Should parse -k as KeyHideOn"
+    $ verifyResult argList expected
   where
     argList = ["-k", "command"]
     expected = updateDefArgs #keyHide KeyHideOn
 
 parseLongShowKey :: TestTree
 parseLongShowKey =
-  testCase "Should parse --key-hide as KeyHideOff" $
-    verifyResult argList expected
+  testCase "Should parse --key-hide as KeyHideOff"
+    $ verifyResult argList expected
   where
     argList = ["--key-hide", "command"]
     expected = updateDefArgs #keyHide KeyHideOn
 
 parseNoKeyHide :: TestTree
 parseNoKeyHide =
-  testCase "Parse --no-key-hide" $
-    verifyResult argList expected
+  testCase "Parse --no-key-hide"
+    $ verifyResult argList expected
   where
     argList = ["--no-key-hide", "command"]
     expected = updateDefArgsFlag #noKeyHide True
@@ -500,24 +501,24 @@ pollIntervalSpecs =
 
 parseShortPollInterval :: TestTree
 parseShortPollInterval =
-  testCase "Should parse -p as poll-interval" $
-    verifyResult argList expected
+  testCase "Should parse -p as poll-interval"
+    $ verifyResult argList expected
   where
     argList = ["-p", "100", "command"]
     expected = updateDefArgs #pollInterval 100
 
 parseLongPollInterval :: TestTree
 parseLongPollInterval =
-  testCase "Should parse --poll-interval as poll-interval" $
-    verifyResult argList expected
+  testCase "Should parse --poll-interval as poll-interval"
+    $ verifyResult argList expected
   where
     argList = ["--poll-interval", "1000", "command"]
     expected = updateDefArgs #pollInterval 1000
 
 parseNoPollInterval :: TestTree
 parseNoPollInterval =
-  testCase "Parse --no-poll-interval" $
-    verifyResult argList expected
+  testCase "Parse --no-poll-interval"
+    $ verifyResult argList expected
   where
     argList = ["--no-poll-interval", "command"]
     expected = updateDefArgsFlag #noPollInterval True
@@ -535,40 +536,40 @@ timerFormatSpecs =
 
 parseTimerFormatDigitalCompact :: TestTree
 parseTimerFormatDigitalCompact =
-  testCase "Should parse --timer-format digital_compact as DigitalCompact" $
-    verifyResult argList expected
+  testCase "Should parse --timer-format digital_compact as DigitalCompact"
+    $ verifyResult argList expected
   where
     argList = ["--timer-format", "digital_compact", "command"]
     expected = updateDefArgs #timerFormat DigitalCompact
 
 parseTimerFormatDigitalFull :: TestTree
 parseTimerFormatDigitalFull =
-  testCase "Should parse --timer-format digital_full as DigitalFull" $
-    verifyResult argList expected
+  testCase "Should parse --timer-format digital_full as DigitalFull"
+    $ verifyResult argList expected
   where
     argList = ["--timer-format", "digital_full", "command"]
     expected = updateDefArgs #timerFormat DigitalFull
 
 parseTimerFormatProseCompact :: TestTree
 parseTimerFormatProseCompact =
-  testCase "Should parse --timer-format prose_compact as ProseCompact" $
-    verifyResult argList expected
+  testCase "Should parse --timer-format prose_compact as ProseCompact"
+    $ verifyResult argList expected
   where
     argList = ["--timer-format", "prose_compact", "command"]
     expected = updateDefArgs #timerFormat ProseCompact
 
 parseTimerFormatProseFull :: TestTree
 parseTimerFormatProseFull =
-  testCase "Should parse --timer-format prose_full as ProseFull" $
-    verifyResult argList expected
+  testCase "Should parse --timer-format prose_full as ProseFull"
+    $ verifyResult argList expected
   where
     argList = ["--timer-format", "prose_full", "command"]
     expected = updateDefArgs #timerFormat ProseFull
 
 parseNoTimerFormat :: TestTree
 parseNoTimerFormat =
-  testCase "Parse --no-timer-format" $
-    verifyResult argList expected
+  testCase "Parse --no-timer-format"
+    $ verifyResult argList expected
   where
     argList = ["--no-timer-format", "command"]
     expected = updateDefArgsFlag #noTimerFormat True
@@ -586,16 +587,16 @@ stripControlSpecs =
 
 parseShortStripControlAll :: TestTree
 parseShortStripControlAll =
-  testCase "Should parse -sall as StripControlAll" $
-    verifyResult argList expected
+  testCase "Should parse -sall as StripControlAll"
+    $ verifyResult argList expected
   where
     argList = ["-sall", "command"]
     expected = updateDefArgs #cmdLogStripControl StripControlAll
 
 parseShortStripControlNone :: TestTree
 parseShortStripControlNone =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse -snone as StripControlNone"
     argList = ["-snone", "command"]
@@ -603,8 +604,8 @@ parseShortStripControlNone =
 
 parseShortStripControlSmart :: TestTree
 parseShortStripControlSmart =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse -ssmart as StripControlSmart"
     argList = ["-ssmart", "command"]
@@ -612,8 +613,8 @@ parseShortStripControlSmart =
 
 parseLongStripControlSmart :: TestTree
 parseLongStripControlSmart =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse --cmd-log-strip-control=smart as StripControlSmart"
     argList = ["--cmd-log-strip-control=smart", "command"]
@@ -621,8 +622,8 @@ parseLongStripControlSmart =
 
 parseNoCmdLogStripControl :: TestTree
 parseNoCmdLogStripControl =
-  testCase "Parse --no-cmd-log-strip-control" $
-    verifyResult argList expected
+  testCase "Parse --no-cmd-log-strip-control"
+    $ verifyResult argList expected
   where
     argList = ["--no-cmd-log-strip-control", "command"]
     expected = updateDefArgsFlag #noCmdLogStripControl True
@@ -638,8 +639,8 @@ cmdNameTruncSpecs =
 
 parseShortCmdNameTrunc :: TestTree
 parseShortCmdNameTrunc =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse -x as command name truncation"
     argList = ["-x", "15", "command"]
@@ -656,8 +657,8 @@ parseLongCmdNameTrunc =
 
 parseNoCmdNameTrunc :: TestTree
 parseNoCmdNameTrunc =
-  testCase "Parse --no-cmd-name-trunc" $
-    verifyResult argList expected
+  testCase "Parse --no-cmd-name-trunc"
+    $ verifyResult argList expected
   where
     argList = ["--no-cmd-name-trunc", "command"]
     expected = updateDefArgsFlag #noCmdNameTrunc True
@@ -674,8 +675,8 @@ cmdLineTruncSpecs =
 
 parseShortCmdLineTrunc :: TestTree
 parseShortCmdLineTrunc =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse -y as command line truncation"
     argList = ["-y", "15", "command"]
@@ -692,8 +693,8 @@ parseLongCmdLineTrunc =
 
 parseDetectCmdLineTrunc :: TestTree
 parseDetectCmdLineTrunc =
-  testCase desc $
-    verifyResult argList expected
+  testCase desc
+    $ verifyResult argList expected
   where
     desc = "Should parse --cmd-log-line-trunc detect as detect command line truncation"
     argList = ["--cmd-log-line-trunc", "detect", "command"]
@@ -701,8 +702,8 @@ parseDetectCmdLineTrunc =
 
 parseNoCmdLogLineTrunc :: TestTree
 parseNoCmdLogLineTrunc =
-  testCase "Parse --no-cmd-log-line-trunc" $
-    verifyResult argList expected
+  testCase "Parse --no-cmd-log-line-trunc"
+    $ verifyResult argList expected
   where
     argList = ["--no-cmd-log-line-trunc", "command"]
     expected = updateDefArgsFlag #noCmdLogLineTrunc True
@@ -732,8 +733,8 @@ parseNotifyActionCommand = testCase desc $ verifyResult argList expected
 
 parseNoNotifyAction :: TestTree
 parseNoNotifyAction =
-  testCase "Parse --no-notify-action" $
-    verifyResult argList expected
+  testCase "Parse --no-notify-action"
+    $ verifyResult argList expected
   where
     argList = ["--no-notify-action", "command"]
     expected = updateDefArgsFlag #noNotifyAction True
@@ -771,8 +772,8 @@ parseNotifySystemAppleScript = testCase desc $ verifyResult argList expected
 
 parseNoNotifySystem :: TestTree
 parseNoNotifySystem =
-  testCase "Parse --no-notify-system" $
-    verifyResult argList expected
+  testCase "Parse --no-notify-system"
+    $ verifyResult argList expected
   where
     argList = ["--no-notify-system", "command"]
     expected = updateDefArgsFlag #noNotifySystem True
@@ -802,8 +803,8 @@ parseNotifyTimeoutNever = testCase desc $ verifyResult argList expected
 
 parseNoNotifyTimeout :: TestTree
 parseNoNotifyTimeout =
-  testCase "Parse --no-notify-timeout" $
-    verifyResult argList expected
+  testCase "Parse --no-notify-timeout"
+    $ verifyResult argList expected
   where
     argList = ["--no-notify-timeout", "command"]
     expected = updateDefArgsFlag #noNotifyTimeout True
@@ -818,13 +819,13 @@ commandSpecs =
 
 emptyCommandsFail :: TestTree
 emptyCommandsFail =
-  testCase "Empty commands fail" $
-    verifyResult [] Nothing
+  testCase "Empty commands fail"
+    $ verifyResult [] Nothing
 
 parseCommands :: TestTree
 parseCommands =
-  testCase "Bare strings parsed as commands" $
-    verifyResult argList expected
+  testCase "Bare strings parsed as commands"
+    $ verifyResult argList expected
   where
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) defArgs

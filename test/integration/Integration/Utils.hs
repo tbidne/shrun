@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
@@ -17,6 +18,7 @@ import DBus.Client (Client (..))
 import Data.Maybe (isJust)
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader (MonadPathReader (..))
+import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.Terminal (MonadTerminal (..))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
@@ -33,7 +35,12 @@ import Shrun.Data.Timeout (Timeout)
 import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Notify.MonadDBus (MonadDBus (..))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend (..))
-import Shrun.Notify.Types (NotifyAction, NotifySystem (..), NotifySystemP1, NotifyTimeout)
+import Shrun.Notify.Types
+  ( NotifyAction,
+    NotifySystem (..),
+    NotifySystemP1,
+    NotifyTimeout,
+  )
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
@@ -70,9 +77,11 @@ instance MonadPathReader ConfigIO where
   doesDirectoryExist = liftIO . doesDirectoryExist
 
 #if OSX
-  getXdgDirectory _ _ = pure (concatDirs ["test", "integration", "toml", "osx"])
+  getXdgDirectory _ _ =
+    pure (FsUtils.unsafeEncodeFpToOs $ concatDirs ["test", "integration", "toml", "osx"])
 #else
-  getXdgDirectory _ _ = pure (concatDirs ["test", "integration", "toml"])
+  getXdgDirectory _ _ =
+    pure (FsUtils.unsafeEncodeFpToOs $ concatDirs ["test", "integration", "toml"])
 #endif
 
 instance MonadTerminal ConfigIO where
@@ -88,8 +97,8 @@ instance MonadTerminal ConfigIO where
 
 instance MonadDBus ConfigIO where
   connectSession =
-    pure $
-      Client
+    pure
+      $ Client
         { clientSocket = error "todo",
           clientPendingCalls = error "todo",
           clientSignalHandlers = error "todo",
@@ -129,7 +138,7 @@ runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
 
 instance MonadPathReader NoConfigIO where
-  getXdgDirectory _ _ = pure "./"
+  getXdgDirectory _ _ = pure [osp|./|]
   getHomeDirectory = error "getHomeDirectory: unimplemented"
   doesFileExist = liftIO . doesFileExist
 

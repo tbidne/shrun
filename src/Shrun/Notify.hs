@@ -44,8 +44,8 @@ sendNotif summary body urgency = do
             `catchAny` \ex -> withRegion Linear (logEx ex)
 
     logEx ex r =
-      Logging.putRegionLog r $
-        MkLog
+      Logging.putRegionLog r
+        $ MkLog
           { cmd = Nothing,
             msg = "Could not send notification: " <> T.pack (displayException ex),
             lvl = LevelError,

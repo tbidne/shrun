@@ -141,6 +141,9 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
 
 builderToPath :: Builder -> Text -> Text -> Text
 builderToPath path l v =
-  LazyT.toStrict $
-    LTBuilder.toLazyText $
-      path <> LTBuilder.fromText l <> " -> " <> LTBuilder.fromText v
+  LazyT.toStrict
+    $ LTBuilder.toLazyText
+    $ path
+    <> LTBuilder.fromText l
+    <> " -> "
+    <> LTBuilder.fromText v

@@ -13,6 +13,8 @@ module Integration.Prelude
   )
 where
 
+import Effects.FileSystem.Utils as X ((</>!))
+import Effects.FileSystem.Utils qualified as FsUtils
 import Shrun.Prelude as X
 import Test.Tasty as X
   ( TestName,
@@ -30,8 +32,8 @@ import Test.Tasty.HUnit as X
   )
 
 data TestArgs = MkTestArgs
-  { rootTmpDir :: FilePath,
-    workingTmpDir :: FilePath
+  { rootTmpDir :: !OsPath,
+    workingTmpDir :: !OsPath
   }
   deriving stock (Eq, Show)
 
@@ -64,7 +66,7 @@ getIntConfig fileName =
     <> ".toml"
 
 concatDirs :: [FilePath] -> FilePath
-concatDirs = foldr (</>) []
+concatDirs = foldr FsUtils.combineFilePaths []
 
 osExt :: FilePath -> FilePath
 #if OSX

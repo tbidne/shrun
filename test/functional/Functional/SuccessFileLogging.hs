@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Functional test for a successful run that displays the key rather
 -- than the command.
 module Functional.SuccessFileLogging (spec) where
@@ -25,7 +27,7 @@ fileLog args =
   testCase "Should write logs to file" $ do
     MkTestArgs {tmpDir} <- args
     let outpath = tmpDir </> outfile
-        argList = ["--no-config", "-f" <> outpath, "sleep 2"]
+        argList = ["--no-config", "-f" <> unsafeDecodeOsToFp outpath, "sleep 2"]
 
     _ <- run argList
     fileResult <- readFileUtf8Lenient outpath
@@ -39,8 +41,8 @@ expected =
     <$> [ withSuccessPrefix "sleep 2"
         ]
 
-outfile :: String
-outfile = "log"
+outfile :: OsPath
+outfile = [osp|log|]
 
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do

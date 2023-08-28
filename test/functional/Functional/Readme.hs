@@ -3,6 +3,7 @@ module Functional.Readme (specs) where
 
 import DBus.Notify (UrgencyLevel (..))
 import Data.Text qualified as T
+import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (..))
 import Shrun.Notify.MonadNotify (ShrunNote (..))
@@ -188,11 +189,12 @@ cmdlogOff =
 
 fileLog :: IO TestArgs -> TestTree
 fileLog testArgs = testCase "Runs file-log example" $ do
-  outFile <- (</> "readme-file-out.log") . view #tmpDir <$> testArgs
-  let args =
+  outFile <- (</>! "readme-file-out.log") . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
         withNoConfig
           [ "--file-log",
-            outFile,
+            outFileStr,
             "sleep 2",
             "bad",
             "for i in {1..3}; do echo hi; sleep 1; done"
@@ -395,11 +397,12 @@ stripControlSmart = testCase "Runs --cmd-log-strip-control smart example" $ do
 
 fileLogStripControlAll :: IO TestArgs -> TestTree
 fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all example" $ do
-  outFile <- (</> "readme-file-out-strip-control-all.log") . view #tmpDir <$> testArgs
-  let args =
+  outFile <- (</>! "readme-file-out-strip-control-all.log") . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
         withNoConfig
           [ "--file-log",
-            outFile,
+            outFileStr,
             "--file-log-strip-control",
             "all",
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
@@ -416,11 +419,12 @@ fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all exam
 
 fileLogStripControlNone :: IO TestArgs -> TestTree
 fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none example" $ do
-  outFile <- (</> "readme-file-out-strip-control-none.log") . view #tmpDir <$> testArgs
-  let args =
+  outFile <- (</>! "readme-file-out-strip-control-none.log") . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
         withNoConfig
           [ "--file-log",
-            outFile,
+            outFileStr,
             "--file-log-strip-control",
             "none",
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
@@ -439,11 +443,12 @@ fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none ex
 
 fileLogStripControlSmart :: IO TestArgs -> TestTree
 fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart example" $ do
-  outFile <- (</> "readme-file-out-strip-control-smart.log") . view #tmpDir <$> testArgs
-  let args =
+  outFile <- (</>! "readme-file-out-strip-control-smart.log") . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
         withNoConfig
           [ "--file-log",
-            outFile,
+            outFileStr,
             "--file-log-strip-control",
             "smart",
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"

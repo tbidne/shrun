@@ -11,7 +11,14 @@ spec :: IO TestArgs -> TestTree
 spec args =
   testCase "Should run commands successfully" $ do
     MkTestArgs {configPath} <- args
-    let argList = ["--config", configPath, "--key-hide", "--timeout", "5"] <> commands
+    let argList =
+          [ "--config",
+            unsafeDecodeOsToFp configPath,
+            "--key-hide",
+            "--timeout",
+            "5"
+          ]
+            <> commands
 
     results <- fmap MkResultText <$> (readIORef =<< runExitFailure argList)
 

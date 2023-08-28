@@ -37,9 +37,20 @@ where
 
 import Data.String as X (IsString)
 import Data.Typeable (typeRep)
+import Effects.FileSystem.Utils (combineFilePaths)
+import Effects.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
-import Shrun.Configuration.Env.Types (HasAnyError (..), HasCommands (..), HasInit (..), HasLogging (..), HasNotifyConfig (..), HasTimeout (..), Logging (..), NotifyEnv)
+import Shrun.Configuration.Env.Types
+  ( HasAnyError (..),
+    HasCommands (..),
+    HasInit (..),
+    HasLogging (..),
+    HasNotifyConfig (..),
+    HasTimeout (..),
+    Logging (..),
+    NotifyEnv,
+  )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
@@ -177,8 +188,8 @@ runMaybeException mException argList = do
         try @_ @e (SR.runShellT SR.shrun funcEnv) >>= \case
           Left _ -> pure (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
           Right _ ->
-            error $
-              mconcat
+            error
+              $ mconcat
                 [ "Expected exception <",
                   show (typeRep proxy),
                   ">, received none"
@@ -237,9 +248,9 @@ withNoConfig as =
 
 configPath :: String
 #if OSX
-configPath = "examples" </> "config_osx.toml"
+configPath = "examples" `cfp` "config_osx.toml"
 #else
-configPath = "examples" </> "config.toml"
+configPath = "examples" `cfp` "config.toml"
 #endif
 
 notifySystemArg :: String
@@ -248,3 +259,6 @@ notifySystemArg = "apple-script"
 #else
 notifySystemArg = "notify-send"
 #endif
+
+cfp :: FilePath -> FilePath -> FilePath
+cfp = combineFilePaths

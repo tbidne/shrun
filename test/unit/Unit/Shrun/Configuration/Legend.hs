@@ -35,8 +35,9 @@ tests =
 
 linesToMapSuccessProps :: TestTree
 linesToMapSuccessProps =
-  testPropertyNamed "linesToMap success props" "successProps" $
-    property $ do
+  testPropertyNamed "linesToMap success props" "successProps"
+    $ property
+    $ do
       commands <- forAll genGoodLines
       let result = linesToMap commands
       case result of
@@ -93,8 +94,9 @@ genVal = Gen.text range Gen.latin1
 
 translateProps :: TestTree
 translateProps =
-  testPropertyNamed "translateCommands includes everything" "translateProps" $
-    property $ do
+  testPropertyNamed "translateCommands includes everything" "translateProps"
+    $ property
+    $ do
       (legend, origCmds) <- forAll genLegendCommands
       let legendKeySet = Set.fromList $ Map.keys legend
           maybeFinalCmds = translateCommands legend origCmds
@@ -197,23 +199,23 @@ returnsRecursiveCmds :: TestTree
 returnsRecursiveCmds = testCase "Should return recursive commands" $ do
   let result = translateCommands legendMap ("all" :<|| [])
       expected =
-        Right $
-          MkCommand (Just "one") "cmd1"
-            :<|| [ MkCommand (Just "two") "cmd2",
-                   MkCommand Nothing "cmd3"
-                 ]
+        Right
+          $ MkCommand (Just "one") "cmd1"
+          :<|| [ MkCommand (Just "two") "cmd2",
+                 MkCommand Nothing "cmd3"
+               ]
   expected @=? result
 
 returnsRecursiveAndOtherCmds :: TestTree
 returnsRecursiveAndOtherCmds = testCase "Should return recursive commands and other" $ do
   let result = translateCommands legendMap ("all" :<|| ["other"])
       expected =
-        Right $
-          MkCommand (Just "one") "cmd1"
-            :<|| [ MkCommand (Just "two") "cmd2",
-                   MkCommand Nothing "cmd3",
-                   MkCommand Nothing "other"
-                 ]
+        Right
+          $ MkCommand (Just "one") "cmd1"
+          :<|| [ MkCommand (Just "two") "cmd2",
+                 MkCommand Nothing "cmd3",
+                 MkCommand Nothing "other"
+               ]
   expected @=? result
 
 noSplitNonKeyCmd :: TestTree
@@ -271,8 +273,9 @@ parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
 
 duplicateKeysThrowErr :: TestTree
 duplicateKeysThrowErr =
-  testCase "Duplicate keys should throw error" $
-    Left (MkDuplicateKeyError "a") @=? linesToMap result
+  testCase "Duplicate keys should throw error"
+    $ Left (MkDuplicateKeyError "a")
+    @=? linesToMap result
   where
     result =
       [ unsafeKeyVal "a" ["b"],

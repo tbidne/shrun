@@ -18,8 +18,8 @@ cradle:
     - path: "./test/functional"
       component: "shrun:test:functional"
 
-    - path: "./test/doctest"
-      component: "shrun:test:doctest"
-
     - path: "./benchmarks/Main.hs"
+      component: "shrun:bench:benchmarks"
+
+    - path: "./benchmarks/Bench/Prelude.hs"
       component: "shrun:bench:benchmarks"

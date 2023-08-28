@@ -4,6 +4,7 @@
 
 module Integration.Defaults (specs) where
 
+import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
   ( SimpleEnv (..),
@@ -95,10 +96,11 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
 cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
-  logPath <- (</> "cli-log") . view #workingTmpDir <$> testArgs
+  logPath <- (</>! "cli-log") . view #workingTmpDir <$> testArgs
   logsRef <- newIORef []
+  let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
 
-  makeEnvAndVerify (args logPath) (`runConfigIO` logsRef) expected
+  makeEnvAndVerify (args logPathStr) (`runConfigIO` logsRef) expected
     `finally` removeFileIfExists logPath
 
   logs <- readIORef logsRef

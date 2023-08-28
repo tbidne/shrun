@@ -1,9 +1,12 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module Main (main) where
 
 import Bench.Prelude
 import Control.DeepSeq (force)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.PathWriter qualified as WDir
+import Effects.FileSystem.Utils qualified as FsUtils
 import Shrun.Prelude hiding (IO)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.Tasty.Bench
@@ -31,10 +34,10 @@ basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
 cmdLogs :: Benchmark
 cmdLogs = bgroup "Command Logging" (runLoops ["-l", "--no-config"])
 
-fileLogs :: FilePath -> Benchmark
-fileLogs testDir = bgroup "File Logging" (runLoops ["-f", fp, "--no-config"])
+fileLogs :: OsPath -> Benchmark
+fileLogs testDir = bgroup "File Logging" (runLoops ["-f", FsUtils.unsafeDecodeOsToFp fp, "--no-config"])
   where
-    fp = testDir </> "bench.log"
+    fp = testDir </> [osp|bench.log|]
 
 runLoops :: List String -> List Benchmark
 runLoops args = fmap f loops
@@ -56,15 +59,19 @@ loops =
 bashLoop :: String -> String
 bashLoop bound = "for i in {1.." ++ bound ++ "}; do echo ${i}; done"
 
-setup :: IO FilePath
+setup :: IO OsPath
 setup = do
-  testDir <- (\tmp -> tmp </> "shrun" </> "bench") <$> RDir.getTemporaryDirectory
+  testDir <-
+    (\tmp -> tmp </> [osp|shrun|] </> [osp|bench|])
+      <$> RDir.getTemporaryDirectory
   WDir.createDirectoryIfMissing True testDir
   pure testDir
 
-teardown :: FilePath -> IO ()
+teardown :: OsPath -> IO ()
 teardown testDir = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     cleanup = WDir.removePathForcibly testDir
     doNothing =
-      putStrLn $ "*** Not cleaning up tmp dir: " <> testDir
+      putStrLn
+        $ "*** Not cleaning up tmp dir: "
+        <> FsUtils.decodeOsToFpShow testDir

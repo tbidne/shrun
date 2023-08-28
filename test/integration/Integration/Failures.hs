@@ -42,7 +42,7 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
   logs <- readIORef logsRef
   logs @=? []
   where
-    expectedErr = "bad-file.toml: withBinaryFile: does not exist (No such file or directory)"
+    expectedErr = "bad-file.toml: openFdAt: does not exist (No such file or directory)"
 
 duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
@@ -188,9 +188,9 @@ linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
 
 runCaptureError :: (Exception e) => [String] -> IORef [Text] -> IO (Maybe e)
 runCaptureError args logsRef =
-  flip runConfigIO logsRef $
-    withArgs args (withEnv pure $> Nothing)
-      `catchCS` \(ex :: e) -> pure (Just ex)
+  flip runConfigIO logsRef
+    $ withArgs args (withEnv pure $> Nothing)
+    `catchCS` \(ex :: e) -> pure (Just ex)
 
 exContains :: (Exception e) => Text -> e -> Assertion
 exContains txt ex = assertBool (T.unpack desc) . T.isInfixOf txt $ exTxt

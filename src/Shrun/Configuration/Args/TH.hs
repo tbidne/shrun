@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Provides TH for CLI args.
 module Shrun.Configuration.Args.TH
   ( getDefaultConfigTH,
@@ -13,4 +15,4 @@ import Shrun.Prelude
 getDefaultConfigTH :: Code Q (List Text)
 getDefaultConfigTH = bindCode (runIO getDefault) liftTyped
   where
-    getDefault = T.lines <$> readFileUtf8Lenient "examples/default.toml"
+    getDefault = T.lines <$> readFileUtf8Lenient [osp|examples/default.toml|]

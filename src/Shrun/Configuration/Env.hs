@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides functions for creating 'Env' from CLI/Toml configuration.
@@ -18,6 +19,7 @@ import Data.Bytes
 import Data.Sequence qualified as Seq
 import Effects.FileSystem.HandleWriter (withBinaryFile)
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
+import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
@@ -113,12 +115,12 @@ withEnv onEnv = do
         --    (e.g. file errors, toml errors).
         Nothing -> do
           configDir <- getShrunXdgConfig
-          let path = configDir </> "config.toml"
+          let path = configDir </> [osp|config.toml|]
           b <- doesFileExist path
           if b
             then readConfig path
             else do
-              putTextLn ("No default config found at: " <> pack path)
+              putTextLn ("No default config found at: " <> FsUtils.decodeOsToFpShowText path)
               pure defaultTomlConfig
 
   let finalConfig = mergeConfig args tomlConfig
@@ -232,7 +234,7 @@ withMLogging cfg onLogging = case cfg ^? (#fileLog %? #path) of
   -- 2. Use the default path.
   Just FPDefault -> do
     stateDir <- getShrunXdgState
-    let fp = stateDir </> "log"
+    let fp = stateDir </> [osp|log|]
     stateExists <- doesDirectoryExist stateDir
     unless stateExists (createDirectoryIfMissing True stateDir)
 
@@ -262,15 +264,15 @@ handleLogFileSize ::
     MonadTerminal m
   ) =>
   TomlConfig ->
-  FilePath ->
+  OsPath ->
   m ()
 handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
   fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
   case fileSizeMode of
     FileSizeModeWarn warnSize ->
-      when (fileSize > warnSize) $
-        putTextLn $
-          sizeWarning warnSize fileSize
+      when (fileSize > warnSize)
+        $ putTextLn
+        $ sizeWarning warnSize fileSize
     FileSizeModeDelete delSize ->
       when (fileSize > delSize) $ do
         putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
@@ -281,7 +283,7 @@ handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
     sizeWarning warnSize fileSize =
       mconcat
         [ "Warning: log file '",
-          pack fp,
+          FsUtils.decodeOsToFpShowText fp,
           "' has size: ",
           formatBytes fileSize,
           ", but specified threshold is: ",
@@ -302,14 +304,14 @@ ensureFileExists ::
     MonadFileWriter m,
     MonadPathReader m
   ) =>
-  FilePath ->
+  OsPath ->
   m ()
 ensureFileExists fp = do
   exists <- doesFileExist fp
   unless exists $ writeFileUtf8 fp ""
 
-getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m FilePath
-getShrunXdgConfig = getXdgConfig "shrun"
+getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgConfig = getXdgConfig [osp|shrun|]
 
-getShrunXdgState :: (HasCallStack, MonadPathReader m) => m FilePath
-getShrunXdgState = getXdgState "shrun"
+getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgState = getXdgState [osp|shrun|]

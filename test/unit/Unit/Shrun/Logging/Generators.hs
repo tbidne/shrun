@@ -24,8 +24,8 @@ genLog = do
   msg <- PGens.genText
   lvl <- genLogLevel
   mode <- genLogMode
-  pure $
-    MkLog
+  pure
+    $ MkLog
       { cmd,
         msg,
         lvl,
@@ -38,8 +38,8 @@ genLogWithCmd = do
   msg <- PGens.genText
   lvl <- genLogLevel
   mode <- genLogMode
-  pure $
-    MkLog
+  pure
+    $ MkLog
       { cmd,
         msg,
         lvl,
@@ -52,8 +52,8 @@ genLogWithCmdKey = do
   msg <- PGens.genText
   lvl <- genLogLevel
   mode <- genLogMode
-  pure $
-    MkLog
+  pure
+    $ MkLog
       { cmd,
         msg,
         lvl,
@@ -65,8 +65,8 @@ genLogNoCmd = do
   msg <- PGens.genText
   lvl <- genLogLevel
   mode <- genLogMode
-  pure $
-    MkLog
+  pure
+    $ MkLog
       { cmd = Nothing,
         msg,
         lvl,

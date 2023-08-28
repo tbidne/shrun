@@ -16,8 +16,9 @@ tests =
 
 diffTimeProps :: TestTree
 diffTimeProps =
-  testPropertyNamed "diffTime" "diffTimeProps" $
-    property $ do
+  testPropertyNamed "diffTime" "diffTimeProps"
+    $ property
+    $ do
       t1 <- forAll PGens.genTimeSpec
       t2 <- forAll PGens.genTimeSpec
       let result = U.diffTime t1 t2
@@ -36,28 +37,33 @@ breakStripPointSpecs =
 
 missingKey :: TestTree
 missingKey =
-  testCase "Missing key should return (str, \"\")" $
-    ("ab", "") @=? U.breakStripPoint point "ab"
+  testCase "Missing key should return (str, \"\")"
+    $ ("ab", "")
+    @=? U.breakStripPoint point "ab"
 
 stripKey :: TestTree
 stripKey =
-  testCase "Normal case should strip out key" $
-    ("abc", "def") @=? U.breakStripPoint point "abc=def"
+  testCase "Normal case should strip out key"
+    $ ("abc", "def")
+    @=? U.breakStripPoint point "abc=def"
 
 multiBreaksFirst :: TestTree
 multiBreaksFirst =
-  testCase "Multiple keys should only break on first)" $
-    ("ab", "cd=ef") @=? U.breakStripPoint point "ab=cd=ef"
+  testCase "Multiple keys should only break on first)"
+    $ ("ab", "cd=ef")
+    @=? U.breakStripPoint point "ab=cd=ef"
 
 leadingKey :: TestTree
 leadingKey =
-  testCase "Leading key should return (\"\", str)" $
-    ("", "ab") @=? U.breakStripPoint point "=ab"
+  testCase "Leading key should return (\"\", str)"
+    $ ("", "ab")
+    @=? U.breakStripPoint point "=ab"
 
 trailingKey :: TestTree
 trailingKey =
-  testCase "Trailing key should return (str, \"\")" $
-    ("ab", "") @=? U.breakStripPoint point "ab="
+  testCase "Trailing key should return (str, \"\")"
+    $ ("ab", "")
+    @=? U.breakStripPoint point "ab="
 
 point :: Text
 point = "="
