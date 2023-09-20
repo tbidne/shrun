@@ -1,18 +1,18 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 -- | This module is the entry point to the @Shrun@ library used by
 -- the @Shrun@ executable.
 module Shrun
-  ( ShellT,
-    runShellT,
-    shrun,
+  ( shrun,
   )
 where
 
 import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
-import Effects.Concurrent.Async qualified as Async
-import Effects.Concurrent.Thread as X (microsleep, sleep)
-import Effects.Time (TimeSpec, withTiming)
+import Effectful.Concurrent.Async qualified as Async
+import Effectful.Concurrent.Static as X (microsleep, sleep)
+import Effectful.Time.Dynamic (TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
     HasAnyError (getAnyError),
@@ -31,15 +31,8 @@ import Shrun.IO (Stderr (MkStderr), tryCommandLogging)
 import Shrun.IO.Types (CommandResult (CommandFailure, CommandSuccess))
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as LogFmt
-import Shrun.Logging.MonadRegionLogger
-  ( MonadRegionLogger
-      ( Region,
-        displayRegions,
-        logGlobal,
-        logRegion,
-        withRegion
-      ),
-  )
+import Shrun.Logging.RegionLogger (RegionLoggerDynamic)
+import Shrun.Logging.RegionLogger qualified as RegionLogger
 import Shrun.Logging.Types
   ( FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
@@ -55,40 +48,37 @@ import Shrun.Logging.Types
     LogRegion (LogNoRegion, LogRegion),
   )
 import Shrun.Notify qualified as Notify
-import Shrun.Notify.MonadNotify (MonadNotify)
+import Shrun.Notify.Notify (NotifyDynamic)
 import Shrun.Notify.Types (_NotifyCommand)
 import Shrun.Prelude
-import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
 
 -- | Entry point
 shrun ::
-  ( HasAnyError env,
+  forall env r es.
+  ( Concurrent :> es,
+    HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasLogging env (Region m),
+    HasLogging env r,
     HasNotifyConfig env,
     HasTimeout env,
-    MonadAsync m,
-    MonadHandleReader m,
-    MonadHandleWriter m,
-    MonadIORef m,
-    MonadNotify m,
-    MonadProcess m,
-    MonadMask m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m,
-    MonadThread m,
-    MonadTime m
+    HandleReaderStatic :> es,
+    HandleWriterStatic :> es,
+    IORefStatic :> es,
+    NotifyDynamic :> es,
+    Reader env :> es,
+    RegionLoggerDynamic r :> es,
+    TimeDynamic :> es,
+    TypedProcess :> es
   ) =>
   -- | .
-  m ()
-shrun = displayRegions $ do
-  logging <- asks getLogging
+  Eff es ()
+shrun = RegionLogger.displayRegions @r $ do
+  logging :: Logging r <- asks @env getLogging
 
   -- always start console logger
-  Async.withAsync pollQueueToConsole $ \consoleLogger -> do
+  Async.withAsync (pollQueueToConsole @env @r) $ \consoleLogger -> do
     -- run commands, running file logger if requested
     maybe
       runCommands
@@ -101,7 +91,7 @@ shrun = displayRegions $ do
     flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
 
     -- if any processes have failed, exit with an error
-    anyError <- readTVarA =<< asks getAnyError
+    anyError <- readTVarA =<< asks @env getAnyError
     when anyError exitFailure
   where
     runWithFileLogging fileLogging =
@@ -117,44 +107,42 @@ shrun = displayRegions $ do
         (h, fileQueue) = fileLogging ^. #log
 
     runCommands = do
-      cmds <- asks getCommands
-      let actions = Async.mapConcurrently_ runCommand cmds
-          actionsWithTimer = Async.race_ actions counter
+      cmds <- asks @env getCommands
+      let actions = Async.mapConcurrently_ (runCommand @env @r) cmds
+          actionsWithTimer = Async.race_ actions (counter @env @r)
 
       (totalTime, result) <- withTiming $ tryAny actionsWithTimer
-      printFinalResult totalTime result
+      printFinalResult @env @r totalTime result
 
 runCommand ::
-  forall m env.
-  ( HasAnyError env,
+  forall env r es.
+  ( Concurrent :> es,
+    HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasLogging env (Region m),
+    HasLogging env r,
     HasNotifyConfig env,
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadMask m,
-    MonadNotify m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m,
-    MonadThread m,
-    MonadTime m
+    HandleReaderStatic :> es,
+    IORefStatic :> es,
+    NotifyDynamic :> es,
+    Reader env :> es,
+    RegionLoggerDynamic r :> es,
+    TimeDynamic :> es,
+    TypedProcess :> es
   ) =>
   CommandP1 ->
-  m ()
+  Eff es ()
 runCommand cmd = do
-  cmdResult <- tryCommandLogging cmd
-  timerFormat <- view #timerFormat <$> (asks getLogging :: m (Logging (Region m)))
+  cmdResult <- tryCommandLogging @env @r cmd
+  timerFormat <- view #timerFormat <$> (asks @env getLogging :: Eff es (Logging r))
 
   let (urgency, msg', lvl, timeElapsed) = case cmdResult of
         CommandFailure t (MkStderr err) -> (Critical, ": " <> err, LevelError, t)
         CommandSuccess t -> (Normal, "", LevelSuccess, t)
       timeMsg = TimerFormat.formatRelativeTime timerFormat timeElapsed <> msg'
 
-  withRegion Linear $ \r ->
-    Logging.putRegionLog r
+  RegionLogger.withRegion @r Linear $ \r ->
+    Logging.putRegionLog @env r
       $ MkLog
         { cmd = Just cmd,
           msg = timeMsg,
@@ -162,33 +150,32 @@ runCommand cmd = do
           mode = LogModeFinish
         }
 
-  logging :: Logging (Region m) <- asks getLogging
+  logging :: Logging r <- asks @env getLogging
   let cmdNameTrunc = logging ^. #cmdNameTrunc
       keyHide = logging ^. #keyHide
       formattedCmd = LogFmt.formatCommand keyHide cmdNameTrunc cmd
 
   -- Sent off notif if NotifyCommand is set
-  cfg <- asks getNotifyConfig
+  cfg <- asks @env getNotifyConfig
   when (is (_Just % #action % _NotifyCommand) cfg)
-    $ Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
+    $ Notify.sendNotif @env @r (formattedCmd <> " Finished") timeMsg urgency
 
 printFinalResult ::
-  forall m env e b.
-  ( Exception e,
+  forall env r es e b.
+  ( Concurrent :> es,
+    Exception e,
     HasAnyError env,
-    HasLogging env (Region m),
+    HasLogging env r,
     HasNotifyConfig env,
-    MonadCatch m,
-    MonadNotify m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m,
-    MonadTime m
+    NotifyDynamic :> es,
+    Reader env :> es,
+    RegionLoggerDynamic r :> es,
+    TimeDynamic :> es
   ) =>
   TimeSpec ->
   Either e b ->
-  m ()
-printFinalResult totalTime result = withRegion Linear $ \r -> do
+  Eff es ()
+printFinalResult totalTime result = RegionLogger.withRegion Linear $ \r -> do
   Utils.whenLeft result $ \ex -> do
     let errMsg =
           mconcat
@@ -203,12 +190,12 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
               lvl = LevelFatal,
               mode = LogModeFinish
             }
-    Logging.putRegionLog r fatalLog
+    Logging.putRegionLog @env @r r fatalLog
 
     -- update anyError
-    setAnyErrorTrue
+    setAnyErrorTrue @env
 
-  timerFormat <- view #timerFormat <$> (asks getLogging :: m (Logging (Region m)))
+  timerFormat <- view #timerFormat <$> (asks @env getLogging :: Eff es (Logging r))
   let totalTimeTxt = TimerFormat.formatRelativeTime timerFormat (Utils.timeSpecToRelTime totalTime)
       finalLog =
         MkLog
@@ -219,52 +206,53 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
           }
 
   -- Send off a 'finished' notification
-  anyError <- readTVarA =<< asks getAnyError
+  anyError <- readTVarA =<< asks @env getAnyError
   let urgency = if anyError then Critical else Normal
 
   -- Sent off notif if notifications are on
-  cfg <- asks getNotifyConfig
+  cfg <- asks @env getNotifyConfig
   when (is _Just cfg)
-    $ Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
+    $ Notify.sendNotif @env @r "Shrun Finished" totalTimeTxt urgency
 
-  Logging.putRegionLog r finalLog
+  Logging.putRegionLog @env r finalLog
 
 counter ::
-  ( HasAnyError env,
+  forall env r es.
+  ( Concurrent :> es,
+    HasAnyError env,
     HasCommands env,
-    HasLogging env (Region m),
+    HasLogging env r,
     HasTimeout env,
-    MonadIORef m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m,
-    MonadThread m,
-    MonadTime m
+    IORefStatic :> es,
+    Reader env :> es,
+    RegionLoggerDynamic r :> es,
+    TimeDynamic :> es
   ) =>
-  m ()
+  Eff es ()
 counter = do
   -- HACK: This brief delay is so that our timer starts "last" i.e. after each
   -- individual command. This way the running timer console region is below all
   -- the commands' in the console.
   microsleep 100_000
-  withRegion Linear $ \r -> do
-    timeout <- asks getTimeout
+  RegionLogger.withRegion @r Linear $ \r -> do
+    timeout <- asks @env getTimeout
     timer <- newIORef 0
-    Utils.whileM_ (keepRunning r timer timeout) $ do
+    Utils.whileM_ (keepRunning @env r timer timeout) $ do
       sleep 1
       elapsed <- atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
-      logCounter r elapsed
+      logCounter @env r elapsed
 
 logCounter ::
-  ( HasLogging env (Region m),
-    MonadReader env m,
-    MonadSTM m
+  forall env r es.
+  ( Concurrent :> es,
+    HasLogging env r,
+    Reader env :> es
   ) =>
-  Region m ->
+  r ->
   Natural ->
-  m ()
+  Eff es ()
 logCounter region elapsed = do
-  logging <- asks getLogging
+  logging <- asks @env getLogging
   let timerFormat = view #timerFormat logging
       msg = TimerFormat.formatSeconds timerFormat elapsed
       lg =
@@ -277,30 +265,30 @@ logCounter region elapsed = do
   Logging.regionLogToConsoleQueue region logging lg
 
 keepRunning ::
-  forall m env.
-  ( HasAnyError env,
+  forall env r es.
+  ( Concurrent :> es,
+    HasAnyError env,
     HasCommands env,
-    HasLogging env (Region m),
-    MonadIORef m,
-    MonadReader env m,
-    MonadSTM m,
-    MonadTime m
+    HasLogging env r,
+    IORefStatic :> es,
+    Reader env :> es,
+    TimeDynamic :> es
   ) =>
-  Region m ->
+  r ->
   IORef Natural ->
   Maybe Timeout ->
-  m Bool
+  Eff es Bool
 keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      keyHide <- asks (view #keyHide . getLogging @env @(Region m))
-      allCmds <- asks getCommands
-      completedCmdsTVar <- asks getCompletedCmds
+      keyHide <- asks (view #keyHide . getLogging @env @r)
+      allCmds <- asks @env getCommands
+      completedCmdsTVar <- asks @env getCompletedCmds
       completedCmds <- readTVarA completedCmdsTVar
 
       -- update anyError
-      setAnyErrorTrue
+      setAnyErrorTrue @env
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ toList allCmds
@@ -308,7 +296,7 @@ keepRunning region timer mto = do
           toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
           unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
 
-      Logging.putRegionLog region
+      Logging.putRegionLog @env region
         $ MkLog
           { cmd = Nothing,
             msg = "Timed out, cancelling remaining commands: " <> unfinishedCmds,
@@ -323,53 +311,52 @@ timedOut _ Nothing = False
 timedOut timer (Just (MkTimeout t)) = timer > t
 
 pollQueueToConsole ::
-  ( HasLogging env (Region m),
-    MonadMask m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m
+  forall env r es void.
+  ( Concurrent :> es,
+    HasLogging env r,
+    Reader env :> es,
+    RegionLoggerDynamic r :> es
   ) =>
-  m void
+  Eff es void
 pollQueueToConsole = do
-  queue <- asks (view #consoleLog . getLogging)
+  queue :: TBQueue (LogRegion r) <- asks (view #consoleLog . getLogging @env @r)
   -- NOTE: Same masking behavior as pollQueueToFile.
-  forever $ atomicReadWrite queue printConsoleLog
+  forever $ atomicReadWrite queue (printConsoleLog @r)
 
-printConsoleLog :: (MonadRegionLogger m) => LogRegion (Region m) -> m ()
-printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
-printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
+printConsoleLog :: forall r es. (RegionLoggerDynamic r :> es) => LogRegion r -> Eff es ()
+printConsoleLog (LogNoRegion consoleLog) = RegionLogger.logGlobal @r (consoleLog ^. #unConsoleLog)
+printConsoleLog (LogRegion m r consoleLog) = RegionLogger.logRegion m r (consoleLog ^. #unConsoleLog)
 
 pollQueueToFile ::
-  ( MonadHandleWriter m,
-    MonadMask m,
-    MonadSTM m
+  forall es void.
+  ( Concurrent :> es,
+    HandleWriterStatic :> es
   ) =>
   FileLogging ->
-  m void
+  Eff es void
 pollQueueToFile fileLogging = do
   forever
     $
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
     -- Hence the mask.
-    atomicReadWrite queue (logFile h)
+    atomicReadWrite queue (logFile @es h)
   where
     (h, queue) = fileLogging ^. #log
 
-logFile :: (MonadHandleWriter m) => Handle -> FileLog -> m ()
+logFile :: (HandleWriterStatic :> es) => Handle -> FileLog -> Eff es ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 
 -- | Reads from a queue and applies the function, if we receive a value.
 -- Atomic in the sense that if a read is successful, then we will apply the
 -- given function, even if an async exception is raised.
 atomicReadWrite ::
-  ( MonadMask m,
-    MonadSTM m
+  ( Concurrent :> es
   ) =>
   -- | Queue from which to read.
   TBQueue a ->
   -- | Function to apply.
-  (a -> m b) ->
-  m ()
+  (a -> Eff es b) ->
+  Eff es ()
 atomicReadWrite queue logAction =
   mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction

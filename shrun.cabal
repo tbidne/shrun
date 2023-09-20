@@ -68,50 +68,47 @@ library
     Shrun.IO.Types
     Shrun.Logging
     Shrun.Logging.Formatting
-    Shrun.Logging.MonadRegionLogger
+    Shrun.Logging.RegionLogger
     Shrun.Logging.Types
     Shrun.Logging.Types.Internal
     Shrun.Notify
-    Shrun.Notify.MonadAppleScript
-    Shrun.Notify.MonadDBus
-    Shrun.Notify.MonadNotify
-    Shrun.Notify.MonadNotifySend
+    Shrun.Notify.AppleScript
+    Shrun.Notify.DBus
+    Shrun.Notify.Notify
+    Shrun.Notify.NotifySend
     Shrun.Notify.Types
     Shrun.Prelude
-    Shrun.ShellT
     Shrun.Utils
 
   build-depends:
-    , base                   >=4.17     && <4.19
-    , bytestring             >=0.10.12  && <0.12
-    , concurrent-output      ^>=1.10.7
-    , containers             ^>=0.6.2.1
-    , dbus                   ^>=1.2.14
-    , effects-async          ^>=0.1
-    , effects-env            ^>=0.1
-    , effects-exceptions     ^>=0.1
-    , effects-fs             ^>=0.1
-    , effects-ioref          ^>=0.1
-    , effects-optparse       ^>=0.1
-    , effects-stm            ^>=0.1
-    , effects-terminal       ^>=0.1
-    , effects-thread         ^>=0.1
-    , effects-time           ^>=0.1
-    , effects-typed-process  ^>=0.1
-    , fdo-notify             ^>=0.3.1
-    , hashable               >=1.3.0.0  && <1.5
-    , mtl                    >=2.2.1    && <2.4
-    , nonempty-containers    >=0.3.4.2  && <0.4
-    , optics-core            ^>=0.4
-    , optics-th              ^>=0.4
-    , optparse-applicative   >=0.15     && <0.19
-    , pretty-terminal        ^>=0.1
-    , relative-time          ^>=0.1
-    , si-bytes               ^>=0.1
-    , template-haskell       >=2.17.0.0 && <2.21
-    , text                   >=1.2.3.2  && <2.1
-    , toml-reader            >=0.2.0.0  && <0.3.0.0
-    , unordered-containers   ^>=0.2.9.0
+    , base                     >=4.17     && <4.19
+    , bytestring               >=0.10.12  && <0.12
+    , concurrent-effectful     ^>=0.1
+    , concurrent-output        ^>=1.10.7
+    , containers               ^>=0.6.2.1
+    , dbus                     ^>=1.2.14
+    , effectful                >=2.2.1.0  && <2.4
+    , exceptions-effectful     ^>=0.1
+    , fdo-notify               ^>=0.3.1
+    , fs-effectful             ^>=0.1
+    , hashable                 >=1.3.0.0  && <1.5
+    , ioref-effectful          ^>=0.1
+    , nonempty-containers      >=0.3.4.2  && <0.4
+    , optics-core              ^>=0.4
+    , optics-th                ^>=0.4
+    , optparse-applicative     >=0.15     && <0.19
+    , optparse-effectful       ^>=0.1
+    , pretty-terminal          ^>=0.1
+    , relative-time            ^>=0.1
+    , si-bytes                 ^>=0.1
+    , stm-effectful            ^>=0.1
+    , template-haskell         >=2.17.0.0 && <2.21
+    , terminal-effectful       ^>=0.1
+    , text                     >=1.2.3.2  && <2.1
+    , time-effectful           ^>=0.1
+    , toml-reader              >=0.2.0.0  && <0.3.0.0
+    , typed-process-effectful  ^>=1.0.0.0
+    , unordered-containers     ^>=0.2.9.0
 
   hs-source-dirs:   src
   default-language: GHC2021
@@ -134,7 +131,13 @@ executable shrun
   main-is:          Main.hs
   build-depends:
     , base
+    , fs-effectful
+    , ioref-effectful
+    , optparse-effectful
     , shrun
+    , terminal-effectful
+    , time-effectful
+    , typed-process-effectful
 
   hs-source-dirs:   app
   ghc-options:      -threaded -with-rtsopts=-N
@@ -155,16 +158,17 @@ test-suite unit
 
   build-depends:
     , base
-    , effects-time
-    , hedgehog              >=1.0.2   && <1.5
+    , effectful
+    , hedgehog              >=1.0.2   && <1.6
     , optparse-applicative
     , shrun
     , si-bytes
     , tasty                 >=1.1.0.3 && <1.5
-    , tasty-hedgehog        >=1.2.0.0 && <1.5
+    , tasty-hedgehog        >=1.2.0.0 && <1.6
     , tasty-hunit           >=0.9     && <0.11
     , text
     , time                  >=1.9.3   && <1.14
+    , time-effectful
     , unordered-containers
 
   hs-source-dirs:   test/unit
@@ -185,13 +189,16 @@ test-suite integration
 
   build-depends:
     , base
+    , containers
     , dbus
-    , effects-exceptions
-    , effects-fs
-    , effects-terminal
+    , effectful
+    , exceptions-effectful
+    , fs-effectful
+    , nonempty-containers
     , shrun
     , tasty
     , tasty-hunit
+    , terminal-effectful
     , text
 
   hs-source-dirs:   test/integration
@@ -216,13 +223,18 @@ test-suite functional
 
   build-depends:
     , base
-    , effects-fs
+    , effectful
     , fdo-notify
+    , fs-effectful
+    , optparse-effectful
     , shrun
     , shrun-verifier
     , tasty
     , tasty-hunit
+    , terminal-effectful
     , text
+    , time-effectful
+    , typed-process-effectful
 
   hs-source-dirs:   test/functional
   default-language: GHC2021
@@ -234,11 +246,16 @@ benchmark benchmarks
   other-modules:    Bench.Prelude
   build-depends:
     , base
-    , deepseq      >=1.4.4.0 && <1.6
-    , effects-fs
-    , env-guard    ^>=0.2
+    , deepseq                  >=1.4.4.0 && <1.6
+    , effectful
+    , env-guard                ^>=0.2
+    , fs-effectful
+    , optparse-effectful
     , shrun
-    , tasty-bench  ^>=0.3
+    , tasty-bench              ^>=0.3
+    , terminal-effectful
+    , time-effectful
+    , typed-process-effectful
 
   hs-source-dirs:   benchmarks
   default-language: GHC2021

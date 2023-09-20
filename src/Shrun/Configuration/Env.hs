@@ -17,11 +17,11 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
-import Effects.FileSystem.HandleWriter (withBinaryFile)
-import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
-import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.Terminal (getTerminalWidth)
-import Shrun (runShellT, shrun)
+import Effectful.FileSystem.HandleWriter.Static qualified as HW
+import Effectful.FileSystem.PathWriter.Static qualified as PW
+import Effectful.FileSystem.Utils qualified as FsUtils
+import Effectful.Terminal.Dynamic qualified as Term
+import Shrun (shrun)
 import Shrun.Configuration.Args
   ( FileMode (FileModeAppend, FileModeWrite),
     FileSizeMode (FileSizeModeDelete, FileSizeModeWarn),
@@ -41,7 +41,6 @@ import Shrun.Configuration.Env.Types
         timeout
       ),
     FileLogging (MkFileLogging, log, stripControl),
-    HasLogging,
     KeyHide (KeyHideOff),
     LineTruncation (Detected, Undetected),
     Logging
@@ -67,56 +66,58 @@ import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Data.TimerFormat (defaultTimerFormat)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
+import Shrun.Logging.RegionLogger (RegionLoggerDynamic)
 import Shrun.Logging.Types (FileLog, LogRegion)
-import Shrun.Notify.MonadAppleScript (MonadAppleScript)
-import Shrun.Notify.MonadDBus (MonadDBus)
-import Shrun.Notify.MonadNotifySend (MonadNotifySend)
+import Shrun.Notify (runNotifyDynamic)
+import Shrun.Notify.AppleScript (AppleScriptDynamic)
+import Shrun.Notify.DBus (DBusDynamic)
+import Shrun.Notify.NotifySend (NotifySendDynamic)
 import Shrun.Prelude
-import Shrun.ShellT (ShellT)
 
 -- | 'withEnv' with 'shrun'.
 makeEnvAndShrun ::
-  ( HasLogging Env (Region (ShellT Env m)),
-    MonadAppleScript m,
-    MonadAsync m,
-    MonadDBus m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadHandleReader m,
-    MonadHandleWriter m,
-    MonadIORef m,
-    MonadNotifySend m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadProcess m,
-    MonadMask m,
-    MonadSTM m,
-    MonadRegionLogger m,
-    MonadTerminal m,
-    MonadThread m,
-    MonadTime m
+  forall es.
+  ( AppleScriptDynamic :> es,
+    Concurrent :> es,
+    DBusDynamic :> es,
+    FileReaderStatic :> es,
+    FileWriterStatic :> es,
+    HandleReaderStatic :> es,
+    HandleWriterStatic :> es,
+    IORefStatic :> es,
+    NotifySendDynamic :> es,
+    OptparseStatic :> es,
+    PathReaderDynamic :> es,
+    PathWriterStatic :> es,
+    RegionLoggerDynamic ConsoleRegion :> es,
+    TerminalDynamic :> es,
+    TimeDynamic :> es,
+    TypedProcess :> es
   ) =>
-  m ()
-makeEnvAndShrun = withEnv (runShellT shrun)
+  Eff es ()
+makeEnvAndShrun = withEnv run
+  where
+    run :: Env -> Eff es ()
+    run env =
+      runReader env
+        $ runNotifyDynamic
+        $ shrun @Env @ConsoleRegion
 
 -- | Creates an 'Env' from CLI args and TOML config to run with a monadic
 -- action.
 withEnv ::
-  ( MonadDBus m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadSTM m,
-    MonadThrow m,
-    MonadTerminal m
+  ( Concurrent :> es,
+    DBusDynamic :> es,
+    FileReaderStatic :> es,
+    FileWriterStatic :> es,
+    HandleWriterStatic :> es,
+    OptparseStatic :> es,
+    PathReaderDynamic :> es,
+    PathWriterStatic :> es,
+    TerminalDynamic :> es
   ) =>
-  (Env -> m a) ->
-  m a
+  (Env -> Eff es a) ->
+  Eff es a
 withEnv onEnv = do
   args <- execParser parserInfoArgs
   tomlConfig <-
@@ -152,22 +153,21 @@ withEnv onEnv = do
         Left tomlErr -> throwM tomlErr
 
 fromToml ::
-  ( MonadDBus m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadSTM m,
-    MonadTerminal m,
-    MonadThrow m
+  ( Concurrent :> es,
+    DBusDynamic :> es,
+    FileWriterStatic :> es,
+    HandleWriterStatic :> es,
+    PathReaderDynamic :> es,
+    PathWriterStatic :> es,
+    TerminalDynamic :> es
   ) =>
   TomlConfig ->
   NESeq Text ->
-  (Env -> m a) ->
-  m a
+  (Env -> Eff es a) ->
+  Eff es a
 fromToml cfg cmdsText onEnv = do
   cmdLogLineTrunc <- case cfg ^? (#cmdLog %? #lineTrunc % _Just) of
-    Just Detected -> Just . MkTruncation <$> getTerminalWidth
+    Just Detected -> Just . MkTruncation <$> Term.getTerminalWidth
     Just (Undetected x) -> pure $ Just x
     Nothing -> pure Nothing
 
@@ -234,18 +234,17 @@ fromToml cfg cmdsText onEnv = do
 type MLogging = Maybe (Tuple2 Handle (TBQueue FileLog))
 
 withMLogging ::
-  forall m a.
-  ( HasCallStack,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadSTM m,
-    MonadTerminal m
+  forall es a.
+  ( Concurrent :> es,
+    FileWriterStatic :> es,
+    HandleWriterStatic :> es,
+    PathReaderDynamic :> es,
+    PathWriterStatic :> es,
+    TerminalDynamic :> es
   ) =>
   TomlConfig ->
-  (MLogging -> m a) ->
-  m a
+  (MLogging -> Eff es a) ->
+  Eff es a
 withMLogging cfg onLogging = case cfg ^? (#fileLog %? #path) of
   -- 1. No file logging
   Nothing -> onLogging Nothing
@@ -254,14 +253,14 @@ withMLogging cfg onLogging = case cfg ^? (#fileLog %? #path) of
     stateDir <- getShrunXdgState
     let fp = stateDir </> [osp|log|]
     stateExists <- doesDirectoryExist stateDir
-    unless stateExists (createDirectoryIfMissing True stateDir)
+    unless stateExists (PW.createDirectoryIfMissing True stateDir)
 
     ensureFileExists fp
     handleLogFileSize cfg fp
 
     fileQueue <- newTBQueueA 1000
 
-    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
+    HW.withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
 
   -- 3. Use the given path.
   Just (FPManual fp) -> do
@@ -269,21 +268,20 @@ withMLogging cfg onLogging = case cfg ^? (#fileLog %? #path) of
     handleLogFileSize cfg fp
     fileQueue <- newTBQueueA 1000
 
-    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
+    HW.withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
   where
     ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLog %? #mode % _Just)) of
       FileModeAppend -> AppendMode
       FileModeWrite -> WriteMode
 
 handleLogFileSize ::
-  ( HasCallStack,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadTerminal m
+  ( PathReaderDynamic :> es,
+    PathWriterStatic :> es,
+    TerminalDynamic :> es
   ) =>
   TomlConfig ->
   OsPath ->
-  m ()
+  Eff es ()
 handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
   fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
   case fileSizeMode of
@@ -318,18 +316,17 @@ handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
         . fmap (fromIntegral @Natural @Double)
 
 ensureFileExists ::
-  ( HasCallStack,
-    MonadFileWriter m,
-    MonadPathReader m
+  ( FileWriterStatic :> es,
+    PathReaderDynamic :> es
   ) =>
   OsPath ->
-  m ()
+  Eff es ()
 ensureFileExists fp = do
   exists <- doesFileExist fp
   unless exists $ writeFileUtf8 fp ""
 
-getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgConfig :: (PathReaderDynamic :> es) => Eff es OsPath
 getShrunXdgConfig = getXdgConfig [osp|shrun|]
 
-getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgState :: (PathReaderDynamic :> es) => Eff es OsPath
 getShrunXdgState = getXdgState [osp|shrun|]

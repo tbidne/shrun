@@ -6,7 +6,11 @@ module Integration.Miscellaneous (specs) where
 
 import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effectful.Environment qualified as Env
+import Effectful.FileSystem.FileWriter.Static qualified as FW
+import Effectful.FileSystem.PathReader.Static qualified as PR
+import Effectful.FileSystem.PathWriter.Static qualified as PW
+import Effectful.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
   ( SimpleEnv
@@ -61,11 +65,11 @@ logFileWarn testArgs = testCase "Large log file should print warning" $ do
       contents = T.replicate 1_500 "test "
 
       run = do
-        writeFileUtf8 logPath contents
+        runEff' $ writeFileUtf8 logPath contents
 
-        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ Env.withArgs (args logsPathStr) (withEnv pure)
 
-  run `finally` removeFileIfExists logPath
+  run `finally` runEff' (removeFileIfExists logPath)
 
   logs <- IORef.readIORef logsRef
   [warning logsPathStr] @=? logs
@@ -94,14 +98,14 @@ logFileDelete testArgs =
         contents = T.replicate 1_500 "test "
 
         run = do
-          writeFileUtf8 logPath contents
+          runEff' $ writeFileUtf8 logPath contents
 
-          flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
+          flip runConfigIO logsRef $ Env.withArgs (args logPathStr) (withEnv pure)
 
           -- file should have been deleted then recreated with a file size of 0.
-          getFileSize logPath
+          runEff' $ PR.getFileSize logPath
 
-    size <- run `finally` removeFileIfExists logPath
+    size <- run `finally` runEff' (removeFileIfExists logPath)
     0 @=? size
 
     logs <- IORef.readIORef logsRef
@@ -194,3 +198,18 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
                      "echo cat"
                    ]
         }
+
+runEff' ::
+  Eff
+    [ PathWriterStatic,
+      PR.PathReaderStatic,
+      FileWriterStatic,
+      IOE
+    ]
+    a ->
+  IO a
+runEff' =
+  runEff
+    . FW.runFileWriterStaticIO
+    . PR.runPathReaderStaticIO
+    . PW.runPathWriterStaticIO

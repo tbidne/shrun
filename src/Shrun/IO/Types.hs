@@ -10,9 +10,9 @@ where
 
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
-import Effects.FileSystem.HandleReader
-  ( MonadHandleReader (hIsClosed),
-    hGetNonBlocking,
+import Effectful.FileSystem.HandleReader.Static
+  ( hGetNonBlocking,
+    hIsClosed,
     hIsReadable,
   )
 import Shrun.Prelude
@@ -58,7 +58,7 @@ readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess err) = MkStderr (fold err)
 
 -- | Attempts to read from the handle.
-readHandle :: (MonadCatch m, MonadHandleReader m) => Handle -> m ReadHandleResult
+readHandle :: (HandleReaderStatic :> es) => Handle -> Eff es ReadHandleResult
 readHandle handle = do
   -- The "nothingIfReady" check and reading step both need to go in the try as
   -- the former can also throw.

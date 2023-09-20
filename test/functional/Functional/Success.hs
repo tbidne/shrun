@@ -1,6 +1,7 @@
 -- | Functional test for a successful run.
 module Functional.Success (spec) where
 
+import Data.IORef qualified as IORef
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (MkTestArgs, configPath))
 import Test.Shrun.Verifier
@@ -24,7 +25,7 @@ spec args =
           ]
             <> commands
 
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure argList)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< runExitFailure argList)
 
     V.verifyExpectedUnexpected results allExpected allUnexpected
   where

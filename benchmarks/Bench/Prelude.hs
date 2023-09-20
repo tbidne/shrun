@@ -7,6 +7,18 @@ module Bench.Prelude
   )
 where
 
+import Effectful.Dispatch.Dynamic (interpret, localSeqUnlift)
+import Effectful.Environment qualified as Environment
+import Effectful.FileSystem.FileReader.Static qualified as FR
+import Effectful.FileSystem.FileWriter.Static qualified as FW
+import Effectful.FileSystem.HandleReader.Static qualified as HR
+import Effectful.FileSystem.HandleWriter.Static qualified as HW
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.PathWriter.Static qualified as PW
+import Effectful.Optparse.Static qualified as OA
+import Effectful.Process.Typed qualified as P
+import Effectful.Terminal.Dynamic qualified as Term
+import Effectful.Time.Dynamic qualified as Time
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
@@ -30,20 +42,13 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging.MonadRegionLogger
-  ( MonadRegionLogger
-      ( Region,
-        displayRegions,
-        logGlobal,
-        logRegion,
-        withRegion
-      ),
+import Shrun.Logging.RegionLogger
+  ( RegionLoggerDynamic (DisplayRegions, LogGlobal, LogRegion, WithRegion),
   )
-import Shrun.Notify.MonadNotify (MonadNotify (notify))
+import Shrun.Notify.DBus qualified as DBus
+import Shrun.Notify.Notify (NotifyDynamic (Notify))
 import Shrun.Notify.Types (NotifyConfig (MkNotifyConfig, action, timeout))
 import Shrun.Prelude
-import Shrun.ShellT (ShellT)
-import System.Environment qualified as SysEnv
 
 data BenchEnv = MkBenchEnv
   { timeout :: Maybe Timeout,
@@ -75,47 +80,70 @@ instance HasAnyError BenchEnv where
 
 instance HasNotifyConfig BenchEnv where
   getNotifyConfig env =
-    (env ^. #notifyEnv) <&> \notifyEnv ->
+    env ^. #notifyEnv <&> \notifyEnv ->
       MkNotifyConfig
         { action = notifyEnv ^. #action,
           timeout = notifyEnv ^. #timeout
         }
 
-instance MonadRegionLogger (ShellT BenchEnv IO) where
-  type Region (ShellT BenchEnv IO) = ()
+runRegionLoggerBench ::
+  Eff (RegionLoggerDynamic () : es) a ->
+  Eff es a
+runRegionLoggerBench = interpret $ \env -> \case
+  LogGlobal _ -> pure ()
+  LogRegion {} -> pure ()
+  WithRegion _ onRegion -> localSeqUnlift env $ \runner -> runner . onRegion $ ()
+  DisplayRegions m -> localSeqUnlift env $ \runner -> runner m
 
-  logGlobal _ = pure ()
-
-  logRegion _ _ = logGlobal
-
-  withRegion _layout regionToShell = regionToShell ()
-
-  displayRegions = id
-
-instance MonadNotify (ShellT BenchEnv IO) where
-  notify _ = pure ()
+runNotifyBench ::
+  Eff (NotifyDynamic : es) a ->
+  Eff es a
+runNotifyBench = interpret $ \_ -> \case
+  Notify _ -> pure ()
 
 runBench :: List String -> IO ()
-runBench argList = do
-  SysEnv.withArgs argList $ Env.withEnv $ \env -> do
-    consoleQueue <- newTBQueueA 1_000
-    let benchEnv =
-          MkBenchEnv
-            { timeout = env ^. #timeout,
-              init = env ^. #init,
-              logging =
-                MkLogging
-                  { keyHide = env ^. (#logging % #keyHide),
-                    timerFormat = env ^. (#logging % #timerFormat),
-                    pollInterval = env ^. (#logging % #pollInterval),
-                    cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
-                    cmdLog = env ^. (#logging % #cmdLog),
-                    consoleLog = consoleQueue,
-                    fileLog = env ^. (#logging % #fileLog)
-                  },
-              completedCmds = env ^. #completedCmds,
-              anyError = env ^. #anyError,
-              commands = env ^. #commands,
-              notifyEnv = env ^. #notifyEnv
-            }
-    SR.runShellT SR.shrun benchEnv
+runBench argList = runEff' $ Environment.withArgs argList $ Env.withEnv $ \env -> do
+  consoleQueue <- newTBQueueA 1_000
+  let benchEnv =
+        MkBenchEnv
+          { timeout = env ^. #timeout,
+            init = env ^. #init,
+            logging =
+              MkLogging
+                { keyHide = env ^. (#logging % #keyHide),
+                  timerFormat = env ^. (#logging % #timerFormat),
+                  pollInterval = env ^. (#logging % #pollInterval),
+                  cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
+                  cmdLog = env ^. (#logging % #cmdLog),
+                  consoleLog = consoleQueue,
+                  fileLog = env ^. (#logging % #fileLog)
+                },
+            completedCmds = env ^. #completedCmds,
+            anyError = env ^. #anyError,
+            commands = env ^. #commands,
+            notifyEnv = env ^. #notifyEnv
+          }
+  runShrun benchEnv (SR.shrun @BenchEnv @())
+  where
+    runShrun env =
+      runReader env
+        . P.runTypedProcess
+        . HW.runHandleWriterStaticIO
+        . HR.runHandleReaderStaticIO
+        . runNotifyBench
+        . runRegionLoggerBench
+        . Time.runTimeDynamicIO
+
+    runEff' =
+      runEff
+        . Environment.runEnvironment
+        . runConcurrent
+        . runIORefStaticIO
+        . FR.runFileReaderStaticIO
+        . FW.runFileWriterStaticIO
+        . HW.runHandleWriterStaticIO
+        . PR.runPathReaderDynamicIO
+        . PW.runPathWriterStaticIO
+        . Term.runTerminalDynamicIO
+        . OA.runOptparseStaticIO
+        . DBus.runDBusDynamicIO

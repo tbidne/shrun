@@ -2,12 +2,9 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Integration.Utils
-  ( ConfigIO (..),
-    runConfigIO,
-    NoConfigIO (..),
+  ( runConfigIO,
     runNoConfigIO,
     SimpleEnv (..),
     makeEnvAndVerify,
@@ -27,14 +24,26 @@ import DBus.Client
   )
 import Data.Maybe (isJust)
 import Data.Text qualified as T
-import Effects.FileSystem.PathReader
-  ( MonadPathReader
-      ( getHomeDirectory,
-        getXdgDirectory
+import Effectful.Dispatch.Dynamic (interpret, reinterpret)
+import Effectful.Environment (Environment)
+import Effectful.Environment qualified as Env
+import Effectful.FileSystem.FileReader.Static qualified as FR
+import Effectful.FileSystem.FileWriter.Static qualified as FW
+import Effectful.FileSystem.HandleWriter.Static qualified as HW
+import Effectful.FileSystem.PathReader.Dynamic
+  ( PathReaderDynamic
+      ( DoesDirectoryExist,
+        DoesFileExist,
+        GetFileSize,
+        GetXdgDirectory
       ),
   )
-import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.Terminal (MonadTerminal (getChar, getTerminalSize))
+import Effectful.FileSystem.PathReader.Static qualified as PR
+import Effectful.FileSystem.PathWriter.Static qualified as PW
+import Effectful.FileSystem.Utils qualified as FsUtils
+import Effectful.Reader.Static (ask)
+import Effectful.Terminal.Dynamic (TerminalDynamic (..))
+import Effectful.Terminal.Dynamic qualified as Term
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types
@@ -48,8 +57,8 @@ import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Data.TimerFormat (TimerFormat)
-import Shrun.Notify.MonadDBus (MonadDBus (connectSession, notify))
-import Shrun.Notify.MonadNotifySend (MonadNotifySend (notify))
+import Shrun.Notify.DBus (DBusDynamic)
+import Shrun.Notify.DBus qualified as DBus
 import Shrun.Notify.Types
   ( NotifyAction,
     NotifySystem (AppleScript, DBus, NotifySend),
@@ -58,60 +67,82 @@ import Shrun.Notify.Types
   )
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
-newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadCatch,
-      MonadEnv,
-      MonadFileReader,
-      MonadFileWriter,
-      MonadHandleWriter,
-      MonadIO,
-      MonadMask,
-      MonadOptparse,
-      MonadPathWriter,
-      MonadIORef,
-      MonadReader (IORef [Text]),
-      MonadSTM,
-      MonadThrow
-    )
-    via (ReaderT (IORef [Text])) IO
+runConfigIO ::
+  Eff
+    [ DBusDynamic,
+      TerminalDynamic,
+      PathWriterStatic,
+      PathReaderDynamic,
+      OptparseStatic,
+      HandleWriterStatic,
+      FileWriterStatic,
+      FileReaderStatic,
+      IORefStatic,
+      Reader (IORef [Text]),
+      Environment,
+      Concurrent,
+      IOE
+    ]
+    a ->
+  IORef [Text] ->
+  IO a
+runConfigIO m ref = run m
+  where
+    run =
+      runEff
+        . runConcurrent
+        . Env.runEnvironment
+        . runReader ref
+        . runIORefStaticIO
+        . FR.runFileReaderStaticIO
+        . FW.runFileWriterStaticIO
+        . HW.runHandleWriterStaticIO
+        . runOptparseStaticIO
+        . runPathReaderConfigIO
+        . PW.runPathWriterStaticIO
+        . runTerminalConfigIO
+        . runDBusConfigIO
 
-runConfigIO :: ConfigIO a -> IORef [Text] -> IO a
-runConfigIO (MkConfigIO rdr) = runReaderT rdr
+{- ORMOLU_DISABLE -}
 
--- HACK: Listing all the MonadPathReader methods is tedious and unnecessary,
--- so rather than list all of them like @foo = error "todo"@, we simply
--- disable the warning with -Wno-missing-methods
-
-instance MonadPathReader ConfigIO where
-  getFileSize = liftIO . getFileSize
-  doesFileExist = liftIO . doesFileExist
-  doesDirectoryExist = liftIO . doesDirectoryExist
+runPathReaderConfigIO ::
+  ( IOE :> es
+  ) =>
+  Eff (PathReaderDynamic : es) a ->
+  Eff es a
+runPathReaderConfigIO = reinterpret PR.runPathReaderStaticIO $ \_ -> \case
+  GetFileSize p -> PR.getFileSize p
+  DoesFileExist p -> PR.doesFileExist p
+  DoesDirectoryExist p -> PR.doesDirectoryExist p
 
 #if OSX
-  getXdgDirectory _ _ =
+  GetXdgDirectory {} ->
     pure (FsUtils.unsafeEncodeFpToOs $ concatDirs ["test", "integration", "toml", "osx"])
 #else
-  getXdgDirectory _ _ =
+  GetXdgDirectory {} ->
     pure (FsUtils.unsafeEncodeFpToOs $ concatDirs ["test", "integration", "toml"])
 #endif
+  _ -> error "runPathReaderConfigIO: unimplemented"
 
-instance MonadTerminal ConfigIO where
-  putStr = error "putStr: unimplemented"
+{- ORMOLU_ENABLE -}
 
-  -- capture logs
-  putStrLn t = ask >>= (`modifyIORef'` (T.pack t :))
+runTerminalConfigIO ::
+  ( IOE :> es,
+    IORefStatic :> es,
+    Reader (IORef [Text]) :> es
+  ) =>
+  Eff (TerminalDynamic : es) a ->
+  Eff es a
+runTerminalConfigIO = reinterpret Term.runTerminalDynamicIO $ \_ -> \case
+  PutStrLn t -> ask >>= (`modifyIORef'` (T.pack t :))
+  GetTerminalSize -> Term.getTerminalSize
+  _ -> error "runTerminalConfigIO: unimplemented"
 
-  getChar = error "getChar: unimplemented"
-
-  -- hardcoded so we can test 'detect'
-  getTerminalSize = liftIO getTerminalSize
-
-instance MonadDBus ConfigIO where
-  connectSession =
+runDBusConfigIO ::
+  Eff (DBusDynamic : es) a ->
+  Eff es a
+runDBusConfigIO = interpret $ \_ -> \case
+  DBus.ConnectSession ->
     pure
       $ Client
         { clientSocket = error "todo",
@@ -121,43 +152,53 @@ instance MonadDBus ConfigIO where
           clientThreadID = error "todo",
           clientInterfaces = error "todo"
         }
-  notify = error "notify: unimplemented"
+  DBus.Notify {} -> error "runDBusConfigIO.Notify: unimplemented"
 
-instance MonadNotifySend ConfigIO where
-  notify = error "notify: unimplemented"
+runNoConfigIO ::
+  Eff
+    [ DBusDynamic,
+      TerminalDynamic,
+      PathWriterStatic,
+      PathReaderDynamic,
+      OptparseStatic,
+      HandleWriterStatic,
+      FileWriterStatic,
+      FileReaderStatic,
+      IORefStatic,
+      Reader (IORef [Text]),
+      Environment,
+      Concurrent,
+      IOE
+    ]
+    a ->
+  IORef [Text] ->
+  IO a
+runNoConfigIO m ref = run m
+  where
+    run =
+      runEff
+        . runConcurrent
+        . Env.runEnvironment
+        . runReader ref
+        . runIORefStaticIO
+        . FR.runFileReaderStaticIO
+        . FW.runFileWriterStaticIO
+        . HW.runHandleWriterStaticIO
+        . runOptparseStaticIO
+        . runPathReaderNoConfigIO
+        . PW.runPathWriterStaticIO
+        . runTerminalConfigIO
+        . runDBusConfigIO
 
--- IO with no default config file
-newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
-  deriving
-    ( Applicative,
-      MonadPathWriter,
-      Functor,
-      Monad,
-      MonadCatch,
-      MonadEnv,
-      MonadFileReader,
-      MonadFileWriter,
-      MonadHandleWriter,
-      MonadIO,
-      MonadMask,
-      MonadOptparse,
-      MonadSTM,
-      MonadThrow
-    )
-    via (ReaderT (IORef [Text])) IO
-  deriving
-    (MonadDBus, MonadNotifySend)
-    via ConfigIO
-
-runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
-runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
-
-instance MonadPathReader NoConfigIO where
-  getXdgDirectory _ _ = pure [osp|./|]
-  getHomeDirectory = error "getHomeDirectory: unimplemented"
-  doesFileExist = liftIO . doesFileExist
-
-deriving via ConfigIO instance MonadTerminal NoConfigIO
+runPathReaderNoConfigIO ::
+  ( IOE :> es
+  ) =>
+  Eff (PathReaderDynamic : es) a ->
+  Eff es a
+runPathReaderNoConfigIO = reinterpret PR.runPathReaderStaticIO $ \_ -> \case
+  DoesFileExist p -> PR.doesFileExist p
+  GetXdgDirectory {} -> pure [osp|./|]
+  _ -> error "runPathReaderNoConfigIO: unimplemented"
 
 -- | Used to check our result Env against our expectations. Very similar to
 -- real Env, except some types are simplified:
@@ -215,26 +256,25 @@ simplifyEnv = to $ \env ->
 -- | Makes an 'Env' for the given monad and compares the result with the
 -- expected params.
 makeEnvAndVerify ::
-  forall m.
-  ( MonadDBus m,
-    MonadEnv m,
-    MonadFileReader m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
-    MonadMask m,
-    MonadOptparse m,
-    MonadPathReader m,
-    MonadPathWriter m,
-    MonadSTM m,
-    MonadTerminal m
+  forall es.
+  ( Concurrent :> es,
+    DBusDynamic :> es,
+    Environment :> es,
+    FileReaderStatic :> es,
+    FileWriterStatic :> es,
+    HandleWriterStatic :> es,
+    OptparseStatic :> es,
+    PathReaderDynamic :> es,
+    PathWriterStatic :> es,
+    TerminalDynamic :> es
   ) =>
   -- | List of CLI arguments.
   List String ->
   -- | Natural transformation from m to IO.
-  (forall x. m x -> IO x) ->
+  (forall x. Eff es x -> IO x) ->
   -- | Expectation
   SimpleEnv ->
   Assertion
 makeEnvAndVerify args toIO expected = do
-  result <- toIO $ withArgs args (withEnv pure)
+  result <- toIO $ Env.withArgs args (withEnv pure)
   expected @=? result ^. simplifyEnv

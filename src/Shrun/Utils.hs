@@ -28,7 +28,7 @@ import Data.Either (either)
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime, fromSeconds)
-import Effects.Time (TimeSpec, diffTimeSpec)
+import Effectful.Time.Dynamic (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
 import Shrun.Prelude
 

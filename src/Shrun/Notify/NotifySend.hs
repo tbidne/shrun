@@ -1,14 +1,23 @@
 -- | Effect for NotifySend.
-module Shrun.Notify.MonadNotifySend
-  ( MonadNotifySend (..),
+module Shrun.Notify.NotifySend
+  ( -- * Effect
+    NotifySendDynamic (..),
+    notify,
+
+    -- ** Handler
+    runNotifySendDynamicIO,
+
+    -- * Functions
     notifyNotifySend,
   )
 where
 
 import DBus.Notify (UrgencyLevel (Critical, Low, Normal))
 import Data.Text qualified as T
-import Effects.System.Process qualified as P
-import Shrun.Notify.MonadNotify (ShrunNote)
+import Effectful (Dispatch (Dynamic), DispatchOf, Effect)
+import Effectful.Dispatch.Dynamic (reinterpret, send)
+import Effectful.Process.Typed qualified as P
+import Shrun.Notify.Notify (ShrunNote)
 import Shrun.Notify.Types
   ( NotifyTimeout
       ( NotifyTimeoutNever,
@@ -17,22 +26,29 @@ import Shrun.Notify.Types
   )
 import Shrun.Prelude
 
--- | Effect for notify-send.
-class (Monad m) => MonadNotifySend m where
-  -- | Sends a notification via notify-send.
-  notify :: Text -> m ()
+-- | Dynamic effect for notify-send.
+data NotifySendDynamic :: Effect where
+  Notify :: Text -> NotifySendDynamic es ()
 
-instance MonadNotifySend IO where
-  notify =
+type instance DispatchOf NotifySendDynamic = Dynamic
+
+notify :: (NotifySendDynamic :> es) => Text -> Eff es ()
+notify = send . Notify
+
+runNotifySendDynamicIO ::
+  ( IOE :> es
+  ) =>
+  Eff (NotifySendDynamic : es) a ->
+  Eff es a
+runNotifySendDynamicIO = reinterpret P.runTypedProcess $ \_ -> \case
+  Notify t ->
     void
       . P.runProcess
       . P.shell
       . T.unpack
+      $ t
 
-instance (MonadNotifySend m) => MonadNotifySend (ReaderT env m) where
-  notify = lift . notify
-
-notifyNotifySend :: (MonadNotifySend m) => ShrunNote -> m ()
+notifyNotifySend :: (NotifySendDynamic :> es) => ShrunNote -> Eff es ()
 notifyNotifySend = notify . shrunToNotifySend
 
 shrunToNotifySend :: ShrunNote -> Text

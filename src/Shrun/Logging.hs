@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 -- | Provides logging functionality. This is a high-level picture of how
 -- logging works:
 --
@@ -39,25 +41,26 @@ import Shrun.Prelude
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
 putRegionLog ::
-  ( HasLogging env r,
-    MonadReader env m,
-    MonadSTM m,
-    MonadTime m
+  forall env r es.
+  ( Concurrent :> es,
+    HasLogging env r,
+    Reader env :> es,
+    TimeDynamic :> es
   ) =>
   -- | Region.
   r ->
   -- | Log to send.
   Log ->
-  m ()
+  Eff es ()
 putRegionLog region lg =
-  asks getLogging >>= \logging -> do
+  asks @env getLogging >>= \logging -> do
     let keyHide = logging ^. #keyHide
     regionLogToConsoleQueue region logging lg
     for_ (logging ^. #fileLog) (\fl -> logToFileQueue keyHide fl lg)
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
-  ( MonadSTM m
+  ( Concurrent :> es
   ) =>
   -- | Region.
   r ->
@@ -65,7 +68,7 @@ regionLogToConsoleQueue ::
   Logging r ->
   -- | Log to send.
   Log ->
-  m ()
+  Eff es ()
 regionLogToConsoleQueue region logging log =
   writeTBQueueA queue (LogRegion (log ^. #mode) region formatted)
   where
@@ -74,8 +77,8 @@ regionLogToConsoleQueue region logging log =
 
 -- | Writes the log to the file queue.
 logToFileQueue ::
-  ( MonadSTM m,
-    MonadTime m
+  ( Concurrent :> es,
+    TimeDynamic :> es
   ) =>
   -- | How to display the command.
   KeyHide ->
@@ -83,7 +86,7 @@ logToFileQueue ::
   FileLogging ->
   -- | Log to send.
   Log ->
-  m ()
+  Eff es ()
 logToFileQueue keyHide fileLogging log = do
   formatted <- formatFileLog keyHide fileLogging log
   writeTBQueueA (fileLogging ^. #log % _2) formatted

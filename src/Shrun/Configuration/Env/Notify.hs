@@ -8,7 +8,7 @@ module Shrun.Configuration.Env.Notify
   )
 where
 
-import Effects.Exception (throwString)
+import Effectful.Exception (throwString)
 import Shrun.Configuration.Env.Types
   ( NotifyEnv
       ( MkNotifyEnv,
@@ -19,7 +19,7 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Configuration.Toml (NotifyToml)
 import Shrun.Data.Phase (AdvancePhase (advancePhase))
-import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
+import Shrun.Notify.DBus (DBusDynamic, connectSession)
 import Shrun.Notify.Types
   ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
     NotifyAction,
@@ -40,24 +40,20 @@ import Shrun.Prelude
 -- | Transforms NotifyToml into NotifyEnv. Notifications are off if
 -- NotifyToml is completely unspecified (i.e. Nothing).
 tomlToNotifyEnv ::
-  ( HasCallStack,
-    MonadDBus m,
-    MonadThrow m
+  ( DBusDynamic :> es
   ) =>
   Maybe NotifyToml ->
-  m (Maybe NotifyEnv)
+  Eff es (Maybe NotifyEnv)
 tomlToNotifyEnv Nothing = pure Nothing
 tomlToNotifyEnv (Just notifyToml) = tomlToNotifyEnvOS notifyToml
 
 #if OSX
 
 tomlToNotifyEnvOS ::
-  ( HasCallStack,
-    MonadDBus m,
-    MonadThrow m
+  ( DBusDynamic :> es
   ) =>
   NotifyToml ->
-  m (Maybe NotifyEnv)
+  Eff es (Maybe NotifyEnv)
 tomlToNotifyEnvOS (notifyToml)
   | is (#system %? _DBus) notifyToml = throwM OsxNotifySystemMismatchDBus
   | is (#system %? _NotifySend) notifyToml = throwM OsxNotifySystemMismatchNotifySend
@@ -70,12 +66,10 @@ tomlToNotifyEnvOS (notifyToml)
 #else
 
 tomlToNotifyEnvOS ::
-  ( HasCallStack,
-    MonadDBus m,
-    MonadThrow m
+  ( DBusDynamic :> es
   ) =>
   NotifyToml ->
-  m (Maybe NotifyEnv)
+  Eff es (Maybe NotifyEnv)
 tomlToNotifyEnvOS notifyToml
   | is (#system %? _AppleScript) notifyToml = throwM LinuxNotifySystemMismatchAppleScript
   | otherwise = case advancePhase systemP1 of

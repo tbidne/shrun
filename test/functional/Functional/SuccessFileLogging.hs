@@ -33,7 +33,7 @@ fileLog args =
         argList = ["--no-config", "-f" <> unsafeDecodeOsToFp outpath, "sleep 2"]
 
     _ <- run argList
-    fileResult <- readFileUtf8Lenient outpath
+    fileResult <- readFileUtf8LenientIO outpath
 
     let results = MkResultText <$> T.lines fileResult
     V.verifyExpected results expected
@@ -50,4 +50,4 @@ outfile = [osp|log|]
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do
   MkTestArgs {tmpDir} <- args
-  void $ tryAny $ removeFileIfExists (tmpDir </> outfile)
+  void $ tryAny $ removeFileIfExistsIO (tmpDir </> outfile)

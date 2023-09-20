@@ -1,10 +1,15 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Integration.Defaults (specs) where
 
-import Effects.FileSystem.Utils qualified as FsUtils
+import Data.IORef qualified as IORef
+import Data.Sequence (Seq (Empty))
+import Data.Sequence.NonEmpty qualified as NESeq
+import Effectful.FileSystem.PathReader.Static qualified as PR
+import Effectful.FileSystem.PathWriter.Static qualified as PW
+import Effectful.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
   ( SimpleEnv
@@ -62,10 +67,10 @@ specs testArgs =
 
 defaultEnv :: TestTree
 defaultEnv = testCase "No arguments and empty config path should return default Env" $ do
-  logsRef <- newIORef []
+  logsRef <- IORef.newIORef []
   makeEnvAndVerify ["cmd1"] (`runNoConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
+  logs <- IORef.readIORef logsRef
   ["No default config found at: ./config.toml"] @=? logs
   where
     expected =
@@ -84,17 +89,17 @@ defaultEnv = testCase "No arguments and empty config path should return default 
           notifySystem = Nothing,
           notifyAction = Nothing,
           notifyTimeout = Nothing,
-          commands = "cmd1" :<|| []
+          commands = NESeq.singleton "cmd1"
         }
 
 {- ORMOLU_DISABLE -}
 
 usesDefaultConfigFile :: TestTree
 usesDefaultConfigFile = testCase "No arguments should use config from default file" $ do
-  logsRef <- newIORef []
+  logsRef <- IORef.newIORef []
   makeEnvAndVerify ["cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
+  logs <- IORef.readIORef logsRef
   [] @=? logs
   where
     expected =
@@ -117,19 +122,19 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
           notifySystem = Just (DBus ()),
 #endif
           notifyTimeout = Just NotifyTimeoutNever,
-          commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
+          commands = NESeq.singleton (MkCommand (Just "cmd1") "echo \"command one\"")
         }
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
 cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
-  logPath <- (</>! "cli-log") . view #workingTmpDir <$> testArgs
-  logsRef <- newIORef []
+  logPath <- (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
+  logsRef <- IORef.newIORef []
   let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
 
   makeEnvAndVerify (args logPathStr) (`runConfigIO` logsRef) expected
-    `finally` removeFileIfExists logPath
+    `finally` run (removeFileIfExists logPath)
 
-  logs <- readIORef logsRef
+  logs <- IORef.readIORef logsRef
   logs @=? []
   where
     args logPath =
@@ -185,16 +190,20 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
           notifySystem = Just NotifySend,
 #endif
           notifyTimeout = Just (NotifyTimeoutSeconds 10),
-          commands = "cmd" :<|| []
+          commands = NESeq.singleton "cmd"
         }
+    run =
+      runEff
+        . PW.runPathWriterStaticIO
+        . PR.runPathReaderStaticIO
 
 cliOverridesConfigFileCmdLog :: TestTree
 cliOverridesConfigFileCmdLog = testCase desc $ do
-  logsRef <- newIORef []
+  logsRef <- IORef.newIORef []
 
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
+  logs <- IORef.readIORef logsRef
   logs @=? []
   where
     desc = "CLI overrides config file cmd-log fields even when CLI --cmd-log is not specified"
@@ -229,17 +238,17 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           notifySystem = Just (DBus ()),
 #endif
           notifyTimeout = Just NotifyTimeoutNever,
-          commands = "cmd" :<|| []
+          commands = NESeq.singleton "cmd"
         }
 
 {- ORMOLU_ENABLE -}
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
-  logsRef <- newIORef []
+  logsRef <- IORef.newIORef []
   makeEnvAndVerify ["--no-config", "cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
+  logs <- IORef.readIORef logsRef
   logs @=? []
   where
     expected =
@@ -258,16 +267,16 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
           notifySystem = Nothing,
           notifyAction = Nothing,
           notifyTimeout = Nothing,
-          commands = "cmd1" :<|| []
+          commands = NESeq.singleton "cmd1"
         }
 
 noXOverridesToml :: TestTree
 noXOverridesToml = testCase "--no-x disables toml options" $ do
-  logsRef <- newIORef []
+  logsRef <- IORef.newIORef []
 
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
+  logs <- IORef.readIORef logsRef
   logs @=? []
   where
     args =
@@ -305,16 +314,16 @@ noXOverridesToml = testCase "--no-x disables toml options" $ do
           notifyAction = Nothing,
           notifySystem = Nothing,
           notifyTimeout = Nothing,
-          commands = "cmd" :<|| []
+          commands = NESeq.singleton "cmd"
         }
 
 noXOverridesArgs :: TestTree
 noXOverridesArgs = testCase "--no-x disables args" $ do
-  logsRef <- newIORef []
+  logsRef <- IORef.newIORef []
 
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
+  logs <- IORef.readIORef logsRef
   logs @=? []
   where
     args =
@@ -376,5 +385,5 @@ noXOverridesArgs = testCase "--no-x disables args" $ do
           notifyAction = Nothing,
           notifySystem = Nothing,
           notifyTimeout = Nothing,
-          commands = "cmd" :<|| []
+          commands = NESeq.singleton "cmd"
         }

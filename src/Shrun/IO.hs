@@ -1,3 +1,5 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+
 -- | Provides the low-level `IO` functions for running shell commands.
 module Shrun.IO
   ( -- * Stdout/stderr newtypes
@@ -10,14 +12,15 @@ where
 
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
-import Effects.Concurrent.Thread (microsleep)
-import Effects.System.Process qualified as P
-import Effects.Time (withTiming)
+import Effectful.Concurrent.Static (microsleep)
+import Effectful.Process.Typed qualified as P
+import Effectful.Time.Dynamic (withTiming)
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommands,
     HasInit (getInit),
     HasLogging (getLogging),
+    Logging,
     prependCompletedCommand,
     setAnyErrorTrue,
   )
@@ -30,7 +33,8 @@ import Shrun.IO.Types
     readHandleResultToStderr,
   )
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
+import Shrun.Logging.RegionLogger (RegionLoggerDynamic)
+import Shrun.Logging.RegionLogger qualified as RegionLogger
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelCommand),
@@ -43,15 +47,15 @@ import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 
 -- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::
+  forall env es.
   ( HasInit env,
-    MonadProcess m,
-    MonadReader env m,
-    MonadSTM m
+    Reader env :> es,
+    TypedProcess :> es
   ) =>
   CommandP1 ->
-  m (ExitCode, Stderr)
+  Eff es (ExitCode, Stderr)
 shExitCode cmd = do
-  process <- commandToProcess cmd <$> asks getInit
+  process <- commandToProcess cmd <$> asks @env getInit
   (exitCode, _stdout, stderr) <- P.readProcess process
   pure (exitCode, wrap MkStderr stderr)
   where
@@ -60,40 +64,38 @@ shExitCode cmd = do
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
 tryShExitCode ::
+  forall env es.
   ( HasInit env,
-    MonadProcess m,
-    MonadReader env m,
-    MonadSTM m
+    Reader env :> es,
+    TypedProcess :> es
   ) =>
   CommandP1 ->
-  m (Maybe Stderr)
+  Eff es (Maybe Stderr)
 tryShExitCode cmd =
-  shExitCode cmd <&> \case
+  shExitCode @env cmd <&> \case
     (ExitSuccess, _) -> Nothing
     (ExitFailure _, stderr) -> Just stderr
 
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
 tryCommandLogging ::
-  forall m env.
-  ( HasAnyError env,
+  forall env r es.
+  ( Concurrent :> es,
+    HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasLogging env (Region m),
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadMask m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m,
-    MonadThread m,
-    MonadTime m
+    HasLogging env r,
+    HandleReaderStatic :> es,
+    IORefStatic :> es,
+    Reader env :> es,
+    RegionLoggerDynamic r :> es,
+    TimeDynamic :> es,
+    TypedProcess :> es
   ) =>
   -- | Command to run.
   CommandP1 ->
   -- | Result.
-  m CommandResult
+  Eff es CommandResult
 tryCommandLogging command = do
   -- NOTE: We do not want tryCommandLogging to throw sync exceptions, as that
   -- will take down the whole app. tryCommandStream and tryShExitCode should be
@@ -112,45 +114,45 @@ tryCommandLogging command = do
   -- Thus the most reasonable course of action is to let shrun die and print
   -- the actual error so it can be fixed.
 
-  logging <- asks getLogging
+  logging :: Logging r <- asks @env getLogging
   let keyHide = logging ^. #keyHide
 
   let cmdFn = case (logging ^. #cmdLog, logging ^. #fileLog) of
         -- 1. No CmdLogging and no FileLogging: No streaming at all.
-        (Nothing, Nothing) -> tryShExitCode
+        (Nothing, Nothing) -> tryShExitCode @env
         -- 2. No CmdLogging but FileLogging: Stream (to file) but no console
         --    region.
         (Nothing, Just fileLogging) -> \cmd -> do
-          let logFn :: Log -> m ()
+          let logFn :: Log -> Eff es ()
               logFn = logFile keyHide fileLogging
 
           logFn hello
 
-          tryCommandStream logFn cmd
+          tryCommandStream @env @r logFn cmd
         -- 3. CmdLogging: Create region and stream. Also stream to file if
         --    requested.
         (Just _, mFileLogging) -> \cmd ->
-          withRegion Linear $ \region -> do
+          RegionLogger.withRegion Linear $ \region -> do
             let logFn log = do
                   logConsole logging region log
                   for_ mFileLogging (\fl -> logFile keyHide fl log)
 
             logFn hello
 
-            tryCommandStream logFn cmd
+            tryCommandStream @env @r logFn cmd
 
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
       -- update completed commands
-      prependCompletedCommand command
+      prependCompletedCommand @env command
 
       pure $ CommandSuccess $ U.timeSpecToRelTime rt
     (rt, Just err) -> do
       -- update completed commands
-      prependCompletedCommand command
+      prependCompletedCommand @env command
 
       -- update anyError
-      setAnyErrorTrue
+      setAnyErrorTrue @env
 
       pure $ CommandFailure (U.timeSpecToRelTime rt) err
   where
@@ -174,35 +176,34 @@ tryCommandLogging command = do
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- instead of the usual swallowing.
 tryCommandStream ::
-  ( HasInit env,
-    HasLogging env (Region m),
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadMask m,
-    MonadProcess m,
-    MonadReader env m,
-    MonadSTM m,
-    MonadThread m
+  forall env r es.
+  ( Concurrent :> es,
+    HasInit env,
+    HasLogging env r,
+    HandleReaderStatic :> es,
+    IORefStatic :> es,
+    Reader env :> es,
+    TypedProcess :> es
   ) =>
   -- | Function to apply to streamed logs.
-  (Log -> m ()) ->
+  (Log -> Eff es ()) ->
   -- | Command to run.
   CommandP1 ->
   -- | Error, if any. Note that this will be 'Just' iff the command exited
   -- with an error, even if the error message itself is blank.
-  m (Maybe Stderr)
+  Eff es (Maybe Stderr)
 tryCommandStream logFn cmd = do
   let outSpec = P.createPipe
       errSpec = P.createPipe
 
   procConfig <-
-    asks getInit
+    asks @env getInit
       <&> P.setStderr outSpec
       . P.setStdout errSpec
       . commandToProcess cmd
 
   (exitCode, lastReadErr) <-
-    P.withProcessWait procConfig (streamOutput logFn cmd)
+    P.withProcessWait procConfig (streamOutput @env @r logFn cmd)
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
@@ -219,28 +220,27 @@ tryCommandStream logFn cmd = do
 --      pure (h, hClose h)
 
 streamOutput ::
-  forall m env.
-  ( HasLogging env (Region m),
-    MonadCatch m,
-    MonadHandleReader m,
-    MonadIORef m,
-    MonadReader env m,
-    MonadSTM m,
-    MonadThread m
+  forall env r es.
+  ( Concurrent :> es,
+    HasLogging env r,
+    HandleReaderStatic :> es,
+    IORefStatic :> es,
+    Reader env :> es,
+    TypedProcess :> es
   ) =>
   -- | Function to apply to streamed logs.
-  (Log -> m ()) ->
+  (Log -> Eff es ()) ->
   -- | Command that was run.
   CommandP1 ->
   -- | Process handle.
   Process () Handle Handle ->
   -- | Exit code along w/ any leftover data.
-  m (ExitCode, ReadHandleResult)
+  Eff es (ExitCode, ReadHandleResult)
 streamOutput logFn cmd p = do
   -- lastReadRef stores the last message in case it is the final error
   -- message.
   lastReadErrRef <- newIORef Nothing
-  logging <- asks (getLogging @env @(Region m))
+  logging <- asks (getLogging @env @r)
   let pollInterval = logging ^. (#pollInterval % #unPollInterval)
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
   exitCode <- U.untilJust $ do
@@ -280,12 +280,12 @@ streamOutput logFn cmd p = do
 --
 -- See Note [EOF / blocking error]
 writeLog ::
-  (MonadIORef m) =>
-  (Log -> m ()) ->
+  (IORefStatic :> es) =>
+  (Log -> Eff es ()) ->
   CommandP1 ->
   IORef (Maybe ReadHandleResult) ->
   ReadHandleResult ->
-  m ()
+  Eff es ()
 writeLog _ _ _ (ReadErr _) = pure ()
 writeLog _ _ _ ReadNoData = pure ()
 writeLog logFn cmd lastReadRef (ReadSuccess messages) = do

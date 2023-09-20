@@ -13,8 +13,8 @@ module Integration.Prelude
   )
 where
 
-import Effects.FileSystem.Utils as X ((</>!))
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effectful.FileSystem.Utils as X ((</>!))
+import Effectful.FileSystem.Utils qualified as FsUtils
 import Shrun.Prelude as X
 import Test.Tasty as X
   ( TestName,

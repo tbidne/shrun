@@ -9,9 +9,11 @@ import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Time (midday)
 import Data.Time.LocalTime (utc)
-import Effects.Time
+import Effectful (runPureEff)
+import Effectful.Dispatch.Dynamic (interpret)
+import Effectful.Time.Dynamic
   ( LocalTime (LocalTime),
-    MonadTime (getMonotonicTime, getSystemZonedTime),
+    TimeDynamic (GetMonotonicTime, GetSystemZonedTime),
     ZonedTime (ZonedTime),
   )
 import Hedgehog.Gen qualified as HGen
@@ -273,22 +275,6 @@ sysTime = "2020-05-31 12:00:00"
 sysTimeNE :: Text
 sysTimeNE = "[" <> sysTime <> "]"
 
-newtype MockEnv = MkMockEnv ()
-
-instance HasLogging MockEnv () where
-  getLogging _ =
-    MkLogging
-      { keyHide = KeyHideOff,
-        pollInterval = 10,
-        timerFormat = ProseCompact,
-        cmdNameTrunc = Nothing,
-        cmdLog = Nothing,
-        consoleLog = error err,
-        fileLog = Nothing
-      }
-    where
-      err = "[Unit.Shrun.Logging.Formatting]: Unit tests should not be using consoleLog"
-
 -- Monad with mock implementation for 'MonadTime'.
 newtype MockTime a = MkMockTime
   { runMockTime :: a
@@ -296,13 +282,10 @@ newtype MockTime a = MkMockTime
   deriving stock (Eq, Generic, Show)
   deriving (Applicative, Functor, Monad) via Identity
 
-instance MonadTime MockTime where
-  getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
-  getMonotonicTime = pure 0
-
-instance MonadReader MockEnv MockTime where
-  ask = pure $ MkMockEnv ()
-  local _ = id
+runTimeDynamicMock :: Eff (TimeDynamic : es) a -> Eff es a
+runTimeDynamicMock = interpret $ \_ -> \case
+  GetSystemZonedTime -> pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
+  GetMonotonicTime -> pure 0
 
 fileLogProps :: TestTree
 fileLogProps =
@@ -397,8 +380,12 @@ shapeProps =
 formatFileLog :: KeyHide -> Log -> Text
 formatFileLog keyHide log =
   view #unFileLog
-    $ Formatting.formatFileLog @MockTime keyHide fileLog log
-    ^. #runMockTime
+    $ run
+    $ Formatting.formatFileLog keyHide fileLog log
+  where
+    run =
+      runPureEff
+        . runTimeDynamicMock
 
 fileLog :: FileLogging
 fileLog = MkFileLogging StripControlNone (error err)

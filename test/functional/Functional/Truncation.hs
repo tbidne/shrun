@@ -1,6 +1,7 @@
 -- | Functional test for a successful run with native logging.
 module Functional.Truncation (spec) where
 
+import Data.IORef qualified as IORef
 import Functional.Prelude
 import Test.Shrun.Verifier
   ( ExpectedText (MkExpectedText),
@@ -14,7 +15,7 @@ spec =
   testGroup
     "Truncation tests"
     [ testCase "Should truncate command name" $ do
-        results <- fmap MkResultText <$> (readIORef =<< run argList)
+        results <- fmap MkResultText <$> (IORef.readIORef =<< run argList)
         V.verifyExpected results expected
     ]
   where

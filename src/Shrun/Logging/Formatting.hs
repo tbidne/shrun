@@ -19,7 +19,7 @@ module Shrun.Logging.Formatting
 where
 
 import Data.Text qualified as T
-import Effects.Time (getSystemTimeString)
+import Effectful.Time.Dynamic (getSystemTimeString)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
     KeyHide (KeyHideOff),
@@ -99,12 +99,12 @@ maybeApply = maybe id
 
 -- | Formats a 'Log' into a 'FileLog'. Applies prefix and timestamp.
 formatFileLog ::
-  ( MonadTime m
+  ( TimeDynamic :> es
   ) =>
   KeyHide ->
   FileLogging ->
   Log ->
-  m FileLog
+  Eff es FileLog
 formatFileLog keyHide fileLogging log = do
   currTime <- getSystemTimeString
   let formatted = case log ^. #cmd of

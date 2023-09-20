@@ -19,15 +19,14 @@
       inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    monad-effects = {
-      url = "github:tbidne/monad-effects";
+    effectful-effects = {
+      url = "github:tbidne/effectful-effects";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.nixpkgs.follows = "nixpkgs";
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
-      inputs.smart-math.follows = "smart-math";
     };
     relative-time = {
       url = "github:tbidne/relative-time";
@@ -71,28 +70,34 @@
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
               file-io = final.callHackage "file-io" "0.1.0.1" { };
-              hedgehog = prev.hedgehog_1_3;
               hlint = prev.hlint_3_6_1;
               nonempty-containers = hlib.dontCheck prev.nonempty-containers;
               ormolu = prev.ormolu_0_7_1_0;
+              th-abstraction = prev.th-abstraction_0_5_0_0;
+              typed-process-effectful =
+                hlib.dontCheck
+                  (final.callHackageDirect
+                    {
+                      pkg = "typed-process-effectful";
+                      ver = "1.0.0.0";
+                      sha256 = "sha256-+AGzviNpE6sIf8j8IQ6qjEjIILe82mItZSEkc/Qc34c=";
+                    }
+                    { });
             } // nix-hs-utils.mkLibs inputs final [
               "algebra-simple"
               "bounds"
               "relative-time"
               "si-bytes"
               "smart-math"
-            ] // nix-hs-utils.mkRelLibs inputs.monad-effects final [
-              "effects-async"
-              "effects-exceptions"
-              "effects-env"
-              "effects-fs"
-              "effects-ioref"
-              "effects-optparse"
-              "effects-stm"
-              "effects-terminal"
-              "effects-thread"
-              "effects-time"
-              "effects-typed-process"
+            ] // nix-hs-utils.mkRelLibs "${inputs.effectful-effects}/lib" final [
+              "concurrent-effectful"
+              "exceptions-effectful"
+              "fs-effectful"
+              "ioref-effectful"
+              "optparse-effectful"
+              "stm-effectful"
+              "terminal-effectful"
+              "time-effectful"
             ];
           };
           hlib = pkgs.haskell.lib;
@@ -102,22 +107,16 @@
               name = "shrun";
               root = ./.;
             };
-          hsDirs = "app benchmarks src test";
+          compilerPkgs = { inherit compiler pkgs; };
         in
         {
           packages.default = mkPkg false;
           devShells.default = mkPkg true;
 
           apps = {
-            format = nix-hs-utils.format {
-              inherit compiler hsDirs pkgs;
-            };
-            lint = nix-hs-utils.lint {
-              inherit compiler hsDirs pkgs;
-            };
-            lint-refactor = nix-hs-utils.lint-refactor {
-              inherit compiler hsDirs pkgs;
-            };
+            format = nix-hs-utils.format compilerPkgs;
+            lint = nix-hs-utils.lint compilerPkgs;
+            lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
           };
         };
       systems = [

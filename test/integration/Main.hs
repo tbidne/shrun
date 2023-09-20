@@ -3,8 +3,9 @@
 -- | Runs integration tests.
 module Main (main) where
 
-import Effects.FileSystem.PathReader qualified as Dir
-import Effects.FileSystem.PathWriter qualified as Dir
+import Effectful.FileSystem.PathReader.Static (PathReaderStatic)
+import Effectful.FileSystem.PathReader.Static qualified as PR
+import Effectful.FileSystem.PathWriter.Static qualified as PW
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
 import Integration.Failures qualified as Failures
@@ -26,11 +27,11 @@ main = do
         ]
 
 setup :: IO TestArgs
-setup = do
-  rootTmpDir <- (</> [osp|shrun|]) <$> Dir.getTemporaryDirectory
+setup = runEff' $ do
+  rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
   let workingTmpDir = rootTmpDir </> [osp|test/integration|]
 
-  Dir.createDirectoryIfMissing True workingTmpDir
+  PW.createDirectoryIfMissing True workingTmpDir
   pure $ MkTestArgs rootTmpDir workingTmpDir
 
 teardown :: TestArgs -> IO ()
@@ -38,9 +39,9 @@ teardown testArgs = do
   let root = testArgs ^. #rootTmpDir
       cwd = testArgs ^. #workingTmpDir
 
-  -- because this is caused in a bracket-style cleanup, we really do not want
+  -- because this is called in a bracket-style cleanup, we really do not want
   -- this to throw
-  void $ tryAny $ do
+  void $ tryAny $ runEff' $ do
     -- There are several tests that rely on this log's existence, since it
     -- exists in the 'config' directory, and these tests test that default.
     -- Thus we cannot delete it until everything has finished.
@@ -55,3 +56,9 @@ teardown testArgs = do
     removeFileIfExists $ root </> [osp|test/integration|]
     removeFileIfExists $ root </> [osp|test|]
     removeDirectoryIfExists root
+
+runEff' :: Eff [PathWriterStatic, PathReaderStatic, IOE] a -> IO a
+runEff' =
+  runEff
+    . PR.runPathReaderStaticIO
+    . PW.runPathWriterStaticIO

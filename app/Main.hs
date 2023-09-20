@@ -1,31 +1,31 @@
 module Main (main) where
 
+import Effectful.FileSystem.FileReader.Static qualified as FR
+import Effectful.FileSystem.FileWriter.Static qualified as FW
+import Effectful.FileSystem.HandleReader.Static qualified as HR
+import Effectful.FileSystem.HandleWriter.Static qualified as HW
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.PathWriter.Static qualified as PW
+import Effectful.IORef.Static qualified as IORef
+import Effectful.Optparse.Static qualified as Optparse
+import Effectful.Process.Typed qualified as P
+import Effectful.Terminal.Dynamic qualified as Term
+import Effectful.Time.Dynamic qualified as Time
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Shrun.Configuration.Env (makeEnvAndShrun)
+import Shrun.Logging.RegionLogger (runRegionLoggerDynamicIO)
+import Shrun.Notify.AppleScript (runAppleScriptDynamicIO)
+import Shrun.Notify.DBus (runDBusDynamicIO)
+import Shrun.Notify.NotifySend (runNotifySendDynamicIO)
 import Shrun.Prelude
-import System.Exit (ExitCode (..))
+import System.Exit (ExitCode (ExitFailure, ExitSuccess))
+import System.IO qualified as IO
 
 main :: IO ()
 main = do
-  setUncaughtExceptionHandler $ \ex ->
-    -- NOTE: Seems redundant, but sadly it isn't.
-    --
-    -- doNothingOnSuccess is solely used to stop ExitSuccess from poisoning the
-    -- error code because GHC determines exit success/failure based on the
-    -- presence of an uncaught exception. However, we still need to rethrow
-    -- the failure.
-    --
-    -- Moreover, we don't really want to print a CallStack for ExitFailure,
-    -- as we are throwing that whenever a command fails, and the CallStack
-    -- is just unhelpful noise.
-    case fromException ex of
-      -- should be impossible due to doNothingOnSuccess...
-      Just (MkExceptionCS ExitSuccess _) -> pure ()
-      -- for command failures
-      Just (MkExceptionCS (ExitFailure _) _) -> pure ()
-      Nothing -> putStrLn $ displayException ex
+  setUncaughtExceptionHandler $ \ex -> IO.putStrLn $ displayException ex
 
-  makeEnvAndShrun `catchCS` doNothingOnSuccess
+  runShrun makeEnvAndShrun `catch` doNothingOnSuccess
   where
     -- We need to catchCS ExitCode so that optparse applicative's --help
     -- does not set the error code to failure...but then we need to rethrow
@@ -33,3 +33,22 @@ main = do
     doNothingOnSuccess :: ExitCode -> IO ()
     doNothingOnSuccess ExitSuccess = pure ()
     doNothingOnSuccess ex@(ExitFailure _) = throwM ex
+
+    runShrun =
+      runEff
+        . runConcurrent
+        . P.runTypedProcess
+        . IORef.runIORefStaticIO
+        . Optparse.runOptparseStaticIO
+        . Time.runTimeDynamicIO
+        . FR.runFileReaderStaticIO
+        . FW.runFileWriterStaticIO
+        . HR.runHandleReaderStaticIO
+        . HW.runHandleWriterStaticIO
+        . PR.runPathReaderDynamicIO
+        . PW.runPathWriterStaticIO
+        . Term.runTerminalDynamicIO
+        . runRegionLoggerDynamicIO
+        . runAppleScriptDynamicIO
+        . runDBusDynamicIO
+        . runNotifySendDynamicIO

@@ -2,11 +2,12 @@
 module Functional.Readme (specs) where
 
 import DBus.Notify (UrgencyLevel (Normal))
+import Data.IORef qualified as IORef
 import Data.Text qualified as T
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effectful.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
-import Shrun.Notify.MonadNotify
+import Shrun.Notify.Notify
   ( ShrunNote
       ( MkShrunNote,
         body,
@@ -62,7 +63,7 @@ specs args =
 gif :: TestTree
 gif =
   testCase "Runs gif example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< runExitFailure args)
     V.verifyExpected results expected
   where
     args =
@@ -90,7 +91,7 @@ gif =
 core :: TestTree
 core =
   testCase "Runs core example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< runExitFailure args)
     V.verifyExpected results expected
   where
     args =
@@ -109,7 +110,7 @@ core =
 timeout :: TestTree
 timeout =
   testCase "Runs timeout example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< runExitFailure args)
     V.verifyExpected results expected
   where
     args =
@@ -129,7 +130,7 @@ timeout =
 initOn :: TestTree
 initOn =
   testCase "Runs init successful example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
@@ -146,7 +147,7 @@ initOn =
 initOff :: TestTree
 initOff =
   testCase "Runs init failure example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< runExitFailure args)
     V.verifyExpected results expected
   where
     args =
@@ -161,7 +162,7 @@ initOff =
 cmdlogOn :: TestTree
 cmdlogOn =
   testCase "Runs cmdlog example with --cmd-log" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
@@ -176,7 +177,7 @@ cmdlogOn =
 cmdlogOnDefault :: TestTree
 cmdlogOnDefault =
   testCase "Runs --cmd-log with no output shows default message" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
@@ -191,7 +192,7 @@ cmdlogOnDefault =
 cmdlogOff :: TestTree
 cmdlogOff =
   testCase "Runs cmdlog example without --cmd-log" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyUnexpected results unexpected
   where
     args =
@@ -213,10 +214,10 @@ fileLog testArgs = testCase "Runs file-log example" $ do
             "for i in {1..3}; do echo hi; sleep 1; done"
           ]
 
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+  resultsConsole <- fmap MkResultText <$> (IORef.readIORef =<< runExitFailure args)
   V.verifyExpected resultsConsole expectedConsole
 
-  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowMIO outFile
   V.verifyExpected resultsFile expectedFile
   where
     expectedConsole =
@@ -233,7 +234,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
 timerFormatDigitalCompact :: TestTree
 timerFormatDigitalCompact =
   testCase "Runs timer format with digital_compact" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
@@ -249,7 +250,7 @@ timerFormatDigitalCompact =
 timerFormatDigitalFull :: TestTree
 timerFormatDigitalFull =
   testCase "Runs timer format with digital_full" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
@@ -265,7 +266,7 @@ timerFormatDigitalFull =
 timerFormatProseCompact :: TestTree
 timerFormatProseCompact =
   testCase "Runs timer format with prose_compact" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
@@ -281,7 +282,7 @@ timerFormatProseCompact =
 timerFormatProseFull :: TestTree
 timerFormatProseFull =
   testCase "Runs timer format with prose_full" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
@@ -297,7 +298,7 @@ timerFormatProseFull =
 keyHideOn :: TestTree
 keyHideOn =
   testCase "Runs key hide example with --key-hide" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -319,7 +320,7 @@ keyHideOn =
 keyHideOff :: TestTree
 keyHideOff =
   testCase "Runs key hide example without --key-hide" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
     V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -339,7 +340,7 @@ keyHideOff =
 
 stripControlAll :: TestTree
 stripControlAll = testCase "Runs --cmd-log-strip-control all example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
@@ -360,7 +361,7 @@ stripControlAll = testCase "Runs --cmd-log-strip-control all example" $ do
 -- is a slight variation on the ones here, we leave it in.
 stripControlAlwaysCmdNames :: TestTree
 stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
@@ -379,7 +380,7 @@ stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
 
 stripControlNone :: TestTree
 stripControlNone = testCase "Runs --cmd-log-strip-control none example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
@@ -395,7 +396,7 @@ stripControlNone = testCase "Runs --cmd-log-strip-control none example" $ do
 
 stripControlSmart :: TestTree
 stripControlSmart = testCase "Runs --cmd-log-strip-control smart example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
@@ -421,9 +422,9 @@ fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all exam
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
           ]
 
-  _ <- fmap MkResultText <$> (readIORef =<< run args)
+  _ <- fmap MkResultText <$> (IORef.readIORef =<< run args)
 
-  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowMIO outFile
   V.verifyExpected resultsFile expectedFile
   where
     expectedFile =
@@ -443,9 +444,9 @@ fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none ex
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
           ]
 
-  _ <- fmap MkResultText <$> (readIORef =<< run args)
+  _ <- fmap MkResultText <$> (IORef.readIORef =<< run args)
 
-  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowMIO outFile
   V.verifyExpected resultsFile expectedFile
   where
     expectedFile =
@@ -467,9 +468,9 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
           ]
 
-  _ <- fmap MkResultText <$> (readIORef =<< run args)
+  _ <- fmap MkResultText <$> (IORef.readIORef =<< run args)
 
-  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowMIO outFile
   V.verifyExpected resultsFile expectedFile
   where
     expectedFile =
@@ -480,7 +481,7 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
 
 cmdNameTruncN :: TestTree
 cmdNameTruncN = testCase "Runs --cmd-name-trunc 10 example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
@@ -497,7 +498,7 @@ cmdNameTruncN = testCase "Runs --cmd-name-trunc 10 example" $ do
 
 cmdLogLineTruncN :: TestTree
 cmdLogLineTruncN = testCase "Runs --cmd-log-line-trunc 80 example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
@@ -516,7 +517,7 @@ cmdLogLineTruncN = testCase "Runs --cmd-log-line-trunc 80 example" $ do
 
 notifyActionFinal :: TestTree
 notifyActionFinal = testCase "Runs --notify-action final" $ do
-  results <- readIORef =<< runNotes args
+  results <- IORef.readIORef =<< runNotes args
   expected @=? results
   where
     args =
@@ -539,7 +540,7 @@ notifyActionFinal = testCase "Runs --notify-action final" $ do
 
 notifyTimeoutNever :: TestTree
 notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
-  results <- readIORef =<< runNotes args
+  results <- IORef.readIORef =<< runNotes args
   expected @=? results
   where
     args =

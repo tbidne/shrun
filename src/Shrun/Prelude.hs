@@ -49,12 +49,6 @@ import Control.Monad as X
   )
 import Control.Monad.Fail as X (MonadFail (fail))
 import Control.Monad.IO.Class as X (MonadIO (liftIO))
-import Control.Monad.Reader as X
-  ( MonadReader (ask, local),
-    ReaderT (runReaderT),
-    asks,
-  )
-import Control.Monad.Trans as X (MonadTrans (lift))
 import Data.Bifunctor as X (Bifunctor)
 import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
@@ -93,89 +87,92 @@ import Data.Traversable as X (Traversable (traverse), for)
 import Data.Tuple as X (fst, snd)
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
-import Effects.Concurrent.Async as X (MonadAsync)
-import Effects.Concurrent.STM as X
-  ( MonadSTM,
-    TBQueue,
-    TVar,
+import Effectful as X (Eff, IOE, runEff, type (:>))
+import Effectful.Concurrent as X (Concurrent, runConcurrent)
+import Effectful.Concurrent.STM.TBQueue.Static as X
+  ( TBQueue,
     flushTBQueueA,
-    modifyTVarA',
     newTBQueueA,
-    newTVarA,
     readTBQueueA,
-    readTVarA,
     writeTBQueueA,
+  )
+import Effectful.Concurrent.STM.TVar.Static as X
+  ( TVar,
+    modifyTVarA',
+    newTVarA,
+    readTVarA,
     writeTVarA,
   )
-import Effects.Concurrent.Thread as X (MonadThread)
-import Effects.Exception as X
+import Effectful.Exception as X
   ( Exception (displayException, fromException),
-    ExceptionCS (MkExceptionCS),
     MonadCatch,
     MonadMask,
     MonadThrow,
     SomeException,
     bracket,
+    catch,
     catchAny,
-    catchCS,
     displayException,
     exitFailure,
     finally,
     mask,
-    throwCS,
     throwM,
     try,
     tryAny,
   )
-import Effects.FileSystem.FileReader as X
-  ( MonadFileReader,
-    decodeUtf8Lenient,
-    readFileUtf8Lenient,
-    readFileUtf8ThrowM,
-  )
-import Effects.FileSystem.FileWriter as X
-  ( MonadFileWriter,
+import Effectful.FileSystem.FileReader.Static as X (FileReaderStatic, readFileUtf8Lenient, readFileUtf8ThrowM, runFileReaderStaticIO)
+import Effectful.FileSystem.FileWriter.Static as X
+  ( FileWriterStatic,
     appendFileUtf8,
     writeFileUtf8,
   )
-import Effects.FileSystem.HandleReader as X (MonadHandleReader)
-import Effects.FileSystem.HandleWriter as X
-  ( MonadHandleWriter (hClose, hFlush, openBinaryFile),
+import Effectful.FileSystem.HandleReader.Static as X (HandleReaderStatic)
+import Effectful.FileSystem.HandleWriter.Static as X
+  ( HandleWriterStatic,
+    hClose,
+    hFlush,
     hPutUtf8,
+    openBinaryFile,
   )
-import Effects.FileSystem.PathReader as X
-  ( MonadPathReader (doesDirectoryExist, doesFileExist, getFileSize),
+import Effectful.FileSystem.PathReader.Dynamic as X
+  ( PathReaderDynamic,
+    doesDirectoryExist,
+    doesFileExist,
+    getFileSize,
     getXdgConfig,
     getXdgState,
   )
-import Effects.FileSystem.PathWriter as X
-  ( MonadPathWriter,
+import Effectful.FileSystem.PathWriter.Static as X
+  ( PathWriterStatic,
     removeDirectoryIfExists,
     removeFile,
     removeFileIfExists,
   )
-import Effects.FileSystem.Utils as X (OsPath, osp, (</>))
-import Effects.IORef as X
+import Effectful.FileSystem.Utils as X (OsPath, decodeUtf8Lenient, osp, (</>))
+import Effectful.IORef.Static as X
   ( IORef,
-    MonadIORef
-      ( atomicModifyIORef',
-        modifyIORef',
-        newIORef,
-        readIORef,
-        writeIORef
-      ),
+    IORefStatic,
+    atomicModifyIORef',
+    modifyIORef',
+    newIORef,
+    readIORef,
+    runIORefStaticIO,
+    writeIORef,
   )
-import Effects.Optparse as X (MonadOptparse (execParser))
-import Effects.System.Environment as X (MonadEnv (withArgs))
-import Effects.System.Process as X (MonadProcess, Process)
-import Effects.System.Terminal as X
-  ( MonadTerminal,
+import Effectful.Optparse.Static as X (OptparseStatic, execParser, runOptparseStaticIO)
+import Effectful.Process.Typed as X
+  ( Process,
+    TypedProcess,
+  )
+import Effectful.Reader.Static as X (Reader, asks, runReader)
+import Effectful.Terminal.Dynamic as X
+  ( TerminalDynamic,
     putStr,
     putStrLn,
     putText,
     putTextLn,
   )
-import Effects.Time as X (MonadTime)
+import Effectful.Time.Dynamic as X (TimeDynamic)
 import GHC.Enum as X (Bounded (maxBound, minBound), Enum (toEnum))
 import GHC.Err as X (error, undefined)
 import GHC.Float as X (Double, Float)

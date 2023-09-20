@@ -1,6 +1,7 @@
 -- | Misc tests
 module Functional.Miscellaneous (specs) where
 
+import Data.IORef qualified as IORef
 import Functional.Prelude
 import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
@@ -14,7 +15,7 @@ specs =
 
 splitNewlineLogs :: TestTree
 splitNewlineLogs = testCase "Logs with newlines are split" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< run args)
   V.verifyExpectedUnexpected results expected unexpected
   where
     args =

@@ -5,7 +5,7 @@ module Shrun.Data.FilePathDefault
 where
 
 import Data.Char qualified as Ch
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effectful.FileSystem.Utils qualified as FsUtils
 import Shrun.Prelude
 
 -- | OsPath option that includes a default possibility.

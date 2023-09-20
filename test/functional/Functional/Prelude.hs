@@ -12,6 +12,11 @@ module Functional.Prelude
     runException,
     runExitFailure,
 
+    -- * IO Helpers
+    readFileUtf8ThrowMIO,
+    readFileUtf8LenientIO,
+    removeFileIfExistsIO,
+
     -- * Expectations
 
     -- ** Text
@@ -37,8 +42,22 @@ where
 
 import Data.String as X (IsString)
 import Data.Typeable (typeRep)
-import Effects.FileSystem.Utils (combineFilePaths)
-import Effects.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
+import Effectful.Dispatch.Dynamic (interpret, localSeqUnlift)
+import Effectful.Environment (Environment)
+import Effectful.Environment qualified as Env
+import Effectful.FileSystem.FileReader.Static qualified as FR
+import Effectful.FileSystem.FileWriter.Static qualified as FW
+import Effectful.FileSystem.HandleReader.Static qualified as HR
+import Effectful.FileSystem.HandleWriter.Static qualified as HW
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.PathReader.Static qualified as PR
+import Effectful.FileSystem.PathWriter.Static qualified as PW
+import Effectful.FileSystem.Utils (combineFilePaths)
+import Effectful.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
+import Effectful.Optparse.Static qualified as OA
+import Effectful.Process.Typed qualified as P
+import Effectful.Terminal.Dynamic qualified as Term
+import Effectful.Time.Dynamic qualified as Time
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
@@ -62,22 +81,21 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging.MonadRegionLogger
-  ( MonadRegionLogger
-      ( Region,
-        displayRegions,
-        logGlobal,
-        logRegion,
-        withRegion
+import Shrun.Logging.RegionLogger
+  ( RegionLoggerDynamic
+      ( DisplayRegions,
+        LogGlobal,
+        LogRegion,
+        WithRegion
       ),
   )
-import Shrun.Notify.MonadNotify (MonadNotify (notify), ShrunNote)
+import Shrun.Notify.DBus (DBusDynamic)
+import Shrun.Notify.DBus qualified as DBus
+import Shrun.Notify.Notify
 import Shrun.Notify.Types
   ( NotifyConfig (MkNotifyConfig, action, timeout),
   )
 import Shrun.Prelude as X
-import Shrun.ShellT (ShellT)
-import System.Environment qualified as SysEnv
 import System.Exit (ExitCode)
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
 import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))
@@ -123,22 +141,31 @@ instance HasNotifyConfig FuncEnv where
           timeout = notifyEnv ^. #timeout
         }
 
-instance MonadRegionLogger (ShellT FuncEnv IO) where
-  type Region (ShellT FuncEnv IO) = ()
+runRegionLoggerFunc ::
+  ( IORefStatic :> es,
+    Reader FuncEnv :> es
+  ) =>
+  Eff (RegionLoggerDynamic () : es) a ->
+  Eff es a
+runRegionLoggerFunc = interpret $ \env -> \case
+  LogGlobal txt -> do
+    ls <- asks @FuncEnv $ view #logs
+    modifyIORef' ls (txt :)
+  LogRegion _ _ txt -> do
+    ls <- asks @FuncEnv $ view #logs
+    modifyIORef' ls (txt :)
+  WithRegion _ onRegion -> localSeqUnlift env $ \runner -> runner . onRegion $ ()
+  DisplayRegions m -> localSeqUnlift env $ \runner -> runner m
 
-  logGlobal txt = do
-    ls <- asks $ view #logs
-    liftIO $ modifyIORef' ls (txt :)
-
-  logRegion _ _ = logGlobal
-
-  withRegion _layout regionToShell = regionToShell ()
-
-  displayRegions = id
-
-instance MonadNotify (ShellT FuncEnv IO) where
-  notify note = do
-    notesRef <- asks (view #shrunNotes)
+runNotifyFunc ::
+  ( IORefStatic :> es,
+    Reader FuncEnv :> es
+  ) =>
+  Eff (NotifyDynamic : es) a ->
+  Eff es a
+runNotifyFunc = interpret $ \_ -> \case
+  Notify note -> do
+    notesRef <- asks @FuncEnv (view #shrunNotes)
     modifyIORef' notesRef (note :)
 
 -- | Runs the args and retrieves the logs.
@@ -152,7 +179,7 @@ runNotes = fmap snd . runMaybeException ExNothing
 -- | 'runException' specialized to ExitFailure.
 runExitFailure :: List String -> IO (IORef (List Text))
 runExitFailure =
-  fmap fst . runMaybeException (ExJust $ Proxy @(ExceptionCS ExitCode))
+  fmap fst . runMaybeException (ExJust $ Proxy @ExitCode)
 
 -- | Like 'runException', except it expects an exception.
 runException ::
@@ -172,8 +199,8 @@ runMaybeException ::
   MaybeException ->
   List String ->
   IO (IORef (List Text), IORef (List ShrunNote))
-runMaybeException mException argList = do
-  SysEnv.withArgs argList $ Env.withEnv $ \env -> do
+runMaybeException mException argList = runEff' $ do
+  Env.withArgs argList $ Env.withEnv $ \env -> do
     ls <- newIORef []
     consoleQueue <- newTBQueueA 1_000
     shrunNotes <- newIORef []
@@ -202,9 +229,9 @@ runMaybeException mException argList = do
 
     case mException of
       ExNothing -> do
-        SR.runShellT SR.shrun funcEnv $> (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
+        runShrun funcEnv (SR.shrun @FuncEnv @()) $> (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
       ExJust (proxy :: Proxy e) ->
-        try @_ @e (SR.runShellT SR.shrun funcEnv) >>= \case
+        try @_ @e (runShrun funcEnv (SR.shrun @FuncEnv @())) >>= \case
           Left _ -> pure (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
           Right _ ->
             error
@@ -213,6 +240,64 @@ runMaybeException mException argList = do
                   show (typeRep proxy),
                   ">, received none"
                 ]
+  where
+    runShrun ::
+      ( IOE :> es,
+        IORefStatic :> es
+      ) =>
+      FuncEnv ->
+      Eff
+        ( TimeDynamic
+            : RegionLoggerDynamic ()
+            : NotifyDynamic
+            : HandleReaderStatic
+            : HandleWriterStatic
+            : TypedProcess
+            : Reader FuncEnv
+            : es
+        )
+        a ->
+      Eff es a
+
+    runShrun env =
+      runReader env
+        . P.runTypedProcess
+        . HW.runHandleWriterStaticIO
+        . HR.runHandleReaderStaticIO
+        . runNotifyFunc
+        . runRegionLoggerFunc
+        . Time.runTimeDynamicIO
+
+runEff' ::
+  Eff
+    [ DBusDynamic,
+      OptparseStatic,
+      TerminalDynamic,
+      PathWriterStatic,
+      PathReaderDynamic,
+      HandleWriterStatic,
+      FileWriterStatic,
+      FileReaderStatic,
+      IORefStatic,
+      Concurrent,
+      Environment,
+      IOE
+    ]
+    a ->
+  IO a
+runEff' =
+  runEff
+    . Env.runEnvironment
+    . runConcurrent
+    . runIORefStaticIO
+    . FR.runFileReaderStaticIO
+    . FW.runFileWriterStaticIO
+    . HW.runHandleWriterStaticIO
+    . PR.runPathReaderDynamicIO
+    . PW.runPathWriterStaticIO
+    . Term.runTerminalDynamicIO
+    . OA.runOptparseStaticIO
+    . DBus.runDBusDynamicIO
 
 commandPrefix :: (IsString s) => s
 commandPrefix = "[Command]"
@@ -281,3 +366,22 @@ notifySystemArg = "notify-send"
 
 cfp :: FilePath -> FilePath -> FilePath
 cfp = combineFilePaths
+
+readFileUtf8ThrowMIO :: OsPath -> IO Text
+readFileUtf8ThrowMIO =
+  runEff
+    . FR.runFileReaderStaticIO
+    . readFileUtf8ThrowM
+
+readFileUtf8LenientIO :: OsPath -> IO Text
+readFileUtf8LenientIO =
+  runEff
+    . FR.runFileReaderStaticIO
+    . readFileUtf8Lenient
+
+removeFileIfExistsIO :: OsPath -> IO ()
+removeFileIfExistsIO =
+  runEff
+    . PR.runPathReaderStaticIO
+    . PW.runPathWriterStaticIO
+    . removeFileIfExists

@@ -18,8 +18,8 @@ import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Data.Time.Relative qualified as RelativeTime
 import Data.Version (Version (versionBranch))
-import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.Optparse (validOsPath)
+import Effectful.FileSystem.Utils qualified as FsUtils
+import Effectful.Optparse.Static (validOsPath)
 import Options.Applicative
   ( ParseError (ErrorMsg),
     Parser,

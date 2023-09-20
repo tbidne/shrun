@@ -1,6 +1,7 @@
 -- | Functional test for a run that should timeout.
 module Functional.Timeout (spec) where
 
+import Data.IORef qualified as IORef
 import Functional.Prelude
 import Test.Shrun.Verifier
   ( ExpectedText (MkExpectedText),
@@ -11,7 +12,7 @@ import Test.Shrun.Verifier qualified as V
 -- | Spec that should timeout.
 spec :: TestTree
 spec = testCase "Should time out" $ do
-  results <- fmap MkResultText <$> (readIORef =<< runExitFailure argList)
+  results <- fmap MkResultText <$> (IORef.readIORef =<< runExitFailure argList)
 
   V.verifyExpected results allExpected
   where
