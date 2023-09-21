@@ -23,21 +23,39 @@ import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
-  ( FileMode (..),
-    FileSizeMode (..),
+  ( FileMode (FileModeAppend, FileModeWrite),
+    FileSizeMode (FileSizeModeDelete, FileSizeModeWarn),
     parserInfoArgs,
   )
 import Shrun.Configuration.Env.Notify qualified as EnvNotify
 import Shrun.Configuration.Env.Types
-  ( CmdLogging (..),
-    Env (..),
-    FileLogging (..),
-    HasLogging (..),
-    KeyHide (..),
-    LineTruncation (..),
-    Logging (..),
-    StripControl (..),
-    Truncation (..),
+  ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
+    Env
+      ( MkEnv,
+        anyError,
+        commands,
+        completedCmds,
+        init,
+        logging,
+        notifyEnv,
+        timeout
+      ),
+    FileLogging (MkFileLogging, log, stripControl),
+    HasLogging,
+    KeyHide (KeyHideOff),
+    LineTruncation (Detected, Undetected),
+    Logging
+      ( MkLogging,
+        cmdLog,
+        cmdNameTrunc,
+        consoleLog,
+        fileLog,
+        keyHide,
+        pollInterval,
+        timerFormat
+      ),
+    StripControl (StripControlAll, StripControlSmart),
+    Truncation (MkTruncation),
   )
 import Shrun.Configuration.Legend (linesToMap, translateCommands)
 import Shrun.Configuration.Toml
@@ -45,15 +63,15 @@ import Shrun.Configuration.Toml
     defaultTomlConfig,
     mergeConfig,
   )
-import Shrun.Data.Command (Command (..))
-import Shrun.Data.FilePathDefault (FilePathDefault (..))
+import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Data.TimerFormat (defaultTimerFormat)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
-import Shrun.Notify.MonadDBus (MonadDBus (..))
-import Shrun.Notify.MonadNotifySend (MonadNotifySend (..))
+import Shrun.Notify.MonadDBus (MonadDBus)
+import Shrun.Notify.MonadNotifySend (MonadNotifySend)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 

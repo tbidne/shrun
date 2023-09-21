@@ -2,7 +2,10 @@
 module Functional.Timeout (spec) where
 
 import Functional.Prelude
-import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
+import Test.Shrun.Verifier
+  ( ExpectedText (MkExpectedText),
+    ResultText (MkResultText),
+  )
 import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should timeout.

@@ -14,30 +14,45 @@ module Integration.Utils
   )
 where
 
-import DBus.Client (Client (..))
+import DBus.Client
+  ( Client
+      ( Client,
+        clientInterfaces,
+        clientObjects,
+        clientPendingCalls,
+        clientSignalHandlers,
+        clientSocket,
+        clientThreadID
+      ),
+  )
 import Data.Maybe (isJust)
 import Data.Text qualified as T
-import Effects.FileSystem.PathReader (MonadPathReader (..))
+import Effects.FileSystem.PathReader
+  ( MonadPathReader
+      ( getHomeDirectory,
+        getXdgDirectory
+      ),
+  )
 import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.Terminal (MonadTerminal (..))
+import Effects.System.Terminal (MonadTerminal (getChar, getTerminalSize))
 import Integration.Prelude as X
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types
   ( Env,
     KeyHide,
     StripControl,
-    TruncRegion (..),
+    TruncRegion (TCmdLine, TCmdName),
     Truncation,
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Data.TimerFormat (TimerFormat)
-import Shrun.Notify.MonadDBus (MonadDBus (..))
-import Shrun.Notify.MonadNotifySend (MonadNotifySend (..))
+import Shrun.Notify.MonadDBus (MonadDBus (connectSession, notify))
+import Shrun.Notify.MonadNotifySend (MonadNotifySend (notify))
 import Shrun.Notify.Types
   ( NotifyAction,
-    NotifySystem (..),
+    NotifySystem (AppleScript, DBus, NotifySend),
     NotifySystemP1,
     NotifyTimeout,
   )

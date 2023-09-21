@@ -13,7 +13,7 @@ import Functional.Success qualified as Success
 import Functional.SuccessCommandLogging qualified as SuccessCommandLogging
 import Functional.SuccessFileLogging qualified as SuccessFileLogging
 import Functional.SuccessShowKey qualified as SuccessShowKey
-import Functional.TestArgs (TestArgs (..))
+import Functional.TestArgs (TestArgs (MkTestArgs, configPath, rootDir, tmpDir))
 import Functional.Timeout qualified as Timeout
 import Functional.Truncation qualified as Truncation
 import GHC.Conc.Sync (setUncaughtExceptionHandler)

@@ -6,8 +6,12 @@ module Functional.SuccessShowKey (spec) where
 
 import Data.Text qualified as T
 import Functional.Prelude
-import Functional.TestArgs (TestArgs (..))
-import Test.Shrun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
+import Functional.TestArgs (TestArgs (MkTestArgs, configPath, tmpDir))
+import Test.Shrun.Verifier
+  ( ExpectedText (MkExpectedText),
+    ResultText (MkResultText),
+    UnexpectedText (MkUnexpectedText),
+  )
 import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should run commands displaying the key in the logs.

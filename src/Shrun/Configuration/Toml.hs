@@ -13,12 +13,12 @@ module Shrun.Configuration.Toml
 where
 
 import Optics.Core (NoIx)
-import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
+import Shrun.Configuration.Args (Args, FileMode, FileSizeMode)
 import Shrun.Configuration.Env.Types
   ( KeyHide,
     LineTruncation,
     StripControl,
-    TruncRegion (..),
+    TruncRegion (TCmdName),
     Truncation,
   )
 import Shrun.Data.FilePathDefault (FilePathDefault)

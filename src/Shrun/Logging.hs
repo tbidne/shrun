@@ -24,14 +24,14 @@ where
 
 import Shrun.Configuration.Env.Types
   ( FileLogging,
-    HasLogging (..),
+    HasLogging (getLogging),
     KeyHide,
     Logging,
   )
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.Types
-  ( Log (..),
-    LogRegion (..),
+  ( Log,
+    LogRegion (LogRegion),
   )
 import Shrun.Prelude
 

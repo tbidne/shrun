@@ -7,11 +7,21 @@ where
 import DBus.Notify (UrgencyLevel)
 import Data.Text qualified as T
 import Effects.Exception (catch)
-import Shrun.Configuration.Env.Types (HasLogging, HasNotifyConfig (..))
+import Shrun.Configuration.Env.Types
+  ( HasLogging,
+    HasNotifyConfig (getNotifyConfig),
+  )
 import Shrun.Logging qualified as Logging
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
-import Shrun.Logging.Types (Log (..), LogLevel (..), LogMode (..))
-import Shrun.Notify.MonadNotify (MonadNotify (..), ShrunNote (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
+import Shrun.Logging.Types
+  ( Log (MkLog, cmd, lvl, mode, msg),
+    LogLevel (LevelError),
+    LogMode (LogModeFinish),
+  )
+import Shrun.Notify.MonadNotify
+  ( MonadNotify (notify),
+    ShrunNote (MkShrunNote, body, summary, timeout, urgency),
+  )
 import Shrun.Prelude
 
 -- | Sends a notification if they are enabled (linux only). Logs any failed

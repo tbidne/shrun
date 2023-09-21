@@ -44,9 +44,12 @@ import Data.Bits (toIntegralSized)
 import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Word (Word16)
-import Shrun.Data.Phase (AdvancePhase (..), Phase (..))
+import Shrun.Data.Phase
+  ( AdvancePhase (NextPhase, advancePhase),
+    Phase (Phase1, Phase2),
+  )
 import Shrun.Prelude
-import TOML (Value (..))
+import TOML (Value (Integer, String))
 import Text.Read qualified as TR
 
 -- | Determines for which actions we should send notifications.

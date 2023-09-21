@@ -1,10 +1,18 @@
 -- | Functional tests for notifications
 module Functional.Notify (specs) where
 
-import DBus.Notify (UrgencyLevel (..))
+import DBus.Notify (UrgencyLevel (Normal))
 import Functional.Prelude
-import Shrun.Notify.MonadNotify (ShrunNote (..))
-import Shrun.Notify.Types (NotifyTimeout (..))
+import Shrun.Notify.MonadNotify
+  ( ShrunNote
+      ( MkShrunNote,
+        body,
+        summary,
+        timeout,
+        urgency
+      ),
+  )
+import Shrun.Notify.Types (NotifyTimeout (NotifyTimeoutSeconds))
 
 specs :: TestTree
 specs = testGroup "Notify" notifyTests

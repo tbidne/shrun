@@ -7,7 +7,7 @@ module Shrun
   )
 where
 
-import DBus.Notify (UrgencyLevel (..))
+import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
@@ -15,32 +15,47 @@ import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
-    HasAnyError (..),
-    HasCommands (..),
+    HasAnyError (getAnyError),
+    HasCommands (getCommands, getCompletedCmds),
     HasInit,
-    HasLogging (..),
-    HasNotifyConfig (..),
-    HasTimeout (..),
+    HasLogging (getLogging),
+    HasNotifyConfig (getNotifyConfig),
+    HasTimeout (getTimeout),
     Logging,
     setAnyErrorTrue,
   )
 import Shrun.Data.Command (CommandP1)
-import Shrun.Data.Timeout (Timeout (..))
+import Shrun.Data.Timeout (Timeout (MkTimeout))
 import Shrun.Data.TimerFormat qualified as TimerFormat
-import Shrun.IO (Stderr (..), tryCommandLogging)
-import Shrun.IO.Types (CommandResult (..))
+import Shrun.IO (Stderr (MkStderr), tryCommandLogging)
+import Shrun.IO.Types (CommandResult (CommandFailure, CommandSuccess))
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as LogFmt
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Logging.MonadRegionLogger
+  ( MonadRegionLogger
+      ( Region,
+        displayRegions,
+        logGlobal,
+        logRegion,
+        withRegion
+      ),
+  )
 import Shrun.Logging.Types
   ( FileLog,
-    Log (..),
-    LogLevel (..),
+    Log (MkLog, cmd, lvl, mode, msg),
+    LogLevel
+      ( LevelError,
+        LevelFatal,
+        LevelFinished,
+        LevelSuccess,
+        LevelTimer,
+        LevelWarn
+      ),
     LogMode (LogModeFinish, LogModeSet),
-    LogRegion (..),
+    LogRegion (LogNoRegion, LogRegion),
   )
 import Shrun.Notify qualified as Notify
-import Shrun.Notify.MonadNotify (MonadNotify (..))
+import Shrun.Notify.MonadNotify (MonadNotify)
 import Shrun.Notify.Types (_NotifyCommand)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)

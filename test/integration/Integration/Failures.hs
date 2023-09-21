@@ -9,11 +9,11 @@ import Effects.Exception (StringException)
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Legend (CyclicKeyError (..), DuplicateKeyError (..))
-import Shrun.Notify.Types
-  ( LinuxNotifySystemMismatch (..),
-    OsxNotifySystemMismatch (..),
+import Shrun.Configuration.Legend
+  ( CyclicKeyError (MkCyclicKeyError),
+    DuplicateKeyError (MkDuplicateKeyError),
   )
+import Shrun.Notify.Types (LinuxNotifySystemMismatch, OsxNotifySystemMismatch)
 
 specs :: TestTree
 specs =

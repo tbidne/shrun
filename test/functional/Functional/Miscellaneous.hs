@@ -2,7 +2,7 @@
 module Functional.Miscellaneous (specs) where
 
 import Functional.Prelude
-import Test.Shrun.Verifier (ResultText (..))
+import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
 specs :: TestTree

@@ -4,28 +4,44 @@
 -- | Tests for Shrun.Logging.Formatting.
 module Unit.Shrun.Logging.Formatting (tests) where
 
-import Data.Functor.Identity (Identity (..))
+import Data.Functor.Identity (Identity (Identity))
 import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Time (midday)
 import Data.Time.LocalTime (utc)
-import Effects.Time (LocalTime (..), MonadTime (..), ZonedTime (..))
+import Effects.Time
+  ( LocalTime (LocalTime),
+    MonadTime (getMonotonicTime, getSystemZonedTime),
+    ZonedTime (ZonedTime),
+  )
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
 import Shrun.Configuration.Env.Types
-  ( CmdLogging (..),
-    FileLogging (..),
-    HasLogging (..),
-    KeyHide (..),
-    Logging (..),
-    StripControl (..),
-    TruncRegion (..),
-    Truncation (..),
+  ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
+    FileLogging (MkFileLogging),
+    HasLogging (getLogging),
+    KeyHide (KeyHideOff, KeyHideOn),
+    Logging
+      ( MkLogging,
+        cmdLog,
+        cmdNameTrunc,
+        consoleLog,
+        fileLog,
+        keyHide,
+        pollInterval,
+        timerFormat
+      ),
+    StripControl (StripControlAll, StripControlNone, StripControlSmart),
+    TruncRegion (TCmdLine, TCmdName),
+    Truncation (MkTruncation),
   )
-import Shrun.Data.Command (Command (..))
+import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Logging.Formatting qualified as Formatting
-import Shrun.Logging.Types (Log (..), LogLevel (..))
+import Shrun.Logging.Types
+  ( Log (MkLog, cmd, lvl, msg),
+    LogLevel (LevelCommand),
+  )
 import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
 import Unit.Prelude

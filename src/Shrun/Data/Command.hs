@@ -11,11 +11,14 @@ module Shrun.Data.Command
 where
 
 import Data.Hashable (Hashable)
-import Data.String (IsString (..))
+import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Effects.System.Process (ProcessConfig)
 import Effects.System.Process qualified as P
-import Shrun.Data.Phase (AdvancePhase (..), Phase (..))
+import Shrun.Data.Phase
+  ( AdvancePhase (NextPhase, advancePhase),
+    Phase (Phase1, Phase2),
+  )
 import Shrun.Prelude
 
 -- $setup

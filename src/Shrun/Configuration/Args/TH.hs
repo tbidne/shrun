@@ -8,7 +8,7 @@ where
 
 import Data.Text qualified as T
 import Language.Haskell.TH (Code, Q)
-import Language.Haskell.TH.Syntax (Lift (..), bindCode, runIO)
+import Language.Haskell.TH.Syntax (Lift (liftTyped), bindCode, runIO)
 import Shrun.Prelude
 
 -- | Reads examples/default.toml at compile time.

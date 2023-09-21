@@ -6,8 +6,11 @@ module Functional.SuccessFileLogging (spec) where
 
 import Data.Text qualified as T
 import Functional.Prelude
-import Functional.TestArgs (TestArgs (..))
-import Test.Shrun.Verifier (ExpectedText (..), ResultText (..))
+import Functional.TestArgs (TestArgs (MkTestArgs, tmpDir))
+import Test.Shrun.Verifier
+  ( ExpectedText (MkExpectedText),
+    ResultText (MkResultText),
+  )
 import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should run commands displaying the key in the logs.

@@ -11,13 +11,13 @@ import Data.Text qualified as T
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Shrun.Configuration.Legend
-  ( CyclicKeyError (..),
-    DuplicateKeyError (..),
+  ( CyclicKeyError (MkCyclicKeyError),
+    DuplicateKeyError (MkDuplicateKeyError),
     LegendMap,
     linesToMap,
     translateCommands,
   )
-import Shrun.Data.Command (Command (..))
+import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
 import Shrun.Utils (unsafeListToNESeq)
 import Unit.Prelude

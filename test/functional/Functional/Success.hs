@@ -2,8 +2,12 @@
 module Functional.Success (spec) where
 
 import Functional.Prelude
-import Functional.TestArgs (TestArgs (..))
-import Test.Shrun.Verifier (ExpectedText (..), ResultText (..), UnexpectedText (..))
+import Functional.TestArgs (TestArgs (MkTestArgs, configPath))
+import Test.Shrun.Verifier
+  ( ExpectedText (MkExpectedText),
+    ResultText (MkResultText),
+    UnexpectedText (MkUnexpectedText),
+  )
 import Test.Shrun.Verifier qualified as V
 
 -- | Spec that should run commands successfully.

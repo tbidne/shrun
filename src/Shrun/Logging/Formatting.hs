@@ -22,14 +22,25 @@ import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
-    KeyHide (..),
-    Logging (..),
-    StripControl (..),
-    TruncRegion (..),
+    KeyHide (KeyHideOff),
+    Logging,
+    StripControl (StripControlAll, StripControlNone),
+    TruncRegion (TCmdName),
     Truncation,
   )
-import Shrun.Data.Command (Command (..), CommandP1)
-import Shrun.Logging.Types (Log (..), LogLevel (..))
+import Shrun.Data.Command (Command (MkCommand), CommandP1)
+import Shrun.Logging.Types
+  ( Log,
+    LogLevel
+      ( LevelCommand,
+        LevelError,
+        LevelFatal,
+        LevelFinished,
+        LevelSuccess,
+        LevelTimer,
+        LevelWarn
+      ),
+  )
 import Shrun.Logging.Types.Internal
   ( ConsoleLog (UnsafeConsoleLog),
     FileLog (UnsafeFileLog),
@@ -37,7 +48,7 @@ import Shrun.Logging.Types.Internal
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 import Shrun.Utils qualified as Utils
-import System.Console.Pretty (Color (..))
+import System.Console.Pretty (Color (Blue, Cyan, Green, Red, White, Yellow))
 import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.

@@ -7,18 +7,44 @@ module Integration.Defaults (specs) where
 import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
-  ( SimpleEnv (..),
+  ( SimpleEnv
+      ( MkSimpleEnv,
+        cmdLog,
+        cmdLogLineTrunc,
+        cmdLogStripControl,
+        cmdNameTrunc,
+        commands,
+        fileLog,
+        fileLogStripControl,
+        init,
+        keyHide,
+        notifyAction,
+        notifySystem,
+        notifyTimeout,
+        pollInterval,
+        timeout,
+        timerFormat
+      ),
     makeEnvAndVerify,
     runConfigIO,
     runNoConfigIO,
   )
-import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
-import Shrun.Data.Command (Command (..))
-import Shrun.Data.TimerFormat (TimerFormat (..))
+import Shrun.Configuration.Env.Types
+  ( KeyHide (KeyHideOff, KeyHideOn),
+    StripControl (StripControlAll, StripControlNone),
+  )
+import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.TimerFormat
+  ( TimerFormat
+      ( DigitalCompact,
+        DigitalFull,
+        ProseCompact
+      ),
+  )
 import Shrun.Notify.Types
-  ( NotifyAction (..),
-    NotifySystem (..),
-    NotifyTimeout (..),
+  ( NotifyAction (NotifyCommand, NotifyFinal),
+    NotifySystem (AppleScript, DBus, NotifySend),
+    NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
 
 specs :: IO TestArgs -> TestTree

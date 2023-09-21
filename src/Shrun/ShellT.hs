@@ -8,15 +8,15 @@ module Shrun.ShellT
 where
 
 import Shrun.Configuration.Env.Types (Env)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
 import Shrun.Notify.MonadAppleScript qualified as MonadAppleScript
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Notify.MonadDBus qualified as MonadDBus
-import Shrun.Notify.MonadNotify (MonadNotify (..))
+import Shrun.Notify.MonadNotify (MonadNotify (notify))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend)
 import Shrun.Notify.MonadNotifySend qualified as MonadNotifySend
-import Shrun.Notify.Types (NotifySystem (..))
+import Shrun.Notify.Types (NotifySystem (AppleScript, DBus, NotifySend))
 import Shrun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.

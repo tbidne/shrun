@@ -18,7 +18,15 @@ module Shrun.Logging.Types
 where
 
 import Shrun.Data.Command (CommandP1)
-import Shrun.Logging.Types.Internal (ConsoleLog, FileLog, LogMode (..))
+import Shrun.Logging.Types.Internal
+  ( ConsoleLog,
+    FileLog,
+    LogMode
+      ( LogModeAppend,
+        LogModeFinish,
+        LogModeSet
+      ),
+  )
 import Shrun.Prelude
 
 -- | Determines the logging level.

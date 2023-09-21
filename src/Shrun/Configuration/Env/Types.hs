@@ -35,7 +35,7 @@ import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Notify.Types
   ( NotifyAction,
-    NotifyConfig (..),
+    NotifyConfig (MkNotifyConfig, action, timeout),
     NotifySystemP2,
     NotifyTimeout,
   )

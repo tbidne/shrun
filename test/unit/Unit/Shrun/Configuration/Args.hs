@@ -4,19 +4,71 @@
 -- | Tests for Shrun.Args
 module Unit.Shrun.Configuration.Args (tests) where
 
-import Data.Bytes (Bytes (..))
+import Data.Bytes (Bytes (MkBytes))
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
-import Shrun.Configuration.Args (Args (..), FileMode (..), FileSizeMode (..))
+import Shrun.Configuration.Args
+  ( Args
+      ( MkArgs,
+        cmdLog,
+        cmdLogLineTrunc,
+        cmdLogStripControl,
+        cmdNameTrunc,
+        commands,
+        configPath,
+        fileLog,
+        fileLogMode,
+        fileLogSizeMode,
+        fileLogStripControl,
+        init,
+        keyHide,
+        noCmdLog,
+        noCmdLogLineTrunc,
+        noCmdLogStripControl,
+        noCmdNameTrunc,
+        noConfig,
+        noFileLog,
+        noFileLogMode,
+        noFileLogSizeMode,
+        noFileLogStripControl,
+        noInit,
+        noKeyHide,
+        noNotifyAction,
+        noNotifySystem,
+        noNotifyTimeout,
+        noPollInterval,
+        noTimeout,
+        noTimerFormat,
+        notifyAction,
+        notifySystem,
+        notifyTimeout,
+        pollInterval,
+        timeout,
+        timerFormat
+      ),
+    FileMode (FileModeAppend, FileModeWrite),
+    FileSizeMode (FileSizeModeDelete, FileSizeModeWarn),
+  )
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Env.Types
-  ( KeyHide (..),
-    LineTruncation (..),
-    StripControl (..),
+  ( KeyHide (KeyHideOn),
+    LineTruncation (Detected, Undetected),
+    StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.TimerFormat (TimerFormat (..))
-import Shrun.Notify.Types (NotifyAction (..), NotifySystem (..), NotifyTimeout (..))
+import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Data.TimerFormat
+  ( TimerFormat
+      ( DigitalCompact,
+        DigitalFull,
+        ProseCompact,
+        ProseFull
+      ),
+  )
+import Shrun.Notify.Types
+  ( NotifyAction (NotifyCommand, NotifyFinal),
+    NotifySystem (AppleScript, DBus, NotifySend),
+    NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
+  )
 import Shrun.Utils qualified as U
 import Unit.Prelude
 

@@ -11,10 +11,10 @@ module Shrun.Configuration.Args
   )
 where
 
-import Data.Bytes (Bytes (..), Size (..))
+import Data.Bytes (Bytes, Size (B))
 import Data.Char qualified as Ch
 import Data.List qualified as L
-import Data.String (IsString (..))
+import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Data.Time.Relative qualified as RelativeTime
 import Data.Version (Version (versionBranch))
@@ -23,29 +23,42 @@ import Effects.Optparse (validOsPath)
 import Options.Applicative
   ( ParseError (ErrorMsg),
     Parser,
-    ParserInfo (..),
+    ParserInfo
+      ( ParserInfo,
+        infoFailureCode,
+        infoFooter,
+        infoFullDesc,
+        infoHeader,
+        infoParser,
+        infoPolicy,
+        infoProgDesc
+      ),
     ReadM,
   )
 import Options.Applicative qualified as OA
-import Options.Applicative.Help.Chunk (Chunk (..))
+import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
-import Options.Applicative.Types (ArgPolicy (..))
+import Options.Applicative.Types (ArgPolicy (Intersperse))
 import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
 import Shrun.Configuration.Env.Types
-  ( KeyHide (..),
-    LineTruncation (..),
-    StripControl (..),
-    TruncRegion (..),
-    Truncation (..),
+  ( KeyHide (KeyHideOn),
+    LineTruncation (Detected, Undetected),
+    StripControl (StripControlAll, StripControlNone, StripControlSmart),
+    TruncRegion (TCmdName),
+    Truncation (MkTruncation),
   )
-import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.PollInterval (PollInterval (..), defaultPollInterval)
-import Shrun.Data.Timeout (Timeout (..))
-import Shrun.Data.TimerFormat (TimerFormat (..))
+import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Data.PollInterval (PollInterval (MkPollInterval), defaultPollInterval)
+import Shrun.Data.Timeout (Timeout (MkTimeout))
+import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Data.TimerFormat qualified as TimerFormat
 import Shrun.Notify.Types
+  ( NotifyAction,
+    NotifySystemP1,
+    NotifyTimeout,
+  )
 import Shrun.Notify.Types qualified as Notify
 import Shrun.Prelude
 import Shrun.Utils qualified as U

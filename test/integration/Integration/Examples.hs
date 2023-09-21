@@ -6,14 +6,38 @@ module Integration.Examples (specs) where
 
 import Data.IORef qualified as IORef
 import Integration.Prelude
-import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
-import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
+import Integration.Utils
+  ( SimpleEnv
+      ( MkSimpleEnv,
+        cmdLog,
+        cmdLogLineTrunc,
+        cmdLogStripControl,
+        cmdNameTrunc,
+        commands,
+        fileLog,
+        fileLogStripControl,
+        init,
+        keyHide,
+        notifyAction,
+        notifySystem,
+        notifyTimeout,
+        pollInterval,
+        timeout,
+        timerFormat
+      ),
+    makeEnvAndVerify,
+    runConfigIO,
+  )
+import Shrun.Configuration.Env.Types
+  ( KeyHide (KeyHideOff),
+    StripControl (StripControlSmart),
+  )
 import Shrun.Data.Command (Command (MkCommand))
-import Shrun.Data.TimerFormat (TimerFormat (..))
+import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Notify.Types
-  ( NotifyAction (..),
-    NotifySystem (..),
-    NotifyTimeout (..),
+  ( NotifyAction (NotifyCommand),
+    NotifySystem (AppleScript, NotifySend),
+    NotifyTimeout (NotifyTimeoutNever),
   )
 
 specs :: TestTree

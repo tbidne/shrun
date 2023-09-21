@@ -9,18 +9,28 @@ module Shrun.Configuration.Env.Notify
 where
 
 import Effects.Exception (throwString)
-import Shrun.Configuration.Env.Types (NotifyEnv (..))
-import Shrun.Configuration.Toml (NotifyToml (..))
+import Shrun.Configuration.Env.Types
+  ( NotifyEnv
+      ( MkNotifyEnv,
+        action,
+        system,
+        timeout
+      ),
+  )
+import Shrun.Configuration.Toml (NotifyToml)
 import Shrun.Data.Phase (AdvancePhase (advancePhase))
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
 import Shrun.Notify.Types
-  ( LinuxNotifySystemMismatch (..),
-    NotifyAction (..),
-    NotifySystem (..),
+  ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
+    NotifyAction,
+    NotifySystem (AppleScript, DBus),
     NotifySystemP1,
     NotifySystemP2,
-    NotifyTimeout (..),
-    OsxNotifySystemMismatch (..),
+    NotifyTimeout (NotifyTimeoutSeconds),
+    OsxNotifySystemMismatch
+      ( OsxNotifySystemMismatchDBus,
+        OsxNotifySystemMismatchNotifySend
+      ),
     _AppleScript,
     _DBus,
     _NotifySend,

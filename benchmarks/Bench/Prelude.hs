@@ -10,20 +10,37 @@ where
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
-  ( HasAnyError (..),
-    HasCommands (..),
-    HasInit (..),
-    HasLogging (..),
-    HasNotifyConfig (..),
-    HasTimeout (..),
-    Logging (..),
+  ( HasAnyError (getAnyError),
+    HasCommands (getCommands, getCompletedCmds),
+    HasInit (getInit),
+    HasLogging (getLogging),
+    HasNotifyConfig (getNotifyConfig),
+    HasTimeout (getTimeout),
+    Logging
+      ( MkLogging,
+        cmdLog,
+        cmdNameTrunc,
+        consoleLog,
+        fileLog,
+        keyHide,
+        pollInterval,
+        timerFormat
+      ),
     NotifyEnv,
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
-import Shrun.Notify.MonadNotify (MonadNotify (..))
-import Shrun.Notify.Types (NotifyConfig (..))
+import Shrun.Logging.MonadRegionLogger
+  ( MonadRegionLogger
+      ( Region,
+        displayRegions,
+        logGlobal,
+        logRegion,
+        withRegion
+      ),
+  )
+import Shrun.Notify.MonadNotify (MonadNotify (notify))
+import Shrun.Notify.Types (NotifyConfig (MkNotifyConfig, action, timeout))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 import System.Environment qualified as SysEnv

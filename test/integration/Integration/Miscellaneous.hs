@@ -8,15 +8,39 @@ import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
-import Integration.Utils (SimpleEnv (..), makeEnvAndVerify, runConfigIO)
+import Integration.Utils
+  ( SimpleEnv
+      ( MkSimpleEnv,
+        cmdLog,
+        cmdLogLineTrunc,
+        cmdLogStripControl,
+        cmdNameTrunc,
+        commands,
+        fileLog,
+        fileLogStripControl,
+        init,
+        keyHide,
+        notifyAction,
+        notifySystem,
+        notifyTimeout,
+        pollInterval,
+        timeout,
+        timerFormat
+      ),
+    makeEnvAndVerify,
+    runConfigIO,
+  )
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Env.Types (KeyHide (..), StripControl (..))
-import Shrun.Data.Command (Command (..))
-import Shrun.Data.TimerFormat (TimerFormat (..))
+import Shrun.Configuration.Env.Types
+  ( KeyHide (KeyHideOff, KeyHideOn),
+    StripControl (StripControlAll, StripControlNone, StripControlSmart),
+  )
+import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.TimerFormat (TimerFormat (DigitalFull, ProseCompact))
 import Shrun.Notify.Types
-  ( NotifyAction (..),
-    NotifySystem (..),
-    NotifyTimeout (..),
+  ( NotifyAction (NotifyCommand),
+    NotifySystem (AppleScript, DBus),
+    NotifyTimeout (NotifyTimeoutNever),
   )
 
 specs :: IO TestArgs -> TestTree

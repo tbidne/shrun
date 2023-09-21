@@ -31,13 +31,13 @@ module Shrun.Prelude
 where
 
 import Control.Applicative as X
-  ( Alternative (..),
-    Applicative (..),
+  ( Alternative (empty, (<|>)),
+    Applicative (liftA2, pure, (*>), (<*>)),
     (<**>),
   )
 import Control.Concurrent as X (threadDelay)
 import Control.Monad as X
-  ( Monad (..),
+  ( Monad ((>>=)),
     forever,
     join,
     unless,
@@ -47,19 +47,22 @@ import Control.Monad as X
     (=<<),
     (>=>),
   )
-import Control.Monad.Fail as X (MonadFail (..))
-import Control.Monad.IO.Class as X (MonadIO (..))
-import Control.Monad.Reader as X (MonadReader (..), ReaderT (..), asks)
-import Control.Monad.Trans as X (MonadTrans (..))
-import Control.Monad.Writer as X (MonadWriter (..), WriterT (..))
-import Data.Bifunctor as X (Bifunctor (..))
-import Data.Bool as X (Bool (..), not, otherwise, (&&), (||))
+import Control.Monad.Fail as X (MonadFail (fail))
+import Control.Monad.IO.Class as X (MonadIO (liftIO))
+import Control.Monad.Reader as X
+  ( MonadReader (ask, local),
+    ReaderT (runReaderT),
+    asks,
+  )
+import Control.Monad.Trans as X (MonadTrans (lift))
+import Data.Bifunctor as X (Bifunctor)
+import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
 import Data.Char as X (Char)
-import Data.Either as X (Either (..))
-import Data.Eq as X (Eq (..))
+import Data.Either as X (Either (Left, Right))
+import Data.Eq as X (Eq ((/=), (==)))
 import Data.Foldable as X
-  ( Foldable (..),
+  ( Foldable (fold, foldl', foldr, toList),
     any,
     for_,
     length,
@@ -67,7 +70,7 @@ import Data.Foldable as X
   )
 import Data.Function as X (const, flip, id, ($), (&), (.))
 import Data.Functor as X
-  ( Functor (..),
+  ( Functor (fmap),
     ($>),
     (<$>),
     (<&>),
@@ -75,18 +78,18 @@ import Data.Functor as X
 import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
 import Data.List as X (filter, replicate, zip, (++))
-import Data.List.NonEmpty as X (NonEmpty (..))
-import Data.Maybe as X (Maybe (..), fromMaybe, maybe)
-import Data.Monoid as X (Monoid (..))
-import Data.Ord as X (Ord (..), Ordering (..))
-import Data.Proxy as X (Proxy (..))
-import Data.Semigroup as X (Semigroup (..))
+import Data.List.NonEmpty as X (NonEmpty ((:|)))
+import Data.Maybe as X (Maybe (Just, Nothing), fromMaybe, maybe)
+import Data.Monoid as X (Monoid (mconcat, mempty))
+import Data.Ord as X (Ord ((<), (<=), (>), (>=)), Ordering)
+import Data.Proxy as X (Proxy (Proxy))
+import Data.Semigroup as X (Semigroup ((<>)))
 import Data.Sequence as X (Seq ((:<|), (:|>)))
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.String as X (String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
-import Data.Traversable as X (Traversable (..), for)
+import Data.Traversable as X (Traversable (traverse), for)
 import Data.Tuple as X (fst, snd)
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
@@ -106,8 +109,8 @@ import Effects.Concurrent.STM as X
   )
 import Effects.Concurrent.Thread as X (MonadThread)
 import Effects.Exception as X
-  ( Exception (..),
-    ExceptionCS (..),
+  ( Exception (displayException, fromException),
+    ExceptionCS (MkExceptionCS),
     MonadCatch,
     MonadMask,
     MonadThrow,
@@ -164,10 +167,7 @@ import Effects.IORef as X
   )
 import Effects.Optparse as X (MonadOptparse (execParser))
 import Effects.System.Environment as X (MonadEnv (withArgs))
-import Effects.System.Process as X
-  ( MonadProcess (..),
-    Process,
-  )
+import Effects.System.Process as X (MonadProcess, Process)
 import Effects.System.Terminal as X
   ( MonadTerminal,
     putStr,
@@ -176,15 +176,15 @@ import Effects.System.Terminal as X
     putTextLn,
   )
 import Effects.Time as X (MonadTime)
-import GHC.Enum as X (Bounded (..), Enum (..))
+import GHC.Enum as X (Bounded (maxBound, minBound), Enum (toEnum))
 import GHC.Err as X (error, undefined)
-import GHC.Float as X (Double (..), Float (..))
+import GHC.Float as X (Double, Float)
 import GHC.Generics as X (Generic)
 import GHC.Integer as X (Integer)
 import GHC.Natural as X (Natural)
-import GHC.Num as X (Num (..))
-import GHC.Real as X (Integral (..), fromIntegral, truncate)
-import GHC.Show as X (Show (..))
+import GHC.Num as X (Num ((*), (+), (-)))
+import GHC.Real as X (Integral, fromIntegral, truncate)
+import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack)
 import Optics.Core as X
   ( A_Getter,
@@ -194,7 +194,7 @@ import Optics.Core as X
     Getter,
     Is,
     Iso',
-    LabelOptic (..),
+    LabelOptic (labelOptic),
     Lens',
     Optic',
     Prism,
@@ -231,11 +231,11 @@ import Optics.TH as X
     noPrefixFieldLabels,
   )
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
-import System.IO as X (FilePath, Handle, IO, IOMode (..), print)
+import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)
 import TOML as X
-  ( DecodeTOML (..),
+  ( DecodeTOML (tomlDecoder),
     Decoder,
-    TOMLError (..),
+    TOMLError,
     Value,
     decode,
     decodeWith,

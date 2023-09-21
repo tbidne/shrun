@@ -5,7 +5,13 @@ module Shrun.Logging.MonadRegionLogger
   )
 where
 
-import Shrun.Logging.Types.Internal (LogMode (..))
+import Shrun.Logging.Types.Internal
+  ( LogMode
+      ( LogModeAppend,
+        LogModeFinish,
+        LogModeSet
+      ),
+  )
 import Shrun.Prelude
 import System.Console.Regions qualified as Regions
 

@@ -13,8 +13,12 @@ module Unit.Shrun.Logging.Generators
 where
 
 import Hedgehog.Gen qualified as HGen
-import Shrun.Data.Command (Command (..), CommandP1)
-import Shrun.Logging.Types (Log (..), LogLevel (..), LogMode (..))
+import Shrun.Data.Command (Command (MkCommand), CommandP1)
+import Shrun.Logging.Types
+  ( Log (MkLog, cmd, lvl, mode, msg),
+    LogLevel,
+    LogMode,
+  )
 import Unit.Generators qualified as PGens
 import Unit.Prelude
 

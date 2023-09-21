@@ -15,31 +15,31 @@ import Effects.System.Process qualified as P
 import Effects.Time (withTiming)
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
-    HasCommands (..),
-    HasInit (..),
-    HasLogging (..),
+    HasCommands,
+    HasInit (getInit),
+    HasLogging (getLogging),
     prependCompletedCommand,
     setAnyErrorTrue,
   )
 import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.IO.Types
-  ( CommandResult (..),
-    ReadHandleResult (..),
-    Stderr (..),
+  ( CommandResult (CommandFailure, CommandSuccess),
+    ReadHandleResult (ReadErr, ReadNoData, ReadSuccess),
+    Stderr (MkStderr),
     readHandle,
     readHandleResultToStderr,
   )
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
 import Shrun.Logging.Types
-  ( Log (..),
-    LogLevel (..),
-    LogMode (..),
+  ( Log (MkLog, cmd, lvl, mode, msg),
+    LogLevel (LevelCommand),
+    LogMode (LogModeSet),
     LogRegion (LogRegion),
   )
 import Shrun.Prelude
 import Shrun.Utils qualified as U
-import System.Exit (ExitCode (..))
+import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 
 -- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::

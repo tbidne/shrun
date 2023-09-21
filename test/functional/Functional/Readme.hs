@@ -1,14 +1,27 @@
 -- | Functional tests for readme examples.
 module Functional.Readme (specs) where
 
-import DBus.Notify (UrgencyLevel (..))
+import DBus.Notify (UrgencyLevel (Normal))
 import Data.Text qualified as T
 import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
-import Functional.TestArgs (TestArgs (..))
-import Shrun.Notify.MonadNotify (ShrunNote (..))
-import Shrun.Notify.Types (NotifyTimeout (..))
-import Test.Shrun.Verifier (ResultText (..))
+import Functional.TestArgs (TestArgs)
+import Shrun.Notify.MonadNotify
+  ( ShrunNote
+      ( MkShrunNote,
+        body,
+        summary,
+        timeout,
+        urgency
+      ),
+  )
+import Shrun.Notify.Types
+  ( NotifyTimeout
+      ( NotifyTimeoutNever,
+        NotifyTimeoutSeconds
+      ),
+  )
+import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update the README!

@@ -7,11 +7,16 @@ where
 
 import DBus.Client (Client)
 import DBus.Client qualified as DBusC
-import DBus.Notify (Hint (Urgency), Note (..), Notification)
+import DBus.Notify (Hint (Urgency), Note, Notification)
 import DBus.Notify qualified as DBusN
 import Data.Text qualified as T
 import Shrun.Notify.MonadNotify (ShrunNote)
-import Shrun.Notify.Types (NotifyTimeout (..))
+import Shrun.Notify.Types
+  ( NotifyTimeout
+      ( NotifyTimeoutNever,
+        NotifyTimeoutSeconds
+      ),
+  )
 import Shrun.Prelude
 
 -- | Effect for DBus.

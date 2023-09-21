@@ -18,8 +18,8 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
-import Shrun.Data.Command (Command (..), CommandP1)
-import Shrun.Data.Legend (KeyVal (..), LegendMap)
+import Shrun.Data.Command (Command (MkCommand), CommandP1)
+import Shrun.Data.Legend (KeyVal (MkKeyVal), LegendMap)
 import Shrun.Prelude
 
 -- $setup
