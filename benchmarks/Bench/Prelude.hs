@@ -46,13 +46,13 @@ import Shrun.ShellT (ShellT)
 import System.Environment qualified as SysEnv
 
 data BenchEnv = MkBenchEnv
-  { timeout :: !(Maybe Timeout),
-    init :: !(Maybe Text),
-    logging :: !(Logging ()),
-    completedCmds :: !(TVar (Seq CommandP1)),
-    commands :: !(NESeq CommandP1),
-    notifyEnv :: !(Maybe NotifyEnv),
-    anyError :: !(TVar Bool)
+  { timeout :: Maybe Timeout,
+    init :: Maybe Text,
+    logging :: Logging (),
+    completedCmds :: TVar (Seq CommandP1),
+    commands :: NESeq CommandP1,
+    notifyEnv :: Maybe NotifyEnv,
+    anyError :: TVar Bool
   }
 
 makeFieldLabelsNoPrefix ''BenchEnv

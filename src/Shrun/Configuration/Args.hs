@@ -103,77 +103,77 @@ instance DecodeTOML FileSizeMode where
 -- | Type for parsing command line args.
 data Args = MkArgs
   { -- | Optional config file.
-    configPath :: !(Maybe OsPath),
+    configPath :: Maybe OsPath,
     -- | Ignores toml config file.
     noConfig :: Bool,
     -- | Timeout.
-    timeout :: !(Maybe Timeout),
+    timeout :: Maybe Timeout,
     -- | Disables timeout.
-    noTimeout :: !Bool,
+    noTimeout :: Bool,
     -- | Shell logic to run before each command.
-    init :: !(Maybe Text),
+    init :: Maybe Text,
     -- | Disables init.
-    noInit :: !Bool,
+    noInit :: Bool,
     -- | Whether to display command by (key) name or command.
-    keyHide :: !(Maybe KeyHide),
+    keyHide :: Maybe KeyHide,
     -- | Disables keyHide.
-    noKeyHide :: !Bool,
+    noKeyHide :: Bool,
     -- | How often to poll commands for logs, in microseconds.
-    pollInterval :: !(Maybe PollInterval),
+    pollInterval :: Maybe PollInterval,
     -- | Disables pollInterval.
-    noPollInterval :: !Bool,
+    noPollInterval :: Bool,
     -- | How to format the timer.
-    timerFormat :: !(Maybe TimerFormat),
+    timerFormat :: Maybe TimerFormat,
     -- | Disables timerFormat.
-    noTimerFormat :: !Bool,
+    noTimerFormat :: Bool,
     -- | The max number of command characters to display in the logs.
-    cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
+    cmdNameTrunc :: Maybe (Truncation TCmdName),
     -- | Disables cmdNameTrunc.
-    noCmdNameTrunc :: !Bool,
+    noCmdNameTrunc :: Bool,
     -- | Whether to log commands.
-    cmdLog :: !(Maybe Bool),
+    cmdLog :: Maybe Bool,
     -- | Disables cmdLogging.
-    noCmdLog :: !Bool,
+    noCmdLog :: Bool,
     -- | Determines to what extent we should remove control characters
     -- from command logs.
-    cmdLogStripControl :: !(Maybe StripControl),
+    cmdLogStripControl :: Maybe StripControl,
     -- | Disables cmdLogStripControl.
-    noCmdLogStripControl :: !Bool,
+    noCmdLogStripControl :: Bool,
     -- | The max number of line characters to display in the logs.
-    cmdLogLineTrunc :: !(Maybe LineTruncation),
+    cmdLogLineTrunc :: Maybe LineTruncation,
     -- | Disables cmdLogLineTrunc.
-    noCmdLogLineTrunc :: !Bool,
+    noCmdLogLineTrunc :: Bool,
     -- | Optional path to log file. Determines if we log to a file.
-    fileLog :: !(Maybe FilePathDefault),
+    fileLog :: Maybe FilePathDefault,
     -- | Disable fileLog.
-    noFileLog :: !Bool,
+    noFileLog :: Bool,
     -- | Determines to what extent we should remove control characters
     -- from file logs.
-    fileLogStripControl :: !(Maybe StripControl),
+    fileLogStripControl :: Maybe StripControl,
     -- | Disables fileLogStripControl.
-    noFileLogStripControl :: !Bool,
+    noFileLogStripControl :: Bool,
     -- | Mode to use with the file log.
-    fileLogMode :: !(Maybe FileMode),
+    fileLogMode :: Maybe FileMode,
     -- | Disables fileLogMode.
-    noFileLogMode :: !Bool,
+    noFileLogMode :: Bool,
     -- | Threshold for when we should warn about the log file size.
-    fileLogSizeMode :: !(Maybe FileSizeMode),
+    fileLogSizeMode :: Maybe FileSizeMode,
     -- | Disables fileLogSizeMode.
-    noFileLogSizeMode :: !Bool,
+    noFileLogSizeMode :: Bool,
     -- | Actions for which to send notifications.
-    notifyAction :: !(Maybe NotifyAction),
+    notifyAction :: Maybe NotifyAction,
     -- | Disables notifyAction.
-    noNotifyAction :: !Bool,
+    noNotifyAction :: Bool,
     -- | The notification system to use.
-    notifySystem :: !(Maybe NotifySystemP1),
+    notifySystem :: Maybe NotifySystemP1,
     -- | Disables notifySystem.
-    noNotifySystem :: !Bool,
+    noNotifySystem :: Bool,
     -- | when to timeout successful notifications.
-    notifyTimeout :: !(Maybe NotifyTimeout),
+    notifyTimeout :: Maybe NotifyTimeout,
     -- | Disables notifyTimeout.
-    noNotifyTimeout :: !Bool,
+    noNotifyTimeout :: Bool,
     -- | List of commands.
-    commands :: !(NESeq Text)
+    commands :: NESeq Text
   }
   deriving stock (Eq, Show)
 

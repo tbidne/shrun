@@ -38,6 +38,7 @@ common common-lang
     OverloadedLabels
     OverloadedStrings
     PatternSynonyms
+    StrictData
     TypeFamilies
 
   if os(osx)

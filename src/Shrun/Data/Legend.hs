@@ -24,8 +24,8 @@ type LegendMap = HashMap Text (NESeq Text)
 -- * @val@ is non-empty.
 -- * all @v_i@ in @val@ are non-empty.
 data KeyVal = UnsafeKeyVal
-  { key :: !Text,
-    val :: !(NESeq Text)
+  { key :: Text,
+    val :: NESeq Text
   }
   deriving stock (Eq, Show)
 

@@ -96,7 +96,7 @@ type NotifySystemP2 = NotifySystem Phase2
 type NotifySystem :: Phase -> Type
 data NotifySystem p
   = -- | Uses DBus.
-    DBus !(DBusF p)
+    DBus (DBusF p)
   | -- | Uses notify-send.
     NotifySend
   | -- | Uses apple-script.
@@ -156,7 +156,7 @@ notifySystemStr = "(dbus|notify-send|apple-script)"
 -- | Determines notification timeout.
 data NotifyTimeout
   = -- | Times out after the given seconds.
-    NotifyTimeoutSeconds !Word16
+    NotifyTimeoutSeconds Word16
   | -- | Never times out.
     NotifyTimeoutNever
   deriving stock (Eq, Show)
@@ -200,9 +200,9 @@ notifyTimeoutStr = "(never|NAT)"
 -- | Holds notification config.
 data NotifyConfig = MkNotifyConfig
   { -- | Notification action.
-    action :: !NotifyAction,
+    action :: NotifyAction,
     -- | Timeout to use for notifications.
-    timeout :: !NotifyTimeout
+    timeout :: NotifyTimeout
   }
   deriving stock (Eq, Show)
 

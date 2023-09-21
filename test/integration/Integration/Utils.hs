@@ -165,21 +165,21 @@ deriving via ConfigIO instance MonadTerminal NoConfigIO
 -- * FileLogging is merely a bool since we just want to check off/on, not
 --   equality with a file handle or queue.
 data SimpleEnv = MkSimpleEnv
-  { timeout :: !(Maybe Timeout),
-    init :: !(Maybe Text),
-    keyHide :: !KeyHide,
-    pollInterval :: !PollInterval,
-    timerFormat :: !TimerFormat,
-    cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
-    cmdLog :: !Bool,
-    cmdLogLineTrunc :: !(Maybe (Truncation TCmdLine)),
-    cmdLogStripControl :: !(Maybe StripControl),
-    fileLog :: !Bool,
-    fileLogStripControl :: !(Maybe StripControl),
-    notifySystem :: !(Maybe NotifySystemP1),
-    notifyAction :: !(Maybe NotifyAction),
-    notifyTimeout :: !(Maybe NotifyTimeout),
-    commands :: !(NESeq CommandP1)
+  { timeout :: Maybe Timeout,
+    init :: Maybe Text,
+    keyHide :: KeyHide,
+    pollInterval :: PollInterval,
+    timerFormat :: TimerFormat,
+    cmdNameTrunc :: Maybe (Truncation TCmdName),
+    cmdLog :: Bool,
+    cmdLogLineTrunc :: Maybe (Truncation TCmdLine),
+    cmdLogStripControl :: Maybe StripControl,
+    fileLog :: Bool,
+    fileLogStripControl :: Maybe StripControl,
+    notifySystem :: Maybe NotifySystemP1,
+    notifyAction :: Maybe NotifyAction,
+    notifyTimeout :: Maybe NotifyTimeout,
+    commands :: NESeq CommandP1
   }
   deriving stock (Eq, Show)
 

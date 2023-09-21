@@ -86,15 +86,15 @@ import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))
 -- simplified logging
 
 data FuncEnv = MkFuncEnv
-  { timeout :: !(Maybe Timeout),
-    init :: !(Maybe Text),
-    logging :: !(Logging ()),
-    completedCmds :: !(TVar (Seq CommandP1)),
-    commands :: !(NESeq CommandP1),
-    logs :: !(IORef (List Text)),
-    notifyEnv :: !(Maybe NotifyEnv),
-    shrunNotes :: !(IORef (List ShrunNote)),
-    anyError :: !(TVar Bool)
+  { timeout :: Maybe Timeout,
+    init :: Maybe Text,
+    logging :: Logging (),
+    completedCmds :: TVar (Seq CommandP1),
+    commands :: NESeq CommandP1,
+    logs :: IORef (List Text),
+    notifyEnv :: Maybe NotifyEnv,
+    shrunNotes :: IORef (List ShrunNote),
+    anyError :: TVar Bool
   }
 
 makeFieldLabelsNoPrefix ''FuncEnv

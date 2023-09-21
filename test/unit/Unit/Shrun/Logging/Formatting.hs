@@ -137,7 +137,7 @@ instance HasLogging Env () where
         fileLog = Nothing
       }
     where
-      err = "[Unit.Props.Shrun.Logging.Formatting]: Unit tests should not be using consoleLog"
+      err = "[Unit.Shrun.Logging.Formatting]: Unit tests should not be using consoleLog"
 
 -- | Entry point for Shrun.Logging.Formatting property tests.
 tests :: TestTree
@@ -287,7 +287,7 @@ instance HasLogging MockEnv () where
         fileLog = Nothing
       }
     where
-      err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using consoleLog"
+      err = "[Unit.Shrun.Logging.Formatting]: Unit tests should not be using consoleLog"
 
 -- Monad with mock implementation for 'MonadTime'.
 newtype MockTime a = MkMockTime

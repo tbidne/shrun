@@ -32,8 +32,8 @@ import Test.Tasty.HUnit as X
   )
 
 data TestArgs = MkTestArgs
-  { rootTmpDir :: !OsPath,
-    workingTmpDir :: !OsPath
+  { rootTmpDir :: OsPath,
+    workingTmpDir :: OsPath
   }
   deriving stock (Eq, Show)
 

@@ -23,8 +23,8 @@ newtype Stderr = MkStderr {getStderr :: Text}
 
 -- | Result of running a command.
 data CommandResult
-  = CommandSuccess !RelativeTime
-  | CommandFailure !RelativeTime !Stderr
+  = CommandSuccess RelativeTime
+  | CommandFailure RelativeTime Stderr
   deriving stock (Eq, Show)
 
 -- | Result from reading a handle. The ordering is based on:
@@ -37,7 +37,7 @@ data CommandResult
 -- element. For identical constructors, the left argument is taken.
 data ReadHandleResult
   = -- | Error encountered while trying to read a handle.
-    ReadErr !Text
+    ReadErr Text
   | -- | Successfully read data from the handle.
     ReadSuccess ![Text]
   | -- | Successfully read no data from the handle.

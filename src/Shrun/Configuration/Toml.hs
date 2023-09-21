@@ -31,8 +31,8 @@ import Shrun.Prelude
 
 -- | Logging that applies to command logs.
 data CmdLoggingToml = MkCmdLoggingToml
-  { stripControl :: !(Maybe StripControl),
-    lineTrunc :: !(Maybe LineTruncation)
+  { stripControl :: Maybe StripControl,
+    lineTrunc :: Maybe LineTruncation
   }
   deriving stock (Eq, Show)
 
@@ -44,10 +44,10 @@ instance DecodeTOML CmdLoggingToml where
 
 -- | Holds file logging data.
 data FileLoggingToml = MkFileLoggingToml
-  { path :: !FilePathDefault,
-    stripControl :: !(Maybe StripControl),
-    mode :: !(Maybe FileMode),
-    sizeMode :: !(Maybe FileSizeMode)
+  { path :: FilePathDefault,
+    stripControl :: Maybe StripControl,
+    mode :: Maybe FileMode,
+    sizeMode :: Maybe FileSizeMode
   }
   deriving stock (Eq, Show)
 
@@ -62,11 +62,11 @@ instance DecodeTOML FileLoggingToml where
 -- | Holds notification settings.
 data NotifyToml = MkNotifyToml
   { -- | Notification action.
-    action :: !NotifyAction,
+    action :: NotifyAction,
     -- | Notification system to use.
-    system :: !(Maybe NotifySystemP1),
+    system :: Maybe NotifySystemP1,
     -- | Timeout to use for notifications.
-    timeout :: !(Maybe NotifyTimeout)
+    timeout :: Maybe NotifyTimeout
   }
   deriving stock (Eq, Show)
 
@@ -80,27 +80,27 @@ instance DecodeTOML NotifyToml where
 -- | 'TomlConfig' refers to TomlConfiguration we retrieve from the toml TomlConfig file.
 data TomlConfig = MkTomlConfig
   { -- | Timeout.
-    timeout :: !(Maybe Timeout),
+    timeout :: Maybe Timeout,
     -- | Shell logic to run before each command.
-    init :: !(Maybe Text),
+    init :: Maybe Text,
     -- | Whether to display the command (key) names or the commands
     -- themselves.
-    keyHide :: !(Maybe KeyHide),
+    keyHide :: Maybe KeyHide,
     -- | How often to poll commands for logs, in microseconds.
-    pollInterval :: !(Maybe PollInterval),
+    pollInterval :: Maybe PollInterval,
     -- | How to format the timer.
-    timerFormat :: !(Maybe TimerFormat),
+    timerFormat :: Maybe TimerFormat,
     -- | Truncates command names in the logs.
-    cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
+    cmdNameTrunc :: Maybe (Truncation TCmdName),
     -- | Whether to log commands.
-    cmdLog :: !(Maybe CmdLoggingToml),
+    cmdLog :: Maybe CmdLoggingToml,
     -- | Optional file logging. If enabled, holds the path to the file
     -- and the log queue.
-    fileLog :: !(Maybe FileLoggingToml),
+    fileLog :: Maybe FileLoggingToml,
     -- | Holds notification toml config.
-    notify :: !(Maybe NotifyToml),
+    notify :: Maybe NotifyToml,
     -- | Legend text containing command aliases.
-    legend :: !(Maybe (List KeyVal))
+    legend :: Maybe (List KeyVal)
   }
   deriving stock (Eq, Show)
 

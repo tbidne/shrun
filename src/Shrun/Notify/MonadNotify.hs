@@ -14,10 +14,10 @@ import Shrun.Prelude
 
 -- | Holds notification data.
 data ShrunNote = MkShrunNote
-  { summary :: !Text,
-    body :: !Text,
-    urgency :: !UrgencyLevel,
-    timeout :: !NotifyTimeout
+  { summary :: Text,
+    body :: Text,
+    urgency :: UrgencyLevel,
+    timeout :: NotifyTimeout
   }
   deriving stock (Eq, Show)
 

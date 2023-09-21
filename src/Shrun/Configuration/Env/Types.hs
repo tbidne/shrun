@@ -121,8 +121,8 @@ instance DecodeTOML StripControl where
           <> unpack bad
 
 data CmdLogging = MkCmdLogging
-  { stripControl :: !StripControl,
-    lineTrunc :: !(Maybe (Truncation TCmdLine))
+  { stripControl :: StripControl,
+    lineTrunc :: Maybe (Truncation TCmdLine)
   }
   deriving stock
     ( Eq,
@@ -132,8 +132,8 @@ data CmdLogging = MkCmdLogging
 makeFieldLabelsNoPrefix ''CmdLogging
 
 data FileLogging = MkFileLogging
-  { stripControl :: !StripControl,
-    log :: Tuple2 Handle (TBQueue FileLog)
+  { stripControl :: StripControl,
+    log :: ~(Tuple2 Handle (TBQueue FileLog))
   }
 
 makeFieldLabelsNoPrefix ''FileLogging
@@ -150,21 +150,25 @@ instance Show FileLogging where
 data Logging r = MkLogging
   { -- | Whether to display the command (key) names or the commands
     -- themselves.
-    keyHide :: !KeyHide,
+    keyHide :: KeyHide,
     -- | How often to poll commands for logs, in microseconds.
-    pollInterval :: !PollInterval,
+    pollInterval :: PollInterval,
     -- | How to format the timer.
-    timerFormat :: !TimerFormat,
+    timerFormat :: TimerFormat,
     -- | Truncates command names in the logs.
-    cmdNameTrunc :: !(Maybe (Truncation TCmdName)),
+    cmdNameTrunc :: Maybe (Truncation TCmdName),
     -- | Whether to log commands.
-    cmdLog :: !(Maybe CmdLogging),
+    cmdLog :: Maybe CmdLogging,
     -- | Console log queue.
-    consoleLog :: TBQueue (LogRegion r),
+    consoleLog :: ~(TBQueue (LogRegion r)),
     -- | Optional file logging. If enabled, holds the path to the file
     -- and the log queue.
-    fileLog :: !(Maybe FileLogging)
+    fileLog :: Maybe FileLogging
   }
+
+-- TODO: Laziness annotations are because unit tests currently require
+-- passing in dummy values with error, so we don't want them evaluated.
+-- We should come up with a different method.
 
 makeFieldLabelsNoPrefix ''Logging
 
@@ -191,9 +195,9 @@ data NotifyEnv = MkNotifyEnv
   { -- | Notification system to use.
     system :: !NotifySystemP2,
     -- | Notification action.
-    action :: !NotifyAction,
+    action :: NotifyAction,
     -- | Timeout to use for notifications.
-    timeout :: !NotifyTimeout
+    timeout :: NotifyTimeout
   }
 
 makeFieldLabelsNoPrefix ''NotifyEnv
@@ -224,21 +228,21 @@ class HasAnyError env where
 -- | The main 'Env' type used by Shrun.
 data Env = MkEnv
   { -- | Timeout.
-    timeout :: !(Maybe Timeout),
+    timeout :: Maybe Timeout,
     -- | Shell logic to run before each command.
-    init :: !(Maybe Text),
+    init :: Maybe Text,
     -- | Logging env.
-    logging :: !(Logging ConsoleRegion),
+    logging :: Logging ConsoleRegion,
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
-    completedCmds :: !(TVar (Seq CommandP1)),
+    completedCmds :: TVar (Seq CommandP1),
     -- | Holds the anyError flag, signaling if any command exited with an
     -- error.
-    anyError :: !(TVar Bool),
+    anyError :: TVar Bool,
     -- | Holds notification environment.
-    notifyEnv :: !(Maybe NotifyEnv),
+    notifyEnv :: Maybe NotifyEnv,
     -- | The commands to run.
-    commands :: !(NESeq CommandP1)
+    commands :: NESeq CommandP1
   }
 
 makeFieldLabelsNoPrefix ''Env

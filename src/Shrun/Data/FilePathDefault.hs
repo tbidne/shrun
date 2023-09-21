@@ -11,7 +11,7 @@ import Shrun.Prelude
 -- | OsPath option that includes a default possibility.
 data FilePathDefault
   = FPDefault
-  | FPManual !OsPath
+  | FPManual OsPath
   deriving stock (Eq, Show)
 
 instance DecodeTOML FilePathDefault where
