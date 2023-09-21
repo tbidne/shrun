@@ -13,17 +13,19 @@ import Data.Text qualified as T
 import Effectful.Concurrent.Async qualified as Async
 import Effectful.Concurrent.Static as X (microsleep, sleep)
 import Effectful.State.Static.Local qualified as StateLocal
+import Effectful.State.Static.Shared qualified as State
 import Effectful.Time.Dynamic (TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
-    HasAnyError (getAnyError),
-    HasCommands (getCommands, getCompletedCmds),
+    HasCommands (getCommands),
     HasInit,
     HasLogging (getLogging),
     HasNotifyConfig (getNotifyConfig),
     HasTimeout (getTimeout),
     Logging,
-    setAnyErrorTrue,
+    ShrunResult (ShrunFailure, ShrunSuccess),
+    ShrunState,
+    setShrunFailure,
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout (MkTimeout))
@@ -60,7 +62,6 @@ type StateLocal = StateLocal.State
 shrun ::
   forall env r es.
   ( Concurrent :> es,
-    HasAnyError env,
     HasCommands env,
     HasInit env,
     HasLogging env r,
@@ -72,6 +73,7 @@ shrun ::
     NotifyDynamic :> es,
     Reader env :> es,
     RegionLoggerDynamic r :> es,
+    State ShrunState :> es,
     TimeDynamic :> es,
     TypedProcess :> es
   ) =>
@@ -94,8 +96,8 @@ shrun = RegionLogger.displayRegions @r $ do
     flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
 
     -- if any processes have failed, exit with an error
-    anyError <- readTVarA =<< asks @env getAnyError
-    when anyError exitFailure
+    shrunResult <- view #shrunResult <$> get @ShrunState
+    when (shrunResult == ShrunFailure) exitFailure
   where
     runWithFileLogging fileLogging =
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
@@ -120,8 +122,6 @@ shrun = RegionLogger.displayRegions @r $ do
 runCommand ::
   forall env r es.
   ( Concurrent :> es,
-    HasAnyError env,
-    HasCommands env,
     HasInit env,
     HasLogging env r,
     HasNotifyConfig env,
@@ -130,6 +130,7 @@ runCommand ::
     NotifyDynamic :> es,
     Reader env :> es,
     RegionLoggerDynamic r :> es,
+    State ShrunState :> es,
     TimeDynamic :> es,
     TypedProcess :> es
   ) =>
@@ -167,12 +168,12 @@ printFinalResult ::
   forall env r es e b.
   ( Concurrent :> es,
     Exception e,
-    HasAnyError env,
     HasLogging env r,
     HasNotifyConfig env,
     NotifyDynamic :> es,
     Reader env :> es,
     RegionLoggerDynamic r :> es,
+    State ShrunState :> es,
     TimeDynamic :> es
   ) =>
   TimeSpec ->
@@ -195,8 +196,8 @@ printFinalResult totalTime result = RegionLogger.withRegion Linear $ \r -> do
             }
     Logging.putRegionLog @env @r r fatalLog
 
-    -- update anyError
-    setAnyErrorTrue @env
+    -- update shrun result
+    setShrunFailure
 
   timerFormat <- view #timerFormat <$> (asks @env getLogging :: Eff es (Logging r))
   let totalTimeTxt = TimerFormat.formatRelativeTime timerFormat (Utils.timeSpecToRelTime totalTime)
@@ -209,8 +210,10 @@ printFinalResult totalTime result = RegionLogger.withRegion Linear $ \r -> do
           }
 
   -- Send off a 'finished' notification
-  anyError <- readTVarA =<< asks @env getAnyError
-  let urgency = if anyError then Critical else Normal
+  urgency <-
+    (view #shrunResult <$> get @ShrunState) <&> \case
+      ShrunFailure -> Critical
+      ShrunSuccess -> Normal
 
   -- Sent off notif if notifications are on
   cfg <- asks @env getNotifyConfig
@@ -222,12 +225,12 @@ printFinalResult totalTime result = RegionLogger.withRegion Linear $ \r -> do
 counter ::
   forall env r es.
   ( Concurrent :> es,
-    HasAnyError env,
     HasCommands env,
     HasLogging env r,
     HasTimeout env,
     Reader env :> es,
     RegionLoggerDynamic r :> es,
+    State ShrunState :> es,
     TimeDynamic :> es
   ) =>
   Eff es ()
@@ -270,10 +273,10 @@ keepRunning ::
   forall env r es.
   ( StateLocal Natural :> es,
     Concurrent :> es,
-    HasAnyError env,
     HasCommands env,
     HasLogging env r,
     Reader env :> es,
+    State ShrunState :> es,
     TimeDynamic :> es
   ) =>
   r ->
@@ -285,11 +288,10 @@ keepRunning region mto = do
     then do
       keyHide <- asks (view #keyHide . getLogging @env @r)
       allCmds <- asks @env getCommands
-      completedCmdsTVar <- asks @env getCompletedCmds
-      completedCmds <- readTVarA completedCmdsTVar
+      completedCmds <- view #completedCmds <$> State.get @ShrunState
 
-      -- update anyError
-      setAnyErrorTrue @env
+      -- update shrun result
+      setShrunFailure
 
       let completedCmdsSet = Set.fromList $ toList completedCmds
           allCmdsSet = Set.fromList $ toList allCmds

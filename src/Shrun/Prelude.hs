@@ -165,6 +165,7 @@ import Effectful.Process.Typed as X
     TypedProcess,
   )
 import Effectful.Reader.Static as X (Reader, asks, runReader)
+import Effectful.State.Static.Shared as X (State, evalState, execState, get, modify, put, runState)
 import Effectful.Terminal.Dynamic as X
   ( TerminalDynamic,
     putStr,

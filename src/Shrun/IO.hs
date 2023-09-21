@@ -16,13 +16,12 @@ import Effectful.Concurrent.Static (microsleep)
 import Effectful.Process.Typed qualified as P
 import Effectful.Time.Dynamic (withTiming)
 import Shrun.Configuration.Env.Types
-  ( HasAnyError,
-    HasCommands,
-    HasInit (getInit),
+  ( HasInit (getInit),
     HasLogging (getLogging),
     Logging,
+    ShrunState,
     prependCompletedCommand,
-    setAnyErrorTrue,
+    setShrunFailure,
   )
 import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.IO.Types
@@ -81,14 +80,13 @@ tryShExitCode cmd =
 tryCommandLogging ::
   forall env r es.
   ( Concurrent :> es,
-    HasAnyError env,
-    HasCommands env,
     HasInit env,
     HasLogging env r,
     HandleReaderStatic :> es,
     IORefStatic :> es,
     Reader env :> es,
     RegionLoggerDynamic r :> es,
+    State ShrunState :> es,
     TimeDynamic :> es,
     TypedProcess :> es
   ) =>
@@ -144,15 +142,15 @@ tryCommandLogging command = do
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
       -- update completed commands
-      prependCompletedCommand @env command
+      prependCompletedCommand command
 
       pure $ CommandSuccess $ U.timeSpecToRelTime rt
     (rt, Just err) -> do
       -- update completed commands
-      prependCompletedCommand @env command
+      prependCompletedCommand command
 
-      -- update anyError
-      setAnyErrorTrue @env
+      -- update shrun result
+      setShrunFailure
 
       pure $ CommandFailure (U.timeSpecToRelTime rt) err
   where

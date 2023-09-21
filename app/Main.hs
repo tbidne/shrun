@@ -13,6 +13,7 @@ import Effectful.Terminal.Dynamic qualified as Term
 import Effectful.Time.Dynamic qualified as Time
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Shrun.Configuration.Env (makeEnvAndShrun)
+import Shrun.Configuration.Env.Types (ShrunState)
 import Shrun.Logging.RegionLogger (runRegionLoggerDynamicIO)
 import Shrun.Notify.AppleScript (runAppleScriptDynamicIO)
 import Shrun.Notify.DBus (runDBusDynamicIO)
@@ -37,6 +38,7 @@ main = do
     runShrun =
       runEff
         . runConcurrent
+        . evalState @ShrunState mempty
         . P.runTypedProcess
         . IORef.runIORefStaticIO
         . Optparse.runOptparseStaticIO

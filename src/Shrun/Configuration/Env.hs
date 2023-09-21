@@ -16,7 +16,6 @@ import Data.Bytes
     formatSized,
     sizedFormatterNatural,
   )
-import Data.Sequence qualified as Seq
 import Effectful.FileSystem.HandleWriter.Static qualified as HW
 import Effectful.FileSystem.PathWriter.Static qualified as PW
 import Effectful.FileSystem.Utils qualified as FsUtils
@@ -32,9 +31,7 @@ import Shrun.Configuration.Env.Types
   ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
     Env
       ( MkEnv,
-        anyError,
         commands,
-        completedCmds,
         init,
         logging,
         notifyEnv,
@@ -53,6 +50,7 @@ import Shrun.Configuration.Env.Types
         pollInterval,
         timerFormat
       ),
+    ShrunState,
     StripControl (StripControlAll, StripControlSmart),
     Truncation (MkTruncation),
   )
@@ -90,6 +88,7 @@ makeEnvAndShrun ::
     PathReaderDynamic :> es,
     PathWriterStatic :> es,
     RegionLoggerDynamic ConsoleRegion :> es,
+    State ShrunState :> es,
     TerminalDynamic :> es,
     TimeDynamic :> es,
     TypedProcess :> es
@@ -184,9 +183,6 @@ fromToml cfg cmdsText onEnv = do
         Left err -> throwM err
       Left err -> throwM err
 
-  completedCmds' <- newTVarA Seq.empty
-  anyError <- newTVarA False
-
   notifyEnv <- EnvNotify.tomlToNotifyEnv (cfg ^. #notify)
 
   let -- make environment
@@ -222,8 +218,6 @@ fromToml cfg cmdsText onEnv = do
                           stripControl = fileLogStripControl
                         }
                 },
-            anyError,
-            completedCmds = completedCmds',
             commands = commands'
           }
 

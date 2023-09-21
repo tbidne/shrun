@@ -6,15 +6,14 @@
 module Shrun.Configuration.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    prependCompletedCommand,
     HasLogging (..),
     HasTimeout (..),
     HasInit (..),
-    HasAnyError (..),
-    setAnyErrorTrue,
     HasNotifyConfig (..),
 
     -- * Types
+
+    -- ** Reader
     Env (..),
     Logging (..),
     CmdLogging (..),
@@ -25,6 +24,12 @@ module Shrun.Configuration.Env.Types
     LineTruncation (..),
     TruncRegion (..),
     StripControl (..),
+
+    -- ** State
+    ShrunState (..),
+    ShrunResult (..),
+    prependCompletedCommand,
+    setShrunFailure,
   )
 where
 
@@ -207,8 +212,6 @@ makeFieldLabelsNoPrefix ''NotifyEnv
 class HasCommands env where
   getCommands :: env -> NESeq CommandP1
 
-  getCompletedCmds :: env -> TVar (Seq CommandP1)
-
 -- | Timeout, if any.
 class HasTimeout env where
   getTimeout :: env -> Maybe Timeout
@@ -222,10 +225,6 @@ class HasLogging env r where
   -- | Retrieves logging env.
   getLogging :: env -> Logging r
 
-class HasAnyError env where
-  -- | Retrieves the anyError flag.
-  getAnyError :: env -> TVar Bool
-
 -- | The main 'Env' type used by Shrun.
 data Env = MkEnv
   { -- | Timeout.
@@ -234,12 +233,6 @@ data Env = MkEnv
     init :: Maybe Text,
     -- | Logging env.
     logging :: Logging ConsoleRegion,
-    -- | Holds a sequence of commands that have completed. Used so we can
-    -- determine which commands have /not/ completed if we time out.
-    completedCmds :: TVar (Seq CommandP1),
-    -- | Holds the anyError flag, signaling if any command exited with an
-    -- error.
-    anyError :: TVar Bool,
     -- | Holds notification environment.
     notifyEnv :: Maybe NotifyEnv,
     -- | The commands to run.
@@ -255,8 +248,6 @@ instance Show Env where
       . showsPrec appPrec1 (env ^. #timeout)
       . showString ", logging = "
       . showsPrec appPrec1 (env ^. #logging)
-      . showString ", completedCmds = <TVar>"
-      . showString ", anyError = <TVar>"
       . showString ", commands = "
       . showsPrec appPrec1 (env ^. #commands)
       . showString "}"
@@ -272,33 +263,6 @@ instance HasLogging Env ConsoleRegion where
 
 instance HasCommands Env where
   getCommands = view #commands
-  getCompletedCmds = view #completedCmds
-
--- | Prepends a completed command.
-prependCompletedCommand ::
-  forall env es.
-  ( HasCommands env,
-    Concurrent :> es,
-    Reader env :> es
-  ) =>
-  CommandP1 ->
-  Eff es ()
-prependCompletedCommand command = do
-  completedCmds <- asks @env getCompletedCmds
-  modifyTVarA' completedCmds (command :<|)
-
-instance HasAnyError Env where
-  getAnyError = view #anyError
-
--- | Set anyError to 'True'.
-setAnyErrorTrue ::
-  forall env es.
-  ( Concurrent :> es,
-    HasAnyError env,
-    Reader env :> es
-  ) =>
-  Eff es ()
-setAnyErrorTrue = asks @env getAnyError >>= \ref -> writeTVarA ref True
 
 -- | Class for retrieving the notify config.
 class HasNotifyConfig env where
@@ -312,3 +276,49 @@ instance HasNotifyConfig Env where
         { action = notifyEnv ^. #action,
           timeout = notifyEnv ^. #timeout
         }
+
+data ShrunResult
+  = ShrunSuccess
+  | ShrunFailure
+  deriving stock (Eq, Show)
+
+instance Semigroup ShrunResult where
+  ShrunFailure <> _ = ShrunFailure
+  ShrunSuccess <> r = r
+
+instance Monoid ShrunResult where
+  mempty = ShrunSuccess
+
+data ShrunState = MkShrunState
+  { -- | Holds a sequence of commands that have completed. Used so we can
+    -- determine which commands have /not/ completed if we time out.
+    completedCmds :: Seq CommandP1,
+    -- | Holds the shrun result, signaling if any command exited with an
+    -- error.
+    shrunResult :: ShrunResult
+  }
+  deriving stock (Eq, Show)
+
+makeFieldLabelsNoPrefix ''ShrunState
+
+instance Semigroup ShrunState where
+  l <> r =
+    MkShrunState
+      { completedCmds = l ^. #completedCmds <> r ^. #completedCmds,
+        shrunResult = l ^. #shrunResult <> r ^. #shrunResult
+      }
+
+instance Monoid ShrunState where
+  mempty = MkShrunState mempty mempty
+
+-- | Prepends a completed command.
+prependCompletedCommand :: (State ShrunState :> es) => CommandP1 -> Eff es ()
+prependCompletedCommand command = modify (over' @_ @_ @ShrunState #completedCmds (command :<|))
+
+-- | Set shrun result to 'ShrunFailure'.
+setShrunFailure ::
+  forall es.
+  ( State ShrunState :> es
+  ) =>
+  Eff es ()
+setShrunFailure = modify (set' @_ @_ @ShrunState #shrunResult ShrunFailure)

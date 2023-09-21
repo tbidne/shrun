@@ -61,8 +61,7 @@ import Effectful.Time.Dynamic qualified as Time
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
-  ( HasAnyError (getAnyError),
-    HasCommands (getCommands, getCompletedCmds),
+  ( HasCommands (getCommands),
     HasInit (getInit),
     HasLogging (getLogging),
     HasNotifyConfig (getNotifyConfig),
@@ -78,6 +77,7 @@ import Shrun.Configuration.Env.Types
         timerFormat
       ),
     NotifyEnv,
+    ShrunState,
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
@@ -107,12 +107,10 @@ data FuncEnv = MkFuncEnv
   { timeout :: Maybe Timeout,
     init :: Maybe Text,
     logging :: Logging (),
-    completedCmds :: TVar (Seq CommandP1),
     commands :: NESeq CommandP1,
     logs :: IORef (List Text),
     notifyEnv :: Maybe NotifyEnv,
-    shrunNotes :: IORef (List ShrunNote),
-    anyError :: TVar Bool
+    shrunNotes :: IORef (List ShrunNote)
   }
 
 makeFieldLabelsNoPrefix ''FuncEnv
@@ -128,10 +126,6 @@ instance HasLogging FuncEnv () where
 
 instance HasCommands FuncEnv where
   getCommands = view #commands
-  getCompletedCmds = view #completedCmds
-
-instance HasAnyError FuncEnv where
-  getAnyError = view #anyError
 
 instance HasNotifyConfig FuncEnv where
   getNotifyConfig env =
@@ -219,8 +213,6 @@ runMaybeException mException argList = runEff' $ do
                     consoleLog = consoleQueue,
                     fileLog = env ^. (#logging % #fileLog)
                   },
-              completedCmds = env ^. #completedCmds,
-              anyError = env ^. #anyError,
               commands = env ^. #commands,
               logs = ls,
               notifyEnv = env ^. #notifyEnv,
@@ -253,6 +245,7 @@ runMaybeException mException argList = runEff' $ do
             : HandleReaderStatic
             : HandleWriterStatic
             : TypedProcess
+            : State ShrunState
             : Reader FuncEnv
             : es
         )
@@ -261,6 +254,7 @@ runMaybeException mException argList = runEff' $ do
 
     runShrun env =
       runReader env
+        . evalState mempty
         . P.runTypedProcess
         . HW.runHandleWriterStaticIO
         . HR.runHandleReaderStaticIO

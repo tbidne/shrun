@@ -22,8 +22,7 @@ import Effectful.Time.Dynamic qualified as Time
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
-  ( HasAnyError (getAnyError),
-    HasCommands (getCommands, getCompletedCmds),
+  ( HasCommands (getCommands),
     HasInit (getInit),
     HasLogging (getLogging),
     HasNotifyConfig (getNotifyConfig),
@@ -39,6 +38,7 @@ import Shrun.Configuration.Env.Types
         timerFormat
       ),
     NotifyEnv,
+    ShrunState,
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout)
@@ -54,10 +54,8 @@ data BenchEnv = MkBenchEnv
   { timeout :: Maybe Timeout,
     init :: Maybe Text,
     logging :: Logging (),
-    completedCmds :: TVar (Seq CommandP1),
     commands :: NESeq CommandP1,
-    notifyEnv :: Maybe NotifyEnv,
-    anyError :: TVar Bool
+    notifyEnv :: Maybe NotifyEnv
   }
 
 makeFieldLabelsNoPrefix ''BenchEnv
@@ -73,10 +71,6 @@ instance HasLogging BenchEnv () where
 
 instance HasCommands BenchEnv where
   getCommands = view #commands
-  getCompletedCmds = view #completedCmds
-
-instance HasAnyError BenchEnv where
-  getAnyError = view #anyError
 
 instance HasNotifyConfig BenchEnv where
   getNotifyConfig env =
@@ -118,8 +112,6 @@ runBench argList = runEff' $ Environment.withArgs argList $ Env.withEnv $ \env -
                   consoleLog = consoleQueue,
                   fileLog = env ^. (#logging % #fileLog)
                 },
-            completedCmds = env ^. #completedCmds,
-            anyError = env ^. #anyError,
             commands = env ^. #commands,
             notifyEnv = env ^. #notifyEnv
           }
@@ -127,6 +119,7 @@ runBench argList = runEff' $ Environment.withArgs argList $ Env.withEnv $ \env -
   where
     runShrun env =
       runReader env
+        . evalState @ShrunState mempty
         . P.runTypedProcess
         . HW.runHandleWriterStaticIO
         . HR.runHandleReaderStaticIO
