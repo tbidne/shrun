@@ -12,6 +12,7 @@ import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Effectful.Concurrent.Async qualified as Async
 import Effectful.Concurrent.Static as X (microsleep, sleep)
+import Effectful.State.Static.Local qualified as StateLocal
 import Effectful.Time.Dynamic (TimeSpec, withTiming)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
@@ -52,6 +53,8 @@ import Shrun.Notify.Notify (NotifyDynamic)
 import Shrun.Notify.Types (_NotifyCommand)
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
+
+type StateLocal = StateLocal.State
 
 -- | Entry point
 shrun ::
@@ -223,7 +226,6 @@ counter ::
     HasCommands env,
     HasLogging env r,
     HasTimeout env,
-    IORefStatic :> es,
     Reader env :> es,
     RegionLoggerDynamic r :> es,
     TimeDynamic :> es
@@ -234,24 +236,24 @@ counter = do
   -- individual command. This way the running timer console region is below all
   -- the commands' in the console.
   microsleep 100_000
-  RegionLogger.withRegion @r Linear $ \r -> do
+  RegionLogger.withRegion @r Linear $ \r -> StateLocal.evalState 0 $ do
     timeout <- asks @env getTimeout
-    timer <- newIORef 0
-    Utils.whileM_ (keepRunning @env r timer timeout) $ do
+    Utils.whileM_ (keepRunning @env @r @(StateLocal Natural : es) r timeout) $ do
       sleep 1
-      elapsed <- atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
-      logCounter @env r elapsed
+      StateLocal.modify (\(!n) -> n + (1 :: Natural))
+      logCounter @env r
 
 logCounter ::
   forall env r es.
   ( Concurrent :> es,
     HasLogging env r,
-    Reader env :> es
+    Reader env :> es,
+    StateLocal Natural :> es
   ) =>
   r ->
-  Natural ->
   Eff es ()
-logCounter region elapsed = do
+logCounter region = do
+  elapsed <- StateLocal.get
   logging <- asks @env getLogging
   let timerFormat = view #timerFormat logging
       msg = TimerFormat.formatSeconds timerFormat elapsed
@@ -266,20 +268,19 @@ logCounter region elapsed = do
 
 keepRunning ::
   forall env r es.
-  ( Concurrent :> es,
+  ( StateLocal Natural :> es,
+    Concurrent :> es,
     HasAnyError env,
     HasCommands env,
     HasLogging env r,
-    IORefStatic :> es,
     Reader env :> es,
     TimeDynamic :> es
   ) =>
   r ->
-  IORef Natural ->
   Maybe Timeout ->
   Eff es Bool
-keepRunning region timer mto = do
-  elapsed <- readIORef timer
+keepRunning region mto = do
+  elapsed <- StateLocal.get
   if timedOut elapsed mto
     then do
       keyHide <- asks (view #keyHide . getLogging @env @r)
