@@ -3,7 +3,6 @@
 -- | Runs integration tests.
 module Main (main) where
 
-import Effectful.FileSystem.PathReader.Static (PathReaderStatic)
 import Effectful.FileSystem.PathReader.Static qualified as PR
 import Effectful.FileSystem.PathWriter.Static qualified as PW
 import Integration.Defaults qualified as Defaults
@@ -27,7 +26,7 @@ main = do
         ]
 
 setup :: IO TestArgs
-setup = runEff' $ do
+setup = do
   rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
   let workingTmpDir = rootTmpDir </> [osp|test/integration|]
 
@@ -41,7 +40,7 @@ teardown testArgs = do
 
   -- because this is called in a bracket-style cleanup, we really do not want
   -- this to throw
-  void $ tryAny $ runEff' $ do
+  void $ tryAny $ do
     -- There are several tests that rely on this log's existence, since it
     -- exists in the 'config' directory, and these tests test that default.
     -- Thus we cannot delete it until everything has finished.
@@ -56,9 +55,3 @@ teardown testArgs = do
     removeFileIfExists $ root </> [osp|test/integration|]
     removeFileIfExists $ root </> [osp|test|]
     removeDirectoryIfExists root
-
-runEff' :: Eff [PathWriterStatic, PathReaderStatic, IOE] a -> IO a
-runEff' =
-  runEff
-    . PR.runPathReaderStaticIO
-    . PW.runPathWriterStaticIO

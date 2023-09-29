@@ -89,18 +89,16 @@ import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Effectful as X (Eff, IOE, runEff, type (:>))
 import Effectful.Concurrent as X (Concurrent, runConcurrent)
-import Effectful.Concurrent.STM.TBQueue.Static as X
+import Effectful.Concurrent.STM.Static as X
   ( TBQueue,
+    TVar,
     flushTBQueueA,
-    newTBQueueA,
-    readTBQueueA,
-    writeTBQueueA,
-  )
-import Effectful.Concurrent.STM.TVar.Static as X
-  ( TVar,
     modifyTVarA',
+    newTBQueueA,
     newTVarA,
+    readTBQueueA,
     readTVarA,
+    writeTBQueueA,
     writeTVarA,
   )
 import Effectful.Exception as X

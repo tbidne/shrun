@@ -1,7 +1,6 @@
 -- | Functional test for a successful run with native logging.
 module Functional.SuccessCommandLogging (spec) where
 
-import Data.IORef qualified as IORef
 import Functional.Prelude
 import Test.Shrun.Verifier
   ( ExpectedText (MkExpectedText),
@@ -27,7 +26,7 @@ success = testCase "Should print commands stdout" $ do
         ]
           <> commands
 
-  results <- fmap MkResultText <$> (IORef.readIORef =<< run argList)
+  results <- fmap MkResultText <$> (readIORef =<< run argList)
 
   V.verifyExpected results expected
   where
@@ -49,7 +48,7 @@ capturesStderr = testCase "Should capture stdout and stderr" $ do
           "./test/functional/Functional/stderr.sh"
         ]
 
-  results <- fmap MkResultText <$> (IORef.readIORef =<< run argList)
+  results <- fmap MkResultText <$> (readIORef =<< run argList)
 
   V.verifyExpected results expected
   where

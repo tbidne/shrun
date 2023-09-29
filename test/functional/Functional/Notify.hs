@@ -2,7 +2,6 @@
 module Functional.Notify (specs) where
 
 import DBus.Notify (UrgencyLevel (Normal))
-import Data.IORef qualified as IORef
 import Functional.Prelude
 import Shrun.Notify.Notify
   ( ShrunNote
@@ -35,7 +34,7 @@ notifyTests =
 
 notifySystem :: TestTree
 notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
-  results <- IORef.readIORef =<< runNotes args
+  results <- readIORef =<< runNotes args
   expected @=? results
   where
     args =
@@ -70,7 +69,7 @@ notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
 
 notifyActionCommand :: TestTree
 notifyActionCommand = testCase "Runs --notify-action command" $ do
-  results <- IORef.readIORef =<< runNotes args
+  results <- readIORef =<< runNotes args
   expected @=? results
   where
     args =
@@ -105,7 +104,7 @@ notifyActionCommand = testCase "Runs --notify-action command" $ do
 
 notifyTimeout5 :: TestTree
 notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
-  results <- IORef.readIORef =<< runNotes args
+  results <- readIORef =<< runNotes args
   expected @=? results
   where
     args =

@@ -4,7 +4,6 @@
 
 module Integration.Miscellaneous (specs) where
 
-import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import Effectful.Environment qualified as Env
 import Effectful.FileSystem.FileWriter.Static qualified as FW
@@ -60,18 +59,18 @@ specs testArgs =
 logFileWarn :: IO TestArgs -> TestTree
 logFileWarn testArgs = testCase "Large log file should print warning" $ do
   logPath <- (</>! "large-file-warn") . view #workingTmpDir <$> testArgs
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
       contents = T.replicate 1_500 "test "
 
       run = do
-        runEff' $ writeFileUtf8 logPath contents
+        writeFileUtf8 logPath contents
 
         flip runConfigIO logsRef $ Env.withArgs (args logsPathStr) (withEnv pure)
 
-  run `finally` runEff' (removeFileIfExists logPath)
+  run `finally` removeFileIfExists logPath
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   [warning logsPathStr] @=? logs
   where
     warning fp =
@@ -93,22 +92,22 @@ logFileDelete :: IO TestArgs -> TestTree
 logFileDelete testArgs =
   testCase "Large log file should be deleted" $ do
     logPath <- (</>! "large-file-del") . view #workingTmpDir <$> testArgs
-    logsRef <- IORef.newIORef []
+    logsRef <- newIORef []
     let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
         contents = T.replicate 1_500 "test "
 
         run = do
-          runEff' $ writeFileUtf8 logPath contents
+          writeFileUtf8 logPath contents
 
           flip runConfigIO logsRef $ Env.withArgs (args logPathStr) (withEnv pure)
 
           -- file should have been deleted then recreated with a file size of 0.
-          runEff' $ PR.getFileSize logPath
+          PR.getFileSize logPath
 
-    size <- run `finally` runEff' (removeFileIfExists logPath)
+    size <- run `finally` removeFileIfExists logPath
     0 @=? size
 
-    logs <- IORef.readIORef logsRef
+    logs <- readIORef logsRef
     [warning logPathStr] @=? logs
   where
     warning fp =
@@ -130,10 +129,10 @@ logFileDelete testArgs =
 
 usesRecursiveCmdExample :: TestTree
 usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args = ["multi1"]
@@ -168,10 +167,10 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
 
 usesRecursiveCmd :: TestTree
 usesRecursiveCmd = testCase "Uses recursive commands" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args = ["-c", getExampleConfig "default", "all", "echo cat"]
@@ -198,18 +197,3 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
                      "echo cat"
                    ]
         }
-
-runEff' ::
-  Eff
-    [ PathWriterStatic,
-      PR.PathReaderStatic,
-      FileWriterStatic,
-      IOE
-    ]
-    a ->
-  IO a
-runEff' =
-  runEff
-    . FW.runFileWriterStaticIO
-    . PR.runPathReaderStaticIO
-    . PW.runPathWriterStaticIO

@@ -4,7 +4,6 @@
 module Integration.Failures (specs) where
 
 import Control.Exception (IOException)
-import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import Effectful.Environment qualified as Env
 import Effectful.Exception (StringException, catch)
@@ -33,7 +32,7 @@ specs =
 
 missingConfig :: TestTree
 missingConfig = testCase "Missing explicit config throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["-c", "bad-file.toml", "cmd"]
   result <- runCaptureError @IOException args logsRef
 
@@ -41,14 +40,14 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
     Nothing -> assertFailure "Expected exception"
     Just ex -> expectedErr @=? displayException ex
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     expectedErr = "bad-file.toml: openFdAt: does not exist (No such file or directory)"
 
 duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["-c", getIntConfig "duplicate-keys", "cmd"]
   result <- runCaptureError args logsRef
 
@@ -57,12 +56,12 @@ duplicateKeys = testCase "Duplicate keys throws exception" $ do
       "key1" @=? k
     Nothing -> assertFailure "Expected exception"
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
 
 emptyKey :: TestTree
 emptyKey = testCase "Empty key throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["-c", getIntConfig "empty-key", "cmd"]
   result <- runCaptureError @TOMLError args logsRef
 
@@ -70,14 +69,14 @@ emptyKey = testCase "Empty key throws exception" $ do
     Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     expectedErr = "Decode error at '.legend[0].key': Unexpected empty text"
 
 emptyValue :: TestTree
 emptyValue = testCase "Empty value throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["-c", getIntConfig "empty-value", "cmd"]
   result <- runCaptureError @TOMLError args logsRef
 
@@ -85,14 +84,14 @@ emptyValue = testCase "Empty value throws exception" $ do
     Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Exception exception"
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     expectedErr = "Decode error at '.legend[0].val': Unexpected empty text"
 
 cyclicKeys :: TestTree
 cyclicKeys = testCase "Cyclic keys throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   -- using config.toml, which has cyclic definition
   let args = ["a"]
   result <- runCaptureError args logsRef
@@ -101,12 +100,12 @@ cyclicKeys = testCase "Cyclic keys throws exception" $ do
     Just (MkCyclicKeyError path) -> "a -> b -> c -> a" @=? path
     Nothing -> assertFailure "Exception exception"
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
 
 emptyFileLog :: TestTree
 emptyFileLog = testCase "Empty file log throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["-c", getIntConfig "empty-file-log", "cmd"]
   result <- runCaptureError @TOMLError args logsRef
 
@@ -114,7 +113,7 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
     Just err -> expectedErr @=? displayException err
     Nothing -> assertFailure "Expected exception"
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     expectedErr = "Decode error at '.file-log.path': Empty path given for --file-log"
@@ -129,7 +128,7 @@ osTests =
 
 osxNotifyConfigError :: TestTree
 osxNotifyConfigError = testCase "OSX with linux notify config throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", getExampleConfig "config", "cmd"]
@@ -141,7 +140,7 @@ osxNotifyConfigError = testCase "OSX with linux notify config throws exception" 
 
 osxDBusError :: TestTree
 osxDBusError = testCase "OSX with dbus throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["--notify-system", "dbus" ,"cmd"]
   result <- runCaptureError @OsxNotifySystemMismatch args logsRef
 
@@ -151,7 +150,7 @@ osxDBusError = testCase "OSX with dbus throws exception" $ do
 
 osxNotifySendError :: TestTree
 osxNotifySendError = testCase "OSX with notify-send throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["--notify-system", "notify-send" ,"cmd"]
   result <- runCaptureError @OsxNotifySystemMismatch args logsRef
 
@@ -167,7 +166,7 @@ osTests =
 
 linuxNotifyConfigError :: TestTree
 linuxNotifyConfigError = testCase "Linux with osx notify config throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", getExampleConfig "config_osx", "cmd"]
@@ -179,7 +178,7 @@ linuxNotifyConfigError = testCase "Linux with osx notify config throws exception
 
 linuxAppleScriptError :: TestTree
 linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let args = ["--notify-system", "apple-script" ,"cmd"]
   result <- runCaptureError @LinuxNotifySystemMismatch args logsRef
 

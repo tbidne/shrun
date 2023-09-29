@@ -4,7 +4,6 @@
 
 module Integration.Defaults (specs) where
 
-import Data.IORef qualified as IORef
 import Data.Sequence (Seq (Empty))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Effectful.FileSystem.PathReader.Static qualified as PR
@@ -67,10 +66,10 @@ specs testArgs =
 
 defaultEnv :: TestTree
 defaultEnv = testCase "No arguments and empty config path should return default Env" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify ["cmd1"] (`runNoConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   ["No default config found at: ./config.toml"] @=? logs
   where
     expected =
@@ -96,10 +95,10 @@ defaultEnv = testCase "No arguments and empty config path should return default 
 
 usesDefaultConfigFile :: TestTree
 usesDefaultConfigFile = testCase "No arguments should use config from default file" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify ["cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   [] @=? logs
   where
     expected =
@@ -128,13 +127,13 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
 cliOverridesConfigFile :: IO TestArgs -> TestTree
 cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
   logPath <- (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
 
   makeEnvAndVerify (args logPathStr) (`runConfigIO` logsRef) expected
-    `finally` run (removeFileIfExists logPath)
+    `finally` removeFileIfExists logPath
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args logPath =
@@ -192,18 +191,14 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
           notifyTimeout = Just (NotifyTimeoutSeconds 10),
           commands = NESeq.singleton "cmd"
         }
-    run =
-      runEff
-        . PW.runPathWriterStaticIO
-        . PR.runPathReaderStaticIO
 
 cliOverridesConfigFileCmdLog :: TestTree
 cliOverridesConfigFileCmdLog = testCase desc $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
 
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     desc = "CLI overrides config file cmd-log fields even when CLI --cmd-log is not specified"
@@ -245,10 +240,10 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify ["--no-config", "cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     expected =
@@ -272,11 +267,11 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
 
 noXOverridesToml :: TestTree
 noXOverridesToml = testCase "--no-x disables toml options" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
 
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args =
@@ -319,11 +314,11 @@ noXOverridesToml = testCase "--no-x disables toml options" $ do
 
 noXOverridesArgs :: TestTree
 noXOverridesArgs = testCase "--no-x disables args" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
 
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args =

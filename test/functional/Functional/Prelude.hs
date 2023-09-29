@@ -12,11 +12,6 @@ module Functional.Prelude
     runException,
     runExitFailure,
 
-    -- * IO Helpers
-    readFileUtf8ThrowMIO,
-    readFileUtf8LenientIO,
-    removeFileIfExistsIO,
-
     -- * Expectations
 
     -- ** Text
@@ -50,7 +45,6 @@ import Effectful.FileSystem.FileWriter.Static qualified as FW
 import Effectful.FileSystem.HandleReader.Static qualified as HR
 import Effectful.FileSystem.HandleWriter.Static qualified as HW
 import Effectful.FileSystem.PathReader.Dynamic qualified as PR
-import Effectful.FileSystem.PathReader.Static qualified as PR
 import Effectful.FileSystem.PathWriter.Static qualified as PW
 import Effectful.FileSystem.Utils (combineFilePaths)
 import Effectful.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
@@ -360,22 +354,3 @@ notifySystemArg = "notify-send"
 
 cfp :: FilePath -> FilePath -> FilePath
 cfp = combineFilePaths
-
-readFileUtf8ThrowMIO :: OsPath -> IO Text
-readFileUtf8ThrowMIO =
-  runEff
-    . FR.runFileReaderStaticIO
-    . readFileUtf8ThrowM
-
-readFileUtf8LenientIO :: OsPath -> IO Text
-readFileUtf8LenientIO =
-  runEff
-    . FR.runFileReaderStaticIO
-    . readFileUtf8Lenient
-
-removeFileIfExistsIO :: OsPath -> IO ()
-removeFileIfExistsIO =
-  runEff
-    . PR.runPathReaderStaticIO
-    . PW.runPathWriterStaticIO
-    . removeFileIfExists

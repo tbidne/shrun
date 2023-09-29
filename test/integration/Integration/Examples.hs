@@ -4,7 +4,6 @@
 
 module Integration.Examples (specs) where
 
-import Data.IORef qualified as IORef
 import Integration.Prelude
 import Integration.Utils
   ( SimpleEnv
@@ -52,10 +51,10 @@ specs =
 
 examplesConfig :: TestTree
 examplesConfig = testCase "examples/config.toml is valid" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args = ["-c", getExampleConfigOS "config", "cmd1"]
@@ -86,10 +85,10 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
 
 examplesDefault :: TestTree
 examplesDefault = testCase "examples/default.toml is valid" $ do
-  logsRef <- IORef.newIORef []
+  logsRef <- newIORef []
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
+  logs <- readIORef logsRef
   logs @=? []
   where
     args = ["-c", getExampleConfig "default", "cmd"]

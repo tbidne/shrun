@@ -20,11 +20,10 @@ import Shrun.Notify.DBus (runDBusDynamicIO)
 import Shrun.Notify.NotifySend (runNotifySendDynamicIO)
 import Shrun.Prelude
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
-import System.IO qualified as IO
 
 main :: IO ()
 main = do
-  setUncaughtExceptionHandler $ \ex -> IO.putStrLn $ displayException ex
+  setUncaughtExceptionHandler $ \ex -> putStrLn $ displayException ex
 
   runShrun makeEnvAndShrun `catch` doNothingOnSuccess
   where

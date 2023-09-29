@@ -17,13 +17,12 @@ import Functional.TestArgs (TestArgs (MkTestArgs, configPath, rootDir, tmpDir))
 import Functional.Timeout qualified as Timeout
 import Functional.Truncation qualified as Truncation
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import System.IO qualified as IO
 import Test.Tasty qualified as Tasty
 
 -- | Entry point for functional tests.
 main :: IO ()
 main = do
-  setUncaughtExceptionHandler (IO.putStrLn . displayException)
+  setUncaughtExceptionHandler (putStrLn . displayException)
   defaultMain $ Tasty.withResource setup teardown specs
 
 specs :: IO TestArgs -> TestTree
@@ -42,7 +41,7 @@ specs args = do
     ]
 
 setup :: IO TestArgs
-setup = runEff' $ do
+setup = do
   rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
   let workingTmpDir = rootTmpDir </> [osp|test/functional|]
 
@@ -62,14 +61,8 @@ teardown testArgs = do
   let root = testArgs ^. #rootDir
       cwd = testArgs ^. #tmpDir
 
-  void $ tryAny $ runEff' $ do
+  void $ tryAny $ do
     removeDirectoryIfExists cwd
     removeDirectoryIfExists $ root </> [osp|test/functional|]
     removeDirectoryIfExists $ root </> [osp|test|]
     removeDirectoryIfExists root
-
-runEff' :: Eff [PathWriterStatic, PR.PathReaderStatic, IOE] a -> IO a
-runEff' =
-  runEff
-    . PR.runPathReaderStaticIO
-    . PW.runPathWriterStaticIO

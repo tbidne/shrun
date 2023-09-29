@@ -4,7 +4,6 @@
 -- than the command.
 module Functional.SuccessShowKey (spec) where
 
-import Data.IORef qualified as IORef
 import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs (MkTestArgs, configPath, tmpDir))
@@ -45,8 +44,8 @@ withShowKey args addShowKey = do
         ]
           <> commands
 
-  results <- fmap MkResultText <$> (IORef.readIORef =<< run argList)
-  fileContents <- readFileUtf8LenientIO outpath
+  results <- fmap MkResultText <$> (readIORef =<< run argList)
+  fileContents <- readFileUtf8Lenient outpath
   let fileResults = MkResultText <$> T.lines fileContents
 
   V.verifyExpectedUnexpected results expected unexpected
@@ -92,4 +91,4 @@ outfile = [osp|show-key.log"|]
 teardown :: IO TestArgs -> () -> IO ()
 teardown args _ = do
   MkTestArgs {tmpDir} <- args
-  void $ tryAny $ removeFileIfExistsIO (tmpDir </> outfile)
+  void $ tryAny $ removeFileIfExists (tmpDir </> outfile)
