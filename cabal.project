@@ -20,9 +20,6 @@ package shrun
     -Wunused-type-patterns
     -Wno-unticked-promoted-constructors
 
-  benchmark-options:
-    +RTS -T --nonmoving-gc -RTS
-
 optimization: 2
 test-show-details: direct
 
