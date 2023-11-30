@@ -6,7 +6,7 @@ module Shrun.Notify.MonadAppleScript
 where
 
 import Data.Text qualified as T
-import Effects.System.Process qualified as P
+import Effects.Process.Typed qualified as P
 import Shrun.Notify.MonadNotify (ShrunNote)
 import Shrun.Prelude
 

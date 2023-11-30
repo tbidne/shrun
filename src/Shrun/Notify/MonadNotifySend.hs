@@ -7,7 +7,7 @@ where
 
 import DBus.Notify (UrgencyLevel (Critical, Low, Normal))
 import Data.Text qualified as T
-import Effects.System.Process qualified as P
+import Effects.Process.Typed qualified as P
 import Shrun.Notify.MonadNotify (ShrunNote)
 import Shrun.Notify.Types
   ( NotifyTimeout

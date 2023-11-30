@@ -11,7 +11,7 @@ where
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
 import Effects.Concurrent.Thread (microsleep)
-import Effects.System.Process qualified as P
+import Effects.Process.Typed qualified as P
 import Effects.Time (withTiming)
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
@@ -44,9 +44,8 @@ import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 -- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::
   ( HasInit env,
-    MonadProcess m,
     MonadReader env m,
-    MonadSTM m
+    MonadTypedProcess m
   ) =>
   CommandP1 ->
   m (ExitCode, Stderr)
@@ -61,9 +60,8 @@ shExitCode cmd = do
 -- 'Right' 'Stdout' otherwise.
 tryShExitCode ::
   ( HasInit env,
-    MonadProcess m,
     MonadReader env m,
-    MonadSTM m
+    MonadTypedProcess m
   ) =>
   CommandP1 ->
   m (Maybe Stderr)
@@ -83,12 +81,12 @@ tryCommandLogging ::
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
-    MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
     MonadThread m,
-    MonadTime m
+    MonadTime m,
+    MonadTypedProcess m
   ) =>
   -- | Command to run.
   CommandP1 ->
@@ -179,10 +177,9 @@ tryCommandStream ::
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
-    MonadProcess m,
     MonadReader env m,
-    MonadSTM m,
-    MonadThread m
+    MonadThread m,
+    MonadTypedProcess m
   ) =>
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->
@@ -225,8 +222,8 @@ streamOutput ::
     MonadHandleReader m,
     MonadIORef m,
     MonadReader env m,
-    MonadSTM m,
-    MonadThread m
+    MonadThread m,
+    MonadTypedProcess m
   ) =>
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->

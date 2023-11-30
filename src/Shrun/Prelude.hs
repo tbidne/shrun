@@ -166,8 +166,8 @@ import Effects.IORef as X
       ),
   )
 import Effects.Optparse as X (MonadOptparse (execParser))
+import Effects.Process.Typed as X (MonadTypedProcess, Process)
 import Effects.System.Environment as X (MonadEnv (withArgs))
-import Effects.System.Process as X (MonadProcess, Process)
 import Effects.System.Terminal as X
   ( MonadTerminal,
     putStr,

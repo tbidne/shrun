@@ -17,6 +17,7 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Sequence qualified as Seq
+import Data.Text qualified as T
 import Effects.FileSystem.HandleWriter (withBinaryFile)
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
 import Effects.FileSystem.Utils qualified as FsUtils
@@ -90,7 +91,7 @@ makeEnvAndShrun ::
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadProcess m,
+    MonadTypedProcess m,
     MonadMask m,
     MonadSTM m,
     MonadRegionLogger m,
@@ -138,7 +139,7 @@ withEnv onEnv = do
           if b
             then readConfig path
             else do
-              putTextLn ("No default config found at: " <> FsUtils.decodeOsToFpShowText path)
+              putTextLn ("No default config found at: " <> T.pack (FsUtils.decodeOsToFpShow path))
               pure defaultTomlConfig
 
   let finalConfig = mergeConfig args tomlConfig
@@ -301,7 +302,7 @@ handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
     sizeWarning warnSize fileSize =
       mconcat
         [ "Warning: log file '",
-          FsUtils.decodeOsToFpShowText fp,
+          T.pack $ FsUtils.decodeOsToFpShow fp,
           "' has size: ",
           formatBytes fileSize,
           ", but specified threshold is: ",

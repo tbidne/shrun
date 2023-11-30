@@ -13,8 +13,8 @@ where
 import Data.Hashable (Hashable)
 import Data.String (IsString (fromString))
 import Data.Text qualified as T
-import Effects.System.Process (ProcessConfig)
-import Effects.System.Process qualified as P
+import Effects.Process.Typed (ProcessConfig)
+import Effects.Process.Typed qualified as P
 import Shrun.Data.Phase
   ( AdvancePhase (NextPhase, advancePhase),
     Phase (Phase1, Phase2),

@@ -39,7 +39,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadMask,
       MonadNotifySend,
       MonadPathWriter,
-      MonadProcess,
+      MonadTypedProcess,
       MonadReader env,
       MonadSTM,
       MonadTerminal,
