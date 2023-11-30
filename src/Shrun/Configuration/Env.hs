@@ -253,7 +253,7 @@ withMLogging cfg onLogging = case cfg ^? (#fileLog %? #path) of
   -- 2. Use the default path.
   Just FPDefault -> do
     stateDir <- getShrunXdgState
-    let fp = stateDir </> [osp|log|]
+    let fp = stateDir </> [osp|shrun.log|]
     stateExists <- doesDirectoryExist stateDir
     unless stateExists (createDirectoryIfMissing True stateDir)
 

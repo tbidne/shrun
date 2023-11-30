@@ -145,7 +145,7 @@ val = 'b'
 
 #[file-log]
 # Writes all logs to a file. The "default" option writes to the XDG state
-# directory e.g. ~/.local/state/shrun/log. Any other string is interpreted as
+# directory e.g. ~/.local/state/shrun/shrun.log. Any other string is interpreted as
 # a PATH.
 #path = "default"
 

@@ -44,12 +44,12 @@ teardown testArgs = do
     -- There are several tests that rely on this log's existence, since it
     -- exists in the 'config' directory, and these tests test that default.
     -- Thus we cannot delete it until everything has finished.
-    removeFileIfExists [osp|test/integration/toml/log|]
-    removeFileIfExists [osp|test/integration/toml/osx/log|]
+    removeFileIfExists [osp|test/integration/toml/shrun.log|]
+    removeFileIfExists [osp|test/integration/toml/osx/shrun.log|]
 
     -- Ideally we want to clean up after ourselves in each test. These are for
     -- insurance.
-    removeFileIfExists $ cwd </> [osp|log|]
+    removeFileIfExists $ cwd </> [osp|shrun.log|]
     removeFileIfExists $ cwd </> [osp|large-file-warn|]
     removeFileIfExists $ cwd </> [osp|large-file-del|]
     removeFileIfExists $ root </> [osp|test/integration|]

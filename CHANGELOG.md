@@ -11,6 +11,10 @@ the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
 ## [Unreleased]
+### Changed
+* Default log renamed from `XDG_STATE/shrun/log` to
+  `XDG_STATE/shrun/shrun.log`.
+
 ### Added
 * Added feature for sending notifications upon command/shrun completion.
   The new CLI options (`toml`) are:
