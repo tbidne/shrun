@@ -10,7 +10,7 @@ Note that PVP is applied to the _application_, **not** the library. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
-## [Unreleased]
+## [0.8.1] -- 2023-12-08
 ### Changed
 * Default log renamed from `XDG_STATE/shrun/log` to
   `XDG_STATE/shrun/shrun.log`.
@@ -162,7 +162,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.8...main
+[0.8.1]: https://github.com/tbidne/shrun/compare/0.8...0.8.1
 [0.8]: https://github.com/tbidne/shrun/compare/0.7...0.8
 [0.7]: https://github.com/tbidne/shrun/compare/0.6...0.7
 [0.6]: https://github.com/tbidne/shrun/compare/0.5...0.6
