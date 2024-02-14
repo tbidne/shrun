@@ -147,7 +147,7 @@ stripControlAll =
   --
   -- By performing stripAnsiAll first, we remove entire ansi sequences,
   -- then remove other control chars (e.g. newlines, tabs).
-  T.strip . T.filter (not . isControl) . stripAnsiAll
+  T.strip . T.filter (not . isControl) . newlineToSpace . stripAnsiAll
 
 -- | Strips control chars, including most ansi escape sequences. Leading and
 -- trailing whitespace is also stripped. We leave behind SGR ansi escape
@@ -166,7 +166,7 @@ stripControlSmart =
   -- Like 'stripControlAll', we need to handle the ansi sequences first.
   -- Because we actually leave some sequences behind, we need to be more
   -- surgical removing the rest of the control chars (e.g. newline, tabs).
-  T.strip . T.filter ctrlToFilter . stripAnsiControl
+  T.strip . T.filter ctrlToFilter . newlineToSpace . stripAnsiControl
   where
     -- stripAnsiControl should be handling all \ESC sequences, so we should
     -- be safe to ignore these, accomplishing our goal of preserving the SGR
@@ -178,6 +178,12 @@ stripControlSmart =
     ctrlToFilter c
       | isControl c = c == '\ESC'
       | otherwise = True
+
+-- In general we want to simply strip out 'bad' control chars w/o further
+-- thought. However, we can arguably do better in the case of newlines and at
+-- least separate such words by a simple space, for better legibility.
+newlineToSpace :: Text -> Text
+newlineToSpace = T.replace "\n" " "
 
 -- | Strips all ansi sequences from the given text.
 --

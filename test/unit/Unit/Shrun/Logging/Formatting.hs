@@ -429,7 +429,7 @@ stripAll :: TestTree
 stripAll =
   testCase "StripControlAll should strip whitespace + all control" $ do
     "" @=? stripAll' ""
-    "oo    bar  baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
+    "oo    bar   baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
     stripAll' = flip Formatting.stripChars (Just StripControlAll)
 
@@ -437,7 +437,7 @@ stripSmart :: TestTree
 stripSmart =
   testCase "StripControlSmart should strip whitespace + some control" $ do
     "" @=? stripSmart' ""
-    "foo \ESC[m   bar  baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
+    "foo \ESC[m   bar   baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
     stripSmart' = flip Formatting.stripChars (Just StripControlSmart)
 

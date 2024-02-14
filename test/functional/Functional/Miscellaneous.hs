@@ -22,11 +22,16 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
         [ "--cmd-log",
           "sleep 1 && echo 'line one\nline two' && sleep 2"
         ]
+
+    -- Newline is stripped from printed result
+    printedCmd :: (IsString a) => a
+    printedCmd = "sleep 1 && echo 'line one line two' && sleep 2"
+
     expected =
-      [ withSuccessPrefix "sleep 1 && echo 'line oneline two' && sleep 2",
-        withCommandPrefix "sleep 1 && echo 'line oneline two' && sleep 2" "line one",
-        withCommandPrefix "sleep 1 && echo 'line oneline two' && sleep 2" "line two"
+      [ withSuccessPrefix printedCmd,
+        withCommandPrefix printedCmd "line one",
+        withCommandPrefix printedCmd "line two"
       ]
     unexpected =
-      [ withCommandPrefix "sleep 1 && echo 'line oneline two' && sleep 2" "line oneline two"
+      [ withCommandPrefix printedCmd "line one line two"
       ]

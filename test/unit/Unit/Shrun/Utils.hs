@@ -89,7 +89,7 @@ allControlStripped =
     "" @=? U.stripControlAll "\ESC[A"
     "foo" @=? U.stripControlAll "foo\ESC[A"
     "bar" @=? U.stripControlAll "\ESC[Abar"
-    "foobarbaz" @=? U.stripControlAll "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
+    "foobar baz" @=? U.stripControlAll "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
 
 someControlStripped :: TestTree
 someControlStripped =
@@ -97,6 +97,6 @@ someControlStripped =
     "" @=? U.stripControlSmart "\ESC[A"
     "foo" @=? U.stripControlSmart "foo\ESC[A"
     "bar" @=? U.stripControlSmart "\ESC[Abar"
-    "foobar\ESC[1mbaz" @=? U.stripControlSmart "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
+    "foobar\ESC[1m baz" @=? U.stripControlSmart "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
     "\ESC[0mfoo" @=? U.stripControlSmart "\ESC[0mfoo"
     "foo\ESC[0mbar" @=? U.stripControlSmart "foo\ESC[0mbar"

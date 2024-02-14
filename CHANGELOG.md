@@ -15,6 +15,10 @@ the major/minor/patch definitions apply to the application's interface / usage
 * New option `--cmd-log-size` (toml: `cmd-log-size`) that controls the size of
   logs we read from command with `--cmd-log` and `--file-log`.
 
+### Fixed
+* Improved `strip-control` options `all` and `smart` to replace newlines with
+  a single whitespace, rather than stripping them.
+
 ## [0.8.1] -- 2023-12-08
 ### Changed
 * Default log renamed from `XDG_STATE/shrun/log` to
