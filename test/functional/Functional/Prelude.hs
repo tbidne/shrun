@@ -51,6 +51,7 @@ import Shrun.Configuration.Env.Types
     Logging
       ( MkLogging,
         cmdLog,
+        cmdLogSize,
         cmdNameTrunc,
         consoleLog,
         fileLog,
@@ -188,6 +189,7 @@ runMaybeException mException argList = do
                     pollInterval = env ^. (#logging % #pollInterval),
                     timerFormat = env ^. (#logging % #timerFormat),
                     cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
+                    cmdLogSize = env ^. (#logging % #cmdLogSize),
                     cmdLog = env ^. (#logging % #cmdLog),
                     consoleLog = consoleQueue,
                     fileLog = env ^. (#logging % #fileLog)

@@ -14,6 +14,9 @@ module Shrun.Logging.Types
 
     -- * File Logs
     FileLog,
+
+    -- * Misc
+    defaultCmdLogSize,
   )
 where
 
@@ -62,3 +65,6 @@ data Log = MkLog
   deriving stock (Show)
 
 makeFieldLabelsNoPrefix ''Log
+
+defaultCmdLogSize :: Bytes B Natural
+defaultCmdLogSize = MkBytes 1024

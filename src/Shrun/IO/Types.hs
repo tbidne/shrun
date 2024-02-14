@@ -58,8 +58,14 @@ readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess err) = MkStderr (fold err)
 
 -- | Attempts to read from the handle.
-readHandle :: (MonadCatch m, MonadHandleReader m) => Handle -> m ReadHandleResult
-readHandle handle = do
+readHandle ::
+  ( MonadCatch m,
+    MonadHandleReader m
+  ) =>
+  Int ->
+  Handle ->
+  m ReadHandleResult
+readHandle blockSize handle = do
   -- The "nothingIfReady" check and reading step both need to go in the try as
   -- the former can also throw.
   tryAny readHandle' <&> \case
@@ -80,8 +86,7 @@ readHandle handle = do
           -- a workaround: Use the following non blocking call which streams
           -- properly, and manually split the lines ourselves. The block size
           -- should be large enough that we are not likely to cut off a line
-          -- prematurely, but obviously this is best-effort. We can make this
-          -- configurable should the need arise.
+          -- prematurely, but obviously this is best-effort.
           hGetNonBlocking handle blockSize <&> \case
             "" -> ReadNoData
             bs -> ReadSuccess (T.lines $ decodeUtf8Lenient bs)
@@ -113,6 +118,3 @@ readHandle handle = do
 -- causes errors at the end) and probably hReady as well, but these both
 -- block and I have not found a way to invoke them while also streaming
 -- the process output (blocks until everything gets dumped at the end).
-
-blockSize :: Int
-blockSize = 1024

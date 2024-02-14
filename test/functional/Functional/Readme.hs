@@ -36,6 +36,8 @@ specs args =
       timeout,
       initOn,
       initOff,
+      cmdLogSizeDefault,
+      cmdLogSize,
       cmdlogOn,
       cmdlogOnDefault,
       cmdlogOff,
@@ -156,6 +158,47 @@ initOff =
     expected =
       [ withErrorPrefix "bash_function",
         finishedPrefix
+      ]
+
+cmdLogSizeDefault :: TestTree
+cmdLogSizeDefault =
+  testCase "Default --cmd-log-size splits 1024" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--cmd-log",
+          "--cmd-name-trunc",
+          "5",
+          cmd
+        ]
+    commandLog = replicate 1024 'a'
+    cmd = "sleep 1 ; echo " ++ commandLog ++ "b; sleep 1"
+    cmdExpected = V.MkExpectedText . T.pack $ commandLog
+    expected =
+      [ withCommandPrefix "sl..." cmdExpected,
+        withCommandPrefix "sl..." "b"
+      ]
+
+cmdLogSize :: TestTree
+cmdLogSize =
+  testCase "Runs --cmd-log-size example" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--cmd-log",
+          "--cmd-log-size",
+          "5",
+          cmd
+        ]
+    cmd :: (IsString a) => a
+    cmd = "sleep 1 ; echo abcdef; sleep 1"
+    expected =
+      [ withCommandPrefix cmd "abcde",
+        withCommandPrefix cmd "f"
       ]
 
 cmdlogOn :: TestTree

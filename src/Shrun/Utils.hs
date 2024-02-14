@@ -22,7 +22,7 @@ module Shrun.Utils
   )
 where
 
-import Data.Bytes (Bytes, Conversion (convert), Size (B), SomeSize, parse)
+import Data.Bytes (Conversion (convert), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Either (either)
 import Data.Sequence.NonEmpty qualified as NESeq

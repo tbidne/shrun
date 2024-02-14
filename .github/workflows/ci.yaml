@@ -35,16 +35,16 @@ jobs:
         run: cabal configure --enable-tests --ghc-options -Werror
 
       - name: Compile
-        run: cabal build lib:shrun
+        run: cabal build lib:shrun --ghc-options -Werror
 
       - name: Unit Tests
-        run: cabal test unit --test-options '--hedgehog-tests 100000'
+        run: cabal test unit --test-options '--hedgehog-tests 100000' --ghc-options -Werror
 
       - name: Integration Tests
-        run: cabal test integration
+        run: cabal test integration --ghc-options -Werror
 
       - name: Functional Tests
-        run: cabal test functional
+        run: cabal test functional --ghc-options -Werror
 
       - name: Benchmarks
         if: ${{ matrix.os == 'ubuntu-latest' }}

@@ -11,7 +11,6 @@ module Shrun.Configuration.Args
   )
 where
 
-import Data.Bytes (Bytes, Size (B))
 import Data.Char qualified as Ch
 import Data.List qualified as L
 import Data.String (IsString (fromString))
@@ -130,6 +129,10 @@ data Args = MkArgs
     cmdNameTrunc :: Maybe (Truncation TCmdName),
     -- | Disables cmdNameTrunc.
     noCmdNameTrunc :: Bool,
+    -- | Determines the max log size we read from commands in one go.
+    cmdLogSize :: Maybe (Bytes B Natural),
+    -- | Disables cmdLogSize.
+    noCmdLogSize :: Bool,
     -- | Whether to log commands.
     cmdLog :: Maybe Bool,
     -- | Disables cmdLogging.
@@ -195,6 +198,8 @@ defaultArgs cmds =
       noTimerFormat = False,
       init = empty,
       noInit = False,
+      cmdLogSize = empty,
+      noCmdLogSize = False,
       cmdLog = empty,
       noCmdLog = False,
       cmdLogStripControl = empty,
@@ -262,6 +267,8 @@ argsParser =
     <*> noTimerFormatParser
     <*> cmdNameTruncParser
     <*> noCmdNameTruncParser
+    <*> cmdLogSizeParser
+    <*> noCmdLogSizeParser
     <*> cmdLogParser
     <*> noCmdLogParser
     <*> cmdLogStripControlParser
@@ -407,6 +414,35 @@ noCmdNameTruncParser =
     $ mconcat
       [ OA.long "no-cmd-name-trunc",
         mkHelp "Disables --cmd-name-trunc."
+      ]
+
+cmdLogSizeParser :: Parser (Maybe (Bytes B Natural))
+cmdLogSizeParser =
+  OA.optional
+    $ OA.option
+      readCmdLogSize
+      ( mconcat
+          [ OA.long "cmd-log-size",
+            mkHelp helpTxt,
+            OA.metavar "NATURAL"
+          ]
+      )
+  where
+    readCmdLogSize = MkBytes <$> OA.auto
+    helpTxt =
+      mconcat
+        [ "Non-negative integer that determines the size (bytes) of command ",
+          "logs in a single read (--cmd-log and --file-log). Logs larger than ",
+          "--cmd-log-size will be read in a subsequent read, hence broken ",
+          "across lines. The default is 1024."
+        ]
+
+noCmdLogSizeParser :: Parser Bool
+noCmdLogSizeParser =
+  OA.switch
+    $ mconcat
+      [ OA.long "no-cmd-log-size",
+        mkHelp "Disables --cmd-log-size."
       ]
 
 cmdLogLineTruncParser :: Parser (Maybe LineTruncation)

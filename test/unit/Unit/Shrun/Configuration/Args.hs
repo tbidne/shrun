@@ -4,7 +4,6 @@
 -- | Tests for Shrun.Args
 module Unit.Shrun.Configuration.Args (tests) where
 
-import Data.Bytes (Bytes (MkBytes))
 import Options.Applicative (ParserPrefs)
 import Options.Applicative qualified as OptApp
 import Shrun.Configuration.Args
@@ -12,6 +11,7 @@ import Shrun.Configuration.Args
       ( MkArgs,
         cmdLog,
         cmdLogLineTrunc,
+        cmdLogSize,
         cmdLogStripControl,
         cmdNameTrunc,
         commands,
@@ -24,6 +24,7 @@ import Shrun.Configuration.Args
         keyHide,
         noCmdLog,
         noCmdLogLineTrunc,
+        noCmdLogSize,
         noCmdLogStripControl,
         noCmdNameTrunc,
         noConfig,
@@ -85,6 +86,7 @@ tests =
       fileLogModeSpecs,
       fileLogStripControlSpecs,
       fileLogSizeModeSpecs,
+      cmdLogSizeSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
       pollIntervalSpecs,
@@ -124,6 +126,8 @@ parseDefaultArgs = testCase "Should parse default args" $ do
               noTimerFormat = False,
               cmdNameTrunc = Nothing,
               noCmdNameTrunc = False,
+              cmdLogSize = Nothing,
+              noCmdLogSize = False,
               cmdLog = Nothing,
               noCmdLog = False,
               cmdLogStripControl = Nothing,
@@ -476,6 +480,31 @@ parseNoFileLogSizeMode =
   where
     argList = ["--no-file-log-size-mode", "command"]
     expected = updateDefArgsFlag #noFileLogSizeMode True
+
+cmdLogSizeSpecs :: TestTree
+cmdLogSizeSpecs =
+  testGroup
+    "Command log size arg parsing"
+    [ parseCmdLogSize,
+      parseNoCmdLogSize
+    ]
+
+parseCmdLogSize :: TestTree
+parseCmdLogSize =
+  testCase
+    "Should parse --cmd-log-size as command log size"
+    $ verifyResult argList expected
+  where
+    argList = ["--cmd-log-size", "2048", "command"]
+    expected = updateDefArgs #cmdLogSize (MkBytes 2048)
+
+parseNoCmdLogSize :: TestTree
+parseNoCmdLogSize =
+  testCase "Parse --no---cmd-log-size"
+    $ verifyResult argList expected
+  where
+    argList = ["--no-cmd-log-size", "command"]
+    expected = updateDefArgsFlag #noCmdLogSize True
 
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =

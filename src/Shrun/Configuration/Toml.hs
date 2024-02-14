@@ -92,6 +92,8 @@ data TomlConfig = MkTomlConfig
     timerFormat :: Maybe TimerFormat,
     -- | Truncates command names in the logs.
     cmdNameTrunc :: Maybe (Truncation TCmdName),
+    -- | Determines the max log size we read from commands in one go.
+    cmdLogSize :: Maybe (Bytes B Natural),
     -- | Whether to log commands.
     cmdLog :: Maybe CmdLoggingToml,
     -- | Optional file logging. If enabled, holds the path to the file
@@ -118,6 +120,7 @@ defaultTomlConfig =
     Nothing
     Nothing
     Nothing
+    Nothing
 
 instance DecodeTOML TomlConfig where
   tomlDecoder =
@@ -128,6 +131,7 @@ instance DecodeTOML TomlConfig where
       <*> decodePollInterval
       <*> decodeTimerFormat
       <*> decodeCmdNameTrunc
+      <*> decodeCmdLogSize
       <*> getFieldOptWith tomlDecoder "cmd-log"
       <*> getFieldOptWith tomlDecoder "file-log"
       <*> getFieldOptWith tomlDecoder "notify"
@@ -156,6 +160,9 @@ decodeCmdDisplay = getFieldOptWith tomlDecoder "key-hide"
 
 decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
 decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
+
+decodeCmdLogSize :: Decoder (Maybe (Bytes B Natural))
+decodeCmdLogSize = getFieldOptWith (fmap MkBytes tomlDecoder) "cmd-log-size"
 
 decodeCmdLineTrunc :: Decoder (Maybe LineTruncation)
 decodeCmdLineTrunc = getFieldOptWith tomlDecoder "line-trunc"
@@ -192,6 +199,7 @@ mergeConfig args tomlConfig =
       pollInterval = combineWithDisable #pollInterval #pollInterval #noPollInterval,
       timerFormat = combineWithDisable #timerFormat #timerFormat #noTimerFormat,
       cmdNameTrunc = combineWithDisable #cmdNameTrunc #cmdNameTrunc #noCmdNameTrunc,
+      cmdLogSize = combineWithDisable #cmdLogSize #cmdLogSize #noCmdLogSize,
       cmdLog,
       fileLog,
       notify,

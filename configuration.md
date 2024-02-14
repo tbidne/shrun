@@ -9,6 +9,7 @@
   - [Logging](#logging)
     - [Command Log](#command-log)
     - [Poll Interval](#poll-interval)
+    - [Command Log Size](#command-log-size)
     - [File Log](#file-log)
     - [File Log Mode](#file-log-mode)
     - [File Log Size Mode](#file-log-size-mode)
@@ -163,6 +164,26 @@ Note that lower values will increase CPU usage. In particular, 0 will max out a 
 <code><span style="color: #ff79c6">$</span><span> shrun --poll-interval 100 --cmd-log "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Timer] 7 seconds</span></code>
+</pre>
+
+### Command Log Size
+
+**Arg:** `--cmd-log-size NATURAL`
+
+**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines the maximum size of logs we read from commands, in bytes. Logs that are over the limit will be read the next time (see [`--poll-interval`](#poll-interval)).
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-size 5 "echo abcdef" </span>
+<span style="color:">[Success][sleep 1 && e...] abcde</span>
+<span style="color: #a3fefe">[Timer] 1 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-size 5 "echo abcdef" </span>
+<span style="color:">[Success][sleep 1 && e...] f</span>
+<span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
 
 ### File Log

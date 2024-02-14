@@ -238,14 +238,25 @@ streamOutput logFn cmd p = do
   -- message.
   lastReadErrRef <- newIORef Nothing
   logging <- asks (getLogging @env @(Region m))
-  let pollInterval = logging ^. (#pollInterval % #unPollInterval)
+
+  let pollInterval :: Natural
+      pollInterval = logging ^. (#pollInterval % #unPollInterval)
+
+      sleepFn :: m ()
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
+
+      blockSize :: Int
+      blockSize = fromIntegral $ logging ^. (#cmdLogSize % _MkBytes)
+
+      readBlock :: Handle -> m ReadHandleResult
+      readBlock = readHandle blockSize
+
   exitCode <- U.untilJust $ do
     -- We need to read from both stdout and stderr -- regardless of if we
     -- created a single pipe in tryCommandStream -- or else we will miss
     -- messages
-    outResult <- readHandle (P.getStdout p)
-    errResult <- readHandle (P.getStderr p)
+    outResult <- readBlock (P.getStdout p)
+    errResult <- readBlock (P.getStderr p)
     writeLog logFn cmd lastReadErrRef outResult
     writeLog logFn cmd lastReadErrRef errResult
 
@@ -260,8 +271,8 @@ streamOutput logFn cmd p = do
   lastReadErr <- readIORef lastReadErrRef
   remainingData <-
     (<>)
-      <$> readHandle (P.getStderr p)
-      <*> readHandle (P.getStdout p)
+      <$> readBlock (P.getStderr p)
+      <*> readBlock (P.getStdout p)
 
   pure $ (exitCode,) $ case lastReadErr of
     Nothing -> remainingData

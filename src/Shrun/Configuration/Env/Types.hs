@@ -157,6 +157,8 @@ data Logging r = MkLogging
     timerFormat :: TimerFormat,
     -- | Truncates command names in the logs.
     cmdNameTrunc :: Maybe (Truncation TCmdName),
+    -- | The max number of command characters to display in the logs.
+    cmdLogSize :: Bytes B Natural,
     -- | Whether to log commands.
     cmdLog :: Maybe CmdLogging,
     -- | Console log queue.
@@ -183,6 +185,8 @@ instance Show (Logging r) where
       . showsPrec appPrec1 (env ^. #timerFormat)
       . showString ", cmdNameTrunc = "
       . showsPrec appPrec1 (env ^. #cmdNameTrunc)
+      . showString ", cmdLogSize = "
+      . showsPrec appPrec1 (env ^. #cmdLogSize)
       . showString ", cmdLog = "
       . showsPrec appPrec1 (env ^. #cmdLog)
       . showString ", consoleLog = <TBQueue>"

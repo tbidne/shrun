@@ -24,6 +24,7 @@ import Shrun.Configuration.Env.Types
     Logging
       ( MkLogging,
         cmdLog,
+        cmdLogSize,
         cmdNameTrunc,
         consoleLog,
         fileLog,
@@ -127,6 +128,7 @@ instance HasLogging Env () where
         pollInterval = 100,
         timerFormat = ProseCompact,
         cmdNameTrunc = env ^. #cmdTrunc,
+        cmdLogSize = MkBytes 0,
         cmdLog =
           Just
             MkCmdLogging
@@ -282,6 +284,7 @@ instance HasLogging MockEnv () where
         pollInterval = 10,
         timerFormat = ProseCompact,
         cmdNameTrunc = Nothing,
+        cmdLogSize = MkBytes 0,
         cmdLog = Nothing,
         consoleLog = error err,
         fileLog = Nothing

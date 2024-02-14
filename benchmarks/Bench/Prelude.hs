@@ -19,6 +19,7 @@ import Shrun.Configuration.Env.Types
     Logging
       ( MkLogging,
         cmdLog,
+        cmdLogSize,
         cmdNameTrunc,
         consoleLog,
         fileLog,
@@ -109,6 +110,7 @@ runBench argList = do
                     timerFormat = env ^. (#logging % #timerFormat),
                     pollInterval = env ^. (#logging % #pollInterval),
                     cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
+                    cmdLogSize = env ^. (#logging % #cmdLogSize),
                     cmdLog = env ^. (#logging % #cmdLog),
                     consoleLog = consoleQueue,
                     fileLog = env ^. (#logging % #fileLog)

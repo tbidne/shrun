@@ -9,10 +9,8 @@ module Shrun.Configuration.Env
 where
 
 import Data.Bytes
-  ( Bytes (MkBytes),
-    FloatingFormatter (MkFloatingFormatter),
+  ( FloatingFormatter (MkFloatingFormatter),
     Normalize (normalize),
-    Size (B),
     formatSized,
     sizedFormatterNatural,
   )
@@ -48,6 +46,7 @@ import Shrun.Configuration.Env.Types
     Logging
       ( MkLogging,
         cmdLog,
+        cmdLogSize,
         cmdNameTrunc,
         consoleLog,
         fileLog,
@@ -69,7 +68,7 @@ import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Data.TimerFormat (defaultTimerFormat)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
-import Shrun.Logging.Types (FileLog, LogRegion)
+import Shrun.Logging.Types (FileLog, LogRegion, defaultCmdLogSize)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Notify.MonadNotifySend (MonadNotifySend)
@@ -208,6 +207,10 @@ fromToml cfg cmdsText onEnv = do
                   pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
                   timerFormat = fromMaybe defaultTimerFormat (cfg ^? (#timerFormat % _Just)),
                   cmdNameTrunc = cfg ^. #cmdNameTrunc,
+                  cmdLogSize =
+                    fromMaybe
+                      defaultCmdLogSize
+                      (cfg ^? (#cmdLogSize % _Just)),
                   cmdLog =
                     cfg ^. #cmdLog <&> \cmdLog ->
                       MkCmdLogging
