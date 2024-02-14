@@ -1,5 +1,5 @@
 -- | Functional tests for readme examples.
-module Functional.Readme (specs) where
+module Functional.Examples (specs) where
 
 import DBus.Notify (UrgencyLevel (Normal))
 import Data.Text qualified as T

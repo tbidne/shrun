@@ -5,10 +5,10 @@ module Main (main) where
 
 import Effects.FileSystem.PathReader qualified as Dir
 import Effects.FileSystem.PathWriter qualified as Dir
+import Functional.Examples qualified as Examples
 import Functional.Miscellaneous qualified as Miscellaneous
 import Functional.Notify qualified as Notify
 import Functional.Prelude
-import Functional.Readme qualified as Readme
 import Functional.Success qualified as Success
 import Functional.SuccessCommandLogging qualified as SuccessCommandLogging
 import Functional.SuccessFileLogging qualified as SuccessFileLogging
@@ -29,15 +29,15 @@ specs :: IO TestArgs -> TestTree
 specs args = do
   testGroup
     "Functional Tests"
-    [ Miscellaneous.specs,
+    [ Examples.specs args,
+      Miscellaneous.specs,
       Notify.specs,
       Success.spec args,
       SuccessCommandLogging.spec,
       SuccessFileLogging.spec args,
       SuccessShowKey.spec args,
       Timeout.spec,
-      Truncation.spec,
-      Readme.specs args
+      Truncation.spec
     ]
 
 setup :: IO TestArgs

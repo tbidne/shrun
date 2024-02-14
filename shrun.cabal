@@ -201,10 +201,10 @@ test-suite functional
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:
+    Functional.Examples
     Functional.Miscellaneous
     Functional.Notify
     Functional.Prelude
-    Functional.Readme
     Functional.Success
     Functional.SuccessCommandLogging
     Functional.SuccessFileLogging
