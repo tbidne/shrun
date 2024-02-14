@@ -88,12 +88,12 @@ data TomlConfig = MkTomlConfig
     keyHide :: Maybe KeyHide,
     -- | How often to poll commands for logs, in microseconds.
     pollInterval :: Maybe PollInterval,
+    -- | Determines the max log size we read from commands in one go.
+    cmdLogSize :: Maybe (Bytes B Natural),
     -- | How to format the timer.
     timerFormat :: Maybe TimerFormat,
     -- | Truncates command names in the logs.
     cmdNameTrunc :: Maybe (Truncation TCmdName),
-    -- | Determines the max log size we read from commands in one go.
-    cmdLogSize :: Maybe (Bytes B Natural),
     -- | Whether to log commands.
     cmdLog :: Maybe CmdLoggingToml,
     -- | Optional file logging. If enabled, holds the path to the file
@@ -129,9 +129,9 @@ instance DecodeTOML TomlConfig where
       <*> decodeInit
       <*> decodeCmdDisplay
       <*> decodePollInterval
+      <*> decodeCmdLogSize
       <*> decodeTimerFormat
       <*> decodeCmdNameTrunc
-      <*> decodeCmdLogSize
       <*> getFieldOptWith tomlDecoder "cmd-log"
       <*> getFieldOptWith tomlDecoder "file-log"
       <*> getFieldOptWith tomlDecoder "notify"
@@ -197,9 +197,9 @@ mergeConfig args tomlConfig =
       init = combineWithDisable #init #init #noInit,
       keyHide = combineWithDisable #keyHide #keyHide #noKeyHide,
       pollInterval = combineWithDisable #pollInterval #pollInterval #noPollInterval,
+      cmdLogSize = combineWithDisable #cmdLogSize #cmdLogSize #noCmdLogSize,
       timerFormat = combineWithDisable #timerFormat #timerFormat #noTimerFormat,
       cmdNameTrunc = combineWithDisable #cmdNameTrunc #cmdNameTrunc #noCmdNameTrunc,
-      cmdLogSize = combineWithDisable #cmdLogSize #cmdLogSize #noCmdLogSize,
       cmdLog,
       fileLog,
       notify,

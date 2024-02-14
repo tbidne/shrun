@@ -37,6 +37,10 @@ key-hide = false
 # out a CPU thread.
 poll-interval = 100
 
+# Determines the size of the logs we read from commands (cmd-log and file-log).
+# Overrides the default of 1024.
+cmd-log-size = 2048
+
 # String that determines how the timers is formatted. Options (and examples)
 # are:
 #
@@ -55,10 +59,6 @@ timer-format = "prose_compact"
 # 2. The command is not run with an alias (so it cannot be hidden with
 #    key-hide = false).
 cmd-name-trunc = 80
-
-# Determines the size of the logs we read from commands (cmd-log and file-log).
-# Overrides the default of 1024.
-cmd-log-size = 2048
 
 # Command aliases are defined here. Values can either be a single unit or a
 # list of units, where a unit is either a command literal

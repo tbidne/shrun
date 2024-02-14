@@ -121,6 +121,10 @@ data Args = MkArgs
     pollInterval :: Maybe PollInterval,
     -- | Disables pollInterval.
     noPollInterval :: Bool,
+    -- | Determines the max log size we read from commands in one go.
+    cmdLogSize :: Maybe (Bytes B Natural),
+    -- | Disables cmdLogSize.
+    noCmdLogSize :: Bool,
     -- | How to format the timer.
     timerFormat :: Maybe TimerFormat,
     -- | Disables timerFormat.
@@ -129,10 +133,6 @@ data Args = MkArgs
     cmdNameTrunc :: Maybe (Truncation TCmdName),
     -- | Disables cmdNameTrunc.
     noCmdNameTrunc :: Bool,
-    -- | Determines the max log size we read from commands in one go.
-    cmdLogSize :: Maybe (Bytes B Natural),
-    -- | Disables cmdLogSize.
-    noCmdLogSize :: Bool,
     -- | Whether to log commands.
     cmdLog :: Maybe Bool,
     -- | Disables cmdLogging.
@@ -263,12 +263,12 @@ argsParser =
     <*> noKeyHideParser
     <*> pollIntervalParser
     <*> noPollIntervalParser
+    <*> cmdLogSizeParser
+    <*> noCmdLogSizeParser
     <*> timerFormatParser
     <*> noTimerFormatParser
     <*> cmdNameTruncParser
     <*> noCmdNameTruncParser
-    <*> cmdLogSizeParser
-    <*> noCmdLogSizeParser
     <*> cmdLogParser
     <*> noCmdLogParser
     <*> cmdLogStripControlParser
