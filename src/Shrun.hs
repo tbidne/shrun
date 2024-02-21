@@ -56,7 +56,13 @@ import Shrun.Logging.Types
   )
 import Shrun.Notify qualified as Notify
 import Shrun.Notify.MonadNotify (MonadNotify)
-import Shrun.Notify.Types (_NotifyCommand)
+import Shrun.Notify.Types
+  ( NotifyAction
+      ( NotifyAll,
+        NotifyCommand,
+        NotifyFinal
+      ),
+  )
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
@@ -167,10 +173,12 @@ runCommand cmd = do
       keyHide = logging ^. #keyHide
       formattedCmd = LogFmt.formatCommand keyHide cmdNameTrunc cmd
 
-  -- Sent off notif if NotifyCommand is set
+  -- Sent off notif if NotifyAll or NotifyCommand is set
   cfg <- asks getNotifyConfig
-  when (is (_Just % #action % _NotifyCommand) cfg)
-    $ Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
+  case cfg ^? (_Just % #action) of
+    Just NotifyAll -> Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
+    Just NotifyCommand -> Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
+    _ -> pure ()
 
 printFinalResult ::
   forall m env e b.
@@ -222,10 +230,12 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   anyError <- readTVarA =<< asks getAnyError
   let urgency = if anyError then Critical else Normal
 
-  -- Sent off notif if notifications are on
+  -- Sent off notif if NotifyAll or NotifyFinal is set
   cfg <- asks getNotifyConfig
-  when (is _Just cfg)
-    $ Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
+  case cfg ^? (_Just % #action) of
+    Just NotifyAll -> Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
+    Just NotifyFinal -> Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
+    _ -> pure ()
 
   Logging.putRegionLog r finalLog
 

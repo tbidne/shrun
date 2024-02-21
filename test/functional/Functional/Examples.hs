@@ -590,7 +590,7 @@ notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
         [ "--notify-system",
           notifySystemArg,
           "--notify-action",
-          "command",
+          "all",
           "--notify-timeout",
           "never",
           "sleep 2",

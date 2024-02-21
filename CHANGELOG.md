@@ -11,6 +11,11 @@ the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
 ## [Unreleased]
+### Changed
+* `--notify-action command` (`notify.action = "command"`) no longer implies
+  `--notify-action final`. There is a new option `--notify-action all` for
+  that.
+
 ### Added
 * New option `--cmd-log-size` (toml: `cmd-log-size`) that controls the size of
   logs we read from command with `--cmd-log` and `--file-log`.

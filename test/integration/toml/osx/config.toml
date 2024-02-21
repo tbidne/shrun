@@ -34,5 +34,5 @@ strip-control = "none"
 
 [notify]
 system = "apple-script"
-action = "command"
+action = "all"
 timeout = "never"

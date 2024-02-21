@@ -66,7 +66,7 @@ import Shrun.Data.TimerFormat
       ),
   )
 import Shrun.Notify.Types
-  ( NotifyAction (NotifyCommand, NotifyFinal),
+  ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
     NotifySystem (AppleScript, DBus, NotifySend),
     NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
@@ -795,6 +795,7 @@ notifyActionSpecs =
     "Notify action parsing"
     [ parseNotifyActionFinal,
       parseNotifyActionCommand,
+      parseNotifyActionAll,
       parseNoNotifyAction
     ]
 
@@ -811,6 +812,13 @@ parseNotifyActionCommand = testCase desc $ verifyResult argList expected
     desc = "Should parse --notify-action command"
     argList = ["--notify-action", "command", "command"]
     expected = updateDefArgs #notifyAction NotifyCommand
+
+parseNotifyActionAll :: TestTree
+parseNotifyActionAll = testCase desc $ verifyResult argList expected
+  where
+    desc = "Should parse --notify-action all"
+    argList = ["--notify-action", "all", "command"]
+    expected = updateDefArgs #notifyAction NotifyAll
 
 parseNoNotifyAction :: TestTree
 parseNoNotifyAction =

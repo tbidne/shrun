@@ -21,6 +21,7 @@ notifyTests :: [TestTree]
 notifyTests =
   [ notifySystem,
     notifyActionCommand,
+    notifyActionAll,
     notifyTimeout5
   ]
 
@@ -30,7 +31,7 @@ notifyTests =
 --   - notifyActionFinal
 --   - notifyActionTimeoutNever
 --
--- are part of the Readme module
+-- are part of the Examples test module
 
 notifySystem :: TestTree
 notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
@@ -48,12 +49,6 @@ notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
         ]
     expected =
       [ MkShrunNote
-          { summary = "Shrun Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          },
-        MkShrunNote
           { summary = "[sleep 3]  Finished",
             body = "3 seconds",
             urgency = Normal,
@@ -76,6 +71,35 @@ notifyActionCommand = testCase "Runs --notify-action command" $ do
       withNoConfig
         [ "--notify-action",
           "command",
+          "--notify-system",
+          notifySystemArg,
+          "sleep 2",
+          "sleep 3"
+        ]
+    expected =
+      [ MkShrunNote
+          { summary = "[sleep 3]  Finished",
+            body = "3 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutSeconds 10
+          },
+        MkShrunNote
+          { summary = "[sleep 2]  Finished",
+            body = "2 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutSeconds 10
+          }
+      ]
+
+notifyActionAll :: TestTree
+notifyActionAll = testCase "Runs --notify-action all" $ do
+  results <- readIORef =<< runNotes args
+  expected @=? results
+  where
+    args =
+      withNoConfig
+        [ "--notify-action",
+          "all",
           "--notify-system",
           notifySystemArg,
           "sleep 2",
@@ -110,7 +134,7 @@ notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
     args =
       withNoConfig
         [ "--notify-action",
-          "command",
+          "all",
           "--notify-system",
           notifySystemArg,
           "--notify-timeout",

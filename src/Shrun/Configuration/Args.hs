@@ -869,8 +869,9 @@ notifyActionParser =
     helpTxt =
       mconcat
         [ "Sends notifications for various actions. 'Final' sends off a ",
-          "notification when Shrun itself finishes whereas 'command' (which ",
-          "implies 'final') sends off one each time a command finishes."
+          "notification when Shrun itself finishes whereas 'command' sends ",
+          "off one each time a command finishes. 'All' implies 'final' and ",
+          "'command'."
         ]
 
 noNotifyActionParser :: Parser Bool

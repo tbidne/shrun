@@ -39,7 +39,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.TimerFormat (TimerFormat (DigitalFull, ProseCompact))
 import Shrun.Notify.Types
-  ( NotifyAction (NotifyCommand),
+  ( NotifyAction (NotifyAll, NotifyCommand),
     NotifySystem (AppleScript, DBus),
     NotifyTimeout (NotifyTimeoutNever),
   )
@@ -148,7 +148,7 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
           cmdLogLineTrunc = Just 150,
           fileLog = True,
           fileLogStripControl = Just StripControlNone,
-          notifyAction = Just NotifyCommand,
+          notifyAction = Just NotifyAll,
 #if OSX
           notifySystem = Just AppleScript,
 #else

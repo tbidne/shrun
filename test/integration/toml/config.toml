@@ -33,5 +33,5 @@ strip-control = "none"
 
 [notify]
 system = "dbus"
-action = "command"
+action = "all"
 timeout = "never"

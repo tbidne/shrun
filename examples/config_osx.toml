@@ -146,8 +146,8 @@ line-trunc = 150
 # Mandatory, turns on notifications.
 #
 # "final" -> sends off a notification when all commands finish
-# "command" -> sends off a notification when each command finishes. Implies
-# "final"
+# "command" -> sends off a notification when each command finishes.
+# "all" -> implies "final" and "command".
 action = "command"
 
 # For linux, must be one of "dbus" or "notify-send". Defaults to "dbus".

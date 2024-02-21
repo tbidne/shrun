@@ -56,9 +56,10 @@ import Text.Read qualified as TR
 data NotifyAction
   = -- | Send a notification after all commands are completed.
     NotifyFinal
-  | -- | Send notifications when each command completes. Implies
-    -- 'NotifyFinal'.
+  | -- | Send notifications when each command completes.
     NotifyCommand
+  | -- | NotifyFinal and NotifyCommand.
+    NotifyAll
   deriving stock (Eq, Show)
 
 makePrisms ''NotifyAction
@@ -70,6 +71,7 @@ instance DecodeTOML NotifyAction where
 parseNotifyAction :: (MonadFail m) => Text -> m NotifyAction
 parseNotifyAction "final" = pure NotifyFinal
 parseNotifyAction "command" = pure NotifyCommand
+parseNotifyAction "all" = pure NotifyAll
 parseNotifyAction other =
   fail
     $ mconcat
@@ -81,7 +83,7 @@ parseNotifyAction other =
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
-notifyActionStr = "(final|command)"
+notifyActionStr = "(final|command|all)"
 
 -- | Maps DBus to its phased param.
 type family DBusF p where

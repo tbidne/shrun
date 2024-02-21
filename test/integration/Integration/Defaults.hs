@@ -43,7 +43,7 @@ import Shrun.Data.TimerFormat
       ),
   )
 import Shrun.Notify.Types
-  ( NotifyAction (NotifyCommand, NotifyFinal),
+  ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
     NotifySystem (AppleScript, DBus, NotifySend),
     NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
@@ -113,7 +113,7 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
           cmdLogLineTrunc = Just 150,
           fileLog = True,
           fileLogStripControl = Just StripControlNone,
-          notifyAction = Just NotifyCommand,
+          notifyAction = Just NotifyAll,
 #if OSX
           notifySystem = Just AppleScript,
 #else
