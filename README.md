@@ -95,6 +95,7 @@ Using `ghcup`, install `cabal 2.4+` and one of:
 
 - `ghc 9.4`
 - `ghc 9.6`
+- `ghc 9.8`
 
 ### Build Shrun
 

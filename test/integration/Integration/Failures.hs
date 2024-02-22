@@ -4,6 +4,7 @@
 module Integration.Failures (specs) where
 
 import Control.Exception (IOException)
+import Data.List qualified as L
 import Data.Text qualified as T
 import Effects.Exception (StringException)
 import Integration.Prelude
@@ -37,12 +38,16 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
 
   case result of
     Nothing -> assertFailure "Expected exception"
-    Just ex -> expectedErr @=? displayException ex
+    Just ex -> do
+      let exMsg = displayException ex
+      assertBool ("Exception: " ++ exMsg) (expectedStart `L.isPrefixOf` displayException ex)
+      assertBool ("Exception: " ++ exMsg) (expectedEnd `L.isSuffixOf` displayException ex)
 
   logs <- readIORef logsRef
   logs @=? []
   where
-    expectedErr = "bad-file.toml: openFdAt: does not exist (No such file or directory)"
+    expectedStart = "bad-file.toml"
+    expectedEnd = "does not exist (No such file or directory)"
 
 duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
