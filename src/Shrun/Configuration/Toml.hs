@@ -13,19 +13,17 @@ module Shrun.Configuration.Toml
 where
 
 import Optics.Core (NoIx)
-import Shrun.Configuration.Args (Args, FileMode, FileSizeMode)
-import Shrun.Configuration.Env.Types
-  ( KeyHide,
-    LineTruncation,
-    StripControl,
-    TruncRegion (TCmdName),
-    Truncation,
-  )
+import Shrun.Configuration.Args (Args)
+import Shrun.Data.FileMode (FileMode)
 import Shrun.Data.FilePathDefault (FilePathDefault)
+import Shrun.Data.FileSizeMode (FileSizeMode)
+import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Data.Legend (KeyVal)
 import Shrun.Data.PollInterval (PollInterval)
+import Shrun.Data.StripControl (StripControl)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Data.TimerFormat (TimerFormat)
+import Shrun.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
 import Shrun.Notify.Types (NotifyAction, NotifySystemP1, NotifyTimeout)
 import Shrun.Prelude
 

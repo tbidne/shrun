@@ -25,9 +25,9 @@ where
 import Shrun.Configuration.Env.Types
   ( FileLogging,
     HasLogging (getLogging),
-    KeyHide,
     Logging,
   )
+import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.Types
   ( Log,

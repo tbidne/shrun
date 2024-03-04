@@ -4,20 +4,16 @@
 -- | Provides functionality for parsing command line arguments.
 module Shrun.Configuration.Args
   ( Args (..),
-    FileMode (..),
-    FileSizeMode (..),
     defaultArgs,
     parserInfoArgs,
   )
 where
 
-import Data.Char qualified as Ch
 import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Data.Time.Relative qualified as RelativeTime
 import Data.Version (Version (versionBranch))
-import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.Optparse (validOsPath)
 import Options.Applicative
   ( ParseError (ErrorMsg),
@@ -41,18 +37,27 @@ import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse))
 import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
-import Shrun.Configuration.Env.Types
-  ( KeyHide (KeyHideOn),
-    LineTruncation (Detected, Undetected),
-    StripControl (StripControlAll, StripControlNone, StripControlSmart),
-    TruncRegion (TCmdName),
-    Truncation (MkTruncation),
-  )
-import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
-import Shrun.Data.PollInterval (PollInterval (MkPollInterval), defaultPollInterval)
+import Shrun.Data.FileMode (FileMode)
+import Shrun.Data.FileMode qualified as FileMode
+import Shrun.Data.FilePathDefault (FilePathDefault)
+import Shrun.Data.FilePathDefault qualified as FilePathDefault
+import Shrun.Data.FileSizeMode (FileSizeMode)
+import Shrun.Data.FileSizeMode qualified as FileSizeMode
+import Shrun.Data.KeyHide (KeyHide (KeyHideOn))
+import Shrun.Data.PollInterval (PollInterval, defaultPollInterval)
+import Shrun.Data.PollInterval qualified as PollInterval
+import Shrun.Data.StripControl (StripControl)
+import Shrun.Data.StripControl qualified as StripControl
 import Shrun.Data.Timeout (Timeout (MkTimeout))
+import Shrun.Data.Timeout qualified as Timeout
 import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Data.TimerFormat qualified as TimerFormat
+import Shrun.Data.Truncation
+  ( LineTruncation,
+    TruncRegion (TCmdName),
+    Truncation,
+  )
+import Shrun.Data.Truncation qualified as Trunc
 import Shrun.Notify.Types
   ( NotifyAction,
     NotifySystemP1,
@@ -61,43 +66,6 @@ import Shrun.Notify.Types
 import Shrun.Notify.Types qualified as Notify
 import Shrun.Prelude
 import Shrun.Utils qualified as U
-import Text.Read qualified as TR
-
--- | File mode.
-data FileMode
-  = FileModeAppend
-  | FileModeWrite
-  deriving stock (Eq, Show)
-
-instance DecodeTOML FileMode where
-  tomlDecoder =
-    tomlDecoder @Text >>= \case
-      "append" -> pure FileModeAppend
-      "write" -> pure FileModeWrite
-      bad -> fail $ "Unrecognized file-mode: " <> unpack bad
-
-parseFileSizeMode :: (MonadFail m) => Text -> m FileSizeMode
-parseFileSizeMode txt = do
-  let (m, byteTxt) = T.break Ch.isSpace txt
-  cons <- case m of
-    "warn" -> pure FileSizeModeWarn
-    "delete" -> pure FileSizeModeDelete
-    bad -> fail $ "Unrecognized file-log-size-mode: " <> unpack bad
-  case U.parseByteText byteTxt of
-    Right b -> pure $ cons b
-    Left err -> fail $ "Could not parse --file-log-size-mode size: " <> unpack err
-
--- | Determines what to do if the log file surpasses the given size
--- threshold.
-data FileSizeMode
-  = -- | Print a warning.
-    FileSizeModeWarn (Bytes B Natural)
-  | -- | Delete the file.
-    FileSizeModeDelete (Bytes B Natural)
-  deriving stock (Eq, Show)
-
-instance DecodeTOML FileSizeMode where
-  tomlDecoder = tomlDecoder >>= parseFileSizeMode
 
 -- | Type for parsing command line args.
 data Args = MkArgs
@@ -350,7 +318,7 @@ timeoutParser :: Parser (Maybe Timeout)
 timeoutParser =
   OA.optional
     $ OA.option
-      readTimeout
+      (Timeout.parseTimeout OA.auto OA.str)
       ( mconcat
           [ OA.long "timeout",
             OA.short 't',
@@ -390,7 +358,7 @@ cmdNameTruncParser :: Parser (Maybe (Truncation TCmdName))
 cmdNameTruncParser =
   OA.optional
     $ OA.option
-      readTruncation
+      (Trunc.parseTruncation OA.auto)
       ( mconcat
           [ OA.long "cmd-name-trunc",
             OA.short 'x',
@@ -449,7 +417,7 @@ cmdLogLineTruncParser :: Parser (Maybe LineTruncation)
 cmdLogLineTruncParser =
   OA.optional
     $ OA.option
-      (defRead <|> readDetectTruncation)
+      (Trunc.parseLineTruncation OA.auto OA.str)
       ( mconcat
           [ OA.long "cmd-log-line-trunc",
             OA.short 'y',
@@ -458,7 +426,6 @@ cmdLogLineTruncParser =
           ]
       )
   where
-    defRead = Undetected <$> readTruncation
     helpTxt =
       mconcat
         [ "Non-negative integer that limits the length of logs ",
@@ -477,24 +444,11 @@ noCmdLogLineTruncParser =
         mkHelp "Disables --cmd-log-line-trunc."
       ]
 
-readTruncation :: ReadM (Truncation a)
-readTruncation = MkTruncation <$> OA.auto
-
-readDetectTruncation :: ReadM LineTruncation
-readDetectTruncation =
-  OA.str >>= T.toCaseFold .> \case
-    "detect" -> pure Detected
-    bad ->
-      OA.readerAbort
-        $ ErrorMsg
-        $ "Unrecognized truncation option:"
-        <> unpack bad
-
 cmdLogStripControlParser :: Parser (Maybe StripControl)
 cmdLogStripControlParser =
   OA.optional
     $ OA.option
-      readStripControl
+      (StripControl.parseStripControl OA.str)
       ( mconcat
           [ OA.long "cmd-log-strip-control",
             OA.short 's',
@@ -515,18 +469,6 @@ cmdLogStripControlParser =
           " This option is experimental and subject to change."
         ]
 
-readStripControl :: ReadM StripControl
-readStripControl =
-  OA.str >>= T.toCaseFold .> \case
-    "all" -> pure StripControlAll
-    "none" -> pure StripControlNone
-    "smart" -> pure StripControlSmart
-    bad ->
-      OA.readerAbort
-        $ ErrorMsg
-        $ "Unrecognized strip-control option: "
-        <> unpack bad
-
 noCmdLogStripControlParser :: Parser Bool
 noCmdLogStripControlParser =
   OA.switch
@@ -540,7 +482,7 @@ fileLogParser :: Parser (Maybe FilePathDefault)
 fileLogParser =
   OA.optional
     $ OA.option
-      readLogFile
+      (FilePathDefault.parseFilePathDefault OA.str)
       ( mconcat
           [ OA.long "file-log",
             OA.short 'f',
@@ -568,19 +510,11 @@ noFileLogParser =
         mkHelp "Disables --file-log."
       ]
 
-readLogFile :: ReadM FilePathDefault
-readLogFile = do
-  f <- OA.str
-  case fmap Ch.toLower f of
-    "default" -> pure FPDefault
-    "" -> fail "Empty path given for --file-log"
-    _ -> FPManual <$> FsUtils.encodeFpToOsFail f
-
 fileLogModeParser :: Parser (Maybe FileMode)
 fileLogModeParser =
   OA.optional
     $ OA.option
-      readFileMode
+      (FileMode.parseFileMode OA.str)
       ( mconcat
           [ OA.long "file-log-mode",
             mkHelp helpTxt,
@@ -599,22 +533,11 @@ noFileLogModeParser =
         mkHelp "Disables --file-log-mode."
       ]
 
-readFileMode :: ReadM FileMode
-readFileMode =
-  OA.str >>= \case
-    "append" -> pure FileModeAppend
-    "write" -> pure FileModeWrite
-    bad ->
-      OA.readerAbort
-        $ ErrorMsg
-        $ "Unrecognized --file-log-mode option: "
-        <> unpack bad
-
 fileLogStripControlParser :: Parser (Maybe StripControl)
 fileLogStripControlParser =
   OA.optional
     $ OA.option
-      readStripControl
+      (StripControl.parseStripControl OA.str)
       ( mconcat
           [ OA.long "file-log-strip-control",
             mkHelp helpTxt,
@@ -641,7 +564,7 @@ fileLogSizeModeParser :: Parser (Maybe FileSizeMode)
 fileLogSizeModeParser =
   OA.optional
     $ OA.option
-      readFileSize
+      (FileSizeMode.parseFileSizeMode OA.str)
       ( mconcat
           [ OA.long "file-log-size-mode",
             mkHelp helpTxt,
@@ -656,7 +579,6 @@ fileLogSizeModeParser =
           "The SIZE should include the value and units e.g. ",
           "warn 10 mb, warn 5 gigabytes, delete 20.5B."
         ]
-    readFileSize = OA.str >>= parseFileSizeMode
 
 noFileLogSizeModeParser :: Parser Bool
 noFileLogSizeModeParser =
@@ -729,7 +651,7 @@ pollIntervalParser :: Parser (Maybe PollInterval)
 pollIntervalParser =
   OA.optional
     $ OA.option
-      readPI
+      (PollInterval.parsePollInterval OA.auto)
       ( mconcat
           [ OA.long "poll-interval",
             OA.short 'p',
@@ -738,15 +660,6 @@ pollIntervalParser =
           ]
       )
   where
-    readPI = do
-      s <- OA.str
-      case TR.readMaybe s of
-        Nothing ->
-          OA.readerAbort
-            $ ErrorMsg
-            $ "Could not parse poll-interval: "
-            <> s
-        Just n -> pure $ MkPollInterval n
     helpTxt =
       mconcat
         [ "Non-negative integer used in conjunction with --cmd-log and ",
@@ -779,14 +692,13 @@ noPollIntervalParser =
 timerFormatParser :: Parser (Maybe TimerFormat)
 timerFormatParser =
   OA.optional
-    $ OA.option readTimerFormat
+    $ OA.option (TimerFormat.parseTimerFormat OA.str)
     $ mconcat
       [ OA.long "timer-format",
         mkHelp helpTxt,
         OA.metavar TimerFormat.timerFormatStr
       ]
   where
-    readTimerFormat = OA.str >>= TimerFormat.parseTimerFormat
     helpTxt =
       mconcat
         [ "How to format the timer. Defaults to prose_compact e.g. ",
@@ -832,14 +744,13 @@ noInitParser =
 notifySystemParser :: Parser (Maybe NotifySystemP1)
 notifySystemParser =
   OA.optional
-    $ OA.option readNotifySystem
+    $ OA.option (Notify.parseNotifySystem OA.str)
     $ mconcat
       [ OA.long "notify-system",
         mkHelp helpTxt,
         OA.metavar Notify.notifySystemStr
       ]
   where
-    readNotifySystem = OA.str >>= Notify.parseNotifySystem
     helpTxt =
       mconcat
         [ "The system used for sending notifications. 'dbus' and 'notify-send' ",
@@ -858,14 +769,13 @@ noNotifySystemParser =
 notifyActionParser :: Parser (Maybe NotifyAction)
 notifyActionParser =
   OA.optional
-    $ OA.option readNotifyAction
+    $ OA.option (Notify.parseNotifyAction OA.str)
     $ mconcat
       [ OA.long "notify-action",
         mkHelp helpTxt,
         OA.metavar Notify.notifyActionStr
       ]
   where
-    readNotifyAction = OA.str >>= Notify.parseNotifyAction
     helpTxt =
       mconcat
         [ "Sends notifications for various actions. 'Final' sends off a ",
@@ -886,14 +796,13 @@ noNotifyActionParser =
 notifyTimeoutParser :: Parser (Maybe NotifyTimeout)
 notifyTimeoutParser =
   OA.optional
-    $ OA.option readNotifySystem
+    $ OA.option (Notify.parseNotifyTimeout OA.str)
     $ mconcat
       [ OA.long "notify-timeout",
         mkHelp helpTxt,
         OA.metavar Notify.notifyTimeoutStr
       ]
   where
-    readNotifySystem = OA.str >>= Notify.parseNotifyTimeout
     helpTxt = "When to timeout success notifications. Defaults to 10 seconds."
 
 noNotifyTimeoutParser :: Parser Bool

@@ -65,21 +65,23 @@ data NotifyAction
 makePrisms ''NotifyAction
 
 instance DecodeTOML NotifyAction where
-  tomlDecoder = tomlDecoder >>= parseNotifyAction
+  tomlDecoder = parseNotifyAction tomlDecoder
 
 -- | Parses 'NotifyAction'.
-parseNotifyAction :: (MonadFail m) => Text -> m NotifyAction
-parseNotifyAction "final" = pure NotifyFinal
-parseNotifyAction "command" = pure NotifyCommand
-parseNotifyAction "all" = pure NotifyAll
-parseNotifyAction other =
-  fail
-    $ mconcat
-      [ "Unrecognized notify action: '",
-        T.unpack other,
-        "'. Expected one of ",
-        notifyActionStr
-      ]
+parseNotifyAction :: (MonadFail m) => m Text -> m NotifyAction
+parseNotifyAction getTxt =
+  getTxt >>= \case
+    "final" -> pure NotifyFinal
+    "command" -> pure NotifyCommand
+    "all" -> pure NotifyAll
+    other ->
+      fail
+        $ mconcat
+          [ "Unrecognized notify action: '",
+            T.unpack other,
+            "'. Expected one of ",
+            notifyActionStr
+          ]
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
@@ -111,7 +113,7 @@ deriving stock instance Eq (NotifySystem Phase1)
 deriving stock instance Show (NotifySystem Phase1)
 
 instance DecodeTOML (NotifySystem Phase1) where
-  tomlDecoder = tomlDecoder >>= parseNotifySystem
+  tomlDecoder = parseNotifySystem tomlDecoder
 
 instance AdvancePhase (NotifySystem Phase1) where
   type NextPhase (NotifySystem Phase1) = Either (NotifySystem Phase2) (Client -> NotifySystem Phase2)
@@ -138,18 +140,20 @@ instance AdvancePhase (NotifySystem Phase1) where
 -- _value_ of the first parameter.
 
 -- | Parses 'NotifySystem'.
-parseNotifySystem :: (MonadFail m) => Text -> m (NotifySystem Phase1)
-parseNotifySystem "dbus" = pure $ DBus ()
-parseNotifySystem "notify-send" = pure NotifySend
-parseNotifySystem "apple-script" = pure AppleScript
-parseNotifySystem other =
-  fail
-    $ mconcat
-      [ "Unrecognized notify system: '",
-        T.unpack other,
-        "'. Expected one of ",
-        notifySystemStr
-      ]
+parseNotifySystem :: (MonadFail m) => m Text -> m (NotifySystem Phase1)
+parseNotifySystem getTxt =
+  getTxt >>= \case
+    "dbus" -> pure $ DBus ()
+    "notify-send" -> pure NotifySend
+    "apple-script" -> pure AppleScript
+    other ->
+      fail
+        $ mconcat
+          [ "Unrecognized notify system: '",
+            T.unpack other,
+            "'. Expected one of ",
+            notifySystemStr
+          ]
 
 -- | Available 'NotifySystem' strings.
 notifySystemStr :: (IsString a) => a
@@ -180,20 +184,22 @@ instance DecodeTOML NotifyTimeout where
       maxW16 = maxBound @Word16
 
 -- | Parses 'NotifyTimeout'.
-parseNotifyTimeout :: (MonadFail m) => Text -> m NotifyTimeout
-parseNotifyTimeout "never" = pure NotifyTimeoutNever
-parseNotifyTimeout other = case TR.readMaybe other' of
-  Just n -> pure $ NotifyTimeoutSeconds n
-  Nothing ->
-    fail
-      $ mconcat
-        [ "Unrecognized notify timeout: '",
-          other',
-          "'. Expected one of ",
-          notifyTimeoutStr
-        ]
-  where
-    other' = T.unpack other
+parseNotifyTimeout :: (MonadFail m) => m Text -> m NotifyTimeout
+parseNotifyTimeout getTxt =
+  getTxt >>= \case
+    "never" -> pure NotifyTimeoutNever
+    other ->
+      let otherStr = T.unpack other
+       in case TR.readMaybe otherStr of
+            Just n -> pure $ NotifyTimeoutSeconds n
+            Nothing ->
+              fail
+                $ mconcat
+                  [ "Unrecognized notify timeout: '",
+                    otherStr,
+                    "'. Expected one of ",
+                    notifyTimeoutStr
+                  ]
 
 -- | Available 'NotifyTimeout' strings.
 notifyTimeoutStr :: (IsString a) => a

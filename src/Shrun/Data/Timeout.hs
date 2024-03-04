@@ -4,13 +4,13 @@
 -- | Provides the 'Timeout' type.
 module Shrun.Data.Timeout
   ( Timeout (..),
+    parseTimeout,
+    parseTimeoutStr,
   )
 where
 
 import Data.Time.Relative qualified as RT
 import Shrun.Prelude
-import TOML (Value (Integer, String))
-import Text.Read (readMaybe)
 
 -- | Represents a timeout, which is a non-negative integer.
 newtype Timeout = MkTimeout
@@ -22,29 +22,24 @@ newtype Timeout = MkTimeout
 makeFieldLabelsNoPrefix ''Timeout
 
 instance DecodeTOML Timeout where
-  tomlDecoder = makeDecoder $ \case
-    -- Valid strings are "time string" e.g. "1d4h" only. If literal seconds
-    -- supplied, we want them to be explicit integer types.
-    String s ->
-      unpack s & \s' -> do
-        case fromTimeString s' of
-          Nothing ->
-            invalidValue
-              "Unexpected timeout. Only valid strings are time strings."
-              (String s)
-          Just n -> pure $ MkTimeout $ RT.toSeconds n
-    Integer i
-      | i >= 0 -> pure $ MkTimeout $ fromIntegral i
-      | otherwise ->
-          invalidValue
-            "Unexpected timeout. Integer must be >= 0."
-            (Integer i)
-    badTy -> typeMismatch badTy
-    where
-      -- parses a RelativeTime from a "time string" if the string is _not_
-      -- a valid integer (e.g. "30").
-      fromTimeString s =
-        fmap
-          (\_ -> RT.fromString s)
-          (readMaybe @Integer s ^? _Nothing)
-          ^? (_Just % _Right)
+  tomlDecoder =
+    parseTimeout tomlDecoder tomlDecoder
+
+-- NOTE: [CLI vs. Toml Types]
+--
+-- Normally we'd want CLI and Toml to share the exact same parsing, however,
+-- we should take advantage of Toml's types when possible. For instance,
+-- here we want to allow parsing a numeric nat or a "time string".
+--
+-- The CLI has to make do with strings everywhere, hence parseTimeout makes sense.
+
+parseTimeout :: (Alternative f, MonadFail f) => f Natural -> f Text -> f Timeout
+parseTimeout getNat getTxt =
+  (MkTimeout <$> getNat) <|> (getTxt >>= parseTimeoutStr)
+
+parseTimeoutStr :: (MonadFail f) => Text -> f Timeout
+parseTimeoutStr txt = case RT.fromString str of
+  Right n -> pure $ MkTimeout $ RT.toSeconds n
+  Left err -> fail $ "Error reading time string: " <> err
+  where
+    str = unpack txt

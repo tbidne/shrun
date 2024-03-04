@@ -20,7 +20,6 @@ import Shrun.Configuration.Env.Types
   ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
     FileLogging (MkFileLogging),
     HasLogging (getLogging),
-    KeyHide (KeyHideOff, KeyHideOn),
     Logging
       ( MkLogging,
         cmdLog,
@@ -32,12 +31,21 @@ import Shrun.Configuration.Env.Types
         pollInterval,
         timerFormat
       ),
-    StripControl (StripControlAll, StripControlNone, StripControlSmart),
-    TruncRegion (TCmdLine, TCmdName),
-    Truncation (MkTruncation),
   )
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
+import Shrun.Data.StripControl
+  ( StripControl
+      ( StripControlAll,
+        StripControlNone,
+        StripControlSmart
+      ),
+  )
 import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
+import Shrun.Data.Truncation
+  ( TruncRegion (TCmdLine, TCmdName),
+    Truncation (MkTruncation),
+  )
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, msg),

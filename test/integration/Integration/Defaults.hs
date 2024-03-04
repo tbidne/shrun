@@ -30,11 +30,14 @@ import Integration.Utils
     runConfigIO,
     runNoConfigIO,
   )
-import Shrun.Configuration.Env.Types
-  ( KeyHide (KeyHideOff, KeyHideOn),
-    StripControl (StripControlAll, StripControlNone),
-  )
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
+import Shrun.Data.StripControl
+  ( StripControl
+      ( StripControlAll,
+        StripControlNone
+      ),
+  )
 import Shrun.Data.TimerFormat
   ( TimerFormat
       ( DigitalCompact,

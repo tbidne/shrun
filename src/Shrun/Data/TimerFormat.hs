@@ -37,19 +37,21 @@ data TimerFormat
   deriving stock (Eq, Show)
 
 instance DecodeTOML TimerFormat where
-  tomlDecoder = tomlDecoder >>= parseTimerFormat
+  tomlDecoder = parseTimerFormat tomlDecoder
 
 -- | Prose Compact
 defaultTimerFormat :: TimerFormat
 defaultTimerFormat = ProseCompact
 
 -- | Parse timer format.
-parseTimerFormat :: (MonadFail m) => Text -> m TimerFormat
-parseTimerFormat "digital_compact" = pure DigitalCompact
-parseTimerFormat "digital_full" = pure DigitalFull
-parseTimerFormat "prose_compact" = pure ProseCompact
-parseTimerFormat "prose_full" = pure ProseFull
-parseTimerFormat bad = fail $ "Unrecognized timer-format: " <> unpack bad
+parseTimerFormat :: (MonadFail m) => m Text -> m TimerFormat
+parseTimerFormat getTxt =
+  getTxt >>= \case
+    "digital_compact" -> pure DigitalCompact
+    "digital_full" -> pure DigitalFull
+    "prose_compact" -> pure ProseCompact
+    "prose_full" -> pure ProseFull
+    bad -> fail $ "Unrecognized timer-format: " <> unpack bad
 
 -- | Available 'TimerFormat' strings.
 timerFormatStr :: (IsString a) => a

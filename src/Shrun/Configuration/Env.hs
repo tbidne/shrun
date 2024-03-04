@@ -22,9 +22,7 @@ import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration.Args
-  ( FileMode (FileModeAppend, FileModeWrite),
-    FileSizeMode (FileSizeModeDelete, FileSizeModeWarn),
-    parserInfoArgs,
+  ( parserInfoArgs,
   )
 import Shrun.Configuration.Env.Notify qualified as EnvNotify
 import Shrun.Configuration.Env.Types
@@ -41,8 +39,6 @@ import Shrun.Configuration.Env.Types
       ),
     FileLogging (MkFileLogging, log, stripControl),
     HasLogging,
-    KeyHide (KeyHideOff),
-    LineTruncation (Detected, Undetected),
     Logging
       ( MkLogging,
         cmdLog,
@@ -54,8 +50,6 @@ import Shrun.Configuration.Env.Types
         pollInterval,
         timerFormat
       ),
-    StripControl (StripControlAll, StripControlSmart),
-    Truncation (MkTruncation),
   )
 import Shrun.Configuration.Legend (linesToMap, translateCommands)
 import Shrun.Configuration.Toml
@@ -64,9 +58,14 @@ import Shrun.Configuration.Toml
     mergeConfig,
   )
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeDelete, FileSizeModeWarn))
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
 import Shrun.Data.PollInterval (defaultPollInterval)
+import Shrun.Data.StripControl (StripControl (StripControlAll, StripControlSmart))
 import Shrun.Data.TimerFormat (defaultTimerFormat)
+import Shrun.Data.Truncation (LineTruncation (Detected, Undetected), Truncation (MkTruncation))
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (FileLog, LogRegion, defaultCmdLogSize)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)

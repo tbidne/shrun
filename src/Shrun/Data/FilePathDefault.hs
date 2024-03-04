@@ -1,10 +1,11 @@
 -- | Provides the 'FilePathDefault' type.
 module Shrun.Data.FilePathDefault
   ( FilePathDefault (..),
+    parseFilePathDefault,
   )
 where
 
-import Data.Char qualified as Ch
+import Data.Text qualified as T
 import Effects.FileSystem.Utils qualified as FsUtils
 import Shrun.Prelude
 
@@ -15,9 +16,11 @@ data FilePathDefault
   deriving stock (Eq, Show)
 
 instance DecodeTOML FilePathDefault where
-  tomlDecoder = do
-    f <- tomlDecoder
-    case fmap Ch.toLower f of
-      "default" -> pure FPDefault
-      "" -> fail "Empty path given for --file-log"
-      _ -> FPManual <$> FsUtils.encodeFpToOsFail f
+  tomlDecoder = parseFilePathDefault tomlDecoder
+
+parseFilePathDefault :: (MonadFail m) => m Text -> m FilePathDefault
+parseFilePathDefault getTxt =
+  getTxt >>= \case
+    "default" -> pure FPDefault
+    "" -> fail "Empty path given for --file-log"
+    other -> FPManual <$> FsUtils.encodeFpToOsFail (T.unpack other)

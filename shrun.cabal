@@ -58,12 +58,17 @@ library
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
     Shrun.Data.Command
+    Shrun.Data.FileMode
     Shrun.Data.FilePathDefault
+    Shrun.Data.FileSizeMode
+    Shrun.Data.KeyHide
     Shrun.Data.Legend
     Shrun.Data.Phase
     Shrun.Data.PollInterval
+    Shrun.Data.StripControl
     Shrun.Data.Timeout
     Shrun.Data.TimerFormat
+    Shrun.Data.Truncation
     Shrun.IO
     Shrun.IO.Types
     Shrun.Logging
@@ -188,6 +193,7 @@ test-suite integration
     , effects-exceptions
     , effects-fs
     , effects-terminal
+    , pretty-simple       >=4.0.0.0 && <4.2
     , shrun
     , tasty
     , tasty-hunit

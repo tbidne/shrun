@@ -29,11 +29,9 @@ import Integration.Utils
     makeEnvAndVerify,
     runConfigIO,
   )
-import Shrun.Configuration.Env.Types
-  ( KeyHide (KeyHideOff),
-    StripControl (StripControlSmart),
-  )
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
+import Shrun.Data.StripControl (StripControl (StripControlSmart))
 import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Notify.Types
   ( NotifyAction (NotifyCommand),

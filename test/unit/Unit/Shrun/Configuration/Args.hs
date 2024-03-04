@@ -47,16 +47,20 @@ import Shrun.Configuration.Args
         timeout,
         timerFormat
       ),
-    FileMode (FileModeAppend, FileModeWrite),
-    FileSizeMode (FileSizeModeDelete, FileSizeModeWarn),
   )
 import Shrun.Configuration.Args qualified as Args
-import Shrun.Configuration.Env.Types
-  ( KeyHide (KeyHideOn),
-    LineTruncation (Detected, Undetected),
-    StripControl (StripControlAll, StripControlNone, StripControlSmart),
-  )
+import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Data.FileSizeMode
+  ( FileSizeMode
+      ( FileSizeModeDelete,
+        FileSizeModeWarn
+      ),
+  )
+import Shrun.Data.KeyHide (KeyHide (KeyHideOn))
+import Shrun.Data.StripControl
+  ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
+  )
 import Shrun.Data.TimerFormat
   ( TimerFormat
       ( DigitalCompact,
@@ -65,6 +69,7 @@ import Shrun.Data.TimerFormat
         ProseFull
       ),
   )
+import Shrun.Data.Truncation (LineTruncation (Detected, Undetected))
 import Shrun.Notify.Types
   ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
     NotifySystem (AppleScript, DBus, NotifySend),

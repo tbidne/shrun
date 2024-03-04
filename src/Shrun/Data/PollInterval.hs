@@ -4,12 +4,12 @@
 -- | Provides the 'PollInterval' type.
 module Shrun.Data.PollInterval
   ( PollInterval (..),
+    parsePollInterval,
     defaultPollInterval,
   )
 where
 
 import Shrun.Prelude
-import TOML (Value (Integer))
 
 -- | Represents how often to poll for command logs, in microseconds.
 -- Zero is interpreted as infinite i.e. limited only by the CPU.
@@ -20,14 +20,10 @@ newtype PollInterval = MkPollInterval {unPollInterval :: Natural}
 makeFieldLabelsNoPrefix ''PollInterval
 
 instance DecodeTOML PollInterval where
-  tomlDecoder = makeDecoder $ \case
-    Integer i
-      | i >= 0 -> pure $ MkPollInterval $ fromIntegral i
-      | otherwise ->
-          invalidValue
-            "Unexpected poll-interval. Integer must be >= 0."
-            (Integer i)
-    badTy -> typeMismatch badTy
+  tomlDecoder = MkPollInterval <$> tomlDecoder
+
+parsePollInterval :: (Functor m) => m Natural -> m PollInterval
+parsePollInterval getNat = MkPollInterval <$> getNat
 
 -- | Default 'PollInterval'.
 --

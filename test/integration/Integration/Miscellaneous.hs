@@ -32,11 +32,11 @@ import Integration.Utils
     runConfigIO,
   )
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Env.Types
-  ( KeyHide (KeyHideOff, KeyHideOn),
-    StripControl (StripControlAll, StripControlNone, StripControlSmart),
-  )
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
+import Shrun.Data.StripControl
+  ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
+  )
 import Shrun.Data.TimerFormat (TimerFormat (DigitalFull, ProseCompact))
 import Shrun.Notify.Types
   ( NotifyAction (NotifyAll, NotifyCommand),
@@ -51,7 +51,8 @@ specs testArgs =
     [ logFileWarn testArgs,
       logFileDelete testArgs,
       usesRecursiveCmdExample,
-      usesRecursiveCmd
+      usesRecursiveCmd,
+      lineTruncDetect
     ]
 
 logFileWarn :: IO TestArgs -> TestTree
@@ -196,4 +197,33 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
                      "echo hi",
                      "echo cat"
                    ]
+        }
+
+lineTruncDetect :: TestTree
+lineTruncDetect = testCase "cmdLogLineTrunc reads 'detect' string from toml" $ do
+  logsRef <- newIORef []
+  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+  logs <- readIORef logsRef
+  [] @=? logs
+  where
+    args = ["-c", getIntConfig "misc", "cmd1"]
+    expected =
+      MkSimpleEnv
+        { timeout = Nothing,
+          init = Nothing,
+          cmdLog = True,
+          keyHide = KeyHideOff,
+          pollInterval = 10_000,
+          cmdLogSize = MkBytes 1024,
+          timerFormat = ProseCompact,
+          cmdNameTrunc = Nothing,
+          cmdLogStripControl = Just StripControlSmart,
+          cmdLogLineTrunc = Just 87,
+          fileLog = False,
+          fileLogStripControl = Nothing,
+          notifySystem = Nothing,
+          notifyAction = Nothing,
+          notifyTimeout = Nothing,
+          commands = "cmd1" :<|| []
         }

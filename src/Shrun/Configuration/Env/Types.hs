@@ -19,19 +19,17 @@ module Shrun.Configuration.Env.Types
     CmdLogging (..),
     FileLogging (..),
     NotifyEnv (..),
-    KeyHide (..),
-    Truncation (..),
-    LineTruncation (..),
-    TruncRegion (..),
-    StripControl (..),
   )
 where
 
 import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (CommandP1)
+import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Data.PollInterval (PollInterval)
+import Shrun.Data.StripControl (StripControl)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Data.TimerFormat (TimerFormat)
+import Shrun.Data.Truncation (TruncRegion (TCmdLine, TCmdName), Truncation)
 import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Notify.Types
   ( NotifyAction,
@@ -40,85 +38,7 @@ import Shrun.Notify.Types
     NotifyTimeout,
   )
 import Shrun.Prelude
-import TOML (Value (Integer, String))
 import Text.Show (showParen, showString)
-
--- | Type for determining if we use the command's key
--- for display, rather than the key itself.
-data KeyHide
-  = -- | Display the command's key, if it exists, rather
-    -- than the key itself.
-    KeyHideOff
-  | -- | Display the command itself, not the key.
-    KeyHideOn
-  deriving stock (Bounded, Enum, Eq, Ord, Show)
-
-instance DecodeTOML KeyHide where
-  tomlDecoder =
-    tomlDecoder <&> \case
-      True -> KeyHideOn
-      False -> KeyHideOff
-
--- | The different regions to apply truncation rules.
-data TruncRegion
-  = -- | Apply truncation rules to commands/key names.
-    TCmdName
-  | -- | Apply truncation rules to command log entire lines.
-    TCmdLine
-  deriving stock (Eq, Show)
-
--- | The maximum number of command characters to display in the logs.
-type Truncation :: TruncRegion -> Type
-newtype Truncation a = MkTruncation
-  { unTruncation :: Natural
-  }
-  deriving stock (Eq, Ord, Show)
-  deriving (Num) via Natural
-
-makeFieldLabelsNoPrefix ''Truncation
-
-instance DecodeTOML (Truncation a) where
-  tomlDecoder = MkTruncation <$> tomlDecoder
-
--- | Determines command log line truncation behavior. We need a separate
--- type from 'Truncation' to add a third option, to detect the terminal size
--- automatically.
-data LineTruncation
-  = Undetected (Truncation TCmdLine)
-  | Detected
-  deriving stock (Eq, Show)
-
-instance DecodeTOML LineTruncation where
-  tomlDecoder = makeDecoder $ \case
-    String "detect" -> pure Detected
-    String bad -> invalidValue "Unexpected cmd-line-trunc. Only valid string is 'detect': " (String bad)
-    Integer i
-      | i >= 0 -> pure $ Undetected $ MkTruncation $ fromIntegral i
-      | otherwise -> invalidValue "Unexpected cmd-line-trunc. Integers must be >= 0" (Integer i)
-    badTy -> typeMismatch badTy
-
--- | Determines how we should treat control characters encountered in
--- logs.
-data StripControl
-  = -- | \"Intelligently\" strip control characters e.g. colors are fine,
-    -- ones that affect the cursor should be removed.
-    StripControlSmart
-  | -- | Do not strip any control characters.
-    StripControlNone
-  | -- | Strip all control characters.
-    StripControlAll
-  deriving stock (Bounded, Enum, Eq, Ord, Show)
-
-instance DecodeTOML StripControl where
-  tomlDecoder =
-    tomlDecoder >>= \case
-      "none" -> pure StripControlNone
-      "smart" -> pure StripControlSmart
-      "all" -> pure StripControlAll
-      bad ->
-        fail
-          $ "Unexpected strip-control. Expected one of none, smart, all: "
-          <> unpack bad
 
 data CmdLogging = MkCmdLogging
   { stripControl :: StripControl,

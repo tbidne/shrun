@@ -22,13 +22,12 @@ import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
 import Shrun.Configuration.Env.Types
   ( FileLogging,
-    KeyHide (KeyHideOff),
     Logging,
-    StripControl (StripControlAll, StripControlNone),
-    TruncRegion (TCmdName),
-    Truncation,
   )
 import Shrun.Data.Command (Command (MkCommand), CommandP1)
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
+import Shrun.Data.StripControl (StripControl (StripControlAll, StripControlNone))
+import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
 import Shrun.Logging.Types
   ( Log,
     LogLevel
