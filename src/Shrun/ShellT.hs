@@ -7,7 +7,7 @@ module Shrun.ShellT
   )
 where
 
-import Shrun.Configuration.Env.Types (Env)
+import Shrun.Env.Types (Env)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
 import Shrun.Notify.MonadAppleScript qualified as MonadAppleScript

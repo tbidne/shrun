@@ -27,7 +27,6 @@ import DBus.Client
   )
 import Data.Maybe (isJust)
 import Data.Text qualified as T
-import Data.Text.Lazy qualified as TL
 import Effects.FileSystem.PathReader
   ( MonadPathReader
       ( getHomeDirectory,
@@ -37,10 +36,6 @@ import Effects.FileSystem.PathReader
 import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.Terminal (MonadTerminal (getChar, getTerminalSize), Window (Window))
 import Integration.Prelude as X
-import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Env.Types
-  ( Env,
-  )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Data.PollInterval (PollInterval)
@@ -48,6 +43,10 @@ import Shrun.Data.StripControl (StripControl)
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Data.Truncation (TruncRegion (TCmdLine, TCmdName), Truncation)
+import Shrun.Env (withEnv)
+import Shrun.Env.Types
+  ( Env,
+  )
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession, notify))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend (notify))
 import Shrun.Notify.Types
@@ -56,8 +55,6 @@ import Shrun.Notify.Types
     NotifySystemP1,
     NotifyTimeout,
   )
-import Test.Tasty.HUnit (assertEqual)
-import Text.Pretty.Simple (pShow)
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
@@ -238,17 +235,11 @@ makeEnvAndVerify ::
   (forall x. m x -> IO x) ->
   -- | Expectation
   SimpleEnv ->
-  Assertion
+  PropertyT IO ()
 makeEnvAndVerify args toIO expected = do
-  result <- toIO $ withArgs args (withEnv pure)
+  result <- liftIO $ toIO $ withArgs args (withEnv $ \x -> pure x)
 
-  let resultEnv = result ^. simplifyEnv
-      msg =
-        TL.unlines
-          [ "*** Expected:***\n",
-            pShow expected,
-            "\n***Result:***\n",
-            pShow resultEnv
-          ]
+  annotateShow args
+  annotateShow result
 
-  assertEqual (T.unpack $ TL.toStrict msg) expected resultEnv
+  expected === result ^. simplifyEnv

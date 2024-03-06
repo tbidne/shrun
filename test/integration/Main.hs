@@ -47,11 +47,15 @@ teardown testArgs = do
     removeFileIfExists [osp|test/integration/toml/shrun.log|]
     removeFileIfExists [osp|test/integration/toml/osx/shrun.log|]
 
-    -- Ideally we want to clean up after ourselves in each test. These are for
-    -- insurance.
+    -- Ideally we want to clean up after ourselves in each test. However,
+    -- we switched to hedgehog's test suite, which runs in PropertyT, thus
+    -- cannot use finally (no MonadMask instance).
+    --
+    -- For now, this is good enough.
     removeFileIfExists $ cwd </> [osp|shrun.log|]
     removeFileIfExists $ cwd </> [osp|large-file-warn|]
     removeFileIfExists $ cwd </> [osp|large-file-del|]
+    removeFileIfExists $ cwd </> [osp|cli-log|]
     removeFileIfExists $ root </> [osp|test/integration|]
     removeFileIfExists $ root </> [osp|test|]
     removeDirectoryIfExists root

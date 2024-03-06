@@ -50,11 +50,16 @@ library
   autogen-modules:  Paths_shrun
   exposed-modules:
     Shrun
+    Shrun.Configuration
     Shrun.Configuration.Args
+    Shrun.Configuration.Args.Parsing
     Shrun.Configuration.Args.TH
-    Shrun.Configuration.Env
-    Shrun.Configuration.Env.Notify
-    Shrun.Configuration.Env.Types
+    Shrun.Configuration.Data.CmdLogging
+    Shrun.Configuration.Data.ConfigPhase
+    Shrun.Configuration.Data.Core
+    Shrun.Configuration.Data.FileLogging
+    Shrun.Configuration.Data.MergedConfig
+    Shrun.Configuration.Data.Notify
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
     Shrun.Data.Command
@@ -69,6 +74,9 @@ library
     Shrun.Data.Timeout
     Shrun.Data.TimerFormat
     Shrun.Data.Truncation
+    Shrun.Env
+    Shrun.Env.Notify
+    Shrun.Env.Types
     Shrun.IO
     Shrun.IO.Types
     Shrun.Logging
@@ -193,9 +201,10 @@ test-suite integration
     , effects-exceptions
     , effects-fs
     , effects-terminal
-    , pretty-simple       >=4.0.0.0 && <4.2
+    , hedgehog
     , shrun
     , tasty
+    , tasty-hedgehog
     , tasty-hunit
     , text
 

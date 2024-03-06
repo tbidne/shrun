@@ -22,12 +22,12 @@ module Shrun.Logging
   )
 where
 
-import Shrun.Configuration.Env.Types
+import Shrun.Data.KeyHide (KeyHide)
+import Shrun.Env.Types
   ( FileLogging,
     HasLogging (getLogging),
     Logging,
   )
-import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.Types
   ( Log,

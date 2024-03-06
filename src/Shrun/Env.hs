@@ -2,7 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides functions for creating 'Env' from CLI/Toml configuration.
-module Shrun.Configuration.Env
+module Shrun.Env
   ( withEnv,
     makeEnvAndShrun,
   )
@@ -17,15 +17,37 @@ import Data.Bytes
 import Data.Sequence qualified as Seq
 import Data.Text qualified as T
 import Effects.FileSystem.HandleWriter (withBinaryFile)
-import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
+import Effects.FileSystem.PathWriter
+  ( MonadPathWriter
+      ( createDirectoryIfMissing
+      ),
+  )
 import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
-import Shrun.Configuration.Args
+import Shrun.Configuration (mergeConfig)
+import Shrun.Configuration.Args.Parsing
   ( parserInfoArgs,
   )
-import Shrun.Configuration.Env.Notify qualified as EnvNotify
-import Shrun.Configuration.Env.Types
+import Shrun.Configuration.Data.ConfigPhase
+import Shrun.Configuration.Data.MergedConfig (MergedConfig)
+import Shrun.Configuration.Legend (linesToMap, translateCommands)
+import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
+import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Data.FileSizeMode
+  ( FileSizeMode
+      ( FileSizeModeDelete,
+        FileSizeModeWarn
+      ),
+  )
+import Shrun.Data.StripControl (StripControl)
+import Shrun.Data.Truncation
+  ( LineTruncation (Detected, Undetected),
+    Truncation (MkTruncation),
+  )
+import Shrun.Env.Notify qualified as EnvNotify
+import Shrun.Env.Types
   ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
     Env
       ( MkEnv,
@@ -51,23 +73,8 @@ import Shrun.Configuration.Env.Types
         timerFormat
       ),
   )
-import Shrun.Configuration.Legend (linesToMap, translateCommands)
-import Shrun.Configuration.Toml
-  ( TomlConfig,
-    defaultTomlConfig,
-    mergeConfig,
-  )
-import Shrun.Data.Command (Command (MkCommand))
-import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
-import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
-import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeDelete, FileSizeModeWarn))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
-import Shrun.Data.PollInterval (defaultPollInterval)
-import Shrun.Data.StripControl (StripControl (StripControlAll, StripControlSmart))
-import Shrun.Data.TimerFormat (defaultTimerFormat)
-import Shrun.Data.Truncation (LineTruncation (Detected, Undetected), Truncation (MkTruncation))
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
-import Shrun.Logging.Types (FileLog, LogRegion, defaultCmdLogSize)
+import Shrun.Logging.Types (FileLog, LogRegion)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Notify.MonadNotifySend (MonadNotifySend)
@@ -118,11 +125,12 @@ withEnv ::
   m a
 withEnv onEnv = do
   args <- execParser parserInfoArgs
-  tomlConfig <-
-    if args ^. #noConfig
+
+  mTomlConfig <-
+    if args ^. (#configPath % _DisableBool)
       then -- 1. If noConfig is true then we ignore all toml config
-        pure defaultTomlConfig
-      else case args ^. #configPath of
+        pure Nothing
+      else case args ^. (#configPath % _DisableA) of
         -- 2. noConfig is false and toml config explicitly set: try reading
         --    (all errors rethrown)
         Just f -> readConfig f
@@ -135,14 +143,14 @@ withEnv onEnv = do
           let path = configDir </> [osp|config.toml|]
           b <- doesFileExist path
           if b
-            then readConfig path
+            then Just <$> readConfig path
             else do
               putTextLn ("No default config found at: " <> T.pack (FsUtils.decodeOsToFpShow path))
-              pure defaultTomlConfig
+              pure Nothing
 
-  let finalConfig = mergeConfig args tomlConfig
+  let mergedConfig = mergeConfig args mTomlConfig
 
-  fromToml finalConfig (args ^. #commands) onEnv
+  fromMergedConfig mergedConfig onEnv
   where
     readConfig fp = do
       contents <- readFileUtf8ThrowM fp
@@ -150,7 +158,7 @@ withEnv onEnv = do
         Right cfg -> pure cfg
         Left tomlErr -> throwM tomlErr
 
-fromToml ::
+fromMergedConfig ::
   ( MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
@@ -160,20 +168,14 @@ fromToml ::
     MonadTerminal m,
     MonadThrow m
   ) =>
-  TomlConfig ->
-  NESeq Text ->
+  MergedConfig ->
   (Env -> m a) ->
   m a
-fromToml cfg cmdsText onEnv = do
-  cmdLogLineTrunc <- case cfg ^? (#cmdLog %? #lineTrunc % _Just) of
+fromMergedConfig cfg onEnv = do
+  cmdLogLineTrunc <- case cfg ^? (#coreConfig % #cmdLogging %? #lineTrunc % _Just) of
     Just Detected -> Just . MkTruncation <$> getTerminalWidth
     Just (Undetected x) -> pure $ Just x
     Nothing -> pure Nothing
-
-  let fileLogStripControl =
-        fromMaybe
-          StripControlAll
-          (cfg ^? (#fileLog %? #stripControl % _Just))
 
   commands' <- case cfg ^. #legend of
     Nothing -> pure $ MkCommand Nothing <$> cmdsText
@@ -186,43 +188,39 @@ fromToml cfg cmdsText onEnv = do
   completedCmds' <- newTVarA Seq.empty
   anyError <- newTVarA False
 
-  notifyEnv <- EnvNotify.tomlToNotifyEnv (cfg ^. #notify)
+  notifyEnv <- EnvNotify.tomlToNotifyEnv (cfg ^. (#coreConfig % #notify))
 
   let -- make environment
       envWithLogging ::
         -- optional file logging
-        Maybe (Tuple2 Handle (TBQueue FileLog)) ->
+        Maybe (Tuple3 Handle (TBQueue FileLog) StripControl) ->
         -- console logging
         TBQueue (LogRegion ConsoleRegion) ->
         Env
       envWithLogging mFileLogging consoleLog =
         MkEnv
-          { timeout = cfg ^. #timeout,
-            init = cfg ^. #init,
+          { timeout = cfg ^. (#coreConfig % #timeout),
+            init = cfg ^. (#coreConfig % #init),
             notifyEnv,
             logging =
               MkLogging
-                { keyHide = fromMaybe KeyHideOff (cfg ^? (#keyHide % _Just)),
-                  pollInterval = fromMaybe defaultPollInterval (cfg ^? (#pollInterval % _Just)),
-                  timerFormat = fromMaybe defaultTimerFormat (cfg ^? (#timerFormat % _Just)),
-                  cmdNameTrunc = cfg ^. #cmdNameTrunc,
-                  cmdLogSize =
-                    fromMaybe
-                      defaultCmdLogSize
-                      (cfg ^? (#cmdLogSize % _Just)),
+                { keyHide = cfg ^. (#coreConfig % #keyHide),
+                  pollInterval = cfg ^. (#coreConfig % #pollInterval),
+                  timerFormat = cfg ^. (#coreConfig % #timerFormat),
+                  cmdNameTrunc = cfg ^. (#coreConfig % #cmdNameTrunc),
+                  cmdLogSize = cfg ^. (#coreConfig % #cmdLogSize),
                   cmdLog =
-                    cfg ^. #cmdLog <&> \cmdLog ->
+                    cfg ^. (#coreConfig % #cmdLogging) <&> \cmdLog ->
                       MkCmdLogging
-                        { stripControl =
-                            fromMaybe StripControlSmart (cmdLog ^? (#stripControl % _Just)),
+                        { stripControl = cmdLog ^. #stripControl,
                           lineTrunc = cmdLogLineTrunc
                         },
                   consoleLog,
                   fileLog =
                     mFileLogging <&> \log ->
                       MkFileLogging
-                        { log,
-                          stripControl = fileLogStripControl
+                        { log = (log ^. _1, log ^. _2),
+                          stripControl = log ^. _3
                         }
                 },
             anyError,
@@ -233,8 +231,10 @@ fromToml cfg cmdsText onEnv = do
   consoleQueue <- newTBQueueA 1000
 
   withMLogging cfg $ \h -> onEnv (envWithLogging h consoleQueue)
+  where
+    cmdsText = cfg ^. #commands
 
-type MLogging = Maybe (Tuple2 Handle (TBQueue FileLog))
+type MLogging = Maybe (Tuple3 Handle (TBQueue FileLog) StripControl)
 
 withMLogging ::
   forall m a.
@@ -246,37 +246,32 @@ withMLogging ::
     MonadSTM m,
     MonadTerminal m
   ) =>
-  TomlConfig ->
+  MergedConfig ->
   (MLogging -> m a) ->
   m a
-withMLogging cfg onLogging = case cfg ^? (#fileLog %? #path) of
+withMLogging cfg onLogging = case cfg ^. (#coreConfig % #fileLogging) of
   -- 1. No file logging
   Nothing -> onLogging Nothing
   -- 2. Use the default path.
-  Just FPDefault -> do
-    stateDir <- getShrunXdgState
-    let fp = stateDir </> [osp|shrun.log|]
-    stateExists <- doesDirectoryExist stateDir
-    unless stateExists (createDirectoryIfMissing True stateDir)
+  Just fileLogging -> do
+    let ioMode = case fileLogging ^. #mode of
+          FileModeAppend -> AppendMode
+          FileModeWrite -> WriteMode
+
+    fp <- case fileLogging ^. #path of
+      FPDefault -> do
+        stateDir <- getShrunXdgState
+        let fp = stateDir </> [osp|shrun.log|]
+        stateExists <- doesDirectoryExist stateDir
+        unless stateExists (createDirectoryIfMissing True stateDir)
+        pure fp
+      FPManual fp -> pure fp
 
     ensureFileExists fp
     handleLogFileSize cfg fp
-
     fileQueue <- newTBQueueA 1000
 
-    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
-
-  -- 3. Use the given path.
-  Just (FPManual fp) -> do
-    ensureFileExists fp
-    handleLogFileSize cfg fp
-    fileQueue <- newTBQueueA 1000
-
-    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue))
-  where
-    ioMode = case fromMaybe FileModeWrite (cfg ^? (#fileLog %? #mode % _Just)) of
-      FileModeAppend -> AppendMode
-      FileModeWrite -> WriteMode
+    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue, fileLogging ^. #stripControl))
 
 handleLogFileSize ::
   ( HasCallStack,
@@ -284,7 +279,7 @@ handleLogFileSize ::
     MonadPathWriter m,
     MonadTerminal m
   ) =>
-  TomlConfig ->
+  MergedConfig ->
   OsPath ->
   m ()
 handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
@@ -299,7 +294,7 @@ handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
         putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
         removeFile fp
   where
-    mfileSizeMode = cfg ^? (#fileLog %? #sizeMode % _Just)
+    mfileSizeMode = cfg ^? (#coreConfig % #fileLogging %? #sizeMode % _Just)
 
     sizeWarning warnSize fileSize =
       mconcat

@@ -2,7 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types and typeclasses for our environment.
-module Shrun.Configuration.Env.Types
+module Shrun.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
     prependCompletedCommand,

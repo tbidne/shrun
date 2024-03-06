@@ -1,7 +1,7 @@
 module Main (main) where
 
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import Shrun.Configuration.Env (makeEnvAndShrun)
+import Shrun.Env (makeEnvAndShrun)
 import Shrun.Prelude
 import System.Exit (ExitCode (..))
 

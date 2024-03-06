@@ -13,7 +13,10 @@ import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
-import Shrun.Configuration.Env.Types
+import Shrun.Data.Command (CommandP1)
+import Shrun.Data.Timeout (Timeout (MkTimeout))
+import Shrun.Data.TimerFormat qualified as TimerFormat
+import Shrun.Env.Types
   ( FileLogging,
     HasAnyError (getAnyError),
     HasCommands (getCommands, getCompletedCmds),
@@ -24,9 +27,6 @@ import Shrun.Configuration.Env.Types
     Logging,
     setAnyErrorTrue,
   )
-import Shrun.Data.Command (CommandP1)
-import Shrun.Data.Timeout (Timeout (MkTimeout))
-import Shrun.Data.TimerFormat qualified as TimerFormat
 import Shrun.IO (Stderr (MkStderr), tryCommandLogging)
 import Shrun.IO.Types (CommandResult (CommandFailure, CommandSuccess))
 import Shrun.Logging qualified as Logging

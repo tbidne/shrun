@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Integration.Defaults (specs) where
@@ -35,7 +36,8 @@ import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
 import Shrun.Data.StripControl
   ( StripControl
       ( StripControlAll,
-        StripControlNone
+        StripControlNone,
+        StripControlSmart
       ),
   )
 import Shrun.Data.TimerFormat
@@ -50,6 +52,7 @@ import Shrun.Notify.Types
     NotifySystem (AppleScript, DBus, NotifySend),
     NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
+import Test.Tasty.Hedgehog (testProperty)
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -59,19 +62,23 @@ specs testArgs =
       usesDefaultConfigFile,
       cliOverridesConfigFile testArgs,
       cliOverridesConfigFileCmdLog,
+      cliOverridesConfigFileFileLog,
       ignoresDefaultConfigFile,
       noXOverridesToml,
       noXOverridesArgs
     ]
 
 defaultEnv :: TestTree
-defaultEnv = testCase "No arguments and empty config path should return default Env" $ do
-  logsRef <- newIORef []
-  makeEnvAndVerify ["cmd1"] (`runNoConfigIO` logsRef) expected
+defaultEnv = testPropertyNamed desc "defaultEnv"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeEnvAndVerify ["cmd1"] (`runNoConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  ["No default config found at: ./config.toml"] @=? logs
+    logs <- liftIO $ readIORef logsRef
+    ["No default config found at: ./config.toml"] === logs
   where
+    desc = "No arguments and empty config path should return default Env"
     expected =
       MkSimpleEnv
         { timeout = Nothing,
@@ -95,13 +102,16 @@ defaultEnv = testCase "No arguments and empty config path should return default 
 {- ORMOLU_DISABLE -}
 
 usesDefaultConfigFile :: TestTree
-usesDefaultConfigFile = testCase "No arguments should use config from default file" $ do
-  logsRef <- newIORef []
-  makeEnvAndVerify ["cmd1"] (`runConfigIO` logsRef) expected
+usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeEnvAndVerify ["cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  [] @=? logs
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "No arguments should use config from default file"
     expected =
       MkSimpleEnv
         { timeout = Just 3_600,
@@ -127,17 +137,19 @@ usesDefaultConfigFile = testCase "No arguments should use config from default fi
         }
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
-cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
-  logPath <- (</>! "cli-log") . view #workingTmpDir <$> testArgs
-  logsRef <- newIORef []
-  let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
+cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile"
+  $ property
+  $ do
+    logPath <- liftIO $ (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
+    logsRef <- liftIO $ newIORef []
+    let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
 
-  makeEnvAndVerify (args logPathStr) (`runConfigIO` logsRef) expected
-    `finally` removeFileIfExists logPath
+    makeEnvAndVerify (args logPathStr) (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "CLI args overrides config file"
     args logPath =
       [ "--config",
         getIntConfigOS "overridden",
@@ -198,13 +210,15 @@ cliOverridesConfigFile testArgs = testCase "CLI args overrides config file" $ do
         }
 
 cliOverridesConfigFileCmdLog :: TestTree
-cliOverridesConfigFileCmdLog = testCase desc $ do
-  logsRef <- newIORef []
+cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmdLog"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
 
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
     desc = "CLI overrides config file cmd-log fields even when CLI --cmd-log is not specified"
     args =
@@ -242,16 +256,68 @@ cliOverridesConfigFileCmdLog = testCase desc $ do
           commands = "cmd" :<|| []
         }
 
+cliOverridesConfigFileFileLog :: TestTree
+cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFileLog"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+
+    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
+  where
+    desc = "CLI overrides config file file-log fields even when CLI --file-log is not specified"
+    args =
+      [ "--config",
+        getIntConfigOS "overridden",
+        "--file-log-mode",
+        "write",
+        "--file-log-strip-control",
+        "smart",
+        "--file-log-size-mode",
+        "warn 10 mb",
+        "cmd"
+      ]
+    expected =
+      MkSimpleEnv
+        { -- These two params we care about
+          fileLog = True,
+          fileLogStripControl = Just StripControlSmart,
+          -- These are just the rest
+          timeout = Just 3_600,
+          init = Just "blah",
+          keyHide = KeyHideOff,
+          pollInterval = 100,
+          cmdLogSize = MkBytes 50,
+          timerFormat = DigitalFull,
+          cmdNameTrunc = Just 80,
+          cmdLog = True,
+          cmdLogStripControl = Just StripControlAll,
+          cmdLogLineTrunc = Just 150,
+          notifyAction = Just NotifyCommand,
+#if OSX
+          notifySystem = Just AppleScript,
+#else
+          notifySystem = Just (DBus ()),
+#endif
+          notifyTimeout = Just NotifyTimeoutNever,
+          commands = "cmd" :<|| []
+        }
+
 {- ORMOLU_ENABLE -}
 
 ignoresDefaultConfigFile :: TestTree
-ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
-  logsRef <- newIORef []
-  makeEnvAndVerify ["--no-config", "cmd1"] (`runConfigIO` logsRef) expected
+ignoresDefaultConfigFile = testPropertyNamed desc "ignoresDefaultConfigFile"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeEnvAndVerify ["--no-config", "cmd1"] (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "--no-config should ignore config file"
     expected =
       MkSimpleEnv
         { timeout = Nothing,
@@ -273,14 +339,17 @@ ignoresDefaultConfigFile = testCase "--no-config should ignore config file" $ do
         }
 
 noXOverridesToml :: TestTree
-noXOverridesToml = testCase "--no-x disables toml options" $ do
-  logsRef <- newIORef []
+noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
 
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "--no-x disables toml options"
     args =
       [ "--config",
         getIntConfigOS "overridden",
@@ -322,14 +391,17 @@ noXOverridesToml = testCase "--no-x disables toml options" $ do
         }
 
 noXOverridesArgs :: TestTree
-noXOverridesArgs = testCase "--no-x disables args" $ do
-  logsRef <- newIORef []
+noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
 
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "--no-x disables args"
     args =
       [ "--timeout",
         "5",

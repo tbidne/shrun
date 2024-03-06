@@ -50,13 +50,16 @@ specs =
 {- ORMOLU_DISABLE -}
 
 examplesConfig :: TestTree
-examplesConfig = testCase "examples/config.toml is valid" $ do
-  logsRef <- IORef.newIORef []
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+examplesConfig = testPropertyNamed desc "examplesConfig"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "examples/config.toml is valid"
     args = ["-c", getExampleConfigOS "config", "cmd1"]
     expected =
       MkSimpleEnv
@@ -85,13 +88,16 @@ examplesConfig = testCase "examples/config.toml is valid" $ do
 {- ORMOLU_ENABLE -}
 
 examplesDefault :: TestTree
-examplesDefault = testCase "examples/default.toml is valid" $ do
-  logsRef <- IORef.newIORef []
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+examplesDefault = testPropertyNamed desc "examplesDefault"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "examples/default.toml is valid"
     args = ["-c", getExampleConfig "default", "cmd"]
     expected =
       MkSimpleEnv

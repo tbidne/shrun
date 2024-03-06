@@ -3,13 +3,15 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 -- | Transforms NotifyToml into NotifyEnv.
-module Shrun.Configuration.Env.Notify
+module Shrun.Env.Notify
   ( tomlToNotifyEnv,
   )
 where
 
 import Effects.Exception (throwString)
-import Shrun.Configuration.Env.Types
+import Shrun.Configuration.Data.Notify (NotifyMerged)
+import Shrun.Data.Phase (AdvancePhase (advancePhase))
+import Shrun.Env.Types
   ( NotifyEnv
       ( MkNotifyEnv,
         action,
@@ -17,8 +19,6 @@ import Shrun.Configuration.Env.Types
         timeout
       ),
   )
-import Shrun.Configuration.Toml (NotifyToml)
-import Shrun.Data.Phase (AdvancePhase (advancePhase))
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
 import Shrun.Notify.Types
   ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
@@ -44,7 +44,7 @@ tomlToNotifyEnv ::
     MonadDBus m,
     MonadThrow m
   ) =>
-  Maybe NotifyToml ->
+  Maybe NotifyMerged ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnv Nothing = pure Nothing
 tomlToNotifyEnv (Just notifyToml) = tomlToNotifyEnvOS notifyToml
@@ -56,7 +56,7 @@ tomlToNotifyEnvOS ::
     MonadDBus m,
     MonadThrow m
   ) =>
-  NotifyToml ->
+  NotifyMerged ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnvOS (notifyToml)
   | is (#system %? _DBus) notifyToml = throwM OsxNotifySystemMismatchDBus
@@ -74,7 +74,7 @@ tomlToNotifyEnvOS ::
     MonadDBus m,
     MonadThrow m
   ) =>
-  NotifyToml ->
+  NotifyMerged ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnvOS notifyToml
   | is (#system %? _AppleScript) notifyToml = throwM LinuxNotifySystemMismatchAppleScript
@@ -86,10 +86,10 @@ tomlToNotifyEnvOS notifyToml
 
 #endif
 
-mkNotify :: NotifyToml -> NotifySystemP2 -> NotifyEnv
+mkNotify :: NotifyMerged -> NotifySystemP2 -> NotifyEnv
 mkNotify notifyToml systemP2 =
   MkNotifyEnv
     { system = systemP2,
       action = notifyToml ^. #action,
-      timeout = fromMaybe (NotifyTimeoutSeconds 10) (notifyToml ^. #timeout)
+      timeout = notifyToml ^. #timeout
     }

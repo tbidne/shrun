@@ -7,7 +7,7 @@ where
 import DBus.Notify (UrgencyLevel)
 import Data.Text qualified as T
 import Effects.Exception (catch)
-import Shrun.Configuration.Env.Types
+import Shrun.Env.Types
   ( HasLogging,
     HasNotifyConfig (getNotifyConfig),
   )

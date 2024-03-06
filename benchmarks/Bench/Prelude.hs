@@ -8,8 +8,10 @@ module Bench.Prelude
 where
 
 import Shrun qualified as SR
-import Shrun.Configuration.Env qualified as Env
-import Shrun.Configuration.Env.Types
+import Shrun.Data.Command (CommandP1)
+import Shrun.Data.Timeout (Timeout)
+import Shrun.Env qualified as Env
+import Shrun.Env.Types
   ( HasAnyError (getAnyError),
     HasCommands (getCommands, getCompletedCmds),
     HasInit (getInit),
@@ -29,8 +31,6 @@ import Shrun.Configuration.Env.Types
       ),
     NotifyEnv,
   )
-import Shrun.Data.Command (CommandP1)
-import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.MonadRegionLogger
   ( MonadRegionLogger
       ( Region,

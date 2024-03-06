@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Integration.Miscellaneous (specs) where
@@ -31,13 +32,13 @@ import Integration.Utils
     makeEnvAndVerify,
     runConfigIO,
   )
-import Shrun.Configuration.Env (withEnv)
 import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
 import Shrun.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
 import Shrun.Data.TimerFormat (TimerFormat (DigitalFull, ProseCompact))
+import Shrun.Env (withEnv)
 import Shrun.Notify.Types
   ( NotifyAction (NotifyAll, NotifyCommand),
     NotifySystem (AppleScript, DBus),
@@ -56,22 +57,23 @@ specs testArgs =
     ]
 
 logFileWarn :: IO TestArgs -> TestTree
-logFileWarn testArgs = testCase "Large log file should print warning" $ do
-  logPath <- (</>! "large-file-warn") . view #workingTmpDir <$> testArgs
-  logsRef <- IORef.newIORef []
+logFileWarn testArgs = testPropertyNamed desc "logFileWarn" $ property $ do
+  logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
+  logsRef <- liftIO $ newIORef []
   let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
       contents = T.replicate 1_500 "test "
 
-      run = do
+      run = liftIO $ do
         writeFileUtf8 logPath contents
 
         flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
 
-  run `finally` removeFileIfExists logPath
+  run
 
-  logs <- IORef.readIORef logsRef
-  [warning logsPathStr] @=? logs
+  logs <- liftIO $ readIORef logsRef
+  [warning logsPathStr] === logs
   where
+    desc = "Large log file should print warning"
     warning fp =
       mconcat
         [ "Warning: log file '",
@@ -88,27 +90,27 @@ logFileWarn testArgs = testCase "Large log file should print warning" $ do
       ]
 
 logFileDelete :: IO TestArgs -> TestTree
-logFileDelete testArgs =
-  testCase "Large log file should be deleted" $ do
-    logPath <- (</>! "large-file-del") . view #workingTmpDir <$> testArgs
-    logsRef <- IORef.newIORef []
-    let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
-        contents = T.replicate 1_500 "test "
+logFileDelete testArgs = testPropertyNamed desc "logFileDelete" $ property $ do
+  logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
+  logsRef <- liftIO $ newIORef []
+  let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
+      contents = T.replicate 1_500 "test "
 
-        run = do
-          writeFileUtf8 logPath contents
+      run = liftIO $ do
+        writeFileUtf8 logPath contents
 
-          flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
 
-          -- file should have been deleted then recreated with a file size of 0.
-          getFileSize logPath
+        -- file should have been deleted then recreated with a file size of 0.
+        getFileSize logPath
 
-    size <- run `finally` removeFileIfExists logPath
-    0 @=? size
+  size <- run
+  0 === size
 
-    logs <- IORef.readIORef logsRef
-    [warning logPathStr] @=? logs
+  logs <- liftIO $ readIORef logsRef
+  [warning logPathStr] === logs
   where
+    desc = "Large log file should be deleted"
     warning fp =
       mconcat
         [ "Warning: log file '",
@@ -127,13 +129,16 @@ logFileDelete testArgs =
 {- ORMOLU_DISABLE -}
 
 usesRecursiveCmdExample :: TestTree
-usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
-  logsRef <- IORef.newIORef []
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
-  logs @=? []
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
+    desc = "Uses recursive command from example"
     args = ["multi1"]
     expected =
       MkSimpleEnv
@@ -166,13 +171,14 @@ usesRecursiveCmdExample = testCase "Uses recursive command from example" $ do
 {- ORMOLU_ENABLE -}
 
 usesRecursiveCmd :: TestTree
-usesRecursiveCmd = testCase "Uses recursive commands" $ do
-  logsRef <- IORef.newIORef []
+usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd" $ property $ do
+  logsRef <- liftIO $ newIORef []
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- IORef.readIORef logsRef
-  logs @=? []
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
+    desc = "Uses recursive commands"
     args = ["-c", getExampleConfig "default", "all", "echo cat"]
     expected =
       MkSimpleEnv
@@ -200,13 +206,14 @@ usesRecursiveCmd = testCase "Uses recursive commands" $ do
         }
 
 lineTruncDetect :: TestTree
-lineTruncDetect = testCase "cmdLogLineTrunc reads 'detect' string from toml" $ do
-  logsRef <- newIORef []
+lineTruncDetect = testPropertyNamed desc "lineTruncDetect" $ property $ do
+  logsRef <- liftIO $ newIORef []
   makeEnvAndVerify args (`runConfigIO` logsRef) expected
 
-  logs <- readIORef logsRef
-  [] @=? logs
+  logs <- liftIO $ readIORef logsRef
+  logs === []
   where
+    desc = "cmdLogLineTrunc reads 'detect' string from toml"
     args = ["-c", getIntConfig "misc", "cmd1"]
     expected =
       MkSimpleEnv

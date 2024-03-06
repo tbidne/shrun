@@ -16,7 +16,21 @@ import Effects.Time
   )
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
-import Shrun.Configuration.Env.Types
+import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
+import Shrun.Data.StripControl
+  ( StripControl
+      ( StripControlAll,
+        StripControlNone,
+        StripControlSmart
+      ),
+  )
+import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
+import Shrun.Data.Truncation
+  ( TruncRegion (TCmdLine, TCmdName),
+    Truncation (MkTruncation),
+  )
+import Shrun.Env.Types
   ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
     FileLogging (MkFileLogging),
     HasLogging (getLogging),
@@ -31,20 +45,6 @@ import Shrun.Configuration.Env.Types
         pollInterval,
         timerFormat
       ),
-  )
-import Shrun.Data.Command (Command (MkCommand))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
-import Shrun.Data.StripControl
-  ( StripControl
-      ( StripControlAll,
-        StripControlNone,
-        StripControlSmart
-      ),
-  )
-import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
-import Shrun.Data.Truncation
-  ( TruncRegion (TCmdLine, TCmdName),
-    Truncation (MkTruncation),
   )
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types

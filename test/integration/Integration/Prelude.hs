@@ -15,6 +15,14 @@ where
 
 import Effects.FileSystem.Utils as X ((</>!))
 import Effects.FileSystem.Utils qualified as FsUtils
+import Hedgehog as X
+  ( Property,
+    PropertyT,
+    annotate,
+    annotateShow,
+    property,
+    (===),
+  )
 import Shrun.Prelude as X
 import Test.Tasty as X
   ( TestName,
@@ -30,6 +38,7 @@ import Test.Tasty.HUnit as X
     testCase,
     (@=?),
   )
+import Test.Tasty.Hedgehog as X (testPropertyNamed)
 
 data TestArgs = MkTestArgs
   { rootTmpDir :: OsPath,

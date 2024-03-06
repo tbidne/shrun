@@ -41,9 +41,11 @@ where
 
 import DBus.Client (Client)
 import Data.Bits (toIntegralSized)
+import Data.Bytes (FromInteger (afromInteger))
 import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Word (Word16)
+import GHC.Num (Num (fromInteger))
 import Shrun.Data.Phase
   ( AdvancePhase (NextPhase, advancePhase),
     Phase (Phase1, Phase2),
@@ -166,6 +168,9 @@ data NotifyTimeout
   | -- | Never times out.
     NotifyTimeoutNever
   deriving stock (Eq, Show)
+
+instance FromInteger NotifyTimeout where
+  afromInteger = NotifyTimeoutSeconds . fromInteger
 
 -- DecodeTOML instance does not reuse parseNotifyTimeout as we want to
 -- enforce the integer type.

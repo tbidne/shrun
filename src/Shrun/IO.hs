@@ -13,7 +13,8 @@ import Data.Text qualified as T
 import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
 import Effects.Time (withTiming)
-import Shrun.Configuration.Env.Types
+import Shrun.Data.Command (CommandP1, commandToProcess)
+import Shrun.Env.Types
   ( HasAnyError,
     HasCommands,
     HasInit (getInit),
@@ -21,7 +22,6 @@ import Shrun.Configuration.Env.Types
     prependCompletedCommand,
     setAnyErrorTrue,
   )
-import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.IO.Types
   ( CommandResult (CommandFailure, CommandSuccess),
     ReadHandleResult (ReadErr, ReadNoData, ReadSuccess),
