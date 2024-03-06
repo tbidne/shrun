@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -10,6 +11,7 @@ module Shrun.Notify.Types
     NotifySystem (..),
     parseNotifySystem,
     notifySystemStr,
+    defaultNotifySystem,
     NotifySystemP1,
     NotifySystemP2,
     DBusF,
@@ -160,6 +162,13 @@ parseNotifySystem getTxt =
 -- | Available 'NotifySystem' strings.
 notifySystemStr :: (IsString a) => a
 notifySystemStr = "(dbus|notify-send|apple-script)"
+
+defaultNotifySystem :: NotifySystem Phase1
+#if OSX
+defaultNotifySystem = AppleScript
+#else
+defaultNotifySystem = DBus ()
+#endif
 
 -- | Determines notification timeout.
 data NotifyTimeout

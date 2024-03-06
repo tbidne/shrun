@@ -189,6 +189,7 @@ import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack)
 import Optics.Core as X
   ( A_Getter,
+    A_Setter,
     AffineTraversal',
     An_AffineFold,
     An_AffineTraversal,
@@ -198,6 +199,7 @@ import Optics.Core as X
     LabelOptic (labelOptic),
     Lens,
     Lens',
+    NoIx,
     Optic',
     Prism,
     Prism',

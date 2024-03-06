@@ -33,8 +33,7 @@ import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
         commands,
-        coreConfig,
-        legend
+        coreConfig
       ),
   )
 import Shrun.Configuration.Data.Notify (mergeNotifyLogging)
@@ -107,7 +106,6 @@ mergeConfig args mToml = do
                       (args ^. (#coreConfig % #notify))
                       Nothing
                 },
-            legend = Nothing,
             commands
           }
     (Just toml) -> do
@@ -167,7 +165,6 @@ mergeConfig args mToml = do
                       (args ^. (#coreConfig % #notify))
                       (toml ^. (#coreConfig % #notify))
                 },
-            legend = toml ^. #legend,
             commands
           }
   where

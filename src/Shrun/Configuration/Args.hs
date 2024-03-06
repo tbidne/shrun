@@ -24,8 +24,7 @@ import Shrun.Configuration.Data.ConfigPhase
     emptyWithDisable,
   )
 import Shrun.Configuration.Data.Core
-  ( CoreConfigArgs,
-    CoreConfigP
+  ( CoreConfigP
       ( MkCoreConfigP,
         cmdLogSize,
         cmdLogging,

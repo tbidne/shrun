@@ -202,6 +202,7 @@ test-suite integration
     , effects-fs
     , effects-terminal
     , hedgehog
+    , nonempty-containers
     , shrun
     , tasty
     , tasty-hedgehog

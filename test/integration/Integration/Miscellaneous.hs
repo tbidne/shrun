@@ -1,49 +1,26 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Integration.Miscellaneous (specs) where
 
-import Data.IORef qualified as IORef
+import Data.Sequence.NonEmpty qualified as NESeq
+import Data.String (IsString)
 import Data.Text qualified as T
 import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
-  ( SimpleEnv
-      ( MkSimpleEnv,
-        cmdLog,
-        cmdLogLineTrunc,
-        cmdLogSize,
-        cmdLogStripControl,
-        cmdNameTrunc,
-        commands,
-        fileLog,
-        fileLogStripControl,
-        init,
-        keyHide,
-        notifyAction,
-        notifySystem,
-        notifyTimeout,
-        pollInterval,
-        timeout,
-        timerFormat
-      ),
-    makeEnvAndVerify,
+  ( makeConfigAndAssertFieldEq,
     runConfigIO,
+    (^=@),
+    (^?=@),
   )
+import Shrun.Configuration qualified as Configuration
+import Shrun.Configuration.Args qualified as Args
+import Shrun.Configuration.Data.MergedConfig qualified as Merged
+import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Data.Command (Command (MkCommand))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
-import Shrun.Data.StripControl
-  ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
-  )
-import Shrun.Data.TimerFormat (TimerFormat (DigitalFull, ProseCompact))
 import Shrun.Env (withEnv)
-import Shrun.Notify.Types
-  ( NotifyAction (NotifyAll, NotifyCommand),
-    NotifySystem (AppleScript, DBus),
-    NotifyTimeout (NotifyTimeoutNever),
-  )
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -53,7 +30,8 @@ specs testArgs =
       logFileDelete testArgs,
       usesRecursiveCmdExample,
       usesRecursiveCmd,
-      lineTruncDetect
+      lineTruncDetect,
+      testDefaultConfigs
     ]
 
 logFileWarn :: IO TestArgs -> TestTree
@@ -126,111 +104,80 @@ logFileDelete testArgs = testPropertyNamed desc "logFileDelete" $ property $ do
         "cmd"
       ]
 
-{- ORMOLU_DISABLE -}
-
 usesRecursiveCmdExample :: TestTree
 usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
-    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
   where
     desc = "Uses recursive command from example"
     args = ["multi1"]
-    expected =
-      MkSimpleEnv
-        { timeout = Just 3600,
-          init = Just ". some file",
-          keyHide = KeyHideOn,
-          pollInterval = 127,
-          timerFormat = DigitalFull,
-          cmdNameTrunc = Just 80,
-          cmdLogSize = MkBytes 20,
-          cmdLog = True,
-          cmdLogStripControl = Just StripControlAll,
-          cmdLogLineTrunc = Just 150,
-          fileLog = True,
-          fileLogStripControl = Just StripControlNone,
-          notifyAction = Just NotifyAll,
-#if OSX
-          notifySystem = Just AppleScript,
-#else
-          notifySystem = Just (DBus ()),
-#endif
-          notifyTimeout = Just NotifyTimeoutNever,
-          commands =
-            MkCommand (Just "m1") "m1val"
-              :<|| [ "m2",
-                     "m3"
-                   ]
-        }
-
-{- ORMOLU_ENABLE -}
+    cmds =
+      MkCommand (Just "m1") "m1val"
+        :<|| [ "m2",
+               "m3"
+             ]
+    expected = [#commands ^=@ cmds]
 
 usesRecursiveCmd :: TestTree
 usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd" $ property $ do
   logsRef <- liftIO $ newIORef []
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
   logs <- liftIO $ readIORef logsRef
   [] === logs
   where
     desc = "Uses recursive commands"
     args = ["-c", getExampleConfig "default", "all", "echo cat"]
-    expected =
-      MkSimpleEnv
-        { timeout = Nothing,
-          init = Nothing,
-          keyHide = KeyHideOff,
-          pollInterval = 10_000,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Nothing,
-          cmdLogSize = MkBytes 1024,
-          cmdLog = False,
-          cmdLogStripControl = Nothing,
-          cmdLogLineTrunc = Nothing,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
-          commands =
-            MkCommand (Just "cmd1") "echo \"command one\""
-              :<|| [ MkCommand (Just "cmd4") "command four",
-                     "echo hi",
-                     "echo cat"
-                   ]
-        }
+
+    cmds =
+      MkCommand (Just "cmd1") "echo \"command one\""
+        :<|| [ MkCommand (Just "cmd4") "command four",
+               "echo hi",
+               "echo cat"
+             ]
+    expected = [#commands ^=@ cmds]
 
 lineTruncDetect :: TestTree
 lineTruncDetect = testPropertyNamed desc "lineTruncDetect" $ property $ do
   logsRef <- liftIO $ newIORef []
-  makeEnvAndVerify args (`runConfigIO` logsRef) expected
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
   logs <- liftIO $ readIORef logsRef
   logs === []
   where
     desc = "cmdLogLineTrunc reads 'detect' string from toml"
     args = ["-c", getIntConfig "misc", "cmd1"]
-    expected =
-      MkSimpleEnv
-        { timeout = Nothing,
-          init = Nothing,
-          cmdLog = True,
-          keyHide = KeyHideOff,
-          pollInterval = 10_000,
-          cmdLogSize = MkBytes 1024,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Nothing,
-          cmdLogStripControl = Just StripControlSmart,
-          cmdLogLineTrunc = Just 87,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
-          commands = "cmd1" :<|| []
-        }
+
+    expected = [#coreConfig % #cmdLogging %? #lineTrunc % _Just ^?=@ Just 87]
+
+newtype TermIO a = MkTermIO (IO a)
+  deriving (Applicative, Functor, Monad, MonadThrow) via IO
+
+runTermIO :: (MonadIO m) => TermIO a -> m a
+runTermIO (MkTermIO a) = liftIO a
+
+-- For MonadTerminal instance (used to get window size; shouldn't be used
+-- in default configs)
+instance MonadTerminal TermIO
+
+testDefaultConfigs :: TestTree
+testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs" $ property $ do
+  let expected = Merged.defaultMergedConfig cmds
+      args = Args.defaultArgs cmds
+      toml = Toml.defaultToml
+
+  resultNoToml <- runTermIO $ Configuration.mergeConfig args Nothing
+  resultMerge <- runTermIO $ Configuration.mergeConfig args $ Just toml
+
+  expected === resultNoToml
+  expected === resultMerge
+  where
+    desc = "defaultMergedConfig === merge defaultArgs defaultToml"
+
+    cmds :: (IsString a) => NESeq a
+    cmds = NESeq.singleton "cmd"

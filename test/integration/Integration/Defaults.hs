@@ -8,30 +8,58 @@ module Integration.Defaults (specs) where
 import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
-  ( SimpleEnv
-      ( MkSimpleEnv,
-        cmdLog,
-        cmdLogLineTrunc,
+  ( CompareField (MkCompareField),
+    defaultConfig,
+    makeConfigAndAssertEq,
+    makeConfigAndAssertFieldEq,
+    notifySystemOSDBus,
+    notifySystemOSNotifySend,
+    runConfigIO,
+    runNoConfigIO,
+    (^=@),
+    (^?=@),
+  )
+import Shrun.Configuration.Data.CmdLogging
+  ( CmdLoggingP (MkCmdLoggingP, lineTrunc, stripControl),
+  )
+import Shrun.Configuration.Data.Core
+  ( CoreConfigP
+      ( MkCoreConfigP,
         cmdLogSize,
-        cmdLogStripControl,
+        cmdLogging,
         cmdNameTrunc,
-        commands,
-        fileLog,
-        fileLogStripControl,
+        fileLogging,
         init,
         keyHide,
-        notifyAction,
-        notifySystem,
-        notifyTimeout,
+        notify,
         pollInterval,
         timeout,
         timerFormat
       ),
-    makeEnvAndVerify,
-    runConfigIO,
-    runNoConfigIO,
+  )
+import Shrun.Configuration.Data.FileLogging
+  ( FileLoggingP
+      ( MkFileLoggingP,
+        mode,
+        path,
+        sizeMode,
+        stripControl
+      ),
+  )
+import Shrun.Configuration.Data.MergedConfig
+  ( MergedConfig
+      ( MkMergedConfig,
+        commands,
+        coreConfig
+      ),
+  )
+import Shrun.Configuration.Data.Notify
+  ( NotifyP (MkNotifyP, action, system, timeout),
   )
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
+import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeWarn))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
 import Shrun.Data.StripControl
   ( StripControl
@@ -63,6 +91,7 @@ specs testArgs =
       cliOverridesConfigFile testArgs,
       cliOverridesConfigFileCmdLog,
       cliOverridesConfigFileFileLog,
+      fileLogStripControlDefaultsAll,
       ignoresDefaultConfigFile,
       noXOverridesToml,
       noXOverridesArgs
@@ -73,66 +102,59 @@ defaultEnv = testPropertyNamed desc "defaultEnv"
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
-    makeEnvAndVerify ["cmd1"] (`runNoConfigIO` logsRef) expected
+
+    makeConfigAndAssertEq ["cmd"] (`runNoConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     ["No default config found at: ./config.toml"] === logs
   where
     desc = "No arguments and empty config path should return default Env"
-    expected =
-      MkSimpleEnv
-        { timeout = Nothing,
-          init = Nothing,
-          cmdLog = False,
-          keyHide = KeyHideOff,
-          pollInterval = 10_000,
-          cmdLogSize = MkBytes 1024,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Nothing,
-          cmdLogStripControl = Nothing,
-          cmdLogLineTrunc = Nothing,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
-          commands = "cmd1" :<|| []
-        }
-
-{- ORMOLU_DISABLE -}
+    expected = defaultConfig
 
 usesDefaultConfigFile :: TestTree
 usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
-    makeEnvAndVerify ["cmd1"] (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq ["cmd1"] (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
   where
     desc = "No arguments should use config from default file"
     expected =
-      MkSimpleEnv
-        { timeout = Just 3_600,
-          init = Just ". some file",
-          keyHide = KeyHideOn,
-          pollInterval = 127,
-          cmdLogSize = MkBytes 20,
-          timerFormat = DigitalFull,
-          cmdNameTrunc = Just 80,
-          cmdLog = True,
-          cmdLogStripControl = Just StripControlAll,
-          cmdLogLineTrunc = Just 150,
-          fileLog = True,
-          fileLogStripControl = Just StripControlNone,
-          notifyAction = Just NotifyAll,
-#if OSX
-          notifySystem = Just AppleScript,
-#else
-          notifySystem = Just (DBus ()),
-#endif
-          notifyTimeout = Just NotifyTimeoutNever,
+      MkMergedConfig
+        { coreConfig =
+            MkCoreConfigP
+              { timeout = Just 3_600,
+                init = Just ". some file",
+                keyHide = KeyHideOn,
+                pollInterval = 127,
+                cmdLogSize = MkBytes 20,
+                timerFormat = DigitalFull,
+                cmdNameTrunc = Just 80,
+                cmdLogging =
+                  Just
+                    $ MkCmdLoggingP
+                      { stripControl = StripControlAll,
+                        lineTrunc = Just 150
+                      },
+                fileLogging =
+                  Just
+                    $ MkFileLoggingP
+                      { path = FPDefault,
+                        stripControl = StripControlNone,
+                        mode = FileModeAppend,
+                        sizeMode = Nothing
+                      },
+                notify =
+                  Just
+                    $ MkNotifyP
+                      { action = NotifyAll,
+                        system = notifySystemOSDBus,
+                        timeout = NotifyTimeoutNever
+                      }
+              },
           commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
@@ -144,7 +166,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
     logsRef <- liftIO $ newIORef []
     let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
 
-    makeEnvAndVerify (args logPathStr) (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq (args logPathStr) (`runConfigIO` logsRef) (expected logPath)
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
@@ -175,37 +197,46 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "60",
         "--cmd-log-strip-control",
         "none",
-#if !OSX
-        "--notify-system",
-        "notify-send",
-#endif
         "--notify-action",
         "final",
         "--notify-timeout",
-        "10",
-        "cmd"
+        "10"
       ]
-    expected =
-      MkSimpleEnv
-        { timeout = Just 10,
-          init = Just ". another file",
-          keyHide = KeyHideOn,
-          pollInterval = 127,
-          cmdLogSize = MkBytes 512,
-          timerFormat = DigitalCompact,
-          cmdNameTrunc = Just 10,
-          cmdLog = True,
-          cmdLogStripControl = Just StripControlNone,
-          cmdLogLineTrunc = Just 60,
-          fileLog = True,
-          fileLogStripControl = Just StripControlNone,
-          notifyAction = Just NotifyFinal,
-#if OSX
-          notifySystem = Just AppleScript,
-#else
-          notifySystem = Just NotifySend,
-#endif
-          notifyTimeout = Just (NotifyTimeoutSeconds 10),
+        ++ notifySendArgs
+        ++ ["cmd"]
+    expected logPath =
+      MkMergedConfig
+        { coreConfig =
+            MkCoreConfigP
+              { timeout = Just 10,
+                init = Just ". another file",
+                keyHide = KeyHideOn,
+                pollInterval = 127,
+                cmdLogSize = MkBytes 512,
+                timerFormat = DigitalCompact,
+                cmdNameTrunc = Just 10,
+                cmdLogging =
+                  Just
+                    $ MkCmdLoggingP
+                      { stripControl = StripControlNone,
+                        lineTrunc = Just 60
+                      },
+                fileLogging =
+                  Just
+                    $ MkFileLoggingP
+                      { path = FPManual logPath,
+                        stripControl = StripControlNone,
+                        mode = FileModeAppend,
+                        sizeMode = Nothing
+                      },
+                notify =
+                  Just
+                    $ MkNotifyP
+                      { action = NotifyFinal,
+                        system = notifySystemOSNotifySend,
+                        timeout = NotifyTimeoutSeconds 10
+                      }
+              },
           commands = "cmd" :<|| []
         }
 
@@ -215,7 +246,7 @@ cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmd
   $ do
     logsRef <- liftIO $ newIORef []
 
-    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
@@ -231,30 +262,9 @@ cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmd
         "cmd"
       ]
     expected =
-      MkSimpleEnv
-        { -- These two params we care about
-          cmdLogStripControl = Just StripControlNone,
-          cmdLogLineTrunc = Just 60,
-          -- These are just the rest
-          timeout = Just 3_600,
-          init = Just "blah",
-          keyHide = KeyHideOff,
-          pollInterval = 100,
-          cmdLogSize = MkBytes 50,
-          timerFormat = DigitalFull,
-          cmdNameTrunc = Just 80,
-          cmdLog = True,
-          fileLog = True,
-          fileLogStripControl = Just StripControlAll,
-          notifyAction = Just NotifyCommand,
-#if OSX
-          notifySystem = Just AppleScript,
-#else
-          notifySystem = Just (DBus ()),
-#endif
-          notifyTimeout = Just NotifyTimeoutNever,
-          commands = "cmd" :<|| []
-        }
+      [ #coreConfig % #cmdLogging %? #stripControl ^?=@ Just StripControlNone,
+        #coreConfig % #cmdLogging %? #lineTrunc % _Just ^?=@ Just 60
+      ]
 
 cliOverridesConfigFileFileLog :: TestTree
 cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFileLog"
@@ -262,7 +272,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
   $ do
     logsRef <- liftIO $ newIORef []
 
-    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
@@ -279,64 +289,59 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         "warn 10 mb",
         "cmd"
       ]
-    expected =
-      MkSimpleEnv
-        { -- These two params we care about
-          fileLog = True,
-          fileLogStripControl = Just StripControlSmart,
-          -- These are just the rest
-          timeout = Just 3_600,
-          init = Just "blah",
-          keyHide = KeyHideOff,
-          pollInterval = 100,
-          cmdLogSize = MkBytes 50,
-          timerFormat = DigitalFull,
-          cmdNameTrunc = Just 80,
-          cmdLog = True,
-          cmdLogStripControl = Just StripControlAll,
-          cmdLogLineTrunc = Just 150,
-          notifyAction = Just NotifyCommand,
-#if OSX
-          notifySystem = Just AppleScript,
-#else
-          notifySystem = Just (DBus ()),
-#endif
-          notifyTimeout = Just NotifyTimeoutNever,
-          commands = "cmd" :<|| []
-        }
 
-{- ORMOLU_ENABLE -}
+    expected =
+      [ #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
+        #coreConfig % #fileLogging %? #mode ^?=@ Just FileModeWrite,
+        #coreConfig % #fileLogging %? #sizeMode % _Just ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
+      ]
+
+fileLogStripControlDefaultsAll :: TestTree
+fileLogStripControlDefaultsAll = testPropertyNamed desc "fileLogStripControlDefaultsAll"
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+
+    -- Test that no toml defaults to All
+    makeConfigAndAssertFieldEq args1 (`runNoConfigIO` logsRef) expected
+
+    logs <- liftIO $ readIORef logsRef
+    ["No default config found at: ./config.toml"] === logs
+
+    -- Test that with toml defaults to All
+    makeConfigAndAssertFieldEq args2 (`runNoConfigIO` logsRef) expected
+  where
+    desc = "File log strip-control defaults to All"
+    args1 =
+      [ "--file-log",
+        "default",
+        "cmd"
+      ]
+
+    args2 =
+      [ "--config",
+        getIntConfig "basic-file-log",
+        "--file-log",
+        "default",
+        "cmd"
+      ]
+
+    expected =
+      [ #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlAll
+      ]
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testPropertyNamed desc "ignoresDefaultConfigFile"
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
-    makeEnvAndVerify ["--no-config", "cmd1"] (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq ["--no-config", "cmd"] (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
   where
     desc = "--no-config should ignore config file"
-    expected =
-      MkSimpleEnv
-        { timeout = Nothing,
-          init = Nothing,
-          keyHide = KeyHideOff,
-          pollInterval = 10_000,
-          cmdLogSize = MkBytes 1024,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Nothing,
-          cmdLog = False,
-          cmdLogStripControl = Nothing,
-          cmdLogLineTrunc = Nothing,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
-          commands = "cmd1" :<|| []
-        }
+    expected = defaultConfig
 
 noXOverridesToml :: TestTree
 noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
@@ -344,7 +349,7 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
   $ do
     logsRef <- liftIO $ newIORef []
 
-    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
@@ -370,25 +375,7 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
         "--no-notify-timeout",
         "cmd"
       ]
-    expected =
-      MkSimpleEnv
-        { timeout = Nothing,
-          init = Nothing,
-          keyHide = KeyHideOff,
-          pollInterval = 10_000,
-          cmdLogSize = MkBytes 1024,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Nothing,
-          cmdLog = False,
-          cmdLogStripControl = Nothing,
-          cmdLogLineTrunc = Nothing,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifyAction = Nothing,
-          notifySystem = Nothing,
-          notifyTimeout = Nothing,
-          commands = "cmd" :<|| []
-        }
+    expected = defaultConfig
 
 noXOverridesArgs :: TestTree
 noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
@@ -396,7 +383,7 @@ noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
   $ do
     logsRef <- liftIO $ newIORef []
 
-    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
@@ -448,22 +435,11 @@ noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
         "--no-notify-timeout",
         "cmd"
       ]
-    expected =
-      MkSimpleEnv
-        { timeout = Nothing,
-          init = Nothing,
-          keyHide = KeyHideOff,
-          pollInterval = 10_000,
-          cmdLogSize = MkBytes 1024,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Nothing,
-          cmdLog = False,
-          cmdLogStripControl = Nothing,
-          cmdLogLineTrunc = Nothing,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifyAction = Nothing,
-          notifySystem = Nothing,
-          notifyTimeout = Nothing,
-          commands = "cmd" :<|| []
-        }
+    expected = defaultConfig
+
+notifySendArgs :: List String
+#if OSX
+notifySendArgs = []
+#else
+notifySendArgs = [ "--notify-system", "notify-send" ]
+#endif

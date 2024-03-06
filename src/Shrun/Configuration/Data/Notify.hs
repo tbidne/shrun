@@ -14,16 +14,18 @@ import Data.Bytes (FromInteger (afromInteger))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    ConfigPhaseMaybeF,
     WithDisable,
     altDefault,
-    altNothing,
     defaultIfDisabled,
-    nothingIfDisabled,
     _DisableA,
     _DisableBool,
   )
-import Shrun.Notify.Types (NotifyAction, NotifySystemP1, NotifyTimeout)
+import Shrun.Notify.Types
+  ( NotifyAction,
+    NotifySystemP1,
+    NotifyTimeout,
+    defaultNotifySystem,
+  )
 import Shrun.Prelude
 
 type NotifyActionF :: ConfigPhase -> Type
@@ -38,7 +40,7 @@ data NotifyP p = MkNotifyP
   { -- | Actions for which to send notifications.
     action :: NotifyActionF p,
     -- | The notification system to use.
-    system :: ConfigPhaseMaybeF p NotifySystemP1,
+    system :: ConfigPhaseF p NotifySystemP1,
     -- | when to timeout successful notifications.
     timeout :: ConfigPhaseF p NotifyTimeout
   }
@@ -80,22 +82,19 @@ mergeNotifyLogging args mToml =
         Just
           $ MkNotifyP
             { action = argsAction,
-              system = nothingIfDisabled (args ^. #system),
+              system = defaultIfDisabled defaultNotifySystem (args ^. #system),
               timeout = defaultIfDisabled (afromInteger 10) (args ^. #timeout)
             }
       (mArgsAction, Just toml) ->
         Just
           $ MkNotifyP
             { action = fromMaybe (toml ^. #action) mArgsAction,
-              system = altNothing' #system (toml ^. #system),
+              system = altDefault' defaultNotifySystem #system (toml ^. #system),
               timeout = altDefault' (afromInteger 10) #timeout (toml ^. #timeout)
             }
   where
     altDefault' :: a -> Lens' NotifyArgs (WithDisable (Maybe a)) -> Maybe a -> a
     altDefault' defA = altDefault defA args
-
-    altNothing' :: Lens' NotifyArgs (WithDisable (Maybe a)) -> Maybe a -> Maybe a
-    altNothing' = altNothing args
 
 instance DecodeTOML NotifyToml where
   tomlDecoder =

@@ -7,27 +7,35 @@ module Integration.Examples (specs) where
 import Data.IORef qualified as IORef
 import Integration.Prelude
 import Integration.Utils
-  ( SimpleEnv
-      ( MkSimpleEnv,
-        cmdLog,
-        cmdLogLineTrunc,
+  ( defaultConfig,
+    makeConfigAndAssertEq,
+    notifySystemOSDBus,
+    notifySystemOSNotifySend,
+    runConfigIO,
+  )
+import Shrun.Configuration.Data.CmdLogging
+  ( CmdLoggingP (MkCmdLoggingP, lineTrunc, stripControl),
+  )
+import Shrun.Configuration.Data.Core
+  ( CoreConfigP
+      ( MkCoreConfigP,
         cmdLogSize,
-        cmdLogStripControl,
+        cmdLogging,
         cmdNameTrunc,
-        commands,
-        fileLog,
-        fileLogStripControl,
+        fileLogging,
         init,
         keyHide,
-        notifyAction,
-        notifySystem,
-        notifyTimeout,
+        notify,
         pollInterval,
         timeout,
         timerFormat
       ),
-    makeEnvAndVerify,
-    runConfigIO,
+  )
+import Shrun.Configuration.Data.MergedConfig
+  ( MergedConfig (MkMergedConfig, commands, coreConfig),
+  )
+import Shrun.Configuration.Data.Notify
+  ( NotifyP (MkNotifyP, action, system, timeout),
   )
 import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
@@ -47,14 +55,12 @@ specs =
       examplesDefault
     ]
 
-{- ORMOLU_DISABLE -}
-
 examplesConfig :: TestTree
 examplesConfig = testPropertyNamed desc "examplesConfig"
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
-    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
@@ -62,59 +68,44 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
     desc = "examples/config.toml is valid"
     args = ["-c", getExampleConfigOS "config", "cmd1"]
     expected =
-      MkSimpleEnv
-        { timeout = Just 20,
-          init = Just ". examples/bashrc",
-          keyHide = KeyHideOff,
-          pollInterval = 100,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Just 80,
-          cmdLogSize = MkBytes 2048,
-          cmdLog = True,
-          cmdLogLineTrunc = Just 150,
-          cmdLogStripControl = Just StripControlSmart,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifyAction = Just NotifyCommand,
-#if OSX
-          notifySystem = Just AppleScript,
-#else
-          notifySystem = Just NotifySend,
-#endif
-          notifyTimeout = Just NotifyTimeoutNever,
+      MkMergedConfig
+        { coreConfig =
+            MkCoreConfigP
+              { timeout = Just 20,
+                init = Just ". examples/bashrc",
+                keyHide = KeyHideOff,
+                pollInterval = 100,
+                cmdLogSize = MkBytes 2048,
+                timerFormat = ProseCompact,
+                cmdNameTrunc = Just 80,
+                cmdLogging =
+                  Just
+                    $ MkCmdLoggingP
+                      { stripControl = StripControlSmart,
+                        lineTrunc = Just 150
+                      },
+                fileLogging = Nothing,
+                notify =
+                  Just
+                    $ MkNotifyP
+                      { action = NotifyCommand,
+                        system = notifySystemOSNotifySend,
+                        timeout = NotifyTimeoutNever
+                      }
+              },
           commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
         }
-
-{- ORMOLU_ENABLE -}
 
 examplesDefault :: TestTree
 examplesDefault = testPropertyNamed desc "examplesDefault"
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
-    makeEnvAndVerify args (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
   where
     desc = "examples/default.toml is valid"
     args = ["-c", getExampleConfig "default", "cmd"]
-    expected =
-      MkSimpleEnv
-        { timeout = Nothing,
-          init = Nothing,
-          keyHide = KeyHideOff,
-          pollInterval = 10_000,
-          timerFormat = ProseCompact,
-          cmdNameTrunc = Nothing,
-          cmdLogSize = MkBytes 1024,
-          cmdLog = False,
-          cmdLogStripControl = Nothing,
-          cmdLogLineTrunc = Nothing,
-          fileLog = False,
-          fileLogStripControl = Nothing,
-          notifySystem = Nothing,
-          notifyAction = Nothing,
-          notifyTimeout = Nothing,
-          commands = "cmd" :<|| []
-        }
+    expected = defaultConfig

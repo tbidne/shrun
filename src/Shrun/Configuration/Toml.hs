@@ -3,6 +3,7 @@
 
 module Shrun.Configuration.Toml
   ( Toml (..),
+    defaultToml,
   )
 where
 
@@ -72,6 +73,25 @@ instance DecodeTOML Toml where
               },
           legend
         }
+
+defaultToml :: Toml
+defaultToml =
+  MkToml
+    { coreConfig =
+        MkCoreConfigP
+          { timeout = Nothing,
+            init = Nothing,
+            keyHide = Nothing,
+            pollInterval = Nothing,
+            cmdLogSize = Nothing,
+            timerFormat = Nothing,
+            cmdNameTrunc = Nothing,
+            cmdLogging = Nothing,
+            fileLogging = Nothing,
+            notify = Nothing
+          },
+      legend = Nothing
+    }
 
 decodeTimeout :: Decoder (Maybe Timeout)
 decodeTimeout = getFieldOptWith tomlDecoder "timeout"

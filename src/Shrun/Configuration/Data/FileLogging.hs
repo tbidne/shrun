@@ -25,7 +25,7 @@ import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Data.FileMode (FileMode (FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault)
 import Shrun.Data.FileSizeMode (FileSizeMode)
-import Shrun.Data.StripControl (StripControl (StripControlAll, StripControlSmart))
+import Shrun.Data.StripControl (StripControl (StripControlAll))
 import Shrun.Prelude
 
 type FileLogPathF :: ConfigPhase -> Type
@@ -86,7 +86,7 @@ mergeFileLogging cli mToml =
           $ MkFileLoggingP
             { path = p,
               stripControl =
-                defaultIfDisabled StripControlSmart (cli ^. #stripControl),
+                defaultIfDisabled StripControlAll (cli ^. #stripControl),
               mode =
                 defaultIfDisabled FileModeWrite (cli ^. #mode),
               sizeMode = nothingIfDisabled (cli ^. #sizeMode)

@@ -59,13 +59,13 @@ tomlToNotifyEnvOS ::
   NotifyMerged ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnvOS (notifyToml)
-  | is (#system %? _DBus) notifyToml = throwM OsxNotifySystemMismatchDBus
-  | is (#system %? _NotifySend) notifyToml = throwM OsxNotifySystemMismatchNotifySend
+  | is (#system % _DBus) notifyToml = throwM OsxNotifySystemMismatchDBus
+  | is (#system % _NotifySend) notifyToml = throwM OsxNotifySystemMismatchNotifySend
   | otherwise = case advancePhase systemP1 of
     Left sys -> pure $ Just $ mkNotify notifyToml sys
     Right mkDBus -> Just . mkNotify notifyToml . mkDBus <$> connectSession
     where
-      systemP1 = fromMaybe AppleScript (notifyToml ^. #system)
+      systemP1 = notifyToml ^. #system
 
 #else
 
@@ -77,12 +77,12 @@ tomlToNotifyEnvOS ::
   NotifyMerged ->
   m (Maybe NotifyEnv)
 tomlToNotifyEnvOS notifyToml
-  | is (#system %? _AppleScript) notifyToml = throwM LinuxNotifySystemMismatchAppleScript
+  | is (#system % _AppleScript) notifyToml = throwM LinuxNotifySystemMismatchAppleScript
   | otherwise = case advancePhase systemP1 of
     Left sys -> pure $ Just $ mkNotify notifyToml sys
     Right mkDBus -> Just . mkNotify notifyToml . mkDBus <$> connectSession
     where
-      systemP1 = fromMaybe (DBus ()) (notifyToml ^. #system)
+      systemP1 = notifyToml ^. #system
 
 #endif
 

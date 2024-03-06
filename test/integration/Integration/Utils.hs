@@ -1,16 +1,25 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Integration.Utils
-  ( ConfigIO (..),
+  ( -- * Running
+    ConfigIO (..),
     runConfigIO,
     NoConfigIO (..),
     runNoConfigIO,
-    SimpleEnv (..),
-    makeEnvAndVerify,
+
+    -- * Assertions
+    makeConfigAndAssertEq,
+    makeConfigAndAssertFieldEq,
+    CompareField (..),
+    (^=@),
+    (^?=@),
+
+    -- * Misc
+    defaultConfig,
+    notifySystemOSDBus,
+    notifySystemOSNotifySend,
   )
 where
 
@@ -25,7 +34,7 @@ import DBus.Client
         clientThreadID
       ),
   )
-import Data.Maybe (isJust)
+import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader
   ( MonadPathReader
@@ -34,27 +43,17 @@ import Effects.FileSystem.PathReader
       ),
   )
 import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.Terminal (MonadTerminal (getChar, getTerminalSize), Window (Window))
-import Integration.Prelude as X
-import Shrun.Data.Command (CommandP1)
-import Shrun.Data.KeyHide (KeyHide)
-import Shrun.Data.PollInterval (PollInterval)
-import Shrun.Data.StripControl (StripControl)
-import Shrun.Data.Timeout (Timeout)
-import Shrun.Data.TimerFormat (TimerFormat)
-import Shrun.Data.Truncation (TruncRegion (TCmdLine, TCmdName), Truncation)
-import Shrun.Env (withEnv)
-import Shrun.Env.Types
-  ( Env,
+import Effects.System.Terminal
+  ( MonadTerminal (getChar, getTerminalSize),
+    Window (Window),
   )
+import Integration.Prelude as X
+import Shrun.Configuration.Data.MergedConfig (MergedConfig, defaultMergedConfig)
+import Shrun.Env qualified as Env
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession, notify))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend (notify))
-import Shrun.Notify.Types
-  ( NotifyAction,
-    NotifySystem (AppleScript, DBus, NotifySend),
-    NotifySystemP1,
-    NotifyTimeout,
-  )
+import Shrun.Notify.Types (NotifySystemP1)
+import Shrun.Notify.Types qualified as Notify.Types
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
@@ -158,88 +157,115 @@ instance MonadPathReader NoConfigIO where
 
 deriving via ConfigIO instance MonadTerminal NoConfigIO
 
--- | Used to check our result Env against our expectations. Very similar to
--- real Env, except some types are simplified:
---
--- * FileLogging is merely a bool since we just want to check off/on, not
---   equality with a file handle or queue.
-data SimpleEnv = MkSimpleEnv
-  { timeout :: Maybe Timeout,
-    init :: Maybe Text,
-    keyHide :: KeyHide,
-    pollInterval :: PollInterval,
-    cmdLogSize :: Bytes B Natural,
-    timerFormat :: TimerFormat,
-    cmdNameTrunc :: Maybe (Truncation TCmdName),
-    cmdLog :: Bool,
-    cmdLogLineTrunc :: Maybe (Truncation TCmdLine),
-    cmdLogStripControl :: Maybe StripControl,
-    fileLog :: Bool,
-    fileLogStripControl :: Maybe StripControl,
-    notifySystem :: Maybe NotifySystemP1,
-    notifyAction :: Maybe NotifyAction,
-    notifyTimeout :: Maybe NotifyTimeout,
-    commands :: NESeq CommandP1
-  }
-  deriving stock (Eq, Show)
-
-makeFieldLabelsNoPrefix ''SimpleEnv
-
-simplifyEnv :: Getter Env SimpleEnv
-simplifyEnv = to $ \env ->
-  MkSimpleEnv
-    { timeout = env ^. #timeout,
-      init = env ^. #init,
-      keyHide = env ^. (#logging % #keyHide),
-      pollInterval = env ^. (#logging % #pollInterval),
-      cmdLogSize = env ^. (#logging % #cmdLogSize),
-      timerFormat = env ^. (#logging % #timerFormat),
-      cmdLog = is (#logging % #cmdLog % _Just) env,
-      cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
-      cmdLogLineTrunc = env ^? (#logging % #cmdLog %? #lineTrunc % _Just),
-      cmdLogStripControl = env ^? (#logging % #cmdLog %? #stripControl),
-      fileLog = isJust (env ^. (#logging % #fileLog)),
-      fileLogStripControl = env ^? (#logging % #fileLog %? #stripControl),
-      notifySystem = mkNotifySystem env,
-      notifyAction = env ^? (#notifyEnv %? #action),
-      notifyTimeout = env ^? (#notifyEnv %? #timeout),
-      commands = env ^. #commands
-    }
-  where
-    -- Convert Phase2 back to Phase1 for Eq
-    mkNotifySystem e = case e ^? (#notifyEnv %? #system) of
-      Nothing -> Nothing
-      Just NotifySend -> Just NotifySend
-      Just (DBus _) -> Just (DBus ())
-      Just AppleScript -> Just AppleScript
-
--- | Makes an 'Env' for the given monad and compares the result with the
--- expected params.
-makeEnvAndVerify ::
+-- | Makes a 'MergedConfig' for the given monad and compares the result with
+-- the expectation.
+makeConfigAndAssertEq ::
   forall m.
   ( MonadDBus m,
     MonadEnv m,
     MonadFileReader m,
-    MonadFileWriter m,
-    MonadHandleWriter m,
     MonadMask m,
     MonadOptparse m,
     MonadPathReader m,
-    MonadPathWriter m,
-    MonadSTM m,
     MonadTerminal m
   ) =>
   -- | List of CLI arguments.
   List String ->
   -- | Natural transformation from m to IO.
   (forall x. m x -> IO x) ->
-  -- | Expectation
-  SimpleEnv ->
+  -- | Expectation.
+  MergedConfig ->
   PropertyT IO ()
-makeEnvAndVerify args toIO expected = do
-  result <- liftIO $ toIO $ withArgs args (withEnv $ \x -> pure x)
+makeConfigAndAssertEq args toIO expected = do
+  result <- makeMergedConfig args toIO
+  expected === result
+
+-- | Used for testing a selection of MergedConfig's fields rather than the
+-- entire structure.
+data CompareField where
+  -- | Tests a lens.
+  MkCompareField :: (Eq a, Show a) => Lens' MergedConfig a -> a -> CompareField
+  -- | Tests an affine traversal.
+  MkCompareFieldMaybe ::
+    (Eq a, Show a) =>
+    AffineTraversal' MergedConfig a ->
+    Maybe a ->
+    CompareField
+
+-- | Alias for 'MkCompareField'.
+(^=@) :: (Eq a, Show a) => Lens' MergedConfig a -> a -> CompareField
+l ^=@ r = MkCompareField l r
+
+infix 1 ^=@
+
+-- | Alias for 'MkCompareFieldMaybe'.
+(^?=@) :: (Eq a, Show a) => AffineTraversal' MergedConfig a -> Maybe a -> CompareField
+l ^?=@ r = MkCompareFieldMaybe l r
+
+infix 1 ^?=@
+
+-- | Like 'makeConfigAndAssertEq' except we only compare select fields.
+makeConfigAndAssertFieldEq ::
+  forall m.
+  ( MonadDBus m,
+    MonadEnv m,
+    MonadFileReader m,
+    MonadMask m,
+    MonadOptparse m,
+    MonadPathReader m,
+    MonadTerminal m
+  ) =>
+  -- | List of CLI arguments.
+  List String ->
+  -- | Natural transformation from m to IO.
+  (forall x. m x -> IO x) ->
+  -- | List of expectations.
+  List CompareField ->
+  PropertyT IO ()
+makeConfigAndAssertFieldEq args toIO comparisons = do
+  result <- makeMergedConfig args toIO
+
+  for_ comparisons $ \case
+    MkCompareField l expected -> expected === result ^. l
+    MkCompareFieldMaybe l expected -> expected === result ^? l
+
+makeMergedConfig ::
+  forall m.
+  ( MonadDBus m,
+    MonadEnv m,
+    MonadFileReader m,
+    MonadMask m,
+    MonadOptparse m,
+    MonadPathReader m,
+    MonadTerminal m
+  ) =>
+  -- | List of CLI arguments.
+  List String ->
+  -- | Natural transformation from m to IO.
+  (forall x. m x -> IO x) ->
+  PropertyT IO MergedConfig
+makeMergedConfig args toIO = do
+  result <- liftIO $ toIO $ withArgs args Env.getMergedConfig
 
   annotateShow args
-  annotateShow result
 
-  expected === result ^. simplifyEnv
+  pure result
+
+-- | Convenience for tests expecting a default config. The test should
+-- pass a single command 'cmd'.
+defaultConfig :: MergedConfig
+defaultConfig = defaultMergedConfig $ NESeq.singleton "cmd"
+
+notifySystemOSDBus :: NotifySystemP1
+#if OSX
+notifySystemOSDBus = Notify.Types.AppleScript
+#else
+notifySystemOSDBus = Notify.Types.DBus ()
+#endif
+
+notifySystemOSNotifySend :: NotifySystemP1
+#if OSX
+notifySystemOSNotifySend = Notify.Types.AppleScript
+#else
+notifySystemOSNotifySend = Notify.Types.NotifySend
+#endif
