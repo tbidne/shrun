@@ -10,10 +10,10 @@ module Shrun.Configuration.Data.CmdLogging
   )
 where
 
+import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    ConfigPhaseMaybeF,
     WithDisable,
     altDefault,
     altNothing,
@@ -22,14 +22,24 @@ import Shrun.Configuration.Data.ConfigPhase
     _MkWithDisable,
   )
 import Shrun.Data.StripControl (StripControl (StripControlSmart))
-import Shrun.Data.Truncation (LineTruncation)
+import Shrun.Data.Truncation
+  ( LineTruncation (Detected, Undetected),
+    TruncRegion (TCmdLine),
+    Truncation (MkTruncation),
+  )
 import Shrun.Prelude
+
+type CmdLogLineTruncF :: ConfigPhase -> Type
+type family CmdLogLineTruncF p where
+  CmdLogLineTruncF ConfigPhaseArgs = WithDisable (Maybe LineTruncation)
+  CmdLogLineTruncF ConfigPhaseToml = Maybe LineTruncation
+  CmdLogLineTruncF ConfigPhaseMerged = Maybe (Truncation TCmdLine)
 
 -- | Holds command logging config.
 type CmdLoggingP :: ConfigPhase -> Type
 data CmdLoggingP p = MkCmdLoggingP
   { stripControl :: ConfigPhaseF p StripControl,
-    lineTrunc :: ConfigPhaseMaybeF p LineTruncation
+    lineTrunc :: CmdLogLineTruncF p
   }
 
 makeFieldLabelsNoPrefix ''CmdLoggingP
@@ -54,30 +64,48 @@ deriving stock instance Show (CmdLoggingP ConfigPhaseMerged)
 
 -- | Merges args and toml configs.
 mergeCmdLogging ::
+  ( MonadTerminal m
+  ) =>
   WithDisable Bool ->
   CmdLoggingArgs ->
   Maybe CmdLoggingToml ->
-  Maybe CmdLoggingMerged
+  m (Maybe CmdLoggingMerged)
 mergeCmdLogging withDisable args mToml =
   case (withDisable ^. _MkWithDisable, mToml) of
     -- 1. Logging globally disabled -> disable
-    ((_, True), _) -> Nothing
+    ((_, True), _) -> pure Nothing
     -- 2. Neither Args nor Toml specifies logging -> disable
-    ((False, False), Nothing) -> Nothing
+    ((False, False), Nothing) -> pure Nothing
     -- 3. Args but no Toml -> Use Args
-    ((True, False), Nothing) ->
-      Just
+    ((True, False), Nothing) -> do
+      cmdLogLineTrunc <- case nothingIfDisabled (args ^. #lineTrunc) of
+        Just Detected -> Just . MkTruncation <$> getTerminalWidth
+        Just (Undetected x) -> pure $ Just x
+        Nothing -> pure Nothing
+
+      pure
+        $ Just
         $ MkCmdLoggingP
           { stripControl = defaultIfDisabled StripControlSmart (args ^. #stripControl),
-            lineTrunc = nothingIfDisabled (args ^. #lineTrunc)
+            lineTrunc = cmdLogLineTrunc
           }
     -- 4. Maybe Args and Toml -> Merge (doesn't matter if Args specifies logging
     --    since we only need at least one of Args + Toml, and Toml does)
-    (_, Just toml) ->
-      Just
+    (_, Just toml) -> do
+      cmdLogLineTrunc <- case altNothing' #lineTrunc (toml ^. #lineTrunc) of
+        Just Detected -> Just . MkTruncation <$> getTerminalWidth
+        Just (Undetected x) -> pure $ Just x
+        Nothing -> pure Nothing
+
+      pure
+        $ Just
         $ MkCmdLoggingP
-          { stripControl = altDefault' StripControlSmart #stripControl (toml ^. #stripControl),
-            lineTrunc = altNothing' #lineTrunc (toml ^. #lineTrunc)
+          { stripControl =
+              altDefault'
+                StripControlSmart
+                #stripControl
+                (toml ^. #stripControl),
+            lineTrunc = cmdLogLineTrunc
           }
   where
     altDefault' :: a -> Lens' CmdLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a

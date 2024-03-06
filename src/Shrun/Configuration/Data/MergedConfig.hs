@@ -7,6 +7,7 @@ module Shrun.Configuration.Data.MergedConfig
 where
 
 import Shrun.Configuration.Data.Core (CoreConfigMerged)
+import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Legend (KeyVal)
 import Shrun.Prelude
 
@@ -17,7 +18,7 @@ data MergedConfig = MkMergedConfig
     -- | Legend.
     legend :: Maybe (List KeyVal),
     -- | Commands.
-    commands :: NESeq Text
+    commands :: NESeq CommandP1
   }
   deriving stock (Eq, Show)
 

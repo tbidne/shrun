@@ -3,8 +3,12 @@
 
 -- | Provides functions for creating 'Env' from CLI/Toml configuration.
 module Shrun.Env
-  ( withEnv,
+  ( -- * Running with Env
+    withEnv,
     makeEnvAndShrun,
+
+    -- * Misc
+    getMergedConfig,
   )
 where
 
@@ -23,7 +27,6 @@ import Effects.FileSystem.PathWriter
       ),
   )
 import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.Terminal (getTerminalWidth)
 import Shrun (runShellT, shrun)
 import Shrun.Configuration (mergeConfig)
 import Shrun.Configuration.Args.Parsing
@@ -31,8 +34,6 @@ import Shrun.Configuration.Args.Parsing
   )
 import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
-import Shrun.Configuration.Legend (linesToMap, translateCommands)
-import Shrun.Data.Command (Command (MkCommand))
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.FileSizeMode
@@ -42,10 +43,6 @@ import Shrun.Data.FileSizeMode
       ),
   )
 import Shrun.Data.StripControl (StripControl)
-import Shrun.Data.Truncation
-  ( LineTruncation (Detected, Undetected),
-    Truncation (MkTruncation),
-  )
 import Shrun.Env.Notify qualified as EnvNotify
 import Shrun.Env.Types
   ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
@@ -123,7 +120,19 @@ withEnv ::
   ) =>
   (Env -> m a) ->
   m a
-withEnv onEnv = do
+withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
+
+-- | Creates a 'MergedConfig' from CLI args and TOML config.
+getMergedConfig ::
+  ( MonadDBus m,
+    MonadFileReader m,
+    MonadOptparse m,
+    MonadPathReader m,
+    MonadThrow m,
+    MonadTerminal m
+  ) =>
+  m MergedConfig
+getMergedConfig = do
   args <- execParser parserInfoArgs
 
   mTomlConfig <-
@@ -145,12 +154,13 @@ withEnv onEnv = do
           if b
             then Just <$> readConfig path
             else do
-              putTextLn ("No default config found at: " <> T.pack (FsUtils.decodeOsToFpShow path))
+              putTextLn
+                ( "No default config found at: "
+                    <> T.pack (FsUtils.decodeOsToFpShow path)
+                )
               pure Nothing
 
-  let mergedConfig = mergeConfig args mTomlConfig
-
-  fromMergedConfig mergedConfig onEnv
+  mergeConfig args mTomlConfig
   where
     readConfig fp = do
       contents <- readFileUtf8ThrowM fp
@@ -172,19 +182,6 @@ fromMergedConfig ::
   (Env -> m a) ->
   m a
 fromMergedConfig cfg onEnv = do
-  cmdLogLineTrunc <- case cfg ^? (#coreConfig % #cmdLogging %? #lineTrunc % _Just) of
-    Just Detected -> Just . MkTruncation <$> getTerminalWidth
-    Just (Undetected x) -> pure $ Just x
-    Nothing -> pure Nothing
-
-  commands' <- case cfg ^. #legend of
-    Nothing -> pure $ MkCommand Nothing <$> cmdsText
-    Just aliases -> case linesToMap aliases of
-      Right mp -> case translateCommands mp cmdsText of
-        Right cmds -> pure cmds
-        Left err -> throwM err
-      Left err -> throwM err
-
   completedCmds' <- newTVarA Seq.empty
   anyError <- newTVarA False
 
@@ -213,26 +210,24 @@ fromMergedConfig cfg onEnv = do
                     cfg ^. (#coreConfig % #cmdLogging) <&> \cmdLog ->
                       MkCmdLogging
                         { stripControl = cmdLog ^. #stripControl,
-                          lineTrunc = cmdLogLineTrunc
+                          lineTrunc = cfg ^? (#coreConfig % #cmdLogging %? #lineTrunc % _Just)
                         },
                   consoleLog,
                   fileLog =
-                    mFileLogging <&> \log ->
+                    mFileLogging <&> \(h, q, sc) ->
                       MkFileLogging
-                        { log = (log ^. _1, log ^. _2),
-                          stripControl = log ^. _3
+                        { log = (h, q),
+                          stripControl = sc
                         }
                 },
             anyError,
             completedCmds = completedCmds',
-            commands = commands'
+            commands = cfg ^. #commands
           }
 
   consoleQueue <- newTBQueueA 1000
 
   withMLogging cfg $ \h -> onEnv (envWithLogging h consoleQueue)
-  where
-    cmdsText = cfg ^. #commands
 
 type MLogging = Maybe (Tuple3 Handle (TBQueue FileLog) StripControl)
 
@@ -271,7 +266,8 @@ withMLogging cfg onLogging = case cfg ^. (#coreConfig % #fileLogging) of
     handleLogFileSize cfg fp
     fileQueue <- newTBQueueA 1000
 
-    withBinaryFile fp ioMode $ \h -> onLogging (Just (h, fileQueue, fileLogging ^. #stripControl))
+    withBinaryFile fp ioMode $ \h ->
+      onLogging (Just (h, fileQueue, fileLogging ^. #stripControl))
 
 handleLogFileSize ::
   ( HasCallStack,
