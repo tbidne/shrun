@@ -162,8 +162,8 @@ val = 'b'
 
 # Sets a threshold for the file log size, upon which we either print a
 # warning or delete the file, if it is exceeded. Format is value and units
-# e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to no warnings
-# nor deletions.
+# e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning at
+# 50 mb. Can be disabled with "nothing".
 #size-mode = "warn 1 g"
 
 # If enabled, sends off notifications when commands/shrun complete.

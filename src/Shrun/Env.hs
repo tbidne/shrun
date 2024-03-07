@@ -39,6 +39,7 @@ import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.FileSizeMode
   ( FileSizeMode
       ( FileSizeModeDelete,
+        FileSizeModeNothing,
         FileSizeModeWarn
       ),
   )
@@ -289,8 +290,9 @@ handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
       when (fileSize > delSize) $ do
         putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
         removeFile fp
+    FileSizeModeNothing -> pure ()
   where
-    mfileSizeMode = cfg ^? (#coreConfig % #fileLogging %? #sizeMode % _Just)
+    mfileSizeMode = cfg ^? (#coreConfig % #fileLogging %? #sizeMode)
 
     sizeWarning warnSize fileSize =
       mconcat

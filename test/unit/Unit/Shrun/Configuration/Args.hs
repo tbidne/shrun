@@ -20,12 +20,7 @@ import Shrun.Configuration.Data.FileLogging (FileLoggingArgs)
 import Shrun.Configuration.Data.Notify (NotifyArgs)
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
-import Shrun.Data.FileSizeMode
-  ( FileSizeMode
-      ( FileSizeModeDelete,
-        FileSizeModeWarn
-      ),
-  )
+import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeDelete, FileSizeModeNothing, FileSizeModeWarn))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOn))
 import Shrun.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
@@ -382,6 +377,7 @@ fileLogSizeModeSpecs =
     "File log size mode parsing"
     [ parseFileLogSizeWarn,
       parseFileLogSizeDelete,
+      parseFileLogSizeNothing,
       parseNoFileLogSizeMode
     ]
 
@@ -406,6 +402,17 @@ parseFileLogSizeDelete =
       updateDefFileLogArgs
         #sizeMode
         (FileSizeModeDelete $ MkBytes 2_400)
+
+parseFileLogSizeNothing :: TestTree
+parseFileLogSizeNothing =
+  testPropertyNamed "Should parse --file-log-size-mode nothing" "parseFileLogSizeNothing"
+    $ verifyResult argList expected
+  where
+    argList = ["--file-log-size-mode", "nothing", "command"]
+    expected =
+      updateDefFileLogArgs
+        #sizeMode
+        FileSizeModeNothing
 
 parseNoFileLogSizeMode :: TestTree
 parseNoFileLogSizeMode =

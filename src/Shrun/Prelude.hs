@@ -58,7 +58,12 @@ import Control.Monad.Trans as X (MonadTrans (lift))
 import Data.Bifunctor as X (Bifunctor)
 import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
-import Data.Bytes as X (Bytes (MkBytes), Size (B), _MkBytes)
+import Data.Bytes as X
+  ( Bytes (MkBytes),
+    FromInteger (afromInteger),
+    Size (B),
+    _MkBytes,
+  )
 import Data.Char as X (Char)
 import Data.Either as X (Either (Left, Right))
 import Data.Eq as X (Eq ((/=), (==)))

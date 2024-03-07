@@ -42,7 +42,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadTypedProcess,
       MonadReader env,
       MonadSTM,
-      MonadTerminal,
       MonadThread,
       MonadTime,
       MonadThrow

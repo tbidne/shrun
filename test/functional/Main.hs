@@ -5,6 +5,7 @@ module Main (main) where
 
 import Effects.FileSystem.PathReader qualified as Dir
 import Effects.FileSystem.PathWriter qualified as Dir
+import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Examples qualified as Examples
 import Functional.Miscellaneous qualified as Miscellaneous
 import Functional.Notify qualified as Notify
@@ -17,6 +18,8 @@ import Functional.TestArgs (TestArgs (MkTestArgs, configPath, rootDir, tmpDir))
 import Functional.Timeout qualified as Timeout
 import Functional.Truncation qualified as Truncation
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
+import System.Environment.Guard (guardOrElse')
+import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
 import Test.Tasty qualified as Tasty
 
 -- | Entry point for functional tests.
@@ -56,13 +59,31 @@ setup = do
         configPath = lp
       }
 
-teardown :: TestArgs -> IO ()
-teardown testArgs = do
-  let root = testArgs ^. #rootDir
-      cwd = testArgs ^. #tmpDir
+{-
+teardown :: OsPath -> IO ()
+teardown testDir = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
+  where
+    cleanup = WDir.removePathForcibly testDir
+    doNothing =
+      putStrLn
+        $ "*** Not cleaning up tmp dir: "
+        <> FsUtils.decodeOsToFpShow testDir
+-}
 
-  void $ tryAny $ do
-    removeDirectoryIfExists cwd
-    removeDirectoryIfExists $ root </> [osp|test/functional|]
-    removeDirectoryIfExists $ root </> [osp|test|]
-    removeDirectoryIfExists root
+teardown :: TestArgs -> IO ()
+teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
+  where
+    cleanup = do
+      let root = testArgs ^. #rootDir
+          cwd = testArgs ^. #tmpDir
+
+      void $ tryAny $ do
+        removeDirectoryIfExists cwd
+        removeDirectoryIfExists $ root </> [osp|test/functional|]
+        removeDirectoryIfExists $ root </> [osp|test|]
+        removeDirectoryIfExists root
+
+    doNothing =
+      putStrLn
+        $ "*** Not cleaning up tmp dir: "
+        <> FsUtils.decodeOsToFpShow (testArgs ^. #tmpDir)

@@ -1,2 +1,3 @@
 [file-log]
 path = "apath"
+size-mode = "nothing"

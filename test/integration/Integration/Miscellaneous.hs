@@ -12,6 +12,7 @@ import Integration.Prelude
 import Integration.Utils
   ( makeConfigAndAssertFieldEq,
     runConfigIO,
+    runNoConfigIO,
     (^=@),
     (^?=@),
   )
@@ -20,6 +21,7 @@ import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Data.MergedConfig qualified as Merged
 import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeNothing))
 import Shrun.Env (withEnv)
 
 specs :: IO TestArgs -> TestTree
@@ -31,6 +33,7 @@ specs testArgs =
       usesRecursiveCmdExample,
       usesRecursiveCmd,
       lineTruncDetect,
+      testFileSizeModeNothing,
       testDefaultConfigs
     ]
 
@@ -154,6 +157,19 @@ lineTruncDetect = testPropertyNamed desc "lineTruncDetect" $ property $ do
     args = ["-c", getIntConfig "misc", "cmd1"]
 
     expected = [#coreConfig % #cmdLogging %? #lineTrunc % _Just ^?=@ Just 87]
+
+testFileSizeModeNothing :: TestTree
+testFileSizeModeNothing = testPropertyNamed desc "testFileSizeModeNothing" $ property $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  logs === []
+  where
+    desc = "size-mode reads 'nothing'"
+    args = ["-c", getIntConfig "basic-file-log", "cmd"]
+
+    expected = [#coreConfig % #fileLogging %? #sizeMode ^?=@ Just FileSizeModeNothing]
 
 newtype TermIO a = MkTermIO (IO a)
   deriving (Applicative, Functor, Monad, MonadThrow) via IO

@@ -222,9 +222,24 @@ Note that lower values will increase CPU usage. In particular, 0 will max out a 
 
 ### File Log Size Mode
 
-**Arg:** `--file-log-size-mode <warn SIZE | delete SIZE>`
+**Arg:** `--file-log-size-mode <warn SIZE | delete SIZE | nothing>`
 
-**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`.
+**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`.
+
+**Exmaple:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log size_mode_warn.log --file-log-size-mode "warn 1 b" "sleep 2"</span>
+<span>Warning: log file 'size_mode_warn.log' has size: 11.00 b, but specified threshold is: 1.00 b.</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log size_mode_warn.log --file-log-size-mode nothing "sleep 2"</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+</pre>
 
 ## Log Formatting
 

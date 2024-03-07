@@ -145,7 +145,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                       { path = FPDefault,
                         stripControl = StripControlNone,
                         mode = FileModeAppend,
-                        sizeMode = Nothing
+                        sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
                       },
                 notify =
                   Just
@@ -227,7 +227,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                       { path = FPManual logPath,
                         stripControl = StripControlNone,
                         mode = FileModeAppend,
-                        sizeMode = Nothing
+                        sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
                       },
                 notify =
                   Just
@@ -293,7 +293,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
     expected =
       [ #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
         #coreConfig % #fileLogging %? #mode ^?=@ Just FileModeWrite,
-        #coreConfig % #fileLogging %? #sizeMode % _Just ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
+        #coreConfig % #fileLogging %? #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
       ]
 
 fileLogStripControlDefaultsAll :: TestTree

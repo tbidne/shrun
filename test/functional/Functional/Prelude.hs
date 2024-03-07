@@ -78,7 +78,6 @@ import Shrun.Notify.Types
   )
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
-import System.Environment qualified as SysEnv
 import System.Exit (ExitCode)
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
 import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))
@@ -174,7 +173,7 @@ runMaybeException ::
   List String ->
   IO (IORef (List Text), IORef (List ShrunNote))
 runMaybeException mException argList = do
-  SysEnv.withArgs argList $ Env.withEnv $ \env -> do
+  withArgs argList $ Env.withEnv $ \env -> do
     ls <- newIORef []
     consoleQueue <- newTBQueueA 1_000
     shrunNotes <- newIORef []

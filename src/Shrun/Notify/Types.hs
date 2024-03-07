@@ -43,7 +43,6 @@ where
 
 import DBus.Client (Client)
 import Data.Bits (toIntegralSized)
-import Data.Bytes (FromInteger (afromInteger))
 import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Word (Word16)

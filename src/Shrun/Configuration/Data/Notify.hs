@@ -10,7 +10,6 @@ module Shrun.Configuration.Data.Notify
   )
 where
 
-import Data.Bytes (FromInteger (afromInteger))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,

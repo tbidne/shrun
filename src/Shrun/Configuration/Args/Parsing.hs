@@ -435,7 +435,7 @@ fileLogSizeModeParser = withDisableParser mainParser "file-log-size-mode"
           ( mconcat
               [ OA.long "file-log-size-mode",
                 mkHelp helpTxt,
-                OA.metavar "(warn SIZE | delete SIZE)"
+                OA.metavar FileSizeMode.expectedStr
               ]
           )
     helpTxt =
@@ -443,7 +443,8 @@ fileLogSizeModeParser = withDisableParser mainParser "file-log-size-mode"
         [ "Sets a threshold for the file log size, upon which we either ",
           "print a warning or delete the file, if it is exceeded. ",
           "The SIZE should include the value and units e.g. ",
-          "warn 10 mb, warn 5 gigabytes, delete 20.5B."
+          "warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning ",
+          "at 50 mb."
         ]
 
 cmdLogParser :: Parser (WithDisable Bool)

@@ -13,18 +13,15 @@ where
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    ConfigPhaseMaybeF,
     WithDisable,
     altDefault,
-    altNothing,
     defaultIfDisabled,
-    nothingIfDisabled,
     _DisableA,
     _DisableBool,
   )
 import Shrun.Data.FileMode (FileMode (FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault)
-import Shrun.Data.FileSizeMode (FileSizeMode)
+import Shrun.Data.FileSizeMode (FileSizeMode, defaultFileSizeMode)
 import Shrun.Data.StripControl (StripControl (StripControlAll))
 import Shrun.Prelude
 
@@ -45,7 +42,7 @@ data FileLoggingP p = MkFileLoggingP
     -- | Mode to use with the file log.
     mode :: ConfigPhaseF p FileMode,
     -- | Threshold for when we should warn about the log file size.
-    sizeMode :: ConfigPhaseMaybeF p FileSizeMode
+    sizeMode :: ConfigPhaseF p FileSizeMode
   }
 
 makeFieldLabelsNoPrefix ''FileLoggingP
@@ -89,7 +86,8 @@ mergeFileLogging cli mToml =
                 defaultIfDisabled StripControlAll (cli ^. #stripControl),
               mode =
                 defaultIfDisabled FileModeWrite (cli ^. #mode),
-              sizeMode = nothingIfDisabled (cli ^. #sizeMode)
+              sizeMode =
+                defaultIfDisabled defaultFileSizeMode (cli ^. #sizeMode)
             }
       -- 4. Maybe CLI and Toml
       (mArgsPath, Just toml) ->
@@ -100,14 +98,12 @@ mergeFileLogging cli mToml =
                 altDefault' StripControlAll #stripControl (toml ^. #stripControl),
               mode =
                 altDefault' FileModeWrite #mode (toml ^. #mode),
-              sizeMode = altNothing' #sizeMode (toml ^. #sizeMode)
+              sizeMode =
+                altDefault' defaultFileSizeMode #sizeMode (toml ^. #sizeMode)
             }
   where
     altDefault' :: a -> Lens' FileLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a
     altDefault' defA = altDefault defA cli
-
-    altNothing' :: Lens' FileLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> Maybe a
-    altNothing' = altNothing cli
 
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =
