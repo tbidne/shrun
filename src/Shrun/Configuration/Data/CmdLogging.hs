@@ -29,6 +29,7 @@ import Shrun.Data.Truncation
   )
 import Shrun.Prelude
 
+-- Cmd log line truncation is truly optional, the default being none.
 type CmdLogLineTruncF :: ConfigPhase -> Type
 type family CmdLogLineTruncF p where
   CmdLogLineTruncF ConfigPhaseArgs = WithDisable (Maybe LineTruncation)

@@ -39,6 +39,7 @@ data CoreConfigP p = MkCoreConfigP
     -- | How often to poll commands for logs, in microseconds.
     pollInterval :: ConfigPhaseF p PollInterval,
     -- | Determines the max log size we read from commands in one go.
+    -- Note this is not on cmdLogging or fileLogging since it affects both.
     cmdLogSize :: ConfigPhaseF p (Bytes B Natural),
     -- | How to format the timer.
     timerFormat :: ConfigPhaseF p TimerFormat,

@@ -25,6 +25,25 @@ import Shrun.Data.FileSizeMode (FileSizeMode, defaultFileSizeMode)
 import Shrun.Data.StripControl (StripControl (StripControlAll))
 import Shrun.Prelude
 
+-- NOTE: [Args vs. Toml mandatory fields]
+--
+-- Some fields are mandatory e.g. FileLogging's path if we are actually
+-- doing file logging. The latter is determined by the FileLoggingP itself
+-- being Just (cf. Nothing), thus the path itself is mandatory on Toml and
+-- Merged.
+--
+-- So why is it optional on Args? Because Args' FileLoggingP is _always_
+-- present, unlike Toml and Merged's Maybe. We need this behavior because the
+-- former's fields can be used to override toml fields, even if file-logging is
+-- not specified on the CLI.
+--
+-- For example, 'shrun --file-log-mode write cmd' _should_ overwrite toml's
+-- file-log.mode even though we did not specify --file-log. Therefore Args'
+-- FileLoggingP always needs to be present hence all its field must be
+-- optional, even when some are mandatory on Merged.
+
+-- File logging's path is only optional for the Args. For Toml and merged,
+-- it must be present if file logging is active.
 type FileLogPathF :: ConfigPhase -> Type
 type family FileLogPathF p where
   FileLogPathF ConfigPhaseArgs = WithDisable (Maybe FilePathDefault)
