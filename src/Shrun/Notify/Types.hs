@@ -88,7 +88,7 @@ parseNotifyAction getTxt =
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
-notifyActionStr = "(final|command|all)"
+notifyActionStr = "(final |command | all)"
 
 -- | Maps DBus to its phased param.
 type family DBusF p where
@@ -160,7 +160,7 @@ parseNotifySystem getTxt =
 
 -- | Available 'NotifySystem' strings.
 notifySystemStr :: (IsString a) => a
-notifySystemStr = "(dbus|notify-send|apple-script)"
+notifySystemStr = "(dbus | notify-send | apple-script)"
 
 defaultNotifySystem :: NotifySystem Phase1
 #if OSX
@@ -216,7 +216,7 @@ parseNotifyTimeout getTxt =
 
 -- | Available 'NotifyTimeout' strings.
 notifyTimeoutStr :: (IsString a) => a
-notifyTimeoutStr = "(never|NAT)"
+notifyTimeoutStr = "(never | NAT)"
 
 -- | Holds notification config.
 data NotifyConfig = MkNotifyConfig

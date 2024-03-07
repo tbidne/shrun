@@ -55,7 +55,7 @@ parseTimerFormat getTxt =
 
 -- | Available 'TimerFormat' strings.
 timerFormatStr :: (IsString a) => a
-timerFormatStr = "(digital_compact|digital_full|prose_compact|prose_full)"
+timerFormatStr = "(digital_compact | digital_full | prose_compact | prose_full)"
 
 -- | Formats a relative time.
 formatRelativeTime :: TimerFormat -> RelativeTime -> Text

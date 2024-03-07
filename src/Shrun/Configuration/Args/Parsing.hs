@@ -126,14 +126,24 @@ parserInfoArgs =
     headerTxt = Just "Shrun: A tool for running shell commands concurrently."
     footerTxt = Just $ fromString versNum
     desc =
-      Chunk.paragraph
-        $ mconcat
-          [ "Shrun runs shell commands concurrently. In addition to providing ",
-            "basic timing and logging functionality, we also provide the ",
-            "ability to pass in a config file that can be used to define ",
-            "aliases for commands. See github.com/tbidne/shrun#README for ",
-            "full documentation."
-          ]
+      Chunk.vsepChunks
+        [ Chunk.paragraph
+            $ mconcat
+              [ "Shrun runs shell commands concurrently. In addition to providing ",
+                "basic timing and logging functionality, we also provide the ",
+                "ability to pass in a config file that can be used to define ",
+                "aliases for commands."
+              ],
+          Chunk.paragraph
+            $ mconcat
+              [ "In general, each option --foo has a --no-foo variant that ",
+                "disables cli and toml configuration for that field. For ",
+                "example, the --no-cmd-log option will instruct shrun to ",
+                "ignore both cli --cmd-log and toml cmd-log, ensuring the ",
+                "default behavior is used (i.e. no command logging)."
+              ],
+          Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation."
+        ]
 
 argsParser :: Parser Args
 argsParser = do
@@ -225,7 +235,7 @@ defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config" <> mkHelp h
     help = "Writes a default config.toml file to stdout."
 
 configParser :: Parser (WithDisable (Maybe OsPath))
-configParser = withDisableParserHelp mainParser "config" noHelpTxt
+configParser = withDisableParser mainParser "config"
   where
     mainParser =
       OA.optional
@@ -242,14 +252,8 @@ configParser = withDisableParserHelp mainParser "config" noHelpTxt
       mconcat
         [ "Path to TOML config file. If this argument is not given ",
           "we automatically look in the XDG config directory ",
-          "e.g. ~/.config/shrun/config.toml"
-        ]
-    noHelpTxt =
-      mconcat
-        [ "Overrides toml file config regardless of how it was obtained i.e. ",
-          "explicit --config or implicit reading of the XDG config file. ",
-          "Used for when a config file exists at the expected XDG ",
-          "location, but we want to ignore it."
+          "e.g. ~/.config/shrun/config.toml. The --no-config option disables ",
+          "--config and the automatic XDG lookup."
         ]
 
 timeoutParser :: Parser (WithDisable (Maybe Timeout))
@@ -630,7 +634,7 @@ withDisableParserHelp mainParser name helpTxt = do
         True
         ( mconcat
             [ OA.long $ "no-" ++ name,
-              OA.hidden,
+              OA.internal,
               mkHelp helpTxt
             ]
         )

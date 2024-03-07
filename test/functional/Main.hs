@@ -59,17 +59,6 @@ setup = do
         configPath = lp
       }
 
-{-
-teardown :: OsPath -> IO ()
-teardown testDir = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
-  where
-    cleanup = WDir.removePathForcibly testDir
-    doNothing =
-      putStrLn
-        $ "*** Not cleaning up tmp dir: "
-        <> FsUtils.decodeOsToFpShow testDir
--}
-
 teardown :: TestArgs -> IO ()
 teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
