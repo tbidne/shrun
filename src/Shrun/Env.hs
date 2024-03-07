@@ -33,6 +33,8 @@ import Shrun.Configuration.Args.Parsing
   ( parserInfoArgs,
   )
 import Shrun.Configuration.Data.ConfigPhase
+  ( WithDisable (Disabled, With),
+  )
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
@@ -137,10 +139,10 @@ getMergedConfig = do
   args <- execParser parserInfoArgs
 
   mTomlConfig <-
-    if args ^. (#configPath % _DisableBool)
-      then -- 1. If noConfig is true then we ignore all toml config
-        pure Nothing
-      else case args ^. (#configPath % _DisableA) of
+    case args ^. #configPath of
+      -- 1. If noConfig is true then we ignore all toml config
+      Disabled -> pure Nothing
+      With mConfigPath -> case mConfigPath of
         -- 2. noConfig is false and toml config explicitly set: try reading
         --    (all errors rethrown)
         Just f -> readConfig f

@@ -40,7 +40,7 @@ import Shrun.Configuration.Data.CmdLogging
   ( CmdLoggingArgs,
     CmdLoggingP (MkCmdLoggingP, lineTrunc, stripControl),
   )
-import Shrun.Configuration.Data.ConfigPhase (WithDisable (MkWithDisable))
+import Shrun.Configuration.Data.ConfigPhase (WithDisable (Disabled, With))
 import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
@@ -626,7 +626,10 @@ withDisableParserHelp :: Parser a -> String -> String -> Parser (WithDisable a)
 withDisableParserHelp mainParser name helpTxt = do
   x <- mainParser
   y <- noParser
-  pure $ MkWithDisable (x, y)
+  pure
+    $ if y
+      then Disabled
+      else With x
   where
     noParser =
       OA.flag

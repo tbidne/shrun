@@ -11,10 +11,6 @@ import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Args.Parsing (parserInfoArgs)
 import Shrun.Configuration.Data.CmdLogging (CmdLoggingArgs)
 import Shrun.Configuration.Data.ConfigPhase
-  ( WithDisable,
-    _DisableA,
-    _DisableBool,
-  )
 import Shrun.Configuration.Data.Core (CoreConfigArgs)
 import Shrun.Configuration.Data.FileLogging (FileLoggingArgs)
 import Shrun.Configuration.Data.Notify (NotifyArgs)
@@ -120,7 +116,7 @@ parseNoConfig =
     $ verifyResult argList expected
   where
     argList = ["--no-config", "command"]
-    expected = updateDefArgsBool #configPath True
+    expected = disableDefArgs #configPath
 
 timeoutSpecs :: TestTree
 timeoutSpecs =
@@ -187,7 +183,7 @@ parseNoTimeout =
     $ verifyResult argList expected
   where
     argList = ["--no-timeout", "command"]
-    expected = updateDefCoreArgsBool #timeout True
+    expected = disableDefCoreArgs #timeout
 
 initSpecs :: TestTree
 initSpecs =
@@ -229,7 +225,7 @@ parseNoInit =
     $ verifyResult argList expected
   where
     argList = ["--no-init", "command"]
-    expected = updateDefCoreArgsBool #init True
+    expected = disableDefCoreArgs #init
 
 fileLoggingSpecs :: TestTree
 fileLoggingSpecs =
@@ -300,7 +296,7 @@ parseNoFileLog =
     $ verifyResult argList expected
   where
     argList = ["--no-file-log", "command"]
-    expected = updateDefCoreArgsBool (#fileLogging % #path) True
+    expected = disableDefCoreArgs (#fileLogging % #path)
 
 fileLogModeSpecs :: TestTree
 fileLogModeSpecs =
@@ -335,7 +331,7 @@ parseNoFileLogMode =
     $ verifyResult argList expected
   where
     argList = ["--no-file-log-mode", "command"]
-    expected = updateDefCoreArgsBool (#fileLogging % #mode) True
+    expected = disableDefCoreArgs (#fileLogging % #mode)
 
 fileLogStripControlSpecs :: TestTree
 fileLogStripControlSpecs =
@@ -381,7 +377,7 @@ parseNoFileLogStripControl =
   where
     desc = "Parse --no-file-log-strip-control"
     argList = ["--no-file-log-strip-control", "command"]
-    expected = updateDefCoreArgsBool (#fileLogging % #stripControl) True
+    expected = disableDefCoreArgs (#fileLogging % #stripControl)
 
 fileLogSizeModeSpecs :: TestTree
 fileLogSizeModeSpecs =
@@ -435,7 +431,7 @@ parseNoFileLogSizeMode =
     $ verifyResult argList expected
   where
     argList = ["--no-file-log-size-mode", "command"]
-    expected = updateDefCoreArgsBool (#fileLogging % #sizeMode) True
+    expected = disableDefCoreArgs (#fileLogging % #sizeMode)
 
 cmdLogSizeSpecs :: TestTree
 cmdLogSizeSpecs =
@@ -461,7 +457,7 @@ parseNoCmdLogSize =
     $ verifyResult argList expected
   where
     argList = ["--no-cmd-log-size", "command"]
-    expected = updateDefCoreArgsBool #cmdLogSize True
+    expected = disableDefCoreArgs #cmdLogSize
 
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =
@@ -477,7 +473,7 @@ parseShortCommandLogging = testPropertyNamed "Should parse -l as CmdLogging" "pa
   verifyResult argList expected
   where
     argList = ["-l", "command"]
-    expected = set' (_Just % #cmdLog % _DisableA) True defArgs
+    expected = set' (_Just % #cmdLog) (With True) defArgs
 
 parseLongCommandLogging :: TestTree
 parseLongCommandLogging =
@@ -486,7 +482,7 @@ parseLongCommandLogging =
   where
     desc = "Should parse --cmd-log as CmdLogging"
     argList = ["--cmd-log", "command"]
-    expected = set' (_Just % #cmdLog % _DisableA) True defArgs
+    expected = set' (_Just % #cmdLog) (With True) defArgs
 
 parseNoCmdLog :: TestTree
 parseNoCmdLog =
@@ -494,7 +490,7 @@ parseNoCmdLog =
     $ verifyResult argList expected
   where
     argList = ["--no-cmd-log", "command"]
-    expected = set' (_Just % #cmdLog % _DisableBool) True defArgs
+    expected = set' (_Just % #cmdLog) Disabled defArgs
 
 commandDisplaySpecs :: TestTree
 commandDisplaySpecs =
@@ -527,7 +523,7 @@ parseNoKeyHide =
     $ verifyResult argList expected
   where
     argList = ["--no-key-hide", "command"]
-    expected = updateDefCoreArgsBool #keyHide True
+    expected = disableDefCoreArgs #keyHide
 
 pollIntervalSpecs :: TestTree
 pollIntervalSpecs =
@@ -561,7 +557,7 @@ parseNoPollInterval =
     $ verifyResult argList expected
   where
     argList = ["--no-poll-interval", "command"]
-    expected = updateDefCoreArgsBool #pollInterval True
+    expected = disableDefCoreArgs #pollInterval
 
 timerFormatSpecs :: TestTree
 timerFormatSpecs =
@@ -614,7 +610,7 @@ parseNoTimerFormat =
     $ verifyResult argList expected
   where
     argList = ["--no-timer-format", "command"]
-    expected = updateDefCoreArgsBool #timerFormat True
+    expected = disableDefCoreArgs #timerFormat
 
 stripControlSpecs :: TestTree
 stripControlSpecs =
@@ -670,7 +666,7 @@ parseNoCmdLogStripControl =
   where
     desc = "Parse --no-cmd-log-strip-control"
     argList = ["--no-cmd-log-strip-control", "command"]
-    expected = updateDefCoreArgsBool (#cmdLogging % #stripControl) True
+    expected = disableDefCoreArgs (#cmdLogging % #stripControl)
 
 cmdNameTruncSpecs :: TestTree
 cmdNameTruncSpecs =
@@ -706,7 +702,7 @@ parseNoCmdNameTrunc =
     $ verifyResult argList expected
   where
     argList = ["--no-cmd-name-trunc", "command"]
-    expected = updateDefCoreArgsBool #cmdNameTrunc True
+    expected = disableDefCoreArgs #cmdNameTrunc
 
 cmdLineTruncSpecs :: TestTree
 cmdLineTruncSpecs =
@@ -752,7 +748,7 @@ parseNoCmdLogLineTrunc =
     $ verifyResult argList expected
   where
     argList = ["--no-cmd-log-line-trunc", "command"]
-    expected = updateDefCoreArgsBool (#cmdLogging % #lineTrunc) True
+    expected = disableDefCoreArgs (#cmdLogging % #lineTrunc)
 
 notifyActionSpecs :: TestTree
 notifyActionSpecs =
@@ -797,7 +793,7 @@ parseNoNotifyAction =
     $ verifyResult argList expected
   where
     argList = ["--no-notify-action", "command"]
-    expected = updateDefCoreArgsBool (#notify % #action) True
+    expected = disableDefCoreArgs (#notify % #action)
 
 notifySystemSpecs :: TestTree
 notifySystemSpecs =
@@ -842,7 +838,7 @@ parseNoNotifySystem =
     $ verifyResult argList expected
   where
     argList = ["--no-notify-system", "command"]
-    expected = updateDefCoreArgsBool (#notify % #system) True
+    expected = disableDefCoreArgs (#notify % #system)
 
 notifyTimeoutSpecs :: TestTree
 notifyTimeoutSpecs =
@@ -877,7 +873,7 @@ parseNoNotifyTimeout =
     $ verifyResult argList expected
   where
     argList = ["--no-notify-timeout", "command"]
-    expected = updateDefCoreArgsBool (#notify % #timeout) True
+    expected = disableDefCoreArgs (#notify % #timeout)
 
 commandSpecs :: TestTree
 commandSpecs =
@@ -940,16 +936,16 @@ updateDefArgs ::
 updateDefArgs l x = (l' ?~ x) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % l % _DisableA
+    l' = _Just % l % _With
 
-updateDefArgsBool ::
+disableDefArgs ::
+  forall a.
   Lens' Args (WithDisable a) ->
-  Bool ->
   Maybe Args
-updateDefArgsBool l x = (l' .~ x) defArgs
+disableDefArgs l = (l' .~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) Bool
-    l' = _Just % l % _DisableBool
+    l' :: AffineTraversal' (Maybe Args) (WithDisable a)
+    l' = _Just % l
 
 updateDefCoreArgs ::
   forall a.
@@ -959,16 +955,16 @@ updateDefCoreArgs ::
 updateDefCoreArgs l x = (l' ?~ x) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % l % _DisableA
+    l' = _Just % #coreConfig % l % _With
 
-updateDefCoreArgsBool ::
+disableDefCoreArgs ::
+  forall a.
   Lens' CoreConfigArgs (WithDisable a) ->
-  Bool ->
   Maybe Args
-updateDefCoreArgsBool l x = (l' .~ x) defArgs
+disableDefCoreArgs l = (l' .~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) Bool
-    l' = _Just % #coreConfig % l % _DisableBool
+    l' :: AffineTraversal' (Maybe Args) (WithDisable a)
+    l' = _Just % #coreConfig % l
 
 updateDefCmdLogArgs ::
   forall a.
@@ -978,7 +974,7 @@ updateDefCmdLogArgs ::
 updateDefCmdLogArgs l x = (l' ?~ x) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % #cmdLogging % l % _DisableA
+    l' = _Just % #coreConfig % #cmdLogging % l % _With
 
 updateDefFileLogArgs ::
   forall a.
@@ -988,7 +984,7 @@ updateDefFileLogArgs ::
 updateDefFileLogArgs l x = (l' ?~ x) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % #fileLogging % l % _DisableA
+    l' = _Just % #coreConfig % #fileLogging % l % _With
 
 updateDefNotifyArgs ::
   forall a.
@@ -998,4 +994,4 @@ updateDefNotifyArgs ::
 updateDefNotifyArgs l x = (l' ?~ x) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % #notify % l % _DisableA
+    l' = _Just % #coreConfig % #notify % l % _With

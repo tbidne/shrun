@@ -17,7 +17,7 @@ import Shrun.Configuration.Data.CmdLogging
   ( CmdLoggingP (MkCmdLoggingP, lineTrunc, stripControl),
   )
 import Shrun.Configuration.Data.ConfigPhase
-  ( WithDisable (MkWithDisable),
+  ( WithDisable (With),
     emptyWithDisable,
   )
 import Shrun.Configuration.Data.Core
@@ -53,7 +53,7 @@ defaultArgs :: NESeq Text -> Args
 defaultArgs commands =
   MkArgs
     { configPath = emptyWithDisable,
-      cmdLog = MkWithDisable (False, False),
+      cmdLog = With False,
       coreConfig =
         MkCoreConfigP
           { timeout = emptyWithDisable,

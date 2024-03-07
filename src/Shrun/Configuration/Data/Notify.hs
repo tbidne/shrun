@@ -13,11 +13,9 @@ where
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    WithDisable,
+    WithDisable (Disabled, With),
     altDefault,
     defaultIfDisabled,
-    _DisableA,
-    _DisableBool,
   )
 import Shrun.Notify.Types
   ( NotifyAction,
@@ -74,10 +72,10 @@ mergeNotifyLogging ::
   Maybe NotifyToml ->
   Maybe NotifyMerged
 mergeNotifyLogging args mToml =
-  if args ^. (#action % _DisableBool)
-    then -- 1. Notifications globally disabled
-      Nothing
-    else case (args ^. (#action % _DisableA), mToml) of
+  case args ^. #action of
+    -- 1. Notifications globally disabled
+    Disabled -> Nothing
+    With mAction -> case (mAction, mToml) of
       -- 2. Neither Args nor Toml specifies notifications
       (Nothing, Nothing) -> Nothing
       -- 3. Args but no Toml

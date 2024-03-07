@@ -13,11 +13,9 @@ where
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    WithDisable,
+    WithDisable (Disabled, With),
     altDefault,
     defaultIfDisabled,
-    _DisableA,
-    _DisableBool,
   )
 import Shrun.Data.FileMode (FileMode (FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault)
@@ -89,26 +87,26 @@ mergeFileLogging ::
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
   Maybe FileLoggingMerged
-mergeFileLogging cli mToml =
-  if cli ^. (#path % _DisableBool)
-    then -- 1. Logging globally disabled
-      Nothing
-    else case (cli ^. (#path % _DisableA), mToml) of
-      -- 2. Neither CLI nor Toml specifies logging
+mergeFileLogging args mToml =
+  case args ^. #path of
+    -- 1. Logging globally disabled
+    Disabled -> Nothing
+    With mPath -> case (mPath, mToml) of
+      -- 2. Neither Args nor Toml specifies logging
       (Nothing, Nothing) -> Nothing
-      -- 3. CLI and no Toml
+      -- 3. Args and no Toml
       (Just p, Nothing) ->
         Just
           $ MkFileLoggingP
             { path = p,
               stripControl =
-                defaultIfDisabled StripControlAll (cli ^. #stripControl),
+                defaultIfDisabled StripControlAll (args ^. #stripControl),
               mode =
-                defaultIfDisabled FileModeWrite (cli ^. #mode),
+                defaultIfDisabled FileModeWrite (args ^. #mode),
               sizeMode =
-                defaultIfDisabled defaultFileSizeMode (cli ^. #sizeMode)
+                defaultIfDisabled defaultFileSizeMode (args ^. #sizeMode)
             }
-      -- 4. Maybe CLI and Toml
+      -- 4. Maybe Args and Toml
       (mArgsPath, Just toml) ->
         Just
           $ MkFileLoggingP
@@ -122,7 +120,7 @@ mergeFileLogging cli mToml =
             }
   where
     altDefault' :: a -> Lens' FileLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault' defA = altDefault defA cli
+    altDefault' defA = altDefault defA args
 
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =
