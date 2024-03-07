@@ -40,7 +40,7 @@ import Shrun.Prelude
 -- FileLoggingP always needs to be present hence all its field must be
 -- optional, even when some are mandatory on Merged.
 
--- File logging's path is only optional for the Args. For Toml and merged,
+-- | File logging's path is only optional for the Args. For Toml and merged,
 -- it must be present if file logging is active.
 type FileLogPathF :: ConfigPhase -> Type
 type family FileLogPathF p where

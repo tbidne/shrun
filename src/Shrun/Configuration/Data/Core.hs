@@ -23,12 +23,18 @@ import Shrun.Data.Truncation
   )
 import Shrun.Prelude
 
+-- | For types that are only guaranteed to exist for Args. Generally this
+-- describes "aggregate" types e.g. CmdLoggingP, which always exists for
+-- Args (as subfields can independently override toml), but is not
+-- guaranteed to exist on toml/merged, since its presence in the latter two
+-- indicates active status.
 type family ArgsOnlyDetF p a where
   ArgsOnlyDetF ConfigPhaseArgs a = a
   ArgsOnlyDetF ConfigPhaseToml a = Maybe a
   ArgsOnlyDetF ConfigPhaseMerged a = Maybe a
 
 -- | Holds core configuration data.
+type CoreConfigP :: ConfigPhase -> Type
 data CoreConfigP p = MkCoreConfigP
   { -- | Timeout.
     timeout :: ConfigPhaseMaybeF p Timeout,

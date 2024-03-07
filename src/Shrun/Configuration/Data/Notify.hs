@@ -25,10 +25,9 @@ import Shrun.Notify.Types
   )
 import Shrun.Prelude
 
--- Notify action is mandatory if we are running notifications.
---
 -- See NOTE: [Args vs. Toml mandatory fields]
 
+-- | Notify action is mandatory if we are running notifications.
 type NotifyActionF :: ConfigPhase -> Type
 type family NotifyActionF p where
   NotifyActionF ConfigPhaseArgs = WithDisable (Maybe NotifyAction)
