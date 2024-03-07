@@ -1,6 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
-
 module Shrun.Configuration.Args
   ( Args (..),
     defaultArgs,
