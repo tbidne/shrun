@@ -30,7 +30,10 @@
 
 `shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [default.toml](./examples/default.toml) for a description of the `toml` file.
 
-In general, each option `--foo` has a `--no-foo` variant that disables cli and toml configuration for that field. For example, the `--no-cmd-log` option will instruct shrun to ignore both cli `--cmd-log` and toml `cmd-log`, ensuring the default behavior is used (i.e. no command logging).
+> [!TIP]
+>
+> In general, each option `--foo` has a `--no-foo` variant that disables cli and toml configuration for that field. For example, the `--no-cmd-log` option will instruct shrun to ignore both cli `--cmd-log` and toml `cmd-log`, ensuring the default behavior is used (i.e. no command logging).
+
 
 ## Core Functionality
 
@@ -75,7 +78,8 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 <span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
 
-Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
+> [!CAUTION]
+> Duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
 
 ### Timeout
 
@@ -122,7 +126,8 @@ vs.
 
 **Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is shown at a given time.
 
-Note: When commands have complicated output, the logs can interfere with each other (indeed even overwrite themselves). We attempt to mitigate such situations: see [Strip Control](#strip-control).
+> [!NOTE]
+> When commands have complicated output, the logs can interfere with each other (indeed even overwrite themselves). We attempt to mitigate such situations: see [Strip Control](#strip-control).
 
 **Example:**
 
@@ -139,9 +144,10 @@ vs.
 <span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
-Note: Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
-
-Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File Log](#file-log) for details on investigating command failure.
+> [!NOTE]
+> Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
+>
+> Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File Log](#file-log) for details on investigating command failure.
 
 ### Poll Interval
 
@@ -149,7 +155,8 @@ Practically speaking, this does not have much effect, just that if a command die
 
 **Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
 
-Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
+> [!WARNING]
+> Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
 
 **Example:**
 

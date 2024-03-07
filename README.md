@@ -37,7 +37,7 @@ cmd3
 ...
 ```
 
-But this can be a lot of repetitive typing, especially when the commands are longer. Thus an alias is written:
+But this can be a lot of repetitive typing, especially when the commands are longer. Thus an alias is born:
 
 ```sh
 alias run_commands="cmd1 && cmd2 && cmd3 ..."
