@@ -38,21 +38,24 @@ specs testArgs =
     ]
 
 logFileWarn :: IO TestArgs -> TestTree
-logFileWarn testArgs = testPropertyNamed desc "logFileWarn" $ property $ do
-  logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef []
-  let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
-      contents = T.replicate 1_500 "test "
+logFileWarn testArgs = testPropertyNamed desc "logFileWarn"
+  $ withTests 1
+  $ property
+  $ do
+    logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
+    logsRef <- liftIO $ newIORef []
+    let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
+        contents = T.replicate 1_500 "test "
 
-      run = liftIO $ do
-        writeFileUtf8 logPath contents
+        run = liftIO $ do
+          writeFileUtf8 logPath contents
 
-        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
+          flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
 
-  run
+    run
 
-  logs <- liftIO $ readIORef logsRef
-  [warning logsPathStr] === logs
+    logs <- liftIO $ readIORef logsRef
+    [warning logsPathStr] === logs
   where
     desc = "Large log file should print warning"
     warning fp =
@@ -71,25 +74,28 @@ logFileWarn testArgs = testPropertyNamed desc "logFileWarn" $ property $ do
       ]
 
 logFileDelete :: IO TestArgs -> TestTree
-logFileDelete testArgs = testPropertyNamed desc "logFileDelete" $ property $ do
-  logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef []
-  let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
-      contents = T.replicate 1_500 "test "
+logFileDelete testArgs = testPropertyNamed desc "logFileDelete"
+  $ withTests 1
+  $ property
+  $ do
+    logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
+    logsRef <- liftIO $ newIORef []
+    let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
+        contents = T.replicate 1_500 "test "
 
-      run = liftIO $ do
-        writeFileUtf8 logPath contents
+        run = liftIO $ do
+          writeFileUtf8 logPath contents
 
-        flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
+          flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
 
-        -- file should have been deleted then recreated with a file size of 0.
-        getFileSize logPath
+          -- file should have been deleted then recreated with a file size of 0.
+          getFileSize logPath
 
-  size <- run
-  0 === size
+    size <- run
+    0 === size
 
-  logs <- liftIO $ readIORef logsRef
-  [warning logPathStr] === logs
+    logs <- liftIO $ readIORef logsRef
+    [warning logPathStr] === logs
   where
     desc = "Large log file should be deleted"
     warning fp =
@@ -109,6 +115,7 @@ logFileDelete testArgs = testPropertyNamed desc "logFileDelete" $ property $ do
 
 usesRecursiveCmdExample :: TestTree
 usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -127,12 +134,15 @@ usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
     expected = [#commands ^=@ cmds]
 
 usesRecursiveCmd :: TestTree
-usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd" $ property $ do
-  logsRef <- liftIO $ newIORef []
-  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd"
+  $ withTests 1
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
-  [] === logs
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
   where
     desc = "Uses recursive commands"
     args = ["-c", getExampleConfig "default", "all", "echo cat"]
@@ -146,12 +156,15 @@ usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd" $ property $ do
     expected = [#commands ^=@ cmds]
 
 lineTruncDetect :: TestTree
-lineTruncDetect = testPropertyNamed desc "lineTruncDetect" $ property $ do
-  logsRef <- liftIO $ newIORef []
-  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+lineTruncDetect = testPropertyNamed desc "lineTruncDetect"
+  $ withTests 1
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
-  logs === []
+    logs <- liftIO $ readIORef logsRef
+    logs === []
   where
     desc = "cmdLogLineTrunc reads 'detect' string from toml"
     args = ["-c", getIntConfig "misc", "cmd1"]
@@ -159,12 +172,15 @@ lineTruncDetect = testPropertyNamed desc "lineTruncDetect" $ property $ do
     expected = [#coreConfig % #cmdLogging %? #lineTrunc % _Just ^?=@ Just 87]
 
 testFileSizeModeNothing :: TestTree
-testFileSizeModeNothing = testPropertyNamed desc "testFileSizeModeNothing" $ property $ do
-  logsRef <- liftIO $ newIORef []
-  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+testFileSizeModeNothing = testPropertyNamed desc "testFileSizeModeNothing"
+  $ withTests 1
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
-  logs === []
+    logs <- liftIO $ readIORef logsRef
+    logs === []
   where
     desc = "size-mode reads 'nothing'"
     args = ["-c", getIntConfig "basic-file-log", "cmd"]
@@ -182,16 +198,19 @@ runTermIO (MkTermIO a) = liftIO a
 instance MonadTerminal TermIO
 
 testDefaultConfigs :: TestTree
-testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs" $ property $ do
-  let expected = Merged.defaultMergedConfig cmds
-      args = Args.defaultArgs cmds
-      toml = Toml.defaultToml
+testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs"
+  $ withTests 1
+  $ property
+  $ do
+    let expected = Merged.defaultMergedConfig cmds
+        args = Args.defaultArgs cmds
+        toml = Toml.defaultToml
 
-  resultNoToml <- runTermIO $ Configuration.mergeConfig args Nothing
-  resultMerge <- runTermIO $ Configuration.mergeConfig args $ Just toml
+    resultNoToml <- runTermIO $ Configuration.mergeConfig args Nothing
+    resultMerge <- runTermIO $ Configuration.mergeConfig args $ Just toml
 
-  expected === resultNoToml
-  expected === resultMerge
+    expected === resultNoToml
+    expected === resultMerge
   where
     desc = "defaultMergedConfig === merge defaultArgs defaultToml"
 

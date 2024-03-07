@@ -99,6 +99,7 @@ specs testArgs =
 
 defaultEnv :: TestTree
 defaultEnv = testPropertyNamed desc "defaultEnv"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -113,6 +114,7 @@ defaultEnv = testPropertyNamed desc "defaultEnv"
 
 usesDefaultConfigFile :: TestTree
 usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -160,6 +162,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
 cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile"
+  $ withTests 1
   $ property
   $ do
     logPath <- liftIO $ (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
@@ -242,6 +245,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
 
 cliOverridesConfigFileCmdLog :: TestTree
 cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmdLog"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -268,6 +272,7 @@ cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmd
 
 cliOverridesConfigFileFileLog :: TestTree
 cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFileLog"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -298,6 +303,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
 
 fileLogStripControlDefaultsAll :: TestTree
 fileLogStripControlDefaultsAll = testPropertyNamed desc "fileLogStripControlDefaultsAll"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -332,6 +338,7 @@ fileLogStripControlDefaultsAll = testPropertyNamed desc "fileLogStripControlDefa
 
 ignoresDefaultConfigFile :: TestTree
 ignoresDefaultConfigFile = testPropertyNamed desc "ignoresDefaultConfigFile"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -345,6 +352,7 @@ ignoresDefaultConfigFile = testPropertyNamed desc "ignoresDefaultConfigFile"
 
 noXOverridesToml :: TestTree
 noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -379,6 +387,7 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
 
 noXOverridesArgs :: TestTree
 noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []

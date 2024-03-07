@@ -57,6 +57,7 @@ specs =
 
 examplesConfig :: TestTree
 examplesConfig = testPropertyNamed desc "examplesConfig"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
@@ -98,6 +99,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
 
 examplesDefault :: TestTree
 examplesDefault = testPropertyNamed desc "examplesDefault"
+  $ withTests 1
   $ property
   $ do
     logsRef <- liftIO $ newIORef []

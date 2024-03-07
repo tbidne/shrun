@@ -898,7 +898,7 @@ parseCommands =
     cmds = U.unsafeListToNESeq ["one", "two", "three"]
 
 verifyResult :: List String -> Maybe Args -> Property
-verifyResult argList expected = property $ do
+verifyResult argList expected = withTests 1 $ property $ do
   let parseResult = OptApp.execParserPure prefs parserInfoArgs argList
 
   result <- case parseResult of
@@ -911,7 +911,7 @@ verifyResult argList expected = property $ do
   expected === result
 
 verifyFailure :: List String -> Property
-verifyFailure argList = property $ do
+verifyFailure argList = withTests 1 $ property $ do
   let parseResult = OptApp.execParserPure prefs parserInfoArgs argList
 
   case parseResult of

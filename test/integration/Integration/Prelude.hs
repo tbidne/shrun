@@ -21,6 +21,7 @@ import Hedgehog as X
     annotate,
     annotateShow,
     property,
+    withTests,
     (===),
   )
 import Shrun.Prelude as X
