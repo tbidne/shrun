@@ -20,6 +20,7 @@ import Hedgehog as X
     PropertyT,
     annotate,
     annotateShow,
+    assert,
     property,
     withTests,
     (===),

@@ -1,17 +1,11 @@
-{-# LANGUAGE QuasiQuotes #-}
-{-# OPTIONS_GHC -Wno-missing-methods #-}
-
 -- | Functional tests for readme examples.
 module Functional.Examples (specs) where
 
 import DBus.Notify (UrgencyLevel (Normal))
-import Data.List qualified as L
 import Data.Text qualified as T
 import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
-import Shrun.Env qualified as Env
-import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Notify.MonadNotify
   ( ShrunNote
       ( MkShrunNote,
@@ -29,7 +23,6 @@ import Shrun.Notify.Types
   )
 import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
-import Test.Tasty.HUnit (assertBool)
 
 -- NOTE: If tests in this module fail, fix then update the README!
 
@@ -49,8 +42,6 @@ specs args =
       cmdlogOnDefault,
       cmdlogOff,
       fileLog args,
-      fileLogSizeModeWarn args,
-      fileLogSizeModeNothing args,
       timerFormatDigitalCompact,
       timerFormatDigitalFull,
       timerFormatProseCompact,
@@ -281,98 +272,6 @@ fileLog testArgs = testCase "Runs file-log example" $ do
       expectedConsole
         ++ [ withCommandPrefix "for i in {1..3}; do echo hi; sleep 1; done" "hi"
            ]
-
--- This is currently only used by the File Log Size tests to catch the
--- size warnings.
-newtype SetupIO a = MkSetupIO (ReaderT (IORef String) IO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadCatch,
-      MonadDBus,
-      MonadEnv,
-      MonadFileReader,
-      MonadFileWriter,
-      MonadHandleWriter,
-      MonadIO,
-      MonadIORef,
-      MonadMask,
-      MonadOptparse,
-      MonadPathReader,
-      MonadPathWriter,
-      MonadReader (IORef String),
-      MonadSTM,
-      MonadThrow
-    )
-    via (ReaderT (IORef String) IO)
-
-instance MonadTerminal SetupIO where
-  putStrLn s = ask >>= \r -> modifyIORef' r (++ s)
-
-runSetupIO :: SetupIO a -> IO (String, a)
-runSetupIO (MkSetupIO m) = do
-  ref <- newIORef ""
-  res <- runReaderT m ref
-  (,res) <$> readIORef ref
-
-runCustomSetup :: List String -> IO String
-runCustomSetup argList = do
-  -- Originally this was essentially a copy of prelude's runMaybeException,
-  -- but we were getting errors about opening a file w/ a closed handle during
-  -- the actual shrun run.
-  --
-  -- Thankfully, we don't have to actually run shrun since all the logic we
-  -- currently want exists in the Env setup. Thus we can ignore the issue
-  -- unless we need to test actually running shrun.
-  --
-  -- Notice this introduces a slight discrepancy between the Configuration.md
-  -- and this test, in the sense that we don't actually run the shrun command.
-  -- But this seems an acceptable trade-off.
-  (setupOut, _) <- runSetupIO $ withArgs argList $ Env.withEnv $ const (pure ())
-  pure setupOut
-
-fileLogSizeModeWarn :: IO TestArgs -> TestTree
-fileLogSizeModeWarn testArgs = testCase "Runs file-log size-mode warn" $ do
-  outFile <- (</> [osp|size_mode.log|]) . view #tmpDir <$> testArgs
-
-  writeFileUtf8 outFile "some bytes"
-
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--file-log-size-mode",
-            "warn 1 b",
-            "sleep 2"
-          ]
-
-  setupOut <- runCustomSetup args
-
-  assertBool setupOut $ "Warning: log file '" `L.isPrefixOf` setupOut
-  assertBool setupOut $ "' has size: " `L.isInfixOf` setupOut
-  assertBool setupOut $ ", but specified threshold is: 1.00 b." `L.isSuffixOf` setupOut
-
-fileLogSizeModeNothing :: IO TestArgs -> TestTree
-fileLogSizeModeNothing testArgs = testCase "Runs file-log size-mode nothing" $ do
-  outFile <- (</> [osp|size_mode.log|]) . view #tmpDir <$> testArgs
-
-  writeFileUtf8 outFile "some bytes"
-
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--file-log-size-mode",
-            "nothing",
-            "sleep 2"
-          ]
-
-  setupOut <- runCustomSetup args
-
-  "" @=? setupOut
 
 timerFormatDigitalCompact :: TestTree
 timerFormatDigitalCompact =

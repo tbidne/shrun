@@ -30,6 +30,7 @@ specs testArgs =
     "Miscellaneous"
     [ logFileWarn testArgs,
       logFileDelete testArgs,
+      logFileNothing testArgs,
       usesRecursiveCmdExample,
       usesRecursiveCmd,
       lineTruncDetect,
@@ -49,10 +50,23 @@ logFileWarn testArgs = testPropertyNamed desc "logFileWarn"
 
         run = liftIO $ do
           writeFileUtf8 logPath contents
+          startSize <- getFileSize logPath
 
           flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
 
-    run
+          endSize <- getFileSize logPath
+          pure (startSize, endSize)
+
+    (startSize, endSize) <- run
+
+    exists <- liftIO $ doesFileExist logPath
+    assert exists
+
+    -- NOTE: [Log file unchanged]
+    --
+    -- In a real run this would be >=, but we are not actually running
+    -- shrun so the file should stay untouched.
+    endSize === startSize
 
     logs <- liftIO $ readIORef logsRef
     [warning logsPathStr] === logs
@@ -88,11 +102,15 @@ logFileDelete testArgs = testPropertyNamed desc "logFileDelete"
 
           flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
 
-          -- file should have been deleted then recreated with a file size of 0.
           getFileSize logPath
 
-    size <- run
-    0 === size
+    endSize <- run
+
+    exists <- liftIO $ doesFileExist logPath
+    assert exists
+
+    -- file should have been deleted then recreated with a file size of 0.
+    0 === endSize
 
     logs <- liftIO $ readIORef logsRef
     [warning logPathStr] === logs
@@ -110,6 +128,45 @@ logFileDelete testArgs = testPropertyNamed desc "logFileDelete"
         fp,
         "--file-log-size-mode",
         "delete 5.5 kilobytes",
+        "cmd"
+      ]
+
+logFileNothing :: IO TestArgs -> TestTree
+logFileNothing testArgs = testPropertyNamed desc "logFileNothing"
+  $ withTests 1
+  $ property
+  $ do
+    logPath <- liftIO $ (</> [osp|large-file-nothing|]) . view #workingTmpDir <$> testArgs
+    logsRef <- liftIO $ newIORef []
+    let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
+        contents = T.replicate 1_500 "test "
+
+        run = liftIO $ do
+          writeFileUtf8 logPath contents
+          startSize <- getFileSize logPath
+
+          flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
+
+          endSize <- getFileSize logPath
+          pure (startSize, endSize)
+
+    (startSize, endSize) <- run
+
+    exists <- liftIO $ doesFileExist logPath
+    assert exists
+
+    -- see NOTE: [Log file unchanged]
+    endSize === startSize
+
+    logs <- liftIO $ readIORef logsRef
+    [] === logs
+  where
+    desc = "Large log file should print warning"
+    args fp =
+      [ "-f",
+        fp,
+        "--file-log-size-mode",
+        "nothing",
         "cmd"
       ]
 
