@@ -4,7 +4,7 @@ version:            0.9
 license:            MIT
 license-file:       LICENSE
 tested-with:        GHC ==9.4.8 || ==9.6.3 || ==9.8.1
-copyright:          2021-2023 Thomas Bidne
+copyright:          2021-2024 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
 homepage:           https://github.com/tbidne/shrun/
