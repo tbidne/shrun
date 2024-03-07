@@ -3,7 +3,6 @@
 ### Table of Contents
   - [Core Functionality](#core-functionality)
     - [Config](#config)
-    - [No Config](#no-config)
     - [Timeout](#timeout)
     - [Init](#init)
   - [Logging](#logging)
@@ -31,7 +30,7 @@
 
 `shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [default.toml](./examples/default.toml) for a description of the `toml` file.
 
-Most options have a `no-X` variant e.g. `--cmd-log` has a corresponding `--no-cmd-log`. These flags totally disable the corresponding option and make it as if the field was never specified i.e. the default behavior is used.
+In general, each option `--foo` has a `--no-foo` variant that disables cli and toml configuration for that field. For example, the `--no-cmd-log` option will instruct shrun to ignore both cli `--cmd-log` and toml `cmd-log`, ensuring the default behavior is used (i.e. no command logging).
 
 ## Core Functionality
 
@@ -39,7 +38,7 @@ Most options have a `no-X` variant e.g. `--cmd-log` has a corresponding `--no-cm
 
 **Arg:** `-c, --config PATH`
 
-**Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`.
+**Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`. The `--no-config` option disables `--config` and the automatic XDG lookup.
 
 Examples can be found in [examples](./examples).
 
@@ -78,15 +77,9 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 Note: duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
 
-### No Config
-
-**Arg:** `--no-config`
-
-**Description**: Overrides toml file config regardless of how it was obtained i.e. explicit `--config` or implicit reading of the XDG config file. This is useful when a config file exists at the expected XDG location, but we wish to ignore it.
-
 ### Timeout
 
-**Arg:** `-t, --timeout <NATURAL | STRING>`
+**Arg:** `-t, --timeout (NATURAL | STRING)`
 
 **Description:** The provided timeout must be either a raw integer (interpreted as seconds), or a "time string" e.g. `1d2m3h4s`, `3h20s`. All integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
 
@@ -188,7 +181,7 @@ Note that lower values will increase CPU usage. In particular, 0 will max out a 
 
 ### File Log
 
-**Arg:** `-f, --file-log <default | PATH>`
+**Arg:** `-f, --file-log (default | PATH)`
 
 **Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the XDG state directory e.g. `~/.local/state/shrun/log`.
 
@@ -216,15 +209,15 @@ Note that lower values will increase CPU usage. In particular, 0 will max out a 
 
 ### File Log Mode
 
-**Arg:** `--file-log-mode <append | write>`
+**Arg:** `--file-log-mode (append | write)`
 
 **Description:** Mode in which to open the log file. Defaults to write.
 
 ### File Log Size Mode
 
-**Arg:** `--file-log-size-mode <warn SIZE | delete SIZE | nothing>`
+**Arg:** `--file-log-size-mode (warn SIZE | delete SIZE | nothing)`
 
-**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`.
+**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`. Can be disabled with "nothing".
 
 **Exmaple:**
 
@@ -245,7 +238,7 @@ Note that lower values will increase CPU usage. In particular, 0 will max out a 
 
 ### Timer Format
 
-**Arg:** `--timer-format (digital_compact|digital_full|prose_compact|prose_full)`
+**Arg:** `--timer-format (digital_compact | digital_full | prose_compact | prose_full)`
 
 **Description:** How to format the timer. Defaults to `prose_compact` e.g. `2 hours, 3 seconds`.
 
@@ -313,7 +306,7 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 ### Strip Control
 
-**Arg:** `-s,--cmd-log-strip-control <all | smart | none>`
+**Arg:** `-s,--cmd-log-strip-control (all | smart | none)`
 
 **Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. `all` strips all such chars. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
 
@@ -349,7 +342,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 ### File Log Strip Control
 
-**Arg:** `-f, --file-log-strip-control <all | smart | none>`
+**Arg:** `-f, --file-log-strip-control (all | smart | none)`
 
 **Description**: Like [`--cmd-log-strip-control`](#strip-control), but applies to file logs. If no option is given, defaults to `all`.
 
@@ -375,7 +368,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 ### Command Line Truncation
 
-**Arg:** `-y, --cmd-log-line-trunc <NATURAL | detect>`
+**Arg:** `-y, --cmd-log-line-trunc (NATURAL | detect)`
 
 **Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
 
@@ -399,7 +392,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify Action
 
-**Arg:** `--notify-action (final|command|all)`
+**Arg:** `--notify-action (final |command | all)`
 
 **Description:** Sends notifications for various actions. `final` sends off a notification when `shrun` itself finishes whereas `command` sends one off each time a command finishes. `all` implies `final` and `command`.
 
@@ -411,9 +404,9 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify System
 
-**Arg:** `--notify-system (dbus|notify-send|apple-script)`
+**Arg:** `--notify-system (dbus | notify-send | apple-script)`
 
-**Description:** The system used for sending notifications. `dbus` and `notify-send` available on linux, whereas `apple-script` is available for osx.
+**Description:** The system used for sending notifications. `dbus` and `notify-send` are available on linux, whereas `apple-script` is available for osx.
 
 **Example:**
 
@@ -423,7 +416,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify Timeout
 
-**Arg:** `--notify-timeout (never|NAT)`
+**Arg:** `--notify-timeout (never | NAT)`
 
 **Description:** When to timeout success notifications. Defaults to 10 seconds.
 

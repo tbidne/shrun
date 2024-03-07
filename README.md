@@ -113,7 +113,7 @@ Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `shrun` can b
 
 ### Nix expression
 
-Because `shrun` is a flake, it be built as part of a nix expression. For instance, if you want to add `shrun` to `NixOS`, your `flake.nix` should have:
+Because `shrun` is a flake, it can be built as part of a nix expression. For instance, if you want to add `shrun` to `NixOS`, your `flake.nix` should have:
 
 ```nix
 # flake.nix
