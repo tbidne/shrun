@@ -13,8 +13,10 @@ where
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    WithDisable (Disabled, With),
-    altDefault,
+  )
+import Shrun.Configuration.Data.WithDisable
+  ( WithDisable (Disabled, With),
+    alternativeDefault,
     defaultIfDisabled,
   )
 import Shrun.Data.FileMode (FileMode (FileModeWrite))
@@ -112,15 +114,15 @@ mergeFileLogging args mToml =
           $ MkFileLoggingP
             { path = fromMaybe (toml ^. #path) mArgsPath,
               stripControl =
-                altDefault' StripControlAll #stripControl (toml ^. #stripControl),
+                altDefault StripControlAll #stripControl (toml ^. #stripControl),
               mode =
-                altDefault' FileModeWrite #mode (toml ^. #mode),
+                altDefault FileModeWrite #mode (toml ^. #mode),
               sizeMode =
-                altDefault' defaultFileSizeMode #sizeMode (toml ^. #sizeMode)
+                altDefault defaultFileSizeMode #sizeMode (toml ^. #sizeMode)
             }
   where
-    altDefault' :: a -> Lens' FileLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault' defA = altDefault defA args
+    altDefault :: a -> Lens' FileLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a
+    altDefault defA l = alternativeDefault defA (args ^. l)
 
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =

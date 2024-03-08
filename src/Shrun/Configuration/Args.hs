@@ -16,10 +16,6 @@ import Shrun.Configuration.Args.Parsing
 import Shrun.Configuration.Data.CmdLogging
   ( CmdLoggingP (MkCmdLoggingP, lineTrunc, stripControl),
   )
-import Shrun.Configuration.Data.ConfigPhase
-  ( WithDisable (With),
-    emptyWithDisable,
-  )
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
@@ -47,39 +43,40 @@ import Shrun.Configuration.Data.FileLogging
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
+import Shrun.Configuration.Data.WithDisable (WithDisable (With))
 import Shrun.Prelude
 
 defaultArgs :: NESeq Text -> Args
 defaultArgs commands =
   MkArgs
-    { configPath = emptyWithDisable,
+    { configPath = mempty,
       cmdLog = With False,
       coreConfig =
         MkCoreConfigP
-          { timeout = emptyWithDisable,
-            init = emptyWithDisable,
-            keyHide = emptyWithDisable,
-            pollInterval = emptyWithDisable,
-            cmdLogSize = emptyWithDisable,
-            timerFormat = emptyWithDisable,
-            cmdNameTrunc = emptyWithDisable,
+          { timeout = mempty,
+            init = mempty,
+            keyHide = mempty,
+            pollInterval = mempty,
+            cmdLogSize = mempty,
+            timerFormat = mempty,
+            cmdNameTrunc = mempty,
             cmdLogging =
               MkCmdLoggingP
-                { stripControl = emptyWithDisable,
-                  lineTrunc = emptyWithDisable
+                { stripControl = mempty,
+                  lineTrunc = mempty
                 },
             fileLogging =
               MkFileLoggingP
-                { path = emptyWithDisable,
-                  stripControl = emptyWithDisable,
-                  mode = emptyWithDisable,
-                  sizeMode = emptyWithDisable
+                { path = mempty,
+                  stripControl = mempty,
+                  mode = mempty,
+                  sizeMode = mempty
                 },
             notify =
               MkNotifyP
-                { action = emptyWithDisable,
-                  system = emptyWithDisable,
-                  timeout = emptyWithDisable
+                { action = mempty,
+                  system = mempty,
+                  timeout = mempty
                 }
           },
       commands

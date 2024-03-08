@@ -7,11 +7,11 @@ where
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
-import Shrun.Configuration.Data.ConfigPhase (WithDisable)
 import Shrun.Configuration.Data.Notify
   ( NotifyArgs,
     NotifyP (MkNotifyP, action, system, timeout),
   )
+import Shrun.Configuration.Data.WithDisable (WithDisable)
 import Shrun.Notify.Types (NotifyAction, NotifySystemP1, NotifyTimeout)
 import Shrun.Notify.Types qualified as Notify
 import Shrun.Prelude

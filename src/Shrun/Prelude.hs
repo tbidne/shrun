@@ -13,6 +13,7 @@ module Shrun.Prelude
     headMaybe,
 
     -- * Misc utilities
+    fromFoldable,
     (<<$>>),
     (.>),
 
@@ -280,9 +281,12 @@ displayExceptiont = T.pack . displayException
 --
 -- >>> headMaybe []
 -- Nothing
-headMaybe :: List a -> Maybe a
-headMaybe [] = Nothing
-headMaybe (x : _) = Just x
+headMaybe :: (Foldable f) => f a -> Maybe a
+headMaybe = foldr (\x _ -> Just x) Nothing
+
+-- | From foldable.
+fromFoldable :: (Foldable f) => a -> f a -> a
+fromFoldable x = fromMaybe x . headMaybe
 
 -- | Lifted fmap.
 --

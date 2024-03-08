@@ -32,10 +32,10 @@ import Shrun.Configuration (mergeConfig)
 import Shrun.Configuration.Args.Parsing
   ( parserInfoArgs,
   )
-import Shrun.Configuration.Data.ConfigPhase
+import Shrun.Configuration.Data.MergedConfig (MergedConfig)
+import Shrun.Configuration.Data.WithDisable
   ( WithDisable (Disabled, With),
   )
-import Shrun.Configuration.Data.MergedConfig (MergedConfig)
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.FileSizeMode

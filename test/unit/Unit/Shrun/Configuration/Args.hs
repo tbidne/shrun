@@ -10,10 +10,13 @@ import Shrun.Configuration.Args (Args, defaultArgs)
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Args.Parsing (parserInfoArgs)
 import Shrun.Configuration.Data.CmdLogging (CmdLoggingArgs)
-import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Configuration.Data.Core (CoreConfigArgs)
 import Shrun.Configuration.Data.FileLogging (FileLoggingArgs)
 import Shrun.Configuration.Data.Notify (NotifyArgs)
+import Shrun.Configuration.Data.WithDisable
+  ( WithDisable (Disabled, With),
+    _With,
+  )
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.FileSizeMode

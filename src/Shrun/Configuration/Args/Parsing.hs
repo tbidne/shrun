@@ -37,8 +37,8 @@ import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.Parsing.Core qualified as Core
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
-import Shrun.Configuration.Data.ConfigPhase (WithDisable)
 import Shrun.Configuration.Data.Core (CoreConfigArgs)
+import Shrun.Configuration.Data.WithDisable (WithDisable)
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 

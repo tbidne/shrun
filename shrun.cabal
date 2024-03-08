@@ -65,6 +65,7 @@ library
     Shrun.Configuration.Data.FileLogging
     Shrun.Configuration.Data.MergedConfig
     Shrun.Configuration.Data.Notify
+    Shrun.Configuration.Data.WithDisable
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
     Shrun.Data.Command
@@ -166,6 +167,7 @@ test-suite unit
     Unit.Generators
     Unit.Prelude
     Unit.Shrun.Configuration.Args
+    Unit.Shrun.Configuration.Data.WithDisable
     Unit.Shrun.Configuration.Legend
     Unit.Shrun.Logging.Formatting
     Unit.Shrun.Logging.Generators

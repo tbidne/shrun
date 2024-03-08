@@ -7,11 +7,11 @@ where
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
-import Shrun.Configuration.Data.ConfigPhase (WithDisable)
 import Shrun.Configuration.Data.FileLogging
   ( FileLoggingArgs,
     FileLoggingP (MkFileLoggingP, mode, path, sizeMode, stripControl),
   )
+import Shrun.Configuration.Data.WithDisable (WithDisable)
 import Shrun.Data.FileMode (FileMode)
 import Shrun.Data.FileMode qualified as FileMode
 import Shrun.Data.FilePathDefault (FilePathDefault)

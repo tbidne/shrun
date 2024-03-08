@@ -9,7 +9,7 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
-import Shrun.Configuration.Data.ConfigPhase (WithDisable (Disabled, With))
+import Shrun.Configuration.Data.WithDisable (WithDisable (Disabled, With))
 import Shrun.Prelude
 
 withDisableParser :: Parser a -> String -> Parser (WithDisable a)

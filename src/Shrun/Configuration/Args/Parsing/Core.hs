@@ -11,7 +11,6 @@ import Shrun.Configuration.Args.Parsing.CmdLogging qualified as CmdLogging
 import Shrun.Configuration.Args.Parsing.FileLogging qualified as FileLogging
 import Shrun.Configuration.Args.Parsing.Notify qualified as Notify
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
-import Shrun.Configuration.Data.ConfigPhase (WithDisable)
 import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
@@ -28,6 +27,7 @@ import Shrun.Configuration.Data.Core
         timerFormat
       ),
   )
+import Shrun.Configuration.Data.WithDisable (WithDisable)
 import Shrun.Data.KeyHide (KeyHide (KeyHideOn))
 import Shrun.Data.PollInterval
   ( PollInterval,

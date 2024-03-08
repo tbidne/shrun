@@ -14,11 +14,13 @@ import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    WithDisable (Disabled, With),
-    altDefault,
-    altNothing,
+  )
+import Shrun.Configuration.Data.WithDisable
+  ( WithDisable (Disabled, With),
+    alternativeDefault,
+    alternativeEmpty,
     defaultIfDisabled,
-    nothingIfDisabled,
+    emptyIfDisabled,
   )
 import Shrun.Data.StripControl (StripControl (StripControlSmart))
 import Shrun.Data.Truncation
@@ -79,7 +81,7 @@ mergeCmdLogging withDisable args mToml =
       (False, Nothing) -> pure Nothing
       -- 3. Args but no Toml -> Use Args
       (True, Nothing) -> do
-        cmdLogLineTrunc <- case nothingIfDisabled (args ^. #lineTrunc) of
+        cmdLogLineTrunc <- case emptyIfDisabled (args ^. #lineTrunc) of
           Just Detected -> Just . MkTruncation <$> getTerminalWidth
           Just (Undetected x) -> pure $ Just x
           Nothing -> pure Nothing
@@ -95,7 +97,7 @@ mergeCmdLogging withDisable args mToml =
       --
       --    We combine toml w/ Args' config in altNothing/Default below.
       (_, Just toml) -> do
-        cmdLogLineTrunc <- case altNothing' #lineTrunc (toml ^. #lineTrunc) of
+        cmdLogLineTrunc <- case altNothing #lineTrunc (toml ^. #lineTrunc) of
           Just Detected -> Just . MkTruncation <$> getTerminalWidth
           Just (Undetected x) -> pure $ Just x
           Nothing -> pure Nothing
@@ -104,18 +106,18 @@ mergeCmdLogging withDisable args mToml =
           $ Just
           $ MkCmdLoggingP
             { stripControl =
-                altDefault'
+                altDefault
                   StripControlSmart
                   #stripControl
                   (toml ^. #stripControl),
               lineTrunc = cmdLogLineTrunc
             }
   where
-    altDefault' :: a -> Lens' CmdLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault' defA = altDefault defA args
+    altDefault :: a -> Lens' CmdLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a
+    altDefault defA l = alternativeDefault defA (args ^. l)
 
-    altNothing' :: Lens' CmdLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> Maybe a
-    altNothing' = altNothing args
+    altNothing :: Lens' CmdLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> Maybe a
+    altNothing l = alternativeEmpty (args ^. l)
 
 instance DecodeTOML CmdLoggingToml where
   tomlDecoder =

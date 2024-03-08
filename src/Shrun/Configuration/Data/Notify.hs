@@ -13,8 +13,10 @@ where
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
-    WithDisable (Disabled, With),
-    altDefault,
+  )
+import Shrun.Configuration.Data.WithDisable
+  ( WithDisable (Disabled, With),
+    alternativeDefault,
     defaultIfDisabled,
   )
 import Shrun.Notify.Types
@@ -89,12 +91,12 @@ mergeNotifyLogging args mToml =
         Just
           $ MkNotifyP
             { action = fromMaybe (toml ^. #action) mArgsAction,
-              system = altDefault' defaultNotifySystem #system (toml ^. #system),
-              timeout = altDefault' (afromInteger 10) #timeout (toml ^. #timeout)
+              system = altDefault defaultNotifySystem #system (toml ^. #system),
+              timeout = altDefault (afromInteger 10) #timeout (toml ^. #timeout)
             }
   where
-    altDefault' :: a -> Lens' NotifyArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault' defA = altDefault defA args
+    altDefault :: a -> Lens' NotifyArgs (WithDisable (Maybe a)) -> Maybe a -> a
+    altDefault defA l = alternativeDefault defA (args ^. l)
 
 instance DecodeTOML NotifyToml where
   tomlDecoder =

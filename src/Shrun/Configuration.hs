@@ -5,13 +5,6 @@ where
 
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.CmdLogging (mergeCmdLogging)
-import Shrun.Configuration.Data.ConfigPhase
-  ( WithDisable,
-    altDefault,
-    altNothing,
-    defaultIfDisabled,
-    nothingIfDisabled,
-  )
 import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
@@ -37,6 +30,13 @@ import Shrun.Configuration.Data.MergedConfig
       ),
   )
 import Shrun.Configuration.Data.Notify (mergeNotifyLogging)
+import Shrun.Configuration.Data.WithDisable
+  ( WithDisable,
+    alternativeDefault,
+    alternativeEmpty,
+    defaultIfDisabled,
+    emptyIfDisabled,
+  )
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Data.Command (Command (MkCommand))
@@ -78,8 +78,8 @@ mergeConfig args mToml = do
         $ MkMergedConfig
           { coreConfig =
               MkCoreConfigP
-                { timeout = nothingIfDisabled (args ^. (#coreConfig % #timeout)),
-                  init = nothingIfDisabled (args ^. (#coreConfig % #init)),
+                { timeout = emptyIfDisabled (args ^. (#coreConfig % #timeout)),
+                  init = emptyIfDisabled (args ^. (#coreConfig % #init)),
                   keyHide =
                     defaultIfDisabled KeyHideOff (args ^. (#coreConfig % #keyHide)),
                   pollInterval =
@@ -95,7 +95,7 @@ mergeConfig args mToml = do
                       defaultTimerFormat
                       (args ^. (#coreConfig % #timerFormat)),
                   cmdNameTrunc =
-                    nothingIfDisabled (args ^. (#coreConfig % #cmdNameTrunc)),
+                    emptyIfDisabled (args ^. (#coreConfig % #cmdNameTrunc)),
                   cmdLogging,
                   fileLogging =
                     mergeFileLogging
@@ -128,31 +128,31 @@ mergeConfig args mToml = do
           { coreConfig =
               MkCoreConfigP
                 { timeout =
-                    altNothing' #timeout (toml ^. (#coreConfig % #timeout)),
+                    altNothing #timeout (toml ^. (#coreConfig % #timeout)),
                   init =
-                    altNothing' #init (toml ^. (#coreConfig % #init)),
+                    altNothing #init (toml ^. (#coreConfig % #init)),
                   keyHide =
-                    altDefault'
+                    altDefault
                       KeyHideOff
                       #keyHide
                       (toml ^. (#coreConfig % #keyHide)),
                   pollInterval =
-                    altDefault'
+                    altDefault
                       defaultPollInterval
                       #pollInterval
                       (toml ^. (#coreConfig % #pollInterval)),
                   cmdLogSize =
-                    altDefault'
+                    altDefault
                       defaultCmdLogSize
                       #cmdLogSize
                       (toml ^. (#coreConfig % #cmdLogSize)),
                   timerFormat =
-                    altDefault'
+                    altDefault
                       defaultTimerFormat
                       #timerFormat
                       (toml ^. (#coreConfig % #timerFormat)),
                   cmdNameTrunc =
-                    altNothing'
+                    altNothing
                       #cmdNameTrunc
                       (toml ^. (#coreConfig % #cmdNameTrunc)),
                   cmdLogging,
@@ -170,8 +170,8 @@ mergeConfig args mToml = do
   where
     cmdsText = args ^. #commands
 
-    altDefault' :: a -> Lens' CoreConfigArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault' defA l = altDefault defA args (#coreConfig % l)
+    altDefault :: a -> Lens' CoreConfigArgs (WithDisable (Maybe a)) -> Maybe a -> a
+    altDefault defA l = alternativeDefault defA (args ^. (#coreConfig % l))
 
-    altNothing' :: Lens' CoreConfigArgs (WithDisable (Maybe a)) -> Maybe a -> Maybe a
-    altNothing' l = altNothing args (#coreConfig % l)
+    altNothing :: Lens' CoreConfigArgs (WithDisable (Maybe a)) -> Maybe a -> Maybe a
+    altNothing l = alternativeEmpty (args ^. (#coreConfig % l))

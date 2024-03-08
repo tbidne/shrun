@@ -15,7 +15,7 @@ import Shrun.Configuration.Data.CmdLogging
         stripControl
       ),
   )
-import Shrun.Configuration.Data.ConfigPhase (WithDisable)
+import Shrun.Configuration.Data.WithDisable (WithDisable)
 import Shrun.Data.StripControl (StripControl)
 import Shrun.Data.StripControl qualified as StripControl
 import Shrun.Data.Truncation (LineTruncation)
