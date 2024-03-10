@@ -9,4 +9,4 @@ mkdir -p docs/
 # shellcheck disable=SC2038
 find docs/ -type f | xargs -I % sh -c "rm -r %"
 
-cp -r dist-newstyle/build/x86_64-linux/ghc-9.6.2/shrun-0.8.1/opt/doc/html/shrun/* docs/
+cp -r dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/opt/doc/html/shrun/* docs/
