@@ -31,10 +31,10 @@ import Shrun.Prelude
 --
 -- - Identity: 'Without'
 -- - 'With' is left-biased.
--- - ('Without', 'Without') forms a normal submonoid, in particular:
+-- - ('Without', 'Disabled') forms a normal submonoid, in particular:
 --
 -- @
---   'Without' <> _ === 'Without' === _ <> 'Without'
+--   'Disabled' <> _ === 'Disabled' === _ <> 'Disabled'
 -- @
 data WithDisabled a
   = -- | The field.
