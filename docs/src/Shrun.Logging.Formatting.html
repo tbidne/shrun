@@ -1,0 +1,618 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Provides 'Log' formatting functionality.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Logging.Formatting</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * High-level</span></span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatConsoleLog"><span class="hs-identifier">formatConsoleLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatFileLog"><span class="hs-identifier">formatFileLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Low-level</span></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#logToColor"><span class="hs-identifier">logToColor</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#logToPrefix"><span class="hs-identifier">logToPrefix</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier">levelToColor</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier">levelToPrefix</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Utils</span></span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatCommand"><span class="hs-identifier">formatCommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#displayCmd"><span class="hs-identifier">displayCmd</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#stripChars"><span class="hs-identifier">stripChars</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier">brackets</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-time-0.1-acde8ff68a94372c5511028585eca014592bff188877e8bbf23a14cbce2ec2c3/share/doc/html/src/Effects.Time.html"><span class="hs-identifier">Effects.Time</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-time-0.1-acde8ff68a94372c5511028585eca014592bff188877e8bbf23a14cbce2ec2c3/share/doc/html/src/Effects.Time.html#getSystemTimeString"><span class="hs-identifier">getSystemTimeString</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html"><span class="hs-identifier">Shrun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#Command"><span class="hs-identifier">Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#MkCommand"><span class="hs-identifier">MkCommand</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.KeyHide.html"><span class="hs-identifier">Shrun.Data.KeyHide</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier">KeyHide</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier">KeyHideOff</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html"><span class="hs-identifier">Shrun.Data.StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier">StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier">StripControlAll</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControlNone"><span class="hs-identifier">StripControlNone</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html"><span class="hs-identifier">Shrun.Data.Truncation</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#TruncRegion"><span class="hs-identifier">TruncRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#TCmdName"><span class="hs-identifier">TCmdName</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#Truncation"><span class="hs-identifier">Truncation</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Env.Types.html"><span class="hs-identifier">Shrun.Env.Types</span></a></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Env.Types.html#FileLogging"><span class="hs-identifier">FileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Shrun.Env.Types.html#Logging"><span class="hs-identifier">Logging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html"><span class="hs-identifier">Shrun.Logging.Types</span></a></span><span>
+</span><span id="line-32"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier">Log</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier">LogLevel</span></a></span><span>
+</span><span id="line-34"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier">LevelCommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier">LevelError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelFatal"><span class="hs-identifier">LevelFatal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelFinished"><span class="hs-identifier">LevelFinished</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelSuccess"><span class="hs-identifier">LevelSuccess</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelTimer"><span class="hs-identifier">LevelTimer</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.html#LevelWarn"><span class="hs-identifier">LevelWarn</span></a></span><span>
+</span><span id="line-41"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html"><span class="hs-identifier">Shrun.Logging.Types.Internal</span></a></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier">ConsoleLog</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#UnsafeConsoleLog"><span class="hs-identifier">UnsafeConsoleLog</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier">FileLog</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#UnsafeFileLog"><span class="hs-identifier">UnsafeFileLog</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-48"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">U</span></span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///nix/store/1znim02rkqixxlsqxf5qrmxc749nar7r-scientific-0.3.7.0-doc/share/doc/scientific-0.3.7.0/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html"><span class="hs-identifier">System.Console.Pretty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Color"><span class="hs-identifier">Color</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Blue"><span class="hs-identifier">Blue</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Cyan"><span class="hs-identifier">Cyan</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Green"><span class="hs-identifier">Green</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Red"><span class="hs-identifier">Red</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#White"><span class="hs-identifier">White</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Yellow"><span class="hs-identifier">Yellow</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html"><span class="hs-identifier">System.Console.Pretty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="annot"><span class="hs-comment">-- | Formats a log to be printed to the console.</span></span><span>
+</span><span id="line-54"></span><span id="local-6989586621679458673"><span class="annot"><a href="Shrun.Logging.Formatting.html#formatConsoleLog"><span class="hs-identifier hs-type">formatConsoleLog</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Env.Types.html#Logging"><span class="hs-identifier hs-type">Logging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679458673"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier hs-type">ConsoleLog</span></a></span></span><span>
+</span><span id="line-55"></span><span id="formatConsoleLog"><span class="annot"><span class="annottext">formatConsoleLog :: forall r. Logging r -&gt; Log -&gt; ConsoleLog
+</span><a href="Shrun.Logging.Formatting.html#formatConsoleLog"><span class="hs-identifier hs-var hs-var">formatConsoleLog</span></a></span></span><span> </span><span id="local-6989586621679458960"><span class="annot"><span class="annottext">Logging r
+</span><a href="#local-6989586621679458960"><span class="hs-identifier hs-var">logging</span></a></span></span><span> </span><span id="local-6989586621679458961"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679458961"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679458962"><span class="annot"><span class="annottext">line :: Text
+</span><a href="#local-6989586621679458962"><span class="hs-identifier hs-var hs-var">line</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679458961"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Optic' A_Lens NoIx Log (Maybe CommandP1) -&gt; Maybe CommandP1
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log (Maybe CommandP1)
+</span><span class="">#cmd</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-57"></span><span>        </span><span class="annot"><span class="annottext">Maybe CommandP1
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Text -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var">brackets</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679458964"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679458965"><span class="hs-identifier hs-var">msgStripped</span></a></span><span>
+</span><span id="line-58"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679458966"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679458966"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-59"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679458967"><span class="annot"><span class="annottext">cmd' :: Text
+</span><a href="#local-6989586621679458967"><span class="hs-identifier hs-var hs-var">cmd'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-60"></span><span>                </span><span class="annot"><span class="annottext">KeyHide -&gt; Maybe (Truncation 'TCmdName) -&gt; CommandP1 -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#formatCommand"><span class="hs-identifier hs-var">formatCommand</span></a></span><span>
+</span><span id="line-61"></span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Logging r
+</span><a href="#local-6989586621679458960"><span class="hs-identifier hs-var">logging</span></a></span><span> </span><span class="annot"><span class="annottext">Logging r -&gt; Optic' A_Lens NoIx (Logging r) KeyHide -&gt; KeyHide
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Logging r) KeyHide
+</span><span class="">#keyHide</span></span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Logging r
+</span><a href="#local-6989586621679458960"><span class="hs-identifier hs-var">logging</span></a></span><span> </span><span class="annot"><span class="annottext">Logging r
+-&gt; Optic' A_Lens NoIx (Logging r) (Maybe (Truncation 'TCmdName))
+-&gt; Maybe (Truncation 'TCmdName)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Logging r) (Maybe (Truncation 'TCmdName))
+</span><span class="">#cmdNameTrunc</span></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>                  </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679458966"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-64"></span><span>           </span><span class="hs-keyword">in</span><span> </span><span class="hs-comment">-- truncate entire line if necessary</span><span>
+</span><span id="line-65"></span><span>              </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679458968"><span class="hs-identifier hs-var">truncateCmdLineFn</span></a></span><span>
+</span><span id="line-66"></span><span>                </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; Text -&gt; Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-67"></span><span>                  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Text -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var">brackets</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679458964"><span class="hs-identifier hs-var">prefix</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-68"></span><span>                    </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679458967"><span class="hs-identifier hs-var">cmd'</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-69"></span><span>                    </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679458965"><span class="hs-identifier hs-var">msgStripped</span></a></span><span>
+</span><span id="line-70"></span><span>                  </span><span class="hs-special">]</span><span>
+</span><span id="line-71"></span><span>   </span><span class="hs-keyword">in</span><span> </span><span class="hs-comment">-- NOTE: We want colorize on the outside for two reasons:</span><span>
+</span><span id="line-72"></span><span>      </span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span>      </span><span class="hs-comment">-- 1. Truncation calculation should not take colorization into account,</span><span>
+</span><span id="line-74"></span><span>      </span><span class="hs-comment">--    as chars are invisible.</span><span>
+</span><span id="line-75"></span><span>      </span><span class="hs-comment">-- 2. Having colorization _inside_ can accidentally cause the &quot;end color&quot;</span><span>
+</span><span id="line-76"></span><span>      </span><span class="hs-comment">--    chars to be stripped, leading to bugs where colorizing bleeds.</span><span>
+</span><span id="line-77"></span><span>      </span><span class="hs-comment">--</span><span>
+</span><span id="line-78"></span><span>      </span><span class="hs-comment">-- This 2nd point is likely the cause for some &quot;color bleeding&quot; that was</span><span>
+</span><span id="line-79"></span><span>      </span><span class="hs-comment">-- occasionally noticed.</span><span>
+</span><span id="line-80"></span><span>      </span><span class="annot"><span class="annottext">Text -&gt; ConsoleLog
+</span><a href="Shrun.Logging.Types.Internal.html#UnsafeConsoleLog"><span class="hs-identifier hs-var">UnsafeConsoleLog</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679458969"><span class="hs-identifier hs-var">colorize</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679458962"><span class="hs-identifier hs-var">line</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-82"></span><span>    </span><span id="local-6989586621679458965"><span class="annot"><span class="annottext">msgStripped :: Text
+</span><a href="#local-6989586621679458965"><span class="hs-identifier hs-var hs-var">msgStripped</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe StripControl -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#stripChars"><span class="hs-identifier hs-var">stripChars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679458961"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Optic' A_Lens NoIx Log Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log Text
+</span><span class="">#msg</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Maybe StripControl
+</span><a href="#local-6989586621679458970"><span class="hs-identifier hs-var">mStripControl</span></a></span><span>
+</span><span id="line-83"></span><span>    </span><span id="local-6989586621679458971"><span class="annot"><span class="annottext">mCmdLogging :: Maybe CmdLogging
+</span><a href="#local-6989586621679458971"><span class="hs-identifier hs-var hs-var">mCmdLogging</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Logging r
+</span><a href="#local-6989586621679458960"><span class="hs-identifier hs-var">logging</span></a></span><span> </span><span class="annot"><span class="annottext">Logging r
+-&gt; Optic' A_Lens NoIx (Logging r) (Maybe CmdLogging)
+-&gt; Maybe CmdLogging
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Logging r) (Maybe CmdLogging)
+</span><span class="">#cmdLog</span></span><span>
+</span><span id="line-84"></span><span>    </span><span id="local-6989586621679458970"><span class="annot"><span class="annottext">mStripControl :: Maybe StripControl
+</span><a href="#local-6989586621679458970"><span class="hs-identifier hs-var hs-var">mStripControl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe CmdLogging
+</span><a href="#local-6989586621679458971"><span class="hs-identifier hs-var">mCmdLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe CmdLogging
+-&gt; Optic' An_AffineTraversal NoIx (Maybe CmdLogging) StripControl
+-&gt; Maybe StripControl
+forall k s (is :: IxList) a.
+Is k An_AffineFold =&gt;
+s -&gt; Optic' k is s a -&gt; Maybe a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E%3F"><span class="hs-operator hs-var">^?</span></a></span><span> </span><span class="annot"><span class="annottext">Prism (Maybe CmdLogging) (Maybe CmdLogging) CmdLogging CmdLogging
+forall a b. Prism (Maybe a) (Maybe b) a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Data.Maybe.Optics.html#_Just"><span class="hs-identifier hs-var">_Just</span></a></span><span> </span><span class="annot"><span class="annottext">Prism (Maybe CmdLogging) (Maybe CmdLogging) CmdLogging CmdLogging
+-&gt; Optic
+     A_Lens NoIx CmdLogging CmdLogging StripControl StripControl
+-&gt; Optic' An_AffineTraversal NoIx (Maybe CmdLogging) StripControl
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx CmdLogging CmdLogging StripControl StripControl
+</span><span class="">#stripControl</span></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span>    </span><span class="hs-comment">-- truncate entire line if necessary (flag on and command log only)</span><span>
+</span><span id="line-87"></span><span>    </span><span id="local-6989586621679458968"><span class="annot"><span class="annottext">truncateCmdLineFn :: Text -&gt; Text
+</span><a href="#local-6989586621679458968"><span class="hs-identifier hs-var hs-var">truncateCmdLineFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679458961"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Optic' A_Lens NoIx Log LogLevel -&gt; LogLevel
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log LogLevel
+</span><span class="">#lvl</span></span><span class="hs-special">,</span><span>
+</span><span id="line-88"></span><span>                               </span><span class="annot"><span class="annottext">Maybe CmdLogging
+</span><a href="#local-6989586621679458971"><span class="hs-identifier hs-var">mCmdLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe CmdLogging
+-&gt; Optic' An_AffineTraversal NoIx (Maybe CmdLogging) Natural
+-&gt; Maybe Natural
+forall k s (is :: IxList) a.
+Is k An_AffineFold =&gt;
+s -&gt; Optic' k is s a -&gt; Maybe a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E%3F"><span class="hs-operator hs-var">^?</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Prism (Maybe CmdLogging) (Maybe CmdLogging) CmdLogging CmdLogging
+forall a b. Prism (Maybe a) (Maybe b) a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Data.Maybe.Optics.html#_Just"><span class="hs-identifier hs-var">_Just</span></a></span><span> </span><span class="annot"><span class="annottext">Prism (Maybe CmdLogging) (Maybe CmdLogging) CmdLogging CmdLogging
+-&gt; Optic
+     A_Lens
+     NoIx
+     CmdLogging
+     CmdLogging
+     (Maybe (Truncation 'TCmdLine))
+     (Maybe (Truncation 'TCmdLine))
+-&gt; Optic
+     An_AffineTraversal
+     NoIx
+     (Maybe CmdLogging)
+     (Maybe CmdLogging)
+     (Maybe (Truncation 'TCmdLine))
+     (Maybe (Truncation 'TCmdLine))
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CmdLogging
+  CmdLogging
+  (Maybe (Truncation 'TCmdLine))
+  (Maybe (Truncation 'TCmdLine))
+</span><span class="">#lineTrunc</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  An_AffineTraversal
+  NoIx
+  (Maybe CmdLogging)
+  (Maybe CmdLogging)
+  (Maybe (Truncation 'TCmdLine))
+  (Maybe (Truncation 'TCmdLine))
+-&gt; Optic
+     An_Iso
+     NoIx
+     (Truncation 'TCmdLine)
+     (Truncation 'TCmdLine)
+     Natural
+     Natural
+-&gt; Optic' An_AffineTraversal NoIx (Maybe CmdLogging) Natural
+forall (is :: IxList) (js :: IxList) (ks :: IxList) k k' l m s t u
+       v a b.
+(AppendIndices is js ks, JoinKinds k A_Prism k',
+ JoinKinds k' l m) =&gt;
+Optic k is s t (Maybe u) (Maybe v)
+-&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Data.Maybe.Optics.html#%25%3F"><span class="hs-operator hs-var">%?</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  An_Iso
+  NoIx
+  (Truncation 'TCmdLine)
+  (Truncation 'TCmdLine)
+  Natural
+  Natural
+</span><span class="">#unTruncation</span></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>                             </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-90"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier hs-var">LevelCommand</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679458976"><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679458976"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Text -&gt; Text
+</span><a href="Shrun.Utils.html#truncateIfNeeded"><span class="hs-identifier hs-var">U.truncateIfNeeded</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679458976"><span class="hs-identifier hs-var">m</span></a></span><span>
+</span><span id="line-91"></span><span>      </span><span class="annot"><span class="annottext">(LogLevel, Maybe Natural)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-92"></span><span>
+</span><span id="line-93"></span><span>    </span><span id="local-6989586621679458969"><span class="annot"><span class="annottext">colorize :: Text -&gt; Text
+</span><a href="#local-6989586621679458969"><span class="hs-identifier hs-var hs-var">colorize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color -&gt; Text -&gt; Text
+forall a. Pretty a =&gt; Color -&gt; a -&gt; a
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#color"><span class="hs-identifier hs-var">P.color</span></a></span><span> </span><span class="annot"><span class="annottext">(Color -&gt; Text -&gt; Text) -&gt; Color -&gt; Text -&gt; Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Color
+</span><a href="Shrun.Logging.Formatting.html#logToColor"><span class="hs-identifier hs-var">logToColor</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679458961"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-94"></span><span>    </span><span id="local-6989586621679458964"><span class="annot"><span class="annottext">prefix :: Text
+</span><a href="#local-6989586621679458964"><span class="hs-identifier hs-var hs-var">prefix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Log -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#logToPrefix"><span class="hs-identifier hs-var">logToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679458961"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span id="local-6989586621679458755"><span id="local-6989586621679458756"><span class="annot"><a href="Shrun.Logging.Formatting.html#maybeApply"><span class="hs-identifier hs-type">maybeApply</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679458755"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679458756"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679458756"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679458755"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679458756"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679458756"><span class="hs-identifier hs-type">b</span></a></span></span></span><span>
+</span><span id="line-97"></span><span id="maybeApply"><span class="annot"><span class="annottext">maybeApply :: forall a b. (a -&gt; b -&gt; b) -&gt; Maybe a -&gt; b -&gt; b
+</span><a href="Shrun.Logging.Formatting.html#maybeApply"><span class="hs-identifier hs-var hs-var">maybeApply</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(b -&gt; b) -&gt; (a -&gt; b -&gt; b) -&gt; Maybe a -&gt; b -&gt; b
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="annot"><span class="annottext">b -&gt; b
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="annot"><span class="hs-comment">-- | Formats a 'Log' into a 'FileLog'. Applies prefix and timestamp.</span></span><span>
+</span><span id="line-100"></span><span id="local-6989586621679458761"><span class="annot"><a href="Shrun.Logging.Formatting.html#formatFileLog"><span class="hs-identifier hs-type">formatFileLog</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-101"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-time-0.1-acde8ff68a94372c5511028585eca014592bff188877e8bbf23a14cbce2ec2c3/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679458761"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-103"></span><span>  </span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier hs-type">KeyHide</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-104"></span><span>  </span><span class="annot"><a href="Shrun.Env.Types.html#FileLogging"><span class="hs-identifier hs-type">FileLogging</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-105"></span><span>  </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-106"></span><span>  </span><span class="annot"><a href="#local-6989586621679458761"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier hs-type">FileLog</span></a></span></span><span>
+</span><span id="line-107"></span><span id="formatFileLog"><span class="annot"><span class="annottext">formatFileLog :: forall (m :: Type -&gt; Type).
+MonadTime m =&gt;
+KeyHide -&gt; FileLogging -&gt; Log -&gt; m FileLog
+</span><a href="Shrun.Logging.Formatting.html#formatFileLog"><span class="hs-identifier hs-var hs-var">formatFileLog</span></a></span></span><span> </span><span id="local-6989586621679459018"><span class="annot"><span class="annottext">KeyHide
+</span><a href="#local-6989586621679459018"><span class="hs-identifier hs-var">keyHide</span></a></span></span><span> </span><span id="local-6989586621679459019"><span class="annot"><span class="annottext">FileLogging
+</span><a href="#local-6989586621679459019"><span class="hs-identifier hs-var">fileLogging</span></a></span></span><span> </span><span id="local-6989586621679459020"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679459020"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-108"></span><span>  </span><span id="local-6989586621679459021"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679459021"><span class="hs-identifier hs-var">currTime</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m String
+forall (m :: Type -&gt; Type). (HasCallStack, MonadTime m) =&gt; m String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-time-0.1-acde8ff68a94372c5511028585eca014592bff188877e8bbf23a14cbce2ec2c3/share/doc/html/src/Effects.Time.html#getSystemTimeString"><span class="hs-identifier hs-var">getSystemTimeString</span></a></span><span>
+</span><span id="line-109"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679459022"><span class="annot"><span class="annottext">formatted :: Text
+</span><a href="#local-6989586621679459022"><span class="hs-identifier hs-var hs-var">formatted</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679459020"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Optic' A_Lens NoIx Log (Maybe CommandP1) -&gt; Maybe CommandP1
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log (Maybe CommandP1)
+</span><span class="">#cmd</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-110"></span><span>        </span><span class="annot"><span class="annottext">Maybe CommandP1
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Text -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var">brackets</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459023"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459024"><span class="hs-identifier hs-var">msgStripped</span></a></span><span>
+</span><span id="line-111"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679459025"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679459025"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-112"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679459026"><span class="annot"><span class="annottext">cmd' :: Text
+</span><a href="#local-6989586621679459026"><span class="hs-identifier hs-var hs-var">cmd'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-113"></span><span>                </span><span class="annot"><span class="annottext">KeyHide -&gt; Maybe (Truncation 'TCmdName) -&gt; CommandP1 -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#formatCommand"><span class="hs-identifier hs-var">formatCommand</span></a></span><span>
+</span><span id="line-114"></span><span>                  </span><span class="annot"><span class="annottext">KeyHide
+</span><a href="#local-6989586621679459018"><span class="hs-identifier hs-var">keyHide</span></a></span><span>
+</span><span id="line-115"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdName)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-116"></span><span>                  </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679459025"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-117"></span><span>           </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-118"></span><span>                </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Text -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var">brackets</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459023"><span class="hs-identifier hs-var">prefix</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-119"></span><span>                  </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459026"><span class="hs-identifier hs-var">cmd'</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-120"></span><span>                  </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459024"><span class="hs-identifier hs-var">msgStripped</span></a></span><span>
+</span><span id="line-121"></span><span>                </span><span class="hs-special">]</span><span>
+</span><span id="line-122"></span><span>      </span><span id="local-6989586621679459027"><span class="annot"><span class="annottext">withTimestamp :: Text
+</span><a href="#local-6989586621679459027"><span class="hs-identifier hs-var hs-var">withTimestamp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-123"></span><span>        </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-124"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Text -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var">brackets</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679459021"><span class="hs-identifier hs-var">currTime</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-125"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459022"><span class="hs-identifier hs-var">formatted</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-126"></span><span>            </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-127"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-128"></span><span>  </span><span class="annot"><span class="annottext">FileLog -&gt; m FileLog
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(FileLog -&gt; m FileLog) -&gt; FileLog -&gt; m FileLog
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; FileLog
+</span><a href="Shrun.Logging.Types.Internal.html#UnsafeFileLog"><span class="hs-identifier hs-var">UnsafeFileLog</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459027"><span class="hs-identifier hs-var">withTimestamp</span></a></span><span>
+</span><span id="line-129"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-130"></span><span>    </span><span id="local-6989586621679459024"><span class="annot"><span class="annottext">msgStripped :: Text
+</span><a href="#local-6989586621679459024"><span class="hs-identifier hs-var hs-var">msgStripped</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe StripControl -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#stripChars"><span class="hs-identifier hs-var">stripChars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679459020"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Optic' A_Lens NoIx Log Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log Text
+</span><span class="">#msg</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">StripControl -&gt; Maybe StripControl
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">StripControl
+</span><a href="#local-6989586621679459029"><span class="hs-identifier hs-var">stripControl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>    </span><span id="local-6989586621679459029"><span class="annot"><span class="annottext">stripControl :: StripControl
+</span><a href="#local-6989586621679459029"><span class="hs-identifier hs-var hs-var">stripControl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FileLogging
+</span><a href="#local-6989586621679459019"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="annot"><span class="annottext">FileLogging
+-&gt; Optic' A_Lens NoIx FileLogging StripControl -&gt; StripControl
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLogging StripControl
+</span><span class="">#stripControl</span></span><span>
+</span><span id="line-132"></span><span>    </span><span id="local-6989586621679459023"><span class="annot"><span class="annottext">prefix :: Text
+</span><a href="#local-6989586621679459023"><span class="hs-identifier hs-var hs-var">prefix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Log -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#logToPrefix"><span class="hs-identifier hs-var">logToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679459020"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-133"></span><span>
+</span><span id="line-134"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatCommand"><span class="hs-identifier hs-type">formatCommand</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-135"></span><span>  </span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier hs-type">KeyHide</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-136"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#TCmdName"><span class="hs-identifier hs-type">TCmdName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-137"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-138"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-139"></span><span id="formatCommand"><span class="annot"><span class="annottext">formatCommand :: KeyHide -&gt; Maybe (Truncation 'TCmdName) -&gt; CommandP1 -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#formatCommand"><span class="hs-identifier hs-var hs-var">formatCommand</span></a></span></span><span> </span><span id="local-6989586621679459030"><span class="annot"><span class="annottext">KeyHide
+</span><a href="#local-6989586621679459030"><span class="hs-identifier hs-var">keyHide</span></a></span></span><span> </span><span id="local-6989586621679459031"><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdName)
+</span><a href="#local-6989586621679459031"><span class="hs-identifier hs-var">cmdNameTrunc</span></a></span></span><span> </span><span id="local-6989586621679459032"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679459032"><span class="hs-identifier hs-var">com</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Text -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var">brackets</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679459033"><span class="hs-identifier hs-var">truncateNameFn</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459034"><span class="hs-identifier hs-var">cmdName</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-140"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-141"></span><span>    </span><span class="hs-comment">-- Get cmd name to display. Always strip control sequences.</span><span>
+</span><span id="line-142"></span><span>    </span><span id="local-6989586621679459034"><span class="annot"><span class="annottext">cmdName :: Text
+</span><a href="#local-6989586621679459034"><span class="hs-identifier hs-var hs-var">cmdName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-143"></span><span>      </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripControlAll"><span class="hs-identifier hs-var">Utils.stripControlAll</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; Text -&gt; Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; KeyHide -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#displayCmd"><span class="hs-identifier hs-var">displayCmd</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679459032"><span class="hs-identifier hs-var">com</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHide
+</span><a href="#local-6989586621679459030"><span class="hs-identifier hs-var">keyHide</span></a></span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span>    </span><span class="hs-comment">-- truncate cmd/name if necessary</span><span>
+</span><span id="line-146"></span><span>    </span><span id="local-6989586621679459033"><span class="annot"><span class="annottext">truncateNameFn :: Text -&gt; Text
+</span><a href="#local-6989586621679459033"><span class="hs-identifier hs-var hs-var">truncateNameFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-147"></span><span>      </span><span class="annot"><span class="annottext">(Natural -&gt; Text -&gt; Text) -&gt; Maybe Natural -&gt; Text -&gt; Text
+forall a b. (a -&gt; b -&gt; b) -&gt; Maybe a -&gt; b -&gt; b
+</span><a href="Shrun.Logging.Formatting.html#maybeApply"><span class="hs-identifier hs-var">maybeApply</span></a></span><span>
+</span><span id="line-148"></span><span>        </span><span class="annot"><span class="annottext">Natural -&gt; Text -&gt; Text
+</span><a href="Shrun.Utils.html#truncateIfNeeded"><span class="hs-identifier hs-var">U.truncateIfNeeded</span></a></span><span>
+</span><span id="line-149"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdName)
+</span><a href="#local-6989586621679459031"><span class="hs-identifier hs-var">cmdNameTrunc</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdName)
+-&gt; Optic' A_Prism NoIx (Maybe (Truncation 'TCmdName)) Natural
+-&gt; Maybe Natural
+forall k s (is :: IxList) a.
+Is k An_AffineFold =&gt;
+s -&gt; Optic' k is s a -&gt; Maybe a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E%3F"><span class="hs-operator hs-var">^?</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Prism
+  (Maybe (Truncation 'TCmdName))
+  (Maybe (Truncation 'TCmdName))
+  (Truncation 'TCmdName)
+  (Truncation 'TCmdName)
+forall a b. Prism (Maybe a) (Maybe b) a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Data.Maybe.Optics.html#_Just"><span class="hs-identifier hs-var">_Just</span></a></span><span> </span><span class="annot"><span class="annottext">Prism
+  (Maybe (Truncation 'TCmdName))
+  (Maybe (Truncation 'TCmdName))
+  (Truncation 'TCmdName)
+  (Truncation 'TCmdName)
+-&gt; Optic
+     An_Iso
+     NoIx
+     (Truncation 'TCmdName)
+     (Truncation 'TCmdName)
+     Natural
+     Natural
+-&gt; Optic' A_Prism NoIx (Maybe (Truncation 'TCmdName)) Natural
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  An_Iso
+  NoIx
+  (Truncation 'TCmdName)
+  (Truncation 'TCmdName)
+  Natural
+  Natural
+</span><span class="">#unTruncation</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-150"></span><span>
+</span><span id="line-151"></span><span class="hs-comment">-- | Pretty show for 'Command'. If the command has a key, and 'KeyHide' is</span><span>
+</span><span id="line-152"></span><span class="hs-comment">-- 'KeyHideOff' then we return the key. Otherwise we return the command itself.</span><span>
+</span><span id="line-153"></span><span class="hs-comment">--</span><span>
+</span><span id="line-154"></span><span class="hs-comment">-- &gt;&gt;&gt; displayCmd (MkCommand Nothing &quot;some long command&quot;) KeyHideOn</span><span>
+</span><span id="line-155"></span><span class="hs-comment">-- &quot;some long command&quot;</span><span>
+</span><span id="line-156"></span><span class="hs-comment">--</span><span>
+</span><span id="line-157"></span><span class="hs-comment">-- &gt;&gt;&gt; displayCmd (MkCommand Nothing &quot;some long command&quot;) KeyHideOff</span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- &quot;some long command&quot;</span><span>
+</span><span id="line-159"></span><span class="hs-comment">--</span><span>
+</span><span id="line-160"></span><span class="hs-comment">-- &gt;&gt;&gt; displayCmd (MkCommand (Just &quot;long&quot;) &quot;some long command&quot;) KeyHideOn</span><span>
+</span><span id="line-161"></span><span class="hs-comment">-- &quot;some long command&quot;</span><span>
+</span><span id="line-162"></span><span class="hs-comment">--</span><span>
+</span><span id="line-163"></span><span class="hs-comment">-- &gt;&gt;&gt; displayCmd (MkCommand (Just &quot;long&quot;) &quot;some long command&quot;) KeyHideOff</span><span>
+</span><span id="line-164"></span><span class="hs-comment">-- &quot;long&quot;</span><span>
+</span><span id="line-165"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#displayCmd"><span class="hs-identifier hs-type">displayCmd</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier hs-type">KeyHide</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-166"></span><span id="displayCmd"><span class="annot"><span class="annottext">displayCmd :: CommandP1 -&gt; KeyHide -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#displayCmd"><span class="hs-identifier hs-var hs-var">displayCmd</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#MkCommand"><span class="hs-identifier hs-type">MkCommand</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679459036"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459036"><span class="hs-identifier hs-var">key</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">KeyHide
+</span><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459036"><span class="hs-identifier hs-var">key</span></a></span><span>
+</span><span id="line-167"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#displayCmd"><span class="hs-identifier hs-var">displayCmd</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#MkCommand"><span class="hs-identifier hs-type">MkCommand</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679459037"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459037"><span class="hs-identifier hs-var">cmd</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">KeyHide
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459037"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span class="hs-comment">-- | Applies the given 'StripControl' to the 'Text'.</span><span>
+</span><span id="line-170"></span><span class="hs-comment">--</span><span>
+</span><span id="line-171"></span><span class="hs-comment">-- * 'StripControlAll': Strips whitespace + all control chars.</span><span>
+</span><span id="line-172"></span><span class="hs-comment">-- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.</span><span>
+</span><span id="line-173"></span><span class="hs-comment">-- * 'StripControlNone': Strips whitespace.</span><span>
+</span><span id="line-174"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#stripChars"><span class="hs-identifier hs-type">stripChars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-type">StripControl</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-175"></span><span id="stripChars"><span class="annot"><span class="annottext">stripChars :: Text -&gt; Maybe StripControl -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#stripChars"><span class="hs-identifier hs-var hs-var">stripChars</span></a></span></span><span> </span><span id="local-6989586621679459038"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459038"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-176"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier hs-var">StripControlAll</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripControlAll"><span class="hs-identifier hs-var">Utils.stripControlAll</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459038"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-177"></span><span>  </span><span class="hs-comment">-- whitespace</span><span>
+</span><span id="line-178"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlNone"><span class="hs-identifier hs-var">StripControlNone</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.strip</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459038"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-179"></span><span>  </span><span class="hs-comment">--  default to smart</span><span>
+</span><span id="line-180"></span><span>  </span><span class="annot"><span class="annottext">Maybe StripControl
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripControlSmart"><span class="hs-identifier hs-var">Utils.stripControlSmart</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459038"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-181"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Shrun.Logging.Formatting.html#stripChars"><span class="hs-pragma hs-type">stripChars</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-182"></span><span>
+</span><span id="line-183"></span><span class="hs-comment">-- | Surrounds text with brackets, appending a space if the boolean is 'True'.</span><span>
+</span><span id="line-184"></span><span class="hs-comment">--</span><span>
+</span><span id="line-185"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-186"></span><span class="hs-comment">--</span><span>
+</span><span id="line-187"></span><span class="hs-comment">-- &gt;&gt;&gt; brackets False &quot;text&quot;</span><span>
+</span><span id="line-188"></span><span class="hs-comment">-- &quot;[text]&quot;</span><span>
+</span><span id="line-189"></span><span class="hs-comment">--</span><span>
+</span><span id="line-190"></span><span class="hs-comment">-- &gt;&gt;&gt; brackets True &quot;text&quot;</span><span>
+</span><span id="line-191"></span><span class="hs-comment">-- &quot;[text] &quot;</span><span>
+</span><span id="line-192"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-type">brackets</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-193"></span><span id="brackets"><span class="annot"><span class="annottext">brackets :: Bool -&gt; Text -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var hs-var">brackets</span></a></span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span id="local-6989586621679459041"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459041"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;[&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459041"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;]&quot;</span></span><span>
+</span><span id="line-194"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#brackets"><span class="hs-identifier hs-var">brackets</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span id="local-6989586621679459042"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459042"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;[&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679459042"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;] &quot;</span></span><span>
+</span><span id="line-195"></span><span>
+</span><span id="line-196"></span><span class="annot"><span class="hs-comment">-- | Transforms log to a color based on its 'LogLevel'.</span></span><span>
+</span><span id="line-197"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#logToColor"><span class="hs-identifier hs-type">logToColor</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Color"><span class="hs-identifier hs-type">Color</span></a></span><span>
+</span><span id="line-198"></span><span id="logToColor"><span class="annot"><span class="annottext">logToColor :: Log -&gt; Color
+</span><a href="Shrun.Logging.Formatting.html#logToColor"><span class="hs-identifier hs-var hs-var">logToColor</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogLevel -&gt; Color
+</span><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var">levelToColor</span></a></span><span> </span><span class="annot"><span class="annottext">(LogLevel -&gt; Color) -&gt; (Log -&gt; LogLevel) -&gt; Log -&gt; Color
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log LogLevel -&gt; Log -&gt; LogLevel
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log LogLevel
+</span><span class="">#lvl</span></span><span>
+</span><span id="line-199"></span><span>
+</span><span id="line-200"></span><span class="annot"><span class="hs-comment">-- | Transforms log to a prefix based on its 'LogLevel'.</span></span><span>
+</span><span id="line-201"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#logToPrefix"><span class="hs-identifier hs-type">logToPrefix</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-202"></span><span id="logToPrefix"><span class="annot"><span class="annottext">logToPrefix :: Log -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#logToPrefix"><span class="hs-identifier hs-var hs-var">logToPrefix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogLevel -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var">levelToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">(LogLevel -&gt; Text) -&gt; (Log -&gt; LogLevel) -&gt; Log -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log LogLevel -&gt; Log -&gt; LogLevel
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log LogLevel
+</span><span class="">#lvl</span></span><span>
+</span><span id="line-203"></span><span>
+</span><span id="line-204"></span><span class="annot"><span class="hs-comment">-- | Maps 'LogLevel' to 'Color'.</span></span><span>
+</span><span id="line-205"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-type">levelToColor</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier hs-type">LogLevel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Color"><span class="hs-identifier hs-type">Color</span></a></span><span>
+</span><span id="line-206"></span><span id="levelToColor"><span class="annot"><span class="annottext">levelToColor :: LogLevel -&gt; Color
+</span><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var hs-var">levelToColor</span></a></span></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier hs-var">LevelCommand</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#White"><span class="hs-identifier hs-var">White</span></a></span><span>
+</span><span id="line-207"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var">levelToColor</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelFinished"><span class="hs-identifier hs-var">LevelFinished</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Blue"><span class="hs-identifier hs-var">Blue</span></a></span><span>
+</span><span id="line-208"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var">levelToColor</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelTimer"><span class="hs-identifier hs-var">LevelTimer</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Cyan"><span class="hs-identifier hs-var">Cyan</span></a></span><span>
+</span><span id="line-209"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var">levelToColor</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelSuccess"><span class="hs-identifier hs-var">LevelSuccess</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Green"><span class="hs-identifier hs-var">Green</span></a></span><span>
+</span><span id="line-210"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var">levelToColor</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelWarn"><span class="hs-identifier hs-var">LevelWarn</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Yellow"><span class="hs-identifier hs-var">Yellow</span></a></span><span>
+</span><span id="line-211"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var">levelToColor</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier hs-var">LevelError</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Red"><span class="hs-identifier hs-var">Red</span></a></span><span>
+</span><span id="line-212"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToColor"><span class="hs-identifier hs-var">levelToColor</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelFatal"><span class="hs-identifier hs-var">LevelFatal</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="file:///nix/store/dv2zphjzf4a3zscs3gaqgz6xwjsrfxk1-pretty-terminal-0.1.0.0-doc/share/doc/pretty-terminal-0.1.0.0/html/src/System.Console.Pretty.html#Red"><span class="hs-identifier hs-var">Red</span></a></span><span>
+</span><span id="line-213"></span><span>
+</span><span id="line-214"></span><span class="annot"><span class="hs-comment">-- | Maps 'LogLevel' to \'Prefix\'.</span></span><span>
+</span><span id="line-215"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-type">levelToPrefix</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier hs-type">LogLevel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-216"></span><span id="levelToPrefix"><span class="annot"><span class="annottext">levelToPrefix :: LogLevel -&gt; Text
+</span><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var hs-var">levelToPrefix</span></a></span></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier hs-var">LevelCommand</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Command&quot;</span></span><span>
+</span><span id="line-217"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var">levelToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelFinished"><span class="hs-identifier hs-var">LevelFinished</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Finished&quot;</span></span><span>
+</span><span id="line-218"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var">levelToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelTimer"><span class="hs-identifier hs-var">LevelTimer</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Timer&quot;</span></span><span>
+</span><span id="line-219"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var">levelToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelSuccess"><span class="hs-identifier hs-var">LevelSuccess</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Success&quot;</span></span><span>
+</span><span id="line-220"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var">levelToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelWarn"><span class="hs-identifier hs-var">LevelWarn</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Warn&quot;</span></span><span>
+</span><span id="line-221"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var">levelToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier hs-var">LevelError</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Error&quot;</span></span><span>
+</span><span id="line-222"></span><span class="annot"><a href="Shrun.Logging.Formatting.html#levelToPrefix"><span class="hs-identifier hs-var">levelToPrefix</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelFatal"><span class="hs-identifier hs-var">LevelFatal</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Fatal&quot;</span></span><span>
+</span><span id="line-223"></span></pre></body></html>

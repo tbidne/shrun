@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679452173"><span id="local-6989586621679452174"></span></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Data.KeyHide</span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier">KeyHide</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- | Type for determining if we use the command's key</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- for display, rather than the key itself.</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">data</span><span> </span><span id="KeyHide"><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier hs-var">KeyHide</span></a></span></span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | Display the command's key, if it exists, rather</span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-comment">-- than the key itself.</span><span>
+</span><span id="line-13"></span><span>    </span><span id="KeyHideOff"><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Display the command itself, not the key.</span></span><span>
+</span><span id="line-15"></span><span>    </span><span id="KeyHideOn"><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHideOn"><span class="hs-identifier hs-var">KeyHideOn</span></a></span></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679452178"><span id="local-6989586621679452180"><span class="annot"><span class="annottext">KeyHide
+KeyHide -&gt; KeyHide -&gt; Bounded KeyHide
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: KeyHide
+minBound :: KeyHide
+$cmaxBound :: KeyHide
+maxBound :: KeyHide
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679452184"><span id="local-6989586621679452192"><span id="local-6989586621679452198"><span id="local-6989586621679452212"><span id="local-6989586621679452214"><span id="local-6989586621679452218"><span id="local-6989586621679452222"><span id="local-6989586621679452226"><span class="annot"><span class="annottext">Int -&gt; KeyHide
+KeyHide -&gt; Int
+KeyHide -&gt; [KeyHide]
+KeyHide -&gt; KeyHide
+KeyHide -&gt; KeyHide -&gt; [KeyHide]
+KeyHide -&gt; KeyHide -&gt; KeyHide -&gt; [KeyHide]
+(KeyHide -&gt; KeyHide)
+-&gt; (KeyHide -&gt; KeyHide)
+-&gt; (Int -&gt; KeyHide)
+-&gt; (KeyHide -&gt; Int)
+-&gt; (KeyHide -&gt; [KeyHide])
+-&gt; (KeyHide -&gt; KeyHide -&gt; [KeyHide])
+-&gt; (KeyHide -&gt; KeyHide -&gt; [KeyHide])
+-&gt; (KeyHide -&gt; KeyHide -&gt; KeyHide -&gt; [KeyHide])
+-&gt; Enum KeyHide
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: KeyHide -&gt; KeyHide
+succ :: KeyHide -&gt; KeyHide
+$cpred :: KeyHide -&gt; KeyHide
+pred :: KeyHide -&gt; KeyHide
+$ctoEnum :: Int -&gt; KeyHide
+toEnum :: Int -&gt; KeyHide
+$cfromEnum :: KeyHide -&gt; Int
+fromEnum :: KeyHide -&gt; Int
+$cenumFrom :: KeyHide -&gt; [KeyHide]
+enumFrom :: KeyHide -&gt; [KeyHide]
+$cenumFromThen :: KeyHide -&gt; KeyHide -&gt; [KeyHide]
+enumFromThen :: KeyHide -&gt; KeyHide -&gt; [KeyHide]
+$cenumFromTo :: KeyHide -&gt; KeyHide -&gt; [KeyHide]
+enumFromTo :: KeyHide -&gt; KeyHide -&gt; [KeyHide]
+$cenumFromThenTo :: KeyHide -&gt; KeyHide -&gt; KeyHide -&gt; [KeyHide]
+enumFromThenTo :: KeyHide -&gt; KeyHide -&gt; KeyHide -&gt; [KeyHide]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679452230"><span id="local-6989586621679452232"><span class="annot"><span class="annottext">KeyHide -&gt; KeyHide -&gt; Bool
+(KeyHide -&gt; KeyHide -&gt; Bool)
+-&gt; (KeyHide -&gt; KeyHide -&gt; Bool) -&gt; Eq KeyHide
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: KeyHide -&gt; KeyHide -&gt; Bool
+== :: KeyHide -&gt; KeyHide -&gt; Bool
+$c/= :: KeyHide -&gt; KeyHide -&gt; Bool
+/= :: KeyHide -&gt; KeyHide -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679452239"><span id="local-6989586621679452241"><span id="local-6989586621679452243"><span id="local-6989586621679452247"><span id="local-6989586621679452250"><span id="local-6989586621679452253"><span id="local-6989586621679452256"><span class="annot"><span class="annottext">Eq KeyHide
+Eq KeyHide =&gt;
+(KeyHide -&gt; KeyHide -&gt; Ordering)
+-&gt; (KeyHide -&gt; KeyHide -&gt; Bool)
+-&gt; (KeyHide -&gt; KeyHide -&gt; Bool)
+-&gt; (KeyHide -&gt; KeyHide -&gt; Bool)
+-&gt; (KeyHide -&gt; KeyHide -&gt; Bool)
+-&gt; (KeyHide -&gt; KeyHide -&gt; KeyHide)
+-&gt; (KeyHide -&gt; KeyHide -&gt; KeyHide)
+-&gt; Ord KeyHide
+KeyHide -&gt; KeyHide -&gt; Bool
+KeyHide -&gt; KeyHide -&gt; Ordering
+KeyHide -&gt; KeyHide -&gt; KeyHide
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: KeyHide -&gt; KeyHide -&gt; Ordering
+compare :: KeyHide -&gt; KeyHide -&gt; Ordering
+$c&lt; :: KeyHide -&gt; KeyHide -&gt; Bool
+&lt; :: KeyHide -&gt; KeyHide -&gt; Bool
+$c&lt;= :: KeyHide -&gt; KeyHide -&gt; Bool
+&lt;= :: KeyHide -&gt; KeyHide -&gt; Bool
+$c&gt; :: KeyHide -&gt; KeyHide -&gt; Bool
+&gt; :: KeyHide -&gt; KeyHide -&gt; Bool
+$c&gt;= :: KeyHide -&gt; KeyHide -&gt; Bool
+&gt;= :: KeyHide -&gt; KeyHide -&gt; Bool
+$cmax :: KeyHide -&gt; KeyHide -&gt; KeyHide
+max :: KeyHide -&gt; KeyHide -&gt; KeyHide
+$cmin :: KeyHide -&gt; KeyHide -&gt; KeyHide
+min :: KeyHide -&gt; KeyHide -&gt; KeyHide
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679452260"><span id="local-6989586621679452262"><span id="local-6989586621679452266"><span class="annot"><span class="annottext">Int -&gt; KeyHide -&gt; ShowS
+[KeyHide] -&gt; ShowS
+KeyHide -&gt; [Char]
+(Int -&gt; KeyHide -&gt; ShowS)
+-&gt; (KeyHide -&gt; [Char]) -&gt; ([KeyHide] -&gt; ShowS) -&gt; Show KeyHide
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; [Char]) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; KeyHide -&gt; ShowS
+showsPrec :: Int -&gt; KeyHide -&gt; ShowS
+$cshow :: KeyHide -&gt; [Char]
+show :: KeyHide -&gt; [Char]
+$cshowList :: [KeyHide] -&gt; ShowS
+showList :: [KeyHide] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier hs-type">KeyHide</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>  </span><span id="local-6989586621679452276"><span class="annot"><span class="annottext">tomlDecoder :: Decoder KeyHide
+</span><a href="#local-6989586621679452276"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><span class="annottext">Decoder Bool
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Bool -&gt; (Bool -&gt; KeyHide) -&gt; Decoder KeyHide
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-21"></span><span>      </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">KeyHide
+</span><a href="Shrun.Data.KeyHide.html#KeyHideOn"><span class="hs-identifier hs-var">KeyHideOn</span></a></span><span>
+</span><span id="line-22"></span><span>      </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">KeyHide
+</span><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span><span>
+</span><span id="line-23"></span></pre></body></html>

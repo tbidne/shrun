@@ -1,0 +1,1088 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration</span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.html#mergeConfig"><span class="hs-identifier">mergeConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.html"><span class="hs-identifier">Shrun.Configuration.Args</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier">Args</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.CmdLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#mergeCmdLogging"><span class="hs-identifier">mergeCmdLogging</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html"><span class="hs-identifier">Shrun.Configuration.Data.Core</span></a></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier">CoreConfigArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigP"><span class="hs-identifier">CoreConfigP</span></a></span><span>
+</span><span id="line-11"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier">MkCoreConfigP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogSize%3AMkCoreConfigP"><span class="hs-identifier">cmdLogSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogging%3AMkCoreConfigP"><span class="hs-identifier">cmdLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdNameTrunc%3AMkCoreConfigP"><span class="hs-identifier">cmdNameTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AfileLogging%3AMkCoreConfigP"><span class="hs-identifier">fileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Ainit%3AMkCoreConfigP"><span class="hs-identifier">init</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AkeyHide%3AMkCoreConfigP"><span class="hs-identifier">keyHide</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Anotify%3AMkCoreConfigP"><span class="hs-identifier">notify</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3ApollInterval%3AMkCoreConfigP"><span class="hs-identifier">pollInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Atimeout%3AMkCoreConfigP"><span class="hs-identifier">timeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AtimerFormat%3AMkCoreConfigP"><span class="hs-identifier">timerFormat</span></a></span><span>
+</span><span id="line-22"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#mergeFileLogging"><span class="hs-identifier">mergeFileLogging</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html"><span class="hs-identifier">Shrun.Configuration.Data.MergedConfig</span></a></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier">MergedConfig</span></a></span><span>
+</span><span id="line-27"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier">MkMergedConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3Acommands%3AMkMergedConfig"><span class="hs-identifier">commands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3AcoreConfig%3AMkMergedConfig"><span class="hs-identifier">coreConfig</span></a></span><span>
+</span><span id="line-30"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#mergeNotifyLogging"><span class="hs-identifier">mergeNotifyLogging</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator">(&lt;&gt;?)</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">WD</span></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Legend.html"><span class="hs-identifier">Shrun.Configuration.Legend</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Legend</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.html"><span class="hs-identifier">Shrun.Configuration.Toml</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier">Toml</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html"><span class="hs-identifier">Shrun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#Command"><span class="hs-identifier">Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#MkCommand"><span class="hs-identifier">MkCommand</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.KeyHide.html"><span class="hs-identifier">Shrun.Data.KeyHide</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier">KeyHide</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier">KeyHideOff</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.PollInterval.html"><span class="hs-identifier">Shrun.Data.PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.PollInterval.html#defaultPollInterval"><span class="hs-identifier">defaultPollInterval</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.TimerFormat.html"><span class="hs-identifier">Shrun.Data.TimerFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.TimerFormat.html#defaultTimerFormat"><span class="hs-identifier">defaultTimerFormat</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html"><span class="hs-identifier">Shrun.Logging.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#defaultCmdLogSize"><span class="hs-identifier">defaultCmdLogSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- | Merges Args and Toml together, filling in necessary defaults and</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- doing some light processing.</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--</span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- We want this function to do as much to prepare the final config as</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- possible. For instance, in addition to filling in defaults, we also process</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- commands via the legend (MonadThrow) and detect the terminal width for</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- command logging's lineTrunc field (MonadTerminal).</span><span>
+</span><span id="line-51"></span><span class="hs-comment">--</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- This is very nearly pure, except for the aforementioned effects.</span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- The only remaining tasks the Env needs to take care of is IO that we</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- really can't test anyway, such as opening file handles and creating</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- queues.</span><span>
+</span><span id="line-56"></span><span id="local-6989586621679462799"><span class="annot"><a href="Shrun.Configuration.html#mergeConfig"><span class="hs-identifier hs-type">mergeConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-57"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-terminal-0.1-8225eede747ffb6c8baf52f86eacb8d898676e7c2ea23a66df65cba2e82db12f/share/doc/html/src/Effects.System.Terminal.html#MonadTerminal"><span class="hs-identifier hs-type">MonadTerminal</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679462799"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadThrow</span></span><span> </span><span class="annot"><a href="#local-6989586621679462799"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-60"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-61"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.html#Toml"><span class="hs-identifier hs-type">Toml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-62"></span><span>  </span><span class="annot"><a href="#local-6989586621679462799"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-type">MergedConfig</span></a></span></span><span>
+</span><span id="line-63"></span><span id="mergeConfig"><span class="annot"><span class="annottext">mergeConfig :: forall (m :: Type -&gt; Type).
+(MonadTerminal m, MonadThrow m) =&gt;
+Args -&gt; Maybe Toml -&gt; m MergedConfig
+</span><a href="Shrun.Configuration.html#mergeConfig"><span class="hs-identifier hs-var hs-var">mergeConfig</span></a></span></span><span> </span><span id="local-6989586621679463564"><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span id="local-6989586621679463565"><span class="annot"><span class="annottext">Maybe Toml
+</span><a href="#local-6989586621679463565"><span class="hs-identifier hs-var">mToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe Toml
+</span><a href="#local-6989586621679463565"><span class="hs-identifier hs-var">mToml</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-65"></span><span>    </span><span class="annot"><span class="annottext">Maybe Toml
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-66"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679463566"><span class="annot"><span class="annottext">commands :: NESeq (Command 'Phase1)
+</span><a href="#local-6989586621679463566"><span class="hs-identifier hs-var hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; Text -&gt; Command 'Phase1
+forall (p :: Phase). Maybe Text -&gt; Text -&gt; Command p
+</span><a href="Shrun.Data.Command.html#MkCommand"><span class="hs-identifier hs-var">MkCommand</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Command 'Phase1) -&gt; NESeq Text -&gt; NESeq (Command 'Phase1)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679463568"><span class="hs-identifier hs-var">cmdsText</span></a></span><span>
+</span><span id="line-67"></span><span>      </span><span id="local-6989586621679463569"><span class="annot"><span class="annottext">Maybe CmdLoggingMerged
+</span><a href="#local-6989586621679463569"><span class="hs-identifier hs-var">cmdLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-68"></span><span>        </span><span class="annot"><span class="annottext">WithDisabled ()
+-&gt; CmdLoggingArgs
+-&gt; Maybe CmdLoggingToml
+-&gt; m (Maybe CmdLoggingMerged)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled ()
+-&gt; CmdLoggingArgs
+-&gt; Maybe CmdLoggingToml
+-&gt; m (Maybe CmdLoggingMerged)
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#mergeCmdLogging"><span class="hs-identifier hs-var">mergeCmdLogging</span></a></span><span>
+</span><span id="line-69"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled ()) -&gt; WithDisabled ()
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Args (WithDisabled ())
+</span><span class="">#cmdLog</span></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args CmdLoggingArgs -&gt; CmdLoggingArgs
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     CmdLoggingArgs
+     CmdLoggingArgs
+-&gt; Optic' A_Lens NoIx Args CmdLoggingArgs
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  CmdLoggingArgs
+  CmdLoggingArgs
+</span><span class="">#cmdLogging</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>          </span><span class="annot"><span class="annottext">Maybe CmdLoggingToml
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-72"></span><span>      </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-73"></span><span>        </span><span class="hs-operator">$</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-type">MkMergedConfig</span></a></span><span>
+</span><span id="line-74"></span><span>          </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:coreConfig:MkMergedConfig :: CoreConfigMerged
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3AcoreConfig%3AMkMergedConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>              </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier hs-type">MkCoreConfigP</span></a></span><span>
+</span><span id="line-76"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:timeout:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged Timeout
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Atimeout%3AMkCoreConfigP"><span class="hs-identifier hs-var">timeout</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled Timeout -&gt; Maybe Timeout
+forall a. WithDisabled a -&gt; Maybe a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-var">WD.toMaybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled Timeout)
+-&gt; WithDisabled Timeout
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled Timeout)
+     (WithDisabled Timeout)
+-&gt; Optic' A_Lens NoIx Args (WithDisabled Timeout)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled Timeout)
+  (WithDisabled Timeout)
+</span><span class="">#timeout</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>                  </span><span class="annot"><span class="annottext">$sel:init:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged Text
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Ainit%3AMkCoreConfigP"><span class="hs-identifier hs-var">init</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled Text -&gt; Maybe Text
+forall a. WithDisabled a -&gt; Maybe a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-var">WD.toMaybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled Text) -&gt; WithDisabled Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled Text)
+     (WithDisabled Text)
+-&gt; Optic' A_Lens NoIx Args (WithDisabled Text)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled Text)
+  (WithDisabled Text)
+</span><span class="">#init</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>                  </span><span class="annot"><span class="annottext">$sel:keyHide:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged KeyHide
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AkeyHide%3AMkCoreConfigP"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-79"></span><span>                    </span><span class="annot"><span class="annottext">KeyHide -&gt; WithDisabled KeyHide -&gt; KeyHide
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHide
+</span><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled KeyHide)
+-&gt; WithDisabled KeyHide
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled KeyHide)
+     (WithDisabled KeyHide)
+-&gt; Optic' A_Lens NoIx Args (WithDisabled KeyHide)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled KeyHide)
+  (WithDisabled KeyHide)
+</span><span class="">#keyHide</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-80"></span><span>                  </span><span class="annot"><span class="annottext">$sel:pollInterval:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged PollInterval
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3ApollInterval%3AMkCoreConfigP"><span class="hs-identifier hs-var">pollInterval</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-81"></span><span>                    </span><span class="annot"><span class="annottext">PollInterval -&gt; WithDisabled PollInterval -&gt; PollInterval
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span>
+</span><span id="line-82"></span><span>                      </span><span class="annot"><span class="annottext">PollInterval
+</span><a href="Shrun.Data.PollInterval.html#defaultPollInterval"><span class="hs-identifier hs-var">defaultPollInterval</span></a></span><span>
+</span><span id="line-83"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled PollInterval)
+-&gt; WithDisabled PollInterval
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled PollInterval)
+     (WithDisabled PollInterval)
+-&gt; Optic' A_Lens NoIx Args (WithDisabled PollInterval)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled PollInterval)
+  (WithDisabled PollInterval)
+</span><span class="">#pollInterval</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>                  </span><span class="annot"><span class="annottext">$sel:cmdLogSize:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged (Bytes 'B Natural)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogSize%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdLogSize</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-85"></span><span>                    </span><span class="annot"><span class="annottext">Bytes 'B Natural
+-&gt; WithDisabled (Bytes 'B Natural) -&gt; Bytes 'B Natural
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span>
+</span><span id="line-86"></span><span>                      </span><span class="annot"><span class="annottext">Bytes 'B Natural
+</span><a href="Shrun.Logging.Types.html#defaultCmdLogSize"><span class="hs-identifier hs-var">defaultCmdLogSize</span></a></span><span>
+</span><span id="line-87"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled (Bytes 'B Natural))
+-&gt; WithDisabled (Bytes 'B Natural)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled (Bytes 'B Natural))
+     (WithDisabled (Bytes 'B Natural))
+-&gt; Optic' A_Lens NoIx Args (WithDisabled (Bytes 'B Natural))
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled (Bytes 'B Natural))
+  (WithDisabled (Bytes 'B Natural))
+</span><span class="">#cmdLogSize</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-88"></span><span>                  </span><span class="annot"><span class="annottext">$sel:timerFormat:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged TimerFormat
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AtimerFormat%3AMkCoreConfigP"><span class="hs-identifier hs-var">timerFormat</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-89"></span><span>                    </span><span class="annot"><span class="annottext">TimerFormat -&gt; WithDisabled TimerFormat -&gt; TimerFormat
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span>
+</span><span id="line-90"></span><span>                      </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Data.TimerFormat.html#defaultTimerFormat"><span class="hs-identifier hs-var">defaultTimerFormat</span></a></span><span>
+</span><span id="line-91"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled TimerFormat)
+-&gt; WithDisabled TimerFormat
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled TimerFormat)
+     (WithDisabled TimerFormat)
+-&gt; Optic' A_Lens NoIx Args (WithDisabled TimerFormat)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled TimerFormat)
+  (WithDisabled TimerFormat)
+</span><span class="">#timerFormat</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-92"></span><span>                  </span><span class="annot"><span class="annottext">$sel:cmdNameTrunc:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged (Truncation 'TCmdName)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdNameTrunc%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdNameTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-93"></span><span>                    </span><span class="annot"><span class="annottext">WithDisabled (Truncation 'TCmdName) -&gt; Maybe (Truncation 'TCmdName)
+forall a. WithDisabled a -&gt; Maybe a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-var">WD.toMaybe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled (Truncation 'TCmdName))
+-&gt; WithDisabled (Truncation 'TCmdName)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled (Truncation 'TCmdName))
+     (WithDisabled (Truncation 'TCmdName))
+-&gt; Optic' A_Lens NoIx Args (WithDisabled (Truncation 'TCmdName))
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled (Truncation 'TCmdName))
+  (WithDisabled (Truncation 'TCmdName))
+</span><span class="">#cmdNameTrunc</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-94"></span><span>                  </span><span class="annot"><span class="annottext">Maybe CmdLoggingMerged
+ArgsOnlyDetF 'ConfigPhaseMerged CmdLoggingMerged
+$sel:cmdLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged CmdLoggingMerged
+cmdLogging :: Maybe CmdLoggingMerged
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var hs-var">cmdLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-95"></span><span>                  </span><span class="annot"><span class="annottext">$sel:fileLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged (FileLoggingP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AfileLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-96"></span><span>                    </span><span class="annot"><span class="annottext">FileLoggingArgs
+-&gt; Maybe FileLoggingToml -&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#mergeFileLogging"><span class="hs-identifier hs-var">mergeFileLogging</span></a></span><span>
+</span><span id="line-97"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args FileLoggingArgs -&gt; FileLoggingArgs
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     FileLoggingArgs
+     FileLoggingArgs
+-&gt; Optic' A_Lens NoIx Args FileLoggingArgs
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  FileLoggingArgs
+  FileLoggingArgs
+</span><span class="">#fileLogging</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>                      </span><span class="annot"><span class="annottext">Maybe FileLoggingToml
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>                  </span><span class="annot"><span class="annottext">$sel:notify:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged (NotifyP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Anotify%3AMkCoreConfigP"><span class="hs-identifier hs-var">notify</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-100"></span><span>                    </span><span class="annot"><span class="annottext">NotifyArgs
+-&gt; Maybe NotifyToml -&gt; Maybe (NotifyP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Notify.html#mergeNotifyLogging"><span class="hs-identifier hs-var">mergeNotifyLogging</span></a></span><span>
+</span><span id="line-101"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args NotifyArgs -&gt; NotifyArgs
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens NoIx CoreConfigArgs CoreConfigArgs NotifyArgs NotifyArgs
+-&gt; Optic' A_Lens NoIx Args NotifyArgs
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens NoIx CoreConfigArgs CoreConfigArgs NotifyArgs NotifyArgs
+</span><span class="">#notify</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>                      </span><span class="annot"><span class="annottext">Maybe NotifyToml
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-103"></span><span>                </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-104"></span><span>            </span><span class="annot"><span class="annottext">NESeq (Command 'Phase1)
+$sel:commands:MkMergedConfig :: NESeq (Command 'Phase1)
+commands :: NESeq (Command 'Phase1)
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3Acommands%3AMkMergedConfig"><span class="hs-identifier hs-var hs-var">commands</span></a></span><span>
+</span><span id="line-105"></span><span>          </span><span class="hs-special">}</span><span>
+</span><span id="line-106"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679463574"><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-107"></span><span>      </span><span id="local-6989586621679463575"><span class="annot"><span class="annottext">NESeq (Command 'Phase1)
+</span><a href="#local-6989586621679463575"><span class="hs-identifier hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe (List KeyVal))
+-&gt; Maybe (List KeyVal)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Toml (Maybe (List KeyVal))
+</span><span class="">#legend</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-108"></span><span>        </span><span class="annot"><span class="annottext">Maybe (List KeyVal)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NESeq (Command 'Phase1) -&gt; m (NESeq (Command 'Phase1))
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NESeq (Command 'Phase1) -&gt; m (NESeq (Command 'Phase1)))
+-&gt; NESeq (Command 'Phase1) -&gt; m (NESeq (Command 'Phase1))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; Text -&gt; Command 'Phase1
+forall (p :: Phase). Maybe Text -&gt; Text -&gt; Command p
+</span><a href="Shrun.Data.Command.html#MkCommand"><span class="hs-identifier hs-var">MkCommand</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Command 'Phase1) -&gt; NESeq Text -&gt; NESeq (Command 'Phase1)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679463568"><span class="hs-identifier hs-var">cmdsText</span></a></span><span>
+</span><span id="line-109"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679463576"><span class="annot"><span class="annottext">List KeyVal
+</span><a href="#local-6989586621679463576"><span class="hs-identifier hs-var">aliases</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">List KeyVal -&gt; Either DuplicateKeyError LegendMap
+</span><a href="Shrun.Configuration.Legend.html#linesToMap"><span class="hs-identifier hs-var">Legend.linesToMap</span></a></span><span> </span><span class="annot"><span class="annottext">List KeyVal
+</span><a href="#local-6989586621679463576"><span class="hs-identifier hs-var">aliases</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-110"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679463578"><span class="annot"><span class="annottext">LegendMap
+</span><a href="#local-6989586621679463578"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">LegendMap
+-&gt; NESeq Text -&gt; Either CyclicKeyError (NESeq (Command 'Phase1))
+</span><a href="Shrun.Configuration.Legend.html#translateCommands"><span class="hs-identifier hs-var">Legend.translateCommands</span></a></span><span> </span><span class="annot"><span class="annottext">LegendMap
+</span><a href="#local-6989586621679463578"><span class="hs-identifier hs-var">mp</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679463568"><span class="hs-identifier hs-var">cmdsText</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-111"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679463580"><span class="annot"><span class="annottext">NESeq (Command 'Phase1)
+</span><a href="#local-6989586621679463580"><span class="hs-identifier hs-var">cmds</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NESeq (Command 'Phase1) -&gt; m (NESeq (Command 'Phase1))
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NESeq (Command 'Phase1)
+</span><a href="#local-6989586621679463580"><span class="hs-identifier hs-var">cmds</span></a></span><span>
+</span><span id="line-112"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679463581"><span class="annot"><span class="annottext">CyclicKeyError
+</span><a href="#local-6989586621679463581"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CyclicKeyError -&gt; m (NESeq (Command 'Phase1))
+forall (m :: Type -&gt; Type) e a.
+(HasCallStack, MonadThrow m, Exception e) =&gt;
+e -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-exceptions-0.1-579c9a81a5eea4e68d920d34a6fba8b6db62b785d93b60572c7e511e79999f70/share/doc/html/src/Effects.Exception.html#throwM"><span class="hs-identifier hs-var">throwM</span></a></span><span> </span><span class="annot"><span class="annottext">CyclicKeyError
+</span><a href="#local-6989586621679463581"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-113"></span><span>          </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679463583"><span class="annot"><span class="annottext">DuplicateKeyError
+</span><a href="#local-6989586621679463583"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">DuplicateKeyError -&gt; m (NESeq (Command 'Phase1))
+forall (m :: Type -&gt; Type) e a.
+(HasCallStack, MonadThrow m, Exception e) =&gt;
+e -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-exceptions-0.1-579c9a81a5eea4e68d920d34a6fba8b6db62b785d93b60572c7e511e79999f70/share/doc/html/src/Effects.Exception.html#throwM"><span class="hs-identifier hs-var">throwM</span></a></span><span> </span><span class="annot"><span class="annottext">DuplicateKeyError
+</span><a href="#local-6989586621679463583"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-114"></span><span>
+</span><span id="line-115"></span><span>      </span><span id="local-6989586621679463584"><span class="annot"><span class="annottext">Maybe CmdLoggingMerged
+</span><a href="#local-6989586621679463584"><span class="hs-identifier hs-var">cmdLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-116"></span><span>        </span><span class="annot"><span class="annottext">WithDisabled ()
+-&gt; CmdLoggingArgs
+-&gt; Maybe CmdLoggingToml
+-&gt; m (Maybe CmdLoggingMerged)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled ()
+-&gt; CmdLoggingArgs
+-&gt; Maybe CmdLoggingToml
+-&gt; m (Maybe CmdLoggingMerged)
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#mergeCmdLogging"><span class="hs-identifier hs-var">mergeCmdLogging</span></a></span><span>
+</span><span id="line-117"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args
+-&gt; Optic' A_Lens NoIx Args (WithDisabled ()) -&gt; WithDisabled ()
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Args (WithDisabled ())
+</span><span class="">#cmdLog</span></span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args CmdLoggingArgs -&gt; CmdLoggingArgs
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     CmdLoggingArgs
+     CmdLoggingArgs
+-&gt; Optic' A_Lens NoIx Args CmdLoggingArgs
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  CmdLoggingArgs
+  CmdLoggingArgs
+</span><span class="">#cmdLogging</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe CmdLoggingToml)
+-&gt; Maybe CmdLoggingToml
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe CmdLoggingToml)
+     (Maybe CmdLoggingToml)
+-&gt; Optic' A_Lens NoIx Toml (Maybe CmdLoggingToml)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe CmdLoggingToml)
+  (Maybe CmdLoggingToml)
+</span><span class="">#cmdLogging</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span>      </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-122"></span><span>        </span><span class="hs-operator">$</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-type">MkMergedConfig</span></a></span><span>
+</span><span id="line-123"></span><span>          </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:coreConfig:MkMergedConfig :: CoreConfigMerged
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3AcoreConfig%3AMkMergedConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-124"></span><span>              </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier hs-type">MkCoreConfigP</span></a></span><span>
+</span><span id="line-125"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:timeout:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged Timeout
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Atimeout%3AMkCoreConfigP"><span class="hs-identifier hs-var">timeout</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-126"></span><span>                    </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled Timeout)
+  (WithDisabled Timeout)
+-&gt; Maybe Timeout -&gt; Maybe Timeout
+forall a.
+Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; Maybe a
+</span><a href="#local-6989586621679463585"><span class="hs-identifier hs-var">plusNothing</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled Timeout)
+  (WithDisabled Timeout)
+</span><span class="">#timeout</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml -&gt; Optic' A_Lens NoIx Toml (Maybe Timeout) -&gt; Maybe Timeout
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe Timeout)
+     (Maybe Timeout)
+-&gt; Optic' A_Lens NoIx Toml (Maybe Timeout)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe Timeout)
+  (Maybe Timeout)
+</span><span class="">#timeout</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-127"></span><span>                  </span><span class="annot"><span class="annottext">$sel:init:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged Text
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Ainit%3AMkCoreConfigP"><span class="hs-identifier hs-var">init</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-128"></span><span>                    </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled Text)
+  (WithDisabled Text)
+-&gt; Maybe Text -&gt; Maybe Text
+forall a.
+Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; Maybe a
+</span><a href="#local-6989586621679463585"><span class="hs-identifier hs-var">plusNothing</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled Text)
+  (WithDisabled Text)
+</span><span class="">#init</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml -&gt; Optic' A_Lens NoIx Toml (Maybe Text) -&gt; Maybe Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens NoIx CoreConfigToml CoreConfigToml (Maybe Text) (Maybe Text)
+-&gt; Optic' A_Lens NoIx Toml (Maybe Text)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens NoIx CoreConfigToml CoreConfigToml (Maybe Text) (Maybe Text)
+</span><span class="">#init</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-129"></span><span>                  </span><span class="annot"><span class="annottext">$sel:keyHide:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged KeyHide
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AkeyHide%3AMkCoreConfigP"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-130"></span><span>                    </span><span class="annot"><span class="annottext">KeyHide
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled KeyHide)
+     (WithDisabled KeyHide)
+-&gt; Maybe KeyHide
+-&gt; KeyHide
+forall a.
+a -&gt; Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679463586"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-131"></span><span>                      </span><span class="annot"><span class="annottext">KeyHide
+</span><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span><span class="hs-cpp">
+                      #keyHide
+</span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml -&gt; Optic' A_Lens NoIx Toml (Maybe KeyHide) -&gt; Maybe KeyHide
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe KeyHide)
+     (Maybe KeyHide)
+-&gt; Optic' A_Lens NoIx Toml (Maybe KeyHide)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe KeyHide)
+  (Maybe KeyHide)
+</span><span class="">#keyHide</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-134"></span><span>                  </span><span class="annot"><span class="annottext">$sel:pollInterval:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged PollInterval
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3ApollInterval%3AMkCoreConfigP"><span class="hs-identifier hs-var">pollInterval</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-135"></span><span>                    </span><span class="annot"><span class="annottext">PollInterval
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled PollInterval)
+     (WithDisabled PollInterval)
+-&gt; Maybe PollInterval
+-&gt; PollInterval
+forall a.
+a -&gt; Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679463586"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-136"></span><span>                      </span><span class="annot"><span class="annottext">PollInterval
+</span><a href="Shrun.Data.PollInterval.html#defaultPollInterval"><span class="hs-identifier hs-var">defaultPollInterval</span></a></span><span class="hs-cpp">
+                      #pollInterval
+</span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe PollInterval)
+-&gt; Maybe PollInterval
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe PollInterval)
+     (Maybe PollInterval)
+-&gt; Optic' A_Lens NoIx Toml (Maybe PollInterval)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe PollInterval)
+  (Maybe PollInterval)
+</span><span class="">#pollInterval</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-139"></span><span>                  </span><span class="annot"><span class="annottext">$sel:cmdLogSize:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged (Bytes 'B Natural)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogSize%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdLogSize</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-140"></span><span>                    </span><span class="annot"><span class="annottext">Bytes 'B Natural
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled (Bytes 'B Natural))
+     (WithDisabled (Bytes 'B Natural))
+-&gt; Maybe (Bytes 'B Natural)
+-&gt; Bytes 'B Natural
+forall a.
+a -&gt; Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679463586"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-141"></span><span>                      </span><span class="annot"><span class="annottext">Bytes 'B Natural
+</span><a href="Shrun.Logging.Types.html#defaultCmdLogSize"><span class="hs-identifier hs-var">defaultCmdLogSize</span></a></span><span class="hs-cpp">
+                      #cmdLogSize
+</span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe (Bytes 'B Natural))
+-&gt; Maybe (Bytes 'B Natural)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe (Bytes 'B Natural))
+     (Maybe (Bytes 'B Natural))
+-&gt; Optic' A_Lens NoIx Toml (Maybe (Bytes 'B Natural))
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe (Bytes 'B Natural))
+  (Maybe (Bytes 'B Natural))
+</span><span class="">#cmdLogSize</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-144"></span><span>                  </span><span class="annot"><span class="annottext">$sel:timerFormat:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged TimerFormat
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AtimerFormat%3AMkCoreConfigP"><span class="hs-identifier hs-var">timerFormat</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-145"></span><span>                    </span><span class="annot"><span class="annottext">TimerFormat
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     (WithDisabled TimerFormat)
+     (WithDisabled TimerFormat)
+-&gt; Maybe TimerFormat
+-&gt; TimerFormat
+forall a.
+a -&gt; Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679463586"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-146"></span><span>                      </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Data.TimerFormat.html#defaultTimerFormat"><span class="hs-identifier hs-var">defaultTimerFormat</span></a></span><span class="hs-cpp">
+                      #timerFormat
+</span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe TimerFormat) -&gt; Maybe TimerFormat
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe TimerFormat)
+     (Maybe TimerFormat)
+-&gt; Optic' A_Lens NoIx Toml (Maybe TimerFormat)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe TimerFormat)
+  (Maybe TimerFormat)
+</span><span class="">#timerFormat</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-149"></span><span>                  </span><span class="annot"><span class="annottext">$sel:cmdNameTrunc:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged (Truncation 'TCmdName)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdNameTrunc%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdNameTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-150"></span><span>                    </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  (WithDisabled (Truncation 'TCmdName))
+  (WithDisabled (Truncation 'TCmdName))
+-&gt; Maybe (Truncation 'TCmdName) -&gt; Maybe (Truncation 'TCmdName)
+forall a.
+Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; Maybe a
+</span><a href="#local-6989586621679463585"><span class="hs-identifier hs-var">plusNothing</span></a></span><span class="hs-cpp">
+                      #cmdNameTrunc
+</span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe (Truncation 'TCmdName))
+-&gt; Maybe (Truncation 'TCmdName)
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe (Truncation 'TCmdName))
+     (Maybe (Truncation 'TCmdName))
+-&gt; Optic' A_Lens NoIx Toml (Maybe (Truncation 'TCmdName))
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe (Truncation 'TCmdName))
+  (Maybe (Truncation 'TCmdName))
+</span><span class="">#cmdNameTrunc</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-153"></span><span>                  </span><span class="annot"><span class="annottext">Maybe CmdLoggingMerged
+ArgsOnlyDetF 'ConfigPhaseMerged CmdLoggingMerged
+$sel:cmdLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged CmdLoggingMerged
+cmdLogging :: Maybe CmdLoggingMerged
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var hs-var">cmdLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-154"></span><span>                  </span><span class="annot"><span class="annottext">$sel:fileLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged (FileLoggingP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AfileLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-155"></span><span>                    </span><span class="annot"><span class="annottext">FileLoggingArgs
+-&gt; Maybe FileLoggingToml -&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#mergeFileLogging"><span class="hs-identifier hs-var">mergeFileLogging</span></a></span><span>
+</span><span id="line-156"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args FileLoggingArgs -&gt; FileLoggingArgs
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigArgs
+     CoreConfigArgs
+     FileLoggingArgs
+     FileLoggingArgs
+-&gt; Optic' A_Lens NoIx Args FileLoggingArgs
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigArgs
+  CoreConfigArgs
+  FileLoggingArgs
+  FileLoggingArgs
+</span><span class="">#fileLogging</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-157"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe FileLoggingToml)
+-&gt; Maybe FileLoggingToml
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe FileLoggingToml)
+     (Maybe FileLoggingToml)
+-&gt; Optic' A_Lens NoIx Toml (Maybe FileLoggingToml)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe FileLoggingToml)
+  (Maybe FileLoggingToml)
+</span><span class="">#fileLogging</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-158"></span><span>                  </span><span class="annot"><span class="annottext">$sel:notify:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged (NotifyP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Anotify%3AMkCoreConfigP"><span class="hs-identifier hs-var">notify</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-159"></span><span>                    </span><span class="annot"><span class="annottext">NotifyArgs
+-&gt; Maybe NotifyToml -&gt; Maybe (NotifyP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Notify.html#mergeNotifyLogging"><span class="hs-identifier hs-var">mergeNotifyLogging</span></a></span><span>
+</span><span id="line-160"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args NotifyArgs -&gt; NotifyArgs
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Optic
+     A_Lens NoIx CoreConfigArgs CoreConfigArgs NotifyArgs NotifyArgs
+-&gt; Optic' A_Lens NoIx Args NotifyArgs
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens NoIx CoreConfigArgs CoreConfigArgs NotifyArgs NotifyArgs
+</span><span class="">#notify</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-161"></span><span>                      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Toml
+</span><a href="#local-6989586621679463574"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">Toml
+-&gt; Optic' A_Lens NoIx Toml (Maybe NotifyToml) -&gt; Maybe NotifyToml
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Toml Toml CoreConfigToml CoreConfigToml
+-&gt; Optic
+     A_Lens
+     NoIx
+     CoreConfigToml
+     CoreConfigToml
+     (Maybe NotifyToml)
+     (Maybe NotifyToml)
+-&gt; Optic' A_Lens NoIx Toml (Maybe NotifyToml)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CoreConfigToml
+  CoreConfigToml
+  (Maybe NotifyToml)
+  (Maybe NotifyToml)
+</span><span class="">#notify</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-162"></span><span>                </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-163"></span><span>            </span><span class="annot"><span class="annottext">NESeq (Command 'Phase1)
+$sel:commands:MkMergedConfig :: NESeq (Command 'Phase1)
+commands :: NESeq (Command 'Phase1)
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3Acommands%3AMkMergedConfig"><span class="hs-identifier hs-var hs-var">commands</span></a></span><span>
+</span><span id="line-164"></span><span>          </span><span class="hs-special">}</span><span>
+</span><span id="line-165"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-166"></span><span>    </span><span id="local-6989586621679463568"><span class="annot"><span class="annottext">cmdsText :: NESeq Text
+</span><a href="#local-6989586621679463568"><span class="hs-identifier hs-var hs-var">cmdsText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args (NESeq Text) -&gt; NESeq Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Args (NESeq Text)
+</span><span class="">#commands</span></span><span>
+</span><span id="line-167"></span><span>
+</span><span id="line-168"></span><span>    </span><span id="local-6989586621679462962"><span class="annot"><a href="#local-6989586621679463586"><span class="hs-identifier hs-type">plusDefault</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679462962"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#Lens%27"><span class="hs-identifier hs-type">Lens'</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier hs-type">CoreConfigArgs</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679462962"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679462962"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679462962"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-169"></span><span>    </span><span id="local-6989586621679463586"><span class="annot"><span class="annottext">plusDefault :: forall a.
+a -&gt; Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679463586"><span class="hs-identifier hs-var hs-var">plusDefault</span></a></span></span><span> </span><span id="local-6989586621679463599"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679463599"><span class="hs-identifier hs-var">defA</span></a></span></span><span> </span><span id="local-6989586621679463600"><span class="annot"><span class="annottext">Lens' CoreConfigArgs (WithDisabled a)
+</span><a href="#local-6989586621679463600"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679463601"><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679463601"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; WithDisabled a -&gt; a
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679463599"><span class="hs-identifier hs-var">defA</span></a></span><span> </span><span class="annot"><span class="annottext">(WithDisabled a -&gt; a) -&gt; WithDisabled a -&gt; a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args (WithDisabled a) -&gt; WithDisabled a
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Lens' CoreConfigArgs (WithDisabled a)
+-&gt; Optic' A_Lens NoIx Args (WithDisabled a)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' CoreConfigArgs (WithDisabled a)
+</span><a href="#local-6989586621679463600"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+forall a. WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator hs-var">&lt;&gt;?</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679463601"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span>    </span><span id="local-6989586621679462960"><span class="annot"><a href="#local-6989586621679463585"><span class="hs-identifier hs-type">plusNothing</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#Lens%27"><span class="hs-identifier hs-type">Lens'</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigArgs"><span class="hs-identifier hs-type">CoreConfigArgs</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679462960"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679462960"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679462960"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-172"></span><span>    </span><span id="local-6989586621679463585"><span class="annot"><span class="annottext">plusNothing :: forall a.
+Lens' CoreConfigArgs (WithDisabled a) -&gt; Maybe a -&gt; Maybe a
+</span><a href="#local-6989586621679463585"><span class="hs-identifier hs-var hs-var">plusNothing</span></a></span></span><span> </span><span id="local-6989586621679463613"><span class="annot"><span class="annottext">Lens' CoreConfigArgs (WithDisabled a)
+</span><a href="#local-6989586621679463613"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679463614"><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679463614"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; Maybe a
+forall a. WithDisabled a -&gt; Maybe a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#toMaybe"><span class="hs-identifier hs-var">WD.toMaybe</span></a></span><span> </span><span class="annot"><span class="annottext">(WithDisabled a -&gt; Maybe a) -&gt; WithDisabled a -&gt; Maybe a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Args
+</span><a href="#local-6989586621679463564"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">Args -&gt; Optic' A_Lens NoIx Args (WithDisabled a) -&gt; WithDisabled a
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+</span><span class="">#coreConfig</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx Args Args CoreConfigArgs CoreConfigArgs
+-&gt; Lens' CoreConfigArgs (WithDisabled a)
+-&gt; Optic' A_Lens NoIx Args (WithDisabled a)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' CoreConfigArgs (WithDisabled a)
+</span><a href="#local-6989586621679463613"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+forall a. WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator hs-var">&lt;&gt;?</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679463614"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-173"></span></pre></body></html>

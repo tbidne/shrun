@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Provides framework for &quot;phased&quot; data. This is a generalization of</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- the &quot;Higher-kinded data&quot; approach where instead of merely annotating a</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- data type with some constructor e.g.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- data Foo f = MkFoo</span><span>
+</span><span id="line-7"></span><span class="hs-comment">--   { bar :: f Bool,</span><span>
+</span><span id="line-8"></span><span class="hs-comment">--     baz :: f String,</span><span>
+</span><span id="line-9"></span><span class="hs-comment">--     ...</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--   }</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- we use a type family:</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- data Foo p = MkFoo</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--   { bar :: Fam1 p,</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--     baz :: Fam2 p,</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--   ...</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--   }</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-22"></span><span class="hs-comment">--</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- Not only does this allow fields to vary independently, it also means</span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- we can avoid clunky wrappers like @Identity@.</span><span>
+</span><span id="line-25"></span><span class="hs-comment">--</span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- We do this so that we can represent data that &quot;evolves&quot; e.g. we may</span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- initially parse a data type as Foo1 (phase 1) but then further process</span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- this data type into Foo2 (phase 2). Using this phased approach avoids</span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- duplication of constructors and fields.</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Data.Phase</span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase"><span class="hs-identifier">Phase</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="Shrun.Data.Phase.html#AdvancePhase"><span class="hs-identifier">AdvancePhase</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="annot"><span class="hs-comment">-- | Index for data that has a &quot;phased&quot; evolution.</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">data</span><span> </span><span id="Phase"><span class="annot"><a href="Shrun.Data.Phase.html#Phase"><span class="hs-identifier hs-var">Phase</span></a></span></span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="Phase1"><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-var">Phase1</span></a></span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="Phase2"><span class="annot"><a href="Shrun.Data.Phase.html#Phase2"><span class="hs-identifier hs-var">Phase2</span></a></span></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679450776"><span id="local-6989586621679450778"><span class="annot"><span class="annottext">Phase -&gt; Phase -&gt; Bool
+(Phase -&gt; Phase -&gt; Bool) -&gt; (Phase -&gt; Phase -&gt; Bool) -&gt; Eq Phase
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Phase -&gt; Phase -&gt; Bool
+== :: Phase -&gt; Phase -&gt; Bool
+$c/= :: Phase -&gt; Phase -&gt; Bool
+/= :: Phase -&gt; Phase -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679450783"><span id="local-6989586621679450785"><span id="local-6989586621679450789"><span class="annot"><span class="annottext">Int -&gt; Phase -&gt; ShowS
+[Phase] -&gt; ShowS
+Phase -&gt; String
+(Int -&gt; Phase -&gt; ShowS)
+-&gt; (Phase -&gt; String) -&gt; ([Phase] -&gt; ShowS) -&gt; Show Phase
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Phase -&gt; ShowS
+showsPrec :: Int -&gt; Phase -&gt; ShowS
+$cshow :: Phase -&gt; String
+show :: Phase -&gt; String
+$cshowList :: [Phase] -&gt; ShowS
+showList :: [Phase] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="annot"><span class="hs-comment">-- | Advances phased data.</span></span><span>
+</span><span id="line-45"></span><span class="hs-keyword">class</span><span> </span><span id="AdvancePhase"><span class="annot"><a href="Shrun.Data.Phase.html#AdvancePhase"><span class="hs-identifier hs-var">AdvancePhase</span></a></span></span><span> </span><span id="local-6989586621679450792"><span class="annot"><a href="#local-6989586621679450792"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-comment">-- | The next phase.</span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-keyword">type</span><span> </span><span id="NextPhase"><span class="annot"><a href="Shrun.Data.Phase.html#NextPhase"><span class="hs-identifier hs-var">NextPhase</span></a></span></span><span> </span><span id="local-6989586621679450792"><span class="annot"><a href="#local-6989586621679450792"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-comment">-- | Advances the data.</span><span>
+</span><span id="line-50"></span><span>  </span><span id="advancePhase"><span class="annot"><a href="Shrun.Data.Phase.html#advancePhase"><span class="hs-identifier hs-type">advancePhase</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679450792"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#NextPhase"><span class="hs-identifier hs-type">NextPhase</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679450792"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-51"></span></pre></body></html>

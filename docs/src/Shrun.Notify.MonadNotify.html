@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="annot"><span class="hs-comment">-- | Provides effects for sending notifications.</span></span><span>
+</span><span id="line-5"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Notify.MonadNotify</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#MonadNotify"><span class="hs-identifier">MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier">ShrunNote</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/z7xgvhb0zz3vsryj47bli4q26nvflk9s-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html"><span class="hs-identifier">DBus.Notify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/z7xgvhb0zz3vsryj47bli4q26nvflk9s-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#UrgencyLevel"><span class="hs-identifier">UrgencyLevel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html"><span class="hs-identifier">Shrun.Notify.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier">NotifyTimeout</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="annot"><span class="hs-comment">-- | Holds notification data.</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">data</span><span> </span><span id="ShrunNote"><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier hs-var">ShrunNote</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkShrunNote"><span class="annot"><a href="Shrun.Notify.MonadNotify.html#MkShrunNote"><span class="hs-identifier hs-var">MkShrunNote</span></a></span></span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="%24sel%3Asummary%3AMkShrunNote"><span class="annot"><span class="annottext">ShrunNote -&gt; Text
+</span><a href="Shrun.Notify.MonadNotify.html#%24sel%3Asummary%3AMkShrunNote"><span class="hs-identifier hs-var hs-var">summary</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span id="%24sel%3Abody%3AMkShrunNote"><span class="annot"><span class="annottext">ShrunNote -&gt; Text
+</span><a href="Shrun.Notify.MonadNotify.html#%24sel%3Abody%3AMkShrunNote"><span class="hs-identifier hs-var hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span id="%24sel%3Aurgency%3AMkShrunNote"><span class="annot"><span class="annottext">ShrunNote -&gt; UrgencyLevel
+</span><a href="Shrun.Notify.MonadNotify.html#%24sel%3Aurgency%3AMkShrunNote"><span class="hs-identifier hs-var hs-var">urgency</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/z7xgvhb0zz3vsryj47bli4q26nvflk9s-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#UrgencyLevel"><span class="hs-identifier hs-type">UrgencyLevel</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span id="%24sel%3Atimeout%3AMkShrunNote"><span class="annot"><span class="annottext">ShrunNote -&gt; NotifyTimeout
+</span><a href="Shrun.Notify.MonadNotify.html#%24sel%3Atimeout%3AMkShrunNote"><span class="hs-identifier hs-var hs-var">timeout</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679451331"><span id="local-6989586621679451340"><span class="annot"><span class="annottext">ShrunNote -&gt; ShrunNote -&gt; Bool
+(ShrunNote -&gt; ShrunNote -&gt; Bool)
+-&gt; (ShrunNote -&gt; ShrunNote -&gt; Bool) -&gt; Eq ShrunNote
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ShrunNote -&gt; ShrunNote -&gt; Bool
+== :: ShrunNote -&gt; ShrunNote -&gt; Bool
+$c/= :: ShrunNote -&gt; ShrunNote -&gt; Bool
+/= :: ShrunNote -&gt; ShrunNote -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679451345"><span id="local-6989586621679451356"><span id="local-6989586621679451360"><span class="annot"><span class="annottext">Int -&gt; ShrunNote -&gt; ShowS
+[ShrunNote] -&gt; ShowS
+ShrunNote -&gt; String
+(Int -&gt; ShrunNote -&gt; ShowS)
+-&gt; (ShrunNote -&gt; String)
+-&gt; ([ShrunNote] -&gt; ShowS)
+-&gt; Show ShrunNote
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ShrunNote -&gt; ShowS
+showsPrec :: Int -&gt; ShrunNote -&gt; ShowS
+$cshow :: ShrunNote -&gt; String
+show :: ShrunNote -&gt; String
+$cshowList :: [ShrunNote] -&gt; ShowS
+showList :: [ShrunNote] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span id="local-6989586621679451298"><span id="local-6989586621679451299"><span id="local-6989586621679451300"><span id="local-6989586621679451301"><span id="local-6989586621679451302"><span id="local-6989586621679451303"><span id="local-6989586621679451304"><span id="local-6989586621679451305"><span id="local-6989586621679451306"><span id="local-6989586621679451307"><span id="local-6989586621679451308"><span id="local-6989586621679451309"><span id="local-6989586621679451367"><span id="local-6989586621679451372"><span id="local-6989586621679451377"><span id="local-6989586621679451382"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">ShrunNote</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="annot"><span class="hs-comment">-- | General effect for sending notifications.</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679451323"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MonadNotify"><span class="annot"><a href="Shrun.Notify.MonadNotify.html#MonadNotify"><span class="hs-identifier hs-var">MonadNotify</span></a></span></span><span> </span><span id="local-6989586621679451323"><span class="annot"><a href="#local-6989586621679451323"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-28"></span><span>  </span><span id="notify"><span class="annot"><a href="Shrun.Notify.MonadNotify.html#notify"><span class="hs-identifier hs-type">notify</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier hs-type">ShrunNote</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679451323"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span></pre></body></html>

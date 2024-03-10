@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Effect for AppleScript.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Notify.MonadAppleScript</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier">MonadAppleScript</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#notifyAppleScript"><span class="hs-identifier">notifyAppleScript</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-typed-process-0.1-caff352ab5ee8be1ff6984ececa43c50c4dbd091023b8f54b9a4b7746d13da57/share/doc/html/src/Effects.Process.Typed.html"><span class="hs-identifier">Effects.Process.Typed</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html"><span class="hs-identifier">Shrun.Notify.MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier">ShrunNote</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="annot"><span class="hs-comment">-- | Effect for apple script.</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679451654"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MonadAppleScript"><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier hs-var">MonadAppleScript</span></a></span></span><span> </span><span id="local-6989586621679451654"><span class="annot"><a href="#local-6989586621679451654"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-comment">-- | Sends a notification via apple script.</span><span>
+</span><span id="line-16"></span><span>  </span><span id="notify"><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#notify"><span class="hs-identifier hs-type">notify</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679451654"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier hs-type">MonadAppleScript</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>  </span><span id="local-6989586621679451734"><span class="annot"><span class="annottext">notify :: Text -&gt; IO ()
+</span><a href="Shrun.Notify.MonadAppleScript.html#notify"><span class="hs-identifier hs-var hs-var hs-var hs-var">notify</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><span class="annottext">IO ExitCode -&gt; IO ()
+forall (f :: Type -&gt; Type) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span>
+</span><span id="line-21"></span><span>      </span><span class="annot"><span class="annottext">(IO ExitCode -&gt; IO ()) -&gt; (Text -&gt; IO ExitCode) -&gt; Text -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ProcessConfig () () () -&gt; IO ExitCode
+forall stdin stdout stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr -&gt; IO ExitCode
+forall (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr -&gt; m ExitCode
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-typed-process-0.1-caff352ab5ee8be1ff6984ececa43c50c4dbd091023b8f54b9a4b7746d13da57/share/doc/html/src/Effects.Process.Typed.html#runProcess"><span class="hs-identifier hs-var">P.runProcess</span></a></span><span>
+</span><span id="line-22"></span><span>      </span><span class="annot"><span class="annottext">(ProcessConfig () () () -&gt; IO ExitCode)
+-&gt; (Text -&gt; ProcessConfig () () ()) -&gt; Text -&gt; IO ExitCode
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ProcessConfig () () ()
+</span><a href="file:///nix/store/48kcnaw1sw1ssr5cskyjrj32ivqwa1sv-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#shell"><span class="hs-identifier hs-var">P.shell</span></a></span><span>
+</span><span id="line-23"></span><span>      </span><span class="annot"><span class="annottext">(String -&gt; ProcessConfig () () ())
+-&gt; (Text -&gt; String) -&gt; Text -&gt; ProcessConfig () () ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679451674"><span id="local-6989586621679451675"><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier hs-type">MonadAppleScript</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679451674"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier hs-type">MonadAppleScript</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679451675"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679451674"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-26"></span><span>  </span><span id="local-6989586621679451751"><span class="annot"><span class="annottext">notify :: Text -&gt; ReaderT env m ()
+</span><a href="Shrun.Notify.MonadAppleScript.html#notify"><span class="hs-identifier hs-var hs-var hs-var hs-var">notify</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m () -&gt; ReaderT env m ()
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; ReaderT env m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type) (m :: Type -&gt; Type) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(m () -&gt; ReaderT env m ())
+-&gt; (Text -&gt; m ()) -&gt; Text -&gt; ReaderT env m ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; m ()
+forall (m :: Type -&gt; Type). MonadAppleScript m =&gt; Text -&gt; m ()
+</span><a href="Shrun.Notify.MonadAppleScript.html#notify"><span class="hs-identifier hs-var">notify</span></a></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span id="local-6989586621679451681"><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#notifyAppleScript"><span class="hs-identifier hs-type">notifyAppleScript</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier hs-type">MonadAppleScript</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679451681"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier hs-type">ShrunNote</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679451681"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-29"></span><span id="notifyAppleScript"><span class="annot"><span class="annottext">notifyAppleScript :: forall (m :: Type -&gt; Type). MonadAppleScript m =&gt; ShrunNote -&gt; m ()
+</span><a href="Shrun.Notify.MonadAppleScript.html#notifyAppleScript"><span class="hs-identifier hs-var hs-var">notifyAppleScript</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; m ()
+forall (m :: Type -&gt; Type). MonadAppleScript m =&gt; Text -&gt; m ()
+</span><a href="Shrun.Notify.MonadAppleScript.html#notify"><span class="hs-identifier hs-var">notify</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; m ()) -&gt; (ShrunNote -&gt; Text) -&gt; ShrunNote -&gt; m ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ShrunNote -&gt; Text
+</span><a href="Shrun.Notify.MonadAppleScript.html#shrunToAppleScript"><span class="hs-identifier hs-var">shrunToAppleScript</span></a></span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#shrunToAppleScript"><span class="hs-identifier hs-type">shrunToAppleScript</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier hs-type">ShrunNote</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-32"></span><span id="shrunToAppleScript"><span class="annot"><span class="annottext">shrunToAppleScript :: ShrunNote -&gt; Text
+</span><a href="Shrun.Notify.MonadAppleScript.html#shrunToAppleScript"><span class="hs-identifier hs-var hs-var">shrunToAppleScript</span></a></span></span><span> </span><span id="local-6989586621679451756"><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679451756"><span class="hs-identifier hs-var">shrunNote</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451757"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-34"></span><span>    </span><span id="local-6989586621679451757"><span class="annot"><span class="annottext">txt :: Text
+</span><a href="#local-6989586621679451757"><span class="hs-identifier hs-var hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-35"></span><span>      </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;osascript -e 'display notification &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Notify.MonadAppleScript.html#withDoubleQuotes"><span class="hs-identifier hs-var">withDoubleQuotes</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679451756"><span class="hs-identifier hs-var">shrunNote</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote -&gt; Optic' A_Lens NoIx ShrunNote Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx ShrunNote Text
+</span><span class="">#body</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>          </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot; with title \&quot;Shrun\&quot; &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>          </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot; subtitle &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>          </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Notify.MonadAppleScript.html#withDoubleQuotes"><span class="hs-identifier hs-var">withDoubleQuotes</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679451756"><span class="hs-identifier hs-var">shrunNote</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote -&gt; Optic' A_Lens NoIx ShrunNote Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx ShrunNote Text
+</span><span class="">#summary</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>          </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;'&quot;</span></span><span>
+</span><span id="line-42"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#withDoubleQuotes"><span class="hs-identifier hs-type">withDoubleQuotes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-45"></span><span id="withDoubleQuotes"><span class="annot"><span class="annottext">withDoubleQuotes :: Text -&gt; Text
+</span><a href="Shrun.Notify.MonadAppleScript.html#withDoubleQuotes"><span class="hs-identifier hs-var hs-var">withDoubleQuotes</span></a></span></span><span> </span><span id="local-6989586621679451760"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451760"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot; \&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451760"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;\&quot; &quot;</span></span><span>
+</span><span id="line-46"></span></pre></body></html>

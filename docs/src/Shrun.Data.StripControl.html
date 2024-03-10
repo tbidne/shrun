@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679450487"><span id="local-6989586621679450488"></span></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Data.StripControl</span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier">StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>    </span><span class="annot"><a href="Shrun.Data.StripControl.html#parseStripControl"><span class="hs-identifier">parseStripControl</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- | Determines how we should treat control characters encountered in</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- logs.</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">data</span><span> </span><span id="StripControl"><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-var">StripControl</span></a></span></span><span>
+</span><span id="line-12"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | \&quot;Intelligently\&quot; strip control characters e.g. colors are fine,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-comment">-- ones that affect the cursor should be removed.</span><span>
+</span><span id="line-14"></span><span>    </span><span id="StripControlSmart"><span class="annot"><a href="Shrun.Data.StripControl.html#StripControlSmart"><span class="hs-identifier hs-var">StripControlSmart</span></a></span></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Do not strip any control characters.</span></span><span>
+</span><span id="line-16"></span><span>    </span><span id="StripControlNone"><span class="annot"><a href="Shrun.Data.StripControl.html#StripControlNone"><span class="hs-identifier hs-var">StripControlNone</span></a></span></span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Strip all control characters.</span></span><span>
+</span><span id="line-18"></span><span>    </span><span id="StripControlAll"><span class="annot"><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier hs-var">StripControlAll</span></a></span></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679450494"><span id="local-6989586621679450496"><span class="annot"><span class="annottext">StripControl
+StripControl -&gt; StripControl -&gt; Bounded StripControl
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: StripControl
+minBound :: StripControl
+$cmaxBound :: StripControl
+maxBound :: StripControl
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679450500"><span id="local-6989586621679450508"><span id="local-6989586621679450514"><span id="local-6989586621679450528"><span id="local-6989586621679450530"><span id="local-6989586621679450534"><span id="local-6989586621679450538"><span id="local-6989586621679450542"><span class="annot"><span class="annottext">Int -&gt; StripControl
+StripControl -&gt; Int
+StripControl -&gt; [StripControl]
+StripControl -&gt; StripControl
+StripControl -&gt; StripControl -&gt; [StripControl]
+StripControl -&gt; StripControl -&gt; StripControl -&gt; [StripControl]
+(StripControl -&gt; StripControl)
+-&gt; (StripControl -&gt; StripControl)
+-&gt; (Int -&gt; StripControl)
+-&gt; (StripControl -&gt; Int)
+-&gt; (StripControl -&gt; [StripControl])
+-&gt; (StripControl -&gt; StripControl -&gt; [StripControl])
+-&gt; (StripControl -&gt; StripControl -&gt; [StripControl])
+-&gt; (StripControl -&gt; StripControl -&gt; StripControl -&gt; [StripControl])
+-&gt; Enum StripControl
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: StripControl -&gt; StripControl
+succ :: StripControl -&gt; StripControl
+$cpred :: StripControl -&gt; StripControl
+pred :: StripControl -&gt; StripControl
+$ctoEnum :: Int -&gt; StripControl
+toEnum :: Int -&gt; StripControl
+$cfromEnum :: StripControl -&gt; Int
+fromEnum :: StripControl -&gt; Int
+$cenumFrom :: StripControl -&gt; [StripControl]
+enumFrom :: StripControl -&gt; [StripControl]
+$cenumFromThen :: StripControl -&gt; StripControl -&gt; [StripControl]
+enumFromThen :: StripControl -&gt; StripControl -&gt; [StripControl]
+$cenumFromTo :: StripControl -&gt; StripControl -&gt; [StripControl]
+enumFromTo :: StripControl -&gt; StripControl -&gt; [StripControl]
+$cenumFromThenTo :: StripControl -&gt; StripControl -&gt; StripControl -&gt; [StripControl]
+enumFromThenTo :: StripControl -&gt; StripControl -&gt; StripControl -&gt; [StripControl]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679450546"><span id="local-6989586621679450548"><span class="annot"><span class="annottext">StripControl -&gt; StripControl -&gt; Bool
+(StripControl -&gt; StripControl -&gt; Bool)
+-&gt; (StripControl -&gt; StripControl -&gt; Bool) -&gt; Eq StripControl
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: StripControl -&gt; StripControl -&gt; Bool
+== :: StripControl -&gt; StripControl -&gt; Bool
+$c/= :: StripControl -&gt; StripControl -&gt; Bool
+/= :: StripControl -&gt; StripControl -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679450555"><span id="local-6989586621679450557"><span id="local-6989586621679450559"><span id="local-6989586621679450563"><span id="local-6989586621679450566"><span id="local-6989586621679450569"><span id="local-6989586621679450572"><span class="annot"><span class="annottext">Eq StripControl
+Eq StripControl =&gt;
+(StripControl -&gt; StripControl -&gt; Ordering)
+-&gt; (StripControl -&gt; StripControl -&gt; Bool)
+-&gt; (StripControl -&gt; StripControl -&gt; Bool)
+-&gt; (StripControl -&gt; StripControl -&gt; Bool)
+-&gt; (StripControl -&gt; StripControl -&gt; Bool)
+-&gt; (StripControl -&gt; StripControl -&gt; StripControl)
+-&gt; (StripControl -&gt; StripControl -&gt; StripControl)
+-&gt; Ord StripControl
+StripControl -&gt; StripControl -&gt; Bool
+StripControl -&gt; StripControl -&gt; Ordering
+StripControl -&gt; StripControl -&gt; StripControl
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: StripControl -&gt; StripControl -&gt; Ordering
+compare :: StripControl -&gt; StripControl -&gt; Ordering
+$c&lt; :: StripControl -&gt; StripControl -&gt; Bool
+&lt; :: StripControl -&gt; StripControl -&gt; Bool
+$c&lt;= :: StripControl -&gt; StripControl -&gt; Bool
+&lt;= :: StripControl -&gt; StripControl -&gt; Bool
+$c&gt; :: StripControl -&gt; StripControl -&gt; Bool
+&gt; :: StripControl -&gt; StripControl -&gt; Bool
+$c&gt;= :: StripControl -&gt; StripControl -&gt; Bool
+&gt;= :: StripControl -&gt; StripControl -&gt; Bool
+$cmax :: StripControl -&gt; StripControl -&gt; StripControl
+max :: StripControl -&gt; StripControl -&gt; StripControl
+$cmin :: StripControl -&gt; StripControl -&gt; StripControl
+min :: StripControl -&gt; StripControl -&gt; StripControl
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679450576"><span id="local-6989586621679450578"><span id="local-6989586621679450582"><span class="annot"><span class="annottext">Int -&gt; StripControl -&gt; ShowS
+[StripControl] -&gt; ShowS
+StripControl -&gt; [Char]
+(Int -&gt; StripControl -&gt; ShowS)
+-&gt; (StripControl -&gt; [Char])
+-&gt; ([StripControl] -&gt; ShowS)
+-&gt; Show StripControl
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; [Char]) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; StripControl -&gt; ShowS
+showsPrec :: Int -&gt; StripControl -&gt; ShowS
+$cshow :: StripControl -&gt; [Char]
+show :: StripControl -&gt; [Char]
+$cshowList :: [StripControl] -&gt; ShowS
+showList :: [StripControl] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-type">StripControl</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>  </span><span id="local-6989586621679450592"><span class="annot"><span class="annottext">tomlDecoder :: Decoder StripControl
+</span><a href="#local-6989586621679450592"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder StripControl
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m StripControl
+</span><a href="Shrun.Data.StripControl.html#parseStripControl"><span class="hs-identifier hs-var">parseStripControl</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span id="local-6989586621679450473"><span class="annot"><a href="Shrun.Data.StripControl.html#parseStripControl"><span class="hs-identifier hs-type">parseStripControl</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679450473"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450473"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450473"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-type">StripControl</span></a></span></span><span>
+</span><span id="line-25"></span><span id="parseStripControl"><span class="annot"><span class="annottext">parseStripControl :: forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m StripControl
+</span><a href="Shrun.Data.StripControl.html#parseStripControl"><span class="hs-identifier hs-var hs-var">parseStripControl</span></a></span></span><span> </span><span id="local-6989586621679450616"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679450616"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-26"></span><span>  </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679450616"><span class="hs-identifier hs-var">getTxt</span></a></span><span> </span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m StripControl) -&gt; m StripControl
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;all&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">StripControl -&gt; m StripControl
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier hs-var">StripControlAll</span></a></span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;none&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">StripControl -&gt; m StripControl
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlNone"><span class="hs-identifier hs-var">StripControlNone</span></a></span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;smart&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">StripControl -&gt; m StripControl
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlSmart"><span class="hs-identifier hs-var">StripControlSmart</span></a></span><span>
+</span><span id="line-30"></span><span>    </span><span id="local-6989586621679450617"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679450617"><span class="hs-identifier hs-var">bad</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-31"></span><span>      </span><span class="annot"><span class="annottext">[Char] -&gt; m StripControl
+forall a. [Char] -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; [Char] -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span>
+</span><span id="line-32"></span><span>        </span><span class="annot"><span class="annottext">([Char] -&gt; m StripControl) -&gt; [Char] -&gt; m StripControl
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[[Char]] -&gt; [Char]
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-33"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;Wanted one of (all|none|smart), received: &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>            </span><span class="annot"><span class="annottext">Text -&gt; [Char]
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679450617"><span class="hs-identifier hs-var">bad</span></a></span><span>
+</span><span id="line-35"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-36"></span></pre></body></html>

@@ -1,0 +1,599 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="annot"><span class="hs-comment">-- | Provides type for notifications.</span></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Notify.Types</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Main type</span></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyConfig"><span class="hs-identifier">NotifyConfig</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Notify system</span></span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier">NotifySystem</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#parseNotifySystem"><span class="hs-identifier">parseNotifySystem</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#notifySystemStr"><span class="hs-identifier">notifySystemStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#defaultNotifySystem"><span class="hs-identifier">defaultNotifySystem</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystemP1"><span class="hs-identifier">NotifySystemP1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystemP2"><span class="hs-identifier">NotifySystemP2</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#DBusF"><span class="hs-identifier">DBusF</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Optics</span></span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#_DBus"><span class="hs-identifier">_DBus</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#_NotifySend"><span class="hs-identifier">_NotifySend</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#_AppleScript"><span class="hs-identifier">_AppleScript</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Notify actions</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyAction"><span class="hs-identifier">NotifyAction</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#parseNotifyAction"><span class="hs-identifier">parseNotifyAction</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#notifyActionStr"><span class="hs-identifier">notifyActionStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><span class="hs-comment">-- ** Optics</span></span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#_NotifyFinal"><span class="hs-identifier">_NotifyFinal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#_NotifyCommand"><span class="hs-identifier">_NotifyCommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Notify timeout</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier">NotifyTimeout</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#parseNotifyTimeout"><span class="hs-identifier">parseNotifyTimeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#notifyTimeoutStr"><span class="hs-identifier">notifyTimeoutStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Exceptions</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#OsxNotifySystemMismatch"><span class="hs-identifier">OsxNotifySystemMismatch</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#LinuxNotifySystemMismatch"><span class="hs-identifier">LinuxNotifySystemMismatch</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/28w8qyy4b454l1bcrycrmpxp6jfj1ybr-dbus-1.2.29-doc/share/doc/dbus-1.2.29/html/src/DBus.Client.html"><span class="hs-identifier">DBus.Client</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/28w8qyy4b454l1bcrycrmpxp6jfj1ybr-dbus-1.2.29-doc/share/doc/dbus-1.2.29/html/src/DBus.Client.html#Client"><span class="hs-identifier">Client</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Bits</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">toIntegralSized</span></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.String</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-48"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Word</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Word16</span></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Num</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Num</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromInteger</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html"><span class="hs-identifier">Shrun.Data.Phase</span></a></span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#AdvancePhase"><span class="hs-identifier">AdvancePhase</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Phase.html#NextPhase"><span class="hs-identifier">NextPhase</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#advancePhase"><span class="hs-identifier">advancePhase</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase"><span class="hs-identifier">Phase</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier">Phase1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase2"><span class="hs-identifier">Phase2</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.html"><span class="hs-identifier">TOML</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#Value"><span class="hs-identifier">Value</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#Integer"><span class="hs-identifier">Integer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#String"><span class="hs-identifier">String</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Read</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TR</span></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="annot"><span class="hs-comment">-- | Determines for which actions we should send notifications.</span></span><span>
+</span><span id="line-59"></span><span class="hs-keyword">data</span><span> </span><span id="NotifyAction"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyAction"><span class="hs-identifier hs-var">NotifyAction</span></a></span></span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Send a notification after all commands are completed.</span></span><span>
+</span><span id="line-61"></span><span>    </span><span id="NotifyFinal"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyFinal"><span class="hs-identifier hs-var">NotifyFinal</span></a></span></span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Send notifications when each command completes.</span></span><span>
+</span><span id="line-63"></span><span>    </span><span id="NotifyCommand"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyCommand"><span class="hs-identifier hs-var">NotifyCommand</span></a></span></span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | NotifyFinal and NotifyCommand.</span></span><span>
+</span><span id="line-65"></span><span>    </span><span id="NotifyAll"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyAll"><span class="hs-identifier hs-var">NotifyAll</span></a></span></span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679450934"><span id="local-6989586621679450936"><span class="annot"><span class="annottext">NotifyAction -&gt; NotifyAction -&gt; Bool
+(NotifyAction -&gt; NotifyAction -&gt; Bool)
+-&gt; (NotifyAction -&gt; NotifyAction -&gt; Bool) -&gt; Eq NotifyAction
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: NotifyAction -&gt; NotifyAction -&gt; Bool
+== :: NotifyAction -&gt; NotifyAction -&gt; Bool
+$c/= :: NotifyAction -&gt; NotifyAction -&gt; Bool
+/= :: NotifyAction -&gt; NotifyAction -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679450941"><span id="local-6989586621679450943"><span id="local-6989586621679450947"><span class="annot"><span class="annottext">Int -&gt; NotifyAction -&gt; ShowS
+[NotifyAction] -&gt; ShowS
+NotifyAction -&gt; String
+(Int -&gt; NotifyAction -&gt; ShowS)
+-&gt; (NotifyAction -&gt; String)
+-&gt; ([NotifyAction] -&gt; ShowS)
+-&gt; Show NotifyAction
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; NotifyAction -&gt; ShowS
+showsPrec :: Int -&gt; NotifyAction -&gt; ShowS
+$cshow :: NotifyAction -&gt; String
+show :: NotifyAction -&gt; String
+$cshowList :: [NotifyAction] -&gt; ShowS
+showList :: [NotifyAction] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span id="_NotifyFinal"><span id="_NotifyCommand"><span id="_NotifyAll"><span class="hs-identifier">makePrisms</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">NotifyAction</span></span></span></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyAction"><span class="hs-identifier hs-type">NotifyAction</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-71"></span><span>  </span><span id="local-6989586621679450962"><span class="annot"><span class="annottext">tomlDecoder :: Decoder NotifyAction
+</span><a href="#local-6989586621679450962"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder NotifyAction
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m NotifyAction
+</span><a href="Shrun.Notify.Types.html#parseNotifyAction"><span class="hs-identifier hs-var">parseNotifyAction</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="annot"><span class="hs-comment">-- | Parses 'NotifyAction'.</span></span><span>
+</span><span id="line-74"></span><span id="local-6989586621679450811"><span class="annot"><a href="Shrun.Notify.Types.html#parseNotifyAction"><span class="hs-identifier hs-type">parseNotifyAction</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679450811"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450811"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450811"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyAction"><span class="hs-identifier hs-type">NotifyAction</span></a></span></span><span>
+</span><span id="line-75"></span><span id="parseNotifyAction"><span class="annot"><span class="annottext">parseNotifyAction :: forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m NotifyAction
+</span><a href="Shrun.Notify.Types.html#parseNotifyAction"><span class="hs-identifier hs-var hs-var">parseNotifyAction</span></a></span></span><span> </span><span id="local-6989586621679450989"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679450989"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-76"></span><span>  </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679450989"><span class="hs-identifier hs-var">getTxt</span></a></span><span> </span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m NotifyAction) -&gt; m NotifyAction
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;final&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyAction -&gt; m NotifyAction
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifyAction
+</span><a href="Shrun.Notify.Types.html#NotifyFinal"><span class="hs-identifier hs-var">NotifyFinal</span></a></span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;command&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyAction -&gt; m NotifyAction
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifyAction
+</span><a href="Shrun.Notify.Types.html#NotifyCommand"><span class="hs-identifier hs-var">NotifyCommand</span></a></span><span>
+</span><span id="line-79"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;all&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyAction -&gt; m NotifyAction
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifyAction
+</span><a href="Shrun.Notify.Types.html#NotifyAll"><span class="hs-identifier hs-var">NotifyAll</span></a></span><span>
+</span><span id="line-80"></span><span>    </span><span id="local-6989586621679450990"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679450990"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-81"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; m NotifyAction
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span>
+</span><span id="line-82"></span><span>        </span><span class="annot"><span class="annottext">(String -&gt; m NotifyAction) -&gt; String -&gt; m NotifyAction
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-83"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Unrecognized notify action: '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-84"></span><span>            </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679450990"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-85"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;'. Expected one of &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-86"></span><span>            </span><span class="annot"><span class="annottext">String
+forall a. IsString a =&gt; a
+</span><a href="Shrun.Notify.Types.html#notifyActionStr"><span class="hs-identifier hs-var">notifyActionStr</span></a></span><span>
+</span><span id="line-87"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="annot"><span class="hs-comment">-- | Available 'NotifyAction' strings.</span></span><span>
+</span><span id="line-90"></span><span id="local-6989586621679450829"><span class="annot"><a href="Shrun.Notify.Types.html#notifyActionStr"><span class="hs-identifier hs-type">notifyActionStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679450829"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450829"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-91"></span><span id="notifyActionStr"><span class="annot"><span class="annottext">notifyActionStr :: forall a. IsString a =&gt; a
+</span><a href="Shrun.Notify.Types.html#notifyActionStr"><span class="hs-identifier hs-var hs-var">notifyActionStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;(final |command | all)&quot;</span></span><span>
+</span><span id="line-92"></span><span>
+</span><span id="line-93"></span><span class="annot"><span class="hs-comment">-- | Maps DBus to its phased param.</span></span><span>
+</span><span id="line-94"></span><span class="hs-keyword">type</span><span> </span><span class="hs-keyword">family</span><span> </span><span id="DBusF"><span class="annot"><a href="Shrun.Notify.Types.html#DBusF"><span class="hs-identifier hs-var">DBusF</span></a></span></span><span> </span><span id="local-6989586621679450994"><span class="annot"><a href="#local-6989586621679450994"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-95"></span><span>  </span><span id="DBusF"><span class="annot"><a href="Shrun.Notify.Types.html#DBusF"><span class="hs-identifier hs-var">DBusF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>  </span><span id="DBusF"><span class="annot"><a href="Shrun.Notify.Types.html#DBusF"><span class="hs-identifier hs-var">DBusF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase2"><span class="hs-identifier hs-type">Phase2</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="file:///nix/store/28w8qyy4b454l1bcrycrmpxp6jfj1ybr-dbus-1.2.29-doc/share/doc/dbus-1.2.29/html/src/DBus.Client.html#Client"><span class="hs-identifier hs-type">Client</span></a></span><span>
+</span><span id="line-97"></span><span>
+</span><span id="line-98"></span><span class="hs-keyword">type</span><span> </span><span id="NotifySystemP1"><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystemP1"><span class="hs-identifier hs-var">NotifySystemP1</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span class="hs-keyword">type</span><span> </span><span id="NotifySystemP2"><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystemP2"><span class="hs-identifier hs-var">NotifySystemP2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase2"><span class="hs-identifier hs-type">Phase2</span></a></span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span class="annot"><span class="hs-comment">-- | Notification systems.</span></span><span>
+</span><span id="line-103"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase"><span class="hs-identifier hs-type">Phase</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-104"></span><span class="hs-keyword">data</span><span> </span><span id="NotifySystem"><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-var">NotifySystem</span></a></span></span><span> </span><span id="local-6989586621679450832"><span class="annot"><a href="#local-6989586621679450832"><span class="hs-identifier hs-type">p</span></a></span></span><span>
+</span><span id="line-105"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Uses DBus.</span></span><span>
+</span><span id="line-106"></span><span>    </span><span id="DBus"><span class="annot"><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier hs-var">DBus</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#DBusF"><span class="hs-identifier hs-type">DBusF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679450832"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Uses notify-send.</span></span><span>
+</span><span id="line-108"></span><span>    </span><span id="NotifySend"><span class="annot"><a href="Shrun.Notify.Types.html#NotifySend"><span class="hs-identifier hs-var">NotifySend</span></a></span></span><span>
+</span><span id="line-109"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Uses apple-script.</span></span><span>
+</span><span id="line-110"></span><span>    </span><span id="AppleScript"><span class="annot"><a href="Shrun.Notify.Types.html#AppleScript"><span class="hs-identifier hs-var">AppleScript</span></a></span></span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span id="local-6989586621679450832"><span id="local-6989586621679450834"><span id="_DBus"><span id="_NotifySend"><span id="_AppleScript"><span class="hs-identifier">makePrisms</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">NotifySystem</span></span></span></span></span></span><span>
+</span><span id="line-113"></span><span>
+</span><span id="line-114"></span><span id="local-6989586621679451004"><span id="local-6989586621679451008"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span id="local-6989586621679451012"><span id="local-6989586621679451018"><span id="local-6989586621679451022"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-117"></span><span>
+</span><span id="line-118"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-119"></span><span>  </span><span id="local-6989586621679451028"><span class="annot"><span class="annottext">tomlDecoder :: Decoder (NotifySystem 'Phase1)
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder (NotifySystem 'Phase1)
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m (NotifySystem 'Phase1)
+</span><a href="Shrun.Notify.Types.html#parseNotifySystem"><span class="hs-identifier hs-var">parseNotifySystem</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#AdvancePhase"><span class="hs-identifier hs-type">AdvancePhase</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-122"></span><span>  </span><span class="hs-keyword">type</span><span> </span><span id="NextPhase"><span class="annot"><a href="Shrun.Data.Phase.html#NextPhase"><span class="hs-identifier hs-var">NextPhase</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase2"><span class="hs-identifier hs-type">Phase2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/28w8qyy4b454l1bcrycrmpxp6jfj1ybr-dbus-1.2.29-doc/share/doc/dbus-1.2.29/html/src/DBus.Client.html#Client"><span class="hs-identifier hs-type">Client</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase2"><span class="hs-identifier hs-type">Phase2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span>  </span><span id="local-6989586621679451032"><span class="annot"><span class="annottext">advancePhase :: NotifySystem 'Phase1 -&gt; NextPhase (NotifySystem 'Phase1)
+</span><a href="Shrun.Data.Phase.html#advancePhase"><span class="hs-identifier hs-var hs-var hs-var hs-var">advancePhase</span></a></span></span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase1
+</span><a href="Shrun.Notify.Types.html#NotifySend"><span class="hs-identifier hs-var">NotifySend</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase2
+-&gt; Either (NotifySystem 'Phase2) (Client -&gt; NotifySystem 'Phase2)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase2
+forall (p :: Phase). NotifySystem p
+</span><a href="Shrun.Notify.Types.html#NotifySend"><span class="hs-identifier hs-var">NotifySend</span></a></span><span>
+</span><span id="line-124"></span><span>  </span><span class="annot"><a href="Shrun.Data.Phase.html#advancePhase"><span class="hs-identifier hs-var">advancePhase</span></a></span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase1
+</span><a href="Shrun.Notify.Types.html#AppleScript"><span class="hs-identifier hs-var">AppleScript</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase2
+-&gt; Either (NotifySystem 'Phase2) (Client -&gt; NotifySystem 'Phase2)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase2
+forall (p :: Phase). NotifySystem p
+</span><a href="Shrun.Notify.Types.html#AppleScript"><span class="hs-identifier hs-var">AppleScript</span></a></span><span>
+</span><span id="line-125"></span><span>  </span><span class="annot"><a href="Shrun.Data.Phase.html#advancePhase"><span class="hs-identifier hs-var">advancePhase</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier hs-type">DBus</span></a></span><span> </span><span class="annot"><span class="annottext">DBusF 'Phase1
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Client -&gt; NotifySystem 'Phase2)
+-&gt; Either (NotifySystem 'Phase2) (Client -&gt; NotifySystem 'Phase2)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">Client -&gt; NotifySystem 'Phase2
+DBusF 'Phase2 -&gt; NotifySystem 'Phase2
+forall (p :: Phase). DBusF p -&gt; NotifySystem p
+</span><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier hs-var">DBus</span></a></span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span class="hs-comment">-- NOTE: It would be nice if we could guarantee that the above is &quot;doing the</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- right thing&quot; i.e. NotifySend -&gt; NotifySend and DBus -&gt; DBus, but that</span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- would require dependent types e.g. (dependent visible kinds for clarity):</span><span>
+</span><span id="line-130"></span><span class="hs-comment">--</span><span>
+</span><span id="line-131"></span><span class="hs-comment">--     type ConsNS :: forall k -&gt; k -&gt; Type</span><span>
+</span><span id="line-132"></span><span class="hs-comment">--     type family ConsNS l k where</span><span>
+</span><span id="line-133"></span><span class="hs-comment">--       ConsNS (NotifySystem p) NotifySend = ()</span><span>
+</span><span id="line-134"></span><span class="hs-comment">--       ConsNS (NotifySystem p) (DBus _) = Client</span><span>
+</span><span id="line-135"></span><span class="hs-comment">--</span><span>
+</span><span id="line-136"></span><span class="hs-comment">--     advancePhase :: foreach (x :: NotifySystem Phase1) -&gt; ConsNS (NotifySystem Phase1) x -&gt; NotifySystem Phase2</span><span>
+</span><span id="line-137"></span><span class="hs-comment">--</span><span>
+</span><span id="line-138"></span><span class="hs-comment">--     -- call this like</span><span>
+</span><span id="line-139"></span><span class="hs-comment">--     advancePhase NotifySend ()</span><span>
+</span><span id="line-140"></span><span class="hs-comment">--     advancePhase (DBus ()) client</span><span>
+</span><span id="line-141"></span><span class="hs-comment">--</span><span>
+</span><span id="line-142"></span><span class="hs-comment">-- That is, we want to pick the _type_ of the &quot;extra&quot; parameter based on the</span><span>
+</span><span id="line-143"></span><span class="hs-comment">-- _value_ of the first parameter.</span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span class="annot"><span class="hs-comment">-- | Parses 'NotifySystem'.</span></span><span>
+</span><span id="line-146"></span><span id="local-6989586621679450844"><span class="annot"><a href="Shrun.Notify.Types.html#parseNotifySystem"><span class="hs-identifier hs-type">parseNotifySystem</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679450844"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450844"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450844"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-147"></span><span id="parseNotifySystem"><span class="annot"><span class="annottext">parseNotifySystem :: forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m (NotifySystem 'Phase1)
+</span><a href="Shrun.Notify.Types.html#parseNotifySystem"><span class="hs-identifier hs-var hs-var">parseNotifySystem</span></a></span></span><span> </span><span id="local-6989586621679451052"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679451052"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-148"></span><span>  </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679451052"><span class="hs-identifier hs-var">getTxt</span></a></span><span> </span><span class="annot"><span class="annottext">m Text
+-&gt; (Text -&gt; m (NotifySystem 'Phase1)) -&gt; m (NotifySystem 'Phase1)
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-149"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;dbus&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase1 -&gt; m (NotifySystem 'Phase1)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NotifySystem 'Phase1 -&gt; m (NotifySystem 'Phase1))
+-&gt; NotifySystem 'Phase1 -&gt; m (NotifySystem 'Phase1)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">DBusF 'Phase1 -&gt; NotifySystem 'Phase1
+forall (p :: Phase). DBusF p -&gt; NotifySystem p
+</span><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier hs-var">DBus</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-150"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;notify-send&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase1 -&gt; m (NotifySystem 'Phase1)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase1
+forall (p :: Phase). NotifySystem p
+</span><a href="Shrun.Notify.Types.html#NotifySend"><span class="hs-identifier hs-var">NotifySend</span></a></span><span>
+</span><span id="line-151"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;apple-script&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase1 -&gt; m (NotifySystem 'Phase1)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifySystem 'Phase1
+forall (p :: Phase). NotifySystem p
+</span><a href="Shrun.Notify.Types.html#AppleScript"><span class="hs-identifier hs-var">AppleScript</span></a></span><span>
+</span><span id="line-152"></span><span>    </span><span id="local-6989586621679451053"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451053"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-153"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; m (NotifySystem 'Phase1)
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span>
+</span><span id="line-154"></span><span>        </span><span class="annot"><span class="annottext">(String -&gt; m (NotifySystem 'Phase1))
+-&gt; String -&gt; m (NotifySystem 'Phase1)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-155"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Unrecognized notify system: '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-156"></span><span>            </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451053"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-157"></span><span>            </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;'. Expected one of &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-158"></span><span>            </span><span class="annot"><span class="annottext">String
+forall a. IsString a =&gt; a
+</span><a href="Shrun.Notify.Types.html#notifySystemStr"><span class="hs-identifier hs-var">notifySystemStr</span></a></span><span>
+</span><span id="line-159"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-160"></span><span>
+</span><span id="line-161"></span><span class="annot"><span class="hs-comment">-- | Available 'NotifySystem' strings.</span></span><span>
+</span><span id="line-162"></span><span id="local-6989586621679451054"><span class="annot"><a href="Shrun.Notify.Types.html#notifySystemStr"><span class="hs-identifier hs-type">notifySystemStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679451054"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679451054"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-163"></span><span id="notifySystemStr"><span class="annot"><span class="annottext">notifySystemStr :: forall a. IsString a =&gt; a
+</span><a href="Shrun.Notify.Types.html#notifySystemStr"><span class="hs-identifier hs-var hs-var">notifySystemStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;(dbus | notify-send | apple-script)&quot;</span></span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span class="annot"><a href="Shrun.Notify.Types.html#defaultNotifySystem"><span class="hs-identifier hs-type">defaultNotifySystem</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystem"><span class="hs-identifier hs-type">NotifySystem</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Phase.html#Phase1"><span class="hs-identifier hs-type">Phase1</span></a></span><span class="hs-cpp">
+#if OSX
+</span><span class="hs-identifier">defaultNotifySystem</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">AppleScript</span><span class="hs-cpp">
+#else
+</span><span id="defaultNotifySystem"><span class="annot"><span class="annottext">defaultNotifySystem :: NotifySystem 'Phase1
+</span><a href="Shrun.Notify.Types.html#defaultNotifySystem"><span class="hs-identifier hs-var hs-var">defaultNotifySystem</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">DBusF 'Phase1 -&gt; NotifySystem 'Phase1
+forall (p :: Phase). DBusF p -&gt; NotifySystem p
+</span><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier hs-var">DBus</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-cpp">
+#endif
+</span><span>
+</span><span id="line-172"></span><span class="annot"><span class="hs-comment">-- | Determines notification timeout.</span></span><span>
+</span><span id="line-173"></span><span class="hs-keyword">data</span><span> </span><span id="NotifyTimeout"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier hs-var">NotifyTimeout</span></a></span></span><span>
+</span><span id="line-174"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Times out after the given seconds.</span></span><span>
+</span><span id="line-175"></span><span>    </span><span id="NotifyTimeoutSeconds"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeoutSeconds"><span class="hs-identifier hs-var">NotifyTimeoutSeconds</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span>
+</span><span id="line-176"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Never times out.</span></span><span>
+</span><span id="line-177"></span><span>    </span><span id="NotifyTimeoutNever"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeoutNever"><span class="hs-identifier hs-var">NotifyTimeoutNever</span></a></span></span><span>
+</span><span id="line-178"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679451060"><span id="local-6989586621679451064"><span class="annot"><span class="annottext">NotifyTimeout -&gt; NotifyTimeout -&gt; Bool
+(NotifyTimeout -&gt; NotifyTimeout -&gt; Bool)
+-&gt; (NotifyTimeout -&gt; NotifyTimeout -&gt; Bool) -&gt; Eq NotifyTimeout
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: NotifyTimeout -&gt; NotifyTimeout -&gt; Bool
+== :: NotifyTimeout -&gt; NotifyTimeout -&gt; Bool
+$c/= :: NotifyTimeout -&gt; NotifyTimeout -&gt; Bool
+/= :: NotifyTimeout -&gt; NotifyTimeout -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679451068"><span id="local-6989586621679451073"><span id="local-6989586621679451077"><span class="annot"><span class="annottext">Int -&gt; NotifyTimeout -&gt; ShowS
+[NotifyTimeout] -&gt; ShowS
+NotifyTimeout -&gt; String
+(Int -&gt; NotifyTimeout -&gt; ShowS)
+-&gt; (NotifyTimeout -&gt; String)
+-&gt; ([NotifyTimeout] -&gt; ShowS)
+-&gt; Show NotifyTimeout
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; NotifyTimeout -&gt; ShowS
+showsPrec :: Int -&gt; NotifyTimeout -&gt; ShowS
+$cshow :: NotifyTimeout -&gt; String
+show :: NotifyTimeout -&gt; String
+$cshowList :: [NotifyTimeout] -&gt; ShowS
+showList :: [NotifyTimeout] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-179"></span><span>
+</span><span id="line-180"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/algebra-simple-0.1-0f0dd48bfcbc9bbd637ffdf995dbc65c45943a377befab55fe1b702e9362a26c/share/doc/html/src/Numeric.Literal.Integer.html#FromInteger"><span class="hs-identifier hs-type">FromInteger</span></a></span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-181"></span><span>  </span><span id="local-6989586621679451085"><span class="annot"><span class="annottext">afromInteger :: HasCallStack =&gt; Integer -&gt; NotifyTimeout
+</span><a href="#local-6989586621679451085"><span class="hs-identifier hs-var hs-var hs-var hs-var">afromInteger</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#NotifyTimeoutSeconds"><span class="hs-identifier hs-var">NotifyTimeoutSeconds</span></a></span><span> </span><span class="annot"><span class="annottext">(Word16 -&gt; NotifyTimeout)
+-&gt; (Integer -&gt; Word16) -&gt; Integer -&gt; NotifyTimeout
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Word16
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span>
+</span><span id="line-182"></span><span>
+</span><span id="line-183"></span><span class="hs-comment">-- DecodeTOML instance does not reuse parseNotifyTimeout as we want to</span><span>
+</span><span id="line-184"></span><span class="hs-comment">-- enforce the integer type.</span><span>
+</span><span id="line-185"></span><span>
+</span><span id="line-186"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-187"></span><span>  </span><span id="local-6989586621679451103"><span class="annot"><span class="annottext">tomlDecoder :: Decoder NotifyTimeout
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Value -&gt; DecodeM NotifyTimeout) -&gt; Decoder NotifyTimeout
+forall a. (Value -&gt; DecodeM a) -&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#makeDecoder"><span class="hs-identifier hs-var">makeDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">((Value -&gt; DecodeM NotifyTimeout) -&gt; Decoder NotifyTimeout)
+-&gt; (Value -&gt; DecodeM NotifyTimeout) -&gt; Decoder NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-188"></span><span>    </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#String"><span class="hs-identifier hs-type">String</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;never&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; DecodeM NotifyTimeout
+forall a. a -&gt; DecodeM a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#NotifyTimeoutNever"><span class="hs-identifier hs-var">NotifyTimeoutNever</span></a></span><span>
+</span><span id="line-189"></span><span>    </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#String"><span class="hs-identifier hs-type">String</span></a></span><span> </span><span id="local-6989586621679451105"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451105"><span class="hs-identifier hs-var">bad</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value -&gt; DecodeM NotifyTimeout
+forall a. Text -&gt; Value -&gt; DecodeM a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#invalidValue"><span class="hs-identifier hs-var">invalidValue</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451107"><span class="hs-identifier hs-var">strErr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Value
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#String"><span class="hs-identifier hs-var">String</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451105"><span class="hs-identifier hs-var">bad</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-190"></span><span>    </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#Integer"><span class="hs-identifier hs-type">Integer</span></a></span><span> </span><span id="local-6989586621679451108"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679451108"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Maybe Word16
+forall a b.
+(Integral a, Integral b, Bits a, Bits b) =&gt;
+a -&gt; Maybe b
+</span><span class="hs-identifier hs-var">toIntegralSized</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679451108"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-191"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679451109"><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679451109"><span class="hs-identifier hs-var">i'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; DecodeM NotifyTimeout
+forall a. a -&gt; DecodeM a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NotifyTimeout -&gt; DecodeM NotifyTimeout)
+-&gt; NotifyTimeout -&gt; DecodeM NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#NotifyTimeoutSeconds"><span class="hs-identifier hs-var">NotifyTimeoutSeconds</span></a></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679451109"><span class="hs-identifier hs-var">i'</span></a></span><span>
+</span><span id="line-192"></span><span>      </span><span class="annot"><span class="annottext">Maybe Word16
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Value -&gt; DecodeM NotifyTimeout
+forall a. Text -&gt; Value -&gt; DecodeM a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#invalidValue"><span class="hs-identifier hs-var">invalidValue</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451110"><span class="hs-identifier hs-var">tooLargeErr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Value
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Value.html#Integer"><span class="hs-identifier hs-var">Integer</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679451108"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-193"></span><span>    </span><span id="local-6989586621679451111"><span class="annot"><span class="annottext">Value
+</span><a href="#local-6989586621679451111"><span class="hs-identifier hs-var">badTy</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Value -&gt; DecodeM NotifyTimeout
+forall a. Value -&gt; DecodeM a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#typeMismatch"><span class="hs-identifier hs-var">typeMismatch</span></a></span><span> </span><span class="annot"><span class="annottext">Value
+</span><a href="#local-6989586621679451111"><span class="hs-identifier hs-var">badTy</span></a></span><span>
+</span><span id="line-194"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-195"></span><span>      </span><span id="local-6989586621679451110"><span class="annot"><span class="annottext">tooLargeErr :: Text
+</span><a href="#local-6989586621679451110"><span class="hs-identifier hs-var hs-var">tooLargeErr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Timeout integer too large. Max is: &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; Text
+forall a. Show a =&gt; a -&gt; Text
+</span><a href="Shrun.Prelude.html#showt"><span class="hs-identifier hs-var">showt</span></a></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679451118"><span class="hs-identifier hs-var">maxW16</span></a></span><span>
+</span><span id="line-196"></span><span>      </span><span id="local-6989586621679451107"><span class="annot"><span class="annottext">strErr :: Text
+</span><a href="#local-6989586621679451107"><span class="hs-identifier hs-var hs-var">strErr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Unexpected timeout. Only valid string is 'never'.&quot;</span></span><span>
+</span><span id="line-197"></span><span>      </span><span id="local-6989586621679451118"><span class="annot"><span class="annottext">maxW16 :: Word16
+</span><a href="#local-6989586621679451118"><span class="hs-identifier hs-var hs-var">maxW16</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span>
+</span><span id="line-198"></span><span>
+</span><span id="line-199"></span><span class="annot"><span class="hs-comment">-- | Parses 'NotifyTimeout'.</span></span><span>
+</span><span id="line-200"></span><span id="local-6989586621679450871"><span class="annot"><a href="Shrun.Notify.Types.html#parseNotifyTimeout"><span class="hs-identifier hs-type">parseNotifyTimeout</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679450871"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450871"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679450871"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span></span><span>
+</span><span id="line-201"></span><span id="parseNotifyTimeout"><span class="annot"><span class="annottext">parseNotifyTimeout :: forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#parseNotifyTimeout"><span class="hs-identifier hs-var hs-var">parseNotifyTimeout</span></a></span></span><span> </span><span id="local-6989586621679451139"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679451139"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-202"></span><span>  </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679451139"><span class="hs-identifier hs-var">getTxt</span></a></span><span> </span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m NotifyTimeout) -&gt; m NotifyTimeout
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-203"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;never&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; m NotifyTimeout
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#NotifyTimeoutNever"><span class="hs-identifier hs-var">NotifyTimeoutNever</span></a></span><span>
+</span><span id="line-204"></span><span>    </span><span id="local-6989586621679451140"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451140"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-205"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679451141"><span class="annot"><span class="annottext">otherStr :: String
+</span><a href="#local-6989586621679451141"><span class="hs-identifier hs-var hs-var">otherStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679451140"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-206"></span><span>       </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; Maybe Word16
+forall a. Read a =&gt; String -&gt; Maybe a
+</span><span class="hs-identifier hs-var">TR.readMaybe</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679451141"><span class="hs-identifier hs-var">otherStr</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-207"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679451143"><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679451143"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifyTimeout -&gt; m NotifyTimeout
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NotifyTimeout -&gt; m NotifyTimeout)
+-&gt; NotifyTimeout -&gt; m NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#NotifyTimeoutSeconds"><span class="hs-identifier hs-var">NotifyTimeoutSeconds</span></a></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679451143"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-208"></span><span>            </span><span class="annot"><span class="annottext">Maybe Word16
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-209"></span><span>              </span><span class="annot"><span class="annottext">String -&gt; m NotifyTimeout
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span>
+</span><span id="line-210"></span><span>                </span><span class="annot"><span class="annottext">(String -&gt; m NotifyTimeout) -&gt; String -&gt; m NotifyTimeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-211"></span><span>                  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Unrecognized notify timeout: '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-212"></span><span>                    </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679451141"><span class="hs-identifier hs-var">otherStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-213"></span><span>                    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;'. Expected one of &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-214"></span><span>                    </span><span class="annot"><span class="annottext">String
+forall a. IsString a =&gt; a
+</span><a href="Shrun.Notify.Types.html#notifyTimeoutStr"><span class="hs-identifier hs-var">notifyTimeoutStr</span></a></span><span>
+</span><span id="line-215"></span><span>                  </span><span class="hs-special">]</span><span>
+</span><span id="line-216"></span><span>
+</span><span id="line-217"></span><span class="annot"><span class="hs-comment">-- | Available 'NotifyTimeout' strings.</span></span><span>
+</span><span id="line-218"></span><span id="local-6989586621679451144"><span class="annot"><a href="Shrun.Notify.Types.html#notifyTimeoutStr"><span class="hs-identifier hs-type">notifyTimeoutStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679451144"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679451144"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-219"></span><span id="notifyTimeoutStr"><span class="annot"><span class="annottext">notifyTimeoutStr :: forall a. IsString a =&gt; a
+</span><a href="Shrun.Notify.Types.html#notifyTimeoutStr"><span class="hs-identifier hs-var hs-var">notifyTimeoutStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;(never | NAT)&quot;</span></span><span>
+</span><span id="line-220"></span><span>
+</span><span id="line-221"></span><span class="annot"><span class="hs-comment">-- | Holds notification config.</span></span><span>
+</span><span id="line-222"></span><span class="hs-keyword">data</span><span> </span><span id="NotifyConfig"><span class="annot"><a href="Shrun.Notify.Types.html#NotifyConfig"><span class="hs-identifier hs-var">NotifyConfig</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkNotifyConfig"><span class="annot"><a href="Shrun.Notify.Types.html#MkNotifyConfig"><span class="hs-identifier hs-var">MkNotifyConfig</span></a></span></span><span>
+</span><span id="line-223"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | Notification action.</span></span><span>
+</span><span id="line-224"></span><span>    </span><span id="%24sel%3Aaction%3AMkNotifyConfig"><span class="annot"><span class="annottext">NotifyConfig -&gt; NotifyAction
+</span><a href="Shrun.Notify.Types.html#%24sel%3Aaction%3AMkNotifyConfig"><span class="hs-identifier hs-var hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyAction"><span class="hs-identifier hs-type">NotifyAction</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-225"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Timeout to use for notifications.</span></span><span>
+</span><span id="line-226"></span><span>    </span><span id="%24sel%3Atimeout%3AMkNotifyConfig"><span class="annot"><span class="annottext">NotifyConfig -&gt; NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#%24sel%3Atimeout%3AMkNotifyConfig"><span class="hs-identifier hs-var hs-var">timeout</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier hs-type">NotifyTimeout</span></a></span><span>
+</span><span id="line-227"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-228"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679451151"><span id="local-6989586621679451155"><span class="annot"><span class="annottext">NotifyConfig -&gt; NotifyConfig -&gt; Bool
+(NotifyConfig -&gt; NotifyConfig -&gt; Bool)
+-&gt; (NotifyConfig -&gt; NotifyConfig -&gt; Bool) -&gt; Eq NotifyConfig
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: NotifyConfig -&gt; NotifyConfig -&gt; Bool
+== :: NotifyConfig -&gt; NotifyConfig -&gt; Bool
+$c/= :: NotifyConfig -&gt; NotifyConfig -&gt; Bool
+/= :: NotifyConfig -&gt; NotifyConfig -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679451159"><span id="local-6989586621679451164"><span id="local-6989586621679451168"><span class="annot"><span class="annottext">Int -&gt; NotifyConfig -&gt; ShowS
+[NotifyConfig] -&gt; ShowS
+NotifyConfig -&gt; String
+(Int -&gt; NotifyConfig -&gt; ShowS)
+-&gt; (NotifyConfig -&gt; String)
+-&gt; ([NotifyConfig] -&gt; ShowS)
+-&gt; Show NotifyConfig
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; NotifyConfig -&gt; ShowS
+showsPrec :: Int -&gt; NotifyConfig -&gt; ShowS
+$cshow :: NotifyConfig -&gt; String
+show :: NotifyConfig -&gt; String
+$cshowList :: [NotifyConfig] -&gt; ShowS
+showList :: [NotifyConfig] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-229"></span><span>
+</span><span id="line-230"></span><span id="local-6989586621679450890"><span id="local-6989586621679450891"><span id="local-6989586621679450892"><span id="local-6989586621679450893"><span id="local-6989586621679450894"><span id="local-6989586621679450895"><span id="local-6989586621679451174"><span id="local-6989586621679451179"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">NotifyConfig</span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-231"></span><span>
+</span><span id="line-232"></span><span class="hs-keyword">data</span><span> </span><span id="OsxNotifySystemMismatch"><span class="annot"><a href="Shrun.Notify.Types.html#OsxNotifySystemMismatch"><span class="hs-identifier hs-var">OsxNotifySystemMismatch</span></a></span></span><span>
+</span><span id="line-233"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="OsxNotifySystemMismatchDBus"><span class="annot"><a href="Shrun.Notify.Types.html#OsxNotifySystemMismatchDBus"><span class="hs-identifier hs-var">OsxNotifySystemMismatchDBus</span></a></span></span><span>
+</span><span id="line-234"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="OsxNotifySystemMismatchNotifySend"><span class="annot"><a href="Shrun.Notify.Types.html#OsxNotifySystemMismatchNotifySend"><span class="hs-identifier hs-var">OsxNotifySystemMismatchNotifySend</span></a></span></span><span>
+</span><span id="line-235"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679451208"><span id="local-6989586621679451210"><span class="annot"><span class="annottext">OsxNotifySystemMismatch -&gt; OsxNotifySystemMismatch -&gt; Bool
+(OsxNotifySystemMismatch -&gt; OsxNotifySystemMismatch -&gt; Bool)
+-&gt; (OsxNotifySystemMismatch -&gt; OsxNotifySystemMismatch -&gt; Bool)
+-&gt; Eq OsxNotifySystemMismatch
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: OsxNotifySystemMismatch -&gt; OsxNotifySystemMismatch -&gt; Bool
+== :: OsxNotifySystemMismatch -&gt; OsxNotifySystemMismatch -&gt; Bool
+$c/= :: OsxNotifySystemMismatch -&gt; OsxNotifySystemMismatch -&gt; Bool
+/= :: OsxNotifySystemMismatch -&gt; OsxNotifySystemMismatch -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679451214"><span id="local-6989586621679451216"><span id="local-6989586621679451220"><span class="annot"><span class="annottext">Int -&gt; OsxNotifySystemMismatch -&gt; ShowS
+[OsxNotifySystemMismatch] -&gt; ShowS
+OsxNotifySystemMismatch -&gt; String
+(Int -&gt; OsxNotifySystemMismatch -&gt; ShowS)
+-&gt; (OsxNotifySystemMismatch -&gt; String)
+-&gt; ([OsxNotifySystemMismatch] -&gt; ShowS)
+-&gt; Show OsxNotifySystemMismatch
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; OsxNotifySystemMismatch -&gt; ShowS
+showsPrec :: Int -&gt; OsxNotifySystemMismatch -&gt; ShowS
+$cshow :: OsxNotifySystemMismatch -&gt; String
+show :: OsxNotifySystemMismatch -&gt; String
+$cshowList :: [OsxNotifySystemMismatch] -&gt; ShowS
+showList :: [OsxNotifySystemMismatch] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-236"></span><span>
+</span><span id="line-237"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679451227"><span id="local-6989586621679451231"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#OsxNotifySystemMismatch"><span class="hs-identifier hs-type">OsxNotifySystemMismatch</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-238"></span><span>  </span><span id="local-6989586621679451235"><span class="annot"><span class="annottext">displayException :: OsxNotifySystemMismatch -&gt; String
+</span><a href="#local-6989586621679451235"><span class="hs-identifier hs-var hs-var hs-var hs-var">displayException</span></a></span></span><span> </span><span class="annot"><span class="annottext">OsxNotifySystemMismatch
+</span><a href="Shrun.Notify.Types.html#OsxNotifySystemMismatchDBus"><span class="hs-identifier hs-var">OsxNotifySystemMismatchDBus</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-239"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Detected osx, but DBus is only available on linux!&quot;</span></span><span>
+</span><span id="line-240"></span><span>  </span><span class="annot"><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">OsxNotifySystemMismatch
+</span><a href="Shrun.Notify.Types.html#OsxNotifySystemMismatchNotifySend"><span class="hs-identifier hs-var">OsxNotifySystemMismatchNotifySend</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-241"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Detected osx, but NotifySend is only available on linux!&quot;</span></span><span>
+</span><span id="line-242"></span><span>
+</span><span id="line-243"></span><span class="hs-keyword">data</span><span> </span><span id="LinuxNotifySystemMismatch"><span class="annot"><a href="Shrun.Notify.Types.html#LinuxNotifySystemMismatch"><span class="hs-identifier hs-var">LinuxNotifySystemMismatch</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="LinuxNotifySystemMismatchAppleScript"><span class="annot"><a href="Shrun.Notify.Types.html#LinuxNotifySystemMismatchAppleScript"><span class="hs-identifier hs-var">LinuxNotifySystemMismatchAppleScript</span></a></span></span><span>
+</span><span id="line-244"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679451239"><span id="local-6989586621679451241"><span class="annot"><span class="annottext">LinuxNotifySystemMismatch -&gt; LinuxNotifySystemMismatch -&gt; Bool
+(LinuxNotifySystemMismatch -&gt; LinuxNotifySystemMismatch -&gt; Bool)
+-&gt; (LinuxNotifySystemMismatch -&gt; LinuxNotifySystemMismatch -&gt; Bool)
+-&gt; Eq LinuxNotifySystemMismatch
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: LinuxNotifySystemMismatch -&gt; LinuxNotifySystemMismatch -&gt; Bool
+== :: LinuxNotifySystemMismatch -&gt; LinuxNotifySystemMismatch -&gt; Bool
+$c/= :: LinuxNotifySystemMismatch -&gt; LinuxNotifySystemMismatch -&gt; Bool
+/= :: LinuxNotifySystemMismatch -&gt; LinuxNotifySystemMismatch -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679451245"><span id="local-6989586621679451247"><span id="local-6989586621679451251"><span class="annot"><span class="annottext">Int -&gt; LinuxNotifySystemMismatch -&gt; ShowS
+[LinuxNotifySystemMismatch] -&gt; ShowS
+LinuxNotifySystemMismatch -&gt; String
+(Int -&gt; LinuxNotifySystemMismatch -&gt; ShowS)
+-&gt; (LinuxNotifySystemMismatch -&gt; String)
+-&gt; ([LinuxNotifySystemMismatch] -&gt; ShowS)
+-&gt; Show LinuxNotifySystemMismatch
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; LinuxNotifySystemMismatch -&gt; ShowS
+showsPrec :: Int -&gt; LinuxNotifySystemMismatch -&gt; ShowS
+$cshow :: LinuxNotifySystemMismatch -&gt; String
+show :: LinuxNotifySystemMismatch -&gt; String
+$cshowList :: [LinuxNotifySystemMismatch] -&gt; ShowS
+showList :: [LinuxNotifySystemMismatch] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-245"></span><span>
+</span><span id="line-246"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679451258"><span id="local-6989586621679451262"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#LinuxNotifySystemMismatch"><span class="hs-identifier hs-type">LinuxNotifySystemMismatch</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-247"></span><span>  </span><span id="local-6989586621679451265"><span class="annot"><span class="annottext">displayException :: LinuxNotifySystemMismatch -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="annot"><span class="annottext">LinuxNotifySystemMismatch
+</span><a href="Shrun.Notify.Types.html#LinuxNotifySystemMismatchAppleScript"><span class="hs-identifier hs-var">LinuxNotifySystemMismatchAppleScript</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-248"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Detected linux, but AppleScript is only available on osx!&quot;</span></span><span>
+</span><span id="line-249"></span></pre></body></html>

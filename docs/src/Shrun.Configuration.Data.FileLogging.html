@@ -1,0 +1,478 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.FileLogging</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier">FileLoggingP</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingArgs"><span class="hs-identifier">FileLoggingArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingToml"><span class="hs-identifier">FileLoggingToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingMerged"><span class="hs-identifier">FileLoggingMerged</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#mergeFileLogging"><span class="hs-identifier">mergeFileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html"><span class="hs-identifier">Shrun.Configuration.Data.ConfigPhase</span></a></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhase"><span class="hs-identifier">ConfigPhase</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier">ConfigPhaseArgs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier">ConfigPhaseMerged</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier">ConfigPhaseToml</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseF"><span class="hs-identifier">ConfigPhaseF</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier">Disabled</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier">With</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#Without"><span class="hs-identifier">Without</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator">(&lt;&gt;?)</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">WD</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.FileMode.html"><span class="hs-identifier">Shrun.Data.FileMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.FileMode.html#FileMode"><span class="hs-identifier">FileMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.FileMode.html#FileModeWrite"><span class="hs-identifier">FileModeWrite</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.FilePathDefault.html"><span class="hs-identifier">Shrun.Data.FilePathDefault</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.FilePathDefault.html#FilePathDefault"><span class="hs-identifier">FilePathDefault</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.FileSizeMode.html"><span class="hs-identifier">Shrun.Data.FileSizeMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.FileSizeMode.html#FileSizeMode"><span class="hs-identifier">FileSizeMode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.FileSizeMode.html#defaultFileSizeMode"><span class="hs-identifier">defaultFileSizeMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html"><span class="hs-identifier">Shrun.Data.StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier">StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier">StripControlAll</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- NOTE: [Args vs. Toml mandatory fields]</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--</span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- Some fields are mandatory e.g. FileLogging's path if we are actually</span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- doing file logging. The latter is determined by the FileLoggingP itself</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- being Just (cf. Nothing), thus the path itself is mandatory on Toml and</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- Merged.</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--</span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- So why is it optional on Args? Because Args' FileLoggingP is _always_</span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- present, unlike Toml and Merged's Maybe. We need this behavior because the</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- former's fields can be used to override toml fields, even if file-logging is</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- not specified on the CLI.</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- For example, 'shrun --file-log-mode write cmd' _should_ overwrite toml's</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- file-log.mode even though we did not specify --file-log. Therefore Args'</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- FileLoggingP always needs to be present hence all its field must be</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- optional, even when some are mandatory on Merged.</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- | File logging's path is only optional for the Args. For Toml and merged,</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- it must be present if file logging is active.</span><span>
+</span><span id="line-47"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLogPathF"><span class="hs-identifier hs-type">FileLogPathF</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhase"><span class="hs-identifier hs-type">ConfigPhase</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-48"></span><span class="hs-keyword">type</span><span> </span><span class="hs-keyword">family</span><span> </span><span id="FileLogPathF"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLogPathF"><span class="hs-identifier hs-var">FileLogPathF</span></a></span></span><span> </span><span id="local-6989586621679460640"><span class="annot"><a href="#local-6989586621679460640"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-49"></span><span>  </span><span id="FileLogPathF"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLogPathF"><span class="hs-identifier hs-var">FileLogPathF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-type">FilePathDefault</span></a></span><span>
+</span><span id="line-50"></span><span>  </span><span id="FileLogPathF"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLogPathF"><span class="hs-identifier hs-var">FileLogPathF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Data.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-type">FilePathDefault</span></a></span><span>
+</span><span id="line-51"></span><span>  </span><span id="FileLogPathF"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLogPathF"><span class="hs-identifier hs-var">FileLogPathF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Data.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-type">FilePathDefault</span></a></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="annot"><span class="hs-comment">-- | Holds file logging config.</span></span><span>
+</span><span id="line-54"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhase"><span class="hs-identifier hs-type">ConfigPhase</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">data</span><span> </span><span id="FileLoggingP"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-var">FileLoggingP</span></a></span></span><span> </span><span id="local-6989586621679460402"><span class="annot"><a href="#local-6989586621679460402"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkFileLoggingP"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier hs-var">MkFileLoggingP</span></a></span></span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | Optional path to log file.</span></span><span>
+</span><span id="line-57"></span><span>    </span><span id="%24sel%3Apath%3AMkFileLoggingP"><span class="annot"><span class="annottext">forall (p :: ConfigPhase). FileLoggingP p -&gt; FileLogPathF p
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Apath%3AMkFileLoggingP"><span class="hs-identifier hs-var hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLogPathF"><span class="hs-identifier hs-type">FileLogPathF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679460402"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-comment">-- | Determines to what extent we should remove control characters</span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-comment">-- from file logs.</span><span>
+</span><span id="line-60"></span><span>    </span><span id="%24sel%3AstripControl%3AMkFileLoggingP"><span class="annot"><span class="annottext">forall (p :: ConfigPhase).
+FileLoggingP p -&gt; ConfigPhaseF p StripControl
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AstripControl%3AMkFileLoggingP"><span class="hs-identifier hs-var hs-var">stripControl</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseF"><span class="hs-identifier hs-type">ConfigPhaseF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679460402"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-type">StripControl</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Mode to use with the file log.</span></span><span>
+</span><span id="line-62"></span><span>    </span><span id="%24sel%3Amode%3AMkFileLoggingP"><span class="annot"><span class="annottext">forall (p :: ConfigPhase).
+FileLoggingP p -&gt; ConfigPhaseF p FileMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Amode%3AMkFileLoggingP"><span class="hs-identifier hs-var hs-var">mode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseF"><span class="hs-identifier hs-type">ConfigPhaseF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679460402"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.FileMode.html#FileMode"><span class="hs-identifier hs-type">FileMode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Threshold for when we should warn about the log file size.</span></span><span>
+</span><span id="line-64"></span><span>    </span><span id="%24sel%3AsizeMode%3AMkFileLoggingP"><span class="annot"><span class="annottext">forall (p :: ConfigPhase).
+FileLoggingP p -&gt; ConfigPhaseF p FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AsizeMode%3AMkFileLoggingP"><span class="hs-identifier hs-var hs-var">sizeMode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseF"><span class="hs-identifier hs-type">ConfigPhaseF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679460402"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.FileSizeMode.html#FileSizeMode"><span class="hs-identifier hs-type">FileSizeMode</span></a></span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span id="local-6989586621679460400"><span id="local-6989586621679460401"><span id="local-6989586621679460402"><span id="local-6989586621679460403"><span id="local-6989586621679460405"><span id="local-6989586621679460406"><span id="local-6989586621679460407"><span id="local-6989586621679460408"><span id="local-6989586621679460409"><span id="local-6989586621679460410"><span id="local-6989586621679460411"><span id="local-6989586621679460412"><span id="local-6989586621679460413"><span id="local-6989586621679460650"><span id="local-6989586621679460655"><span id="local-6989586621679460660"><span id="local-6989586621679460665"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">FileLoggingP</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="hs-keyword">type</span><span> </span><span id="FileLoggingArgs"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingArgs"><span class="hs-identifier hs-var">FileLoggingArgs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="hs-keyword">type</span><span> </span><span id="FileLoggingToml"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingToml"><span class="hs-identifier hs-var">FileLoggingToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="hs-keyword">type</span><span> </span><span id="FileLoggingMerged"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingMerged"><span class="hs-identifier hs-var">FileLoggingMerged</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span id="local-6989586621679460726"><span id="local-6989586621679460737"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span id="local-6989586621679460746"><span id="local-6989586621679460759"><span id="local-6989586621679460763"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span id="local-6989586621679460771"><span id="local-6989586621679460781"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span id="local-6989586621679460785"><span id="local-6989586621679460796"><span id="local-6989586621679460800"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span id="local-6989586621679460803"><span id="local-6989586621679460809"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span id="local-6989586621679460813"><span id="local-6989586621679460820"><span id="local-6989586621679460824"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier hs-type">FileLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="annot"><span class="hs-comment">-- | Merges args and toml configs.</span></span><span>
+</span><span id="line-88"></span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#mergeFileLogging"><span class="hs-identifier hs-type">mergeFileLogging</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-89"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingArgs"><span class="hs-identifier hs-type">FileLoggingArgs</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-90"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingToml"><span class="hs-identifier hs-type">FileLoggingToml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-91"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingMerged"><span class="hs-identifier hs-type">FileLoggingMerged</span></a></span><span>
+</span><span id="line-92"></span><span id="mergeFileLogging"><span class="annot"><span class="annottext">mergeFileLogging :: FileLoggingArgs
+-&gt; Maybe FileLoggingToml -&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#mergeFileLogging"><span class="hs-identifier hs-var hs-var">mergeFileLogging</span></a></span></span><span> </span><span id="local-6989586621679460826"><span class="annot"><span class="annottext">FileLoggingArgs
+</span><a href="#local-6989586621679460826"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span id="local-6989586621679460827"><span class="annot"><span class="annottext">Maybe FileLoggingToml
+</span><a href="#local-6989586621679460827"><span class="hs-identifier hs-var">mToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">FileLoggingArgs
+</span><a href="#local-6989586621679460826"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingArgs
+-&gt; Optic'
+     A_Lens NoIx FileLoggingArgs (WithDisabled FilePathDefault)
+-&gt; WithDisabled FilePathDefault
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingArgs (WithDisabled FilePathDefault)
+</span><span class="">#path</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-94"></span><span>    </span><span class="hs-comment">-- 1. Logging globally disabled</span><span>
+</span><span id="line-95"></span><span>    </span><span class="annot"><span class="annottext">WithDisabled FilePathDefault
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-96"></span><span>    </span><span class="annot"><span class="annottext">WithDisabled FilePathDefault
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Without"><span class="hs-identifier hs-var">Without</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe FileLoggingToml
+</span><a href="#local-6989586621679460827"><span class="hs-identifier hs-var">mToml</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-97"></span><span>      </span><span class="hs-comment">-- 2. No Args and no Toml</span><span>
+</span><span id="line-98"></span><span>      </span><span class="annot"><span class="annottext">Maybe FileLoggingToml
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-99"></span><span>      </span><span class="hs-comment">-- 3. No Args and yes Toml</span><span>
+</span><span id="line-100"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679460829"><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460829"><span class="hs-identifier hs-var">toml</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-101"></span><span>        </span><span class="annot"><span class="annottext">FileLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span>
+</span><span id="line-102"></span><span>          </span><span class="annot"><span class="annottext">(FileLoggingP 'ConfigPhaseMerged
+ -&gt; Maybe (FileLoggingP 'ConfigPhaseMerged))
+-&gt; FileLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier hs-type">MkFileLoggingP</span></a></span><span>
+</span><span id="line-103"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:path:MkFileLoggingP :: FileLogPathF 'ConfigPhaseMerged
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Apath%3AMkFileLoggingP"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460829"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+-&gt; Optic' A_Lens NoIx FileLoggingToml FilePathDefault
+-&gt; FilePathDefault
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml FilePathDefault
+</span><span class="">#path</span></span><span class="hs-special">,</span><span>
+</span><span id="line-104"></span><span>              </span><span class="annot"><span class="annottext">$sel:stripControl:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged StripControl
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AstripControl%3AMkFileLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-105"></span><span>                </span><span class="annot"><span class="annottext">StripControl
+-&gt; Lens' FileLoggingArgs (WithDisabled StripControl)
+-&gt; Maybe StripControl
+-&gt; StripControl
+forall a.
+a -&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679460830"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-106"></span><span>                  </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier hs-var">StripControlAll</span></a></span><span class="hs-cpp">
+                  #stripControl
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460829"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+-&gt; Optic' A_Lens NoIx FileLoggingToml (Maybe StripControl)
+-&gt; Maybe StripControl
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe StripControl)
+</span><span class="">#stripControl</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-109"></span><span>              </span><span class="annot"><span class="annottext">$sel:mode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged FileMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Amode%3AMkFileLoggingP"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-110"></span><span>                </span><span class="annot"><span class="annottext">FileMode
+-&gt; Lens' FileLoggingArgs (WithDisabled FileMode)
+-&gt; Maybe FileMode
+-&gt; FileMode
+forall a.
+a -&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679460830"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-111"></span><span>                  </span><span class="annot"><span class="annottext">FileMode
+</span><a href="Shrun.Data.FileMode.html#FileModeWrite"><span class="hs-identifier hs-var">FileModeWrite</span></a></span><span class="hs-cpp">
+                  #mode
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460829"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+-&gt; Optic' A_Lens NoIx FileLoggingToml (Maybe FileMode)
+-&gt; Maybe FileMode
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe FileMode)
+</span><span class="">#mode</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-114"></span><span>              </span><span class="annot"><span class="annottext">$sel:sizeMode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AsizeMode%3AMkFileLoggingP"><span class="hs-identifier hs-var">sizeMode</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-115"></span><span>                </span><span class="annot"><span class="annottext">FileSizeMode
+-&gt; Lens' FileLoggingArgs (WithDisabled FileSizeMode)
+-&gt; Maybe FileSizeMode
+-&gt; FileSizeMode
+forall a.
+a -&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679460830"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-116"></span><span>                  </span><span class="annot"><span class="annottext">FileSizeMode
+</span><a href="Shrun.Data.FileSizeMode.html#defaultFileSizeMode"><span class="hs-identifier hs-var">defaultFileSizeMode</span></a></span><span class="hs-cpp">
+                  #sizeMode
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460829"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+-&gt; Optic' A_Lens NoIx FileLoggingToml (Maybe FileSizeMode)
+-&gt; Maybe FileSizeMode
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe FileSizeMode)
+</span><span class="">#sizeMode</span></span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>            </span><span class="hs-special">}</span><span>
+</span><span id="line-120"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span id="local-6989586621679460831"><span class="annot"><span class="annottext">FilePathDefault
+</span><a href="#local-6989586621679460831"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe FileLoggingToml
+</span><a href="#local-6989586621679460827"><span class="hs-identifier hs-var">mToml</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-121"></span><span>      </span><span class="hs-comment">-- 3. Yes Args and no Toml</span><span>
+</span><span id="line-122"></span><span>      </span><span class="annot"><span class="annottext">Maybe FileLoggingToml
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-123"></span><span>        </span><span class="annot"><span class="annottext">FileLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span>
+</span><span id="line-124"></span><span>          </span><span class="annot"><span class="annottext">(FileLoggingP 'ConfigPhaseMerged
+ -&gt; Maybe (FileLoggingP 'ConfigPhaseMerged))
+-&gt; FileLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier hs-type">MkFileLoggingP</span></a></span><span>
+</span><span id="line-125"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">FilePathDefault
+FileLogPathF 'ConfigPhaseMerged
+$sel:path:MkFileLoggingP :: FileLogPathF 'ConfigPhaseMerged
+path :: FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Apath%3AMkFileLoggingP"><span class="hs-identifier hs-var hs-var">path</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-126"></span><span>              </span><span class="annot"><span class="annottext">$sel:stripControl:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged StripControl
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AstripControl%3AMkFileLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-127"></span><span>                </span><span class="annot"><span class="annottext">StripControl -&gt; WithDisabled StripControl -&gt; StripControl
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span> </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier hs-var">StripControlAll</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingArgs
+</span><a href="#local-6989586621679460826"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingArgs
+-&gt; Lens' FileLoggingArgs (WithDisabled StripControl)
+-&gt; WithDisabled StripControl
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' FileLoggingArgs (WithDisabled StripControl)
+</span><span class="">#stripControl</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-128"></span><span>              </span><span class="annot"><span class="annottext">$sel:mode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged FileMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Amode%3AMkFileLoggingP"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-129"></span><span>                </span><span class="annot"><span class="annottext">FileMode -&gt; WithDisabled FileMode -&gt; FileMode
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span> </span><span class="annot"><span class="annottext">FileMode
+</span><a href="Shrun.Data.FileMode.html#FileModeWrite"><span class="hs-identifier hs-var">FileModeWrite</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingArgs
+</span><a href="#local-6989586621679460826"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingArgs
+-&gt; Lens' FileLoggingArgs (WithDisabled FileMode)
+-&gt; WithDisabled FileMode
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' FileLoggingArgs (WithDisabled FileMode)
+</span><span class="">#mode</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-130"></span><span>              </span><span class="annot"><span class="annottext">$sel:sizeMode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AsizeMode%3AMkFileLoggingP"><span class="hs-identifier hs-var">sizeMode</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-131"></span><span>                </span><span class="annot"><span class="annottext">FileSizeMode -&gt; WithDisabled FileSizeMode -&gt; FileSizeMode
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span> </span><span class="annot"><span class="annottext">FileSizeMode
+</span><a href="Shrun.Data.FileSizeMode.html#defaultFileSizeMode"><span class="hs-identifier hs-var">defaultFileSizeMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingArgs
+</span><a href="#local-6989586621679460826"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingArgs
+-&gt; Lens' FileLoggingArgs (WithDisabled FileSizeMode)
+-&gt; WithDisabled FileSizeMode
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' FileLoggingArgs (WithDisabled FileSizeMode)
+</span><span class="">#sizeMode</span></span><span class="hs-special">)</span><span>
+</span><span id="line-132"></span><span>            </span><span class="hs-special">}</span><span>
+</span><span id="line-133"></span><span>      </span><span class="hs-comment">-- 4. Yes Args and yes Toml</span><span>
+</span><span id="line-134"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679460833"><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460833"><span class="hs-identifier hs-var">toml</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-135"></span><span>        </span><span class="annot"><span class="annottext">FileLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span>
+</span><span id="line-136"></span><span>          </span><span class="annot"><span class="annottext">(FileLoggingP 'ConfigPhaseMerged
+ -&gt; Maybe (FileLoggingP 'ConfigPhaseMerged))
+-&gt; FileLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (FileLoggingP 'ConfigPhaseMerged)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier hs-type">MkFileLoggingP</span></a></span><span>
+</span><span id="line-137"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">FilePathDefault
+FileLogPathF 'ConfigPhaseMerged
+$sel:path:MkFileLoggingP :: FileLogPathF 'ConfigPhaseMerged
+path :: FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Apath%3AMkFileLoggingP"><span class="hs-identifier hs-var hs-var">path</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-138"></span><span>              </span><span class="annot"><span class="annottext">$sel:stripControl:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged StripControl
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AstripControl%3AMkFileLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-139"></span><span>                </span><span class="annot"><span class="annottext">StripControl
+-&gt; Lens' FileLoggingArgs (WithDisabled StripControl)
+-&gt; Maybe StripControl
+-&gt; StripControl
+forall a.
+a -&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679460830"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-140"></span><span>                  </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlAll"><span class="hs-identifier hs-var">StripControlAll</span></a></span><span class="hs-cpp">
+                  #stripControl
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe StripControl)
+-&gt; FileLoggingToml -&gt; Maybe StripControl
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe StripControl)
+</span><span class="">#stripControl</span></span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460833"><span class="hs-identifier hs-var">toml</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-143"></span><span>              </span><span class="annot"><span class="annottext">$sel:mode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged FileMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Amode%3AMkFileLoggingP"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-144"></span><span>                </span><span class="annot"><span class="annottext">FileMode
+-&gt; Lens' FileLoggingArgs (WithDisabled FileMode)
+-&gt; Maybe FileMode
+-&gt; FileMode
+forall a.
+a -&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679460830"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-145"></span><span>                  </span><span class="annot"><span class="annottext">FileMode
+</span><a href="Shrun.Data.FileMode.html#FileModeWrite"><span class="hs-identifier hs-var">FileModeWrite</span></a></span><span class="hs-cpp">
+                  #mode
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe FileMode)
+-&gt; FileLoggingToml -&gt; Maybe FileMode
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe FileMode)
+</span><span class="">#mode</span></span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460833"><span class="hs-identifier hs-var">toml</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-148"></span><span>              </span><span class="annot"><span class="annottext">$sel:sizeMode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseMerged FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AsizeMode%3AMkFileLoggingP"><span class="hs-identifier hs-var">sizeMode</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-149"></span><span>                </span><span class="annot"><span class="annottext">FileSizeMode
+-&gt; Lens' FileLoggingArgs (WithDisabled FileSizeMode)
+-&gt; Maybe FileSizeMode
+-&gt; FileSizeMode
+forall a.
+a -&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679460830"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-150"></span><span>                  </span><span class="annot"><span class="annottext">FileSizeMode
+</span><a href="Shrun.Data.FileSizeMode.html#defaultFileSizeMode"><span class="hs-identifier hs-var">defaultFileSizeMode</span></a></span><span class="hs-cpp">
+                  #sizeMode
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe FileSizeMode)
+-&gt; FileLoggingToml -&gt; Maybe FileSizeMode
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx FileLoggingToml (Maybe FileSizeMode)
+</span><span class="">#sizeMode</span></span><span> </span><span class="annot"><span class="annottext">FileLoggingToml
+</span><a href="#local-6989586621679460833"><span class="hs-identifier hs-var">toml</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-153"></span><span>            </span><span class="hs-special">}</span><span>
+</span><span id="line-154"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-155"></span><span>    </span><span id="local-6989586621679460468"><span class="annot"><a href="#local-6989586621679460830"><span class="hs-identifier hs-type">plusDefault</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679460468"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#Lens%27"><span class="hs-identifier hs-type">Lens'</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingArgs"><span class="hs-identifier hs-type">FileLoggingArgs</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679460468"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679460468"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679460468"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-156"></span><span>    </span><span id="local-6989586621679460830"><span class="annot"><span class="annottext">plusDefault :: forall a.
+a -&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; Maybe a -&gt; a
+</span><a href="#local-6989586621679460830"><span class="hs-identifier hs-var hs-var">plusDefault</span></a></span></span><span> </span><span id="local-6989586621679460836"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679460836"><span class="hs-identifier hs-var">defA</span></a></span></span><span> </span><span id="local-6989586621679460837"><span class="annot"><span class="annottext">Lens' FileLoggingArgs (WithDisabled a)
+</span><a href="#local-6989586621679460837"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679460838"><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679460838"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; WithDisabled a -&gt; a
+forall a. a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679460836"><span class="hs-identifier hs-var">defA</span></a></span><span> </span><span class="annot"><span class="annottext">(WithDisabled a -&gt; a) -&gt; WithDisabled a -&gt; a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingArgs
+</span><a href="#local-6989586621679460826"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingArgs
+-&gt; Lens' FileLoggingArgs (WithDisabled a) -&gt; WithDisabled a
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' FileLoggingArgs (WithDisabled a)
+</span><a href="#local-6989586621679460837"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+forall a. WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator hs-var">&lt;&gt;?</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679460838"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-157"></span><span>
+</span><span id="line-158"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingToml"><span class="hs-identifier hs-type">FileLoggingToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-159"></span><span>  </span><span id="local-6989586621679460848"><span class="annot"><span class="annottext">tomlDecoder :: Decoder FileLoggingToml
+</span><a href="#local-6989586621679460848"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-160"></span><span>    </span><span class="annot"><span class="annottext">FilePathDefault
+-&gt; Maybe StripControl
+-&gt; Maybe FileMode
+-&gt; Maybe FileSizeMode
+-&gt; FileLoggingToml
+FileLogPathF 'ConfigPhaseToml
+-&gt; ConfigPhaseF 'ConfigPhaseToml StripControl
+-&gt; ConfigPhaseF 'ConfigPhaseToml FileMode
+-&gt; ConfigPhaseF 'ConfigPhaseToml FileSizeMode
+-&gt; FileLoggingToml
+forall (p :: ConfigPhase).
+FileLogPathF p
+-&gt; ConfigPhaseF p StripControl
+-&gt; ConfigPhaseF p FileMode
+-&gt; ConfigPhaseF p FileSizeMode
+-&gt; FileLoggingP p
+</span><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier hs-var">MkFileLoggingP</span></a></span><span>
+</span><span id="line-161"></span><span>      </span><span class="annot"><span class="annottext">(FilePathDefault
+ -&gt; Maybe StripControl
+ -&gt; Maybe FileMode
+ -&gt; Maybe FileSizeMode
+ -&gt; FileLoggingToml)
+-&gt; Decoder FilePathDefault
+-&gt; Decoder
+     (Maybe StripControl
+      -&gt; Maybe FileMode -&gt; Maybe FileSizeMode -&gt; FileLoggingToml)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogging"><span class="hs-identifier hs-var">decodeFileLogging</span></a></span><span>
+</span><span id="line-162"></span><span>      </span><span class="annot"><span class="annottext">Decoder
+  (Maybe StripControl
+   -&gt; Maybe FileMode -&gt; Maybe FileSizeMode -&gt; FileLoggingToml)
+-&gt; Decoder (Maybe StripControl)
+-&gt; Decoder
+     (Maybe FileMode -&gt; Maybe FileSizeMode -&gt; FileLoggingToml)
+forall a b. Decoder (a -&gt; b) -&gt; Decoder a -&gt; Decoder b
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe StripControl)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogStripControl"><span class="hs-identifier hs-var">decodeFileLogStripControl</span></a></span><span>
+</span><span id="line-163"></span><span>      </span><span class="annot"><span class="annottext">Decoder (Maybe FileMode -&gt; Maybe FileSizeMode -&gt; FileLoggingToml)
+-&gt; Decoder (Maybe FileMode)
+-&gt; Decoder (Maybe FileSizeMode -&gt; FileLoggingToml)
+forall a b. Decoder (a -&gt; b) -&gt; Decoder a -&gt; Decoder b
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe FileMode)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogMode"><span class="hs-identifier hs-var">decodeFileLogMode</span></a></span><span>
+</span><span id="line-164"></span><span>      </span><span class="annot"><span class="annottext">Decoder (Maybe FileSizeMode -&gt; FileLoggingToml)
+-&gt; Decoder (Maybe FileSizeMode) -&gt; Decoder FileLoggingToml
+forall a b. Decoder (a -&gt; b) -&gt; Decoder a -&gt; Decoder b
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe FileSizeMode)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogSizeMode"><span class="hs-identifier hs-var">decodeFileLogSizeMode</span></a></span><span>
+</span><span id="line-165"></span><span>
+</span><span id="line-166"></span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogging"><span class="hs-identifier hs-type">decodeFileLogging</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-type">FilePathDefault</span></a></span><span>
+</span><span id="line-167"></span><span id="decodeFileLogging"><span class="annot"><span class="annottext">decodeFileLogging :: Decoder FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogging"><span class="hs-identifier hs-var hs-var">decodeFileLogging</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder FilePathDefault -&gt; Text -&gt; Decoder FilePathDefault
+forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder FilePathDefault
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;path&quot;</span></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogStripControl"><span class="hs-identifier hs-type">decodeFileLogStripControl</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-type">StripControl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-170"></span><span id="decodeFileLogStripControl"><span class="annot"><span class="annottext">decodeFileLogStripControl :: Decoder (Maybe StripControl)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogStripControl"><span class="hs-identifier hs-var hs-var">decodeFileLogStripControl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder StripControl -&gt; Text -&gt; Decoder (Maybe StripControl)
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder StripControl
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;strip-control&quot;</span></span><span>
+</span><span id="line-171"></span><span>
+</span><span id="line-172"></span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogMode"><span class="hs-identifier hs-type">decodeFileLogMode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.FileMode.html#FileMode"><span class="hs-identifier hs-type">FileMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-173"></span><span id="decodeFileLogMode"><span class="annot"><span class="annottext">decodeFileLogMode :: Decoder (Maybe FileMode)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogMode"><span class="hs-identifier hs-var hs-var">decodeFileLogMode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder FileMode -&gt; Text -&gt; Decoder (Maybe FileMode)
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder FileMode
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;mode&quot;</span></span><span>
+</span><span id="line-174"></span><span>
+</span><span id="line-175"></span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogSizeMode"><span class="hs-identifier hs-type">decodeFileLogSizeMode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.FileSizeMode.html#FileSizeMode"><span class="hs-identifier hs-type">FileSizeMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-176"></span><span id="decodeFileLogSizeMode"><span class="annot"><span class="annottext">decodeFileLogSizeMode :: Decoder (Maybe FileSizeMode)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#decodeFileLogSizeMode"><span class="hs-identifier hs-var hs-var">decodeFileLogSizeMode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder FileSizeMode -&gt; Text -&gt; Decoder (Maybe FileSizeMode)
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder FileSizeMode
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;size-mode&quot;</span></span><span>
+</span><span id="line-177"></span></pre></body></html>

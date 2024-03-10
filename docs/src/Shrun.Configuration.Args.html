@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Args</span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier">Args</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Args.html#defaultArgs"><span class="hs-identifier">defaultArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier">Args</span></a></span><span>
+</span><span id="line-9"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier">MkArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3AcmdLog%3AMkArgs"><span class="hs-identifier">cmdLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3Acommands%3AMkArgs"><span class="hs-identifier">commands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3AconfigPath%3AMkArgs"><span class="hs-identifier">configPath</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3AcoreConfig%3AMkArgs"><span class="hs-identifier">coreConfig</span></a></span><span>
+</span><span id="line-14"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.CmdLogging</span></a></span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier">CmdLoggingP</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#MkCmdLoggingP"><span class="hs-identifier">MkCmdLoggingP</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AlineTrunc%3AMkCmdLoggingP"><span class="hs-identifier">lineTrunc</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AstripControl%3AMkCmdLoggingP"><span class="hs-identifier">stripControl</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html"><span class="hs-identifier">Shrun.Configuration.Data.Core</span></a></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigP"><span class="hs-identifier">CoreConfigP</span></a></span><span>
+</span><span id="line-21"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier">MkCoreConfigP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogSize%3AMkCoreConfigP"><span class="hs-identifier">cmdLogSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogging%3AMkCoreConfigP"><span class="hs-identifier">cmdLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdNameTrunc%3AMkCoreConfigP"><span class="hs-identifier">cmdNameTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AfileLogging%3AMkCoreConfigP"><span class="hs-identifier">fileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Ainit%3AMkCoreConfigP"><span class="hs-identifier">init</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AkeyHide%3AMkCoreConfigP"><span class="hs-identifier">keyHide</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Anotify%3AMkCoreConfigP"><span class="hs-identifier">notify</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3ApollInterval%3AMkCoreConfigP"><span class="hs-identifier">pollInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Atimeout%3AMkCoreConfigP"><span class="hs-identifier">timeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AtimerFormat%3AMkCoreConfigP"><span class="hs-identifier">timerFormat</span></a></span><span>
+</span><span id="line-32"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier">FileLoggingP</span></a></span><span>
+</span><span id="line-36"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier">MkFileLoggingP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Amode%3AMkFileLoggingP"><span class="hs-identifier">mode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Apath%3AMkFileLoggingP"><span class="hs-identifier">path</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AsizeMode%3AMkFileLoggingP"><span class="hs-identifier">sizeMode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AstripControl%3AMkFileLoggingP"><span class="hs-identifier">stripControl</span></a></span><span>
+</span><span id="line-41"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html"><span class="hs-identifier">Shrun.Configuration.Data.Notify</span></a></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#NotifyP"><span class="hs-identifier">NotifyP</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#MkNotifyP"><span class="hs-identifier">MkNotifyP</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#%24sel%3Aaction%3AMkNotifyP"><span class="hs-identifier">action</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#%24sel%3Asystem%3AMkNotifyP"><span class="hs-identifier">system</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#%24sel%3Atimeout%3AMkNotifyP"><span class="hs-identifier">timeout</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="annot"><a href="Shrun.Configuration.Args.html#defaultArgs"><span class="hs-identifier hs-type">defaultArgs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gm4yyxlv7sm68pm8b2r0fw8f1lklgmgz-nonempty-containers-0.3.4.4-doc/share/doc/nonempty-containers-0.3.4.4/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#Args"><span class="hs-identifier hs-type">Args</span></a></span><span>
+</span><span id="line-49"></span><span id="defaultArgs"><span class="annot"><span class="annottext">defaultArgs :: NESeq Text -&gt; Args
+</span><a href="Shrun.Configuration.Args.html#defaultArgs"><span class="hs-identifier hs-var hs-var">defaultArgs</span></a></span></span><span> </span><span id="local-6989586621679462798"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679462798"><span class="hs-identifier hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-50"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.html#MkArgs"><span class="hs-identifier hs-type">MkArgs</span></a></span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:configPath:MkArgs :: WithDisabled OsPath
+</span><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3AconfigPath%3AMkArgs"><span class="hs-identifier hs-var">configPath</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled OsPath
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>      </span><span class="annot"><span class="annottext">$sel:cmdLog:MkArgs :: WithDisabled ()
+</span><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3AcmdLog%3AMkArgs"><span class="hs-identifier hs-var">cmdLog</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled ()
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>      </span><span class="annot"><span class="annottext">$sel:coreConfig:MkArgs :: CoreConfigArgs
+</span><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3AcoreConfig%3AMkArgs"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-54"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier hs-type">MkCoreConfigP</span></a></span><span>
+</span><span id="line-55"></span><span>          </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:timeout:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseArgs Timeout
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Atimeout%3AMkCoreConfigP"><span class="hs-identifier hs-var">timeout</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled Timeout
+ConfigPhaseMaybeF 'ConfigPhaseArgs Timeout
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>            </span><span class="annot"><span class="annottext">$sel:init:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseArgs Text
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Ainit%3AMkCoreConfigP"><span class="hs-identifier hs-var">init</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled Text
+ConfigPhaseMaybeF 'ConfigPhaseArgs Text
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>            </span><span class="annot"><span class="annottext">$sel:keyHide:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseArgs KeyHide
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AkeyHide%3AMkCoreConfigP"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled KeyHide
+ConfigPhaseF 'ConfigPhaseArgs KeyHide
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>            </span><span class="annot"><span class="annottext">$sel:pollInterval:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseArgs PollInterval
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3ApollInterval%3AMkCoreConfigP"><span class="hs-identifier hs-var">pollInterval</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled PollInterval
+ConfigPhaseF 'ConfigPhaseArgs PollInterval
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>            </span><span class="annot"><span class="annottext">$sel:cmdLogSize:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseArgs (Bytes 'B Natural)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogSize%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdLogSize</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled (Bytes 'B Natural)
+ConfigPhaseF 'ConfigPhaseArgs (Bytes 'B Natural)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>            </span><span class="annot"><span class="annottext">$sel:timerFormat:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseArgs TimerFormat
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AtimerFormat%3AMkCoreConfigP"><span class="hs-identifier hs-var">timerFormat</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled TimerFormat
+ConfigPhaseF 'ConfigPhaseArgs TimerFormat
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>            </span><span class="annot"><span class="annottext">$sel:cmdNameTrunc:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseArgs (Truncation 'TCmdName)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdNameTrunc%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdNameTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">WithDisabled (Truncation 'TCmdName)
+ConfigPhaseMaybeF 'ConfigPhaseArgs (Truncation 'TCmdName)
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>            </span><span class="annot"><span class="annottext">$sel:cmdLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseArgs (CmdLoggingP 'ConfigPhaseArgs)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdLogging</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-63"></span><span>              </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#MkCmdLoggingP"><span class="hs-identifier hs-type">MkCmdLoggingP</span></a></span><span>
+</span><span id="line-64"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:stripControl:MkCmdLoggingP :: ConfigPhaseF 'ConfigPhaseArgs StripControl
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AstripControl%3AMkCmdLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConfigPhaseF 'ConfigPhaseArgs StripControl
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>                  </span><span class="annot"><span class="annottext">$sel:lineTrunc:MkCmdLoggingP :: CmdLogLineTruncF 'ConfigPhaseArgs
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AlineTrunc%3AMkCmdLoggingP"><span class="hs-identifier hs-var">lineTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CmdLogLineTruncF 'ConfigPhaseArgs
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-66"></span><span>                </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-67"></span><span>            </span><span class="annot"><span class="annottext">$sel:fileLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseArgs (FileLoggingP 'ConfigPhaseArgs)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AfileLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-68"></span><span>              </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier hs-type">MkFileLoggingP</span></a></span><span>
+</span><span id="line-69"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:path:MkFileLoggingP :: FileLogPathF 'ConfigPhaseArgs
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Apath%3AMkFileLoggingP"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FileLogPathF 'ConfigPhaseArgs
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-70"></span><span>                  </span><span class="annot"><span class="annottext">$sel:stripControl:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseArgs StripControl
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AstripControl%3AMkFileLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConfigPhaseF 'ConfigPhaseArgs StripControl
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-71"></span><span>                  </span><span class="annot"><span class="annottext">$sel:mode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseArgs FileMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3Amode%3AMkFileLoggingP"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConfigPhaseF 'ConfigPhaseArgs FileMode
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-72"></span><span>                  </span><span class="annot"><span class="annottext">$sel:sizeMode:MkFileLoggingP :: ConfigPhaseF 'ConfigPhaseArgs FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#%24sel%3AsizeMode%3AMkFileLoggingP"><span class="hs-identifier hs-var">sizeMode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConfigPhaseF 'ConfigPhaseArgs FileSizeMode
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-73"></span><span>                </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>            </span><span class="annot"><span class="annottext">$sel:notify:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseArgs (NotifyP 'ConfigPhaseArgs)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Anotify%3AMkCoreConfigP"><span class="hs-identifier hs-var">notify</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>              </span><span class="annot"><a href="Shrun.Configuration.Data.Notify.html#MkNotifyP"><span class="hs-identifier hs-type">MkNotifyP</span></a></span><span>
+</span><span id="line-76"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:action:MkNotifyP :: NotifyActionF 'ConfigPhaseArgs
+</span><a href="Shrun.Configuration.Data.Notify.html#%24sel%3Aaction%3AMkNotifyP"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NotifyActionF 'ConfigPhaseArgs
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>                  </span><span class="annot"><span class="annottext">$sel:system:MkNotifyP :: ConfigPhaseF 'ConfigPhaseArgs NotifySystemP1
+</span><a href="Shrun.Configuration.Data.Notify.html#%24sel%3Asystem%3AMkNotifyP"><span class="hs-identifier hs-var">system</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConfigPhaseF 'ConfigPhaseArgs NotifySystemP1
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>                  </span><span class="annot"><span class="annottext">$sel:timeout:MkNotifyP :: ConfigPhaseF 'ConfigPhaseArgs NotifyTimeout
+</span><a href="Shrun.Configuration.Data.Notify.html#%24sel%3Atimeout%3AMkNotifyP"><span class="hs-identifier hs-var">timeout</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConfigPhaseF 'ConfigPhaseArgs NotifyTimeout
+forall a. Monoid a =&gt; a
+</span><span class="hs-identifier hs-var">mempty</span></span><span>
+</span><span id="line-79"></span><span>                </span><span class="hs-special">}</span><span>
+</span><span id="line-80"></span><span>          </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-81"></span><span>      </span><span class="annot"><span class="annottext">NESeq Text
+$sel:commands:MkArgs :: NESeq Text
+commands :: NESeq Text
+</span><a href="Shrun.Configuration.Args.Parsing.html#%24sel%3Acommands%3AMkArgs"><span class="hs-identifier hs-var hs-var">commands</span></a></span><span>
+</span><span id="line-82"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-83"></span></pre></body></html>

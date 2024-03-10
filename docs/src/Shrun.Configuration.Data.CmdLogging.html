@@ -1,0 +1,492 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.CmdLogging</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier">CmdLoggingP</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingArgs"><span class="hs-identifier">CmdLoggingArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingToml"><span class="hs-identifier">CmdLoggingToml</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingMerged"><span class="hs-identifier">CmdLoggingMerged</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#mergeCmdLogging"><span class="hs-identifier">mergeCmdLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-terminal-0.1-8225eede747ffb6c8baf52f86eacb8d898676e7c2ea23a66df65cba2e82db12f/share/doc/html/src/Effects.System.Terminal.html"><span class="hs-identifier">Effects.System.Terminal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-terminal-0.1-8225eede747ffb6c8baf52f86eacb8d898676e7c2ea23a66df65cba2e82db12f/share/doc/html/src/Effects.System.Terminal.html#getTerminalWidth"><span class="hs-identifier">getTerminalWidth</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html"><span class="hs-identifier">Shrun.Configuration.Data.ConfigPhase</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhase"><span class="hs-identifier">ConfigPhase</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier">ConfigPhaseArgs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier">ConfigPhaseMerged</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier">ConfigPhaseToml</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseF"><span class="hs-identifier">ConfigPhaseF</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier">Disabled</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier">With</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#Without"><span class="hs-identifier">Without</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator">(&lt;&gt;?)</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">WD</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html"><span class="hs-identifier">Shrun.Data.StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier">StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControlSmart"><span class="hs-identifier">StripControlSmart</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html"><span class="hs-identifier">Shrun.Data.Truncation</span></a></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#LineTruncation"><span class="hs-identifier">LineTruncation</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#Detected"><span class="hs-identifier">Detected</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#Undetected"><span class="hs-identifier">Undetected</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Shrun.Data.Truncation.html#TruncRegion"><span class="hs-identifier">TruncRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#TCmdLine"><span class="hs-identifier">TCmdLine</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="Shrun.Data.Truncation.html#Truncation"><span class="hs-identifier">Truncation</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#MkTruncation"><span class="hs-identifier">MkTruncation</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="annot"><span class="hs-comment">-- | Cmd log line truncation is truly optional, the default being none.</span></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLogLineTruncF"><span class="hs-identifier hs-type">CmdLogLineTruncF</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhase"><span class="hs-identifier hs-type">ConfigPhase</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">type</span><span> </span><span class="hs-keyword">family</span><span> </span><span id="CmdLogLineTruncF"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLogLineTruncF"><span class="hs-identifier hs-var">CmdLogLineTruncF</span></a></span></span><span> </span><span id="local-6989586621679455379"><span class="annot"><a href="#local-6989586621679455379"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-34"></span><span>  </span><span id="CmdLogLineTruncF"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLogLineTruncF"><span class="hs-identifier hs-var">CmdLogLineTruncF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span id="CmdLogLineTruncF"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLogLineTruncF"><span class="hs-identifier hs-var">CmdLogLineTruncF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span>
+</span><span id="line-36"></span><span>  </span><span id="CmdLogLineTruncF"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLogLineTruncF"><span class="hs-identifier hs-var">CmdLogLineTruncF</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#TCmdLine"><span class="hs-identifier hs-type">TCmdLine</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="annot"><span class="hs-comment">-- | Holds command logging config.</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhase"><span class="hs-identifier hs-type">ConfigPhase</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">data</span><span> </span><span id="CmdLoggingP"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-var">CmdLoggingP</span></a></span></span><span> </span><span id="local-6989586621679455247"><span class="annot"><a href="#local-6989586621679455247"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkCmdLoggingP"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#MkCmdLoggingP"><span class="hs-identifier hs-var">MkCmdLoggingP</span></a></span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="%24sel%3AstripControl%3AMkCmdLoggingP"><span class="annot"><span class="annottext">forall (p :: ConfigPhase).
+CmdLoggingP p -&gt; ConfigPhaseF p StripControl
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AstripControl%3AMkCmdLoggingP"><span class="hs-identifier hs-var hs-var">stripControl</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseF"><span class="hs-identifier hs-type">ConfigPhaseF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455247"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-type">StripControl</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span id="%24sel%3AlineTrunc%3AMkCmdLoggingP"><span class="annot"><span class="annottext">forall (p :: ConfigPhase). CmdLoggingP p -&gt; CmdLogLineTruncF p
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AlineTrunc%3AMkCmdLoggingP"><span class="hs-identifier hs-var hs-var">lineTrunc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLogLineTruncF"><span class="hs-identifier hs-type">CmdLogLineTruncF</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455247"><span class="hs-identifier hs-type">p</span></a></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span id="local-6989586621679455247"><span id="local-6989586621679455275"><span id="local-6989586621679455276"><span id="local-6989586621679455277"><span id="local-6989586621679455278"><span id="local-6989586621679455279"><span id="local-6989586621679455280"><span id="local-6989586621679455387"><span id="local-6989586621679455392"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">CmdLoggingP</span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">type</span><span> </span><span id="CmdLoggingArgs"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingArgs"><span class="hs-identifier hs-var">CmdLoggingArgs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-keyword">type</span><span> </span><span id="CmdLoggingToml"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingToml"><span class="hs-identifier hs-var">CmdLoggingToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="hs-keyword">type</span><span> </span><span id="CmdLoggingMerged"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingMerged"><span class="hs-identifier hs-var">CmdLoggingMerged</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span id="local-6989586621679455423"><span id="local-6989586621679455430"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span id="local-6989586621679455437"><span id="local-6989586621679455446"><span id="local-6989586621679455450"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseArgs"><span class="hs-identifier hs-type">ConfigPhaseArgs</span></a></span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span id="local-6989586621679455456"><span id="local-6989586621679455463"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span id="local-6989586621679455467"><span id="local-6989586621679455475"><span id="local-6989586621679455479"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseToml"><span class="hs-identifier hs-type">ConfigPhaseToml</span></a></span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span id="local-6989586621679455482"><span id="local-6989586621679455487"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span id="local-6989586621679455492"><span id="local-6989586621679455498"><span id="local-6989586621679455502"><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingP"><span class="hs-identifier hs-type">CmdLoggingP</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConfigPhase.html#ConfigPhaseMerged"><span class="hs-identifier hs-type">ConfigPhaseMerged</span></a></span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="annot"><span class="hs-comment">-- | Merges args and toml configs.</span></span><span>
+</span><span id="line-66"></span><span id="local-6989586621679455309"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#mergeCmdLogging"><span class="hs-identifier hs-type">mergeCmdLogging</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-terminal-0.1-8225eede747ffb6c8baf52f86eacb8d898676e7c2ea23a66df65cba2e82db12f/share/doc/html/src/Effects.System.Terminal.html#MonadTerminal"><span class="hs-identifier hs-type">MonadTerminal</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455309"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-70"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-71"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingArgs"><span class="hs-identifier hs-type">CmdLoggingArgs</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-72"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingToml"><span class="hs-identifier hs-type">CmdLoggingToml</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-73"></span><span>  </span><span class="annot"><a href="#local-6989586621679455309"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingMerged"><span class="hs-identifier hs-type">CmdLoggingMerged</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-74"></span><span id="mergeCmdLogging"><span class="annot"><span class="annottext">mergeCmdLogging :: forall (m :: OpticKind -&gt; OpticKind).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled ()
+-&gt; CmdLoggingP 'ConfigPhaseArgs
+-&gt; Maybe (CmdLoggingP 'ConfigPhaseToml)
+-&gt; m (Maybe (CmdLoggingP 'ConfigPhaseMerged))
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#mergeCmdLogging"><span class="hs-identifier hs-var hs-var">mergeCmdLogging</span></a></span></span><span> </span><span id="local-6989586621679455610"><span class="annot"><span class="annottext">WithDisabled ()
+</span><a href="#local-6989586621679455610"><span class="hs-identifier hs-var">withDisabled</span></a></span></span><span> </span><span id="local-6989586621679455611"><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseArgs
+</span><a href="#local-6989586621679455611"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span id="local-6989586621679455612"><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679455612"><span class="hs-identifier hs-var">mToml</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">WithDisabled ()
+</span><a href="#local-6989586621679455610"><span class="hs-identifier hs-var">withDisabled</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-comment">-- 1. Logging globally disabled</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><span class="annottext">WithDisabled ()
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseMerged)
+-&gt; m (Maybe (CmdLoggingP 'ConfigPhaseMerged))
+forall (a :: OpticKind). a -&gt; m a
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+Applicative f =&gt;
+a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind). Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="annottext">WithDisabled ()
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Without"><span class="hs-identifier hs-var">Without</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679455612"><span class="hs-identifier hs-var">mToml</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-79"></span><span>      </span><span class="hs-comment">-- 2. No Args and no Toml</span><span>
+</span><span id="line-80"></span><span>      </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseToml)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseMerged)
+-&gt; m (Maybe (CmdLoggingP 'ConfigPhaseMerged))
+forall (a :: OpticKind). a -&gt; m a
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+Applicative f =&gt;
+a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind). Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-81"></span><span>      </span><span class="hs-comment">-- 3. No Args but yes Toml</span><span>
+</span><span id="line-82"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679455613"><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+</span><a href="#local-6989586621679455613"><span class="hs-identifier hs-var">toml</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-83"></span><span>        </span><span id="local-6989586621679455614"><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+</span><a href="#local-6989586621679455614"><span class="hs-identifier hs-var">cmdLogLineTrunc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-84"></span><span>          </span><span class="annot"><span class="annottext">WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (m :: OpticKind -&gt; OpticKind).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-var">toLineTrunc</span></a></span><span> </span><span class="annot"><span class="annottext">(WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine)))
+-&gt; WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens
+  NoIx
+  (CmdLoggingP 'ConfigPhaseArgs)
+  (WithDisabled LineTruncation)
+-&gt; CmdLoggingP 'ConfigPhaseArgs -&gt; WithDisabled LineTruncation
+forall (k :: OpticKind) (is :: IxList) (s :: OpticKind)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens
+  NoIx
+  (CmdLoggingP 'ConfigPhaseArgs)
+  (WithDisabled LineTruncation)
+</span><span class="">#lineTrunc</span></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseArgs
+</span><a href="#local-6989586621679455611"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">WithDisabled LineTruncation
+-&gt; Maybe LineTruncation -&gt; WithDisabled LineTruncation
+forall (a :: OpticKind).
+WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator hs-var">&lt;&gt;?</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe LineTruncation)
+-&gt; CmdLoggingP 'ConfigPhaseToml -&gt; Maybe LineTruncation
+forall (k :: OpticKind) (is :: IxList) (s :: OpticKind)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe LineTruncation)
+</span><span class="">#lineTrunc</span></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+</span><a href="#local-6989586621679455613"><span class="hs-identifier hs-var">toml</span></a></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span>        </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-87"></span><span>          </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind). a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span>
+</span><span id="line-88"></span><span>          </span><span class="annot"><span class="annottext">(CmdLoggingP 'ConfigPhaseMerged
+ -&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged))
+-&gt; CmdLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#MkCmdLoggingP"><span class="hs-identifier hs-type">MkCmdLoggingP</span></a></span><span>
+</span><span id="line-89"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:stripControl:MkCmdLoggingP :: ConfigPhaseF 'ConfigPhaseMerged StripControl
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AstripControl%3AMkCmdLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-90"></span><span>                </span><span class="annot"><span class="annottext">StripControl
+-&gt; Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled StripControl)
+-&gt; Maybe StripControl
+-&gt; StripControl
+forall (a :: OpticKind).
+a
+-&gt; Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled a)
+-&gt; Maybe a
+-&gt; a
+</span><a href="#local-6989586621679455617"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-91"></span><span>                  </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlSmart"><span class="hs-identifier hs-var">StripControlSmart</span></a></span><span class="hs-cpp">
+                  #stripControl
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+</span><a href="#local-6989586621679455613"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+-&gt; Optic'
+     A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe StripControl)
+-&gt; Maybe StripControl
+forall (k :: OpticKind) (s :: OpticKind) (is :: IxList)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe StripControl)
+</span><span class="">#stripControl</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-94"></span><span>              </span><span class="annot"><span class="annottext">$sel:lineTrunc:MkCmdLoggingP :: CmdLogLineTruncF 'ConfigPhaseMerged
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AlineTrunc%3AMkCmdLoggingP"><span class="hs-identifier hs-var">lineTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+CmdLogLineTruncF 'ConfigPhaseMerged
+</span><a href="#local-6989586621679455614"><span class="hs-identifier hs-var">cmdLogLineTrunc</span></a></span><span>
+</span><span id="line-95"></span><span>            </span><span class="hs-special">}</span><span>
+</span><span id="line-96"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span class="annot"><span class="annottext">()
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679455612"><span class="hs-identifier hs-var">mToml</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-97"></span><span>      </span><span class="hs-comment">-- 4. Args but no Toml -&gt; Use Args</span><span>
+</span><span id="line-98"></span><span>      </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseToml)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-99"></span><span>        </span><span id="local-6989586621679455619"><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+</span><a href="#local-6989586621679455619"><span class="hs-identifier hs-var">cmdLogLineTrunc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (m :: OpticKind -&gt; OpticKind).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-var">toLineTrunc</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic'
+  A_Lens
+  NoIx
+  (CmdLoggingP 'ConfigPhaseArgs)
+  (WithDisabled LineTruncation)
+-&gt; CmdLoggingP 'ConfigPhaseArgs -&gt; WithDisabled LineTruncation
+forall (k :: OpticKind) (is :: IxList) (s :: OpticKind)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens
+  NoIx
+  (CmdLoggingP 'ConfigPhaseArgs)
+  (WithDisabled LineTruncation)
+</span><span class="">#lineTrunc</span></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseArgs
+</span><a href="#local-6989586621679455611"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span>        </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-102"></span><span>          </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind). a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span>
+</span><span id="line-103"></span><span>          </span><span class="annot"><span class="annottext">(CmdLoggingP 'ConfigPhaseMerged
+ -&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged))
+-&gt; CmdLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#MkCmdLoggingP"><span class="hs-identifier hs-type">MkCmdLoggingP</span></a></span><span>
+</span><span id="line-104"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:stripControl:MkCmdLoggingP :: ConfigPhaseF 'ConfigPhaseMerged StripControl
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AstripControl%3AMkCmdLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-105"></span><span>                </span><span class="annot"><span class="annottext">StripControl -&gt; WithDisabled StripControl -&gt; StripControl
+forall (a :: OpticKind). a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span>
+</span><span id="line-106"></span><span>                  </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlSmart"><span class="hs-identifier hs-var">StripControlSmart</span></a></span><span>
+</span><span id="line-107"></span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled StripControl)
+-&gt; CmdLoggingP 'ConfigPhaseArgs -&gt; WithDisabled StripControl
+forall (k :: OpticKind) (is :: IxList) (s :: OpticKind)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled StripControl)
+</span><span class="">#stripControl</span></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseArgs
+</span><a href="#local-6989586621679455611"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-108"></span><span>              </span><span class="annot"><span class="annottext">$sel:lineTrunc:MkCmdLoggingP :: CmdLogLineTruncF 'ConfigPhaseMerged
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AlineTrunc%3AMkCmdLoggingP"><span class="hs-identifier hs-var">lineTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+CmdLogLineTruncF 'ConfigPhaseMerged
+</span><a href="#local-6989586621679455619"><span class="hs-identifier hs-var">cmdLogLineTrunc</span></a></span><span>
+</span><span id="line-109"></span><span>            </span><span class="hs-special">}</span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-comment">-- 5. Args and Toml -&gt; Same as 3</span><span>
+</span><span id="line-111"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679455621"><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+</span><a href="#local-6989586621679455621"><span class="hs-identifier hs-var">toml</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-112"></span><span>        </span><span id="local-6989586621679455622"><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+</span><a href="#local-6989586621679455622"><span class="hs-identifier hs-var">cmdLogLineTrunc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-113"></span><span>          </span><span class="annot"><span class="annottext">WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (m :: OpticKind -&gt; OpticKind).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-var">toLineTrunc</span></a></span><span> </span><span class="annot"><span class="annottext">(WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine)))
+-&gt; WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens
+  NoIx
+  (CmdLoggingP 'ConfigPhaseArgs)
+  (WithDisabled LineTruncation)
+-&gt; CmdLoggingP 'ConfigPhaseArgs -&gt; WithDisabled LineTruncation
+forall (k :: OpticKind) (is :: IxList) (s :: OpticKind)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens
+  NoIx
+  (CmdLoggingP 'ConfigPhaseArgs)
+  (WithDisabled LineTruncation)
+</span><span class="">#lineTrunc</span></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseArgs
+</span><a href="#local-6989586621679455611"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">WithDisabled LineTruncation
+-&gt; Maybe LineTruncation -&gt; WithDisabled LineTruncation
+forall (a :: OpticKind).
+WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator hs-var">&lt;&gt;?</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe LineTruncation)
+-&gt; CmdLoggingP 'ConfigPhaseToml -&gt; Maybe LineTruncation
+forall (k :: OpticKind) (is :: IxList) (s :: OpticKind)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe LineTruncation)
+</span><span class="">#lineTrunc</span></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+</span><a href="#local-6989586621679455621"><span class="hs-identifier hs-var">toml</span></a></span><span>
+</span><span id="line-114"></span><span>
+</span><span id="line-115"></span><span>        </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-116"></span><span>          </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind). a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span>
+</span><span id="line-117"></span><span>          </span><span class="annot"><span class="annottext">(CmdLoggingP 'ConfigPhaseMerged
+ -&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged))
+-&gt; CmdLoggingP 'ConfigPhaseMerged
+-&gt; Maybe (CmdLoggingP 'ConfigPhaseMerged)
+forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#MkCmdLoggingP"><span class="hs-identifier hs-type">MkCmdLoggingP</span></a></span><span>
+</span><span id="line-118"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:stripControl:MkCmdLoggingP :: ConfigPhaseF 'ConfigPhaseMerged StripControl
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AstripControl%3AMkCmdLoggingP"><span class="hs-identifier hs-var">stripControl</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-119"></span><span>                </span><span class="annot"><span class="annottext">StripControl
+-&gt; Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled StripControl)
+-&gt; Maybe StripControl
+-&gt; StripControl
+forall (a :: OpticKind).
+a
+-&gt; Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled a)
+-&gt; Maybe a
+-&gt; a
+</span><a href="#local-6989586621679455617"><span class="hs-identifier hs-var">plusDefault</span></a></span><span>
+</span><span id="line-120"></span><span>                  </span><span class="annot"><span class="annottext">StripControl
+</span><a href="Shrun.Data.StripControl.html#StripControlSmart"><span class="hs-identifier hs-var">StripControlSmart</span></a></span><span class="hs-cpp">
+                  #stripControl
+</span><span>                  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+</span><a href="#local-6989586621679455621"><span class="hs-identifier hs-var">toml</span></a></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseToml
+-&gt; Optic'
+     A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe StripControl)
+-&gt; Maybe StripControl
+forall (k :: OpticKind) (s :: OpticKind) (is :: IxList)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic'
+  A_Lens NoIx (CmdLoggingP 'ConfigPhaseToml) (Maybe StripControl)
+</span><span class="">#stripControl</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-123"></span><span>              </span><span class="annot"><span class="annottext">$sel:lineTrunc:MkCmdLoggingP :: CmdLogLineTruncF 'ConfigPhaseMerged
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#%24sel%3AlineTrunc%3AMkCmdLoggingP"><span class="hs-identifier hs-var">lineTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+CmdLogLineTruncF 'ConfigPhaseMerged
+</span><a href="#local-6989586621679455622"><span class="hs-identifier hs-var">cmdLogLineTrunc</span></a></span><span>
+</span><span id="line-124"></span><span>            </span><span class="hs-special">}</span><span>
+</span><span id="line-125"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-126"></span><span>    </span><span id="local-6989586621679455338"><span class="annot"><a href="#local-6989586621679455617"><span class="hs-identifier hs-type">plusDefault</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679455338"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#Lens%27"><span class="hs-identifier hs-type">Lens'</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingArgs"><span class="hs-identifier hs-type">CmdLoggingArgs</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455338"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679455338"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679455338"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-127"></span><span>    </span><span id="local-6989586621679455617"><span class="annot"><span class="annottext">plusDefault :: forall (a :: OpticKind).
+a
+-&gt; Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled a)
+-&gt; Maybe a
+-&gt; a
+</span><a href="#local-6989586621679455617"><span class="hs-identifier hs-var hs-var">plusDefault</span></a></span></span><span> </span><span id="local-6989586621679455624"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679455624"><span class="hs-identifier hs-var">defA</span></a></span></span><span> </span><span id="local-6989586621679455625"><span class="annot"><span class="annottext">Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled a)
+</span><a href="#local-6989586621679455625"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679455626"><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679455626"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; WithDisabled a -&gt; a
+forall (a :: OpticKind). a -&gt; WithDisabled a -&gt; a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#fromWithDisabled"><span class="hs-identifier hs-var">WD.fromWithDisabled</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679455624"><span class="hs-identifier hs-var">defA</span></a></span><span> </span><span class="annot"><span class="annottext">(WithDisabled a -&gt; a) -&gt; WithDisabled a -&gt; a
+forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseArgs
+</span><a href="#local-6989586621679455611"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">CmdLoggingP 'ConfigPhaseArgs
+-&gt; Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled a)
+-&gt; WithDisabled a
+forall (k :: OpticKind) (s :: OpticKind) (is :: IxList)
+       (a :: OpticKind).
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/4wakibz21ahaapk6h38p2l10j9a6z58i-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Lens' (CmdLoggingP 'ConfigPhaseArgs) (WithDisabled a)
+</span><a href="#local-6989586621679455625"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+forall (a :: OpticKind).
+WithDisabled a -&gt; Maybe a -&gt; WithDisabled a
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#%3C%3E%3F"><span class="hs-operator hs-var">&lt;&gt;?</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe a
+</span><a href="#local-6989586621679455626"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#CmdLoggingToml"><span class="hs-identifier hs-type">CmdLoggingToml</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-130"></span><span>  </span><span id="local-6989586621679455634"><span class="annot"><span class="annottext">tomlDecoder :: Decoder (CmdLoggingP 'ConfigPhaseToml)
+</span><a href="#local-6989586621679455634"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-131"></span><span>    </span><span class="annot"><span class="annottext">Maybe StripControl
+-&gt; Maybe LineTruncation -&gt; CmdLoggingP 'ConfigPhaseToml
+ConfigPhaseF 'ConfigPhaseToml StripControl
+-&gt; CmdLogLineTruncF 'ConfigPhaseToml
+-&gt; CmdLoggingP 'ConfigPhaseToml
+forall (p :: ConfigPhase).
+ConfigPhaseF p StripControl -&gt; CmdLogLineTruncF p -&gt; CmdLoggingP p
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#MkCmdLoggingP"><span class="hs-identifier hs-var">MkCmdLoggingP</span></a></span><span>
+</span><span id="line-132"></span><span>      </span><span class="annot"><span class="annottext">(Maybe StripControl
+ -&gt; Maybe LineTruncation -&gt; CmdLoggingP 'ConfigPhaseToml)
+-&gt; Decoder (Maybe StripControl)
+-&gt; Decoder (Maybe LineTruncation -&gt; CmdLoggingP 'ConfigPhaseToml)
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind)
+       (b :: OpticKind).
+Functor f =&gt;
+(a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe StripControl)
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#decodeStripControl"><span class="hs-identifier hs-var">decodeStripControl</span></a></span><span>
+</span><span id="line-133"></span><span>      </span><span class="annot"><span class="annottext">Decoder (Maybe LineTruncation -&gt; CmdLoggingP 'ConfigPhaseToml)
+-&gt; Decoder (Maybe LineTruncation)
+-&gt; Decoder (CmdLoggingP 'ConfigPhaseToml)
+forall (a :: OpticKind) (b :: OpticKind).
+Decoder (a -&gt; b) -&gt; Decoder a -&gt; Decoder b
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind)
+       (b :: OpticKind).
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder (Maybe LineTruncation)
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#decodeCmdLineTrunc"><span class="hs-identifier hs-var">decodeCmdLineTrunc</span></a></span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#decodeStripControl"><span class="hs-identifier hs-type">decodeStripControl</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.StripControl.html#StripControl"><span class="hs-identifier hs-type">StripControl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-136"></span><span id="decodeStripControl"><span class="annot"><span class="annottext">decodeStripControl :: Decoder (Maybe StripControl)
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#decodeStripControl"><span class="hs-identifier hs-var hs-var">decodeStripControl</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder StripControl -&gt; Text -&gt; Decoder (Maybe StripControl)
+forall (a :: OpticKind). Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder StripControl
+forall (a :: OpticKind). DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;strip-control&quot;</span></span><span>
+</span><span id="line-137"></span><span>
+</span><span id="line-138"></span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#decodeCmdLineTrunc"><span class="hs-identifier hs-type">decodeCmdLineTrunc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-139"></span><span id="decodeCmdLineTrunc"><span class="annot"><span class="annottext">decodeCmdLineTrunc :: Decoder (Maybe LineTruncation)
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#decodeCmdLineTrunc"><span class="hs-identifier hs-var hs-var">decodeCmdLineTrunc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder LineTruncation -&gt; Text -&gt; Decoder (Maybe LineTruncation)
+forall (a :: OpticKind). Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder LineTruncation
+forall (a :: OpticKind). DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/gfwzh9i8rj34931p88bivbfkk2k4cn2d-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;line-trunc&quot;</span></span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span id="local-6989586621679455329"><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-type">toLineTrunc</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-142"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-143"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-terminal-0.1-8225eede747ffb6c8baf52f86eacb8d898676e7c2ea23a66df65cba2e82db12f/share/doc/html/src/Effects.System.Terminal.html#MonadTerminal"><span class="hs-identifier hs-type">MonadTerminal</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679455329"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-144"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-145"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-146"></span><span>  </span><span class="annot"><a href="#local-6989586621679455329"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Truncation.html#TCmdLine"><span class="hs-identifier hs-type">TCmdLine</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span></span><span>
+</span><span id="line-147"></span><span id="toLineTrunc"><span class="annot"><span class="annottext">toLineTrunc :: forall (m :: OpticKind -&gt; OpticKind).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TCmdLine))
+</span><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-var hs-var">toLineTrunc</span></a></span></span><span> </span><span class="annot"><span class="annottext">WithDisabled LineTruncation
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine) -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (a :: OpticKind). a -&gt; m a
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+Applicative f =&gt;
+a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+forall (a :: OpticKind). Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-148"></span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-var">toLineTrunc</span></a></span><span> </span><span class="annot"><span class="annottext">WithDisabled LineTruncation
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Without"><span class="hs-identifier hs-var">Without</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine) -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (a :: OpticKind). a -&gt; m a
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+Applicative f =&gt;
+a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine)
+forall (a :: OpticKind). Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-149"></span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-var">toLineTrunc</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span class="annot"><span class="annottext">LineTruncation
+</span><a href="Shrun.Data.Truncation.html#Detected"><span class="hs-identifier hs-var">Detected</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Truncation 'TCmdLine -&gt; Maybe (Truncation 'TCmdLine)
+forall (a :: OpticKind). a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Truncation 'TCmdLine -&gt; Maybe (Truncation 'TCmdLine))
+-&gt; (Natural -&gt; Truncation 'TCmdLine)
+-&gt; Natural
+-&gt; Maybe (Truncation 'TCmdLine)
+forall (b :: OpticKind) (c :: OpticKind) (a :: OpticKind).
+(b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Truncation 'TCmdLine
+forall (a :: TruncRegion). Natural -&gt; Truncation a
+</span><a href="Shrun.Data.Truncation.html#MkTruncation"><span class="hs-identifier hs-var">MkTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; Maybe (Truncation 'TCmdLine))
+-&gt; m Natural -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind)
+       (b :: OpticKind).
+Functor f =&gt;
+(a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">m Natural
+forall (m :: OpticKind -&gt; OpticKind).
+(HasCallStack, MonadTerminal m) =&gt;
+m Natural
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/effects-terminal-0.1-8225eede747ffb6c8baf52f86eacb8d898676e7c2ea23a66df65cba2e82db12f/share/doc/html/src/Effects.System.Terminal.html#getTerminalWidth"><span class="hs-identifier hs-var">getTerminalWidth</span></a></span><span>
+</span><span id="line-150"></span><span class="annot"><a href="Shrun.Configuration.Data.CmdLogging.html#toLineTrunc"><span class="hs-identifier hs-var">toLineTrunc</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Truncation.html#Undetected"><span class="hs-identifier hs-type">Undetected</span></a></span><span> </span><span id="local-6989586621679455653"><span class="annot"><span class="annottext">Truncation 'TCmdLine
+</span><a href="#local-6989586621679455653"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdLine) -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (a :: OpticKind). a -&gt; m a
+forall (f :: OpticKind -&gt; OpticKind) (a :: OpticKind).
+Applicative f =&gt;
+a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Maybe (Truncation 'TCmdLine) -&gt; m (Maybe (Truncation 'TCmdLine)))
+-&gt; Maybe (Truncation 'TCmdLine) -&gt; m (Maybe (Truncation 'TCmdLine))
+forall (a :: OpticKind) b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Truncation 'TCmdLine -&gt; Maybe (Truncation 'TCmdLine)
+forall (a :: OpticKind). a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Truncation 'TCmdLine
+</span><a href="#local-6989586621679455653"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-151"></span></pre></body></html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.MergedConfig</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier">MergedConfig</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#defaultMergedConfig"><span class="hs-identifier">defaultMergedConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html"><span class="hs-identifier">Shrun.Configuration.Data.Core</span></a></span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigMerged"><span class="hs-identifier">CoreConfigMerged</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigP"><span class="hs-identifier">CoreConfigP</span></a></span><span>
+</span><span id="line-13"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier">MkCoreConfigP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogSize%3AMkCoreConfigP"><span class="hs-identifier">cmdLogSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogging%3AMkCoreConfigP"><span class="hs-identifier">cmdLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdNameTrunc%3AMkCoreConfigP"><span class="hs-identifier">cmdNameTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AfileLogging%3AMkCoreConfigP"><span class="hs-identifier">fileLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Ainit%3AMkCoreConfigP"><span class="hs-identifier">init</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AkeyHide%3AMkCoreConfigP"><span class="hs-identifier">keyHide</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Anotify%3AMkCoreConfigP"><span class="hs-identifier">notify</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3ApollInterval%3AMkCoreConfigP"><span class="hs-identifier">pollInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3Atimeout%3AMkCoreConfigP"><span class="hs-identifier">timeout</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#%24sel%3AtimerFormat%3AMkCoreConfigP"><span class="hs-identifier">timerFormat</span></a></span><span>
+</span><span id="line-24"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html"><span class="hs-identifier">Shrun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.KeyHide.html"><span class="hs-identifier">Shrun.Data.KeyHide</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHide"><span class="hs-identifier">KeyHide</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier">KeyHideOff</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.PollInterval.html"><span class="hs-identifier">Shrun.Data.PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.PollInterval.html#PollInterval"><span class="hs-identifier">PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier">MkPollInterval</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.TimerFormat.html"><span class="hs-identifier">Shrun.Data.TimerFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.TimerFormat.html#TimerFormat"><span class="hs-identifier">TimerFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.TimerFormat.html#ProseCompact"><span class="hs-identifier">ProseCompact</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><span class="hs-comment">-- | Merged Args + Toml</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">data</span><span> </span><span id="MergedConfig"><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-var">MergedConfig</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkMergedConfig"><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-var">MkMergedConfig</span></a></span></span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | Core config.</span></span><span>
+</span><span id="line-35"></span><span>    </span><span id="%24sel%3AcoreConfig%3AMkMergedConfig"><span class="annot"><span class="annottext">MergedConfig -&gt; CoreConfigMerged
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3AcoreConfig%3AMkMergedConfig"><span class="hs-identifier hs-var hs-var">coreConfig</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigMerged"><span class="hs-identifier hs-type">CoreConfigMerged</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Commands.</span></span><span>
+</span><span id="line-37"></span><span>    </span><span id="%24sel%3Acommands%3AMkMergedConfig"><span class="annot"><span class="annottext">MergedConfig -&gt; NESeq CommandP1
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3Acommands%3AMkMergedConfig"><span class="hs-identifier hs-var hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gm4yyxlv7sm68pm8b2r0fw8f1lklgmgz-nonempty-containers-0.3.4.4-doc/share/doc/nonempty-containers-0.3.4.4/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span>
+</span><span id="line-38"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679461816"><span id="local-6989586621679461823"><span class="annot"><span class="annottext">MergedConfig -&gt; MergedConfig -&gt; Bool
+(MergedConfig -&gt; MergedConfig -&gt; Bool)
+-&gt; (MergedConfig -&gt; MergedConfig -&gt; Bool) -&gt; Eq MergedConfig
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: MergedConfig -&gt; MergedConfig -&gt; Bool
+== :: MergedConfig -&gt; MergedConfig -&gt; Bool
+$c/= :: MergedConfig -&gt; MergedConfig -&gt; Bool
+/= :: MergedConfig -&gt; MergedConfig -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679461829"><span id="local-6989586621679461838"><span id="local-6989586621679461842"><span class="annot"><span class="annottext">Int -&gt; MergedConfig -&gt; ShowS
+[MergedConfig] -&gt; ShowS
+MergedConfig -&gt; String
+(Int -&gt; MergedConfig -&gt; ShowS)
+-&gt; (MergedConfig -&gt; String)
+-&gt; ([MergedConfig] -&gt; ShowS)
+-&gt; Show MergedConfig
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; MergedConfig -&gt; ShowS
+showsPrec :: Int -&gt; MergedConfig -&gt; ShowS
+$cshow :: MergedConfig -&gt; String
+show :: MergedConfig -&gt; String
+$cshowList :: [MergedConfig] -&gt; ShowS
+showList :: [MergedConfig] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span id="local-6989586621679461757"><span id="local-6989586621679461758"><span id="local-6989586621679461759"><span id="local-6989586621679461760"><span id="local-6989586621679461761"><span id="local-6989586621679461762"><span id="local-6989586621679461850"><span id="local-6989586621679461855"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">MergedConfig</span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#defaultMergedConfig"><span class="hs-identifier hs-type">defaultMergedConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/gm4yyxlv7sm68pm8b2r0fw8f1lklgmgz-nonempty-containers-0.3.4.4-doc/share/doc/nonempty-containers-0.3.4.4/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-type">MergedConfig</span></a></span><span>
+</span><span id="line-44"></span><span id="defaultMergedConfig"><span class="annot"><span class="annottext">defaultMergedConfig :: NESeq CommandP1 -&gt; MergedConfig
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#defaultMergedConfig"><span class="hs-identifier hs-var hs-var">defaultMergedConfig</span></a></span></span><span> </span><span id="local-6989586621679461881"><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679461881"><span class="hs-identifier hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-45"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-type">MkMergedConfig</span></a></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:coreConfig:MkMergedConfig :: CoreConfigMerged
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3AcoreConfig%3AMkMergedConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-47"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#MkCoreConfigP"><span class="hs-identifier hs-type">MkCoreConfigP</span></a></span><span>
+</span><span id="line-48"></span><span>          </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">$sel:fileLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged (FileLoggingP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AfileLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (FileLoggingP 'ConfigPhaseMerged)
+ArgsOnlyDetF 'ConfigPhaseMerged (FileLoggingP 'ConfigPhaseMerged)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>            </span><span class="annot"><span class="annottext">$sel:cmdLogging:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged (CmdLoggingP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogging%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdLogging</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (CmdLoggingP 'ConfigPhaseMerged)
+ArgsOnlyDetF 'ConfigPhaseMerged (CmdLoggingP 'ConfigPhaseMerged)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>            </span><span class="annot"><span class="annottext">$sel:timerFormat:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged TimerFormat
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AtimerFormat%3AMkCoreConfigP"><span class="hs-identifier hs-var">timerFormat</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimerFormat
+ConfigPhaseF 'ConfigPhaseMerged TimerFormat
+</span><a href="Shrun.Data.TimerFormat.html#ProseCompact"><span class="hs-identifier hs-var">ProseCompact</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>            </span><span class="annot"><span class="annottext">$sel:pollInterval:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged PollInterval
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3ApollInterval%3AMkCoreConfigP"><span class="hs-identifier hs-var">pollInterval</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Shrun.Data.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">10_000</span></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>            </span><span class="annot"><span class="annottext">$sel:keyHide:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged KeyHide
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AkeyHide%3AMkCoreConfigP"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">KeyHide
+ConfigPhaseF 'ConfigPhaseMerged KeyHide
+</span><a href="Shrun.Data.KeyHide.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>            </span><span class="annot"><span class="annottext">$sel:cmdNameTrunc:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged (Truncation 'TCmdName)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdNameTrunc%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdNameTrunc</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TCmdName)
+ConfigPhaseMaybeF 'ConfigPhaseMerged (Truncation 'TCmdName)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>            </span><span class="annot"><span class="annottext">$sel:cmdLogSize:MkCoreConfigP :: ConfigPhaseF 'ConfigPhaseMerged (Bytes 'B Natural)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3AcmdLogSize%3AMkCoreConfigP"><span class="hs-identifier hs-var">cmdLogSize</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Bytes 'B Natural
+forall (s :: Size) n. n -&gt; Bytes s n
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.6.3/si-bytes-0.1-387edc941d8e4bf4b7365208b3d10530cc92849ddc6909abfaa49c6195c6683c/share/doc/html/src/Data.Bytes.Internal.html#MkBytes"><span class="hs-identifier hs-var">MkBytes</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">1024</span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>            </span><span class="annot"><span class="annottext">$sel:notify:MkCoreConfigP :: ArgsOnlyDetF 'ConfigPhaseMerged (NotifyP 'ConfigPhaseMerged)
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Anotify%3AMkCoreConfigP"><span class="hs-identifier hs-var">notify</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (NotifyP 'ConfigPhaseMerged)
+ArgsOnlyDetF 'ConfigPhaseMerged (NotifyP 'ConfigPhaseMerged)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>            </span><span class="annot"><span class="annottext">$sel:timeout:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged Timeout
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Atimeout%3AMkCoreConfigP"><span class="hs-identifier hs-var">timeout</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Timeout
+ConfigPhaseMaybeF 'ConfigPhaseMerged Timeout
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>            </span><span class="annot"><span class="annottext">$sel:init:MkCoreConfigP :: ConfigPhaseMaybeF 'ConfigPhaseMerged Text
+</span><a href="Shrun.Configuration.Data.Core.html#%24sel%3Ainit%3AMkCoreConfigP"><span class="hs-identifier hs-var">init</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Text
+ConfigPhaseMaybeF 'ConfigPhaseMerged Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-58"></span><span>          </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>      </span><span class="annot"><span class="annottext">NESeq CommandP1
+$sel:commands:MkMergedConfig :: NESeq CommandP1
+commands :: NESeq CommandP1
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#%24sel%3Acommands%3AMkMergedConfig"><span class="hs-identifier hs-var hs-var">commands</span></a></span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-61"></span></pre></body></html>
