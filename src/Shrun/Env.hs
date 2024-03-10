@@ -74,7 +74,7 @@ import Shrun.Env.Types
       ),
   )
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
-import Shrun.Logging.Types (FileLog, LogRegion)
+import Shrun.Logging.Types (FileLog)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Notify.MonadNotifySend (MonadNotifySend)
@@ -184,8 +184,9 @@ fromMergedConfig ::
   (Env -> m a) ->
   m a
 fromMergedConfig cfg onEnv = do
-  completedCmds' <- newTVarA Seq.empty
+  completedCmds <- newTVarA Seq.empty
   anyError <- newTVarA False
+  consoleLog <- newTBQueueA 1000
 
   notifyEnv <- EnvNotify.tomlToNotifyEnv (cfg ^. (#coreConfig % #notify))
 
@@ -193,10 +194,8 @@ fromMergedConfig cfg onEnv = do
       envWithLogging ::
         -- optional file logging
         Maybe (Tuple3 Handle (TBQueue FileLog) StripControl) ->
-        -- console logging
-        TBQueue (LogRegion ConsoleRegion) ->
         Env
-      envWithLogging mFileLogging consoleLog =
+      envWithLogging mFileLogging =
         MkEnv
           { timeout = cfg ^. (#coreConfig % #timeout),
             init = cfg ^. (#coreConfig % #init),
@@ -223,13 +222,11 @@ fromMergedConfig cfg onEnv = do
                         }
                 },
             anyError,
-            completedCmds = completedCmds',
+            completedCmds,
             commands = cfg ^. #commands
           }
 
-  consoleQueue <- newTBQueueA 1000
-
-  withMLogging cfg $ \h -> onEnv (envWithLogging h consoleQueue)
+  withMLogging cfg $ \h -> onEnv (envWithLogging h)
 
 type MLogging = Maybe (Tuple3 Handle (TBQueue FileLog) StripControl)
 
