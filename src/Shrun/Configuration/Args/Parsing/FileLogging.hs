@@ -11,7 +11,7 @@ import Shrun.Configuration.Data.FileLogging
   ( FileLoggingArgs,
     FileLoggingP (MkFileLoggingP, mode, path, sizeMode, stripControl),
   )
-import Shrun.Configuration.Data.WithDisable (WithDisable)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Data.FileMode (FileMode)
 import Shrun.Data.FileMode qualified as FileMode
 import Shrun.Data.FilePathDefault (FilePathDefault)
@@ -37,8 +37,8 @@ fileLoggingParser = do
         sizeMode
       }
 
-fileLogParser :: Parser (WithDisable (Maybe FilePathDefault))
-fileLogParser = Utils.withDisableParser mainParser "file-log"
+fileLogParser :: Parser (WithDisabled FilePathDefault)
+fileLogParser = Utils.withDisabledParser mainParser "file-log"
   where
     mainParser =
       OA.optional
@@ -61,9 +61,9 @@ fileLogParser = Utils.withDisableParser mainParser "file-log"
           "directory e.g. ~/.config/shrun/shrun.log."
         ]
 
-fileLogStripControlParser :: Parser (WithDisable (Maybe StripControl))
+fileLogStripControlParser :: Parser (WithDisabled StripControl)
 fileLogStripControlParser =
-  Utils.withDisableParser mainParser "file-log-strip-control"
+  Utils.withDisabledParser mainParser "file-log-strip-control"
   where
     mainParser =
       OA.optional
@@ -81,8 +81,8 @@ fileLogStripControlParser =
           "Defaults to all."
         ]
 
-fileLogModeParser :: Parser (WithDisable (Maybe FileMode))
-fileLogModeParser = Utils.withDisableParser mainParser "file-log-mode"
+fileLogModeParser :: Parser (WithDisabled FileMode)
+fileLogModeParser = Utils.withDisabledParser mainParser "file-log-mode"
   where
     mainParser =
       OA.optional
@@ -96,8 +96,8 @@ fileLogModeParser = Utils.withDisableParser mainParser "file-log-mode"
           )
     helpTxt = "Mode in which to open the log file. Defaults to write."
 
-fileLogSizeModeParser :: Parser (WithDisable (Maybe FileSizeMode))
-fileLogSizeModeParser = Utils.withDisableParser mainParser "file-log-size-mode"
+fileLogSizeModeParser :: Parser (WithDisabled FileSizeMode)
+fileLogSizeModeParser = Utils.withDisabledParser mainParser "file-log-size-mode"
   where
     mainParser =
       OA.optional

@@ -14,11 +14,11 @@ import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
   )
-import Shrun.Configuration.Data.WithDisable
-  ( WithDisable (Disabled, With),
-    alternativeDefault,
-    defaultIfDisabled,
+import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled (Disabled, With, Without),
+    (<>?),
   )
+import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Data.FileMode (FileMode (FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault)
 import Shrun.Data.FileSizeMode (FileSizeMode, defaultFileSizeMode)
@@ -46,7 +46,7 @@ import Shrun.Prelude
 -- it must be present if file logging is active.
 type FileLogPathF :: ConfigPhase -> Type
 type family FileLogPathF p where
-  FileLogPathF ConfigPhaseArgs = WithDisable (Maybe FilePathDefault)
+  FileLogPathF ConfigPhaseArgs = WithDisabled FilePathDefault
   FileLogPathF ConfigPhaseToml = FilePathDefault
   FileLogPathF ConfigPhaseMerged = FilePathDefault
 
@@ -93,36 +93,67 @@ mergeFileLogging args mToml =
   case args ^. #path of
     -- 1. Logging globally disabled
     Disabled -> Nothing
-    With mPath -> case (mPath, mToml) of
-      -- 2. Neither Args nor Toml specifies logging
-      (Nothing, Nothing) -> Nothing
-      -- 3. Args and no Toml
-      (Just p, Nothing) ->
+    Without -> case mToml of
+      -- 2. No Args and no Toml
+      Nothing -> Nothing
+      -- 3. No Args and yes Toml
+      Just toml ->
         Just
           $ MkFileLoggingP
-            { path = p,
+            { path = toml ^. #path,
               stripControl =
-                defaultIfDisabled StripControlAll (args ^. #stripControl),
+                plusDefault
+                  StripControlAll
+                  #stripControl
+                  (toml ^. #stripControl),
               mode =
-                defaultIfDisabled FileModeWrite (args ^. #mode),
+                plusDefault
+                  FileModeWrite
+                  #mode
+                  (toml ^. #mode),
               sizeMode =
-                defaultIfDisabled defaultFileSizeMode (args ^. #sizeMode)
+                plusDefault
+                  defaultFileSizeMode
+                  #sizeMode
+                  (toml ^. #sizeMode)
             }
-      -- 4. Maybe Args and Toml
-      (mArgsPath, Just toml) ->
+    With path -> case mToml of
+      -- 3. Yes Args and no Toml
+      Nothing ->
         Just
           $ MkFileLoggingP
-            { path = fromMaybe (toml ^. #path) mArgsPath,
+            { path,
               stripControl =
-                altDefault StripControlAll #stripControl (toml ^. #stripControl),
+                WD.fromWithDisabled StripControlAll (args ^. #stripControl),
               mode =
-                altDefault FileModeWrite #mode (toml ^. #mode),
+                WD.fromWithDisabled FileModeWrite (args ^. #mode),
               sizeMode =
-                altDefault defaultFileSizeMode #sizeMode (toml ^. #sizeMode)
+                WD.fromWithDisabled defaultFileSizeMode (args ^. #sizeMode)
+            }
+      -- 4. Yes Args and yes Toml
+      Just toml ->
+        Just
+          $ MkFileLoggingP
+            { path,
+              stripControl =
+                plusDefault
+                  StripControlAll
+                  #stripControl
+                  (view #stripControl toml),
+              mode =
+                plusDefault
+                  FileModeWrite
+                  #mode
+                  (view #mode toml),
+              sizeMode =
+                plusDefault
+                  defaultFileSizeMode
+                  #sizeMode
+                  (view #sizeMode toml)
             }
   where
-    altDefault :: a -> Lens' FileLoggingArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault defA l = alternativeDefault defA (args ^. l)
+    plusDefault :: a -> Lens' FileLoggingArgs (WithDisabled a) -> Maybe a -> a
+    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
 
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =

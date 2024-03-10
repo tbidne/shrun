@@ -43,14 +43,13 @@ import Shrun.Configuration.Data.FileLogging
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
-import Shrun.Configuration.Data.WithDisable (WithDisable (With))
 import Shrun.Prelude
 
 defaultArgs :: NESeq Text -> Args
 defaultArgs commands =
   MkArgs
     { configPath = mempty,
-      cmdLog = With False,
+      cmdLog = mempty,
       coreConfig =
         MkCoreConfigP
           { timeout = mempty,

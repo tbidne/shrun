@@ -33,8 +33,8 @@ import Shrun.Configuration.Args.Parsing
   ( parserInfoArgs,
   )
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
-import Shrun.Configuration.Data.WithDisable
-  ( WithDisable (Disabled, With),
+import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled (Disabled, With, Without),
   )
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
@@ -142,26 +142,25 @@ getMergedConfig = do
     case args ^. #configPath of
       -- 1. If noConfig is true then we ignore all toml config
       Disabled -> pure Nothing
-      With mConfigPath -> case mConfigPath of
-        -- 2. noConfig is false and toml config explicitly set: try reading
-        --    (all errors rethrown)
-        Just f -> readConfig f
-        -- 3. noConfig is false and toml config not set: try reading from
-        --    default location. If it does not exist that's fine, just print
-        --    a message. If it does, try to read it and throw any errors
-        --    (e.g. file errors, toml errors).
-        Nothing -> do
-          configDir <- getShrunXdgConfig
-          let path = configDir </> [osp|config.toml|]
-          b <- doesFileExist path
-          if b
-            then Just <$> readConfig path
-            else do
-              putTextLn
-                ( "No default config found at: "
-                    <> T.pack (FsUtils.decodeOsToFpShow path)
-                )
-              pure Nothing
+      -- 2. noConfig is false and toml config not set: try reading from
+      --    default location. If it does not exist that's fine, just print
+      --    a message. If it does, try to read it and throw any errors
+      --    (e.g. file errors, toml errors).
+      Without -> do
+        configDir <- getShrunXdgConfig
+        let path = configDir </> [osp|config.toml|]
+        b <- doesFileExist path
+        if b
+          then Just <$> readConfig path
+          else do
+            putTextLn
+              ( "No default config found at: "
+                  <> T.pack (FsUtils.decodeOsToFpShow path)
+              )
+            pure Nothing
+      -- 3. noConfig is false and toml config explicitly set: try reading
+      --    (all errors rethrown)
+      With f -> readConfig f
 
   mergeConfig args mTomlConfig
   where

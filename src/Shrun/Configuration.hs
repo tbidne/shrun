@@ -30,13 +30,8 @@ import Shrun.Configuration.Data.MergedConfig
       ),
   )
 import Shrun.Configuration.Data.Notify (mergeNotifyLogging)
-import Shrun.Configuration.Data.WithDisable
-  ( WithDisable,
-    alternativeDefault,
-    alternativeEmpty,
-    defaultIfDisabled,
-    emptyIfDisabled,
-  )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
+import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Data.Command (Command (MkCommand))
@@ -78,24 +73,24 @@ mergeConfig args mToml = do
         $ MkMergedConfig
           { coreConfig =
               MkCoreConfigP
-                { timeout = emptyIfDisabled (args ^. (#coreConfig % #timeout)),
-                  init = emptyIfDisabled (args ^. (#coreConfig % #init)),
+                { timeout = WD.toMaybe (args ^. (#coreConfig % #timeout)),
+                  init = WD.toMaybe (args ^. (#coreConfig % #init)),
                   keyHide =
-                    defaultIfDisabled KeyHideOff (args ^. (#coreConfig % #keyHide)),
+                    WD.fromWithDisabled KeyHideOff (args ^. (#coreConfig % #keyHide)),
                   pollInterval =
-                    defaultIfDisabled
+                    WD.fromWithDisabled
                       defaultPollInterval
                       (args ^. (#coreConfig % #pollInterval)),
                   cmdLogSize =
-                    defaultIfDisabled
+                    WD.fromWithDisabled
                       defaultCmdLogSize
                       (args ^. (#coreConfig % #cmdLogSize)),
                   timerFormat =
-                    defaultIfDisabled
+                    WD.fromWithDisabled
                       defaultTimerFormat
                       (args ^. (#coreConfig % #timerFormat)),
                   cmdNameTrunc =
-                    emptyIfDisabled (args ^. (#coreConfig % #cmdNameTrunc)),
+                    WD.toMaybe (args ^. (#coreConfig % #cmdNameTrunc)),
                   cmdLogging,
                   fileLogging =
                     mergeFileLogging
@@ -128,31 +123,31 @@ mergeConfig args mToml = do
           { coreConfig =
               MkCoreConfigP
                 { timeout =
-                    altNothing #timeout (toml ^. (#coreConfig % #timeout)),
+                    plusNothing #timeout (toml ^. (#coreConfig % #timeout)),
                   init =
-                    altNothing #init (toml ^. (#coreConfig % #init)),
+                    plusNothing #init (toml ^. (#coreConfig % #init)),
                   keyHide =
-                    altDefault
+                    plusDefault
                       KeyHideOff
                       #keyHide
                       (toml ^. (#coreConfig % #keyHide)),
                   pollInterval =
-                    altDefault
+                    plusDefault
                       defaultPollInterval
                       #pollInterval
                       (toml ^. (#coreConfig % #pollInterval)),
                   cmdLogSize =
-                    altDefault
+                    plusDefault
                       defaultCmdLogSize
                       #cmdLogSize
                       (toml ^. (#coreConfig % #cmdLogSize)),
                   timerFormat =
-                    altDefault
+                    plusDefault
                       defaultTimerFormat
                       #timerFormat
                       (toml ^. (#coreConfig % #timerFormat)),
                   cmdNameTrunc =
-                    altNothing
+                    plusNothing
                       #cmdNameTrunc
                       (toml ^. (#coreConfig % #cmdNameTrunc)),
                   cmdLogging,
@@ -170,8 +165,8 @@ mergeConfig args mToml = do
   where
     cmdsText = args ^. #commands
 
-    altDefault :: a -> Lens' CoreConfigArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault defA l = alternativeDefault defA (args ^. (#coreConfig % l))
+    plusDefault :: a -> Lens' CoreConfigArgs (WithDisabled a) -> Maybe a -> a
+    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. (#coreConfig % l)) <>? r
 
-    altNothing :: Lens' CoreConfigArgs (WithDisable (Maybe a)) -> Maybe a -> Maybe a
-    altNothing l = alternativeEmpty (args ^. (#coreConfig % l))
+    plusNothing :: Lens' CoreConfigArgs (WithDisabled a) -> Maybe a -> Maybe a
+    plusNothing l r = WD.toMaybe $ (args ^. (#coreConfig % l)) <>? r

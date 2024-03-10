@@ -14,11 +14,11 @@ import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
   )
-import Shrun.Configuration.Data.WithDisable
-  ( WithDisable (Disabled, With),
-    alternativeDefault,
-    defaultIfDisabled,
+import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled (Disabled, With, Without),
+    (<>?),
   )
+import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Notify.Types
   ( NotifyAction,
     NotifySystemP1,
@@ -32,7 +32,7 @@ import Shrun.Prelude
 -- | Notify action is mandatory if we are running notifications.
 type NotifyActionF :: ConfigPhase -> Type
 type family NotifyActionF p where
-  NotifyActionF ConfigPhaseArgs = WithDisable (Maybe NotifyAction)
+  NotifyActionF ConfigPhaseArgs = WithDisabled NotifyAction
   NotifyActionF ConfigPhaseToml = NotifyAction
   NotifyActionF ConfigPhaseMerged = NotifyAction
 
@@ -76,27 +76,50 @@ mergeNotifyLogging args mToml =
   case args ^. #action of
     -- 1. Notifications globally disabled
     Disabled -> Nothing
-    With mAction -> case (mAction, mToml) of
-      -- 2. Neither Args nor Toml specifies notifications
-      (Nothing, Nothing) -> Nothing
-      -- 3. Args but no Toml
-      (Just argsAction, Nothing) ->
+    Without -> case mToml of
+      Nothing -> Nothing
+      Just toml ->
         Just
           $ MkNotifyP
-            { action = argsAction,
-              system = defaultIfDisabled defaultNotifySystem (args ^. #system),
-              timeout = defaultIfDisabled (afromInteger 10) (args ^. #timeout)
+            { action = toml ^. #action,
+              system =
+                plusDefault
+                  defaultNotifySystem
+                  #system
+                  (toml ^. #system),
+              timeout =
+                plusDefault
+                  (afromInteger 10)
+                  #timeout
+                  (toml ^. #timeout)
             }
-      (mArgsAction, Just toml) ->
+    With action -> case mToml of
+      -- 3. Args but no Toml
+      Nothing ->
         Just
           $ MkNotifyP
-            { action = fromMaybe (toml ^. #action) mArgsAction,
-              system = altDefault defaultNotifySystem #system (toml ^. #system),
-              timeout = altDefault (afromInteger 10) #timeout (toml ^. #timeout)
+            { action,
+              system = WD.fromWithDisabled defaultNotifySystem (args ^. #system),
+              timeout = WD.fromWithDisabled (afromInteger 10) (args ^. #timeout)
+            }
+      Just toml ->
+        Just
+          $ MkNotifyP
+            { action,
+              system =
+                plusDefault
+                  defaultNotifySystem
+                  #system
+                  (toml ^. #system),
+              timeout =
+                plusDefault
+                  (afromInteger 10)
+                  #timeout
+                  (toml ^. #timeout)
             }
   where
-    altDefault :: a -> Lens' NotifyArgs (WithDisable (Maybe a)) -> Maybe a -> a
-    altDefault defA l = alternativeDefault defA (args ^. l)
+    plusDefault :: a -> Lens' NotifyArgs (WithDisabled a) -> Maybe a -> a
+    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
 
 instance DecodeTOML NotifyToml where
   tomlDecoder =

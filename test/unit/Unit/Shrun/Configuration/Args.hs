@@ -13,10 +13,7 @@ import Shrun.Configuration.Data.CmdLogging (CmdLoggingArgs)
 import Shrun.Configuration.Data.Core (CoreConfigArgs)
 import Shrun.Configuration.Data.FileLogging (FileLoggingArgs)
 import Shrun.Configuration.Data.Notify (NotifyArgs)
-import Shrun.Configuration.Data.WithDisable
-  ( WithDisable (Disabled, With),
-    _With,
-  )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.FileSizeMode
@@ -476,7 +473,7 @@ parseShortCommandLogging = testPropertyNamed "Should parse -l as CmdLogging" "pa
   verifyResult argList expected
   where
     argList = ["-l", "command"]
-    expected = set' (_Just % #cmdLog) (With True) defArgs
+    expected = set' (_Just % #cmdLog) (With ()) defArgs
 
 parseLongCommandLogging :: TestTree
 parseLongCommandLogging =
@@ -485,7 +482,7 @@ parseLongCommandLogging =
   where
     desc = "Should parse --cmd-log as CmdLogging"
     argList = ["--cmd-log", "command"]
-    expected = set' (_Just % #cmdLog) (With True) defArgs
+    expected = set' (_Just % #cmdLog) (With ()) defArgs
 
 parseNoCmdLog :: TestTree
 parseNoCmdLog =
@@ -933,68 +930,68 @@ defArgs = Just $ Args.defaultArgs defCommand
 
 updateDefArgs ::
   forall a.
-  Lens' Args (WithDisable (Maybe a)) ->
+  Lens' Args (WithDisabled a) ->
   a ->
   Maybe Args
-updateDefArgs l x = (l' ?~ x) defArgs
+updateDefArgs l x = (l' .~ With x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % l % _With
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' = _Just % l
 
 disableDefArgs ::
   forall a.
-  Lens' Args (WithDisable a) ->
+  Lens' Args (WithDisabled a) ->
   Maybe Args
 disableDefArgs l = (l' .~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisable a)
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
     l' = _Just % l
 
 updateDefCoreArgs ::
   forall a.
-  Lens' CoreConfigArgs (WithDisable (Maybe a)) ->
+  Lens' CoreConfigArgs (WithDisabled a) ->
   a ->
   Maybe Args
-updateDefCoreArgs l x = (l' ?~ x) defArgs
+updateDefCoreArgs l x = (l' .~ With x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % l % _With
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' = _Just % #coreConfig % l
 
 disableDefCoreArgs ::
   forall a.
-  Lens' CoreConfigArgs (WithDisable a) ->
+  Lens' CoreConfigArgs (WithDisabled a) ->
   Maybe Args
 disableDefCoreArgs l = (l' .~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisable a)
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
     l' = _Just % #coreConfig % l
 
 updateDefCmdLogArgs ::
   forall a.
-  Lens' CmdLoggingArgs (WithDisable (Maybe a)) ->
+  Lens' CmdLoggingArgs (WithDisabled a) ->
   a ->
   Maybe Args
-updateDefCmdLogArgs l x = (l' ?~ x) defArgs
+updateDefCmdLogArgs l x = (l' .~ With x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % #cmdLogging % l % _With
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' = _Just % #coreConfig % #cmdLogging % l
 
 updateDefFileLogArgs ::
   forall a.
-  Lens' FileLoggingArgs (WithDisable (Maybe a)) ->
+  Lens' FileLoggingArgs (WithDisabled a) ->
   a ->
   Maybe Args
-updateDefFileLogArgs l x = (l' ?~ x) defArgs
+updateDefFileLogArgs l x = (l' .~ With x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % #fileLogging % l % _With
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' = _Just % #coreConfig % #fileLogging % l
 
 updateDefNotifyArgs ::
   forall a.
-  Lens' NotifyArgs (WithDisable (Maybe a)) ->
+  Lens' NotifyArgs (WithDisabled a) ->
   a ->
   Maybe Args
-updateDefNotifyArgs l x = (l' ?~ x) defArgs
+updateDefNotifyArgs l x = (l' .~ With x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % #notify % l % _With
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' = _Just % #coreConfig % #notify % l

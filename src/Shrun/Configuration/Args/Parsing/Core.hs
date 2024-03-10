@@ -27,7 +27,7 @@ import Shrun.Configuration.Data.Core
         timerFormat
       ),
   )
-import Shrun.Configuration.Data.WithDisable (WithDisable)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Data.KeyHide (KeyHide (KeyHideOn))
 import Shrun.Data.PollInterval
   ( PollInterval,
@@ -69,8 +69,8 @@ coreParser = do
         notify
       }
 
-timeoutParser :: Parser (WithDisable (Maybe Timeout))
-timeoutParser = Utils.withDisableParser mainParser "timeout"
+timeoutParser :: Parser (WithDisabled Timeout)
+timeoutParser = Utils.withDisabledParser mainParser "timeout"
   where
     mainParser =
       OA.optional
@@ -90,8 +90,8 @@ timeoutParser = Utils.withDisableParser mainParser "timeout"
           "2h3s. Defaults to no timeout."
         ]
 
-initParser :: Parser (WithDisable (Maybe Text))
-initParser = Utils.withDisableParser mainParser "init"
+initParser :: Parser (WithDisabled Text)
+initParser = Utils.withDisabledParser mainParser "init"
   where
     mainParser =
       OA.optional
@@ -109,8 +109,8 @@ initParser = Utils.withDisableParser mainParser "init"
           "to 'shrun \". ~/.bashrc && foo\" \". ~/.bashrc && bar\"'."
         ]
 
-keyHideParser :: Parser (WithDisable (Maybe KeyHide))
-keyHideParser = Utils.withDisableParser mainParser "key-hide"
+keyHideParser :: Parser (WithDisabled KeyHide)
+keyHideParser = Utils.withDisabledParser mainParser "key-hide"
   where
     mainParser =
       OA.optional
@@ -130,8 +130,8 @@ keyHideParser = Utils.withDisableParser mainParser "key-hide"
           "unaffected."
         ]
 
-pollIntervalParser :: Parser (WithDisable (Maybe PollInterval))
-pollIntervalParser = Utils.withDisableParser mainParser "poll-interval"
+pollIntervalParser :: Parser (WithDisabled PollInterval)
+pollIntervalParser = Utils.withDisabledParser mainParser "poll-interval"
   where
     mainParser =
       OA.optional
@@ -164,8 +164,8 @@ pollIntervalParser = Utils.withDisableParser mainParser "poll-interval"
         . showt
         . view #unPollInterval
 
-cmdLogSizeParser :: Parser (WithDisable (Maybe (Bytes B Natural)))
-cmdLogSizeParser = Utils.withDisableParser mainParser "cmd-log-size"
+cmdLogSizeParser :: Parser (WithDisabled (Bytes B Natural))
+cmdLogSizeParser = Utils.withDisabledParser mainParser "cmd-log-size"
   where
     mainParser =
       OA.optional
@@ -186,8 +186,8 @@ cmdLogSizeParser = Utils.withDisableParser mainParser "cmd-log-size"
           "across lines. The default is 1024."
         ]
 
-timerFormatParser :: Parser (WithDisable (Maybe TimerFormat))
-timerFormatParser = Utils.withDisableParser mainParser "timer-format"
+timerFormatParser :: Parser (WithDisabled TimerFormat)
+timerFormatParser = Utils.withDisabledParser mainParser "timer-format"
   where
     mainParser =
       OA.optional
@@ -203,8 +203,8 @@ timerFormatParser = Utils.withDisableParser mainParser "timer-format"
           "'2 hours, 3 seconds'."
         ]
 
-cmdNameTruncParser :: Parser (WithDisable (Maybe (Truncation TCmdName)))
-cmdNameTruncParser = Utils.withDisableParser mainParser "cmd-name-trunc"
+cmdNameTruncParser :: Parser (WithDisabled (Truncation TCmdName))
+cmdNameTruncParser = Utils.withDisabledParser mainParser "cmd-name-trunc"
   where
     mainParser =
       OA.optional

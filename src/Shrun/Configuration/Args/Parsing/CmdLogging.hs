@@ -15,7 +15,7 @@ import Shrun.Configuration.Data.CmdLogging
         stripControl
       ),
   )
-import Shrun.Configuration.Data.WithDisable (WithDisable)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Data.StripControl (StripControl)
 import Shrun.Data.StripControl qualified as StripControl
 import Shrun.Data.Truncation (LineTruncation)
@@ -33,9 +33,9 @@ cmdLoggingParser = do
         lineTrunc
       }
 
-cmdLogStripControlParser :: Parser (WithDisable (Maybe StripControl))
+cmdLogStripControlParser :: Parser (WithDisabled StripControl)
 cmdLogStripControlParser =
-  Utils.withDisableParser mainParser "cmd-log-strip-control"
+  Utils.withDisabledParser mainParser "cmd-log-strip-control"
   where
     mainParser =
       OA.optional
@@ -60,8 +60,8 @@ cmdLogStripControlParser =
           " This option is experimental and subject to change."
         ]
 
-cmdLogLineTruncParser :: Parser (WithDisable (Maybe LineTruncation))
-cmdLogLineTruncParser = Utils.withDisableParser mainParser "cmd-log-line-trunc"
+cmdLogLineTruncParser :: Parser (WithDisabled LineTruncation)
+cmdLogLineTruncParser = Utils.withDisabledParser mainParser "cmd-log-line-trunc"
   where
     mainParser =
       OA.optional

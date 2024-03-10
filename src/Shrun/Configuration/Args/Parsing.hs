@@ -38,16 +38,16 @@ import Shrun.Configuration.Args.Parsing.Core qualified as Core
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Args.TH (getDefaultConfigTH)
 import Shrun.Configuration.Data.Core (CoreConfigArgs)
-import Shrun.Configuration.Data.WithDisable (WithDisable)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 
 -- | CLI args.
 data Args = MkArgs
   { -- | Optional config file.
-    configPath :: WithDisable (Maybe OsPath),
+    configPath :: WithDisabled OsPath,
     -- | Whether to log commands.
-    cmdLog :: WithDisable Bool,
+    cmdLog :: WithDisabled (),
     -- | Core config.
     coreConfig :: CoreConfigArgs,
     -- | List of commands.
@@ -115,8 +115,8 @@ defaultConfig = OA.infoOption (unpack txt) (OA.long "default-config" <> Utils.mk
     txt = T.unlines $$getDefaultConfigTH
     help = "Writes a default config.toml file to stdout."
 
-configParser :: Parser (WithDisable (Maybe OsPath))
-configParser = Utils.withDisableParser mainParser "config"
+configParser :: Parser (WithDisabled OsPath)
+configParser = Utils.withDisabledParser mainParser "config"
   where
     mainParser =
       OA.optional
@@ -137,10 +137,10 @@ configParser = Utils.withDisableParser mainParser "config"
           "--config and the automatic XDG lookup."
         ]
 
-cmdLogParser :: Parser (WithDisable Bool)
-cmdLogParser = Utils.withDisableParser mainParser "cmd-log"
+cmdLogParser :: Parser (WithDisabled ())
+cmdLogParser = Utils.withDisabledParser mainParser "cmd-log"
   where
-    mainParser =
+    switchParser =
       OA.switch
         ( mconcat
             [ OA.short 'l',
@@ -148,6 +148,12 @@ cmdLogParser = Utils.withDisableParser mainParser "cmd-log"
               Utils.mkHelp helpTxt
             ]
         )
+    mainParser = do
+      b <- switchParser
+      pure
+        $ if b
+          then Just ()
+          else Nothing
     helpTxt =
       mconcat
         [ "The default behavior is to swallow logs for the commands ",

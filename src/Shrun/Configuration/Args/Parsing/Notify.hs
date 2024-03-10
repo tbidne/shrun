@@ -11,7 +11,7 @@ import Shrun.Configuration.Data.Notify
   ( NotifyArgs,
     NotifyP (MkNotifyP, action, system, timeout),
   )
-import Shrun.Configuration.Data.WithDisable (WithDisable)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Notify.Types (NotifyAction, NotifySystemP1, NotifyTimeout)
 import Shrun.Notify.Types qualified as Notify
 import Shrun.Prelude
@@ -29,8 +29,8 @@ notifyParser = do
         timeout
       }
 
-notifyActionParser :: Parser (WithDisable (Maybe NotifyAction))
-notifyActionParser = Utils.withDisableParser mainParser "notify-action"
+notifyActionParser :: Parser (WithDisabled NotifyAction)
+notifyActionParser = Utils.withDisabledParser mainParser "notify-action"
   where
     mainParser =
       OA.optional
@@ -48,8 +48,8 @@ notifyActionParser = Utils.withDisableParser mainParser "notify-action"
           "'command'."
         ]
 
-notifySystemParser :: Parser (WithDisable (Maybe NotifySystemP1))
-notifySystemParser = Utils.withDisableParser mainParser "notify-system"
+notifySystemParser :: Parser (WithDisabled NotifySystemP1)
+notifySystemParser = Utils.withDisabledParser mainParser "notify-system"
   where
     mainParser =
       OA.optional
@@ -65,8 +65,8 @@ notifySystemParser = Utils.withDisableParser mainParser "notify-system"
           "available on linux, whereas 'apple-script' is available for osx."
         ]
 
-notifyTimeoutParser :: Parser (WithDisable (Maybe NotifyTimeout))
-notifyTimeoutParser = Utils.withDisableParser mainParser "notify-timeout"
+notifyTimeoutParser :: Parser (WithDisabled NotifyTimeout)
+notifyTimeoutParser = Utils.withDisabledParser mainParser "notify-timeout"
   where
     mainParser =
       OA.optional

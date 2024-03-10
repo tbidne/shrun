@@ -1,6 +1,6 @@
 module Shrun.Configuration.Args.Parsing.Utils
-  ( withDisableParser,
-    withDisableParserHelp,
+  ( withDisabledParser,
+    withDisabledParserHelp,
     mkHelp,
   )
 where
@@ -9,21 +9,31 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
-import Shrun.Configuration.Data.WithDisable (WithDisable (Disabled, With))
+import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled
+      ( Disabled,
+        With,
+        Without
+      ),
+  )
 import Shrun.Prelude
 
-withDisableParser :: Parser a -> String -> Parser (WithDisable a)
-withDisableParser mainParser name =
-  withDisableParserHelp mainParser name ("Disables --" ++ name)
+withDisabledParser :: Parser (Maybe a) -> String -> Parser (WithDisabled a)
+withDisabledParser mainParser name =
+  withDisabledParserHelp mainParser name ("Disables --" ++ name)
 
-withDisableParserHelp :: Parser a -> String -> String -> Parser (WithDisable a)
-withDisableParserHelp mainParser name helpTxt = do
-  x <- mainParser
+withDisabledParserHelp ::
+  Parser (Maybe a) ->
+  String ->
+  String ->
+  Parser (WithDisabled a)
+withDisabledParserHelp mainParser name helpTxt = do
+  mx <- mainParser
   y <- noParser
   pure
     $ if y
       then Disabled
-      else With x
+      else maybe Without With mx
   where
     noParser =
       OA.flag

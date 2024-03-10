@@ -7,7 +7,7 @@ module Shrun.Configuration.Data.ConfigPhase
   )
 where
 
-import Shrun.Configuration.Data.WithDisable (WithDisable)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
 -- | Data "phases" related to configuration.
@@ -26,7 +26,7 @@ data ConfigPhase
 -- - Merged: Definite
 type ConfigPhaseF :: ConfigPhase -> Type -> Type
 type family ConfigPhaseF p a where
-  ConfigPhaseF ConfigPhaseArgs a = WithDisable (Maybe a)
+  ConfigPhaseF ConfigPhaseArgs a = WithDisabled a
   ConfigPhaseF ConfigPhaseToml a = Maybe a
   ConfigPhaseF ConfigPhaseMerged a = a
 
@@ -37,6 +37,6 @@ type family ConfigPhaseF p a where
 -- - Merged: Maybe
 type ConfigPhaseMaybeF :: ConfigPhase -> Type -> Type
 type family ConfigPhaseMaybeF p a where
-  ConfigPhaseMaybeF ConfigPhaseArgs a = WithDisable (Maybe a)
+  ConfigPhaseMaybeF ConfigPhaseArgs a = WithDisabled a
   ConfigPhaseMaybeF ConfigPhaseToml a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseMerged a = Maybe a
