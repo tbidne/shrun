@@ -56,7 +56,7 @@ readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess errLines) =
-  MkStderr (T.intercalate " " errLines)
+  MkStderr (T.intercalate " " $ fmap T.strip errLines)
 
 -- | Attempts to read from the handle.
 readHandle ::

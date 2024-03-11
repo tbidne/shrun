@@ -45,14 +45,14 @@ spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
     args =
       withNoConfig
         [ "--cmd-log",
-          "sleep 1 && echo 'abc\ndef' && exit 1"
+          "sleep 1 && echo 'abc\n  def' && exit 1"
         ]
 
     -- verifying final 'abc\ndef' log is translated to 'abc def' in the final
     -- stderr msg
     expected =
-      [ withErrorPrefix "sleep 1 && echo 'abc def' && exit 1" <> "1 second: abc def"
+      [ withErrorPrefix "sleep 1 && echo 'abc   def' && exit 1" <> "1 second: abc def"
       ]
     unexpected =
-      [ withErrorPrefix "sleep 1 && echo 'abc def' && exit 1" <> "1 second: abcdef"
+      [ withErrorPrefix "sleep 1 && echo 'abc   def' && exit 1" <> "1 second: abcdef"
       ]
