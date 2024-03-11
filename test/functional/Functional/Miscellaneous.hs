@@ -9,7 +9,8 @@ specs :: TestTree
 specs =
   testGroup
     "Miscellaneous"
-    [ splitNewlineLogs
+    [ splitNewlineLogs,
+      spaceStderrLogs
     ]
 
 splitNewlineLogs :: TestTree
@@ -34,4 +35,24 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
       ]
     unexpected =
       [ withCommandPrefix printedCmd "line one line two"
+      ]
+
+spaceStderrLogs :: TestTree
+spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
+  results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+  V.verifyExpectedUnexpected results expected unexpected
+  where
+    args =
+      withNoConfig
+        [ "--cmd-log",
+          "sleep 1 && echo 'abc\ndef' && exit 1"
+        ]
+
+    -- verifying final 'abc\ndef' log is translated to 'abc def' in the final
+    -- stderr msg
+    expected =
+      [ withErrorPrefix "sleep 1 && echo 'abc def' && exit 1" <> "1 second: abc def"
+      ]
+    unexpected =
+      [ withErrorPrefix "sleep 1 && echo 'abc def' && exit 1" <> "1 second: abcdef"
       ]

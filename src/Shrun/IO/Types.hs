@@ -55,7 +55,8 @@ instance Semigroup ReadHandleResult where
 readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
-readHandleResultToStderr (ReadSuccess err) = MkStderr (fold err)
+readHandleResultToStderr (ReadSuccess errLines) =
+  MkStderr (T.intercalate " " errLines)
 
 -- | Attempts to read from the handle.
 readHandle ::
