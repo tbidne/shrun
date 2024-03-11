@@ -161,10 +161,15 @@ Shrun executes shell commands non-interactively, which means we do not have acce
 foo () {
   ...
 }
+
+bar () {
+  ...
+}
 ```
 
 ```
-$ shrun foo
+$ shrun foo bar
+[Error][bar] 0 seconds: /bin/sh: line 1: bar: command not found
 [Error][foo] 0 seconds: /bin/sh: line 1: foo: command not found
 [Finished] 0 seconds
 ```
@@ -172,11 +177,11 @@ $ shrun foo
 Fortunately, the [Init](configuration.md#init) option exists exactly for this purpose:
 
 ```
-$ shrun --init ". ~/.bashrc" foo
+$ shrun --init ". ~/.bashrc" foo bar
 ```
 
 This is equivalent to running:
 
 ```
-$ shrun ". ~/.bashrc && foo"
+$ shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"
 ```
