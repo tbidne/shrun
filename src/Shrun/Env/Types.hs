@@ -22,7 +22,6 @@ module Shrun.Env.Types
   )
 where
 
-import GHC.Show (appPrec, appPrec1)
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Data.PollInterval (PollInterval)
@@ -38,16 +37,12 @@ import Shrun.Notify.Types
     NotifyTimeout,
   )
 import Shrun.Prelude
-import Text.Show (showParen, showString)
 
 data CmdLogging = MkCmdLogging
   { stripControl :: StripControl,
     lineTrunc :: Maybe (Truncation TCmdLine)
   }
-  deriving stock
-    ( Eq,
-      Show
-    )
+  deriving stock (Eq, Show)
 
 makeFieldLabelsNoPrefix ''CmdLogging
 
@@ -57,14 +52,6 @@ data FileLogging = MkFileLogging
   }
 
 makeFieldLabelsNoPrefix ''FileLogging
-
-instance Show FileLogging where
-  showsPrec p fl =
-    showParen (p > appPrec)
-      $ showString "MkFileLogging {stripControl = "
-      . showsPrec appPrec1 (fl ^. #stripControl)
-      . showString ", log = <(Handle, LogTextQueue)>"
-      . showString "}"
 
 -- | Holds logging data.
 data Logging r = MkLogging
@@ -93,26 +80,6 @@ data Logging r = MkLogging
 -- We should come up with a different method.
 
 makeFieldLabelsNoPrefix ''Logging
-
-instance Show (Logging r) where
-  showsPrec p env =
-    showParen (p > appPrec)
-      $ showString "MkEnv {keyHide = "
-      . showsPrec appPrec1 (env ^. #keyHide)
-      . showString ", pollInterval = "
-      . showsPrec appPrec1 (env ^. #pollInterval)
-      . showString ", cmdLogReadSize = "
-      . showsPrec appPrec1 (env ^. #cmdLogReadSize)
-      . showString ", timerFormat = "
-      . showsPrec appPrec1 (env ^. #timerFormat)
-      . showString ", cmdNameTrunc = "
-      . showsPrec appPrec1 (env ^. #cmdNameTrunc)
-      . showString ", cmdLog = "
-      . showsPrec appPrec1 (env ^. #cmdLog)
-      . showString ", consoleLog = <TBQueue>"
-      . showString ", fileLog = "
-      . showsPrec appPrec1 (env ^. #fileLog)
-      . showString "}"
 
 -- | Holds notification settings.
 data NotifyEnv = MkNotifyEnv
@@ -170,19 +137,6 @@ data Env = MkEnv
   }
 
 makeFieldLabelsNoPrefix ''Env
-
-instance Show Env where
-  showsPrec p env =
-    showParen (p > appPrec)
-      $ showString "MkEnv {timeout = "
-      . showsPrec appPrec1 (env ^. #timeout)
-      . showString ", logging = "
-      . showsPrec appPrec1 (env ^. #logging)
-      . showString ", completedCmds = <TVar>"
-      . showString ", anyError = <TVar>"
-      . showString ", commands = "
-      . showsPrec appPrec1 (env ^. #commands)
-      . showString "}"
 
 instance HasTimeout Env where
   getTimeout = view #timeout
