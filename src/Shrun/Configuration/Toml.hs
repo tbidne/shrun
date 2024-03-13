@@ -10,7 +10,7 @@ where
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogSize,
+        cmdLogReadSize,
         cmdLogging,
         cmdNameTrunc,
         fileLogging,
@@ -48,7 +48,7 @@ instance DecodeTOML Toml where
     init <- decodeInit
     keyHide <- decodeKeyHide
     pollInterval <- decodePollInterval
-    cmdLogSize <- decodeCmdLogSize
+    cmdLogReadSize <- decodeCmdLogReadSize
     timerFormat <- decodeTimerFormat
     cmdNameTrunc <- decodeCmdNameTrunc
     cmdLogging <- getFieldOptWith tomlDecoder "cmd-log"
@@ -64,7 +64,7 @@ instance DecodeTOML Toml where
                 init,
                 keyHide,
                 pollInterval,
-                cmdLogSize,
+                cmdLogReadSize,
                 timerFormat,
                 cmdNameTrunc,
                 cmdLogging,
@@ -83,7 +83,7 @@ defaultToml =
             init = Nothing,
             keyHide = Nothing,
             pollInterval = Nothing,
-            cmdLogSize = Nothing,
+            cmdLogReadSize = Nothing,
             timerFormat = Nothing,
             cmdNameTrunc = Nothing,
             cmdLogging = Nothing,
@@ -111,8 +111,8 @@ decodeTimerFormat = getFieldOptWith tomlDecoder "timer-format"
 decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
 decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
 
-decodeCmdLogSize :: Decoder (Maybe (Bytes B Natural))
-decodeCmdLogSize = getFieldOptWith (fmap MkBytes tomlDecoder) "cmd-log-size"
+decodeCmdLogReadSize :: Decoder (Maybe (Bytes B Natural))
+decodeCmdLogReadSize = getFieldOptWith (fmap MkBytes tomlDecoder) "cmd-log-read-size"
 
 decodeLegend :: Decoder (Maybe (List KeyVal))
 decodeLegend = getFieldOptWith tomlDecoder "legend"

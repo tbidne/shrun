@@ -73,8 +73,8 @@ data Logging r = MkLogging
     keyHide :: KeyHide,
     -- | How often to poll commands for logs, in microseconds.
     pollInterval :: PollInterval,
-    -- | The max number of command characters to display in the logs.
-    cmdLogSize :: Bytes B Natural,
+    -- | The max number of bytes to read when streaming command logs.
+    cmdLogReadSize :: Bytes B Natural,
     -- | How to format the timer.
     timerFormat :: TimerFormat,
     -- | Truncates command names in the logs.
@@ -101,8 +101,8 @@ instance Show (Logging r) where
       . showsPrec appPrec1 (env ^. #keyHide)
       . showString ", pollInterval = "
       . showsPrec appPrec1 (env ^. #pollInterval)
-      . showString ", cmdLogSize = "
-      . showsPrec appPrec1 (env ^. #cmdLogSize)
+      . showString ", cmdLogReadSize = "
+      . showsPrec appPrec1 (env ^. #cmdLogReadSize)
       . showString ", timerFormat = "
       . showsPrec appPrec1 (env ^. #timerFormat)
       . showString ", cmdNameTrunc = "

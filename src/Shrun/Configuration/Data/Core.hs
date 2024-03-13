@@ -46,7 +46,7 @@ data CoreConfigP p = MkCoreConfigP
     pollInterval :: ConfigPhaseF p PollInterval,
     -- | Determines the max log size we read from commands in one go.
     -- Note this is not on cmdLogging or fileLogging since it affects both.
-    cmdLogSize :: ConfigPhaseF p (Bytes B Natural),
+    cmdLogReadSize :: ConfigPhaseF p (Bytes B Natural),
     -- | How to format the timer.
     timerFormat :: ConfigPhaseF p TimerFormat,
     -- | The max number of command characters to display in the logs.

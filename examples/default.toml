@@ -39,7 +39,7 @@ key-hide = false
 
 # Determines the size of the logs we read from commands (cmd-log and file-log).
 # Overrides the default of 1024.
-#cmd-log-size = 1024
+#cmd-log-read-size = 1024
 
 # String that determines how the timers is formatted. Options (and examples)
 # are:

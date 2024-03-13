@@ -20,8 +20,8 @@ the major/minor/patch definitions apply to the application's interface / usage
 * `--no-x` disable args now hidden from help page.
 
 ### Added
-* New option `--cmd-log-size` (toml: `cmd-log-size`) that controls the size of
-  logs we read from command with `--cmd-log` and `--file-log`.
+* New option `--cmd-log-read-size` (toml: `cmd-log-read-size`) that controls
+  the size of logs we read from command with `--cmd-log` and `--file-log`.
 
 ### Fixed
 * Improved `strip-control` options `all` and `smart` to replace newlines with

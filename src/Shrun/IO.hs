@@ -246,7 +246,7 @@ streamOutput logFn cmd p = do
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
 
       blockSize :: Int
-      blockSize = fromIntegral $ logging ^. (#cmdLogSize % _MkBytes)
+      blockSize = fromIntegral $ logging ^. (#cmdLogReadSize % _MkBytes)
 
       readBlock :: Handle -> m ReadHandleResult
       readBlock = readHandle blockSize

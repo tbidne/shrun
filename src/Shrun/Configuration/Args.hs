@@ -19,7 +19,7 @@ import Shrun.Configuration.Data.CmdLogging
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogSize,
+        cmdLogReadSize,
         cmdLogging,
         cmdNameTrunc,
         fileLogging,
@@ -56,7 +56,7 @@ defaultArgs commands =
             init = mempty,
             keyHide = mempty,
             pollInterval = mempty,
-            cmdLogSize = mempty,
+            cmdLogReadSize = mempty,
             timerFormat = mempty,
             cmdNameTrunc = mempty,
             cmdLogging =

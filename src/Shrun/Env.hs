@@ -64,7 +64,7 @@ import Shrun.Env.Types
     Logging
       ( MkLogging,
         cmdLog,
-        cmdLogSize,
+        cmdLogReadSize,
         cmdNameTrunc,
         consoleLog,
         fileLog,
@@ -206,7 +206,7 @@ fromMergedConfig cfg onEnv = do
                   pollInterval = cfg ^. (#coreConfig % #pollInterval),
                   timerFormat = cfg ^. (#coreConfig % #timerFormat),
                   cmdNameTrunc = cfg ^. (#coreConfig % #cmdNameTrunc),
-                  cmdLogSize = cfg ^. (#coreConfig % #cmdLogSize),
+                  cmdLogReadSize = cfg ^. (#coreConfig % #cmdLogReadSize),
                   cmdLog =
                     cfg ^. (#coreConfig % #cmdLogging) <&> \cmdLog ->
                       MkCmdLogging

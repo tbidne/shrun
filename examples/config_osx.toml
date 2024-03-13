@@ -39,7 +39,7 @@ poll-interval = 100
 
 # Determines the size of the logs we read from commands (cmd-log and file-log).
 # Overrides the default of 1024.
-cmd-log-size = 2048
+cmd-log-read-size = 2048
 
 # String that determines how the timers is formatted. Options (and examples)
 # are:

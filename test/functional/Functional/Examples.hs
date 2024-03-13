@@ -36,8 +36,8 @@ specs args =
       timeout,
       initOn,
       initOff,
-      cmdLogSizeDefault,
-      cmdLogSize,
+      cmdLogReadSizeDefault,
+      cmdLogReadSize,
       cmdlogOn,
       cmdlogOnDefault,
       cmdlogOff,
@@ -160,9 +160,9 @@ initOff =
         finishedPrefix
       ]
 
-cmdLogSizeDefault :: TestTree
-cmdLogSizeDefault =
-  testCase "Default --cmd-log-size splits 1024" $ do
+cmdLogReadSizeDefault :: TestTree
+cmdLogReadSizeDefault =
+  testCase "Default --cmd-log-read-size splits 1024" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
@@ -181,16 +181,16 @@ cmdLogSizeDefault =
         withCommandPrefix "sl..." "b"
       ]
 
-cmdLogSize :: TestTree
-cmdLogSize =
-  testCase "Runs --cmd-log-size example" $ do
+cmdLogReadSize :: TestTree
+cmdLogReadSize =
+  testCase "Runs --cmd-log-read-size example" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
         [ "--cmd-log",
-          "--cmd-log-size",
+          "--cmd-log-read-size",
           "5",
           cmd
         ]

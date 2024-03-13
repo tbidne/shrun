@@ -11,7 +11,7 @@ import Shrun.Configuration.Data.Core
   ( CoreConfigMerged,
     CoreConfigP
       ( MkCoreConfigP,
-        cmdLogSize,
+        cmdLogReadSize,
         cmdLogging,
         cmdNameTrunc,
         fileLogging,
@@ -24,9 +24,10 @@ import Shrun.Configuration.Data.Core
       ),
   )
 import Shrun.Data.Command (CommandP1)
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
-import Shrun.Data.PollInterval (PollInterval (MkPollInterval))
-import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
+import Shrun.Data.KeyHide (defaultKeyHide)
+import Shrun.Data.PollInterval (defaultPollInterval)
+import Shrun.Data.TimerFormat (defaultTimerFormat)
+import Shrun.Logging.Types (defaultCmdLogReadSize)
 import Shrun.Prelude
 
 -- | Merged Args + Toml
@@ -47,11 +48,11 @@ defaultMergedConfig commands =
         MkCoreConfigP
           { fileLogging = Nothing,
             cmdLogging = Nothing,
-            timerFormat = ProseCompact,
-            pollInterval = MkPollInterval 10_000,
-            keyHide = KeyHideOff,
+            timerFormat = defaultTimerFormat,
+            pollInterval = defaultPollInterval,
+            keyHide = defaultKeyHide,
             cmdNameTrunc = Nothing,
-            cmdLogSize = MkBytes 1024,
+            cmdLogReadSize = defaultCmdLogReadSize,
             notify = Nothing,
             timeout = Nothing,
             init = Nothing

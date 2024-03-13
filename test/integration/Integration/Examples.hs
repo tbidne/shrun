@@ -19,7 +19,7 @@ import Shrun.Configuration.Data.CmdLogging
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogSize,
+        cmdLogReadSize,
         cmdLogging,
         cmdNameTrunc,
         fileLogging,
@@ -76,7 +76,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 init = Just ". examples/bashrc",
                 keyHide = KeyHideOff,
                 pollInterval = 100,
-                cmdLogSize = MkBytes 2048,
+                cmdLogReadSize = MkBytes 2048,
                 timerFormat = ProseCompact,
                 cmdNameTrunc = Just 80,
                 cmdLogging =

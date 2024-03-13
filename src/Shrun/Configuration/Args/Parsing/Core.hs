@@ -15,7 +15,7 @@ import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
       ( MkCoreConfigP,
-        cmdLogSize,
+        cmdLogReadSize,
         cmdLogging,
         cmdNameTrunc,
         fileLogging,
@@ -48,7 +48,7 @@ coreParser = do
   init <- initParser
   keyHide <- keyHideParser
   pollInterval <- pollIntervalParser
-  cmdLogSize <- cmdLogSizeParser
+  cmdLogReadSize <- cmdLogReadSizeParser
   timerFormat <- timerFormatParser
   cmdNameTrunc <- cmdNameTruncParser
   cmdLogging <- CmdLogging.cmdLoggingParser
@@ -61,7 +61,7 @@ coreParser = do
         init,
         keyHide,
         pollInterval,
-        cmdLogSize,
+        cmdLogReadSize,
         timerFormat,
         cmdNameTrunc,
         cmdLogging,
@@ -164,25 +164,25 @@ pollIntervalParser = Utils.withDisabledParser mainParser "poll-interval"
         . showt
         . view #unPollInterval
 
-cmdLogSizeParser :: Parser (WithDisabled (Bytes B Natural))
-cmdLogSizeParser = Utils.withDisabledParser mainParser "cmd-log-size"
+cmdLogReadSizeParser :: Parser (WithDisabled (Bytes B Natural))
+cmdLogReadSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
   where
     mainParser =
       OA.optional
         $ OA.option
-          readCmdLogSize
+          readcmdLogReadSize
           ( mconcat
-              [ OA.long "cmd-log-size",
+              [ OA.long "cmd-log-read-size",
                 Utils.mkHelp helpTxt,
                 OA.metavar "NATURAL"
               ]
           )
-    readCmdLogSize = MkBytes <$> OA.auto
+    readcmdLogReadSize = MkBytes <$> OA.auto
     helpTxt =
       mconcat
         [ "Non-negative integer that determines the size (bytes) of command ",
           "logs in a single read (--cmd-log and --file-log). Logs larger than ",
-          "--cmd-log-size will be read in a subsequent read, hence broken ",
+          "--cmd-log-read-size will be read in a subsequent read, hence broken ",
           "across lines. The default is 1024."
         ]
 

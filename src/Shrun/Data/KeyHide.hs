@@ -1,5 +1,6 @@
 module Shrun.Data.KeyHide
   ( KeyHide (..),
+    defaultKeyHide,
   )
 where
 
@@ -20,3 +21,6 @@ instance DecodeTOML KeyHide where
     tomlDecoder <&> \case
       True -> KeyHideOn
       False -> KeyHideOff
+
+defaultKeyHide :: KeyHide
+defaultKeyHide = KeyHideOff

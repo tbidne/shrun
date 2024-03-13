@@ -9,7 +9,7 @@ import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
       ( MkCoreConfigP,
-        cmdLogSize,
+        cmdLogReadSize,
         cmdLogging,
         cmdNameTrunc,
         fileLogging,
@@ -35,10 +35,10 @@ import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Data.Command (Command (MkCommand))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
+import Shrun.Data.KeyHide (KeyHide (KeyHideOff), defaultKeyHide)
 import Shrun.Data.PollInterval (defaultPollInterval)
 import Shrun.Data.TimerFormat (defaultTimerFormat)
-import Shrun.Logging.Types (defaultCmdLogSize)
+import Shrun.Logging.Types (defaultCmdLogReadSize)
 import Shrun.Prelude
 
 -- | Merges Args and Toml together, filling in necessary defaults and
@@ -76,15 +76,17 @@ mergeConfig args mToml = do
                 { timeout = WD.toMaybe (args ^. (#coreConfig % #timeout)),
                   init = WD.toMaybe (args ^. (#coreConfig % #init)),
                   keyHide =
-                    WD.fromWithDisabled KeyHideOff (args ^. (#coreConfig % #keyHide)),
+                    WD.fromWithDisabled
+                      defaultKeyHide
+                      (args ^. (#coreConfig % #keyHide)),
                   pollInterval =
                     WD.fromWithDisabled
                       defaultPollInterval
                       (args ^. (#coreConfig % #pollInterval)),
-                  cmdLogSize =
+                  cmdLogReadSize =
                     WD.fromWithDisabled
-                      defaultCmdLogSize
-                      (args ^. (#coreConfig % #cmdLogSize)),
+                      defaultCmdLogReadSize
+                      (args ^. (#coreConfig % #cmdLogReadSize)),
                   timerFormat =
                     WD.fromWithDisabled
                       defaultTimerFormat
@@ -136,11 +138,11 @@ mergeConfig args mToml = do
                       defaultPollInterval
                       #pollInterval
                       (toml ^. (#coreConfig % #pollInterval)),
-                  cmdLogSize =
+                  cmdLogReadSize =
                     plusDefault
-                      defaultCmdLogSize
-                      #cmdLogSize
-                      (toml ^. (#coreConfig % #cmdLogSize)),
+                      defaultCmdLogReadSize
+                      #cmdLogReadSize
+                      (toml ^. (#coreConfig % #cmdLogReadSize)),
                   timerFormat =
                     plusDefault
                       defaultTimerFormat

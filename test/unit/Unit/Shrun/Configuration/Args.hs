@@ -57,7 +57,7 @@ tests =
       fileLogModeSpecs,
       fileLogStripControlSpecs,
       fileLogSizeModeSpecs,
-      cmdLogSizeSpecs,
+      cmdLogReadSizeSpecs,
       commandLoggingSpecs,
       commandDisplaySpecs,
       pollIntervalSpecs,
@@ -433,31 +433,31 @@ parseNoFileLogSizeMode =
     argList = ["--no-file-log-size-mode", "command"]
     expected = disableDefCoreArgs (#fileLogging % #sizeMode)
 
-cmdLogSizeSpecs :: TestTree
-cmdLogSizeSpecs =
+cmdLogReadSizeSpecs :: TestTree
+cmdLogReadSizeSpecs =
   testGroup
     "Command log size arg parsing"
-    [ parseCmdLogSize,
-      parseNoCmdLogSize
+    [ parsecmdLogReadSize,
+      parseNocmdLogReadSize
     ]
 
-parseCmdLogSize :: TestTree
-parseCmdLogSize =
+parsecmdLogReadSize :: TestTree
+parsecmdLogReadSize =
   testPropertyNamed
-    "Should parse --cmd-log-size as command log size"
-    "parseCmdLogSize"
+    "Should parse --cmd-log-read-size as command log size"
+    "parsecmdLogReadSize"
     $ verifyResult argList expected
   where
-    argList = ["--cmd-log-size", "2048", "command"]
-    expected = updateDefCoreArgs #cmdLogSize (MkBytes 2048)
+    argList = ["--cmd-log-read-size", "2048", "command"]
+    expected = updateDefCoreArgs #cmdLogReadSize (MkBytes 2048)
 
-parseNoCmdLogSize :: TestTree
-parseNoCmdLogSize =
-  testPropertyNamed "Parse --no---cmd-log-size" "parseNoCmdLogSize"
+parseNocmdLogReadSize :: TestTree
+parseNocmdLogReadSize =
+  testPropertyNamed "Parse --no-cmd-log-read-size" "parseNocmdLogReadSize"
     $ verifyResult argList expected
   where
-    argList = ["--no-cmd-log-size", "command"]
-    expected = disableDefCoreArgs #cmdLogSize
+    argList = ["--no-cmd-log-read-size", "command"]
+    expected = disableDefCoreArgs #cmdLogReadSize
 
 commandLoggingSpecs :: TestTree
 commandLoggingSpecs =
