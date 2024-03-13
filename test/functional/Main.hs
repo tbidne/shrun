@@ -6,6 +6,7 @@ module Main (main) where
 import Effects.FileSystem.PathReader qualified as Dir
 import Effects.FileSystem.PathWriter qualified as Dir
 import Effects.FileSystem.Utils qualified as FsUtils
+import Functional.Buffering qualified as Buffering
 import Functional.Examples qualified as Examples
 import Functional.Miscellaneous qualified as Miscellaneous
 import Functional.Notify qualified as Notify
@@ -33,6 +34,7 @@ specs args = do
   testGroup
     "Functional Tests"
     [ Examples.specs args,
+      Buffering.specs,
       Miscellaneous.specs,
       Notify.specs,
       Success.spec args,

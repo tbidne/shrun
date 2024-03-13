@@ -80,7 +80,13 @@ import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
 import System.Exit (ExitCode)
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
-import Test.Tasty.HUnit as X (Assertion, testCase, (@=?))
+import Test.Tasty.HUnit as X
+  ( Assertion,
+    assertBool,
+    assertFailure,
+    testCase,
+    (@=?),
+  )
 
 -- NOTE: FuncEnv is essentially the real Env w/ an IORef for logs and a
 -- simplified logging
