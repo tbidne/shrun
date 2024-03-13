@@ -210,10 +210,10 @@ cmdlogOn =
     args =
       withNoConfig
         [ "--cmd-log",
-          "for i in {1..10}; do echo hi; sleep 1; done"
+          "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
         ]
     expected =
-      [ withCommandPrefix "for i in {1..10}; do echo hi; sleep 1; done" "hi"
+      [ withCommandPrefix "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done" "hi"
       ]
 
 cmdlogOnDefault :: TestTree
@@ -225,10 +225,10 @@ cmdlogOnDefault =
     args =
       withNoConfig
         [ "--cmd-log",
-          "for i in {1..3}; do sleep 1; done"
+          "for i in 1 2 3; do sleep 1; done"
         ]
     expected =
-      [ withCommandPrefix "for i in {1..3}; do sleep 1; done" "Starting..."
+      [ withCommandPrefix "for i in 1 2 3; do sleep 1; done" "Starting..."
       ]
 
 cmdlogOff :: TestTree
@@ -239,7 +239,7 @@ cmdlogOff =
   where
     args =
       withNoConfig
-        [ "for i in {1..10}; do echo hi; sleep 1; done"
+        [ "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
         ]
     unexpected = [commandPrefix]
 
@@ -253,7 +253,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
             outFileStr,
             "sleep 2",
             "bad",
-            "for i in {1..3}; do echo hi; sleep 1; done"
+            "for i in 1 2 3; do echo hi; sleep 1; done"
           ]
 
   resultsConsole <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
@@ -265,12 +265,12 @@ fileLog testArgs = testCase "Runs file-log example" $ do
     expectedConsole =
       [ withErrorPrefix "bad",
         withSuccessPrefix "sleep 2",
-        withSuccessPrefix "for i in {1..3}; do echo hi; sleep 1; done",
+        withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done",
         finishedPrefix
       ]
     expectedFile =
       expectedConsole
-        ++ [ withCommandPrefix "for i in {1..3}; do echo hi; sleep 1; done" "hi"
+        ++ [ withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi"
            ]
 
 timerFormatDigitalCompact :: TestTree
@@ -531,7 +531,7 @@ cmdNameTruncN = testCase "Runs --cmd-name-trunc 10 example" $ do
         [ "-l",
           "--cmd-name-trunc",
           "10",
-          "for i in {1..3}; do echo hi; sleep 1; done"
+          "for i in 1 2 3; do echo hi; sleep 1; done"
         ]
     expected =
       [ withCommandPrefix "for i i..." "hi",

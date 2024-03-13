@@ -56,6 +56,11 @@ loops =
       ("1_000_000", bashLoop "1000000")
     ]
 
+-- We have trouble with CI not interpolating brace syntax correctly, but
+-- apparently it works here? At least the benchmark results correctly show the
+-- running time getting slower across the 3 params.
+--
+-- See NOTE: [Bash brace loop interpolation].
 bashLoop :: String -> String
 bashLoop bound = "for i in {1.." ++ bound ++ "}; do echo ${i}; done"
 
