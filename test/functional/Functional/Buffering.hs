@@ -28,29 +28,39 @@ logsNoBuffer =
     -- literally i.e. {0..3}. The manual listing of indices appears to work,
     -- however
     args =
+      -- Having the indexes be 1.3, 2.6, ... rather than integers does not
+      -- change anything, but it makes the output slightly clearer.
       withNoConfig
         [ "--cmd-log",
           "--cmd-log-strip-control=all",
           "--cmd-name-trunc=15",
-          "for i in 0 1 2 3; do echo \"$i\"; sleep 1.5; done"
+          "sleep 0.5 ; for i in 0.5 1.5 2.5 3.5; do echo \"$i\"; sleep 1; done"
         ]
 
     -- To test that the logs are correctly streamed, we check that actual
     -- order of logs against the timing logs. This is a bit hacky, but the
-    -- sleep of 1.5 makes this fairly reliable.
+    -- offset of 0.5 makes this more reliable.
+    --
+    -- Basically, we do not want a race between Timer logs (every 1s, starting
+    -- at 100_000 ms) and Command logs. We tried making the intervals
+    -- different (e.g. Command every 1.3s), but that proved flaky as it
+    -- gets close enough to the Timer logs (e.g. Timer 4s vs. Command 3.9s)
+    -- for a race.
+    --
+    -- Having the same interval yet an offset make this more reliable.
+    cmdPrefix = "sleep 0.5 ; ..."
     expecteds =
-      [ withCommandPrefix "for i in 0 1..." "Starting...",
-        withCommandPrefix "for i in 0 1..." "0",
+      [ withCommandPrefix cmdPrefix "Starting...",
+        withCommandPrefix cmdPrefix "0.5",
         withTimerPrefix "1 second",
-        withCommandPrefix "for i in 0 1..." "1",
+        withCommandPrefix cmdPrefix "1.5",
         withTimerPrefix "2 seconds",
-        withCommandPrefix "for i in 0 1..." "2",
+        withCommandPrefix cmdPrefix "2.5",
         withTimerPrefix "3 seconds",
+        withCommandPrefix cmdPrefix "3.5",
         withTimerPrefix "4 seconds",
-        withCommandPrefix "for i in 0 1..." "3",
-        withTimerPrefix "5 seconds",
-        withSuccessPrefix "for i in 0 1..." <> "6 seconds",
-        withFinishedPrefix "6 seconds"
+        withSuccessPrefix cmdPrefix <> "4 seconds",
+        withFinishedPrefix "4 seconds"
       ]
 
 assertLogsEq :: List Text -> List Text -> IO ()
