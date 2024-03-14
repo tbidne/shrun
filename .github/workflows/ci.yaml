@@ -82,7 +82,26 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Compile & Test
-        run: nix build
+        run: |
+          set +e
+
+          out=$(nix build 2>&1)
+          ec=$?
+
+          regex=".*'(nix log \/nix\/store\/.*.drv)'.*"
+
+          if [[ $ec -ne 0 ]]; then
+            if [[ $out =~ $regex ]]; then
+              echo echo "*** Regex match ***"
+              log_cmd="${BASH_REMATCH[1]}"
+              $log_cmd | cat
+            else
+              echo "*** No regex match on output ***"
+              echo $out
+            fi
+          fi
+
+          exit $ec
   lint:
     runs-on: "ubuntu-latest"
     steps:
