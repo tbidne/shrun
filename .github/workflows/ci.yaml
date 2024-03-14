@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - release-2
 
   pull_request:
     branches:
       - main
+      - release-2
 
   workflow_dispatch:
 
@@ -120,3 +122,39 @@ jobs:
 
       - name: HLint
         run: nix run .#lint
+  release:
+    needs: [cabal, nix, lint]
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc:
+          - "9.6.3"
+        os:
+        - "macos-latest"
+        - "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+
+      - name: Configure
+        run: cabal configure --enable-tests --ghc-options -Werror
+
+      - name: Compile
+        run: cabal build exe:shrun
+
+      - name: Install binary
+        if: github.ref == 'refs/heads/release'
+        run: |
+          cabal install --installdir=. --install-method=copy --program-suffix=-${{ matrix.os }}
+          ls
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        if: github.ref == 'refs/heads/release'
+        with:
+          name: build-artifacts
+          path: shrun-${{ matrix.os }}
