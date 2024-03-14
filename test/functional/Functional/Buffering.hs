@@ -28,12 +28,12 @@ logsNoBuffer =
     -- literally i.e. {0..3}. The manual listing of indices appears to work,
     -- however
     args =
-      [ "--cmd-log",
-        "--cmd-log-strip-control=all",
-        "--cmd-name-trunc=15",
-        "--no-config",
-        "for i in 0 1 2 3; do echo \"$i\"; sleep 1.5; done"
-      ]
+      withNoConfig
+        [ "--cmd-log",
+          "--cmd-log-strip-control=all",
+          "--cmd-name-trunc=15",
+          "for i in 0 1 2 3; do echo \"$i\"; sleep 1.5; done"
+        ]
 
     -- To test that the logs are correctly streamed, we check that actual
     -- order of logs against the timing logs. This is a bit hacky, but the
