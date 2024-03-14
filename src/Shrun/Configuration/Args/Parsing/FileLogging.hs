@@ -57,8 +57,8 @@ fileLogParser = Utils.withDisabledParser mainParser "file-log"
           "the supplied file. Furthermore, command logs will be written to ",
           "the file irrespective of --cmd-log. Console logging is unaffected. ",
           "This can be useful for investigating command failures. ",
-          "If the string 'default' is given, then we write to the XDG config ",
-          "directory e.g. ~/.config/shrun/shrun.log."
+          "If the string 'default' is given, then we write to the XDG state ",
+          "directory e.g. ~/.local/state/shrun/shrun.log."
         ]
 
 fileLogStripControlParser :: Parser (WithDisabled StripControl)

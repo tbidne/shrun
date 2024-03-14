@@ -8,7 +8,7 @@
   - [Logging](#logging)
     - [Command Log](#command-log)
     - [Poll Interval](#poll-interval)
-    - [Command Log Size](#command-log-size)
+    - [Command Log Read Size](#command-log-read-size)
     - [File Log](#file-log)
     - [File Log Mode](#file-log-mode)
     - [File Log Size Mode](#file-log-size-mode)
@@ -147,13 +147,13 @@ vs.
 > [!NOTE]
 > Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 >
-> Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [File Log](#file-log) for details on investigating command failure.
+> Practically speaking, this does not have much effect, just that if a command dies while `--cmd-log` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [`--file-log`](#file-log) for details on investigating command failure.
 
 ### Poll Interval
 
 **Arg:** `-p, --poll-interval NATURAL`
 
-**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
+**Description:** Non-negative integer used in conjunction with [`--cmd-log`](#command-log) and [`--file-log`](#file-log) that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
 
 > [!WARNING]
 > Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
@@ -166,22 +166,22 @@ vs.
 <span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
-### Command Log Size
+### Command Log Read Size
 
-**Arg:** `--cmd-log-size NATURAL`
+**Arg:** `--cmd-log-read-size NATURAL`
 
-**Description:** Non-negative integer used in conjunction with [Command Log](#command-log) and [File Log](#file-log) that determines the maximum size of logs we read from commands, in bytes. Logs that are over the limit will be read the next time (see [`--poll-interval`](#poll-interval)).
+**Description:** Non-negative integer that determines that max number of bytes in a single read when streaming command logs ([`--cmd-log`](#command-log) and [`--file-log`](#file-log)). Logs larger than `--cmd-log-read-size` will be read in a subsequent read, hence broken across lines. The default is 1024.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-size 5 "echo abcdef" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-read-size 5 "echo abcdef" </span>
 <span style="color:">[Success][sleep 1 && e...] abcde</span>
 <span style="color: #a3fefe">[Timer] 1 seconds</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-size 5 "echo abcdef" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-read-size 5 "echo abcdef" </span>
 <span style="color:">[Success][sleep 1 && e...] f</span>
 <span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
@@ -190,7 +190,7 @@ vs.
 
 **Arg:** `-f, --file-log (default | PATH)`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of `--cmd-log`. Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the XDG state directory e.g. `~/.local/state/shrun/log`.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of [`--cmd-log`](#command-log). Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the XDG state directory e.g. `~/.local/state/shrun/shrun.log`.
 
 **Example:**
 
@@ -315,7 +315,7 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 **Arg:** `-s,--cmd-log-strip-control (all | smart | none)`
 
-**Description:** Control characters can wreak layout havoc with the `--cmd-log` option, thus we include this option. `all` strips all such chars. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
+**Description:** Control characters can wreak layout havoc with the [`--cmd-log`](#command-log) option, thus we include this option. `all` strips all such chars. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
 
 * Simple formatting is left intact.
 * The layout should not be damaged.
@@ -357,7 +357,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 **Arg:** `-x, --cmd-name-trunc NATURAL`
 
-**Description:** Non-negative integer that limits the length of commands/key-names in the console logs. Defaults to no truncation. This affects everywhere the command/key-name shows up (i.e. in command logs or final success/error message). File logs created via `--file-log` are unaffected.
+**Description:** Non-negative integer that limits the length of commands/key-names in the console logs. Defaults to no truncation. This affects everywhere the command/key-name shows up (i.e. in command logs or final success/error message). File logs created via [`--file-log`](#file-log) are unaffected.
 
 **Example:**
 
@@ -377,7 +377,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 **Arg:** `-y, --cmd-log-line-trunc (NATURAL | detect)`
 
-**Description:** Non-negative integer that limits the length of logs produced via `--cmd-log` in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with `--file-log`.
+**Description:** Non-negative integer that limits the length of logs produced via [`--cmd-log`](#command-log) in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with [`--file-log`](#file-log).
 
 **Example:**
 

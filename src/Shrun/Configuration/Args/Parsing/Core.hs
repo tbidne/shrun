@@ -180,10 +180,10 @@ cmdLogReadSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
     readcmdLogReadSize = MkBytes <$> OA.auto
     helpTxt =
       mconcat
-        [ "Non-negative integer that determines the size (bytes) of command ",
-          "logs in a single read (--cmd-log and --file-log). Logs larger than ",
-          "--cmd-log-read-size will be read in a subsequent read, hence broken ",
-          "across lines. The default is 1024."
+        [ "Non-negative integer that determines that max number of bytes in ",
+          "a single read when streaming command logs (--cmd-log and ",
+          "--file-log). Logs larger than --cmd-log-read-size will be read in ",
+          "a subsequent read, hence broken across lines. The default is 1024."
         ]
 
 timerFormatParser :: Parser (WithDisabled TimerFormat)
