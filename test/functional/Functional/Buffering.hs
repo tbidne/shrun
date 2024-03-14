@@ -59,8 +59,9 @@ logsNoBuffer =
         withTimerPrefix "3 seconds",
         withCommandPrefix cmdPrefix "3.5",
         withTimerPrefix "4 seconds",
-        withSuccessPrefix cmdPrefix <> "4 seconds",
-        withFinishedPrefix "4 seconds"
+        -- No seconds here because it is flaky (e.g. can be either 4/5 seconds)
+        withSuccessPrefix cmdPrefix,
+        withFinishedPrefix ""
       ]
 
 assertLogsEq :: List Text -> List Text -> IO ()

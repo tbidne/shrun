@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - release
 
   pull_request:
     branches:
       - main
+      - release
 
   workflow_dispatch:
 
@@ -82,7 +84,7 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Compile & Test
-        run: nix build
+        run: nix build -L
   lint:
     runs-on: "ubuntu-latest"
     steps:
@@ -101,3 +103,37 @@ jobs:
 
       - name: HLint
         run: nix run .#lint
+  release:
+    needs: [cabal, nix, lint]
+    if: github.ref == 'refs/heads/release'
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: "macos-latest"
+            renamer: rename_osx.sh
+          - os: "ubuntu-latest"
+            renamer: rename_linux.sh
+    runs-on: ${{ matrix.platform.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.6.3"
+
+      - name: Configure
+        # TODO: It would be nice if we could figure out static binaries.
+        # This doesn't appear to work, according to ldd.
+        run: cabal configure --enable-executable-static --enable-executable-stripping --ghc-options -Werror
+
+      - name: Install binary
+        run: |
+          cabal install --installdir=bin --install-method=copy --program-suffix=-${{ matrix.platform.os }}
+          .github/scripts/${{ matrix.platform.renamer }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: bin
