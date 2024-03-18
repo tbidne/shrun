@@ -28,7 +28,7 @@ logsNoBuffer =
     -- literally i.e. {0..3}. The manual listing of indices appears to work,
     -- however
     args =
-      -- Having the indexes be 1.3, 2.6, ... rather than integers does not
+      -- Having the indexes be 0.5, 1.5, ... rather than integers does not
       -- change anything, but it makes the output slightly clearer.
       withNoConfig
         [ "--cmd-log",
