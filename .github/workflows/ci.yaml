@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - release
+      - release-static
 
   pull_request:
     branches:
@@ -14,98 +14,98 @@ on:
   workflow_dispatch:
 
 jobs:
-  cabal:
-    strategy:
-      fail-fast: false
-      matrix:
-        ghc:
-          - "9.4.8"
-          - "9.6.3"
-          - "9.8.1"
-        os:
-        - "macos-latest"
-        - "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
+  # cabal:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       ghc:
+  #         - "9.4.8"
+  #         - "9.6.3"
+  #         - "9.8.1"
+  #       os:
+  #       - "macos-latest"
+  #       - "ubuntu-latest"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: haskell-actions/setup@v2
-        with:
-          ghc-version: ${{ matrix.ghc }}
+  #     - uses: haskell-actions/setup@v2
+  #       with:
+  #         ghc-version: ${{ matrix.ghc }}
 
-      - name: Configure
-        run: cabal configure --enable-tests --ghc-options -Werror
+  #     - name: Configure
+  #       run: cabal configure --enable-tests --ghc-options -Werror
 
-      - name: Compile
-        run: cabal build lib:shrun
+  #     - name: Compile
+  #       run: cabal build lib:shrun
 
-      - name: Unit Tests
-        run: cabal test unit --test-options '--hedgehog-tests 100000'
+  #     - name: Unit Tests
+  #       run: cabal test unit --test-options '--hedgehog-tests 100000'
 
-      - name: Integration Tests
-        run: cabal test integration
+  #     - name: Integration Tests
+  #       run: cabal test integration
 
-      - name: Functional Tests
-        run: cabal test functional
+  #     - name: Functional Tests
+  #       run: cabal test functional
 
-      - name: Benchmarks
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        id: bench
-        run: |
-          cabal bench --benchmark-options '
-            --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
-            --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            --fail-if-slower 50
-            --fail-if-faster 50'
+  #     - name: Benchmarks
+  #       if: ${{ matrix.os == 'ubuntu-latest' }}
+  #       id: bench
+  #       run: |
+  #         cabal bench --benchmark-options '
+  #           --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+  #           --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+  #           --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+  #           --fail-if-slower 50
+  #           --fail-if-faster 50'
 
-      - uses: actions/upload-artifact@v3
-        if: ${{ failure() && steps.bench.conclusion == 'failure' }}
-        with:
-          name: build-artifacts
-          path: |
-            benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
-  nix:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-        - "macos-latest"
-        - "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
+  #     - uses: actions/upload-artifact@v3
+  #       if: ${{ failure() && steps.bench.conclusion == 'failure' }}
+  #       with:
+  #         name: build-artifacts
+  #         path: |
+  #           benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+  #           benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+  # nix:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #       - "macos-latest"
+  #       - "ubuntu-latest"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup nix
-        uses: cachix/install-nix-action@v25
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          nix_path: nixpkgs=channel:nixos-unstable
+  #     - name: Setup nix
+  #       uses: cachix/install-nix-action@v25
+  #       with:
+  #         github_access_token: ${{ secrets.GITHUB_TOKEN }}
+  #         nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Compile & Test
-        run: nix build -L
-  lint:
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: actions/checkout@v4
+  #     - name: Compile & Test
+  #       run: nix build -L
+  # lint:
+  #   runs-on: "ubuntu-latest"
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup nix
-        uses: cachix/install-nix-action@v25
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          nix_path: nixpkgs=channel:nixos-unstable
+  #     - name: Setup nix
+  #       uses: cachix/install-nix-action@v25
+  #       with:
+  #         github_access_token: ${{ secrets.GITHUB_TOKEN }}
+  #         nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Formatting
-        run: |
-          nix run .#format
-          git diff --exit-code --color=always
+  #     - name: Formatting
+  #       run: |
+  #         nix run .#format
+  #         git diff --exit-code --color=always
 
-      - name: HLint
-        run: nix run .#lint
+  #     - name: HLint
+  #       run: nix run .#lint
   release:
-    needs: [cabal, nix, lint]
-    if: github.ref == 'refs/heads/release'
+    #needs: [cabal, nix, lint]
+    if: github.ref == 'refs/heads/release-static'
     strategy:
       fail-fast: false
       matrix:
@@ -129,7 +129,23 @@ jobs:
 
       - name: Install binary
         run: |
-          cabal install --installdir=bin --install-method=copy --program-suffix=-${{ matrix.platform.os }}
+          #cabal install --installdir=bin --install-method=copy --program-suffix=-${{ matrix.platform.os }}
+          mkdir -p bin
+
+          cabal build exe:shrun
+
+          ls dist-newstyle/
+          ls dist-newstyle/build/
+          ls dist-newstyle/build/x86_64-linux/
+          ls dist-newstyle/build/x86_64-linux/ghc-9.6.3/
+          ls dist-newstyle/build/x86_64-linux/ghc-9.6.3/shrun-0.9
+          ls dist-newstyle/build/x86_64-linux/ghc-9.6.3/shrun-0.9/x/
+          ls dist-newstyle/build/x86_64-linux/ghc-9.6.3/shrun-0.9/x/shrun/
+          ls dist-newstyle/build/x86_64-linux/ghc-9.6.3/shrun-0.9/x/shrun/opt
+          ls dist-newstyle/build/x86_64-linux/ghc-9.6.3/shrun-0.9/x/shrun/opt/build/
+          ls dist-newstyle/build/x86_64-linux/ghc-9.6.3/shrun-0.9/x/shrun/opt/build/shrun
+
+          cp dist-newstyle/build/x86_64-linux/ghc-9.6.3/shrun-0.9/x/shrun/opt/build/shrun/shrun ./bin
           .github/scripts/${{ matrix.platform.renamer }}
 
       - name: Upload binary

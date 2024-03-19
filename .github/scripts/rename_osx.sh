@@ -7,5 +7,5 @@ apple_vers=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' \t')
 
 arch=$(uname -m)
 
-chmod a+x bin/shrun-macos-latest
-mv bin/shrun-macos-latest "bin/shrun_$shrun_vers-$arch-apple_$apple_vers-darwin"
+chmod a+x bin/shrun
+mv bin/shrun "bin/shrun_$shrun_vers-$arch-apple_$apple_vers-darwin"
