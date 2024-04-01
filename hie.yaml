@@ -18,6 +18,9 @@ cradle:
     - path: "./test/functional"
       component: "shrun:test:functional"
 
+    - path: "./test/notify"
+      component: "shrun:test:notify"
+
     - path: "./benchmarks/Main.hs"
       component: "shrun:bench:benchmarks"
 

@@ -85,6 +85,29 @@ jobs:
 
       - name: Compile & Test
         run: nix build -L
+
+  # Unfortunately, notify-tests does not seem to work for linux on CI.
+  # Leaving it for osx as that provides some value, and at least we can
+  # test linux notifications manually.
+
+  notify-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - "macos-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup nix
+        uses: cachix/install-nix-action@v25
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Test
+        run: nix develop .#notifyTests -L -c bash -c '.github/scripts/notify_tests.sh'
   lint:
     runs-on: "ubuntu-latest"
     steps:
@@ -104,7 +127,7 @@ jobs:
       - name: HLint
         run: nix run .#lint
   release:
-    needs: [cabal, nix, lint]
+    needs: [cabal, nix, notify-tests, lint]
     if: github.ref == 'refs/heads/release'
     strategy:
       fail-fast: false

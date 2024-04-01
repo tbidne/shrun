@@ -7,26 +7,33 @@ where
 
 import Data.Text qualified as T
 import Effects.Process.Typed qualified as P
-import Shrun.Notify.MonadNotify (ShrunNote)
+import Shrun.Notify.MonadNotify
+  ( NotifyException (MkNotifyException),
+    ShrunNote,
+    exitFailureToStderr,
+  )
+import Shrun.Notify.Types (NotifySystem (AppleScript))
 import Shrun.Prelude
 
 -- | Effect for apple script.
 class (Monad m) => MonadAppleScript m where
   -- | Sends a notification via apple script.
-  notify :: Text -> m ()
+  notify :: Text -> m (Maybe ByteString)
 
 instance MonadAppleScript IO where
   notify =
-    void
-      . P.runProcess
+    fmap exitFailureToStderr
+      . P.readProcessStderr
       . P.shell
       . T.unpack
 
 instance (MonadAppleScript m) => MonadAppleScript (ReaderT env m) where
   notify = lift . notify
 
-notifyAppleScript :: (MonadAppleScript m) => ShrunNote -> m ()
-notifyAppleScript = notify . shrunToAppleScript
+notifyAppleScript :: (MonadAppleScript m) => ShrunNote -> m (Maybe NotifyException)
+notifyAppleScript note =
+  notify (shrunToAppleScript note) <<&>> \stderr ->
+    MkNotifyException note AppleScript (decodeUtf8Lenient stderr)
 
 shrunToAppleScript :: ShrunNote -> Text
 shrunToAppleScript shrunNote = txt

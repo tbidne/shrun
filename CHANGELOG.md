@@ -26,6 +26,8 @@ the major/minor/patch definitions apply to the application's interface / usage
 ### Fixed
 * Improved `strip-control` options `all` and `smart` to replace newlines with
   a single whitespace, rather than stripping them.
+* Notification failures are no longer swallowed; errors do not kill shrun,
+  but they are logged and cause the program to exit with a failure code.
 
 ## [0.8.1] -- 2023-12-08
 ### Changed

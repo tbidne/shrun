@@ -7,12 +7,13 @@ where
 
 import DBus.Client (Client)
 import DBus.Client qualified as DBusC
-import DBus.Notify (Hint (Urgency), Note, Notification)
+import DBus.Notify (Hint (Urgency), Note)
 import DBus.Notify qualified as DBusN
 import Data.Text qualified as T
-import Shrun.Notify.MonadNotify (ShrunNote)
+import Shrun.Notify.MonadNotify (NotifyException (MkNotifyException), ShrunNote)
 import Shrun.Notify.Types
-  ( NotifyTimeout
+  ( NotifySystem (DBus),
+    NotifyTimeout
       ( NotifyTimeoutNever,
         NotifyTimeoutSeconds
       ),
@@ -25,18 +26,23 @@ class (Monad m) => MonadDBus m where
   connectSession :: m Client
 
   -- | Sends a notification to DBus.
-  notify :: Client -> Note -> m Notification
+  notify :: Client -> Note -> m (Maybe SomeException)
 
 instance MonadDBus IO where
   connectSession = DBusC.connectSession
-  notify = DBusN.notify
+  notify client note =
+    tryAny (DBusN.notify client note) <&> \case
+      Left err -> Just err
+      Right _ -> Nothing
 
 instance (MonadDBus m) => MonadDBus (ReaderT env m) where
   connectSession = lift connectSession
   notify c = lift . notify c
 
-notifyDBus :: (MonadDBus m) => Client -> ShrunNote -> m ()
-notifyDBus client = void . notify client . shrunToDBus
+notifyDBus :: (MonadDBus m) => Client -> ShrunNote -> m (Maybe NotifyException)
+notifyDBus client note =
+  notify client (shrunToDBus note) <<&>> \stderr ->
+    MkNotifyException note (DBus ()) (T.pack $ displayException stderr)
 
 shrunToDBus :: ShrunNote -> Note
 shrunToDBus shrunNote =

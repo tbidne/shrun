@@ -15,6 +15,7 @@ module Shrun.Prelude
     -- * Misc utilities
     fromFoldable,
     (<<$>>),
+    (<<&>>),
     (.>),
 
     -- * 'Text' replacements for 'P.String' functions.
@@ -161,7 +162,7 @@ import Effects.FileSystem.PathWriter as X
     removeFile,
     removeFileIfExists,
   )
-import Effects.FileSystem.Utils as X (OsPath, osp, (</>))
+import Effects.FileSystem.Utils as X (OsPath, decodeUtf8, osp, (</>))
 import Effects.IORef as X
   ( IORef,
     MonadIORef
@@ -241,6 +242,7 @@ import Optics.TH as X
     noPrefixFieldLabels,
   )
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
+import System.Exit as X (ExitCode (ExitFailure, ExitSuccess))
 import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)
 import TOML as X
   ( DecodeTOML (tomlDecoder),
@@ -296,6 +298,10 @@ fromFoldable x = fromMaybe x . headMaybe
 (<<$>>) = fmap . fmap
 
 infixl 4 <<$>>
+
+-- | Flipped '(<<$>>)'; lifted `(<&>)`.
+(<<&>>) :: (Functor f, Functor g) => f (g a) -> (a -> b) -> f (g b)
+(<<&>>) = flip (<<$>>)
 
 -- | Flipped '(.)'
 (.>) :: (a -> b) -> (b -> c) -> a -> c

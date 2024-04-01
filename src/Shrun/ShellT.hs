@@ -68,7 +68,10 @@ instance
   ) =>
   MonadNotify (ShellT Env m)
   where
-  notify note = asks (preview (#notifyEnv %? #system)) >>= traverse_ sendNote
+  notify note =
+    asks (preview (#notifyEnv %? #system)) >>= \case
+      Nothing -> pure Nothing
+      Just nenv -> sendNote nenv
     where
       sendNote (DBus client) = MonadDBus.notifyDBus client note
       sendNote NotifySend = MonadNotifySend.notifyNotifySend note

@@ -78,7 +78,6 @@ import Shrun.Notify.Types
   )
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
-import System.Exit (ExitCode)
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
 import Test.Tasty.HUnit as X
   ( Assertion,
@@ -146,6 +145,7 @@ instance MonadNotify (ShellT FuncEnv IO) where
   notify note = do
     notesRef <- asks (view #shrunNotes)
     modifyIORef' notesRef (note :)
+    pure Nothing
 
 -- | Runs the args and retrieves the logs.
 run :: List String -> IO (IORef (List Text))

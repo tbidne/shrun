@@ -36,6 +36,7 @@ common common-lang
     NoImplicitPrelude
     NoStarIsType
     OverloadedLabels
+    OverloadedRecordDot
     OverloadedStrings
     PatternSynonyms
     StrictData
@@ -249,6 +250,22 @@ test-suite functional
     , text
 
   hs-source-dirs:   test/functional
+  default-language: GHC2021
+
+test-suite notify
+  import:           common-lang
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:
+  build-depends:
+    , base
+    , env-guard
+    , shrun
+    , tasty
+    , tasty-hunit
+    , text
+
+  hs-source-dirs:   test/notify
   default-language: GHC2021
 
 benchmark benchmarks

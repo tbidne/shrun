@@ -12,6 +12,8 @@ module Shrun.Notify.Types
     parseNotifySystem,
     notifySystemStr,
     defaultNotifySystem,
+    showNotifySystem,
+    displayNotifySystem,
     NotifySystemP1,
     NotifySystemP2,
     DBusF,
@@ -114,6 +116,16 @@ makePrisms ''NotifySystem
 deriving stock instance Eq (NotifySystem Phase1)
 
 deriving stock instance Show (NotifySystem Phase1)
+
+showNotifySystem :: (IsString a) => NotifySystem p -> a
+showNotifySystem (DBus _) = "DBus"
+showNotifySystem NotifySend = "NotifySend"
+showNotifySystem AppleScript = "AppleScript"
+
+displayNotifySystem :: (IsString a) => NotifySystem p -> a
+displayNotifySystem (DBus _) = "dbus"
+displayNotifySystem NotifySend = "notify-send"
+displayNotifySystem AppleScript = "apple-script"
 
 instance DecodeTOML (NotifySystem Phase1) where
   tomlDecoder = parseNotifySystem tomlDecoder

@@ -65,7 +65,7 @@
     , ...
     }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      perSystem = { pkgs, ... }:
+      perSystem = { pkgs, system, ... }:
         let
           ghc-version = "ghc963";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
@@ -107,7 +107,21 @@
         in
         {
           packages.default = mkPkg false;
-          devShells.default = mkPkg true;
+          devShells =
+            {
+              default = mkPkg true;
+
+              # We do this rather than re-use mkPkgMod because evidently we
+              # cannot override buildInputs with overrideCabal (maybe we can
+              # overrideAttrs instead)?
+              notifyTests = pkgs.mkShell {
+                buildInputs = nix-hs-utils.mkBuildTools compilerPkgs;
+
+                shellHook = ''
+                  export NOTIFY_TESTS=1
+                '';
+              };
+            };
 
           apps = {
             format = nix-hs-utils.format compilerPkgs;

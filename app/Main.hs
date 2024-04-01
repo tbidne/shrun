@@ -3,7 +3,6 @@ module Main (main) where
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Shrun.Env (makeEnvAndShrun)
 import Shrun.Prelude
-import System.Exit (ExitCode (..))
 
 main :: IO ()
 main = do

@@ -39,7 +39,6 @@ import Shrun.Logging.Types
   )
 import Shrun.Prelude
 import Shrun.Utils qualified as U
-import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 
 -- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::

@@ -94,7 +94,7 @@ instance MonadRegionLogger (ShellT BenchEnv IO) where
   displayRegions = id
 
 instance MonadNotify (ShellT BenchEnv IO) where
-  notify _ = pure ()
+  notify _ = pure Nothing
 
 runBench :: List String -> IO ()
 runBench argList = do

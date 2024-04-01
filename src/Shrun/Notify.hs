@@ -6,10 +6,11 @@ where
 
 import DBus.Notify (UrgencyLevel)
 import Data.Text qualified as T
-import Effects.Exception (catch)
 import Shrun.Env.Types
-  ( HasLogging,
+  ( HasAnyError,
+    HasLogging,
     HasNotifyConfig (getNotifyConfig),
+    setAnyErrorTrue,
   )
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
@@ -27,9 +28,9 @@ import Shrun.Prelude
 -- | Sends a notification if they are enabled (linux only). Logs any failed
 -- sends.
 sendNotif ::
-  ( HasLogging env (Region m),
+  ( HasAnyError env,
+    HasLogging env (Region m),
     HasNotifyConfig env,
-    MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -48,12 +49,13 @@ sendNotif summary body urgency = do
   traverse_ notifyWithErrorLogging (cfg ^? (_Just % #timeout))
   where
     notifyWithErrorLogging timeout =
-      notify (mkNote timeout)
-        `catch` \((MkExceptionCS someEx _) :: ExceptionCS SomeException) ->
-          withRegion Linear (logEx someEx)
-            `catchAny` \ex -> withRegion Linear (logEx ex)
+      notify (mkNote timeout) >>= \case
+        Nothing -> pure ()
+        Just notifyEx -> withRegion Linear (logEx notifyEx)
 
-    logEx ex r =
+    logEx ex r = do
+      -- set exit code
+      setAnyErrorTrue
       Logging.putRegionLog r
         $ MkLog
           { cmd = Nothing,

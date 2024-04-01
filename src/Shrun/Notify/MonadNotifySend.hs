@@ -8,9 +8,14 @@ where
 import DBus.Notify (UrgencyLevel (Critical, Low, Normal))
 import Data.Text qualified as T
 import Effects.Process.Typed qualified as P
-import Shrun.Notify.MonadNotify (ShrunNote)
+import Shrun.Notify.MonadNotify
+  ( NotifyException (MkNotifyException),
+    ShrunNote,
+    exitFailureToStderr,
+  )
 import Shrun.Notify.Types
-  ( NotifyTimeout
+  ( NotifySystem (NotifySend),
+    NotifyTimeout
       ( NotifyTimeoutNever,
         NotifyTimeoutSeconds
       ),
@@ -20,20 +25,22 @@ import Shrun.Prelude
 -- | Effect for notify-send.
 class (Monad m) => MonadNotifySend m where
   -- | Sends a notification via notify-send.
-  notify :: Text -> m ()
+  notify :: Text -> m (Maybe ByteString)
 
 instance MonadNotifySend IO where
   notify =
-    void
-      . P.runProcess
+    fmap exitFailureToStderr
+      . P.readProcessStderr
       . P.shell
       . T.unpack
 
 instance (MonadNotifySend m) => MonadNotifySend (ReaderT env m) where
   notify = lift . notify
 
-notifyNotifySend :: (MonadNotifySend m) => ShrunNote -> m ()
-notifyNotifySend = notify . shrunToNotifySend
+notifyNotifySend :: (MonadNotifySend m) => ShrunNote -> m (Maybe NotifyException)
+notifyNotifySend note =
+  notify (shrunToNotifySend note) <<&>> \stderr ->
+    MkNotifyException note NotifySend (decodeUtf8Lenient stderr)
 
 shrunToNotifySend :: ShrunNote -> Text
 shrunToNotifySend shrunNote = txt

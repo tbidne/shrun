@@ -186,7 +186,6 @@ printFinalResult ::
     HasAnyError env,
     HasLogging env (Region m),
     HasNotifyConfig env,
-    MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
