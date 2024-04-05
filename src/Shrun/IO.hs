@@ -301,7 +301,7 @@ writeLog logFn cmd lastReadRef (ReadSuccess messages) = do
     logFn
       $ MkLog
         { cmd = Just cmd,
-          msg,
+          msg = msg ^. #unStrippedText,
           lvl = LevelCommand,
           mode = LogModeSet
         }

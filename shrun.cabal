@@ -78,6 +78,7 @@ library
     Shrun.Data.Phase
     Shrun.Data.PollInterval
     Shrun.Data.StripControl
+    Shrun.Data.Text
     Shrun.Data.Timeout
     Shrun.Data.TimerFormat
     Shrun.Data.Truncation

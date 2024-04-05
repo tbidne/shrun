@@ -8,13 +8,14 @@ module Shrun.IO.Types
   )
 where
 
-import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.HandleReader
   ( MonadHandleReader (hIsClosed),
     hGetNonBlocking,
     hIsReadable,
   )
+import Shrun.Data.Text (StrippedText)
+import Shrun.Data.Text qualified as Shrun.Text
 import Shrun.Prelude
 
 -- | Newtype wrapper for stderr.
@@ -39,7 +40,7 @@ data ReadHandleResult
   = -- | Error encountered while trying to read a handle.
     ReadErr Text
   | -- | Successfully read data from the handle.
-    ReadSuccess ![Text]
+    ReadSuccess [StrippedText]
   | -- | Successfully read no data from the handle.
     ReadNoData
   deriving stock (Eq, Show)
@@ -56,7 +57,7 @@ readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
 readHandleResultToStderr (ReadErr err) = MkStderr err
 readHandleResultToStderr (ReadSuccess errLines) =
-  MkStderr (T.intercalate " " $ fmap T.strip errLines)
+  MkStderr (Shrun.Text.sepLines errLines)
 
 -- | Attempts to read from the handle.
 readHandle ::
@@ -90,7 +91,7 @@ readHandle blockSize handle = do
           -- prematurely, but obviously this is best-effort.
           hGetNonBlocking handle blockSize <&> \case
             "" -> ReadNoData
-            bs -> ReadSuccess (T.lines $ decodeUtf8Lenient bs)
+            bs -> ReadSuccess (Shrun.Text.stripLines $ decodeUtf8Lenient bs)
 
     nothingIfReady = do
       -- NOTE: This somewhat torturous logic exists for a reason. We want to
