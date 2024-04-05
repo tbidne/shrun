@@ -24,6 +24,7 @@ import Shrun.Notify.Types
     NotifySystemP1,
     NotifyTimeout,
     defaultNotifySystem,
+    defaultNotifyTimeout,
   )
 import Shrun.Prelude
 
@@ -89,7 +90,7 @@ mergeNotifyLogging args mToml =
                   (toml ^. #system),
               timeout =
                 plusDefault
-                  (afromInteger 10)
+                  defaultNotifyTimeout
                   #timeout
                   (toml ^. #timeout)
             }

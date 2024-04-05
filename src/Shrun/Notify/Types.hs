@@ -36,6 +36,7 @@ module Shrun.Notify.Types
     NotifyTimeout (..),
     parseNotifyTimeout,
     notifyTimeoutStr,
+    defaultNotifyTimeout,
 
     -- * Exceptions
     OsxNotifySystemMismatch (..),
@@ -188,6 +189,9 @@ data NotifyTimeout
   | -- | Never times out.
     NotifyTimeoutNever
   deriving stock (Eq, Show)
+
+defaultNotifyTimeout :: NotifyTimeout
+defaultNotifyTimeout = NotifyTimeoutSeconds 10
 
 instance FromInteger NotifyTimeout where
   afromInteger = NotifyTimeoutSeconds . fromInteger
