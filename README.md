@@ -185,3 +185,74 @@ This is equivalent to running:
 ```
 $ shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"
 ```
+
+## Init vs. Legend
+
+There are two ways to use command aliases with `shrun`. One is with the toml file's `legend` section:
+
+```toml
+legend = [
+  { key = 'backend', val = 'javac ...' },
+]
+```
+
+```
+# runs javac as a shrun command
+shrun -c config.toml backend
+```
+
+Another is with `--init` (toml's top-level `init`):
+
+```
+# e.g. define as bash alias/function instead in ~/.bashrc
+
+backend () { javac ...; }
+```
+
+```
+# runs the bash 'backend' function as a shrun command
+shrun --init ". ~/.bashrc" backend
+```
+
+Why two methods? The first reason is historical: `--init` did not exist at first, so the only way to use aliases with `shrun` was to define them in `legend`.
+
+The second is that the legend allows us to easily combine _multiple_ commands and keep `shrun`'s usual semantics (e.g. concurrency, independence):
+
+```toml
+legend = [
+  { key = 'backend', val = 'javac ...' },
+  { key = 'ui', val = 'npm run build' },
+  { key = 'all', val = ['backend', 'ui'] },
+]
+```
+
+```
+# runs ui and backend concurrently
+shrun -c config.toml all
+```
+
+On the other hand, the naive bash translation has different semantics:
+
+```
+# e.g. define as bash alias/function instead in ~/.bashrc
+
+backend () { javac ...; }
+
+ui () { npm run build; }
+
+all () { backend; ui; }
+```
+
+```
+# runs the bash 'all' function as a shrun command, so backend and ui are
+# _not_ run concurrently / separately!
+shrun --init ". ~/.bashrc" all
+```
+
+Of course you _can_ write concurrent bash code. But one of `shrun's` primary motivations is **avoiding** non-trivial bash in the first place.
+
+Another reason for preferring `legend` is if you want a config specific to a certain project, rather than polluting something relatively global like `.bashrc`.
+
+Thus the conclusion is this: If you have a single alias that you may want global (e.g. called with or without `shrun`), and you do not envision regularly running that alias simultaneously with other commands, by all means, throw it in e.g. `.bashrc` and use `--init` (or set the default toml's `init` option for automatic load).
+
+If, instead, you don't want the alias in `.bashrc` or you regularly run it with some other commands, consider putting it in the toml's `legend`.
