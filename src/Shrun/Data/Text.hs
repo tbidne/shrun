@@ -52,7 +52,7 @@ stripLines :: Text -> [StrippedText]
 stripLines = fmap stripText . T.lines
 
 -- | Concats lines with a single whitespace. Removes empties lines so that we
--- exactly one single-space between all non-empty lines.
+-- have exactly one single-space between all non-empty lines.
 sepLines :: [StrippedText] -> Text
 sepLines =
   T.intercalate " "

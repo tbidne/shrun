@@ -18,8 +18,8 @@ extra-source-files:
   CHANGELOG.md
   configuration.md
   examples/default.toml
-  README.md
   faq.md
+  README.md
 
 source-repository head
   type:     git
@@ -173,6 +173,7 @@ test-suite unit
     Unit.Shrun.Configuration.Args
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
+    Unit.Shrun.Data.Text
     Unit.Shrun.Logging.Formatting
     Unit.Shrun.Logging.Generators
     Unit.Shrun.Utils

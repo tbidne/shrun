@@ -5,6 +5,7 @@ import Unit.Prelude
 import Unit.Shrun.Configuration.Args qualified
 import Unit.Shrun.Configuration.Data.WithDisabled qualified
 import Unit.Shrun.Configuration.Legend qualified
+import Unit.Shrun.Data.Text qualified
 import Unit.Shrun.Logging.Formatting qualified
 import Unit.Shrun.Utils qualified
 
@@ -17,6 +18,7 @@ main =
       [ Unit.Shrun.Configuration.Args.tests,
         Unit.Shrun.Configuration.Data.WithDisabled.tests,
         Unit.Shrun.Configuration.Legend.tests,
+        Unit.Shrun.Data.Text.tests,
         Unit.Shrun.Logging.Formatting.tests,
         Unit.Shrun.Utils.tests
       ]
