@@ -126,7 +126,7 @@ Why two methods?
     shrun --init ". ~/.bashrc" all
     ```
 
-    Of course you _can_ write concurrent bash code. But this problem was in fact `shruns`'s [motivating example](README.md#motivation).
+    Of course you _can_ write concurrent bash code. But this problem was in fact `shrun`'s [motivating example](README.md#motivation).
 
 Thus the conclusion is: If you have a single alias that you may want global (e.g. called with or without `shrun`), and you do not envision regularly running that alias simultaneously with other commands, by all means, throw it in e.g. `~/.bashrc` and use `init`.
 
