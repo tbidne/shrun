@@ -16,8 +16,10 @@ description:
 category:           Shell scripting, Utils, Concurrency
 extra-source-files:
   CHANGELOG.md
+  configuration.md
   examples/default.toml
   README.md
+  faq.md
 
 source-repository head
   type:     git
