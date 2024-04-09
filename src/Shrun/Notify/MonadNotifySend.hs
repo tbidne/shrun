@@ -65,5 +65,5 @@ shrunToNotifySend shrunNote = txt
       NotifyTimeoutSeconds s ->
         mconcat
           [ " --expire-time ",
-            showt (fromIntegral @_ @Integer s * 1_000)
+            showt (unsafeConvertIntegral @_ @Integer s * 1_000)
           ]

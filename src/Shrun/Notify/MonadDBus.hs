@@ -59,4 +59,4 @@ shrunToDBus shrunNote =
     expiry = case shrunNote ^. #timeout of
       NotifyTimeoutNever -> DBusN.Never
       NotifyTimeoutSeconds s ->
-        DBusN.Milliseconds $ 1_000 * fromIntegral s
+        DBusN.Milliseconds $ 1_000 * unsafeConvertIntegral s

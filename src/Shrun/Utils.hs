@@ -130,7 +130,7 @@ truncateIfNeeded n txt
     n' = n2i n
 
 n2i :: Natural -> Int
-n2i = fromIntegral
+n2i = unsafeConvertIntegral
 
 -- | Strips all control chars, including ansi escape sequences. Leading
 -- and trailing whitespace is also stripped.

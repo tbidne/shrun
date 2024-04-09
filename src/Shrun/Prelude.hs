@@ -17,6 +17,7 @@ module Shrun.Prelude
     (<<$>>),
     (<<&>>),
     (.>),
+    unsafeConvertIntegral,
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
@@ -58,6 +59,7 @@ import Control.Monad.Reader as X
   )
 import Control.Monad.Trans as X (MonadTrans (lift))
 import Data.Bifunctor as X (Bifunctor)
+import Data.Bits (Bits, toIntegralSized)
 import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
 import Data.Bytes as X
@@ -191,7 +193,7 @@ import GHC.Generics as X (Generic)
 import GHC.Integer as X (Integer)
 import GHC.Natural as X (Natural)
 import GHC.Num as X (Num ((*), (+), (-)))
-import GHC.Real as X (Integral, fromIntegral, truncate)
+import GHC.Real as X (Integral, truncate)
 import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack)
 import Optics.Core as X
@@ -262,6 +264,8 @@ import TOML as X
     runDecoder,
     typeMismatch,
   )
+import Type.Reflection (Typeable)
+import Type.Reflection qualified as Typeable
 import Prelude as X (seq)
 
 -- $setup
@@ -318,3 +322,33 @@ type Tuple2 = (,)
 
 -- | Alias for (,,).
 type Tuple3 = (,,)
+
+-- | Like 'fromIntegral', except:
+--
+--   1. The conversion is only between integral types.
+--   2. Errors rather than silently rounds for bounds issues.
+unsafeConvertIntegral ::
+  forall a b.
+  ( Bits a,
+    Bits b,
+    HasCallStack,
+    Integral a,
+    Integral b,
+    Show a,
+    Typeable a,
+    Typeable b
+  ) =>
+  a ->
+  b
+unsafeConvertIntegral x = case toIntegralSized x of
+  Just y -> y
+  Nothing ->
+    error $
+      mconcat
+        [ "Failed converting ",
+          show x,
+          " from ",
+          show (Typeable.typeOf x),
+          " to ",
+          show $ Typeable.typeOf (undefined :: b)
+        ]

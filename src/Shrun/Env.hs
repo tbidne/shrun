@@ -27,6 +27,7 @@ import Effects.FileSystem.PathWriter
       ),
   )
 import Effects.FileSystem.Utils qualified as FsUtils
+import GHC.Num (Num (fromInteger))
 import Shrun (runShellT, shrun)
 import Shrun.Configuration (mergeConfig)
 import Shrun.Configuration.Args.Parsing
@@ -278,7 +279,7 @@ handleLogFileSize ::
   OsPath ->
   m ()
 handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
-  fileSize <- MkBytes @B . fromIntegral <$> getFileSize fp
+  fileSize <- MkBytes @B . unsafeConvertIntegral <$> getFileSize fp
   case fileSizeMode of
     FileSizeModeWarn warnSize ->
       when (fileSize > warnSize)
@@ -309,7 +310,10 @@ handleLogFileSize cfg fp = for_ mfileSizeMode $ \fileSizeMode -> do
         -- Convert to double _before_ normalizing. We may lose some precision
         -- here, but it is better than normalizing a natural, which will
         -- truncate (i.e. greater precision loss).
-        . fmap (fromIntegral @Natural @Double)
+        . fmap (toDouble . unsafeConvertIntegral)
+
+    toDouble :: Integer -> Double
+    toDouble = fromInteger
 
 ensureFileExists ::
   ( HasCallStack,

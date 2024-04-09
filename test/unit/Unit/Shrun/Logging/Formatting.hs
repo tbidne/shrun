@@ -224,7 +224,7 @@ cmdTruncProps =
 
       let log' = set' #cmd (Just (MkCommand Nothing cmdTxt)) log
           result = formatConsoleLog env' log'
-          cmdNameTruncInt = fromIntegral $ cmdNameTrunc ^. #unTruncation
+          cmdNameTruncInt = unsafeConvertIntegral $ cmdNameTrunc ^. #unTruncation
 
       annotate $ T.unpack result
 
