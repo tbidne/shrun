@@ -77,7 +77,7 @@ shrun -c config.toml backend
 Another is with [`init`](configuration.md#init):
 
 ```
-# e.g. define as bash alias/function instead in ~/.bashrc
+# e.g. define as bash alias/function instead in ~/.bashrc or wherever
 
 backend () { javac ...; }
 ```
@@ -91,9 +91,7 @@ Why two methods?
 
 1. The first reason is historical: `legend` preceded `init`, so for a time the former was the only way to use aliases with `shrun`.
 
-2. Another reason for preferring `legend` is wanting a config specific to a certain project, rather than polluting something relatively global like `~/.bashrc`.
-
-3. Finally, the primary reason is that the legend allows us to easily combine _multiple_ commands and keep `shrun`'s usual semantics (e.g. concurrency, independence):
+2. More importantly, the legend allows us to easily combine _multiple_ commands and keep `shrun`'s usual semantics (e.g. concurrency, independence):
 
     ```toml
     legend = [
@@ -111,8 +109,6 @@ Why two methods?
     On the other hand, the naive bash translation has different semantics:
 
     ```
-    # e.g. define as bash alias/function instead in ~/.bashrc
-
     backend () { javac ...; }
 
     ui () { npm run build; }
@@ -126,7 +122,7 @@ Why two methods?
     shrun --init ". ~/.bashrc" all
     ```
 
-    Of course you _can_ write concurrent bash code. But this problem was in fact `shrun`'s [motivating example](README.md#motivation).
+    Of course you _can_ write concurrent bash code. But the problem of running multiple commands was in fact `shrun`'s [motivating example](README.md#motivation).
 
 Thus the conclusion is: If you have a single alias that you may want global (e.g. called with or without `shrun`), and you do not envision regularly running that alias simultaneously with other commands, by all means, throw it in e.g. `~/.bashrc` and use `init`.
 
