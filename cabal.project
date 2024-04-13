@@ -23,8 +23,6 @@ package shrun
 optimization: 2
 test-show-details: direct
 
-constraints: effects-fs -os_path
-
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
