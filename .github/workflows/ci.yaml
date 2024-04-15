@@ -66,6 +66,20 @@ jobs:
           path: |
             benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+  stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: haskell-actions/setup@v2
+        with:
+          enable-stack: true
+
+      - name: Compile
+        run: stack build --ghc-options -Werror
+
+      - name: Test
+        run: stack test --ghc-options -Werror
   nix:
     strategy:
       fail-fast: false
@@ -127,7 +141,7 @@ jobs:
       - name: HLint
         run: nix run .#lint
   release:
-    needs: [cabal, nix, notify-tests, lint]
+    needs: [cabal, stack, nix, notify-tests, lint]
     if: github.ref == 'refs/heads/release'
     strategy:
       fail-fast: false

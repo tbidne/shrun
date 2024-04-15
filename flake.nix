@@ -67,15 +67,9 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       perSystem = { pkgs, system, ... }:
         let
-          ghc-version = "ghc963";
+          ghc-version = "ghc964";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
-            overrides = final: prev: {
-              hedgehog = prev.hedgehog_1_4;
-              hlint = prev.hlint_3_6_1;
-              nonempty-containers = hlib.dontCheck prev.nonempty-containers;
-              ormolu = prev.ormolu_0_7_2_0;
-              tasty-hedgehog = prev.tasty-hedgehog_1_4_0_2;
-            } // nix-hs-utils.mkLibs inputs final [
+            overrides = final: prev: { } // nix-hs-utils.mkLibs inputs final [
               "algebra-simple"
               "bounds"
               "relative-time"
@@ -104,6 +98,14 @@
               name = "shrun";
               root = ./.;
             };
+          stack-wrapped = pkgs.symlinkJoin {
+            name = "stack";
+            paths = [ pkgs.stack ];
+            buildInputs = [ pkgs.makeWrapper ];
+            postBuild = ''
+              wrapProgram $out/bin/stack --add-flags "--no-nix --system-ghc"
+            '';
+          };
         in
         {
           packages.default = mkPkg false;
@@ -120,6 +122,14 @@
                 shellHook = ''
                   export NOTIFY_TESTS=1
                 '';
+              };
+
+              stack = pkgs.mkShell {
+                buildInputs = [
+                  compiler.ghc
+                  pkgs.zlib
+                  stack-wrapped
+                ];
               };
             };
 

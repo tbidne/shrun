@@ -1,0 +1,49 @@
+resolver: lts-22.17
+packages:
+- .
+ghc-options:
+  "$locals":
+    -Wall -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-deriving-strategies
+    -Wmissing-export-lists
+    -Wmissing-exported-signatures
+    -Wmissing-home-modules
+    -Wpartial-fields
+    -Wprepositive-qualified-module
+    -Wredundant-constraints
+    -Wunused-binds
+    -Wunused-packages
+    -Wunused-type-patterns
+    -Wno-unticked-promoted-constructors
+extra-deps:
+  - env-guard-0.2@sha256:bac94c42908e5308ca6726a076ce49538d50d6fb9a01e1b68b4ac264cb435d39,1312
+  - strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
+  - text-display-0.0.5.1@sha256:da3515adb03b5c01d8e8f0ca81ac0cce4f3ae36f7b74e8566108220a1da670eb,2670
+  - git: https://github.com/tbidne/algebra-simple.git
+    commit: f4f799cea958fb2b2309d70f47a658dff2481441
+  - git: https://github.com/tbidne/bounds.git
+    commit: 50b07ca118ae140d065ec0285f38e72151da4cad
+  - git: https://github.com/tbidne/monad-effects.git
+    commit: 6c3f405c6cecf6f2d6ed16f5a844470d3e3088b4
+    subdirs:
+      - lib/effects-async
+      - lib/effects-exceptions
+      - lib/effects-env
+      - lib/effects-fs
+      - lib/effects-ioref
+      - lib/effects-optparse
+      - lib/effects-stm
+      - lib/effects-time
+      - lib/effects-terminal
+      - lib/effects-thread
+      - lib/effects-typed-process
+      - lib/effects-unix-compat
+  - git: https://github.com/tbidne/relative-time.git
+    commit: 5f89851baf90c671fffa8d5118e0b37186220fef
+  - git: https://github.com/tbidne/si-bytes.git
+    commit: bc73bff27b607be0e5b13c1d65e1da8b2ea29319
+  - git: https://github.com/tbidne/smart-math.git
+    commit: a722e1fee10aeba79aaf88ed774f1cafb19930f4

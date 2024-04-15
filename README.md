@@ -23,6 +23,7 @@
 - [Configuration](#configuration)
 - [Building](#building)
   - [Cabal](#cabal)
+  - [Stack](#stack)
   - [Nix](#nix)
 - [FAQ](#faq)
 
@@ -89,17 +90,29 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 ### Prerequisites
 
-* [`ghcup`](https://www.haskell.org/ghcup/)
+* [`cabal 2.4+`](https://www.haskell.org/cabal/download.html)
+* One of:
+  * [`ghc 9.4`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.6`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.8`](https://www.haskell.org/ghc/download.html)
 
-Using `ghcup`, install `cabal 2.4+` and one of:
-
-- `ghc 9.4`
-- `ghc 9.6`
-- `ghc 9.8`
+The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
 ### Build Shrun
 
-Once you have `cabal` and `ghc`, `shrun` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
+Once you have `cabal` and `ghc`, `shrun` can be built locally with `cabal build` or installed globally (e.g. `~/.local/bin/shrun`) with `cabal install`.
+
+## Stack
+
+### Prerequisites
+
+* [`stack`](https://docs.haskellstack.org/en/stable/)
+
+Like `cabal` and `ghc`, `stack` can be installed with [`ghcup`](https://www.haskell.org/ghcup/).
+
+### Build Shrun
+
+Once you have `stack`, `shrun` can be built with `stack build` or installed globally (i.e. `~/.local/bin/shrun`) with `stack install`.
 
 ## Nix
 
