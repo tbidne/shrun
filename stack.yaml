@@ -20,7 +20,6 @@ ghc-options:
     -Wno-unticked-promoted-constructors
 extra-deps:
   - env-guard-0.2@sha256:bac94c42908e5308ca6726a076ce49538d50d6fb9a01e1b68b4ac264cb435d39,1312
-  - strict-io-0.2.2@sha256:1cc96f9a123a919ff9ee479f740cbc9fa9edf7c8ac65334de3fdce07638949ed,1012
   - text-display-0.0.5.1@sha256:da3515adb03b5c01d8e8f0ca81ac0cce4f3ae36f7b74e8566108220a1da670eb,2670
   - git: https://github.com/tbidne/algebra-simple.git
     commit: f4f799cea958fb2b2309d70f47a658dff2481441
