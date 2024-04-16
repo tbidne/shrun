@@ -19,9 +19,12 @@ jobs:
       fail-fast: false
       matrix:
         ghc:
-          - "9.4.8"
-          - "9.6.3"
-          - "9.8.1"
+          - vers: "9.4.8"
+            proj-file: ""
+          - vers: "9.6.4"
+            proj-file: "--project-file cabal.project.ghc964"
+          - vers: "9.8.1"
+            proj-file: ""
         os:
         - "macos-latest"
         - "ubuntu-latest"
@@ -31,31 +34,35 @@ jobs:
 
       - uses: haskell-actions/setup@v2
         with:
-          ghc-version: ${{ matrix.ghc }}
+          ghc-version: ${{ matrix.ghc.vers }}
 
       - name: Configure
-        run: cabal configure --enable-tests --ghc-options -Werror
+        run: |
+          cabal configure \
+            ${{ matrix.ghc.proj-file }} \
+            --enable-tests \
+            --ghc-options -Werror
 
       - name: Compile
-        run: cabal build lib:shrun
+        run: cabal build ${{ matrix.ghc.proj-file }} lib:shrun
 
       - name: Unit Tests
-        run: cabal test unit --test-options '--hedgehog-tests 100000'
+        run: cabal test ${{ matrix.ghc.proj-file }} unit --test-options '--hedgehog-tests 100000'
 
       - name: Integration Tests
-        run: cabal test integration
+        run: cabal test ${{ matrix.ghc.proj-file }} integration
 
       - name: Functional Tests
-        run: cabal test functional
+        run: cabal test ${{ matrix.ghc.proj-file }} functional
 
       - name: Benchmarks
         if: ${{ matrix.os == 'ubuntu-latest' }}
         id: bench
         run: |
-          cabal bench --benchmark-options '
-            --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
-            --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+          cabal bench ${{ matrix.ghc.proj-file }} --benchmark-options '
+            --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
+            --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
+            --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             --fail-if-slower 50
             --fail-if-faster 50'
 
@@ -64,10 +71,16 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            benchmarks/${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+            benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
+            benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
   stack:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - "macos-latest"
+        - "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
