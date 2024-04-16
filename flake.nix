@@ -58,41 +58,50 @@
     };
   };
   outputs =
-    inputs@{ flake-parts
-    , nix-hs-utils
-    , nixpkgs
-    , self
-    , ...
+    inputs@{
+      flake-parts,
+      nix-hs-utils,
+      nixpkgs,
+      self,
+      ...
     }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      perSystem = { pkgs, system, ... }:
+      perSystem =
+        { pkgs, system, ... }:
         let
           ghc-version = "ghc964";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
-            overrides = final: prev: { } // nix-hs-utils.mkLibs inputs final [
-              "algebra-simple"
-              "bounds"
-              "relative-time"
-              "si-bytes"
-              "smart-math"
-            ] // nix-hs-utils.mkRelLibs "${inputs.monad-effects}/lib" final [
-              "effects-async"
-              "effects-exceptions"
-              "effects-env"
-              "effects-fs"
-              "effects-ioref"
-              "effects-optparse"
-              "effects-stm"
-              "effects-terminal"
-              "effects-thread"
-              "effects-time"
-              "effects-typed-process"
-              "effects-unix-compat"
-            ];
+            overrides =
+              final: prev:
+              { }
+              // nix-hs-utils.mkLibs inputs final [
+                "algebra-simple"
+                "bounds"
+                "relative-time"
+                "si-bytes"
+                "smart-math"
+              ]
+              // nix-hs-utils.mkRelLibs "${inputs.monad-effects}/lib" final [
+                "effects-async"
+                "effects-exceptions"
+                "effects-env"
+                "effects-fs"
+                "effects-ioref"
+                "effects-optparse"
+                "effects-stm"
+                "effects-terminal"
+                "effects-thread"
+                "effects-time"
+                "effects-typed-process"
+                "effects-unix-compat"
+              ];
           };
           hlib = pkgs.haskell.lib;
-          compilerPkgs = { inherit compiler pkgs; };
-          mkPkg = returnShellEnv:
+          compilerPkgs = {
+            inherit compiler pkgs;
+          };
+          mkPkg =
+            returnShellEnv:
             nix-hs-utils.mkHaskellPkg {
               inherit compiler pkgs returnShellEnv;
               name = "shrun";
@@ -109,29 +118,24 @@
         in
         {
           packages.default = mkPkg false;
-          devShells =
-            {
-              default = mkPkg true;
+          devShells = {
+            default = mkPkg true;
 
-              # We do this rather than re-use mkPkgMod because evidently we
-              # cannot override buildInputs with overrideCabal (maybe we can
-              # overrideAttrs instead)?
-              notifyTests = pkgs.mkShell {
-                buildInputs = nix-hs-utils.mkBuildTools compilerPkgs;
-
-                shellHook = ''
-                  export NOTIFY_TESTS=1
-                '';
-              };
-
-              stack = pkgs.mkShell {
-                buildInputs = [
-                  compiler.ghc
-                  pkgs.zlib
-                  stack-wrapped
-                ];
-              };
+            notifyTests = pkgs.mkShell {
+              buildInputs = nix-hs-utils.mkBuildTools compilerPkgs;
+              shellHook = ''
+                export NOTIFY_TESTS=1
+              '';
             };
+
+            stack = pkgs.mkShell {
+              buildInputs = [
+                compiler.ghc
+                pkgs.zlib
+                stack-wrapped
+              ];
+            };
+          };
 
           apps = {
             format = nix-hs-utils.format compilerPkgs;
