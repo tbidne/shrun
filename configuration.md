@@ -32,7 +32,7 @@
 
 > [!TIP]
 >
-> In general, each option `--foo` has a `--no-foo` variant that disables cli and toml configuration for that field. For example, the `--no-cmd-log` option will instruct shrun to ignore both cli `--cmd-log` and toml `cmd-log`, ensuring the default behavior is used (i.e. no command logging).
+> In general, each option `--foo` has a `--no-foo` variant that disables CLI and toml configuration for that field. For example, the `--no-cmd-log` option will instruct shrun to ignore both CLI `--cmd-log` and toml `cmd-log`, ensuring the default behavior is used (i.e. no command logging).
 
 
 ## Core Functionality
@@ -64,7 +64,7 @@ legend = [
 Then the command
 
 ```sh
-shrun --config=path/to/config all "echo cat"
+$ shrun --config=path/to/config all "echo cat"
 ```
 
 Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurrently. A picture is worth a thousand words:
@@ -432,6 +432,10 @@ These options configure `shrun` to send off desktop notifications for certain ac
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-timeout never "sleep 5"</span></code>
 </pre>
+
+> [!NOTE]
+>
+> Timeouts are subject to the whims of the underlying notification system e.g. some notification systems [ignore the timeout entirely](https://bugs.launchpad.net/ubuntu/+source/notify-osd/+bug/390508). Also, "error notifications" (i.e. `shrun` or command failures) are sent with `urgency = critical` where supported, thus may not timeout at all, per [FDO's specification](https://specifications.freedesktop.org/notification-spec/notification-spec-latest.html).
 
 ## Miscellaneous
 

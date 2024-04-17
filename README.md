@@ -106,7 +106,7 @@ Once you have `cabal` and `ghc`, `shrun` can be built locally with `cabal build`
 
 For further reproducibility, optional freeze files can be used e.g.
 
-```
+```sh
 cabal build --project-file cabal.project.ghc964
 ```
 

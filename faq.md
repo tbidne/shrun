@@ -8,7 +8,7 @@ However this is a bit clunky as the timer text will overwrite the `[sudo] passwo
 
 It is therefore easiest to run sudo first to elevate privileges, then execute `shrun` as normal e.g.
 
-```
+```sh
 # Run sudo with some dummy command
 $ sudo ls
 ...
@@ -19,7 +19,7 @@ $ shrun ...
 
 ## What if my command relies on interactive shell e.g. loading ~/.bashrc?
 
-Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc`. This can be annoying if we want to run any of these functions/aliases.
+Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc` or `~/.bash_profile`. This can be annoying if we want to run any of these functions/aliases.
 
 ```sh
 # ~/.bashrc
@@ -32,7 +32,7 @@ bar () {
 }
 ```
 
-```
+```sh
 $ shrun foo bar
 [Error][bar] 0 seconds: /bin/sh: line 1: bar: command not found
 [Error][foo] 0 seconds: /bin/sh: line 1: foo: command not found
@@ -41,13 +41,13 @@ $ shrun foo bar
 
 Fortunately, the [`init`](configuration.md#init) option exists exactly for this purpose:
 
-```
+```sh
 $ shrun --init ". ~/.bashrc" foo bar
 ```
 
 This is equivalent to running:
 
-```
+```sh
 $ shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"
 ```
 
@@ -55,8 +55,8 @@ $ shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"
 >
 > An extensive `~/.bashrc` may contain code that does not work well when loading non-interactively e.g. mine has the line `[[ $- == *i* ]] || return`, which `shrun` chokes on. Instead, you may want to create a file for your functions e.g. `~/.bash_functions.sh`, source _that_ in `~/.bashrc`, and then use it with `shrun` instead:
 >
-> ```
-> shrun --init ". ~/.bash_functions.sh" ...
+> ```sh
+> $ shrun --init ". ~/.bash_functions.sh" ...
 > ```
 
 ## Init vs. Legend
@@ -69,22 +69,21 @@ legend = [
 ]
 ```
 
-```
+```sh
 # runs javac as a shrun command
-shrun -c config.toml backend
+$ shrun -c config.toml backend
 ```
 
 Another is with [`init`](configuration.md#init):
 
-```
+```sh
 # e.g. define as bash alias/function instead in ~/.bashrc or wherever
-
 backend () { javac ...; }
 ```
 
-```
+```sh
 # runs the bash 'backend' function as a shrun command
-shrun --init ". ~/.bashrc" backend
+$ shrun --init ". ~/.bashrc" backend
 ```
 
 Why two methods?
@@ -101,14 +100,14 @@ Why two methods?
     ]
     ```
 
-    ```
+    ```sh
     # runs ui and backend concurrently
-    shrun -c config.toml all
+    $ shrun -c config.toml all
     ```
 
     On the other hand, the naive bash translation has different semantics:
 
-    ```
+    ```sh
     backend () { javac ...; }
 
     ui () { npm run build; }
@@ -116,10 +115,10 @@ Why two methods?
     all () { backend; ui; }
     ```
 
-    ```
+    ```sh
     # runs the bash 'all' function as a shrun command, so backend and ui are
     # _not_ run concurrently / separately!
-    shrun --init ". ~/.bashrc" all
+    $ shrun --init ". ~/.bashrc" all
     ```
 
     Of course you _can_ write concurrent bash code. But the problem of running multiple commands was in fact `shrun`'s [motivating example](README.md#motivation).
@@ -132,6 +131,6 @@ If, instead, you don't want the alias in `~/.bashrc` or you regularly run it wit
 >
 > You can also split the difference here. Put the individual commands `backend` and `ui` in `~/.bashrc`, load that with `init`, and put the aggregate `all` command in `legend`. This allows using `backend` and `ui` independent of `shrun`, while retaining `shrun`'s advantages with `all`:
 >
-> ```
-> shrun --init ". ~/.bashrc" -c config.toml all
+> ```sh
+> $ shrun --init ". ~/.bashrc" -c config.toml all
 > ```
