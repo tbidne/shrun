@@ -22,7 +22,7 @@ jobs:
           - vers: "9.4.8"
             proj-file: ""
           - vers: "9.6.4"
-            proj-file: "--project-file cabal.project.ghc964"
+            proj-file: "--project-file cabal.ghc964.project"
           - vers: "9.8.1"
             proj-file: ""
         os:
