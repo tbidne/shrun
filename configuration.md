@@ -349,7 +349,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 ### File Log Strip Control
 
-**Arg:** `-f, --file-log-strip-control (all | smart | none)`
+**Arg:** `--file-log-strip-control (all | smart | none)`
 
 **Description**: Like [`--cmd-log-strip-control`](#strip-control), but applies to file logs. If no option is given, defaults to `all`.
 
