@@ -19,10 +19,10 @@ import Shrun.Configuration.Data.WithDisabled
     (<>?),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Data.FileMode (FileMode (FileModeWrite))
+import Shrun.Data.FileMode (FileMode, defaultFileMode)
 import Shrun.Data.FilePathDefault (FilePathDefault)
 import Shrun.Data.FileSizeMode (FileSizeMode, defaultFileSizeMode)
-import Shrun.Data.StripControl (StripControl (StripControlAll))
+import Shrun.Data.StripControl (StripControl, defaultFileLogStripControl)
 import Shrun.Prelude
 
 -- NOTE: [Args vs. Toml mandatory fields]
@@ -103,12 +103,12 @@ mergeFileLogging args mToml =
             { path = toml ^. #path,
               stripControl =
                 plusDefault
-                  StripControlAll
+                  defaultFileLogStripControl
                   #stripControl
                   (toml ^. #stripControl),
               mode =
                 plusDefault
-                  FileModeWrite
+                  defaultFileMode
                   #mode
                   (toml ^. #mode),
               sizeMode =
@@ -124,9 +124,11 @@ mergeFileLogging args mToml =
           $ MkFileLoggingP
             { path,
               stripControl =
-                WD.fromWithDisabled StripControlAll (args ^. #stripControl),
+                WD.fromWithDisabled
+                  defaultFileLogStripControl
+                  (args ^. #stripControl),
               mode =
-                WD.fromWithDisabled FileModeWrite (args ^. #mode),
+                WD.fromWithDisabled defaultFileMode (args ^. #mode),
               sizeMode =
                 WD.fromWithDisabled defaultFileSizeMode (args ^. #sizeMode)
             }
@@ -137,12 +139,12 @@ mergeFileLogging args mToml =
             { path,
               stripControl =
                 plusDefault
-                  StripControlAll
+                  defaultFileLogStripControl
                   #stripControl
                   (view #stripControl toml),
               mode =
                 plusDefault
-                  FileModeWrite
+                  defaultFileMode
                   #mode
                   (view #mode toml),
               sizeMode =

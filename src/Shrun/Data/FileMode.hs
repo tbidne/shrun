@@ -1,6 +1,7 @@
 module Shrun.Data.FileMode
   ( FileMode (..),
     parseFileMode,
+    defaultFileMode,
   )
 where
 
@@ -21,3 +22,6 @@ parseFileMode getTxt =
     "append" -> pure FileModeAppend
     "write" -> pure FileModeWrite
     bad -> fail $ "Unrecognized file-mode: " <> unpack bad
+
+defaultFileMode :: FileMode
+defaultFileMode = FileModeWrite

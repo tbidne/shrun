@@ -20,7 +20,7 @@ import Shrun.Configuration.Data.WithDisabled
     (<>?),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Data.StripControl (StripControl (StripControlSmart))
+import Shrun.Data.StripControl (StripControl, defaultCmdLogStripControl)
 import Shrun.Data.Truncation
   ( LineTruncation (Detected, Undetected),
     TruncRegion (TCmdLine),
@@ -88,7 +88,7 @@ mergeCmdLogging withDisabled args mToml =
           $ MkCmdLoggingP
             { stripControl =
                 plusDefault
-                  StripControlSmart
+                  defaultCmdLogStripControl
                   #stripControl
                   (toml ^. #stripControl),
               lineTrunc = cmdLogLineTrunc
@@ -103,7 +103,7 @@ mergeCmdLogging withDisabled args mToml =
           $ MkCmdLoggingP
             { stripControl =
                 WD.fromWithDisabled
-                  StripControlSmart
+                  defaultCmdLogStripControl
                   (view #stripControl args),
               lineTrunc = cmdLogLineTrunc
             }
@@ -117,7 +117,7 @@ mergeCmdLogging withDisabled args mToml =
           $ MkCmdLoggingP
             { stripControl =
                 plusDefault
-                  StripControlSmart
+                  defaultCmdLogStripControl
                   #stripControl
                   (toml ^. #stripControl),
               lineTrunc = cmdLogLineTrunc
