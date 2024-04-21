@@ -26,8 +26,8 @@ jobs:
           - vers: "9.8.1"
             proj-file: ""
         os:
-        - "macos-latest"
-        - "ubuntu-latest"
+          - "macos-latest"
+          - "ubuntu-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -153,37 +153,79 @@ jobs:
 
       - name: HLint
         run: nix run .#lint
-  release:
+  release_osx:
     needs: [cabal, stack, nix, notify-tests, lint]
     if: github.ref == 'refs/heads/release'
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - os: "macos-latest"
-            renamer: rename_osx.sh
-          - os: "ubuntu-latest"
-            renamer: rename_linux.sh
-    runs-on: ${{ matrix.platform.os }}
+        os:
+          - "macos-12"
+          - "macos-13"
+          - "macos-14"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: haskell-actions/setup@v2
         with:
-          ghc-version: "9.6.3"
-
-      - name: Configure
-        # TODO: It would be nice if we could figure out static binaries.
-        # This doesn't appear to work, according to ldd.
-        run: cabal configure --enable-executable-static --enable-executable-stripping --ghc-options -Werror
+          ghc-version: "9.6.4"
 
       - name: Install binary
         run: |
-          cabal install --installdir=bin --install-method=copy --program-suffix=-${{ matrix.platform.os }}
-          .github/scripts/${{ matrix.platform.renamer }}
+          .github/scripts/release_osx.sh
 
       - name: Upload binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: bin
+  release_linux_static:
+    needs: [cabal, stack, nix, notify-tests, lint]
+    if: github.ref == 'refs/heads/release'
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - "alpine_amd64"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker-practice/actions-setup-docker@master
+
+      - name: Install binary
+        run: |
+          .github/scripts/release_linux_static.sh ${{ matrix.dir }}
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.dir }}
+          path: bin
+  release_linux:
+    needs: [cabal, stack, nix, notify-tests, lint]
+    if: github.ref == 'refs/heads/release'
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install binary
+        run: |
+          .github/scripts/release_linux.sh
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-ubuntu-latest
+          path: bin
+  merge:
+    runs-on: "ubuntu-latest"
+    needs: [release_osx, release_linux, release_linux_static]
+    steps:
+      - name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v4
         with:
           name: build-artifacts
-          path: bin
+          pattern: build-artifacts-*
+          delete-merged: true

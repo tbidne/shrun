@@ -20,11 +20,12 @@
 ### Table of Contents
 - [Motivation](#motivation)
 - [Introduction](#introduction)
-- [Configuration](#configuration)
+- [Installation](#installation)
 - [Building](#building)
   - [Cabal](#cabal)
   - [Stack](#stack)
   - [Nix](#nix)
+- [Configuration](#configuration)
 - [FAQ](#faq)
 
 # Motivation
@@ -78,9 +79,9 @@ A running timer is provided, and stdout will be updated when a command finishes 
 
 Note: `shrun` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
 
-# Configuration
+# Installation
 
-See [configuration.md](configuration.md) for the available options.
+The [releases](https://github.com/tbidne/shrun/releases) page has binaries built for several platforms. If there are no binaries for your platform, it is possible to [build shrun](#building) yourself.
 
 # Building
 
@@ -157,6 +158,10 @@ Then include this in the `systemPackages`:
   ];
 }
 ```
+
+# Configuration
+
+See [configuration.md](configuration.md) for the available options.
 
 # FAQ
 
