@@ -47,10 +47,12 @@ common common-lang
   if os(osx)
     cpp-options: -DOSX
 
+  default-language:   GHC2021
+
 library
-  import:           common-lang
-  other-modules:    Paths_shrun
-  autogen-modules:  Paths_shrun
+  import:          common-lang
+  other-modules:   Paths_shrun
+  autogen-modules: Paths_shrun
   exposed-modules:
     Shrun
     Shrun.Configuration
@@ -136,12 +138,11 @@ library
     , toml-reader            >=0.2.0.0  && <0.3.0.0
     , unordered-containers   ^>=0.2.9.0
 
-  hs-source-dirs:   src
-  default-language: GHC2021
+  hs-source-dirs:  src
 
 library shrun-verifier
-  import:           common-lang
-  exposed-modules:  Test.Shrun.Verifier
+  import:          common-lang
+  exposed-modules: Test.Shrun.Verifier
   build-depends:
     , base
     , optics-core
@@ -149,24 +150,22 @@ library shrun-verifier
     , tasty-hunit
     , text
 
-  hs-source-dirs:   test/verifier
-  default-language: GHC2021
+  hs-source-dirs:  test/verifier
 
 executable shrun
-  import:           common-lang
-  main-is:          Main.hs
+  import:         common-lang
+  main-is:        Main.hs
   build-depends:
     , base
     , shrun
 
-  hs-source-dirs:   app
-  ghc-options:      -threaded -with-rtsopts=-N
-  default-language: GHC2021
+  hs-source-dirs: app
+  ghc-options:    -threaded -with-rtsopts=-N
 
 test-suite unit
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
   other-modules:
     Unit.Generators
     Unit.Prelude
@@ -191,14 +190,13 @@ test-suite unit
     , time                  >=1.9.3   && <1.14
     , unordered-containers
 
-  hs-source-dirs:   test/unit
-  ghc-options:      -threaded -with-rtsopts=-N
-  default-language: GHC2021
+  hs-source-dirs: test/unit
+  ghc-options:    -threaded -with-rtsopts=-N
 
 test-suite integration
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
   other-modules:
     Integration.Defaults
     Integration.Examples
@@ -221,13 +219,12 @@ test-suite integration
     , tasty-hunit
     , text
 
-  hs-source-dirs:   test/integration
-  default-language: GHC2021
+  hs-source-dirs: test/integration
 
 test-suite functional
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
   other-modules:
     Functional.Buffering
     Functional.Examples
@@ -253,13 +250,12 @@ test-suite functional
     , tasty-hunit
     , text
 
-  hs-source-dirs:   test/functional
-  default-language: GHC2021
+  hs-source-dirs: test/functional
 
 test-suite notify
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
   other-modules:
   build-depends:
     , base
@@ -269,14 +265,13 @@ test-suite notify
     , tasty-hunit
     , text
 
-  hs-source-dirs:   test/notify
-  default-language: GHC2021
+  hs-source-dirs: test/notify
 
 benchmark benchmarks
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
-  other-modules:    Bench.Prelude
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  other-modules:  Bench.Prelude
   build-depends:
     , base
     , deepseq      >=1.4.4.0 && <1.6
@@ -285,5 +280,4 @@ benchmark benchmarks
     , shrun
     , tasty-bench  ^>=0.3
 
-  hs-source-dirs:   benchmarks
-  default-language: GHC2021
+  hs-source-dirs: benchmarks
