@@ -18,6 +18,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 * `--file-log-size-mode` now defaults to `warn 50 mb` (i.e. warn when the log
   file exceeds 50 mb). There is a new option `nothing` to disable this.
 * `--cmd-name-trunc` short option `-x` removed.
+* `--cmd-log-line-trunc` short option `-y` removed.
 * `--no-x` disable args now hidden from help page.
 
 ### Added

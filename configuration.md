@@ -400,7 +400,7 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 ### Command Line Truncation
 
-**Arg:** `-y, --cmd-log-line-trunc (NATURAL | detect)`
+**Arg:** `--cmd-log-line-trunc (NATURAL | detect)`
 
 **Description:** Non-negative integer that limits the length of logs produced via [`--cmd-log`](#command-log) in the console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation. This does not affect file logs with [`--file-log`](#file-log).
 

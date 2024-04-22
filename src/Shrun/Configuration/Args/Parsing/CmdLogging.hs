@@ -69,7 +69,6 @@ cmdLogLineTruncParser = Utils.withDisabledParser mainParser "cmd-log-line-trunc"
           (Trunc.parseLineTruncation OA.auto OA.str)
           ( mconcat
               [ OA.long "cmd-log-line-trunc",
-                OA.short 'y',
                 Utils.mkHelp helpTxt,
                 OA.metavar "(NATURAL | detect)"
               ]

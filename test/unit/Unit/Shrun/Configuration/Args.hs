@@ -725,20 +725,10 @@ cmdLineTruncSpecs :: TestTree
 cmdLineTruncSpecs =
   testGroup
     "Command line truncation arg parsing"
-    [ parseShortCmdLineTrunc,
-      parseLongCmdLineTrunc,
+    [ parseLongCmdLineTrunc,
       parseDetectCmdLineTrunc,
       parseNoCmdLogLineTrunc
     ]
-
-parseShortCmdLineTrunc :: TestTree
-parseShortCmdLineTrunc =
-  testPropertyNamed desc "parseShortCmdLineTrunc"
-    $ verifyResult argList expected
-  where
-    desc = "Should parse -y as command line truncation"
-    argList = ["-y", "15", "command"]
-    expected = updateDefCmdLogArgs #lineTrunc (Undetected 15)
 
 parseLongCmdLineTrunc :: TestTree
 parseLongCmdLineTrunc =
