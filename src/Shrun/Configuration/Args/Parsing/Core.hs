@@ -212,7 +212,6 @@ cmdNameTruncParser = Utils.withDisabledParser mainParser "cmd-name-trunc"
           (Trunc.parseTruncation OA.auto)
           ( mconcat
               [ OA.long "cmd-name-trunc",
-                OA.short 'x',
                 Utils.mkHelp helpTxt,
                 OA.metavar "NATURAL"
               ]
@@ -220,8 +219,5 @@ cmdNameTruncParser = Utils.withDisabledParser mainParser "cmd-name-trunc"
     helpTxt =
       mconcat
         [ "Non-negative integer that limits the length of commands/key-names ",
-          "in the console logs. Defaults to no truncation. This affects ",
-          "everywhere the command/key-name shows up (i.e. in command logs or ",
-          "final success/error message); File logs created via --file-log ",
-          "are unaffected."
+          "in the console logs. Defaults to no truncation."
         ]

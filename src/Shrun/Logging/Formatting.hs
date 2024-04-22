@@ -112,7 +112,7 @@ formatFileLog keyHide fileLogging log = do
           let cmd' =
                 formatCommand
                   keyHide
-                  Nothing
+                  (fileLogging ^. #cmdNameTrunc)
                   cmd
            in mconcat
                 [ brackets False prefix,

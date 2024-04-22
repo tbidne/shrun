@@ -56,6 +56,7 @@ specs args =
       fileLogStripControlNone args,
       fileLogStripControlSmart args,
       cmdNameTruncN,
+      fileLogCmdNameTruncN args,
       cmdLogLineTruncN,
       notifyActionFinal,
       notifyTimeoutNever
@@ -387,7 +388,9 @@ stripControlAll = testCase "Runs --cmd-log-strip-control all example" $ do
   where
     args =
       withNoConfig
-        [ "-lx10",
+        [ "-l",
+          "--cmd-name-trunc",
+          "10",
           "--cmd-log-strip-control",
           "all",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
@@ -427,7 +430,9 @@ stripControlNone = testCase "Runs --cmd-log-strip-control none example" $ do
   where
     args =
       withNoConfig
-        [ "-lx10",
+        [ "-l",
+          "--cmd-name-trunc",
+          "10",
           "--cmd-log-strip-control",
           "none",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
@@ -443,7 +448,9 @@ stripControlSmart = testCase "Runs --cmd-log-strip-control smart example" $ do
   where
     args =
       withNoConfig
-        [ "-lx10",
+        [ "-l",
+          "--cmd-name-trunc",
+          "10",
           "--cmd-log-strip-control=smart",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
@@ -536,6 +543,34 @@ cmdNameTruncN = testCase "Runs --cmd-name-trunc 10 example" $ do
     expected =
       [ withCommandPrefix "for i i..." "hi",
         withSuccessPrefix "for i i..."
+      ]
+
+fileLogCmdNameTruncN :: IO TestArgs -> TestTree
+fileLogCmdNameTruncN testArgs = testCase "Runs --file-log-cmd-name-trunc 10 example" $ do
+  outFile <- (</>! "readme-file-log-cmd-name-trunc-out.log") . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--file-log-cmd-name-trunc",
+            "10",
+            "for i in 1 2 3; do echo hi; sleep 1; done"
+          ]
+
+  resultsConsole <- fmap MkResultText <$> (readIORef =<< run args)
+  V.verifyExpected resultsConsole expectedConsole
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedConsole =
+      [ withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done", -- not truncated
+        withFinishedPrefix "3 seconds"
+      ]
+    expectedFile =
+      [ withCommandPrefix "for i i..." "hi",
+        withFinishedPrefix "3 seconds"
       ]
 
 cmdLogLineTruncN :: TestTree

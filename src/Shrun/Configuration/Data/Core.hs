@@ -49,7 +49,7 @@ data CoreConfigP p = MkCoreConfigP
     cmdLogReadSize :: ConfigPhaseF p (Bytes B Natural),
     -- | How to format the timer.
     timerFormat :: ConfigPhaseF p TimerFormat,
-    -- | The max number of command characters to display in the logs.
+    -- | The max number of command characters to display in the console logs.
     cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
     -- | Command log config.
     cmdLogging :: ArgsOnlyDetF p (CmdLoggingP p),

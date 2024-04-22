@@ -34,6 +34,7 @@ import Shrun.Configuration.Data.Core
 import Shrun.Configuration.Data.FileLogging
   ( FileLoggingP
       ( MkFileLoggingP,
+        cmdNameTrunc,
         mode,
         path,
         sizeMode,
@@ -67,6 +68,7 @@ defaultArgs commands =
             fileLogging =
               MkFileLoggingP
                 { path = mempty,
+                  cmdNameTrunc = mempty,
                   stripControl = mempty,
                   mode = mempty,
                   sizeMode = mempty

@@ -18,6 +18,7 @@
     - [Strip Control](#strip-control)
     - [File Log Strip Control](#file-log-strip-control)
     - [Command Name Truncation](#command-name-truncation)
+    - [File Command Name Truncation](#file-command-name-truncation)
     - [Command Line Truncation](#command-line-truncation)
   - [Notifications](#notifications)
     - [Notify Action](#notify-action)
@@ -324,25 +325,25 @@ Though it is possible to miss some chars. This option is experimental and subjec
 
 **Example:**
 
-Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes. The former sets the text color to magenta, and the latter resets the cursor to the left by 3 places i.e. partially overwrites the previous characters. We also include the options `-lx10` (show command logs and truncate command name to 10 chars) to make the output easier to read.
+Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes. The former sets the text color to magenta, and the latter resets the cursor to the left by 3 places i.e. partially overwrites the previous characters. We also include the options `-l --cmd-name-trunc 10` (show command logs and truncate command name to 10 chars) to make the output easier to read.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -l --cmd-name-trunc 10 --cmd-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command][echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 
 `none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -l --cmd-name-trunc 10 --cmd-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun -lx10 --cmd-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun -l --cmd-name-trunc 10 --cmd-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
@@ -355,9 +356,9 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 ### Command Name Truncation
 
-**Arg:** `-x, --cmd-name-trunc NATURAL`
+**Arg:** `--cmd-name-trunc NATURAL`
 
-**Description:** Non-negative integer that limits the length of commands/key-names in the console logs. Defaults to no truncation. This affects everywhere the command/key-name shows up (i.e. in command logs or final success/error message). File logs created via [`--file-log`](#file-log) are unaffected.
+**Description:** Non-negative integer that limits the length of commands/key-names in the console logs. Defaults to no truncation.
 
 **Example:**
 
@@ -371,6 +372,30 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 <code><span style="color: #ff79c6">$</span><span> shrun --cmd-log --cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #69ff94">[Success][for i i...] 3 seconds</span>
 <span style="color: #d6acff">[Finished] 3 seconds</span></code>
+</pre>
+
+### File Command Name Truncation
+
+**Arg:** `--file-log-cmd-name-trunc NATURAL`
+
+**Description:** Like [`--cmd-name-trunc`](#command-name-truncation), but for `--file-logs`.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log out.log --file-log-cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<span style="color: #69ff94">[Success][for i i...] 3 seconds</span>
+<span style="color: #d6acff">[Finished] 3 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat out.log</span>
+<span style="color:">[2024-04-23 01:05:21][Command][for i in {1..3}; do echo hi; sleep 1; done] Starting...</span>
+<span style="color:">[2024-04-23 01:05:21][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2024-04-23 01:05:22][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2024-04-23 01:05:23][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2024-04-23 01:05:24][Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
+<span style="color:">[2024-04-23 01:05:24][Finished] 3 seconds</span>
 </pre>
 
 ### Command Line Truncation

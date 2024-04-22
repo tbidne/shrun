@@ -13,6 +13,7 @@ where
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
     ConfigPhaseF,
+    ConfigPhaseMaybeF,
   )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
@@ -23,6 +24,7 @@ import Shrun.Data.FileMode (FileMode, defaultFileMode)
 import Shrun.Data.FilePathDefault (FilePathDefault)
 import Shrun.Data.FileSizeMode (FileSizeMode, defaultFileSizeMode)
 import Shrun.Data.StripControl (StripControl, defaultFileLogStripControl)
+import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
 import Shrun.Prelude
 
 -- NOTE: [Args vs. Toml mandatory fields]
@@ -55,6 +57,8 @@ type FileLoggingP :: ConfigPhase -> Type
 data FileLoggingP p = MkFileLoggingP
   { -- | Optional path to log file.
     path :: FileLogPathF p,
+    -- | The max number of command characters to display in the file logs.
+    cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     stripControl :: ConfigPhaseF p StripControl,
@@ -101,6 +105,10 @@ mergeFileLogging args mToml =
         Just
           $ MkFileLoggingP
             { path = toml ^. #path,
+              cmdNameTrunc =
+                plusNothing
+                  #cmdNameTrunc
+                  (toml ^. #cmdNameTrunc),
               stripControl =
                 plusDefault
                   defaultFileLogStripControl
@@ -123,6 +131,8 @@ mergeFileLogging args mToml =
         Just
           $ MkFileLoggingP
             { path,
+              cmdNameTrunc =
+                WD.toMaybe (args ^. #cmdNameTrunc),
               stripControl =
                 WD.fromWithDisabled
                   defaultFileLogStripControl
@@ -137,6 +147,10 @@ mergeFileLogging args mToml =
         Just
           $ MkFileLoggingP
             { path,
+              cmdNameTrunc =
+                plusNothing
+                  #cmdNameTrunc
+                  (toml ^. #cmdNameTrunc),
               stripControl =
                 plusDefault
                   defaultFileLogStripControl
@@ -157,16 +171,23 @@ mergeFileLogging args mToml =
     plusDefault :: a -> Lens' FileLoggingArgs (WithDisabled a) -> Maybe a -> a
     plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
 
+    plusNothing :: Lens' FileLoggingArgs (WithDisabled a) -> Maybe a -> Maybe a
+    plusNothing l r = WD.toMaybe $ (args ^. l) <>? r
+
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =
     MkFileLoggingP
       <$> decodeFileLogging
+      <*> decodeFileCmdNameTrunc
       <*> decodeFileLogStripControl
       <*> decodeFileLogMode
       <*> decodeFileLogSizeMode
 
 decodeFileLogging :: Decoder FilePathDefault
 decodeFileLogging = getFieldWith tomlDecoder "path"
+
+decodeFileCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
+decodeFileCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
 
 decodeFileLogStripControl :: Decoder (Maybe StripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "strip-control"

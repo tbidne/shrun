@@ -9,7 +9,14 @@ import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.FileLogging
   ( FileLoggingArgs,
-    FileLoggingP (MkFileLoggingP, mode, path, sizeMode, stripControl),
+    FileLoggingP
+      ( MkFileLoggingP,
+        cmdNameTrunc,
+        mode,
+        path,
+        sizeMode,
+        stripControl
+      ),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Data.FileMode (FileMode)
@@ -20,11 +27,14 @@ import Shrun.Data.FileSizeMode (FileSizeMode)
 import Shrun.Data.FileSizeMode qualified as FileSizeMode
 import Shrun.Data.StripControl (StripControl)
 import Shrun.Data.StripControl qualified as StripControl
+import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
+import Shrun.Data.Truncation qualified as Trunc
 import Shrun.Prelude
 
 fileLoggingParser :: Parser FileLoggingArgs
 fileLoggingParser = do
   path <- fileLogParser
+  cmdNameTrunc <- fileLogCmdNameTruncParser
   stripControl <- fileLogStripControlParser
   mode <- fileLogModeParser
   sizeMode <- fileLogSizeModeParser
@@ -32,6 +42,7 @@ fileLoggingParser = do
   pure
     $ MkFileLoggingP
       { path,
+        cmdNameTrunc,
         stripControl,
         mode,
         sizeMode
@@ -60,6 +71,22 @@ fileLogParser = Utils.withDisabledParser mainParser "file-log"
           "If the string 'default' is given, then we write to the XDG state ",
           "directory e.g. ~/.local/state/shrun/shrun.log."
         ]
+
+fileLogCmdNameTruncParser :: Parser (WithDisabled (Truncation TCmdName))
+fileLogCmdNameTruncParser =
+  Utils.withDisabledParser mainParser "file-log-cmd-name-trunc"
+  where
+    mainParser =
+      OA.optional
+        $ OA.option
+          (Trunc.parseTruncation OA.auto)
+          ( mconcat
+              [ OA.long "file-log-cmd-name-trunc",
+                Utils.mkHelp helpTxt,
+                OA.metavar "NATURAL"
+              ]
+          )
+    helpTxt = "Like --cmd-name-trunc, but for --file-logs."
 
 fileLogStripControlParser :: Parser (WithDisabled StripControl)
 fileLogStripControlParser =

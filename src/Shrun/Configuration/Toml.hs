@@ -50,7 +50,7 @@ instance DecodeTOML Toml where
     pollInterval <- decodePollInterval
     cmdLogReadSize <- decodeCmdLogReadSize
     timerFormat <- decodeTimerFormat
-    cmdNameTrunc <- decodeCmdNameTrunc
+    cmdNameTrunc <- decodecmdNameTrunc
     cmdLogging <- getFieldOptWith tomlDecoder "cmd-log"
     fileLogging <- getFieldOptWith tomlDecoder "file-log"
     notify <- getFieldOptWith tomlDecoder "notify"
@@ -108,8 +108,8 @@ decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
 decodeTimerFormat :: Decoder (Maybe TimerFormat)
 decodeTimerFormat = getFieldOptWith tomlDecoder "timer-format"
 
-decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
-decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
+decodecmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
+decodecmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
 
 decodeCmdLogReadSize :: Decoder (Maybe (Bytes B Natural))
 decodeCmdLogReadSize = getFieldOptWith (fmap MkBytes tomlDecoder) "cmd-log-read-size"

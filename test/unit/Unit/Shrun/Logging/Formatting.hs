@@ -50,6 +50,7 @@ import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, msg),
     LogLevel (LevelCommand),
+    LogMode (LogModeSet),
   )
 import Shrun.Utils qualified as Utils
 import Test.Tasty qualified as T
@@ -324,7 +325,8 @@ fileLogProps =
       fileLogPrefixProps,
       commandProps,
       commandPropsShowKey,
-      shapeProps
+      shapeProps,
+      testFileLogCmdNameTrunc
     ]
 
 timestampProps :: TestTree
@@ -405,14 +407,33 @@ shapeProps =
       annotate $ T.unpack result
       expected === result
 
+testFileLogCmdNameTrunc :: TestTree
+testFileLogCmdNameTrunc = testCase "File Log Cmd Name Trunc" $ do
+  let longLog = mkLog "some long cmd"
+      longResult = formatFile' (Just 10) KeyHideOff longLog
+
+  "[2020-05-31 12:00:00][Command][some lo...] cmd\n" @=? longResult
+
+  let shortLog = mkLog "short cmd"
+      shortResult = formatFile' (Just 10) KeyHideOff shortLog
+
+  "[2020-05-31 12:00:00][Command][short cmd] cmd\n" @=? shortResult
+  where
+    mkLog c = MkLog (Just c) "cmd" LevelCommand LogModeSet
+
 formatFileLog :: KeyHide -> Log -> Text
-formatFileLog keyHide log =
+formatFileLog = formatFile' Nothing
+
+formatFile' :: Maybe (Truncation TCmdName) -> KeyHide -> Log -> Text
+formatFile' mCmdNameTrunc keyHide log =
   view #unFileLog
-    $ Formatting.formatFileLog @MockTime keyHide fileLog log
+    $ Formatting.formatFileLog @MockTime keyHide fileLog' log
     ^. #runMockTime
+  where
+    fileLog' = set' #cmdNameTrunc mCmdNameTrunc fileLog
 
 fileLog :: FileLogging
-fileLog = MkFileLogging StripControlNone (error err)
+fileLog = MkFileLogging StripControlNone Nothing (error err)
   where
     err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLog"
 

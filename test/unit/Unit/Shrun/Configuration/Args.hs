@@ -54,6 +54,7 @@ tests =
       timeoutSpecs,
       initSpecs,
       fileLoggingSpecs,
+      fileLoggingCmdNameTruncSpecs,
       fileLogModeSpecs,
       fileLogStripControlSpecs,
       fileLogSizeModeSpecs,
@@ -297,6 +298,32 @@ parseNoFileLog =
   where
     argList = ["--no-file-log", "command"]
     expected = disableDefCoreArgs (#fileLogging % #path)
+
+fileLoggingCmdNameTruncSpecs :: TestTree
+fileLoggingCmdNameTruncSpecs =
+  testGroup
+    "FileLog cmd name trunc arg parsing"
+    [ parseFileLogCmdNameTrunc,
+      parseNoFileLogCmdNameTrunc
+    ]
+
+parseFileLogCmdNameTrunc :: TestTree
+parseFileLogCmdNameTrunc =
+  testPropertyNamed
+    "Should parse --file-log-cmd-name-trunc as command name truncation"
+    "parseFileLogCmdNameTrunc"
+    $ verifyResult argList expected
+  where
+    argList = ["--file-log-cmd-name-trunc", "15", "command"]
+    expected = updateDefFileLogArgs #cmdNameTrunc 15
+
+parseNoFileLogCmdNameTrunc :: TestTree
+parseNoFileLogCmdNameTrunc =
+  testPropertyNamed "Parse --no-file-log-cmd-name-trunc" "parseNoFileLogCmdNameTrunc"
+    $ verifyResult argList expected
+  where
+    argList = ["--no-file-log-cmd-name-trunc", "command"]
+    expected = disableDefFileLogArgs #cmdNameTrunc
 
 fileLogModeSpecs :: TestTree
 fileLogModeSpecs =
@@ -671,34 +698,24 @@ parseNoCmdLogStripControl =
 cmdNameTruncSpecs :: TestTree
 cmdNameTruncSpecs =
   testGroup
-    "Command name truncation arg parsing"
-    [ parseShortCmdNameTrunc,
-      parseLongCmdNameTrunc,
-      parseNoCmdNameTrunc
+    "Console command name truncation arg parsing"
+    [ parsecmdNameTrunc,
+      parseNocmdNameTrunc
     ]
 
-parseShortCmdNameTrunc :: TestTree
-parseShortCmdNameTrunc =
-  testPropertyNamed desc "parseShortCmdNameTrunc"
-    $ verifyResult argList expected
-  where
-    desc = "Should parse -x as command name truncation"
-    argList = ["-x", "15", "command"]
-    expected = updateDefCoreArgs #cmdNameTrunc 15
-
-parseLongCmdNameTrunc :: TestTree
-parseLongCmdNameTrunc =
+parsecmdNameTrunc :: TestTree
+parsecmdNameTrunc =
   testPropertyNamed
     "Should parse --cmd-name-trunc as command name truncation"
-    "parseLongCmdNameTrunc"
+    "parsecmdNameTrunc"
     $ verifyResult argList expected
   where
     argList = ["--cmd-name-trunc", "15", "command"]
     expected = updateDefCoreArgs #cmdNameTrunc 15
 
-parseNoCmdNameTrunc :: TestTree
-parseNoCmdNameTrunc =
-  testPropertyNamed "Parse --no-cmd-name-trunc" "parseNoCmdNameTrunc"
+parseNocmdNameTrunc :: TestTree
+parseNocmdNameTrunc =
+  testPropertyNamed "Parse --no-cmd-name-trunc" "parseNocmdNameTrunc"
     $ verifyResult argList expected
   where
     argList = ["--no-cmd-name-trunc", "command"]
@@ -982,6 +999,15 @@ updateDefFileLogArgs ::
   a ->
   Maybe Args
 updateDefFileLogArgs l x = (l' .~ With x) defArgs
+  where
+    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' = _Just % #coreConfig % #fileLogging % l
+
+disableDefFileLogArgs ::
+  forall a.
+  Lens' FileLoggingArgs (WithDisabled a) ->
+  Maybe Args
+disableDefFileLogArgs l = (l' .~ Disabled) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
     l' = _Just % #coreConfig % #fileLogging % l

@@ -19,6 +19,7 @@ strip-control = "all"
 
 [file-log]
 path = "default"
+cmd-name-trunc = 20
 mode = "append"
 
 [notify]

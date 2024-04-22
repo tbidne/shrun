@@ -60,7 +60,7 @@ import Shrun.Env.Types
         notifyEnv,
         timeout
       ),
-    FileLogging (MkFileLogging, log, stripControl),
+    FileLogging (MkFileLogging, cmdNameTrunc, log, stripControl),
     HasLogging,
     Logging
       ( MkLogging,
@@ -219,6 +219,7 @@ fromMergedConfig cfg onEnv = do
                     mFileLogging <&> \(h, q, sc) ->
                       MkFileLogging
                         { log = (h, q),
+                          cmdNameTrunc = cfg ^? (#coreConfig % #fileLogging %? #cmdNameTrunc % _Just),
                           stripControl = sc
                         }
                 },

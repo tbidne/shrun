@@ -153,6 +153,9 @@ val = 'b'
 # a PATH.
 #path = "default"
 
+# Like cmd-name-trunc, but for file logs.
+# cmd-name-trunc = 40
+
 # Mode in which to open the log file. Can be "write" (the default) or
 # "append".
 #mode = "write"

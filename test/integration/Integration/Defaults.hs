@@ -40,6 +40,7 @@ import Shrun.Configuration.Data.Core
 import Shrun.Configuration.Data.FileLogging
   ( FileLoggingP
       ( MkFileLoggingP,
+        cmdNameTrunc,
         mode,
         path,
         sizeMode,
@@ -145,6 +146,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                   Just
                     $ MkFileLoggingP
                       { path = FPDefault,
+                        cmdNameTrunc = Just 45,
                         stripControl = StripControlNone,
                         mode = FileModeAppend,
                         sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
@@ -186,6 +188,8 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         logPath,
         "--file-log-strip-control",
         "none",
+        "--file-log-cmd-name-trunc",
+        "35",
         "--cmd-log",
         "--key-hide",
         "--poll-interval",
@@ -228,6 +232,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                   Just
                     $ MkFileLoggingP
                       { path = FPManual logPath,
+                        cmdNameTrunc = Just 35,
                         stripControl = StripControlNone,
                         mode = FileModeAppend,
                         sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
@@ -286,6 +291,8 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
     args =
       [ "--config",
         getIntConfigOS "overridden",
+        "--file-log-cmd-name-trunc",
+        "55",
         "--file-log-mode",
         "write",
         "--file-log-strip-control",
@@ -296,7 +303,8 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
       ]
 
     expected =
-      [ #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
+      [ #coreConfig % #fileLogging %? #cmdNameTrunc ^?=@ Just (Just 55),
+        #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
         #coreConfig % #fileLogging %? #mode ^?=@ Just FileModeWrite,
         #coreConfig % #fileLogging %? #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
       ]

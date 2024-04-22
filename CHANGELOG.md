@@ -17,12 +17,15 @@ the major/minor/patch definitions apply to the application's interface / usage
   that.
 * `--file-log-size-mode` now defaults to `warn 50 mb` (i.e. warn when the log
   file exceeds 50 mb). There is a new option `nothing` to disable this.
+* `--cmd-name-trunc` short option `-x` removed.
 * `--no-x` disable args now hidden from help page.
 
 ### Added
 * Added stack support back.
 * New option `--cmd-log-read-size` (toml: `cmd-log-read-size`) that controls
   the size of logs we read from command with `--cmd-log` and `--file-log`.
+* New option `--file-log-cmd-name-trunc` (toml: `file-log.cmd-name-trunc`)
+  for command name truncation in the file logs.
 
 ### Fixed
 * Improved `strip-control` options `all` and `smart` to replace newlines with

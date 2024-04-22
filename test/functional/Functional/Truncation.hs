@@ -22,7 +22,8 @@ spec =
     -- output logged
     commands = ["echo \"a long command\" && sleep 1"]
     argList =
-      [ "-x 10",
+      [ "--cmd-name-trunc",
+        "10",
         "--no-config"
       ]
         <> commands

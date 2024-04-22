@@ -48,6 +48,7 @@ makeFieldLabelsNoPrefix ''CmdLogging
 
 data FileLogging = MkFileLogging
   { stripControl :: StripControl,
+    cmdNameTrunc :: Maybe (Truncation TCmdName),
     log :: ~(Tuple2 Handle (TBQueue FileLog))
   }
 
