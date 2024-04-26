@@ -5,20 +5,19 @@ where
 
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.CmdLogging (mergeCmdLogging)
+import Shrun.Configuration.Data.CommonLogging (mergeCommonLogging)
+import Shrun.Configuration.Data.ConsoleLogging (mergeConsoleLogging)
 import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
       ( MkCoreConfigP,
-        cmdLogReadSize,
         cmdLogging,
-        cmdNameTrunc,
+        commonLogging,
+        consoleLogging,
         fileLogging,
         init,
-        keyHide,
         notify,
-        pollInterval,
-        timeout,
-        timerFormat
+        timeout
       ),
   )
 import Shrun.Configuration.Data.FileLogging (mergeFileLogging)
@@ -35,10 +34,6 @@ import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Data.Command (Command (MkCommand))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff), defaultKeyHide)
-import Shrun.Data.PollInterval (defaultPollInterval)
-import Shrun.Data.TimerFormat (defaultTimerFormat)
-import Shrun.Logging.Types (defaultCmdLogReadSize)
 import Shrun.Prelude
 
 -- | Merges Args and Toml together, filling in necessary defaults and
@@ -64,10 +59,10 @@ mergeConfig args mToml = do
   case mToml of
     Nothing -> do
       let commands = MkCommand Nothing <$> cmdsText
-      cmdLogging <-
-        mergeCmdLogging
-          (args ^. #cmdLog)
-          (args ^. (#coreConfig % #cmdLogging))
+
+      consoleLogging <-
+        mergeConsoleLogging
+          (args ^. (#coreConfig % #consoleLogging))
           Nothing
       pure
         $ MkMergedConfig
@@ -75,25 +70,15 @@ mergeConfig args mToml = do
               MkCoreConfigP
                 { timeout = WD.toMaybe (args ^. (#coreConfig % #timeout)),
                   init = WD.toMaybe (args ^. (#coreConfig % #init)),
-                  keyHide =
-                    WD.fromWithDisabled
-                      defaultKeyHide
-                      (args ^. (#coreConfig % #keyHide)),
-                  pollInterval =
-                    WD.fromWithDisabled
-                      defaultPollInterval
-                      (args ^. (#coreConfig % #pollInterval)),
-                  cmdLogReadSize =
-                    WD.fromWithDisabled
-                      defaultCmdLogReadSize
-                      (args ^. (#coreConfig % #cmdLogReadSize)),
-                  timerFormat =
-                    WD.fromWithDisabled
-                      defaultTimerFormat
-                      (args ^. (#coreConfig % #timerFormat)),
-                  cmdNameTrunc =
-                    WD.toMaybe (args ^. (#coreConfig % #cmdNameTrunc)),
-                  cmdLogging,
+                  commonLogging =
+                    mergeCommonLogging
+                      (args ^. (#coreConfig % #commonLogging))
+                      Nothing,
+                  consoleLogging,
+                  cmdLogging =
+                    mergeCmdLogging
+                      (args ^. (#coreConfig % #cmdLogging))
+                      Nothing,
                   fileLogging =
                     mergeFileLogging
                       (args ^. (#coreConfig % #fileLogging))
@@ -114,11 +99,10 @@ mergeConfig args mToml = do
             Left err -> throwM err
           Left err -> throwM err
 
-      cmdLogging <-
-        mergeCmdLogging
-          (args ^. #cmdLog)
-          (args ^. (#coreConfig % #cmdLogging))
-          (toml ^. (#coreConfig % #cmdLogging))
+      consoleLogging <-
+        mergeConsoleLogging
+          (args ^. (#coreConfig % #consoleLogging))
+          (toml ^. (#coreConfig % #consoleLogging))
 
       pure
         $ MkMergedConfig
@@ -128,31 +112,15 @@ mergeConfig args mToml = do
                     plusNothing #timeout (toml ^. (#coreConfig % #timeout)),
                   init =
                     plusNothing #init (toml ^. (#coreConfig % #init)),
-                  keyHide =
-                    plusDefault
-                      KeyHideOff
-                      #keyHide
-                      (toml ^. (#coreConfig % #keyHide)),
-                  pollInterval =
-                    plusDefault
-                      defaultPollInterval
-                      #pollInterval
-                      (toml ^. (#coreConfig % #pollInterval)),
-                  cmdLogReadSize =
-                    plusDefault
-                      defaultCmdLogReadSize
-                      #cmdLogReadSize
-                      (toml ^. (#coreConfig % #cmdLogReadSize)),
-                  timerFormat =
-                    plusDefault
-                      defaultTimerFormat
-                      #timerFormat
-                      (toml ^. (#coreConfig % #timerFormat)),
-                  cmdNameTrunc =
-                    plusNothing
-                      #cmdNameTrunc
-                      (toml ^. (#coreConfig % #cmdNameTrunc)),
-                  cmdLogging,
+                  commonLogging =
+                    mergeCommonLogging
+                      (args ^. (#coreConfig % #commonLogging))
+                      (toml ^. (#coreConfig % #commonLogging)),
+                  consoleLogging,
+                  cmdLogging =
+                    mergeCmdLogging
+                      (args ^. (#coreConfig % #cmdLogging))
+                      (toml ^. (#coreConfig % #cmdLogging)),
                   fileLogging =
                     mergeFileLogging
                       (args ^. (#coreConfig % #fileLogging))
@@ -166,9 +134,6 @@ mergeConfig args mToml = do
           }
   where
     cmdsText = args ^. #commands
-
-    plusDefault :: a -> Lens' CoreConfigArgs (WithDisabled a) -> Maybe a -> a
-    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. (#coreConfig % l)) <>? r
 
     plusNothing :: Lens' CoreConfigArgs (WithDisabled a) -> Maybe a -> Maybe a
     plusNothing l r = WD.toMaybe $ (args ^. (#coreConfig % l)) <>? r

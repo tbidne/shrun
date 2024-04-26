@@ -163,14 +163,14 @@ initOff =
 
 cmdLogReadSizeDefault :: TestTree
 cmdLogReadSizeDefault =
-  testCase "Default --cmd-log-read-size splits 1024" $ do
+  testCase "Default --read-size splits 1024" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--cmd-log",
-          "--cmd-name-trunc",
+        [ "--console-log-cmd",
+          "--console-log-cmd-name-trunc",
           "5",
           cmd
         ]
@@ -190,7 +190,7 @@ cmdLogReadSize =
   where
     args =
       withNoConfig
-        [ "--cmd-log",
+        [ "--console-log-cmd",
           "--cmd-log-read-size",
           "5",
           cmd
@@ -204,13 +204,13 @@ cmdLogReadSize =
 
 cmdlogOn :: TestTree
 cmdlogOn =
-  testCase "Runs cmdlog example with --cmd-log" $ do
+  testCase "Runs cmdlog example with --console-log-cmd" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--cmd-log",
+        [ "--console-log-cmd",
           "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
         ]
     expected =
@@ -219,13 +219,13 @@ cmdlogOn =
 
 cmdlogOnDefault :: TestTree
 cmdlogOnDefault =
-  testCase "Runs --cmd-log with no output shows default message" $ do
+  testCase "Runs --console-log-cmd with no output shows default message" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--cmd-log",
+        [ "--console-log-cmd",
           "for i in 1 2 3; do sleep 1; done"
         ]
     expected =
@@ -234,7 +234,7 @@ cmdlogOnDefault =
 
 cmdlogOff :: TestTree
 cmdlogOff =
-  testCase "Runs cmdlog example without --cmd-log" $ do
+  testCase "Runs cmdlog example without --console-log-cmd" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyUnexpected results unexpected
   where
@@ -282,7 +282,7 @@ timerFormatDigitalCompact =
   where
     args =
       withBaseArgs
-        [ "--timer-format",
+        [ "--log-timer-format",
           "digital_compact",
           "sleep 2"
         ]
@@ -298,7 +298,7 @@ timerFormatDigitalFull =
   where
     args =
       withBaseArgs
-        [ "--timer-format",
+        [ "--log-timer-format",
           "digital_full",
           "sleep 2"
         ]
@@ -314,7 +314,7 @@ timerFormatProseCompact =
   where
     args =
       withBaseArgs
-        [ "--timer-format",
+        [ "--log-timer-format",
           "prose_compact",
           "sleep 2"
         ]
@@ -330,7 +330,7 @@ timerFormatProseFull =
   where
     args =
       withBaseArgs
-        [ "--timer-format",
+        [ "--log-timer-format",
           "prose_full",
           "sleep 2"
         ]
@@ -340,13 +340,13 @@ timerFormatProseFull =
 
 keyHideOn :: TestTree
 keyHideOn =
-  testCase "Runs key hide example with --key-hide" $ do
+  testCase "Runs key hide example with --log-key-hide" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpectedUnexpected results expected unexpected
   where
     args =
       withBaseArgs
-        [ "--key-hide",
+        [ "--log-key-hide",
           "skynet"
         ]
     expected =
@@ -362,7 +362,7 @@ keyHideOn =
 
 keyHideOff :: TestTree
 keyHideOff =
-  testCase "Runs key hide example without --key-hide" $ do
+  testCase "Runs key hide example without --log-key-hide" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpectedUnexpected results expected unexpected
   where
@@ -382,16 +382,16 @@ keyHideOff =
       ]
 
 stripControlAll :: TestTree
-stripControlAll = testCase "Runs --cmd-log-strip-control all example" $ do
+stripControlAll = testCase "Runs --console-log-strip-control all example" $ do
   results <- fmap MkResultText <$> (readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "-l",
-          "--cmd-name-trunc",
+        [ "--console-log-cmd",
+          "--console-log-cmd-name-trunc",
           "10",
-          "--cmd-log-strip-control",
+          "--console-log-strip-control",
           "all",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
@@ -411,8 +411,8 @@ stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
   where
     args =
       withNoConfig
-        [ "-l",
-          "--cmd-log-strip-control",
+        [ "--console-log-cmd",
+          "--console-log-strip-control",
           "none",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
@@ -424,16 +424,16 @@ stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
       ]
 
 stripControlNone :: TestTree
-stripControlNone = testCase "Runs --cmd-log-strip-control none example" $ do
+stripControlNone = testCase "Runs --console-log-strip-control none example" $ do
   results <- fmap MkResultText <$> (readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "-l",
-          "--cmd-name-trunc",
+        [ "--console-log-cmd",
+          "--console-log-cmd-name-trunc",
           "10",
-          "--cmd-log-strip-control",
+          "--console-log-strip-control",
           "none",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
@@ -442,16 +442,16 @@ stripControlNone = testCase "Runs --cmd-log-strip-control none example" $ do
       ]
 
 stripControlSmart :: TestTree
-stripControlSmart = testCase "Runs --cmd-log-strip-control smart example" $ do
+stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ do
   results <- fmap MkResultText <$> (readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "-l",
-          "--cmd-name-trunc",
+        [ "--console-log-cmd",
+          "--console-log-cmd-name-trunc",
           "10",
-          "--cmd-log-strip-control=smart",
+          "--console-log-strip-control=smart",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
         ]
     expected =
@@ -529,14 +529,14 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
       ]
 
 cmdNameTruncN :: TestTree
-cmdNameTruncN = testCase "Runs --cmd-name-trunc 10 example" $ do
+cmdNameTruncN = testCase "Runs --console-log-cmd-name-trunc 10 example" $ do
   results <- fmap MkResultText <$> (readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "-l",
-          "--cmd-name-trunc",
+        [ "--console-log-cmd",
+          "--console-log-cmd-name-trunc",
           "10",
           "for i in 1 2 3; do echo hi; sleep 1; done"
         ]
@@ -574,14 +574,14 @@ fileLogCmdNameTruncN testArgs = testCase "Runs --file-log-cmd-name-trunc 10 exam
       ]
 
 cmdLogLineTruncN :: TestTree
-cmdLogLineTruncN = testCase "Runs --cmd-log-line-trunc 80 example" $ do
+cmdLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
   results <- fmap MkResultText <$> (readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "-l",
-          "--cmd-log-line-trunc",
+        [ "--console-log-cmd",
+          "--console-log-line-trunc",
           "80",
           "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"
         ]

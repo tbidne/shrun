@@ -2,18 +2,22 @@
 # CLI's supremacy.
 #
 # We need a separate file from config.toml since some of those values cannot
-# be overridden (e.g. cmd-log = true cannot be overriden from cli)
+# be overridden (e.g. cmd = true cannot be overriden from cli)
 
 timeout = "1h"
 init = "blah"
-log-disable = false
-poll-interval = 100
-cmd-log-read-size = 50
-timer-format = "digital_full"
+
+[log]
 key-hide = false
-cmd-name-trunc = 80
+timer-format = "digital_full"
 
 [cmd-log]
+poll-interval = 100
+read-size = 50
+
+[console-log]
+cmd = true
+cmd-name-trunc = 80
 line-trunc = 150
 strip-control = "all"
 

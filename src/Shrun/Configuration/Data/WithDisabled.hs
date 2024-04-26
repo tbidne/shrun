@@ -5,10 +5,12 @@ module Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (..),
 
     -- * Construction
-    Shrun.Configuration.Data.WithDisabled.fromMaybe,
+    fromMaybe,
+    fromBool,
 
     -- * Elimination
     toMaybe,
+    toBool,
     fromWithDisabled,
 
     -- * Misc
@@ -21,7 +23,7 @@ module Shrun.Configuration.Data.WithDisabled
   )
 where
 
-import Shrun.Prelude
+import Shrun.Prelude hiding (fromMaybe)
 
 -- | Like Maybe but adds an extra constructor representing a "disabled" state.
 -- The idea is that both CLI Args and Toml and have optional fields, but
@@ -61,6 +63,11 @@ instance Applicative WithDisabled where
   _ <*> Without = Without
   With f <*> With x = With (f x)
 
+instance Monad WithDisabled where
+  Disabled >>= _ = Disabled
+  Without >>= _ = Without
+  With x >>= f = f x
+
 instance Semigroup (WithDisabled a) where
   Disabled <> _ = Disabled
   _ <> Disabled = Disabled
@@ -75,10 +82,19 @@ toMaybe :: WithDisabled a -> Maybe a
 toMaybe (With x) = Just x
 toMaybe _ = Nothing
 
+toBool :: WithDisabled a -> Bool
+toBool (With _) = True
+toBool Without = False
+toBool Disabled = False
+
 -- | 'Nothing' -> 'Without', 'Just' -> 'With'.
 fromMaybe :: Maybe a -> WithDisabled a
 fromMaybe (Just x) = With x
 fromMaybe Nothing = Without
+
+fromBool :: Bool -> WithDisabled ()
+fromBool True = With ()
+fromBool False = Without
 
 -- | Eliminates 'WithDisabled'.
 fromWithDisabled :: a -> WithDisabled a -> a
@@ -88,6 +104,6 @@ fromWithDisabled x _ = x
 -- | @l <>? r@ lifts 'Maybe' @r@ into a 'WithDisabled' per
 -- 'Shrun.Configuration.Data.WithDisabled.fromMaybe' then runs the 'Semigroup'.
 (<>?) :: WithDisabled a -> Maybe a -> WithDisabled a
-wd <>? m = wd <> Shrun.Configuration.Data.WithDisabled.fromMaybe m
+wd <>? m = wd <> fromMaybe m
 
 infixr 6 <>?

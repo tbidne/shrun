@@ -59,13 +59,17 @@ library
     Shrun.Configuration.Args
     Shrun.Configuration.Args.Parsing
     Shrun.Configuration.Args.Parsing.CmdLogging
+    Shrun.Configuration.Args.Parsing.CommonLogging
+    Shrun.Configuration.Args.Parsing.ConsoleLogging
     Shrun.Configuration.Args.Parsing.Core
     Shrun.Configuration.Args.Parsing.FileLogging
     Shrun.Configuration.Args.Parsing.Notify
     Shrun.Configuration.Args.Parsing.Utils
     Shrun.Configuration.Args.TH
     Shrun.Configuration.Data.CmdLogging
+    Shrun.Configuration.Data.CommonLogging
     Shrun.Configuration.Data.ConfigPhase
+    Shrun.Configuration.Data.ConsoleLogging
     Shrun.Configuration.Data.Core
     Shrun.Configuration.Data.FileLogging
     Shrun.Configuration.Data.MergedConfig

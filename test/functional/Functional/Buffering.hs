@@ -31,9 +31,9 @@ logsNoBuffer =
       -- Having the indexes be 0.5, 1.5, ... rather than integers does not
       -- change anything, but it makes the output slightly clearer.
       withNoConfig
-        [ "--cmd-log",
-          "--cmd-log-strip-control=all",
-          "--cmd-name-trunc=15",
+        [ "--console-log-cmd",
+          "--console-log-strip-control=all",
+          "--console-log-cmd-name-trunc=15",
           "sleep 0.5 ; for i in 0.5 1.5 2.5 3.5; do echo \"$i\"; sleep 1; done"
         ]
 

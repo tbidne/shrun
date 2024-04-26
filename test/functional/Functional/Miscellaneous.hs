@@ -20,7 +20,7 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
   where
     args =
       withNoConfig
-        [ "--cmd-log",
+        [ "--console-log-cmd",
           "sleep 1 && echo 'line one\nline two' && sleep 2"
         ]
 
@@ -44,7 +44,7 @@ spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
   where
     args =
       withNoConfig
-        [ "--cmd-log",
+        [ "--console-log-cmd",
           "sleep 1 && echo 'abc\n  def' && exit 1"
         ]
 

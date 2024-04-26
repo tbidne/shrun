@@ -19,47 +19,6 @@ timeout = 20
 # .bashrc.
 init = ". examples/bashrc"
 
-# By default (key-hide = false), logs will refer to the key name, as defined in
-# legend section. If set to true, logs will instead reference the literal
-# command.
-#
-# For example, if there is an alias 'cmd1 = some long command' and we
-# run 'cmd1', then, with key-hide = true the logs will print
-# 'some long command'. With key-hide = false, they will instead print 'cmd1'.
-key-hide = false
-
-# Non-negative integer used in conjunction with cmd-log and file-log
-# that determines how quickly we poll commands for logs, in microseconds.
-# A value of 0 is interpreted as infinite i.e. limited only by the CPU.
-# Defaults to 10,000.
-#
-# Note that lower values will increase CPU usage. In particular, 0 will max
-# out a CPU thread.
-poll-interval = 100
-
-# Determines the size of the logs we read from commands (cmd-log and file-log).
-# Overrides the default of 1024.
-cmd-log-read-size = 2048
-
-# String that determines how the timers is formatted. Options (and examples)
-# are:
-#
-# digital_compact:   03:00:20
-# digital_full:      00:03:00:20
-# prose_compact:     3 hours, 20 seconds
-# prose_full:        0 days, 3 hours, 0 minutes, 20 seconds
-#
-# Defaults to prose_compact
-timer-format = "prose_compact"
-
-# If set, this truncates command names in the logs to the specified number of
-# characters. This setting is useful when:
-#
-# 1. You do not want a long command to clutter the logs
-# 2. The command is not run with an alias (so it cannot be hidden with
-#    key-hide = false).
-cmd-name-trunc = 80
-
 # Command aliases are defined here. Values can either be a single unit or a
 # list of units, where a unit is either a command literal
 # (e.g. bash expression) or a recursive reference to another alias.
@@ -99,9 +58,63 @@ legend = [
   { key = 'c', val = 'b'},
 ]
 
+# Common logging configuation.
+[log]
+# By default (key-hide = false), logs will refer to the key name, as defined in
+# legend section. If set to true, logs will instead reference the literal
+# command.
+#
+# For example, if there is an alias 'cmd1 = some long command' and we
+# run 'cmd1', then, with key-hide = true the logs will print
+# 'some long command'. With key-hide = false, they will instead print 'cmd1'.
+key-hide = false
+
+# String that determines how the timers is formatted. Options (and examples)
+# are:
+#
+# digital_compact:   03:00:20
+# digital_full:      00:03:00:20
+# prose_compact:     3 hours, 20 seconds
+# prose_full:        0 days, 3 hours, 0 minutes, 20 seconds
+#
+# Defaults to prose_compact
+timer-format = "prose_compact"
+
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.
 [cmd-log]
+# Non-negative integer used in conjunction with console-log.cmd and file-log
+# that determines how quickly we poll commands for logs, in microseconds.
+# A value of 0 is interpreted as infinite i.e. limited only by the CPU.
+# Defaults to 10,000.
+#
+# Note that lower values will increase CPU usage. In particular, 0 will max
+# out a CPU thread.
+poll-interval = 100
+
+# Determines the size of the logs we read from commands (console-log.cmd and file-log).
+# Overrides the default of 1024.
+read-size = 2048
+
+# Configuration for console logging.
+[console-log]
+# If enabled, the output of the commands themselves will be logged. The
+# default behavior is to swallow command logs.
+cmd = true
+
+# If set, this truncates command names in the logs to the specified number of
+# characters. This setting is useful when:
+#
+# 1. You do not want a long command to clutter the logs
+# 2. The command is not run with an alias (so it cannot be hidden with
+#    key-hide = false).
+cmd-name-trunc = 80
+
+# If set, this truncates the entire line to the specified number of
+# characters. It can either be a non-negative integer or the string 'detect',
+# in which we attempt to detect the terminal width.
+line-trunc = 150
+
 # With command logging, the logs can become garbled in the presence of
 # control characters (e.g. newlines, ansi escape sequences). This option
 # attempts to mitigate these issues. The choices are:
@@ -113,11 +126,6 @@ legend = [
 #    else. This has the potential to be the prettiest, though it is possible
 #    some 'bad' sequences remain.
 strip-control = "smart"
-
-# If set, this truncates the entire line to the specified number of
-# characters. It can either be a non-negative integer or the string 'detect',
-# in which we attempt to detect the terminal width.
-line-trunc = 150
 
 #[file-log]
 # Writes all logs to a file. The "default" option writes to the XDG state

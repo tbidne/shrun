@@ -35,17 +35,17 @@ fileLoggingParser :: Parser FileLoggingArgs
 fileLoggingParser = do
   path <- fileLogParser
   cmdNameTrunc <- fileLogCmdNameTruncParser
-  stripControl <- fileLogStripControlParser
   mode <- fileLogModeParser
   sizeMode <- fileLogSizeModeParser
+  stripControl <- fileLogStripControlParser
 
   pure
     $ MkFileLoggingP
-      { path,
-        cmdNameTrunc,
-        stripControl,
+      { cmdNameTrunc,
         mode,
-        sizeMode
+        path,
+        sizeMode,
+        stripControl
       }
 
 fileLogParser :: Parser (WithDisabled FilePathDefault)
@@ -86,7 +86,7 @@ fileLogCmdNameTruncParser =
                 OA.metavar "NATURAL"
               ]
           )
-    helpTxt = "Like --cmd-name-trunc, but for --file-logs."
+    helpTxt = "Like --console-log-cmd-name-trunc, but for --file-logs."
 
 fileLogStripControlParser :: Parser (WithDisabled StripControl)
 fileLogStripControlParser =
@@ -104,7 +104,7 @@ fileLogStripControlParser =
           )
     helpTxt =
       mconcat
-        [ "--cmd-log-strip-control for file logs created with --file-log. ",
+        [ "--console-log-strip-control for file logs created with --file-log. ",
           "Defaults to all."
         ]
 

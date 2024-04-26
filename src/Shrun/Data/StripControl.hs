@@ -1,7 +1,7 @@
 module Shrun.Data.StripControl
   ( StripControl (..),
     parseStripControl,
-    defaultCmdLogStripControl,
+    defaultConsoleLogStripControl,
     defaultFileLogStripControl,
   )
 where
@@ -36,8 +36,8 @@ parseStripControl getTxt =
             unpack bad
           ]
 
-defaultCmdLogStripControl :: StripControl
-defaultCmdLogStripControl = StripControlSmart
+defaultConsoleLogStripControl :: StripControl
+defaultConsoleLogStripControl = StripControlSmart
 
 defaultFileLogStripControl :: StripControl
 defaultFileLogStripControl = StripControlAll

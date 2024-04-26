@@ -10,25 +10,18 @@ where
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogReadSize,
         cmdLogging,
-        cmdNameTrunc,
+        commonLogging,
+        consoleLogging,
         fileLogging,
         init,
-        keyHide,
         notify,
-        pollInterval,
-        timeout,
-        timerFormat
+        timeout
       ),
     CoreConfigToml,
   )
-import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Data.Legend (KeyVal)
-import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Data.TimerFormat (TimerFormat)
-import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
 import Shrun.Prelude
 
 -- | Holds toml config.
@@ -46,12 +39,9 @@ instance DecodeTOML Toml where
   tomlDecoder = do
     timeout <- decodeTimeout
     init <- decodeInit
-    keyHide <- decodeKeyHide
-    pollInterval <- decodePollInterval
-    cmdLogReadSize <- decodeCmdLogReadSize
-    timerFormat <- decodeTimerFormat
-    cmdNameTrunc <- decodecmdNameTrunc
+    commonLogging <- getFieldOptWith tomlDecoder "log"
     cmdLogging <- getFieldOptWith tomlDecoder "cmd-log"
+    consoleLogging <- getFieldOptWith tomlDecoder "console-log"
     fileLogging <- getFieldOptWith tomlDecoder "file-log"
     notify <- getFieldOptWith tomlDecoder "notify"
 
@@ -62,12 +52,9 @@ instance DecodeTOML Toml where
             MkCoreConfigP
               { timeout,
                 init,
-                keyHide,
-                pollInterval,
-                cmdLogReadSize,
-                timerFormat,
-                cmdNameTrunc,
+                commonLogging,
                 cmdLogging,
+                consoleLogging,
                 fileLogging,
                 notify
               },
@@ -81,11 +68,8 @@ defaultToml =
         MkCoreConfigP
           { timeout = Nothing,
             init = Nothing,
-            keyHide = Nothing,
-            pollInterval = Nothing,
-            cmdLogReadSize = Nothing,
-            timerFormat = Nothing,
-            cmdNameTrunc = Nothing,
+            commonLogging = Nothing,
+            consoleLogging = Nothing,
             cmdLogging = Nothing,
             fileLogging = Nothing,
             notify = Nothing
@@ -98,21 +82,6 @@ decodeTimeout = getFieldOptWith tomlDecoder "timeout"
 
 decodeInit :: Decoder (Maybe Text)
 decodeInit = getFieldOptWith tomlDecoder "init"
-
-decodeKeyHide :: Decoder (Maybe KeyHide)
-decodeKeyHide = getFieldOptWith tomlDecoder "key-hide"
-
-decodePollInterval :: Decoder (Maybe PollInterval)
-decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
-
-decodeTimerFormat :: Decoder (Maybe TimerFormat)
-decodeTimerFormat = getFieldOptWith tomlDecoder "timer-format"
-
-decodecmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
-decodecmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
-
-decodeCmdLogReadSize :: Decoder (Maybe (Bytes B Natural))
-decodeCmdLogReadSize = getFieldOptWith (fmap MkBytes tomlDecoder) "cmd-log-read-size"
 
 decodeLegend :: Decoder (Maybe (List KeyVal))
 decodeLegend = getFieldOptWith tomlDecoder "legend"

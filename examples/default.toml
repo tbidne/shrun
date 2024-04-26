@@ -1,5 +1,5 @@
-# All keys are optional. The default descriptions describe what happens
-# when a key is omitted.
+# All keys are optional. The default descriptions describes what happens
+# when the key is omitted.
 
 # Sets a timeout, after which all remaining commands are terminated.
 # Can either be a non-negative integer (seconds) or a "time string"
@@ -17,8 +17,49 @@
 # This is useful when we want to run shrun with functions / aliases that
 # normally only exist in _interactive_ shells e.g. those loaded by
 # .bashrc.
-#init = ". ~/.bashrc"
+#init = ". examples/bashrc"
 
+# Command aliases are defined here. Values can either be a single unit or a
+# list of units, where a unit is either a command literal
+# (e.g. bash expression) or a recursive reference to another alias.
+#
+# Cycles are not allowed, nor are duplicate keys.
+legend = [
+  # GIF Demo
+  { key = 'sign-peace-treaty', val = 'echo play it cool... && sleep 5 && "lol psyche"' },
+  { key = 'querying-targets', val = 'echo finding targets... && sleep 7' },
+  { key = 'skynet', val = 'echo "preparing nuclear missil-- i mean gift baskets"; sleep 13' },
+  { key = 'ui', val = 'echo "adding emojis. we like to have fun :-)"; sleep 10' },
+  { key = 'takeover', val = ['querying-targets', 'ui', 'skynet'] },
+
+  # README Legend Example
+  { key = 'cmd1', val = 'echo "command one"' },
+
+  # recursive references
+  { key = 'cmd2', val = 'cmd1' },
+  { key = 'cmd3', val = 'cmd2' },
+
+  # this will error
+  { key = 'cmd4', val = 'command four' },
+
+  # runs 3, 4 and echo
+  { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
+
+  # Bad Examples
+
+  # duplicates will cause an error when reading this file.
+  #{ key = 'dup_key', val = 'echo duplicate 1'},
+  #{ key = 'dup_key', val = 'echo duplicate 2'},
+
+  # cyclic keys will cause an error when _actually used_ e.g. try running
+  # shrun -c examples/config.toml a
+  { key = 'a', val = 'c'},
+  { key = 'b', val = 'a'},
+  { key = 'c', val = 'b'},
+]
+
+# Common logging configuation.
+#[log]
 # By default (key-hide = false), logs will refer to the key name, as defined in
 # legend section. If set to true, logs will instead reference the literal
 # command.
@@ -26,20 +67,7 @@
 # For example, if there is an alias 'cmd1 = some long command' and we
 # run 'cmd1', then, with key-hide = true the logs will print
 # 'some long command'. With key-hide = false, they will instead print 'cmd1'.
-key-hide = false
-
-# Non-negative integer used in conjunction with cmd-log and file-log
-# that determines how quickly we poll commands for logs, in microseconds.
-# A value of 0 is interpreted as infinite i.e. limited only by the CPU.
-# Defaults to 10,000.
-#
-# Note that lower values will increase CPU usage. In particular, 0 will max
-# out a CPU thread.
-#poll-interval = 100
-
-# Determines the size of the logs we read from commands (cmd-log and file-log).
-# Overrides the default of 1024.
-#cmd-log-read-size = 1024
+#key-hide = false
 
 # String that determines how the timers is formatted. Options (and examples)
 # are:
@@ -50,86 +78,43 @@ key-hide = false
 # prose_full:        0 days, 3 hours, 0 minutes, 20 seconds
 #
 # Defaults to prose_compact
-#timer-format = "digital_full"
+#timer-format = "prose_compact"
+
+# If enabled, the output of the commands themselves will be logged. The
+# default behavior is to swallow command logs.
+#[cmd-log]
+# Non-negative integer used in conjunction with console-log.cmd and file-log
+# that determines how quickly we poll commands for logs, in microseconds.
+# A value of 0 is interpreted as infinite i.e. limited only by the CPU.
+# Defaults to 10,000.
+#
+# Note that lower values will increase CPU usage. In particular, 0 will max
+# out a CPU thread.
+#poll-interval = 100
+
+# Determines the size of the logs we read from commands (console-log.cmd and file-log).
+# Overrides the default of 1024.
+#read-size = 2048
+
+# Configuration for console logging.
+#[console-log]
+# If enabled, the output of the commands themselves will be logged. The
+# default behavior is to swallow command logs.
+#cmd = true
 
 # If set, this truncates command names in the logs to the specified number of
 # characters. This setting is useful when:
 #
 # 1. You do not want a long command to clutter the logs
-# 2. The command is not run with an alias (so it cannot be hidden with key-hide = false).
+# 2. The command is not run with an alias (so it cannot be hidden with
+#    key-hide = false).
 #cmd-name-trunc = 80
 
-# Command aliases are defined here. Values can either be a single unit or a
-# list of units, where a unit is either a command literal
-# (e.g. bash expression) or a recursive reference to another alias.
-#
-# Cycles are not allowed, nor are duplicate keys.
-#
-# Examples
-[[legend]]
-key = 'cmd1'
-val = 'echo "command one"'
+# If set, this truncates the entire line to the specified number of
+# characters. It can either be a non-negative integer or the string 'detect',
+# in which we attempt to detect the terminal width.
+#line-trunc = 150
 
-[[legend]]
-key = 'bash_expr'
-val = """
-set -e
-
-echo hi
-
-ls
-
-echo bye
-"""
-
-# recursive reference cmd2 -> cmd1
-[[legend]]
-key = 'cmd2'
-val = 'cmd1'
-
-# recursive reference cmd3 -> cmd2
-[[legend]]
-key = 'cmd3'
-val = 'cmd2'
-
-# this will error when run as bash will not understand 'command four'
-[[legend]]
-key = 'cmd4'
-val = 'command four'
-
-# runs 3, 4 and echo
-[[legend]]
-key = 'all'
-val = ['cmd3', 'cmd4', 'echo hi']
-
-# Bad examples
-
-# duplicates will cause an error when reading this file.
-#[[legend]]
-#key = 'dup_key'
-#val = 'echo duplicate 1'
-
-#[[legend]]
-#key = 'dup_key'
-#val = 'echo duplicate 2'
-
-# cyclic keys will cause an error when _actually used_ e.g. try running
-# shrun -c examples/default.toml a
-[[legend]]
-key = 'a'
-val = 'c'
-
-[[legend]]
-key = 'b'
-val = 'a'
-
-[[legend]]
-key = 'c'
-val = 'b'
-
-# If enabled, the output of the commands themselves will be logged. The
-# default behavior is to swallow command logs.
-#[cmd-log]
 # With command logging, the logs can become garbled in the presence of
 # control characters (e.g. newlines, ansi escape sequences). This option
 # attempts to mitigate these issues. The choices are:
@@ -142,11 +127,6 @@ val = 'b'
 #    some 'bad' sequences remain.
 #strip-control = "smart"
 
-# If set, this truncates the entire line to the specified number of
-# characters. It can either be a non-negative integer or the string 'detect',
-# in which we attempt to detect the terminal width.
-#line-trunc = "detect"
-
 #[file-log]
 # Writes all logs to a file. The "default" option writes to the XDG state
 # directory e.g. ~/.local/state/shrun/shrun.log. Any other string is interpreted as
@@ -154,7 +134,7 @@ val = 'b'
 #path = "default"
 
 # Like cmd-name-trunc, but for file logs.
-# cmd-name-trunc = 40
+#cmd-name-trunc = 40
 
 # Mode in which to open the log file. Can be "write" (the default) or
 # "append".

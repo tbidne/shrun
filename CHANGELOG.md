@@ -17,14 +17,42 @@ the major/minor/patch definitions apply to the application's interface / usage
   that.
 * `--file-log-size-mode` now defaults to `warn 50 mb` (i.e. warn when the log
   file exceeds 50 mb). There is a new option `nothing` to disable this.
-* `--cmd-name-trunc` short option `-x` removed.
-* `--cmd-log-line-trunc` short option `-y` removed.
 * `--no-x` disable args now hidden from help page.
+* Extensive CLI/toml option changes/renaming:
+  * `--key-hide`:
+    * CLI: `--log-key-hide`.
+    * Toml: `log.key-hide`.
+    * `-k` removed.
+  * `--timer-format`:
+    * CLI: `--log-timer-format`.
+    * Toml: `log.timer-format`.
+  * `--poll-interval`:
+    * CLI: `--cmd-log-poll-interval`.
+    * Toml: `cmd-log.timer-format`.
+    * `-p` removed.
+  * `--cmd-log`:
+    * CLI: `--console-log-cmd`.
+    * Toml: `console-log.cmd`.
+    * `-l` removed.
+  * `--cmd-name-trunc`:
+    * CLI: `--console-log-cmd-name-trunc`.
+    * Toml: `console-log.cmd-name-trunc`.
+    * `-x` removed.
+    * Applies to all console logs, not just command logs.
+  * `--cmd-log-line-trunc`:
+    * CLI: `--console-log-line-trunc`.
+    * `-y` removed.
+    * Toml: `console-log.line-trunc`.
+  * `--cmd-log-strip-control`:
+    * CLI: `--console-log-strip-control`.
+    * Toml: `console-log.strip-control`.
+    * `-s` removed.
 
 ### Added
 * Added stack support back.
-* New option `--cmd-log-read-size` (toml: `cmd-log-read-size`) that controls
-  the size of logs we read from command with `--cmd-log` and `--file-log`.
+* New option `--cmd-log-read-size` (toml: `cmd-log.read-size`) that controls
+  the size of logs we read from command with `--console-cmd-log` and
+  `--file-log`.
 * New option `--file-log-cmd-name-trunc` (toml: `file-log.cmd-name-trunc`)
   for command name truncation in the file logs.
 

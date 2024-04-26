@@ -18,7 +18,7 @@ spec args =
     let argList =
           [ "--config",
             unsafeDecodeOsToFp configPath,
-            "--key-hide",
+            "--log-key-hide",
             "--timeout",
             "5"
           ]

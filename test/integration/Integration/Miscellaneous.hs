@@ -226,7 +226,7 @@ lineTruncDetect = testPropertyNamed desc "lineTruncDetect"
     desc = "cmdLogLineTrunc reads 'detect' string from toml"
     args = ["-c", getIntConfig "misc", "cmd1"]
 
-    expected = [#coreConfig % #cmdLogging %? #lineTrunc % _Just ^?=@ Just 87]
+    expected = [#coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 87]
 
 testFileSizeModeNothing :: TestTree
 testFileSizeModeNothing = testPropertyNamed desc "testFileSizeModeNothing"

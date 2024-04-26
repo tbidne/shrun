@@ -14,21 +14,34 @@ import Integration.Utils
     runConfigIO,
   )
 import Shrun.Configuration.Data.CmdLogging
-  ( CmdLoggingP (MkCmdLoggingP, lineTrunc, stripControl),
+  ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
+  )
+import Shrun.Configuration.Data.CommonLogging
+  ( CommonLoggingP
+      ( MkCommonLoggingP,
+        keyHide,
+        timerFormat
+      ),
+  )
+import Shrun.Configuration.Data.ConsoleLogging
+  ( ConsoleLoggingP
+      ( MkConsoleLoggingP,
+        cmdLogging,
+        cmdNameTrunc,
+        lineTrunc,
+        stripControl
+      ),
   )
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogReadSize,
         cmdLogging,
-        cmdNameTrunc,
+        commonLogging,
+        consoleLogging,
         fileLogging,
         init,
-        keyHide,
         notify,
-        pollInterval,
-        timeout,
-        timerFormat
+        timeout
       ),
   )
 import Shrun.Configuration.Data.MergedConfig
@@ -74,17 +87,23 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
             MkCoreConfigP
               { timeout = Just 20,
                 init = Just ". examples/bashrc",
-                keyHide = KeyHideOff,
-                pollInterval = 100,
-                cmdLogReadSize = MkBytes 2048,
-                timerFormat = ProseCompact,
-                cmdNameTrunc = Just 80,
+                commonLogging =
+                  MkCommonLoggingP
+                    { keyHide = KeyHideOff,
+                      timerFormat = ProseCompact
+                    },
+                consoleLogging =
+                  MkConsoleLoggingP
+                    { cmdLogging = True,
+                      cmdNameTrunc = Just 80,
+                      lineTrunc = Just 150,
+                      stripControl = StripControlSmart
+                    },
                 cmdLogging =
-                  Just
-                    $ MkCmdLoggingP
-                      { stripControl = StripControlSmart,
-                        lineTrunc = Just 150
-                      },
+                  MkCmdLoggingP
+                    { pollInterval = 100,
+                      readSize = MkBytes 2048
+                    },
                 fileLogging = Nothing,
                 notify =
                   Just

@@ -33,7 +33,7 @@ success = testCase "Should print commands stdout" $ do
     -- `sleep 1` is because commands that run too quickly will not have
     -- output logged
     commands = ["echo hi && sleep 1"]
-    cmdLogging = "--cmd-log"
+    cmdLogging = "--console-log-cmd"
 
     expected =
       MkExpectedText
@@ -44,7 +44,7 @@ capturesStderr :: TestTree
 capturesStderr = testCase "Should capture stdout and stderr" $ do
   let argList =
         [ "--no-config",
-          "--cmd-log",
+          "--console-log-cmd",
           "./test/functional/Functional/stderr.sh"
         ]
 

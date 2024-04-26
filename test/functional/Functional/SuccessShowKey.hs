@@ -55,7 +55,7 @@ withShowKey args addShowKey = do
     (showKeyArg, expected, unexpected) =
       if addShowKey
         then ("", showKeyExpected, showKeyUnexpected)
-        else ("--key-hide", noShowKeyExpected, noShowKeyUnexpected)
+        else ("--log-key-hide", noShowKeyExpected, noShowKeyUnexpected)
 
 showKeyExpected :: List ExpectedText
 showKeyExpected =

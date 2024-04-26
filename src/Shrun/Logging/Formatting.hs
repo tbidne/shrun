@@ -83,12 +83,12 @@ formatConsoleLog logging log =
     mCmdLogging = logging ^. #cmdLog
     mStripControl = mCmdLogging ^? _Just % #stripControl
 
-    -- truncate entire line if necessary (flag on and command log only)
-    truncateCmdLineFn = case ( log ^. #lvl,
-                               mCmdLogging ^? (_Just % #lineTrunc %? #unTruncation)
-                             ) of
-      (LevelCommand, Just m) -> U.truncateIfNeeded m
-      _ -> id
+    -- truncate entire line if necessary (flag on)
+    truncateCmdLineFn =
+      maybe
+        id
+        U.truncateIfNeeded
+        (mCmdLogging ^? _Just % #lineTrunc %? #unTruncation)
 
     colorize = P.color $ logToColor log
     prefix = logToPrefix log

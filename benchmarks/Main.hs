@@ -32,7 +32,7 @@ basicLogs :: Benchmark
 basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
 
 cmdLogs :: Benchmark
-cmdLogs = bgroup "Command Logging" (runLoops ["-l", "--no-config"])
+cmdLogs = bgroup "Command Logging" (runLoops ["--console-log-cmd", "--no-config"])
 
 fileLogs :: OsPath -> Benchmark
 fileLogs testDir = bgroup "File Logging" (runLoops ["-f", FsUtils.unsafeDecodeOsToFp fp, "--no-config"])

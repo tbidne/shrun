@@ -7,25 +7,42 @@ module Shrun.Configuration.Data.MergedConfig
   )
 where
 
+import Shrun.Configuration.Data.CmdLogging
+  ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
+  )
+import Shrun.Configuration.Data.CommonLogging
+  ( CommonLoggingP
+      ( MkCommonLoggingP,
+        keyHide,
+        timerFormat
+      ),
+  )
+import Shrun.Configuration.Data.ConsoleLogging
+  ( ConsoleLoggingP
+      ( MkConsoleLoggingP,
+        cmdLogging,
+        cmdNameTrunc,
+        lineTrunc,
+        stripControl
+      ),
+  )
 import Shrun.Configuration.Data.Core
   ( CoreConfigMerged,
     CoreConfigP
       ( MkCoreConfigP,
-        cmdLogReadSize,
         cmdLogging,
-        cmdNameTrunc,
+        commonLogging,
+        consoleLogging,
         fileLogging,
         init,
-        keyHide,
         notify,
-        pollInterval,
-        timeout,
-        timerFormat
+        timeout
       ),
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.KeyHide (defaultKeyHide)
 import Shrun.Data.PollInterval (defaultPollInterval)
+import Shrun.Data.StripControl (defaultConsoleLogStripControl)
 import Shrun.Data.TimerFormat (defaultTimerFormat)
 import Shrun.Logging.Types (defaultCmdLogReadSize)
 import Shrun.Prelude
@@ -46,13 +63,24 @@ defaultMergedConfig commands =
   MkMergedConfig
     { coreConfig =
         MkCoreConfigP
-          { fileLogging = Nothing,
-            cmdLogging = Nothing,
-            timerFormat = defaultTimerFormat,
-            pollInterval = defaultPollInterval,
-            keyHide = defaultKeyHide,
-            cmdNameTrunc = Nothing,
-            cmdLogReadSize = defaultCmdLogReadSize,
+          { commonLogging =
+              MkCommonLoggingP
+                { keyHide = defaultKeyHide,
+                  timerFormat = defaultTimerFormat
+                },
+            cmdLogging =
+              MkCmdLoggingP
+                { pollInterval = defaultPollInterval,
+                  readSize = defaultCmdLogReadSize
+                },
+            consoleLogging =
+              MkConsoleLoggingP
+                { cmdLogging = False,
+                  cmdNameTrunc = Nothing,
+                  lineTrunc = Nothing,
+                  stripControl = defaultConsoleLogStripControl
+                },
+            fileLogging = Nothing,
             notify = Nothing,
             timeout = Nothing,
             init = Nothing

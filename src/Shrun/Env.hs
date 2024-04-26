@@ -203,23 +203,26 @@ fromMergedConfig cfg onEnv = do
             notifyEnv,
             logging =
               MkLogging
-                { keyHide = cfg ^. (#coreConfig % #keyHide),
-                  pollInterval = cfg ^. (#coreConfig % #pollInterval),
-                  timerFormat = cfg ^. (#coreConfig % #timerFormat),
-                  cmdNameTrunc = cfg ^. (#coreConfig % #cmdNameTrunc),
-                  cmdLogReadSize = cfg ^. (#coreConfig % #cmdLogReadSize),
+                { keyHide = cfg ^. #coreConfig % #commonLogging % #keyHide,
+                  pollInterval = cfg ^. #coreConfig % #cmdLogging % #pollInterval,
+                  timerFormat = cfg ^. #coreConfig % #commonLogging % #timerFormat,
+                  cmdNameTrunc = cfg ^. #coreConfig % #consoleLogging % #cmdNameTrunc,
+                  cmdLogReadSize = cfg ^. #coreConfig % #cmdLogging % #readSize,
                   cmdLog =
-                    cfg ^. (#coreConfig % #cmdLogging) <&> \cmdLog ->
-                      MkCmdLogging
-                        { stripControl = cmdLog ^. #stripControl,
-                          lineTrunc = cfg ^? (#coreConfig % #cmdLogging %? #lineTrunc % _Just)
-                        },
+                    if cfg ^. (#coreConfig % #consoleLogging % #cmdLogging)
+                      then
+                        Just
+                          $ MkCmdLogging
+                            { stripControl = cfg ^. #coreConfig % #consoleLogging % #stripControl,
+                              lineTrunc = cfg ^? #coreConfig % #consoleLogging % #lineTrunc % _Just
+                            }
+                      else Nothing,
                   consoleLog,
                   fileLog =
                     mFileLogging <&> \(h, q, sc) ->
                       MkFileLogging
                         { log = (h, q),
-                          cmdNameTrunc = cfg ^? (#coreConfig % #fileLogging %? #cmdNameTrunc % _Just),
+                          cmdNameTrunc = cfg ^? #coreConfig % #fileLogging %? #cmdNameTrunc % _Just,
                           stripControl = sc
                         }
                 },

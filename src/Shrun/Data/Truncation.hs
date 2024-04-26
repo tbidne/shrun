@@ -17,6 +17,7 @@ data TruncRegion
   = -- | Apply truncation rules to commands/key names.
     TCmdName
   | -- | Apply truncation rules to command log entire lines.
+    -- TODO: Rename this
     TCmdLine
   deriving stock (Eq, Show)
 

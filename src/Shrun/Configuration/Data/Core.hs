@@ -10,17 +10,19 @@ module Shrun.Configuration.Data.Core
 where
 
 import Shrun.Configuration.Data.CmdLogging (CmdLoggingP)
+import Shrun.Configuration.Data.CommonLogging (CommonLoggingP)
 import Shrun.Configuration.Data.ConfigPhase
+  ( ConfigPhase
+      ( ConfigPhaseArgs,
+        ConfigPhaseMerged,
+        ConfigPhaseToml
+      ),
+    ConfigPhaseMaybeF,
+  )
+import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingP)
 import Shrun.Configuration.Data.FileLogging (FileLoggingP)
 import Shrun.Configuration.Data.Notify (NotifyP)
-import Shrun.Data.KeyHide (KeyHide)
-import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.Timeout (Timeout)
-import Shrun.Data.TimerFormat (TimerFormat)
-import Shrun.Data.Truncation
-  ( TruncRegion (TCmdName),
-    Truncation,
-  )
 import Shrun.Prelude
 
 -- | For types that are only guaranteed to exist for Args. Generally this
@@ -33,6 +35,11 @@ type family ArgsOnlyDetF p a where
   ArgsOnlyDetF ConfigPhaseToml a = Maybe a
   ArgsOnlyDetF ConfigPhaseMerged a = Maybe a
 
+type family TomlOptF p a where
+  TomlOptF ConfigPhaseArgs a = a
+  TomlOptF ConfigPhaseToml a = Maybe a
+  TomlOptF ConfigPhaseMerged a = a
+
 -- | Holds core configuration data.
 type CoreConfigP :: ConfigPhase -> Type
 data CoreConfigP p = MkCoreConfigP
@@ -40,19 +47,12 @@ data CoreConfigP p = MkCoreConfigP
     timeout :: ConfigPhaseMaybeF p Timeout,
     -- | Shell logic to run before each command.
     init :: ConfigPhaseMaybeF p Text,
-    -- | Whether to display command by (key) name or command.
-    keyHide :: ConfigPhaseF p KeyHide,
-    -- | How often to poll commands for logs, in microseconds.
-    pollInterval :: ConfigPhaseF p PollInterval,
-    -- | Determines the max log size we read from commands in one go.
-    -- Note this is not on cmdLogging or fileLogging since it affects both.
-    cmdLogReadSize :: ConfigPhaseF p (Bytes B Natural),
-    -- | How to format the timer.
-    timerFormat :: ConfigPhaseF p TimerFormat,
-    -- | The max number of command characters to display in the console logs.
-    cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
+    -- | Holds common logging config.
+    commonLogging :: TomlOptF p (CommonLoggingP p),
     -- | Command log config.
-    cmdLogging :: ArgsOnlyDetF p (CmdLoggingP p),
+    cmdLogging :: TomlOptF p (CmdLoggingP p),
+    -- | Holds console logging config.
+    consoleLogging :: TomlOptF p (ConsoleLoggingP p),
     -- | File log config.
     fileLogging :: ArgsOnlyDetF p (FileLoggingP p),
     -- | Notify config.

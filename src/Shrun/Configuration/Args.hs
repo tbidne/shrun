@@ -7,28 +7,36 @@ where
 import Shrun.Configuration.Args.Parsing
   ( Args
       ( MkArgs,
-        cmdLog,
         commands,
         configPath,
         coreConfig
       ),
   )
 import Shrun.Configuration.Data.CmdLogging
-  ( CmdLoggingP (MkCmdLoggingP, lineTrunc, stripControl),
+  ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
+  )
+import Shrun.Configuration.Data.CommonLogging
+  ( CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
+  )
+import Shrun.Configuration.Data.ConsoleLogging
+  ( ConsoleLoggingP
+      ( MkConsoleLoggingP,
+        cmdLogging,
+        cmdNameTrunc,
+        lineTrunc,
+        stripControl
+      ),
   )
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogReadSize,
         cmdLogging,
-        cmdNameTrunc,
+        commonLogging,
+        consoleLogging,
         fileLogging,
         init,
-        keyHide,
         notify,
-        pollInterval,
-        timeout,
-        timerFormat
+        timeout
       ),
   )
 import Shrun.Configuration.Data.FileLogging
@@ -50,20 +58,26 @@ defaultArgs :: NESeq Text -> Args
 defaultArgs commands =
   MkArgs
     { configPath = mempty,
-      cmdLog = mempty,
       coreConfig =
         MkCoreConfigP
           { timeout = mempty,
             init = mempty,
-            keyHide = mempty,
-            pollInterval = mempty,
-            cmdLogReadSize = mempty,
-            timerFormat = mempty,
-            cmdNameTrunc = mempty,
+            commonLogging =
+              MkCommonLoggingP
+                { keyHide = mempty,
+                  timerFormat = mempty
+                },
+            consoleLogging =
+              MkConsoleLoggingP
+                { cmdLogging = mempty,
+                  cmdNameTrunc = mempty,
+                  lineTrunc = mempty,
+                  stripControl = mempty
+                },
             cmdLogging =
               MkCmdLoggingP
-                { stripControl = mempty,
-                  lineTrunc = mempty
+                { pollInterval = mempty,
+                  readSize = mempty
                 },
             fileLogging =
               MkFileLoggingP

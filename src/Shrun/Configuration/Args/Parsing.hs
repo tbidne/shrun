@@ -46,8 +46,6 @@ import Shrun.Utils qualified as U
 data Args = MkArgs
   { -- | Optional config file.
     configPath :: WithDisabled OsPath,
-    -- | Whether to log commands.
-    cmdLog :: WithDisabled (),
     -- | Core config.
     coreConfig :: CoreConfigArgs,
     -- | List of commands.
@@ -96,7 +94,6 @@ argsParser :: Parser Args
 argsParser = do
   MkArgs
     <$> configParser
-    <*> cmdLogParser
     <*> Core.coreParser
     <**> defaultConfig
     <**> version
@@ -135,31 +132,6 @@ configParser = Utils.withDisabledParser mainParser "config"
           "we automatically look in the XDG config directory ",
           "e.g. ~/.config/shrun/config.toml. The --no-config option disables ",
           "--config and the automatic XDG lookup."
-        ]
-
-cmdLogParser :: Parser (WithDisabled ())
-cmdLogParser = Utils.withDisabledParser mainParser "cmd-log"
-  where
-    switchParser =
-      OA.switch
-        ( mconcat
-            [ OA.short 'l',
-              OA.long "cmd-log",
-              Utils.mkHelp helpTxt
-            ]
-        )
-    mainParser = do
-      b <- switchParser
-      pure
-        $ if b
-          then Just ()
-          else Nothing
-    helpTxt =
-      mconcat
-        [ "The default behavior is to swallow logs for the commands ",
-          "themselves. This flag gives each command a console region in ",
-          "which its logs will be printed. Only the latest log per region ",
-          "is show at a given time."
         ]
 
 commandsParser :: Parser (NESeq Text)

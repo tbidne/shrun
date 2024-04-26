@@ -2,12 +2,6 @@
 
 timeout = "1h"
 init = ". some file"
-log-disable = true
-key-hide = true
-poll-interval = 127
-cmd-log-read-size = 20
-cmd-name-trunc = 80
-timer-format = "digital_full"
 
 legend = [
   { key = 'cmd1', val = 'echo "command one"' },
@@ -22,7 +16,17 @@ legend = [
   { key = 'c', val = 'a' },
 ]
 
+[log]
+key-hide = true
+timer-format = "digital_full"
+
 [cmd-log]
+poll-interval = 127
+read-size = 20
+
+[console-log]
+cmd = true
+cmd-name-trunc = 80
 line-trunc = 150
 strip-control = "all"
 

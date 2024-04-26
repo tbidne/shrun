@@ -4,6 +4,7 @@ module Shrun.Configuration.Args.Parsing.CmdLogging
   )
 where
 
+import Data.Text qualified as T
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
@@ -11,73 +12,77 @@ import Shrun.Configuration.Data.CmdLogging
   ( CmdLoggingArgs,
     CmdLoggingP
       ( MkCmdLoggingP,
-        lineTrunc,
-        stripControl
+        pollInterval,
+        readSize
       ),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Data.StripControl (StripControl)
-import Shrun.Data.StripControl qualified as StripControl
-import Shrun.Data.Truncation (LineTruncation)
-import Shrun.Data.Truncation qualified as Trunc
+import Shrun.Data.PollInterval (PollInterval)
+import Shrun.Data.PollInterval qualified as PollInterval
 import Shrun.Prelude
 
 cmdLoggingParser :: Parser CmdLoggingArgs
 cmdLoggingParser = do
-  stripControl <- cmdLogStripControlParser
-  lineTrunc <- cmdLogLineTruncParser
+  pollInterval <- pollIntervalParser
+  readSize <- readSizeParser
 
   pure
     $ MkCmdLoggingP
-      { stripControl,
-        lineTrunc
+      { pollInterval,
+        readSize
       }
 
-cmdLogStripControlParser :: Parser (WithDisabled StripControl)
-cmdLogStripControlParser =
-  Utils.withDisabledParser mainParser "cmd-log-strip-control"
+pollIntervalParser :: Parser (WithDisabled PollInterval)
+pollIntervalParser = Utils.withDisabledParser mainParser "cmd-log-poll-interval"
   where
     mainParser =
       OA.optional
         $ OA.option
-          (StripControl.parseStripControl OA.str)
+          (PollInterval.parsePollInterval OA.auto)
           ( mconcat
-              [ OA.long "cmd-log-strip-control",
-                OA.short 's',
+              [ OA.long "cmd-log-poll-interval",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(all | smart | none)"
+                OA.metavar "NATURAL"
               ]
           )
     helpTxt =
       mconcat
-        [ "Control characters can wreak layout havoc with the --cmd-log",
-          " option, thus we include this option. 'all' strips all",
-          " such chars. 'none' does nothing i.e. all chars are left",
-          " untouched. The default 'smart' attempts to strip",
-          " only the control chars that affect layout (e.g. cursor movements) and",
-          " leaves others unaffected (e.g. colors). This has the potential",
-          " to be the 'prettiest' though it is possible to miss some chars.",
-          " This option is experimental and subject to change."
+        [ "Non-negative integer used in conjunction with --console-log-cmd and ",
+          "--file-log that determines how quickly we poll commands for ",
+          "logs, in microseconds. A value of 0 is interpreted as infinite ",
+          "i.e. limited only by the CPU. Defaults to ",
+          prettyPollInterval PollInterval.defaultPollInterval,
+          ". Note that lower values will increase CPU usage. In particular, ",
+          "0 will max out a CPU thread."
         ]
 
-cmdLogLineTruncParser :: Parser (WithDisabled LineTruncation)
-cmdLogLineTruncParser = Utils.withDisabledParser mainParser "cmd-log-line-trunc"
+    prettyPollInterval =
+      unpack
+        . T.reverse
+        . T.intercalate ","
+        . T.chunksOf 3
+        . T.reverse
+        . showt
+        . view #unPollInterval
+
+readSizeParser :: Parser (WithDisabled (Bytes B Natural))
+readSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
   where
     mainParser =
       OA.optional
         $ OA.option
-          (Trunc.parseLineTruncation OA.auto OA.str)
+          readcmdLogReadSize
           ( mconcat
-              [ OA.long "cmd-log-line-trunc",
+              [ OA.long "cmd-log-read-size",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(NATURAL | detect)"
+                OA.metavar "NATURAL"
               ]
           )
+    readcmdLogReadSize = MkBytes <$> OA.auto
     helpTxt =
       mconcat
-        [ "Non-negative integer that limits the length of logs ",
-          "produced via --cmd-log in the console logs. Can also be the ",
-          "string literal 'detect', to detect the terminal size ",
-          "automatically. Defaults to no truncation. This does ",
-          "not affect file logs with --file-log."
+        [ "Non-negative integer that determines that max number of bytes in ",
+          "a single read when streaming command logs (--console-log-cmd and ",
+          "--file-log). Logs larger than --cmd-log-read-size will be read in ",
+          "a subsequent read, hence broken across lines. The default is 1024."
         ]
