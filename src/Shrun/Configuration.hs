@@ -4,23 +4,7 @@ module Shrun.Configuration
 where
 
 import Shrun.Configuration.Args (Args)
-import Shrun.Configuration.Data.CmdLogging (mergeCmdLogging)
-import Shrun.Configuration.Data.CommonLogging (mergeCommonLogging)
-import Shrun.Configuration.Data.ConsoleLogging (mergeConsoleLogging)
-import Shrun.Configuration.Data.Core
-  ( CoreConfigArgs,
-    CoreConfigP
-      ( MkCoreConfigP,
-        cmdLogging,
-        commonLogging,
-        consoleLogging,
-        fileLogging,
-        init,
-        notify,
-        timeout
-      ),
-  )
-import Shrun.Configuration.Data.FileLogging (mergeFileLogging)
+import Shrun.Configuration.Data.Core (mergeCoreConfig)
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
@@ -28,9 +12,6 @@ import Shrun.Configuration.Data.MergedConfig
         coreConfig
       ),
   )
-import Shrun.Configuration.Data.Notify (mergeNotifyLogging)
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
-import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Data.Command (Command (MkCommand))
@@ -60,34 +41,14 @@ mergeConfig args mToml = do
     Nothing -> do
       let commands = MkCommand Nothing <$> cmdsText
 
-      consoleLogging <-
-        mergeConsoleLogging
-          (args ^. (#coreConfig % #consoleLogging))
+      coreConfig <-
+        mergeCoreConfig
+          (args ^. #coreConfig)
           Nothing
+
       pure
         $ MkMergedConfig
-          { coreConfig =
-              MkCoreConfigP
-                { timeout = WD.toMaybe (args ^. (#coreConfig % #timeout)),
-                  init = WD.toMaybe (args ^. (#coreConfig % #init)),
-                  commonLogging =
-                    mergeCommonLogging
-                      (args ^. (#coreConfig % #commonLogging))
-                      Nothing,
-                  consoleLogging,
-                  cmdLogging =
-                    mergeCmdLogging
-                      (args ^. (#coreConfig % #cmdLogging))
-                      Nothing,
-                  fileLogging =
-                    mergeFileLogging
-                      (args ^. (#coreConfig % #fileLogging))
-                      Nothing,
-                  notify =
-                    mergeNotifyLogging
-                      (args ^. (#coreConfig % #notify))
-                      Nothing
-                },
+          { coreConfig,
             commands
           }
     (Just toml) -> do
@@ -99,41 +60,15 @@ mergeConfig args mToml = do
             Left err -> throwM err
           Left err -> throwM err
 
-      consoleLogging <-
-        mergeConsoleLogging
-          (args ^. (#coreConfig % #consoleLogging))
-          (toml ^. (#coreConfig % #consoleLogging))
+      coreConfig <-
+        mergeCoreConfig
+          (args ^. #coreConfig)
+          (Just $ toml ^. #coreConfig)
 
       pure
         $ MkMergedConfig
-          { coreConfig =
-              MkCoreConfigP
-                { timeout =
-                    plusNothing #timeout (toml ^. (#coreConfig % #timeout)),
-                  init =
-                    plusNothing #init (toml ^. (#coreConfig % #init)),
-                  commonLogging =
-                    mergeCommonLogging
-                      (args ^. (#coreConfig % #commonLogging))
-                      (toml ^. (#coreConfig % #commonLogging)),
-                  consoleLogging,
-                  cmdLogging =
-                    mergeCmdLogging
-                      (args ^. (#coreConfig % #cmdLogging))
-                      (toml ^. (#coreConfig % #cmdLogging)),
-                  fileLogging =
-                    mergeFileLogging
-                      (args ^. (#coreConfig % #fileLogging))
-                      (toml ^. (#coreConfig % #fileLogging)),
-                  notify =
-                    mergeNotifyLogging
-                      (args ^. (#coreConfig % #notify))
-                      (toml ^. (#coreConfig % #notify))
-                },
+          { coreConfig,
             commands
           }
   where
     cmdsText = args ^. #commands
-
-    plusNothing :: Lens' CoreConfigArgs (WithDisabled a) -> Maybe a -> Maybe a
-    plusNothing l r = WD.toMaybe $ (args ^. (#coreConfig % l)) <>? r
