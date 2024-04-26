@@ -38,6 +38,7 @@ type family ArgsOnlyDetF p a where
   ArgsOnlyDetF ConfigPhaseToml a = Maybe a
   ArgsOnlyDetF ConfigPhaseMerged a = Maybe a
 
+-- | For types that are optional only on the Toml.
 type family TomlOptF p a where
   TomlOptF ConfigPhaseArgs a = a
   TomlOptF ConfigPhaseToml a = Maybe a
