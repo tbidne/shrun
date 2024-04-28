@@ -24,40 +24,40 @@ import Shrun.Notify.Types
 import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
--- NOTE: If tests in this module fail, fix then update the README!
+-- NOTE: If tests in this module fail, fix then update configuration.md!
 
 -- | Specs from readme
 specs :: IO TestArgs -> TestTree
 specs args =
   testGroup
-    "README examples"
+    "Configuration.md examples"
     [ gif,
       core,
-      timeout,
       initOn,
       initOff,
+      timeout,
+      keyHideOn,
+      keyHideOff,
+      timerFormatDigitalCompact,
+      timerFormatDigitalFull,
+      timerFormatProseCompact,
+      timerFormatProseFull,
       cmdLogReadSizeDefault,
       cmdLogReadSize,
       cmdlogOn,
       cmdlogOnDefault,
       cmdlogOff,
-      fileLog args,
-      timerFormatDigitalCompact,
-      timerFormatDigitalFull,
-      timerFormatProseCompact,
-      timerFormatProseFull,
-      keyHideOn,
-      keyHideOff,
+      cmdNameTruncN,
+      cmdLogLineTruncN,
       stripControlAlwaysCmdNames,
       stripControlAll,
       stripControlNone,
       stripControlSmart,
+      fileLog args,
+      fileLogCmdNameTruncN args,
       fileLogStripControlAll args,
       fileLogStripControlNone args,
       fileLogStripControlSmart args,
-      cmdNameTruncN,
-      fileLogCmdNameTruncN args,
-      cmdLogLineTruncN,
       notifyActionFinal,
       notifyTimeoutNever
     ]
@@ -109,26 +109,6 @@ core =
         withFinishedPrefix "0 seconds"
       ]
 
-timeout :: TestTree
-timeout =
-  testCase "Runs timeout example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
-    V.verifyExpected results expected
-  where
-    args =
-      withNoConfig
-        [ "-t",
-          "8",
-          "sleep 5",
-          "sleep 10",
-          "sleep 15"
-        ]
-    expected =
-      [ withSuccessPrefix "sleep 5",
-        withTimeoutPrefix "sleep 10, sleep 15",
-        finishedPrefix
-      ]
-
 initOn :: TestTree
 initOn =
   testCase "Runs init successful example" $ do
@@ -161,118 +141,68 @@ initOff =
         finishedPrefix
       ]
 
-cmdLogReadSizeDefault :: TestTree
-cmdLogReadSizeDefault =
-  testCase "Default --read-size splits 1024" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+timeout :: TestTree
+timeout =
+  testCase "Runs timeout example" $ do
+    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-cmd-name-trunc",
-          "5",
-          cmd
-        ]
-    commandLog = replicate 1024 'a'
-    cmd = "sleep 1 ; echo " ++ commandLog ++ "b; sleep 1"
-    cmdExpected = V.MkExpectedText . T.pack $ commandLog
-    expected =
-      [ withCommandPrefix "sl..." cmdExpected,
-        withCommandPrefix "sl..." "b"
-      ]
-
-cmdLogReadSize :: TestTree
-cmdLogReadSize =
-  testCase "Runs --cmd-log-read-size example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
-    V.verifyExpected results expected
-  where
-    args =
-      withNoConfig
-        [ "--console-log-cmd",
-          "--cmd-log-read-size",
-          "5",
-          cmd
-        ]
-    cmd :: (IsString a) => a
-    cmd = "sleep 1 ; echo abcdef; sleep 1"
-    expected =
-      [ withCommandPrefix cmd "abcde",
-        withCommandPrefix cmd "f"
-      ]
-
-cmdlogOn :: TestTree
-cmdlogOn =
-  testCase "Runs cmdlog example with --console-log-cmd" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
-    V.verifyExpected results expected
-  where
-    args =
-      withNoConfig
-        [ "--console-log-cmd",
-          "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
+        [ "-t",
+          "8",
+          "sleep 5",
+          "sleep 10",
+          "sleep 15"
         ]
     expected =
-      [ withCommandPrefix "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done" "hi"
-      ]
-
-cmdlogOnDefault :: TestTree
-cmdlogOnDefault =
-  testCase "Runs --console-log-cmd with no output shows default message" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
-    V.verifyExpected results expected
-  where
-    args =
-      withNoConfig
-        [ "--console-log-cmd",
-          "for i in 1 2 3; do sleep 1; done"
-        ]
-    expected =
-      [ withCommandPrefix "for i in 1 2 3; do sleep 1; done" "Starting..."
-      ]
-
-cmdlogOff :: TestTree
-cmdlogOff =
-  testCase "Runs cmdlog example without --console-log-cmd" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
-    V.verifyUnexpected results unexpected
-  where
-    args =
-      withNoConfig
-        [ "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
-        ]
-    unexpected = [commandPrefix]
-
-fileLog :: IO TestArgs -> TestTree
-fileLog testArgs = testCase "Runs file-log example" $ do
-  outFile <- (</>! "readme-file-out.log") . view #tmpDir <$> testArgs
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "sleep 2",
-            "bad",
-            "for i in 1 2 3; do echo hi; sleep 1; done"
-          ]
-
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
-  V.verifyExpected resultsConsole expectedConsole
-
-  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
-  V.verifyExpected resultsFile expectedFile
-  where
-    expectedConsole =
-      [ withErrorPrefix "bad",
-        withSuccessPrefix "sleep 2",
-        withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done",
+      [ withSuccessPrefix "sleep 5",
+        withTimeoutPrefix "sleep 10, sleep 15",
         finishedPrefix
       ]
-    expectedFile =
-      expectedConsole
-        ++ [ withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi"
-           ]
+
+keyHideOn :: TestTree
+keyHideOn =
+  testCase "Runs key hide example with --log-key-hide" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpectedUnexpected results expected unexpected
+  where
+    args =
+      withBaseArgs
+        [ "--log-key-hide",
+          "skynet"
+        ]
+    expected =
+      [ withCommandPrefix
+          "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
+          "preparing nuclear missil-- i mean gift baskets",
+        withSuccessPrefix "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
+      ]
+    unexpected =
+      [ withCommandPrefix "skynet" "",
+        withSuccessPrefix "skynet"
+      ]
+
+keyHideOff :: TestTree
+keyHideOff =
+  testCase "Runs key hide example without --log-key-hide" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpectedUnexpected results expected unexpected
+  where
+    args =
+      withBaseArgs
+        [ "skynet"
+        ]
+    expected =
+      [ withCommandPrefix "skynet" "",
+        withSuccessPrefix "skynet"
+      ]
+    unexpected =
+      [ withCommandPrefix
+          "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
+          "preparing nuclear missil-- i mean gift baskets",
+        withSuccessPrefix "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
+      ]
 
 timerFormatDigitalCompact :: TestTree
 timerFormatDigitalCompact =
@@ -338,47 +268,122 @@ timerFormatProseFull =
       [ withTimerPrefix "0 days, 0 hours, 0 minutes, 1 second"
       ]
 
-keyHideOn :: TestTree
-keyHideOn =
-  testCase "Runs key hide example with --log-key-hide" $ do
+cmdLogReadSizeDefault :: TestTree
+cmdLogReadSizeDefault =
+  testCase "Default --read-size splits 1024" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
-    V.verifyExpectedUnexpected results expected unexpected
+    V.verifyExpected results expected
   where
     args =
-      withBaseArgs
-        [ "--log-key-hide",
-          "skynet"
+      withNoConfig
+        [ "--console-log-cmd",
+          "--console-log-cmd-name-trunc",
+          "5",
+          cmd
         ]
+    commandLog = replicate 1024 'a'
+    cmd = "sleep 1 ; echo " ++ commandLog ++ "b; sleep 1"
+    cmdExpected = V.MkExpectedText . T.pack $ commandLog
     expected =
-      [ withCommandPrefix
-          "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
-          "preparing nuclear missil-- i mean gift baskets",
-        withSuccessPrefix "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
-      ]
-    unexpected =
-      [ withCommandPrefix "skynet" "",
-        withSuccessPrefix "skynet"
+      [ withCommandPrefix "sl..." cmdExpected,
+        withCommandPrefix "sl..." "b"
       ]
 
-keyHideOff :: TestTree
-keyHideOff =
-  testCase "Runs key hide example without --log-key-hide" $ do
+cmdLogReadSize :: TestTree
+cmdLogReadSize =
+  testCase "Runs --cmd-log-read-size example" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
-    V.verifyExpectedUnexpected results expected unexpected
+    V.verifyExpected results expected
   where
     args =
-      withBaseArgs
-        [ "skynet"
+      withNoConfig
+        [ "--console-log-cmd",
+          "--cmd-log-read-size",
+          "5",
+          "--cmd-log-poll-interval",
+          "1000000",
+          cmd
+        ]
+    cmd :: (IsString a) => a
+    cmd = "echo abcdef && sleep 2"
+    expected =
+      [ withCommandPrefix cmd "abcde",
+        withCommandPrefix cmd "f"
+      ]
+
+cmdlogOn :: TestTree
+cmdlogOn =
+  testCase "Runs cmdlog example with --console-log-cmd" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--console-log-cmd",
+          "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
         ]
     expected =
-      [ withCommandPrefix "skynet" "",
-        withSuccessPrefix "skynet"
+      [ withCommandPrefix "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done" "hi"
       ]
-    unexpected =
-      [ withCommandPrefix
-          "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
-          "preparing nuclear missil-- i mean gift baskets",
-        withSuccessPrefix "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
+
+cmdlogOnDefault :: TestTree
+cmdlogOnDefault =
+  testCase "Runs --console-log-cmd with no output shows default message" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--console-log-cmd",
+          "for i in 1 2 3; do sleep 1; done"
+        ]
+    expected =
+      [ withCommandPrefix "for i in 1 2 3; do sleep 1; done" "Starting..."
+      ]
+
+cmdlogOff :: TestTree
+cmdlogOff =
+  testCase "Runs cmdlog example without --console-log-cmd" $ do
+    results <- fmap MkResultText <$> (readIORef =<< run args)
+    V.verifyUnexpected results unexpected
+  where
+    args =
+      withNoConfig
+        [ "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
+        ]
+    unexpected = [commandPrefix]
+
+cmdNameTruncN :: TestTree
+cmdNameTruncN = testCase "Runs --console-log-cmd-name-trunc 10 example" $ do
+  results <- fmap MkResultText <$> (readIORef =<< run args)
+  V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--console-log-cmd",
+          "--console-log-cmd-name-trunc",
+          "10",
+          "for i in 1 2 3; do echo hi; sleep 1; done"
+        ]
+    expected =
+      [ withCommandPrefix "for i i..." "hi",
+        withSuccessPrefix "for i i..."
+      ]
+
+cmdLogLineTruncN :: TestTree
+cmdLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
+  results <- fmap MkResultText <$> (readIORef =<< run args)
+  V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--console-log-cmd",
+          "--console-log-line-trunc",
+          "80",
+          "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"
+        ]
+    expected =
+      [ "[Command][echo 'some ridiculously long command i mean is this really necessar..."
       ]
 
 stripControlAll :: TestTree
@@ -458,6 +463,64 @@ stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ 
       [ withCommandPrefix "printf ..." "foo \ESC[35m hello  bye"
       ]
 
+fileLog :: IO TestArgs -> TestTree
+fileLog testArgs = testCase "Runs file-log example" $ do
+  outFile <- (</>! "readme-file-out.log") . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "sleep 2",
+            "bad",
+            "for i in 1 2 3; do echo hi; sleep 1; done"
+          ]
+
+  resultsConsole <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+  V.verifyExpected resultsConsole expectedConsole
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedConsole =
+      [ withErrorPrefix "bad",
+        withSuccessPrefix "sleep 2",
+        withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done",
+        finishedPrefix
+      ]
+    expectedFile =
+      expectedConsole
+        ++ [ withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi"
+           ]
+
+fileLogCmdNameTruncN :: IO TestArgs -> TestTree
+fileLogCmdNameTruncN testArgs = testCase "Runs --file-log-cmd-name-trunc 10 example" $ do
+  outFile <- (</>! "readme-file-log-cmd-name-trunc-out.log") . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--file-log-cmd-name-trunc",
+            "10",
+            "for i in 1 2 3; do echo hi; sleep 1; done"
+          ]
+
+  resultsConsole <- fmap MkResultText <$> (readIORef =<< run args)
+  V.verifyExpected resultsConsole expectedConsole
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedConsole =
+      [ withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done", -- not truncated
+        withFinishedPrefix "3 seconds"
+      ]
+    expectedFile =
+      [ withCommandPrefix "for i i..." "hi",
+        withFinishedPrefix "3 seconds"
+      ]
+
 fileLogStripControlAll :: IO TestArgs -> TestTree
 fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all example" $ do
   outFile <- (</>! "readme-file-out-strip-control-all.log") . view #tmpDir <$> testArgs
@@ -526,67 +589,6 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
       [ withCommandPrefix
           "printf ' foo  hello  bye '; sleep 5"
           "foo \ESC[35m hello  bye"
-      ]
-
-cmdNameTruncN :: TestTree
-cmdNameTruncN = testCase "Runs --console-log-cmd-name-trunc 10 example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
-  V.verifyExpected results expected
-  where
-    args =
-      withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-cmd-name-trunc",
-          "10",
-          "for i in 1 2 3; do echo hi; sleep 1; done"
-        ]
-    expected =
-      [ withCommandPrefix "for i i..." "hi",
-        withSuccessPrefix "for i i..."
-      ]
-
-fileLogCmdNameTruncN :: IO TestArgs -> TestTree
-fileLogCmdNameTruncN testArgs = testCase "Runs --file-log-cmd-name-trunc 10 example" $ do
-  outFile <- (</>! "readme-file-log-cmd-name-trunc-out.log") . view #tmpDir <$> testArgs
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--file-log-cmd-name-trunc",
-            "10",
-            "for i in 1 2 3; do echo hi; sleep 1; done"
-          ]
-
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< run args)
-  V.verifyExpected resultsConsole expectedConsole
-
-  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
-  V.verifyExpected resultsFile expectedFile
-  where
-    expectedConsole =
-      [ withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done", -- not truncated
-        withFinishedPrefix "3 seconds"
-      ]
-    expectedFile =
-      [ withCommandPrefix "for i i..." "hi",
-        withFinishedPrefix "3 seconds"
-      ]
-
-cmdLogLineTruncN :: TestTree
-cmdLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
-  V.verifyExpected results expected
-  where
-    args =
-      withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-line-trunc",
-          "80",
-          "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"
-        ]
-    expected =
-      [ "[Command][echo 'some ridiculously long command i mean is this really necessar..."
       ]
 
 -- NOTE: There is no DBus test because that requires creating a real DBus

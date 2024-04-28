@@ -3,8 +3,8 @@
 ### Table of Contents
   - [Core Functionality](#core-functionality)
     - [Config](#config)
-    - [Timeout](#timeout)
     - [Init](#init)
+    - [Timeout](#timeout)
   - [Logging](#logging)
     - [Common Logging](#common-logging)
       - [Key Hide](#key-hide)
@@ -15,7 +15,7 @@
     - [Console Logging](#console-logging)
       - [Command Log](#command-log)
       - [Command Name Truncation](#command-name-truncation)
-      - [Line Truncation](#command-line-truncation)
+      - [Line Truncation](#line-truncation)
       - [Strip Control](#strip-control)
     - [File Logging](#file-logging)
       - [File Log](#file-log)
@@ -85,21 +85,6 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 > [!CAUTION]
 > Duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
 
-### Timeout
-
-**Arg:** `-t, --timeout (NATURAL | STRING)`
-
-**Description:** The provided timeout must be either a raw integer (interpreted as seconds), or a "time string" e.g. `1d2m3h4s`, `3h20s`. All integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
-
-**Example:**
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --timeout 8 "sleep 5" "sleep 10" "sleep 15"</span>
-<span style="color: #69ff94">[Success][sleep 5] 5 seconds</span>
-<span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 10, sleep 15</span>
-<span style="color: #d6acff">[Finished] 9 seconds</span></code>
-</pre>
-
 ### Init
 
 **Arg:** `-i,--init STRING`
@@ -122,6 +107,21 @@ vs.
 <span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
 
+### Timeout
+
+**Arg:** `-t, --timeout (NATURAL | STRING)`
+
+**Description:** The provided timeout must be either a raw integer (interpreted as seconds), or a "time string" e.g. `1d2m3h4s`, `3h20s`. All integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --timeout 8 "sleep 5" "sleep 10" "sleep 15"</span>
+<span style="color: #69ff94">[Success][sleep 5] 5 seconds</span>
+<span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 10, sleep 15</span>
+<span style="color: #d6acff">[Finished] 9 seconds</span></code>
+</pre>
+
 ## Logging
 
 ### Common Logging
@@ -138,12 +138,6 @@ This is general logging config.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --log-key-hide --config=examples/config.toml skynet</span>
-<span style="color:">[Command][echo "preparing nuclear missil-- i mean gift baskets"; sleep 13] preparing nuclear missil-- i mean gift baskets</span>
-<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-key-hide --config=examples/config.toml skynet</span>
 <span style="color: #69ff94">[Success][echo "preparing nuclear missil-- i mean gift baskets"; sleep 13] 13 seconds</span>
 <span style="color: #d6acff">[Finished] 13 seconds</span></code>
 </pre>
@@ -151,13 +145,7 @@ This is general logging config.
 rather than the usual
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --config=examples/config.toml skynet</span>
-<span style="color:">[Command][skynet] preparing nuclear missil-- i mean gift baskets</span>
-<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --config=examples/config.toml skynet</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --config=examples/config.toml skynet</span>
 <span style="color: #69ff94">[Success][skynet] 13 seconds</span>
 <span style="color: #d6acff">[Finished] 13 seconds</span></code>
 </pre>
@@ -173,26 +161,22 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format digital_compact --console-log-cmd "sleep 2"</span>
-<span style="color:">[Command][sleep 2] hi</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format digital_compact "sleep 2"</span>
 <span style="color: #a3fefe">[Timer] 01</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format digital_full --console-log-cmd "sleep 2"</span>
-<span style="color:">[Command][sleep 2] hi</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format digital_full "sleep 2"</span>
 <span style="color: #a3fefe">[Timer] 00:00:00:01</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format prose_compact --console-log-cmd "sleep 2"</span>
-<span style="color:">[Command][sleep 2] hi</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format prose_compact "sleep 2"</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format prose_full --console-log-cmd "sleep 2"</span>
-<span style="color:">[Command][sleep 2] hi</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format prose_full "sleep 2"</span>
 <span style="color: #a3fefe">[Timer] 0 days, 0 hours, 0 minutes, 1 second</span></code>
 </pre>
 
@@ -225,15 +209,18 @@ Config related to **command logs** (both console and file).
 
 **Example:**
 
+> [!NOTE]
+> In this example we also use `--cmd-log-poll-interval 1000000` to slow down the reads, so that we can see `acbde` and `f` are indeed read separately. Ordinarily this would be too fast to see the difference.
+
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-read-size 5 "echo abcdef" </span>
-<span style="color:">[Success][sleep 1 && e...] abcde</span>
-<span style="color: #a3fefe">[Timer] 1 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --cmd-log-read-size 5 --cmd-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
+<span style="color:">[Command][echo abcdef && sleep 2] abcde</span>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-read-size 5 "echo abcdef" </span>
-<span style="color:">[Success][sleep 1 && e...] f</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --cmd-log-read-size 5 --cmd-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
+<span style="color:">[Command][echo abcdef && sleep 2] f</span>
 <span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
 
@@ -279,18 +266,12 @@ vs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
-<span style="color:">[Command][for i i...] hi</span>
-<span style="color: #a3fefe">[Timer] 2 seconds</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #69ff94">[Success][for i i...] 3 seconds</span>
 <span style="color: #d6acff">[Finished] 3 seconds</span></code>
 </pre>
 
-#### Command Line Truncation
+#### Line Truncation
 
 **Arg:** `--console-log-line-trunc (NATURAL | detect)`
 
