@@ -7,6 +7,7 @@ module Shrun.Utils
     truncateIfNeeded,
     stripControlAll,
     stripControlSmart,
+    escapeDoubleQuotes,
 
     -- * MonadTime Utils
     diffTime,
@@ -27,6 +28,9 @@ import Data.Char (isControl, isLetter)
 import Data.Either (either)
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Builder (Builder)
+import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.Time (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
@@ -281,3 +285,11 @@ untilJust m = go
 unsafeListToNESeq :: (HasCallStack) => List a -> NESeq a
 unsafeListToNESeq [] = error "[Shrun.Utils]: empty list"
 unsafeListToNESeq xs = NESeq.fromList $ fromList xs
+
+-- | Escape double quotes in strings.
+escapeDoubleQuotes :: Text -> Text
+escapeDoubleQuotes = TL.toStrict . TLB.toLazyText . T.foldl' go ""
+  where
+    go :: Builder -> Char -> Builder
+    go acc '"' = acc <> "\\\""
+    go acc c = acc <> TLB.singleton c

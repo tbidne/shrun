@@ -62,13 +62,31 @@ osTests =
 #else
 osTests =
   [ mkTest "dbus",
-    mkTest "notify-send"
+    mkTest "notify-send",
+    notifySendHandlesLegendQuotes
   ]
+
+-- This test for a bug where notify-send could not cope with quotation marks
+-- in legend file commands.
+notifySendHandlesLegendQuotes :: TestTree
+notifySendHandlesLegendQuotes = testCase "notify-send handles legend quotes" $ do
+  runShrun args
+  where
+    args =
+      [ "--log-key-hide",
+        "--notify-action",
+        "all",
+        "--notify-system",
+        "notify-send",
+        "--config",
+        "examples/config.toml",
+        "ui"
+      ]
 #endif
 
 mkTest :: String -> TestTree
 mkTest system = testCase ("Runs notify with " ++ system) $ do
-  runShrun (mkArgs system)
+  runShrunNoConfig (mkArgs system)
 
 mkArgs :: String -> List String
 mkArgs system =
@@ -136,6 +154,9 @@ instance MonadRegionLogger (ShellT NotifyEnv IO) where
   withRegion _ onRegion = onRegion ()
   displayRegions m = m
 
+runShrunNoConfig :: List String -> IO ()
+runShrunNoConfig = runShrun . ("--no-config" :)
+
 runShrun :: List String -> IO ()
 runShrun args = do
   consoleQueue <- newTBQueueA 1
@@ -143,7 +164,7 @@ runShrun args = do
   eSomeEx <-
     tryAny
       $ withArgs
-        args'
+        args
         ( withEnv
             ( \env ->
                 runShellT shrun
@@ -167,5 +188,3 @@ runShrun args = do
               ]
 
       assertFailure err
-  where
-    args' = "--no-config" : args

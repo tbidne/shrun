@@ -21,6 +21,7 @@ import Shrun.Notify.Types
       ),
   )
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Effect for notify-send.
 class (Monad m) => MonadNotifySend m where
@@ -49,12 +50,28 @@ shrunToNotifySend shrunNote = txt
       mconcat
         [ "notify-send ",
           " --app-name Shrun \"",
-          shrunNote ^. #summary,
+          summary,
           "\" ",
-          (\b -> " \"" <> b <> "\" ") (shrunNote ^. #body),
+          (\b -> " \"" <> b <> "\" ") body,
           ulToNS (shrunNote ^. #urgency),
           timeout
         ]
+
+    -- Encountered a bug where notify-send would error when given commands
+    -- from the legend that contained quotes and --log-key-hide was active.
+    -- This is presumably due to the command in the logs like
+    --
+    --     [Command][some cmd "with quotes"]...
+    --
+    -- which was then not properly escaped when sent off to notify-send.
+    -- Technically the reproducer:
+    --
+    --     shrun --log-key-hide --notify-system notify-send --config=examples/config.toml ui
+    --
+    -- only required escaping the summary, but we do the same to the body out
+    -- of paranoia.
+    summary = Utils.escapeDoubleQuotes $ shrunNote ^. #summary
+    body = Utils.escapeDoubleQuotes $ shrunNote ^. #body
 
     ulToNS Low = " --urgency low "
     ulToNS Normal = " --urgency normal "

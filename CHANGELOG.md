@@ -61,6 +61,8 @@ the major/minor/patch definitions apply to the application's interface / usage
   a single whitespace, rather than stripping them.
 * Notification failures are no longer swallowed; errors do not kill shrun,
   but they are logged and cause the program to exit with a failure code.
+* Fixed bug where `--notify-system notify-send` failed when given legend
+  commands containing quotes and `--log-key-hide` was active.
 
 ## [0.8.1] -- 2023-12-08
 ### Changed

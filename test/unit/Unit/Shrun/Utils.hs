@@ -11,7 +11,8 @@ tests =
     "Shrun.Utils"
     [ diffTimeProps,
       breakStripPointSpecs,
-      stripAnsiControlSpecs
+      stripAnsiControlSpecs,
+      testEscapeDoubleQuotes
     ]
 
 diffTimeProps :: TestTree
@@ -100,3 +101,9 @@ someControlStripped =
     "foobar\ESC[1m baz" @=? U.stripControlSmart "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
     "\ESC[0mfoo" @=? U.stripControlSmart "\ESC[0mfoo"
     "foo\ESC[0mbar" @=? U.stripControlSmart "foo\ESC[0mbar"
+
+testEscapeDoubleQuotes :: TestTree
+testEscapeDoubleQuotes =
+  testCase "" $ do
+    "some \\\"text \\\"\\\"" @=? U.escapeDoubleQuotes "some \"text \"\""
+    "some text " @=? U.escapeDoubleQuotes "some text "
