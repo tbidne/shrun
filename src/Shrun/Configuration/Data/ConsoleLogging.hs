@@ -6,13 +6,20 @@ module Shrun.Configuration.Data.ConsoleLogging
     ConsoleLoggingArgs,
     ConsoleLoggingToml,
     ConsoleLoggingMerged,
+    ConsoleLoggingEnv,
     mergeConsoleLogging,
+    toEnv,
   )
 where
 
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
+  ( ConfigPhase
+      ( ConfigPhaseArgs,
+        ConfigPhaseEnv,
+        ConfigPhaseMerged,
+        ConfigPhaseToml
+      ),
     ConfigPhaseF,
     ConfigPhaseMaybeF,
   )
@@ -35,6 +42,7 @@ type family CmdLoggingF p where
   CmdLoggingF ConfigPhaseArgs = WithDisabled ()
   CmdLoggingF ConfigPhaseToml = Maybe Bool
   CmdLoggingF ConfigPhaseMerged = Bool
+  CmdLoggingF ConfigPhaseEnv = Bool
 
 -- | Cmd log line truncation is truly optional, the default being none.
 type CmdLogLineTruncF :: ConfigPhase -> Type
@@ -42,6 +50,7 @@ type family CmdLogLineTruncF p where
   CmdLogLineTruncF ConfigPhaseArgs = WithDisabled LineTruncation
   CmdLogLineTruncF ConfigPhaseToml = Maybe LineTruncation
   CmdLogLineTruncF ConfigPhaseMerged = Maybe (Truncation TCmdLine)
+  CmdLogLineTruncF ConfigPhaseEnv = Maybe (Truncation TCmdLine)
 
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
@@ -59,6 +68,8 @@ type ConsoleLoggingArgs = ConsoleLoggingP ConfigPhaseArgs
 type ConsoleLoggingToml = ConsoleLoggingP ConfigPhaseToml
 
 type ConsoleLoggingMerged = ConsoleLoggingP ConfigPhaseMerged
+
+type ConsoleLoggingEnv = ConsoleLoggingP ConfigPhaseEnv
 
 deriving stock instance Eq (ConsoleLoggingP ConfigPhaseArgs)
 
@@ -157,3 +168,12 @@ toLineTrunc Disabled = pure Nothing
 toLineTrunc Without = pure Nothing
 toLineTrunc (With Detected) = Just . MkTruncation <$> getTerminalWidth
 toLineTrunc (With (Undetected x)) = pure $ Just x
+
+toEnv :: ConsoleLoggingMerged -> ConsoleLoggingEnv
+toEnv merged =
+  MkConsoleLoggingP
+    { cmdLogging = merged ^. #cmdLogging,
+      cmdNameTrunc = merged ^. #cmdNameTrunc,
+      lineTrunc = merged ^. #lineTrunc,
+      stripControl = merged ^. #stripControl
+    }

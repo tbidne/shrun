@@ -17,7 +17,7 @@ import Shrun.Configuration.Legend
     linesToMap,
     translateCommands,
   )
-import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
 import Shrun.Utils (unsafeListToNESeq)
 import Unit.Prelude
@@ -186,13 +186,13 @@ translateSpecs =
 translateOneCmd :: TestTree
 translateOneCmd = testCase "Should translate one command" $ do
   let result = translateCommands legendMap ("one" :<|| [])
-      expected = Right (MkCommand (Just "one") "cmd1" :<|| [])
+      expected = Right (MkCommandP (Just "one") "cmd1" :<|| [])
   expected @=? result
 
 returnsNonMapCmd :: TestTree
 returnsNonMapCmd = testCase "Should return non-map command" $ do
   let result = translateCommands legendMap ("other" :<|| [])
-      expected = Right (MkCommand Nothing "other" :<|| [])
+      expected = Right (MkCommandP Nothing "other" :<|| [])
   expected @=? result
 
 returnsRecursiveCmds :: TestTree
@@ -200,9 +200,9 @@ returnsRecursiveCmds = testCase "Should return recursive commands" $ do
   let result = translateCommands legendMap ("all" :<|| [])
       expected =
         Right
-          $ MkCommand (Just "one") "cmd1"
-          :<|| [ MkCommand (Just "two") "cmd2",
-                 MkCommand Nothing "cmd3"
+          $ MkCommandP (Just "one") "cmd1"
+          :<|| [ MkCommandP (Just "two") "cmd2",
+                 MkCommandP Nothing "cmd3"
                ]
   expected @=? result
 
@@ -211,17 +211,17 @@ returnsRecursiveAndOtherCmds = testCase "Should return recursive commands and ot
   let result = translateCommands legendMap ("all" :<|| ["other"])
       expected =
         Right
-          $ MkCommand (Just "one") "cmd1"
-          :<|| [ MkCommand (Just "two") "cmd2",
-                 MkCommand Nothing "cmd3",
-                 MkCommand Nothing "other"
+          $ MkCommandP (Just "one") "cmd1"
+          :<|| [ MkCommandP (Just "two") "cmd2",
+                 MkCommandP Nothing "cmd3",
+                 MkCommandP Nothing "other"
                ]
   expected @=? result
 
 noSplitNonKeyCmd :: TestTree
 noSplitNonKeyCmd = testCase "Should not split non-key commands" $ do
   let result = translateCommands legendMap ("echo ,," :<|| [])
-      expected = Right (MkCommand Nothing "echo ,," :<|| [])
+      expected = Right (MkCommandP Nothing "echo ,," :<|| [])
   expected @=? result
 
 cycleCmdFail :: TestTree

@@ -6,12 +6,19 @@ module Shrun.Configuration.Data.CmdLogging
     CmdLoggingArgs,
     CmdLoggingToml,
     CmdLoggingMerged,
+    CmdLoggingEnv,
     mergeCmdLogging,
+    toEnv,
   )
 where
 
 import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
+  ( ConfigPhase
+      ( ConfigPhaseArgs,
+        ConfigPhaseEnv,
+        ConfigPhaseMerged,
+        ConfigPhaseToml
+      ),
     ConfigPhaseF,
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
@@ -37,6 +44,8 @@ type CmdLoggingArgs = CmdLoggingP ConfigPhaseArgs
 type CmdLoggingToml = CmdLoggingP ConfigPhaseToml
 
 type CmdLoggingMerged = CmdLoggingP ConfigPhaseMerged
+
+type CmdLoggingEnv = CmdLoggingP ConfigPhaseEnv
 
 deriving stock instance Eq (CmdLoggingP ConfigPhaseArgs)
 
@@ -95,3 +104,11 @@ decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
 
 decodeReadSize :: Decoder (Maybe (Bytes B Natural))
 decodeReadSize = getFieldOptWith (fmap MkBytes tomlDecoder) "read-size"
+
+-- | Creates env version from merged.
+toEnv :: CmdLoggingMerged -> CmdLoggingEnv
+toEnv merged =
+  MkCmdLoggingP
+    { pollInterval = merged ^. #pollInterval,
+      readSize = merged ^. #readSize
+    }

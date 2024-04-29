@@ -40,12 +40,16 @@ import Shrun.Configuration.Data.Core
       ),
   )
 import Shrun.Configuration.Data.FileLogging
-  ( FileLoggingP
-      ( MkFileLoggingP,
-        cmdNameTrunc,
+  ( FileLogInitP
+      ( MkFileLogInitP,
         mode,
         path,
-        sizeMode,
+        sizeMode
+      ),
+    FileLoggingP
+      ( MkFileLoggingP,
+        cmdNameTrunc,
+        file,
         stripControl
       ),
   )
@@ -81,11 +85,14 @@ defaultArgs commands =
                 },
             fileLogging =
               MkFileLoggingP
-                { path = mempty,
+                { file =
+                    MkFileLogInitP
+                      { path = mempty,
+                        mode = mempty,
+                        sizeMode = mempty
+                      },
                   cmdNameTrunc = mempty,
-                  stripControl = mempty,
-                  mode = mempty,
-                  sizeMode = mempty
+                  stripControl = mempty
                 },
             notify =
               MkNotifyP

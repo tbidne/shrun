@@ -49,10 +49,10 @@ import Effects.System.Terminal
   )
 import Integration.Prelude as X
 import Shrun.Configuration.Data.MergedConfig (MergedConfig, defaultMergedConfig)
-import Shrun.Env qualified as Env
+import Shrun.Configuration.Env qualified as Env
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession, notify))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend (notify))
-import Shrun.Notify.Types (NotifySystemP1)
+import Shrun.Notify.Types (NotifySystemMerged)
 import Shrun.Notify.Types qualified as Notify.Types
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
@@ -256,14 +256,14 @@ makeMergedConfig args toIO = do
 defaultConfig :: MergedConfig
 defaultConfig = defaultMergedConfig $ NESeq.singleton "cmd"
 
-notifySystemOSDBus :: NotifySystemP1
+notifySystemOSDBus :: NotifySystemMerged
 #if OSX
 notifySystemOSDBus = Notify.Types.AppleScript
 #else
 notifySystemOSDBus = Notify.Types.DBus ()
 #endif
 
-notifySystemOSNotifySend :: NotifySystemP1
+notifySystemOSNotifySend :: NotifySystemMerged
 #if OSX
 notifySystemOSNotifySend = Notify.Types.AppleScript
 #else

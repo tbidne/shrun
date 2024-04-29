@@ -12,7 +12,7 @@ import Shrun.Configuration.Data.Notify
     NotifyP (MkNotifyP, action, system, timeout),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Notify.Types (NotifyAction, NotifySystemP1, NotifyTimeout)
+import Shrun.Notify.Types (NotifyAction, NotifySystemArgs, NotifyTimeout)
 import Shrun.Notify.Types qualified as Notify
 import Shrun.Prelude
 
@@ -48,7 +48,7 @@ notifyActionParser = Utils.withDisabledParser mainParser "notify-action"
           "'command'."
         ]
 
-notifySystemParser :: Parser (WithDisabled NotifySystemP1)
+notifySystemParser :: Parser (WithDisabled NotifySystemArgs)
 notifySystemParser = Utils.withDisabledParser mainParser "notify-system"
   where
     mainParser =

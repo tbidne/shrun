@@ -14,7 +14,7 @@ import DBus.Notify (UrgencyLevel)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
 import Shrun.Notify.Types
-  ( NotifySystemP1,
+  ( NotifySystemMerged,
     NotifyTimeout,
     displayNotifySystem,
   )
@@ -32,7 +32,7 @@ data ShrunNote = MkShrunNote
 makeFieldLabelsNoPrefix ''ShrunNote
 
 -- | Exception for sending desktop notifications.
-data NotifyException = MkNotifyException ShrunNote NotifySystemP1 Text
+data NotifyException = MkNotifyException ShrunNote NotifySystemMerged Text
   deriving stock (Eq, Show)
 
 instance Exception NotifyException where

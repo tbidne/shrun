@@ -14,7 +14,7 @@ import Shrun.Notify.MonadNotify
     exitFailureToStderr,
   )
 import Shrun.Notify.Types
-  ( NotifySystem (NotifySend),
+  ( NotifySystemP (NotifySend),
     NotifyTimeout
       ( NotifyTimeoutNever,
         NotifyTimeoutSeconds

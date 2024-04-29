@@ -18,7 +18,7 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
-import Shrun.Data.Command (Command (MkCommand), CommandP1)
+import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
 import Shrun.Data.Legend (KeyVal (MkKeyVal), LegendMap)
 import Shrun.Prelude
 
@@ -102,7 +102,7 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
     go :: Maybe Text -> HashSet Text -> Builder -> Text -> Either CyclicKeyError (NESeq CommandP1)
     go prevKey foundKeys path line = case Map.lookup line mp of
       -- The line isn't a key, return it.
-      Nothing -> Right $ NESeq.singleton (MkCommand prevKey line)
+      Nothing -> Right $ NESeq.singleton (MkCommandP prevKey line)
       -- The line is a key, check for cycles and recursively
       -- call.
       Just val -> case maybeCyclicVal of

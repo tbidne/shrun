@@ -6,9 +6,11 @@ where
 
 import DBus.Notify (UrgencyLevel)
 import Data.Text qualified as T
-import Shrun.Env.Types
+import Shrun.Configuration.Env.Types
   ( HasAnyError,
-    HasLogging,
+    HasCommonLogging,
+    HasConsoleLogging,
+    HasFileLogging,
     HasNotifyConfig (getNotifyConfig),
     setAnyErrorTrue,
   )
@@ -29,7 +31,9 @@ import Shrun.Prelude
 -- sends.
 sendNotif ::
   ( HasAnyError env,
-    HasLogging env (Region m),
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     HasNotifyConfig env,
     MonadNotify m,
     MonadReader env m,

@@ -1,17 +1,38 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.FileLogging
-  ( FileLoggingP (..),
+  ( FileLogInitP (..),
+    FileLogOpened (..),
+    FileLoggingP (..),
     FileLoggingArgs,
     FileLoggingToml,
     FileLoggingMerged,
+    FileLoggingEnv,
     mergeFileLogging,
+    withFileLoggingEnv,
   )
 where
 
+import Data.Bytes
+  ( FloatingFormatter (MkFloatingFormatter),
+    Normalize (normalize),
+    formatSized,
+    sizedFormatterNatural,
+  )
+import Data.Text qualified as T
+import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile))
+import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
+import Effects.FileSystem.Utils qualified as FsUtils
+import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
+  ( ConfigPhase
+      ( ConfigPhaseArgs,
+        ConfigPhaseEnv,
+        ConfigPhaseMerged,
+        ConfigPhaseToml
+      ),
     ConfigPhaseF,
     ConfigPhaseMaybeF,
   )
@@ -20,11 +41,12 @@ import Shrun.Configuration.Data.WithDisabled
     (<>?),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Data.FileMode (FileMode, defaultFileMode)
-import Shrun.Data.FilePathDefault (FilePathDefault)
-import Shrun.Data.FileSizeMode (FileSizeMode, defaultFileSizeMode)
+import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite), defaultFileMode)
+import Shrun.Data.FilePathDefault (FilePathDefault (..))
+import Shrun.Data.FileSizeMode (FileSizeMode (..), defaultFileSizeMode)
 import Shrun.Data.StripControl (StripControl, defaultFileLogStripControl)
 import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
+import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
 
 -- NOTE: [Args vs. Toml mandatory fields]
@@ -52,20 +74,79 @@ type family FileLogPathF p where
   FileLogPathF ConfigPhaseToml = FilePathDefault
   FileLogPathF ConfigPhaseMerged = FilePathDefault
 
--- | Holds file logging config.
-type FileLoggingP :: ConfigPhase -> Type
-data FileLoggingP p = MkFileLoggingP
+-- | Initial file log params, for usage before we create the final Env.
+data FileLogInitP p = MkFileLogInitP
   { -- | Optional path to log file.
     path :: FileLogPathF p,
-    -- | The max number of command characters to display in the file logs.
-    cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
-    -- | Determines to what extent we should remove control characters
-    -- from file logs.
-    stripControl :: ConfigPhaseF p StripControl,
     -- | Mode to use with the file log.
     mode :: ConfigPhaseF p FileMode,
     -- | Threshold for when we should warn about the log file size.
     sizeMode :: ConfigPhaseF p FileSizeMode
+  }
+
+makeFieldLabelsNoPrefix ''FileLogInitP
+
+type FileLogInitArgs = FileLogInitP ConfigPhaseArgs
+
+type FileLogInitToml = FileLogInitP ConfigPhaseToml
+
+type FileLogInitMerged = FileLogInitP ConfigPhaseMerged
+
+deriving stock instance Eq FileLogInitArgs
+
+deriving stock instance Show FileLogInitArgs
+
+deriving stock instance Eq FileLogInitToml
+
+deriving stock instance Show FileLogInitToml
+
+deriving stock instance Eq FileLogInitMerged
+
+deriving stock instance Show FileLogInitMerged
+
+instance DecodeTOML FileLogInitToml where
+  tomlDecoder =
+    MkFileLogInitP
+      <$> decodeFileLogging
+      <*> decodeFileLogMode
+      <*> decodeFileLogSizeMode
+
+decodeFileLogging :: Decoder FilePathDefault
+decodeFileLogging = getFieldWith tomlDecoder "path"
+
+decodeFileLogMode :: Decoder (Maybe FileMode)
+decodeFileLogMode = getFieldOptWith tomlDecoder "mode"
+
+decodeFileLogSizeMode :: Decoder (Maybe FileSizeMode)
+decodeFileLogSizeMode = getFieldOptWith tomlDecoder "size-mode"
+
+-- | Params after we have opened the file for logging.
+data FileLogOpened = MkFileLogOpened
+  { -- | File handle.
+    handle :: ~Handle,
+    -- | File log queue.
+    queue :: ~(TBQueue FileLog)
+  }
+
+makeFieldLabelsNoPrefix ''FileLogOpened
+
+type FileLogFileF :: ConfigPhase -> Type
+type family FileLogFileF p where
+  FileLogFileF ConfigPhaseArgs = FileLogInitP ConfigPhaseArgs
+  FileLogFileF ConfigPhaseToml = FileLogInitP ConfigPhaseToml
+  FileLogFileF ConfigPhaseMerged = FileLogInitP ConfigPhaseMerged
+  FileLogFileF ConfigPhaseEnv = FileLogOpened
+
+-- | Holds file logging config.
+type FileLoggingP :: ConfigPhase -> Type
+data FileLoggingP p = MkFileLoggingP
+  { -- | File-related params.
+    file :: FileLogFileF p,
+    -- | The max number of command characters to display in the file logs.
+    cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
+    -- | Determines to what extent we should remove control characters
+    -- from file logs.
+    stripControl :: ConfigPhaseF p StripControl
   }
 
 makeFieldLabelsNoPrefix ''FileLoggingP
@@ -75,6 +156,8 @@ type FileLoggingArgs = FileLoggingP ConfigPhaseArgs
 type FileLoggingToml = FileLoggingP ConfigPhaseToml
 
 type FileLoggingMerged = FileLoggingP ConfigPhaseMerged
+
+type FileLoggingEnv = FileLoggingP ConfigPhaseEnv
 
 deriving stock instance Eq (FileLoggingP ConfigPhaseArgs)
 
@@ -94,7 +177,7 @@ mergeFileLogging ::
   Maybe FileLoggingToml ->
   Maybe FileLoggingMerged
 mergeFileLogging args mToml =
-  case args ^. #path of
+  case args ^. (#file % #path) of
     -- 1. Logging globally disabled
     Disabled -> Nothing
     Without -> case mToml of
@@ -104,7 +187,20 @@ mergeFileLogging args mToml =
       Just toml ->
         Just
           $ MkFileLoggingP
-            { path = toml ^. #path,
+            { file =
+                MkFileLogInitP
+                  { path = toml ^. (#file % #path),
+                    mode =
+                      plusDefault
+                        defaultFileMode
+                        (#file % #mode)
+                        (toml ^. #file % #mode),
+                    sizeMode =
+                      plusDefault
+                        defaultFileSizeMode
+                        (#file % #sizeMode)
+                        (toml ^. #file % #sizeMode)
+                  },
               cmdNameTrunc =
                 plusNothing
                   #cmdNameTrunc
@@ -113,40 +209,46 @@ mergeFileLogging args mToml =
                 plusDefault
                   defaultFileLogStripControl
                   #stripControl
-                  (toml ^. #stripControl),
-              mode =
-                plusDefault
-                  defaultFileMode
-                  #mode
-                  (toml ^. #mode),
-              sizeMode =
-                plusDefault
-                  defaultFileSizeMode
-                  #sizeMode
-                  (toml ^. #sizeMode)
+                  (toml ^. #stripControl)
             }
     With path -> case mToml of
       -- 3. Yes Args and no Toml
       Nothing ->
         Just
           $ MkFileLoggingP
-            { path,
+            { file =
+                MkFileLogInitP
+                  { path,
+                    mode =
+                      WD.fromWithDisabled defaultFileMode (args ^. #file % #mode),
+                    sizeMode =
+                      WD.fromWithDisabled defaultFileSizeMode (args ^. #file % #sizeMode)
+                  },
               cmdNameTrunc =
                 WD.toMaybe (args ^. #cmdNameTrunc),
               stripControl =
                 WD.fromWithDisabled
                   defaultFileLogStripControl
-                  (args ^. #stripControl),
-              mode =
-                WD.fromWithDisabled defaultFileMode (args ^. #mode),
-              sizeMode =
-                WD.fromWithDisabled defaultFileSizeMode (args ^. #sizeMode)
+                  (args ^. #stripControl)
             }
       -- 4. Yes Args and yes Toml
       Just toml ->
         Just
           $ MkFileLoggingP
-            { path,
+            { file =
+                MkFileLogInitP
+                  { path,
+                    mode =
+                      plusDefault
+                        defaultFileMode
+                        (#file % #mode)
+                        (toml ^. #file % #mode),
+                    sizeMode =
+                      plusDefault
+                        defaultFileSizeMode
+                        (#file % #sizeMode)
+                        (toml ^. #file % #sizeMode)
+                  },
               cmdNameTrunc =
                 plusNothing
                   #cmdNameTrunc
@@ -155,17 +257,7 @@ mergeFileLogging args mToml =
                 plusDefault
                   defaultFileLogStripControl
                   #stripControl
-                  (view #stripControl toml),
-              mode =
-                plusDefault
-                  defaultFileMode
-                  #mode
-                  (view #mode toml),
-              sizeMode =
-                plusDefault
-                  defaultFileSizeMode
-                  #sizeMode
-                  (view #sizeMode toml)
+                  (view #stripControl toml)
             }
   where
     plusDefault :: a -> Lens' FileLoggingArgs (WithDisabled a) -> Maybe a -> a
@@ -177,14 +269,9 @@ mergeFileLogging args mToml =
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =
     MkFileLoggingP
-      <$> decodeFileLogging
+      <$> tomlDecoder
       <*> decodeFileCmdNameTrunc
       <*> decodeFileLogStripControl
-      <*> decodeFileLogMode
-      <*> decodeFileLogSizeMode
-
-decodeFileLogging :: Decoder FilePathDefault
-decodeFileLogging = getFieldWith tomlDecoder "path"
 
 decodeFileCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
 decodeFileCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
@@ -192,8 +279,131 @@ decodeFileCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
 decodeFileLogStripControl :: Decoder (Maybe StripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "strip-control"
 
-decodeFileLogMode :: Decoder (Maybe FileMode)
-decodeFileLogMode = getFieldOptWith tomlDecoder "mode"
+type MLogging = Maybe (Tuple3 FileLoggingMerged Handle (TBQueue FileLog))
 
-decodeFileLogSizeMode :: Decoder (Maybe FileSizeMode)
-decodeFileLogSizeMode = getFieldOptWith tomlDecoder "size-mode"
+-- | Given merged FileLogging config, constructs a FileLoggingEnv and calls
+-- the continuation.
+withFileLoggingEnv ::
+  forall m a.
+  ( HasCallStack,
+    MonadFileWriter m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadPathWriter m,
+    MonadSTM m,
+    MonadTerminal m
+  ) =>
+  Maybe FileLoggingMerged ->
+  (Maybe FileLoggingEnv -> m a) ->
+  m a
+withFileLoggingEnv mFileLogging onFileLoggingEnv = do
+  let mkEnv :: MLogging -> Maybe FileLoggingEnv
+      mkEnv Nothing = Nothing
+      mkEnv (Just (fl, h, q)) =
+        Just
+          $ MkFileLoggingP
+            { file =
+                MkFileLogOpened
+                  { handle = h,
+                    queue = q
+                  },
+              cmdNameTrunc = fl ^. #cmdNameTrunc,
+              stripControl = fl ^. #stripControl
+            }
+
+  withMLogging mFileLogging (onFileLoggingEnv . mkEnv)
+
+withMLogging ::
+  forall m a.
+  ( HasCallStack,
+    MonadFileWriter m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadPathWriter m,
+    MonadSTM m,
+    MonadTerminal m
+  ) =>
+  Maybe FileLoggingMerged ->
+  (MLogging -> m a) ->
+  m a
+-- 1. No file logging
+withMLogging Nothing onLogging = onLogging Nothing
+-- 2. Use the default path.
+withMLogging (Just fileLogging) onLogging = do
+  let ioMode = case fileLogging ^. #file % #mode of
+        FileModeAppend -> AppendMode
+        FileModeWrite -> WriteMode
+
+  fp <- case fileLogging ^. #file % #path of
+    FPDefault -> do
+      stateDir <- getShrunXdgState
+      let fp = stateDir </> [osp|shrun.log|]
+      stateExists <- doesDirectoryExist stateDir
+      unless stateExists (createDirectoryIfMissing True stateDir)
+      pure fp
+    FPManual fp -> pure fp
+
+  ensureFileExists fp
+  handleLogFileSize (fileLogging ^. #file % #sizeMode) fp
+  fileQueue <- newTBQueueA 1000
+
+  withBinaryFile fp ioMode $ \h ->
+    onLogging (Just (fileLogging, h, fileQueue))
+
+handleLogFileSize ::
+  ( HasCallStack,
+    MonadPathReader m,
+    MonadPathWriter m,
+    MonadTerminal m
+  ) =>
+  FileSizeMode ->
+  OsPath ->
+  m ()
+handleLogFileSize fileSizeMode fp = do
+  fileSize <- MkBytes @B . unsafeConvertIntegral <$> getFileSize fp
+  case fileSizeMode of
+    FileSizeModeWarn warnSize ->
+      when (fileSize > warnSize)
+        $ putTextLn
+        $ sizeWarning warnSize fileSize
+    FileSizeModeDelete delSize ->
+      when (fileSize > delSize) $ do
+        putTextLn $ sizeWarning delSize fileSize <> " Deleting log."
+        removeFile fp
+    FileSizeModeNothing -> pure ()
+  where
+    sizeWarning warnSize fileSize =
+      mconcat
+        [ "Warning: log file '",
+          T.pack $ FsUtils.decodeOsToFpShow fp,
+          "' has size: ",
+          formatBytes fileSize,
+          ", but specified threshold is: ",
+          formatBytes warnSize,
+          "."
+        ]
+
+    formatBytes =
+      formatSized (MkFloatingFormatter (Just 2)) sizedFormatterNatural
+        . normalize
+        -- Convert to double _before_ normalizing. We may lose some precision
+        -- here, but it is better than normalizing a natural, which will
+        -- truncate (i.e. greater precision loss).
+        . fmap (toDouble . unsafeConvertIntegral)
+
+    toDouble :: Integer -> Double
+    toDouble = fromInteger
+
+ensureFileExists ::
+  ( HasCallStack,
+    MonadFileWriter m,
+    MonadPathReader m
+  ) =>
+  OsPath ->
+  m ()
+ensureFileExists fp = do
+  exists <- doesFileExist fp
+  unless exists $ writeFileUtf8 fp ""
+
+getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgState = getXdgState [osp|shrun|]

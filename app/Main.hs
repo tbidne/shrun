@@ -1,7 +1,7 @@
 module Main (main) where
 
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import Shrun.Env (makeEnvAndShrun)
+import Shrun.Configuration.Env (makeEnvAndShrun)
 import Shrun.Prelude
 
 main :: IO ()
@@ -24,7 +24,7 @@ main = do
       Just (MkExceptionCS (ExitFailure _) _) -> pure ()
       Nothing -> putStrLn $ displayException ex
 
-  makeEnvAndShrun `catchCS` doNothingOnSuccess
+  makeEnvAndShrun @IO @ConsoleRegion `catchCS` doNothingOnSuccess
   where
     -- We need to catchCS ExitCode so that optparse applicative's --help
     -- does not set the error code to failure...but then we need to rethrow

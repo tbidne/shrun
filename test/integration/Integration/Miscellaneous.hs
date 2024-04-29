@@ -19,10 +19,10 @@ import Integration.Utils
 import Shrun.Configuration qualified as Configuration
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Data.MergedConfig qualified as Merged
+import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Toml qualified as Toml
-import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeNothing))
-import Shrun.Env (withEnv)
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -184,7 +184,7 @@ usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
     desc = "Uses recursive command from example"
     args = ["multi1"]
     cmds =
-      MkCommand (Just "m1") "m1val"
+      MkCommandP (Just "m1") "m1val"
         :<|| [ "m2",
                "m3"
              ]
@@ -205,8 +205,8 @@ usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd"
     args = ["-c", getExampleConfig "default", "all", "echo cat"]
 
     cmds =
-      MkCommand (Just "cmd1") "echo \"command one\""
-        :<|| [ MkCommand (Just "cmd4") "command four",
+      MkCommandP (Just "cmd1") "echo \"command one\""
+        :<|| [ MkCommandP (Just "cmd4") "command four",
                "echo hi",
                "echo cat"
              ]
@@ -242,7 +242,7 @@ testFileSizeModeNothing = testPropertyNamed desc "testFileSizeModeNothing"
     desc = "size-mode reads 'nothing'"
     args = ["-c", getIntConfig "basic-file-log", "cmd"]
 
-    expected = [#coreConfig % #fileLogging %? #sizeMode ^?=@ Just FileSizeModeNothing]
+    expected = [#coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just FileSizeModeNothing]
 
 newtype TermIO a = MkTermIO (IO a)
   deriving (Applicative, Functor, Monad, MonadThrow) via IO

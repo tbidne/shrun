@@ -12,7 +12,7 @@ import Shrun.Notify.MonadNotify
     ShrunNote,
     exitFailureToStderr,
   )
-import Shrun.Notify.Types (NotifySystem (AppleScript))
+import Shrun.Notify.Types (NotifySystemP (AppleScript))
 import Shrun.Prelude
 
 -- | Effect for apple script.

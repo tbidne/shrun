@@ -13,20 +13,25 @@ import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
+import Shrun.Configuration.Data.FileLogging
+  ( FileLogOpened (MkFileLogOpened),
+    FileLoggingEnv,
+  )
+import Shrun.Configuration.Env.Types
+  ( HasAnyError (getAnyError),
+    HasCmdLogging,
+    HasCommands (getCommands, getCompletedCmds),
+    HasCommonLogging (getCommonLogging),
+    HasConsoleLogging (getConsoleLogging),
+    HasFileLogging (getFileLogging),
+    HasInit,
+    HasNotifyConfig (getNotifyConfig),
+    HasTimeout (getTimeout),
+    setAnyErrorTrue,
+  )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Timeout (Timeout (MkTimeout))
 import Shrun.Data.TimerFormat qualified as TimerFormat
-import Shrun.Env.Types
-  ( FileLogging,
-    HasAnyError (getAnyError),
-    HasCommands (getCommands, getCompletedCmds),
-    HasInit,
-    HasLogging (getLogging),
-    HasNotifyConfig (getNotifyConfig),
-    HasTimeout (getTimeout),
-    Logging,
-    setAnyErrorTrue,
-  )
 import Shrun.IO (Stderr (MkStderr), tryCommandLogging)
 import Shrun.IO.Types (CommandResult (CommandFailure, CommandSuccess))
 import Shrun.Logging qualified as Logging
@@ -69,10 +74,14 @@ import Shrun.Utils qualified as Utils
 
 -- | Entry point
 shrun ::
+  forall m env.
   ( HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasLogging env (Region m),
+    HasCmdLogging env,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     HasNotifyConfig env,
     HasTimeout env,
     MonadAsync m,
@@ -91,25 +100,26 @@ shrun ::
   -- | .
   m ()
 shrun = displayRegions $ do
-  logging <- asks getLogging
+  mFileLogging <- asks getFileLogging
+  (_, consoleQueue) <- asks getConsoleLogging
 
   -- always start console logger
-  Async.withAsync pollQueueToConsole $ \consoleLogger -> do
+  Async.withAsync (pollQueueToConsole consoleQueue) $ \consoleLogger -> do
     -- run commands, running file logger if requested
     maybe
       runCommands
       runWithFileLogging
-      (logging ^. #fileLog)
+      mFileLogging
 
     -- cancel consoleLogger, print remaining logs
     Async.cancel consoleLogger
-    let consoleQueue = logging ^. #consoleLog
     flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
 
     -- if any processes have failed, exit with an error
     anyError <- readTVarA =<< asks getAnyError
     when anyError exitFailure
   where
+    runWithFileLogging :: FileLoggingEnv -> m ()
     runWithFileLogging fileLogging =
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
         runCommands
@@ -120,7 +130,7 @@ shrun = displayRegions $ do
         flushTBQueueA fileQueue >>= traverse_ (logFile h)
         hFlush h
       where
-        (h, fileQueue) = fileLogging ^. #log
+        MkFileLogOpened h fileQueue = fileLogging ^. #file
 
     runCommands = do
       cmds <- asks getCommands
@@ -135,7 +145,10 @@ runCommand ::
   ( HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasLogging env (Region m),
+    HasCmdLogging env,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     HasNotifyConfig env,
     MonadHandleReader m,
     MonadIORef m,
@@ -152,9 +165,11 @@ runCommand ::
   m ()
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
-  timerFormat <- view #timerFormat <$> (asks getLogging :: m (Logging (Region m)))
+  commonLogging <- asks getCommonLogging
+  (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
 
-  let (urgency, msg', lvl, timeElapsed) = case cmdResult of
+  let timerFormat = commonLogging ^. #timerFormat
+      (urgency, msg', lvl, timeElapsed) = case cmdResult of
         CommandFailure t (MkStderr err) -> (Critical, ": " <> err, LevelError, t)
         CommandSuccess t -> (Normal, "", LevelSuccess, t)
       timeMsg = TimerFormat.formatRelativeTime timerFormat timeElapsed <> msg'
@@ -168,9 +183,8 @@ runCommand cmd = do
           mode = LogModeFinish
         }
 
-  logging :: Logging (Region m) <- asks getLogging
-  let cmdNameTrunc = logging ^. #cmdNameTrunc
-      keyHide = logging ^. #keyHide
+  let cmdNameTrunc = consoleLogging ^. #cmdNameTrunc
+      keyHide = commonLogging ^. #keyHide
       formattedCmd = LogFmt.formatCommand keyHide cmdNameTrunc cmd
 
   -- Sent off notif if NotifyAll or NotifyCommand is set
@@ -184,7 +198,9 @@ printFinalResult ::
   forall m env e b.
   ( Exception e,
     HasAnyError env,
-    HasLogging env (Region m),
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     HasNotifyConfig env,
     MonadNotify m,
     MonadReader env m,
@@ -215,7 +231,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
     -- update anyError
     setAnyErrorTrue
 
-  timerFormat <- view #timerFormat <$> (asks getLogging :: m (Logging (Region m)))
+  timerFormat <- asks (view #timerFormat . getCommonLogging)
   let totalTimeTxt = TimerFormat.formatRelativeTime timerFormat (Utils.timeSpecToRelTime totalTime)
       finalLog =
         MkLog
@@ -241,7 +257,9 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 counter ::
   ( HasAnyError env,
     HasCommands env,
-    HasLogging env (Region m),
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     HasTimeout env,
     MonadIORef m,
     MonadReader env m,
@@ -265,7 +283,8 @@ counter = do
       logCounter r elapsed
 
 logCounter ::
-  ( HasLogging env (Region m),
+  ( HasCommonLogging env,
+    HasConsoleLogging env (Region m),
     MonadReader env m,
     MonadSTM m
   ) =>
@@ -273,9 +292,9 @@ logCounter ::
   Natural ->
   m ()
 logCounter region elapsed = do
-  logging <- asks getLogging
-  let timerFormat = view #timerFormat logging
-      msg = TimerFormat.formatSeconds timerFormat elapsed
+  timerFormat <- asks (view #timerFormat . getCommonLogging)
+
+  let msg = TimerFormat.formatSeconds timerFormat elapsed
       lg =
         MkLog
           { cmd = Nothing,
@@ -283,13 +302,15 @@ logCounter region elapsed = do
             lvl = LevelTimer,
             mode = LogModeSet
           }
-  Logging.regionLogToConsoleQueue region logging lg
+  Logging.regionLogToConsoleQueue region lg
 
 keepRunning ::
   forall m env.
   ( HasAnyError env,
     HasCommands env,
-    HasLogging env (Region m),
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     MonadIORef m,
     MonadReader env m,
     MonadSTM m,
@@ -303,7 +324,7 @@ keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      keyHide <- asks (view #keyHide . getLogging @env @(Region m))
+      keyHide <- asks (view #keyHide . getCommonLogging)
       allCmds <- asks getCommands
       completedCmdsTVar <- asks getCompletedCmds
       completedCmds <- readTVarA completedCmdsTVar
@@ -332,15 +353,14 @@ timedOut _ Nothing = False
 timedOut timer (Just (MkTimeout t)) = timer > t
 
 pollQueueToConsole ::
-  ( HasLogging env (Region m),
-    MonadMask m,
+  ( MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m
   ) =>
+  TBQueue (LogRegion (Region m)) ->
   m void
-pollQueueToConsole = do
-  queue <- asks (view #consoleLog . getLogging)
+pollQueueToConsole queue = do
   -- NOTE: Same masking behavior as pollQueueToFile.
   forever $ atomicReadWrite queue printConsoleLog
 
@@ -353,7 +373,7 @@ pollQueueToFile ::
     MonadMask m,
     MonadSTM m
   ) =>
-  FileLogging ->
+  FileLoggingEnv ->
   m void
 pollQueueToFile fileLogging = do
   forever
@@ -363,7 +383,7 @@ pollQueueToFile fileLogging = do
     -- Hence the mask.
     atomicReadWrite queue (logFile h)
   where
-    (h, queue) = fileLogging ^. #log
+    MkFileLogOpened h queue = fileLogging ^. #file
 
 logFile :: (MonadHandleWriter m) => Handle -> FileLog -> m ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog

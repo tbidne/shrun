@@ -8,13 +8,17 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.FileLogging
-  ( FileLoggingArgs,
+  ( FileLogInitP
+      ( MkFileLogInitP,
+        mode,
+        path,
+        sizeMode
+      ),
+    FileLoggingArgs,
     FileLoggingP
       ( MkFileLoggingP,
         cmdNameTrunc,
-        mode,
-        path,
-        sizeMode,
+        file,
         stripControl
       ),
   )
@@ -41,10 +45,13 @@ fileLoggingParser = do
 
   pure
     $ MkFileLoggingP
-      { cmdNameTrunc,
-        mode,
-        path,
-        sizeMode,
+      { file =
+          MkFileLogInitP
+            { mode,
+              path,
+              sizeMode
+            },
+        cmdNameTrunc,
         stripControl
       }
 

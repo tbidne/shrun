@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP #-}
+-- see NOTE: [Unused Top Binds]
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 -- | Runs functional tests.
 module Main (main) where
@@ -6,28 +8,28 @@ module Main (main) where
 import Data.Text qualified as T
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Shrun (shrun)
-import Shrun.Env (withEnv)
-import Shrun.Env.Types
+import Shrun.Configuration.Env (withEnv)
+import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
+    HasCmdLogging (getCmdLogging),
     HasCommands (getCommands, getCompletedCmds),
+    HasCommonLogging (getCommonLogging),
+    HasConsoleLogging (getConsoleLogging),
+    HasFileLogging (getFileLogging),
     HasInit (getInit),
-    HasLogging (getLogging),
     HasNotifyConfig (getNotifyConfig),
     HasTimeout (getTimeout),
-    Logging
-      ( MkLogging,
-        cmdLog,
-        cmdLogReadSize,
-        cmdNameTrunc,
-        consoleLog,
-        fileLog,
-        keyHide,
-        pollInterval,
-        timerFormat
+  )
+import Shrun.Logging.MonadRegionLogger
+  ( MonadRegionLogger
+      ( Region,
+        displayRegions,
+        logGlobal,
+        logRegion,
+        withRegion
       ),
   )
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (..))
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Notify.MonadNotify (MonadNotify (notify))
 import Shrun.Prelude
@@ -100,8 +102,15 @@ mkArgs system =
     "sleep 3"
   ]
 
+-- NOTE: [Unused Top Binds]
+--
+-- Apparently, this warning is tripped as GHC accurately determines that
+-- the consoleQueue field name is never used. It's kind of silly though since
+-- we are using the other fields, and it's not like we can only create
+-- one or two. Consider filing a GHC issue for this.
+
 data NotifyEnv = MkNotifyEnv
-  { unNotifyEnv :: Env,
+  { unNotifyEnv :: Env (),
     consoleQueue :: TBQueue (LogRegion ()),
     logsRef :: IORef [Text]
   }
@@ -113,6 +122,18 @@ instance HasCommands NotifyEnv where
   getCommands = getCommands . (.unNotifyEnv)
   getCompletedCmds = getCompletedCmds . (.unNotifyEnv)
 
+instance HasCmdLogging NotifyEnv where
+  getCmdLogging = getCmdLogging . (.unNotifyEnv)
+
+instance HasCommonLogging NotifyEnv where
+  getCommonLogging = getCommonLogging . (.unNotifyEnv)
+
+instance HasConsoleLogging NotifyEnv () where
+  getConsoleLogging = getConsoleLogging . (.unNotifyEnv)
+
+instance HasFileLogging NotifyEnv where
+  getFileLogging = getFileLogging . (.unNotifyEnv)
+
 instance HasInit NotifyEnv where
   getInit = getInit . (.unNotifyEnv)
 
@@ -122,23 +143,7 @@ instance HasNotifyConfig NotifyEnv where
 instance HasTimeout NotifyEnv where
   getTimeout = getTimeout . (.unNotifyEnv)
 
-instance HasLogging NotifyEnv () where
-  getLogging nenv =
-    MkLogging
-      { keyHide = envLogging ^. #keyHide,
-        pollInterval = envLogging ^. #pollInterval,
-        cmdLogReadSize = envLogging ^. #cmdLogReadSize,
-        timerFormat = envLogging ^. #timerFormat,
-        cmdNameTrunc = envLogging ^. #cmdNameTrunc,
-        cmdLog = envLogging ^. #cmdLog,
-        fileLog = envLogging ^. #fileLog,
-        consoleLog = nenv.consoleQueue
-      }
-    where
-      envLogging :: Logging ConsoleRegion
-      envLogging = getLogging nenv.unNotifyEnv
-
-liftNotify :: ShellT Env IO a -> ShellT NotifyEnv IO a
+liftNotify :: ShellT (Env ()) IO a -> ShellT NotifyEnv IO a
 liftNotify m = do
   MkNotifyEnv env _ _ <- ask
   liftIO $ runShellT m env

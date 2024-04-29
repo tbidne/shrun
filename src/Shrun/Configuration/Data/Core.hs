@@ -7,25 +7,33 @@ module Shrun.Configuration.Data.Core
     CoreConfigToml,
     CoreConfigMerged,
     mergeCoreConfig,
+    withCoreEnv,
   )
 where
 
 import Shrun.Configuration.Data.CmdLogging (CmdLoggingP, mergeCmdLogging)
+import Shrun.Configuration.Data.CmdLogging qualified as CmdLogging
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingP, mergeCommonLogging)
+import Shrun.Configuration.Data.CommonLogging qualified as CommonLogging
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
+        ConfigPhaseEnv,
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
     ConfigPhaseMaybeF,
   )
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingP, mergeConsoleLogging)
+import Shrun.Configuration.Data.ConsoleLogging qualified as ConsoleLogging
 import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
+import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
+import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Data.Timeout (Timeout)
+import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Prelude
 
 -- | For types that are only guaranteed to exist for Args. Generally this
@@ -37,12 +45,14 @@ type family ArgsOnlyDetF p a where
   ArgsOnlyDetF ConfigPhaseArgs a = a
   ArgsOnlyDetF ConfigPhaseToml a = Maybe a
   ArgsOnlyDetF ConfigPhaseMerged a = Maybe a
+  ArgsOnlyDetF ConfigPhaseEnv a = Maybe a
 
 -- | For types that are optional only on the Toml.
 type family TomlOptF p a where
   TomlOptF ConfigPhaseArgs a = a
   TomlOptF ConfigPhaseToml a = Maybe a
   TomlOptF ConfigPhaseMerged a = a
+  TomlOptF ConfigPhaseEnv a = a
 
 -- | Holds core configuration data.
 type CoreConfigP :: ConfigPhase -> Type
@@ -70,6 +80,8 @@ type CoreConfigArgs = CoreConfigP ConfigPhaseArgs
 type CoreConfigToml = CoreConfigP ConfigPhaseToml
 
 type CoreConfigMerged = CoreConfigP ConfigPhaseMerged
+
+type CoreConfigEnv = CoreConfigP ConfigPhaseEnv
 
 deriving stock instance Eq (CoreConfigP ConfigPhaseArgs)
 
@@ -152,3 +164,36 @@ mergeCoreConfig args = \case
   where
     plusNothing :: Lens' CoreConfigArgs (WithDisabled a) -> Maybe a -> Maybe a
     plusNothing l r = WD.toMaybe $ (args ^. l) <>? r
+
+-- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
+-- continuation.
+withCoreEnv ::
+  forall m a.
+  ( HasCallStack,
+    MonadDBus m,
+    MonadFileWriter m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadPathWriter m,
+    MonadSTM m,
+    MonadTerminal m,
+    MonadThrow m
+  ) =>
+  CoreConfigMerged ->
+  (CoreConfigEnv -> m a) ->
+  m a
+withCoreEnv merged onCoreConfigEnv = do
+  notify <- traverse Notify.toEnv (merged ^. #notify)
+
+  FileLogging.withFileLoggingEnv (merged ^. #fileLogging) $ \fileLoggingEnv ->
+    let coreConfigEnv =
+          MkCoreConfigP
+            { init = merged ^. #init,
+              timeout = merged ^. #timeout,
+              commonLogging = CommonLogging.toEnv (merged ^. #commonLogging),
+              cmdLogging = CmdLogging.toEnv (merged ^. #cmdLogging),
+              consoleLogging = ConsoleLogging.toEnv (merged ^. #consoleLogging),
+              fileLogging = fileLoggingEnv,
+              notify
+            }
+     in onCoreConfigEnv coreConfigEnv

@@ -1,17 +1,26 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Shrun.Configuration.Data.Notify
   ( NotifyP (..),
     NotifyArgs,
     NotifyToml,
     NotifyMerged,
+    NotifyEnv,
     mergeNotifyLogging,
+    toEnv,
   )
 where
 
 import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
+  ( ConfigPhase
+      ( ConfigPhaseArgs,
+        ConfigPhaseEnv,
+        ConfigPhaseMerged,
+        ConfigPhaseToml
+      ),
     ConfigPhaseF,
   )
 import Shrun.Configuration.Data.WithDisabled
@@ -19,12 +28,19 @@ import Shrun.Configuration.Data.WithDisabled
     (<>?),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
+import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
 import Shrun.Notify.Types
-  ( NotifyAction,
-    NotifySystemP1,
+  ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
+    NotifyAction,
+    NotifySystemEnv,
+    NotifySystemP (..),
     NotifyTimeout,
-    defaultNotifySystem,
+    OsxNotifySystemMismatch
+      ( OsxNotifySystemMismatchDBus,
+        OsxNotifySystemMismatchNotifySend
+      ),
     defaultNotifyTimeout,
+    mergeNotifySystem,
   )
 import Shrun.Prelude
 
@@ -36,6 +52,7 @@ type family NotifyActionF p where
   NotifyActionF ConfigPhaseArgs = WithDisabled NotifyAction
   NotifyActionF ConfigPhaseToml = NotifyAction
   NotifyActionF ConfigPhaseMerged = NotifyAction
+  NotifyActionF ConfigPhaseEnv = NotifyAction
 
 -- | Holds notification config.
 type NotifyP :: ConfigPhase -> Type
@@ -43,7 +60,7 @@ data NotifyP p = MkNotifyP
   { -- | Actions for which to send notifications.
     action :: NotifyActionF p,
     -- | The notification system to use.
-    system :: ConfigPhaseF p NotifySystemP1,
+    system :: ConfigPhaseF p (NotifySystemP p),
     -- | when to timeout successful notifications.
     timeout :: ConfigPhaseF p NotifyTimeout
   }
@@ -55,6 +72,8 @@ type NotifyArgs = NotifyP ConfigPhaseArgs
 type NotifyToml = NotifyP ConfigPhaseToml
 
 type NotifyMerged = NotifyP ConfigPhaseMerged
+
+type NotifyEnv = NotifyP ConfigPhaseEnv
 
 deriving stock instance Eq (NotifyP ConfigPhaseArgs)
 
@@ -75,7 +94,6 @@ mergeNotifyLogging ::
   Maybe NotifyMerged
 mergeNotifyLogging args mToml =
   case args ^. #action of
-    -- 1. Notifications globally disabled
     Disabled -> Nothing
     Without -> case mToml of
       Nothing -> Nothing
@@ -83,11 +101,7 @@ mergeNotifyLogging args mToml =
         Just
           $ MkNotifyP
             { action = toml ^. #action,
-              system =
-                plusDefault
-                  defaultNotifySystem
-                  #system
-                  (toml ^. #system),
+              system = mergeNotifySystem (args ^. #system) (toml ^. #system),
               timeout =
                 plusDefault
                   defaultNotifyTimeout
@@ -95,12 +109,11 @@ mergeNotifyLogging args mToml =
                   (toml ^. #timeout)
             }
     With action -> case mToml of
-      -- 3. Args but no Toml
       Nothing ->
         Just
           $ MkNotifyP
             { action,
-              system = WD.fromWithDisabled defaultNotifySystem (args ^. #system),
+              system = mergeNotifySystem (args ^. #system) Nothing,
               timeout = WD.fromWithDisabled (afromInteger 10) (args ^. #timeout)
             }
       Just toml ->
@@ -108,10 +121,7 @@ mergeNotifyLogging args mToml =
           $ MkNotifyP
             { action,
               system =
-                plusDefault
-                  defaultNotifySystem
-                  #system
-                  (toml ^. #system),
+                mergeNotifySystem (args ^. #system) (toml ^. #system),
               timeout =
                 plusDefault
                   (afromInteger 10)
@@ -128,3 +138,42 @@ instance DecodeTOML NotifyToml where
       <$> getFieldWith tomlDecoder "action"
       <*> getFieldOptWith tomlDecoder "system"
       <*> getFieldOptWith tomlDecoder "timeout"
+
+#if OSX
+
+toEnv ::
+  ( MonadThrow m
+  ) =>
+  NotifyMerged ->
+  m NotifyEnv
+toEnv notifyMerged = case systemMerged of
+  DBus _ -> throwM OsxNotifySystemMismatchDBus
+  NotifySend -> throwM OsxNotifySystemMismatchNotifySend
+  AppleScript -> pure $ mkNotify notifyMerged AppleScript
+  where
+    systemMerged = notifyMerged ^. #system
+
+#else
+
+toEnv ::
+  ( MonadDBus m,
+    MonadThrow m
+  ) =>
+  NotifyMerged ->
+  m NotifyEnv
+toEnv notifyMerged = case systemMerged of
+  AppleScript -> throwM LinuxNotifySystemMismatchAppleScript
+  DBus _ -> mkNotify notifyMerged . DBus <$> connectSession
+  NotifySend -> pure $ mkNotify notifyMerged NotifySend
+  where
+    systemMerged = notifyMerged ^. #system
+
+#endif
+
+mkNotify :: NotifyMerged -> NotifySystemEnv -> NotifyEnv
+mkNotify notifyToml systemP2 =
+  MkNotifyP
+    { system = systemP2,
+      action = notifyToml ^. #action,
+      timeout = notifyToml ^. #timeout
+    }

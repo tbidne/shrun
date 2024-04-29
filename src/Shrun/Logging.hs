@@ -22,13 +22,15 @@ module Shrun.Logging
   )
 where
 
-import Shrun.Data.KeyHide (KeyHide)
-import Shrun.Env.Types
-  ( FileLogging,
-    HasLogging (getLogging),
-    Logging,
+import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
+import Shrun.Configuration.Env.Types
+  ( HasCommonLogging (getCommonLogging),
+    HasConsoleLogging (getConsoleLogging),
+    HasFileLogging (getFileLogging),
   )
+import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types
   ( Log,
     LogRegion (LogRegion),
@@ -39,38 +41,46 @@ import Shrun.Prelude
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
 putRegionLog ::
-  ( HasLogging env r,
+  ( HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     MonadReader env m,
     MonadSTM m,
     MonadTime m
   ) =>
   -- | Region.
-  r ->
+  Region m ->
   -- | Log to send.
   Log ->
   m ()
-putRegionLog region lg =
-  asks getLogging >>= \logging -> do
-    let keyHide = logging ^. #keyHide
-    regionLogToConsoleQueue region logging lg
-    for_ (logging ^. #fileLog) (\fl -> logToFileQueue keyHide fl lg)
+putRegionLog region lg = do
+  commonLogging <- asks getCommonLogging
+  mFileLogging <- asks getFileLogging
+
+  let keyHide = commonLogging ^. #keyHide
+
+  regionLogToConsoleQueue region lg
+  for_ mFileLogging (\fl -> logToFileQueue keyHide fl lg)
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
-  ( MonadSTM m
+  ( HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    MonadReader env m,
+    MonadSTM m
   ) =>
   -- | Region.
-  r ->
-  -- | Logging config.
-  Logging r ->
+  Region m ->
   -- | Log to send.
   Log ->
   m ()
-regionLogToConsoleQueue region logging log =
+regionLogToConsoleQueue region log = do
+  keyHide <- asks (view #keyHide . getCommonLogging)
+  (consoleLogging, queue) <- asks getConsoleLogging
+
+  let formatted = formatConsoleLog keyHide consoleLogging log
+
   writeTBQueueA queue (LogRegion (log ^. #mode) region formatted)
-  where
-    queue = logging ^. #consoleLog
-    formatted = formatConsoleLog logging log
 
 -- | Writes the log to the file queue.
 logToFileQueue ::
@@ -80,10 +90,10 @@ logToFileQueue ::
   -- | How to display the command.
   KeyHide ->
   -- | FileLogging config.
-  FileLogging ->
+  FileLoggingEnv ->
   -- | Log to send.
   Log ->
   m ()
 logToFileQueue keyHide fileLogging log = do
   formatted <- formatFileLog keyHide fileLogging log
-  writeTBQueueA (fileLogging ^. #log % _2) formatted
+  writeTBQueueA (fileLogging ^. #file % #queue) formatted

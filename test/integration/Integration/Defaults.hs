@@ -47,12 +47,16 @@ import Shrun.Configuration.Data.Core
       ),
   )
 import Shrun.Configuration.Data.FileLogging
-  ( FileLoggingP
-      ( MkFileLoggingP,
-        cmdNameTrunc,
+  ( FileLogInitP
+      ( MkFileLogInitP,
         mode,
         path,
-        sizeMode,
+        sizeMode
+      ),
+    FileLoggingP
+      ( MkFileLoggingP,
+        cmdNameTrunc,
+        file,
         stripControl
       ),
   )
@@ -66,7 +70,7 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
-import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
 import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeWarn))
@@ -87,7 +91,7 @@ import Shrun.Data.TimerFormat
   )
 import Shrun.Notify.Types
   ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
-    NotifySystem (AppleScript, DBus, NotifySend),
+    NotifySystemP (AppleScript, DBus, NotifySend),
     NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
 import Test.Tasty.Hedgehog (testProperty)
@@ -160,11 +164,14 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                 fileLogging =
                   Just
                     $ MkFileLoggingP
-                      { path = FPDefault,
+                      { file =
+                          MkFileLogInitP
+                            { path = FPDefault,
+                              mode = FileModeAppend,
+                              sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
+                            },
                         cmdNameTrunc = Just 45,
-                        stripControl = StripControlNone,
-                        mode = FileModeAppend,
-                        sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
+                        stripControl = StripControlNone
                       },
                 notify =
                   Just
@@ -174,7 +181,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                         timeout = NotifyTimeoutNever
                       }
               },
-          commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
+          commands = MkCommandP (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
@@ -252,11 +259,14 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                 fileLogging =
                   Just
                     $ MkFileLoggingP
-                      { path = FPManual logPath,
+                      { file =
+                          MkFileLogInitP
+                            { path = FPManual logPath,
+                              mode = FileModeAppend,
+                              sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
+                            },
                         cmdNameTrunc = Just 35,
-                        stripControl = StripControlNone,
-                        mode = FileModeAppend,
-                        sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
+                        stripControl = StripControlNone
                       },
                 notify =
                   Just
@@ -326,8 +336,8 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
     expected =
       [ #coreConfig % #fileLogging %? #cmdNameTrunc ^?=@ Just (Just 55),
         #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
-        #coreConfig % #fileLogging %? #mode ^?=@ Just FileModeWrite,
-        #coreConfig % #fileLogging %? #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
+        #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeWrite,
+        #coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
       ]
 
 fileLogStripControlDefaultsAll :: TestTree

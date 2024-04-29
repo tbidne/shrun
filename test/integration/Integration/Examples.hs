@@ -50,13 +50,13 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
-import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
 import Shrun.Data.StripControl (StripControl (StripControlSmart))
 import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Notify.Types
   ( NotifyAction (NotifyCommand),
-    NotifySystem (AppleScript, NotifySend),
+    NotifySystemP (AppleScript, NotifySend),
     NotifyTimeout (NotifyTimeoutNever),
   )
 
@@ -113,7 +113,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                         timeout = NotifyTimeoutNever
                       }
               },
-          commands = MkCommand (Just "cmd1") "echo \"command one\"" :<|| []
+          commands = MkCommandP (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
 examplesDefault :: TestTree

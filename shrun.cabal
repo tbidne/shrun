@@ -75,6 +75,8 @@ library
     Shrun.Configuration.Data.MergedConfig
     Shrun.Configuration.Data.Notify
     Shrun.Configuration.Data.WithDisabled
+    Shrun.Configuration.Env
+    Shrun.Configuration.Env.Types
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
     Shrun.Data.Command
@@ -83,16 +85,12 @@ library
     Shrun.Data.FileSizeMode
     Shrun.Data.KeyHide
     Shrun.Data.Legend
-    Shrun.Data.Phase
     Shrun.Data.PollInterval
     Shrun.Data.StripControl
     Shrun.Data.Text
     Shrun.Data.Timeout
     Shrun.Data.TimerFormat
     Shrun.Data.Truncation
-    Shrun.Env
-    Shrun.Env.Notify
-    Shrun.Env.Types
     Shrun.IO
     Shrun.IO.Types
     Shrun.Logging

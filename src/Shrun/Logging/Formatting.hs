@@ -20,14 +20,14 @@ where
 
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
-import Shrun.Data.Command (Command (MkCommand), CommandP1)
+import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
+import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
+import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
-import Shrun.Data.StripControl (StripControl (StripControlAll, StripControlNone))
-import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
-import Shrun.Env.Types
-  ( FileLogging,
-    Logging,
+import Shrun.Data.StripControl
+  ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
+import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
 import Shrun.Logging.Types
   ( Log,
     LogLevel
@@ -51,15 +51,25 @@ import System.Console.Pretty (Color (Blue, Cyan, Green, Red, White, Yellow))
 import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.
-formatConsoleLog :: Logging r -> Log -> ConsoleLog
-formatConsoleLog logging log =
+formatConsoleLog ::
+  KeyHide ->
+  ConsoleLoggingEnv ->
+  Log ->
+  ConsoleLog
+formatConsoleLog keyHide consoleLogging log =
   let line = case log ^. #cmd of
+        -- FIXME: Line truncation is inconsistently applied here i.e. if the
+        -- the log has a command or not. But that means all messages will have
+        -- it applied _except_ command logs w/ an actual command name.
+        --
+        -- We should make line truncation apply to all logs but _always_ skip
+        -- prefixes.
         Nothing -> brackets True prefix <> msgStripped
         Just cmd ->
           let cmd' =
                 formatCommand
-                  (logging ^. #keyHide)
-                  (logging ^. #cmdNameTrunc)
+                  keyHide
+                  (consoleLogging ^. #cmdNameTrunc)
                   cmd
            in -- truncate entire line if necessary
               truncateCmdLineFn
@@ -79,16 +89,14 @@ formatConsoleLog logging log =
       -- occasionally noticed.
       UnsafeConsoleLog (colorize line)
   where
-    msgStripped = stripChars (log ^. #msg) mStripControl
-    mCmdLogging = logging ^. #cmdLog
-    mStripControl = mCmdLogging ^? _Just % #stripControl
+    msgStripped = stripChars (log ^. #msg) (consoleLogging ^. #stripControl)
 
     -- truncate entire line if necessary (flag on)
     truncateCmdLineFn =
       maybe
         id
         U.truncateIfNeeded
-        (mCmdLogging ^? _Just % #lineTrunc %? #unTruncation)
+        (consoleLogging ^? #lineTrunc %? #unTruncation)
 
     colorize = P.color $ logToColor log
     prefix = logToPrefix log
@@ -101,7 +109,7 @@ formatFileLog ::
   ( MonadTime m
   ) =>
   KeyHide ->
-  FileLogging ->
+  FileLoggingEnv ->
   Log ->
   m FileLog
 formatFileLog keyHide fileLogging log = do
@@ -127,7 +135,7 @@ formatFileLog keyHide fileLogging log = do
           ]
   pure $ UnsafeFileLog withTimestamp
   where
-    msgStripped = stripChars (log ^. #msg) (Just stripControl)
+    msgStripped = stripChars (log ^. #msg) stripControl
     stripControl = fileLogging ^. #stripControl
     prefix = logToPrefix log
 
@@ -151,33 +159,32 @@ formatCommand keyHide cmdNameTrunc com = brackets True (truncateNameFn cmdName)
 -- | Pretty show for 'Command'. If the command has a key, and 'KeyHide' is
 -- 'KeyHideOff' then we return the key. Otherwise we return the command itself.
 --
--- >>> displayCmd (MkCommand Nothing "some long command") KeyHideOn
+-- >>> displayCmd (MkCommandP Nothing "some long command") KeyHideOn
 -- "some long command"
 --
--- >>> displayCmd (MkCommand Nothing "some long command") KeyHideOff
+-- >>> displayCmd (MkCommandP Nothing "some long command") KeyHideOff
 -- "some long command"
 --
--- >>> displayCmd (MkCommand (Just "long") "some long command") KeyHideOn
+-- >>> displayCmd (MkCommandP (Just "long") "some long command") KeyHideOn
 -- "some long command"
 --
--- >>> displayCmd (MkCommand (Just "long") "some long command") KeyHideOff
+-- >>> displayCmd (MkCommandP (Just "long") "some long command") KeyHideOff
 -- "long"
 displayCmd :: CommandP1 -> KeyHide -> Text
-displayCmd (MkCommand (Just key) _) KeyHideOff = key
-displayCmd (MkCommand _ cmd) _ = cmd
+displayCmd (MkCommandP (Just key) _) KeyHideOff = key
+displayCmd (MkCommandP _ cmd) _ = cmd
 
 -- | Applies the given 'StripControl' to the 'Text'.
 --
 -- * 'StripControlAll': Strips whitespace + all control chars.
 -- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.
 -- * 'StripControlNone': Strips whitespace.
-stripChars :: Text -> Maybe StripControl -> Text
+stripChars :: Text -> StripControl -> Text
 stripChars txt = \case
-  Just StripControlAll -> Utils.stripControlAll txt
+  StripControlAll -> Utils.stripControlAll txt
   -- whitespace
-  Just StripControlNone -> T.strip txt
-  --  default to smart
-  _ -> Utils.stripControlSmart txt
+  StripControlNone -> T.strip txt
+  StripControlSmart -> Utils.stripControlSmart txt
 {-# INLINE stripChars #-}
 
 -- | Surrounds text with brackets, appending a space if the boolean is 'True'.

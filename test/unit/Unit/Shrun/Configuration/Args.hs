@@ -37,7 +37,7 @@ import Shrun.Data.TimerFormat
 import Shrun.Data.Truncation (LineTruncation (Detected, Undetected))
 import Shrun.Notify.Types
   ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
-    NotifySystem (AppleScript, DBus, NotifySend),
+    NotifySystemP (AppleScript, DBus, NotifySend),
     NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
 import Shrun.Utils qualified as U
@@ -246,7 +246,7 @@ parseShortFileLogging =
     $ verifyResult argList expected
   where
     argList = ["-flogfile", "command"]
-    expected = updateDefFileLogArgs #path (FPManual [osp|logfile|])
+    expected = updateDefFileLogArgs (#file % #path) (FPManual [osp|logfile|])
 
 parseLongFileLogging :: TestTree
 parseLongFileLogging =
@@ -255,7 +255,7 @@ parseLongFileLogging =
   where
     desc = "Should parse filepath with --file-log"
     argList = ["--file-log=logfile", "command"]
-    expected = updateDefFileLogArgs #path (FPManual [osp|logfile|])
+    expected = updateDefFileLogArgs (#file % #path) (FPManual [osp|logfile|])
 
 parseLongDefaultFileLogging :: TestTree
 parseLongDefaultFileLogging =
@@ -264,7 +264,7 @@ parseLongDefaultFileLogging =
   where
     desc = "Should parse default --file-log"
     argList = ["--file-log", "default", "command"]
-    expected = updateDefFileLogArgs #path FPDefault
+    expected = updateDefFileLogArgs (#file % #path) FPDefault
 
 parseShortDefaultFileLogging :: TestTree
 parseShortDefaultFileLogging =
@@ -272,7 +272,7 @@ parseShortDefaultFileLogging =
     $ verifyResult argList expected
   where
     argList = ["-f", "default", "command"]
-    expected = updateDefFileLogArgs #path FPDefault
+    expected = updateDefFileLogArgs (#file % #path) FPDefault
 
 parseShortEmptyFileLoggingFails :: TestTree
 parseShortEmptyFileLoggingFails =
@@ -296,7 +296,7 @@ parseNoFileLog =
     $ verifyResult argList expected
   where
     argList = ["--no-file-log", "command"]
-    expected = disableDefCoreArgs (#fileLogging % #path)
+    expected = disableDefCoreArgs (#fileLogging % #file % #path)
 
 fileLoggingCmdNameTruncSpecs :: TestTree
 fileLoggingCmdNameTruncSpecs =
@@ -340,7 +340,7 @@ parseFileLogModeAppend =
   where
     desc = "Should parse --file-log-mode append as FileModeAppend"
     argList = ["--file-log-mode", "append", "command"]
-    expected = updateDefFileLogArgs #mode FileModeAppend
+    expected = updateDefFileLogArgs (#file % #mode) FileModeAppend
 
 parseFileLogModeWrite :: TestTree
 parseFileLogModeWrite =
@@ -349,7 +349,7 @@ parseFileLogModeWrite =
   where
     desc = "Should parse --file-log-mode write as FileModeWrite"
     argList = ["--file-log-mode", "write", "command"]
-    expected = updateDefFileLogArgs #mode FileModeWrite
+    expected = updateDefFileLogArgs (#file % #mode) FileModeWrite
 
 parseNoFileLogMode :: TestTree
 parseNoFileLogMode =
@@ -357,7 +357,7 @@ parseNoFileLogMode =
     $ verifyResult argList expected
   where
     argList = ["--no-file-log-mode", "command"]
-    expected = disableDefCoreArgs (#fileLogging % #mode)
+    expected = disableDefCoreArgs (#fileLogging % #file % #mode)
 
 fileLogStripControlSpecs :: TestTree
 fileLogStripControlSpecs =
@@ -424,7 +424,7 @@ parseFileLogSizeWarn =
     argList = ["--file-log-size-mode", "warn 10 gb", "command"]
     expected =
       updateDefFileLogArgs
-        #sizeMode
+        (#file % #sizeMode)
         (FileSizeModeWarn $ MkBytes 10_000_000_000)
 
 parseFileLogSizeDelete :: TestTree
@@ -436,7 +436,7 @@ parseFileLogSizeDelete =
     argList = ["--file-log-size-mode", "delete 2.4Kilobytes", "command"]
     expected =
       updateDefFileLogArgs
-        #sizeMode
+        (#file % #sizeMode)
         (FileSizeModeDelete $ MkBytes 2_400)
 
 parseFileLogSizeNothing :: TestTree
@@ -448,7 +448,7 @@ parseFileLogSizeNothing =
     argList = ["--file-log-size-mode", "nothing", "command"]
     expected =
       updateDefFileLogArgs
-        #sizeMode
+        (#file % #sizeMode)
         FileSizeModeNothing
 
 parseNoFileLogSizeMode :: TestTree
@@ -457,7 +457,7 @@ parseNoFileLogSizeMode =
     $ verifyResult argList expected
   where
     argList = ["--no-file-log-size-mode", "command"]
-    expected = disableDefCoreArgs (#fileLogging % #sizeMode)
+    expected = disableDefCoreArgs (#fileLogging % #file % #sizeMode)
 
 cmdLogReadSizeSpecs :: TestTree
 cmdLogReadSizeSpecs =

@@ -18,6 +18,8 @@ data ConfigPhase
     ConfigPhaseToml
   | -- | Merged args + toml phase.
     ConfigPhaseMerged
+  | -- | Env created from MergedConfig
+    ConfigPhaseEnv
 
 -- | General type family representing:
 --
@@ -29,6 +31,7 @@ type family ConfigPhaseF p a where
   ConfigPhaseF ConfigPhaseArgs a = WithDisabled a
   ConfigPhaseF ConfigPhaseToml a = Maybe a
   ConfigPhaseF ConfigPhaseMerged a = a
+  ConfigPhaseF ConfigPhaseEnv a = a
 
 -- | General type family representing:
 --
@@ -40,3 +43,4 @@ type family ConfigPhaseMaybeF p a where
   ConfigPhaseMaybeF ConfigPhaseArgs a = WithDisabled a
   ConfigPhaseMaybeF ConfigPhaseToml a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseMerged a = Maybe a
+  ConfigPhaseMaybeF ConfigPhaseEnv a = Maybe a

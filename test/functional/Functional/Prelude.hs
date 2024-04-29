@@ -40,28 +40,18 @@ import Data.Typeable (typeRep)
 import Effects.FileSystem.Utils (combineFilePaths)
 import Effects.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
 import Shrun qualified as SR
-import Shrun.Data.Command (CommandP1)
-import Shrun.Data.Timeout (Timeout)
-import Shrun.Env qualified as Env
-import Shrun.Env.Types
-  ( HasAnyError (getAnyError),
+import Shrun.Configuration.Env qualified as Env
+import Shrun.Configuration.Env.Types
+  ( Env,
+    HasAnyError (getAnyError),
+    HasCmdLogging (getCmdLogging),
     HasCommands (getCommands, getCompletedCmds),
+    HasCommonLogging (getCommonLogging),
+    HasConsoleLogging (getConsoleLogging),
+    HasFileLogging (getFileLogging),
     HasInit (getInit),
-    HasLogging (getLogging),
     HasNotifyConfig (getNotifyConfig),
     HasTimeout (getTimeout),
-    Logging
-      ( MkLogging,
-        cmdLog,
-        cmdLogReadSize,
-        cmdNameTrunc,
-        consoleLog,
-        fileLog,
-        keyHide,
-        pollInterval,
-        timerFormat
-      ),
-    NotifyEnv,
   )
 import Shrun.Logging.MonadRegionLogger
   ( MonadRegionLogger
@@ -73,9 +63,6 @@ import Shrun.Logging.MonadRegionLogger
       ),
   )
 import Shrun.Notify.MonadNotify (MonadNotify (notify), ShrunNote)
-import Shrun.Notify.Types
-  ( NotifyConfig (MkNotifyConfig, action, timeout),
-  )
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
@@ -91,42 +78,40 @@ import Test.Tasty.HUnit as X
 -- simplified logging
 
 data FuncEnv = MkFuncEnv
-  { timeout :: Maybe Timeout,
-    init :: Maybe Text,
-    logging :: Logging (),
-    completedCmds :: TVar (Seq CommandP1),
-    commands :: NESeq CommandP1,
+  { coreEnv :: Env (),
     logs :: IORef (List Text),
-    notifyEnv :: Maybe NotifyEnv,
-    shrunNotes :: IORef (List ShrunNote),
-    anyError :: TVar Bool
+    shrunNotes :: IORef (List ShrunNote)
   }
 
 makeFieldLabelsNoPrefix ''FuncEnv
 
 instance HasTimeout FuncEnv where
-  getTimeout = view #timeout
+  getTimeout = getTimeout . view #coreEnv
 
 instance HasInit FuncEnv where
-  getInit = view #init
-
-instance HasLogging FuncEnv () where
-  getLogging = view #logging
+  getInit = getInit . view #coreEnv
 
 instance HasCommands FuncEnv where
-  getCommands = view #commands
-  getCompletedCmds = view #completedCmds
+  getCommands = getCommands . view #coreEnv
+  getCompletedCmds = getCompletedCmds . view #coreEnv
 
 instance HasAnyError FuncEnv where
-  getAnyError = view #anyError
+  getAnyError = getAnyError . view #coreEnv
+
+instance HasCmdLogging FuncEnv where
+  getCmdLogging = getCmdLogging . view #coreEnv
+
+instance HasCommonLogging FuncEnv where
+  getCommonLogging = getCommonLogging . view #coreEnv
+
+instance HasConsoleLogging FuncEnv () where
+  getConsoleLogging = getConsoleLogging . view #coreEnv
+
+instance HasFileLogging FuncEnv where
+  getFileLogging = getFileLogging . view #coreEnv
 
 instance HasNotifyConfig FuncEnv where
-  getNotifyConfig env =
-    (env ^. #notifyEnv) <&> \notifyEnv ->
-      MkNotifyConfig
-        { action = notifyEnv ^. #action,
-          timeout = notifyEnv ^. #timeout
-        }
+  getNotifyConfig = getNotifyConfig . view #coreEnv
 
 instance MonadRegionLogger (ShellT FuncEnv IO) where
   type Region (ShellT FuncEnv IO) = ()
@@ -181,29 +166,11 @@ runMaybeException ::
 runMaybeException mException argList = do
   withArgs argList $ Env.withEnv $ \env -> do
     ls <- newIORef []
-    consoleQueue <- newTBQueueA 1_000
     shrunNotes <- newIORef []
     let funcEnv =
           MkFuncEnv
-            { timeout = env ^. #timeout,
-              init = env ^. #init,
-              -- doing this by hand since we need a different consoleLogging
-              logging =
-                MkLogging
-                  { keyHide = env ^. (#logging % #keyHide),
-                    pollInterval = env ^. (#logging % #pollInterval),
-                    timerFormat = env ^. (#logging % #timerFormat),
-                    cmdNameTrunc = env ^. (#logging % #cmdNameTrunc),
-                    cmdLogReadSize = env ^. (#logging % #cmdLogReadSize),
-                    cmdLog = env ^. (#logging % #cmdLog),
-                    consoleLog = consoleQueue,
-                    fileLog = env ^. (#logging % #fileLog)
-                  },
-              completedCmds = env ^. #completedCmds,
-              anyError = env ^. #anyError,
-              commands = env ^. #commands,
+            { coreEnv = env,
               logs = ls,
-              notifyEnv = env ^. #notifyEnv,
               shrunNotes
             }
 

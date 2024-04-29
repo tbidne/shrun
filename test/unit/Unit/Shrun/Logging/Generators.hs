@@ -13,7 +13,7 @@ module Unit.Shrun.Logging.Generators
 where
 
 import Hedgehog.Gen qualified as HGen
-import Shrun.Data.Command (Command (MkCommand), CommandP1)
+import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel,
@@ -87,7 +87,7 @@ genCommand :: Gen CommandP1
 genCommand = HGen.choice [genCommandWithKey, genCommandNoKey]
 
 genCommandWithKey :: Gen CommandP1
-genCommandWithKey = MkCommand <$> fmap Just PGens.genText <*> PGens.genText
+genCommandWithKey = MkCommandP <$> fmap Just PGens.genText <*> PGens.genText
 
 genCommandNoKey :: Gen CommandP1
-genCommandNoKey = MkCommand Nothing <$> PGens.genText
+genCommandNoKey = MkCommandP Nothing <$> PGens.genText

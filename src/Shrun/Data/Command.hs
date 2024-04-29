@@ -3,7 +3,7 @@
 
 -- | Provides the 'Command' wrapper for commands.
 module Shrun.Data.Command
-  ( Command (..),
+  ( CommandP (..),
     CommandP1,
     CommandP2,
     commandToProcess,
@@ -15,18 +15,18 @@ import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Effects.Process.Typed (ProcessConfig)
 import Effects.Process.Typed qualified as P
-import Shrun.Data.Phase
-  ( AdvancePhase (NextPhase, advancePhase),
-    Phase (Phase1, Phase2),
-  )
 import Shrun.Prelude
 
 -- $setup
 -- >>> :set -XOverloadedLists
 
+data CommandPhase
+  = CommandPhase1
+  | CommandPhase2
+
 -- | Wrapper for shell commands.
-type Command :: Phase -> Type
-data Command p = MkCommand
+type CommandP :: CommandPhase -> Type
+data CommandP p = MkCommandP
   { -- | The key name for the command, for display purposes.
     getKey :: Maybe Text,
     -- | The shell command to run.
@@ -35,33 +35,31 @@ data Command p = MkCommand
   deriving stock (Eq, Generic, Show)
   deriving anyclass (Hashable)
 
-makeFieldLabelsNoPrefix ''Command
+makeFieldLabelsNoPrefix ''CommandP
 
-instance IsString (Command Phase1) where
-  fromString = MkCommand Nothing . T.pack
+instance IsString (CommandP CommandPhase1) where
+  fromString = MkCommandP Nothing . T.pack
 
 -- | Phase1 commands.
-type CommandP1 = Command Phase1
+type CommandP1 = CommandP CommandPhase1
 
 -- | Phase2 commands.
-type CommandP2 = Command Phase2
+type CommandP2 = CommandP CommandPhase2
 
-instance AdvancePhase (Command Phase1) where
-  type NextPhase (Command Phase1) = (Maybe Text -> Command Phase2)
-
-  advancePhase cmd minit = over' #command f cmd
-    where
-      f = case minit of
-        Nothing -> id
-        Just init -> \c -> init <> " && " <> c
+advancePhase :: CommandP1 -> Maybe Text -> CommandP2
+advancePhase cmd minit = over' #command f cmd
+  where
+    f = case minit of
+      Nothing -> id
+      Just init -> \c -> init <> " && " <> c
 
 -- | Transforms a command into its text to be executed by the shell.
-commandToShell :: Command Phase2 -> String
+commandToShell :: CommandP2 -> String
 commandToShell = T.unpack . view #command
 
 -- Transforms a command into a 'ProcessConfig'.
 --
-commandToProcess :: Command Phase1 -> Maybe Text -> ProcessConfig () () ()
+commandToProcess :: CommandP1 -> Maybe Text -> ProcessConfig () () ()
 commandToProcess command =
   P.shell
     . commandToShell

@@ -7,7 +7,7 @@ module Shrun.ShellT
   )
 where
 
-import Shrun.Env.Types (Env)
+import Shrun.Configuration.Env.Types (Env)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger)
 import Shrun.Notify.MonadAppleScript (MonadAppleScript)
 import Shrun.Notify.MonadAppleScript qualified as MonadAppleScript
@@ -16,7 +16,7 @@ import Shrun.Notify.MonadDBus qualified as MonadDBus
 import Shrun.Notify.MonadNotify (MonadNotify (notify))
 import Shrun.Notify.MonadNotifySend (MonadNotifySend)
 import Shrun.Notify.MonadNotifySend qualified as MonadNotifySend
-import Shrun.Notify.Types (NotifySystem (AppleScript, DBus, NotifySend))
+import Shrun.Notify.Types (NotifySystemP (AppleScript, DBus, NotifySend))
 import Shrun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.
@@ -49,7 +49,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
     via (ReaderT env m)
 
 -- | Runs a 'ShellT' with the given @env@.
-runShellT :: ShellT env m a -> env -> m a
+runShellT :: forall m env a. ShellT env m a -> env -> m a
 runShellT (MkShellT rdr) = runReaderT rdr
 {-# INLINEABLE runShellT #-}
 
@@ -59,17 +59,17 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- Can't use @deriving via m@ due to a bug: GHC version 9.2.5: No skolem info:@.
 -- https://gitlab.haskell.org/ghc/ghc/-/issues/15376
 
-deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT Env m)
+deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT (Env r) m)
 
 instance
   ( MonadAppleScript m,
     MonadDBus m,
     MonadNotifySend m
   ) =>
-  MonadNotify (ShellT Env m)
+  MonadNotify (ShellT (Env r) m)
   where
   notify note =
-    asks (preview (#notifyEnv %? #system)) >>= \case
+    asks (preview (#config % #notify %? #system)) >>= \case
       Nothing -> pure Nothing
       Just nenv -> sendNote nenv
     where

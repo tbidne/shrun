@@ -13,15 +13,18 @@ import Data.Text qualified as T
 import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
 import Effects.Time (withTiming)
-import Shrun.Data.Command (CommandP1, commandToProcess)
-import Shrun.Env.Types
+import Shrun.Configuration.Env.Types
   ( HasAnyError,
+    HasCmdLogging (getCmdLogging),
     HasCommands,
+    HasCommonLogging (getCommonLogging),
+    HasConsoleLogging (getConsoleLogging),
+    HasFileLogging (getFileLogging),
     HasInit (getInit),
-    HasLogging (getLogging),
     prependCompletedCommand,
     setAnyErrorTrue,
   )
+import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.IO.Types
   ( CommandResult (CommandFailure, CommandSuccess),
     ReadHandleResult (ReadErr, ReadNoData, ReadSuccess),
@@ -76,7 +79,10 @@ tryCommandLogging ::
   ( HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasLogging env (Region m),
+    HasCmdLogging env,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
@@ -109,28 +115,38 @@ tryCommandLogging command = do
   -- Thus the most reasonable course of action is to let shrun die and print
   -- the actual error so it can be fixed.
 
-  logging <- asks getLogging
-  let keyHide = logging ^. #keyHide
+  commonLogging <- asks getCommonLogging
+  (consoleLogging, consoleLogQueue) <- asks getConsoleLogging
+  mFileLogging <- asks getFileLogging
+  let keyHide = commonLogging ^. #keyHide
 
-  let cmdFn = case (logging ^. #cmdLog, logging ^. #fileLog) of
+  let cmdFn = case (consoleLogging ^. #cmdLogging, mFileLogging) of
         -- 1. No CmdLogging and no FileLogging: No streaming at all.
-        (Nothing, Nothing) -> tryShExitCode
-        -- 2. No CmdLogging but FileLogging: Stream (to file) but no console
+        (False, Nothing) -> tryShExitCode
+        -- 3. CmdLogging but no FileLogging. Stream.
+        (True, Nothing) -> \cmd ->
+          withRegion Linear $ \region -> do
+            let logFn = logConsole keyHide consoleLogQueue region consoleLogging
+
+            logFn hello
+
+            tryCommandStream logFn cmd
+        -- 3. No CmdLogging but FileLogging: Stream (to file) but no console
         --    region.
-        (Nothing, Just fileLogging) -> \cmd -> do
+        (False, Just fileLogging) -> \cmd -> do
           let logFn :: Log -> m ()
               logFn = logFile keyHide fileLogging
 
           logFn hello
 
           tryCommandStream logFn cmd
-        -- 3. CmdLogging: Create region and stream. Also stream to file if
-        --    requested.
-        (Just _, mFileLogging) -> \cmd ->
+        -- 4. CmdLogging and FileLogging: Stream (to both) and create console
+        --    region.
+        (True, Just fileLogging) -> \cmd ->
           withRegion Linear $ \region -> do
             let logFn log = do
-                  logConsole logging region log
-                  for_ mFileLogging (\fl -> logFile keyHide fl log)
+                  logConsole keyHide consoleLogQueue region consoleLogging log
+                  logFile keyHide fileLogging log
 
             logFn hello
 
@@ -151,14 +167,13 @@ tryCommandLogging command = do
 
       pure $ CommandFailure (U.timeSpecToRelTime rt) err
   where
-    logConsole logging region log = do
-      let consoleQueue = logging ^. #consoleLog
-          formatted = formatConsoleLog logging log
+    logConsole keyHide consoleQueue region consoleLogging log = do
+      let formatted = formatConsoleLog keyHide consoleLogging log
       writeTBQueueA consoleQueue (LogRegion (log ^. #mode) region formatted)
 
     logFile keyHide fileLogging log = do
       formatted <- formatFileLog keyHide fileLogging log
-      writeTBQueueA (fileLogging ^. #log % _2) formatted
+      writeTBQueueA (fileLogging ^. #file % #queue) formatted
 
     hello =
       MkLog
@@ -172,7 +187,7 @@ tryCommandLogging command = do
 -- instead of the usual swallowing.
 tryCommandStream ::
   ( HasInit env,
-    HasLogging env (Region m),
+    HasCmdLogging env,
     MonadHandleReader m,
     MonadIORef m,
     MonadMask m,
@@ -216,7 +231,7 @@ tryCommandStream logFn cmd = do
 
 streamOutput ::
   forall m env.
-  ( HasLogging env (Region m),
+  ( HasCmdLogging env,
     MonadCatch m,
     MonadHandleReader m,
     MonadIORef m,
@@ -236,16 +251,16 @@ streamOutput logFn cmd p = do
   -- lastReadRef stores the last message in case it is the final error
   -- message.
   lastReadErrRef <- newIORef Nothing
-  logging <- asks (getLogging @env @(Region m))
+  cmdLogging <- asks getCmdLogging
 
   let pollInterval :: Natural
-      pollInterval = logging ^. (#pollInterval % #unPollInterval)
+      pollInterval = cmdLogging ^. (#pollInterval % #unPollInterval)
 
       sleepFn :: m ()
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
 
       blockSize :: Int
-      blockSize = unsafeConvertIntegral $ logging ^. (#cmdLogReadSize % _MkBytes)
+      blockSize = unsafeConvertIntegral $ cmdLogging ^. (#readSize % _MkBytes)
 
       readBlock :: Handle -> m ReadHandleResult
       readBlock = readHandle blockSize

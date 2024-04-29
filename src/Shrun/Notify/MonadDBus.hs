@@ -12,7 +12,7 @@ import DBus.Notify qualified as DBusN
 import Data.Text qualified as T
 import Shrun.Notify.MonadNotify (NotifyException (MkNotifyException), ShrunNote)
 import Shrun.Notify.Types
-  ( NotifySystem (DBus),
+  ( NotifySystemP (DBus),
     NotifyTimeout
       ( NotifyTimeoutNever,
         NotifyTimeoutSeconds

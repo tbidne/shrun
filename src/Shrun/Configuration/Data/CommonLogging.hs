@@ -6,13 +6,20 @@ module Shrun.Configuration.Data.CommonLogging
     CommonLoggingArgs,
     CommonLoggingToml,
     CommonLoggingMerged,
+    CommonLoggingEnv,
     mergeCommonLogging,
     defaultCommonLoggingMerged,
+    toEnv,
   )
 where
 
 import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase (ConfigPhaseArgs, ConfigPhaseMerged, ConfigPhaseToml),
+  ( ConfigPhase
+      ( ConfigPhaseArgs,
+        ConfigPhaseEnv,
+        ConfigPhaseMerged,
+        ConfigPhaseToml
+      ),
     ConfigPhaseF,
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
@@ -37,6 +44,8 @@ type CommonLoggingArgs = CommonLoggingP ConfigPhaseArgs
 type CommonLoggingToml = CommonLoggingP ConfigPhaseToml
 
 type CommonLoggingMerged = CommonLoggingP ConfigPhaseMerged
+
+type CommonLoggingEnv = CommonLoggingP ConfigPhaseEnv
 
 deriving stock instance Eq (CommonLoggingP ConfigPhaseArgs)
 
@@ -101,4 +110,12 @@ defaultCommonLoggingMerged =
   MkCommonLoggingP
     { keyHide = defaultKeyHide,
       timerFormat = defaultTimerFormat
+    }
+
+-- | Creates env version from merged.
+toEnv :: CommonLoggingMerged -> CommonLoggingEnv
+toEnv merged =
+  MkCommonLoggingP
+    { keyHide = merged ^. #keyHide,
+      timerFormat = merged ^. #timerFormat
     }

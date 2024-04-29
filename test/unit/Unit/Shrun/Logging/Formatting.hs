@@ -16,7 +16,25 @@ import Effects.Time
   )
 import Hedgehog.Gen qualified as HGen
 import Hedgehog.Internal.Range qualified as HRange
-import Shrun.Data.Command (Command (MkCommand))
+import Shrun.Configuration.Data.ConsoleLogging
+  ( ConsoleLoggingP
+      ( MkConsoleLoggingP,
+        cmdLogging,
+        cmdNameTrunc,
+        lineTrunc,
+        stripControl
+      ),
+  )
+import Shrun.Configuration.Data.FileLogging
+  ( FileLogOpened
+      ( MkFileLogOpened,
+        handle,
+        queue
+      ),
+    FileLoggingEnv,
+    FileLoggingP (MkFileLoggingP, cmdNameTrunc, file, stripControl),
+  )
+import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
 import Shrun.Data.StripControl
   ( StripControl
@@ -25,30 +43,13 @@ import Shrun.Data.StripControl
         StripControlSmart
       ),
   )
-import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Data.Truncation
   ( TruncRegion (TCmdLine, TCmdName),
     Truncation (MkTruncation),
   )
-import Shrun.Env.Types
-  ( CmdLogging (MkCmdLogging, lineTrunc, stripControl),
-    FileLogging (MkFileLogging),
-    HasLogging (getLogging),
-    Logging
-      ( MkLogging,
-        cmdLog,
-        cmdLogReadSize,
-        cmdNameTrunc,
-        consoleLog,
-        fileLog,
-        keyHide,
-        pollInterval,
-        timerFormat
-      ),
-  )
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
-  ( Log (MkLog, cmd, lvl, msg),
+  ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelCommand),
     LogMode (LogModeSet),
   )
@@ -130,26 +131,6 @@ genMInt = HGen.choice [Just <$> genNat, pure Nothing]
     genNat = HGen.integral range
     range = HRange.exponential 0 100
 
-instance HasLogging Env () where
-  getLogging env =
-    MkLogging
-      { keyHide = env ^. #keyHide,
-        pollInterval = 100,
-        timerFormat = ProseCompact,
-        cmdNameTrunc = env ^. #cmdTrunc,
-        cmdLogReadSize = MkBytes 0,
-        cmdLog =
-          Just
-            MkCmdLogging
-              { stripControl = StripControlNone,
-                lineTrunc = env ^. #lineTrunc
-              },
-        consoleLog = error err,
-        fileLog = Nothing
-      }
-    where
-      err = "[Unit.Shrun.Logging.Formatting]: Unit tests should not be using consoleLog"
-
 -- | Entry point for Shrun.Logging.Formatting property tests.
 tests :: TestTree
 tests =
@@ -165,6 +146,8 @@ consoleLogProps =
   T.testGroup
     "Console logs"
     [ messageProps,
+      testFormatConsoleNullNoTrunc,
+      testFormatConsoleNullTrunc0,
       prefixProps,
       displayCmdProps,
       displayKeyProps,
@@ -180,7 +163,48 @@ messageProps =
       env <- forAll genEnv
       log@MkLog {msg} <- forAll LGens.genLog
       let result = formatConsoleLog env log
-      includesOrTruncated msg result
+      annotate (T.unpack result)
+      includesOrTruncated (T.strip msg) result
+
+testFormatConsoleNullNoTrunc :: TestTree
+testFormatConsoleNullNoTrunc = testCase "Null byte with no truncation" $ do
+  let result = formatConsoleLog env log
+
+  "\ESC[97m[Command] \NUL\ESC[0m" @=? result
+  where
+    env =
+      MkEnv
+        { keyHide = KeyHideOff,
+          cmdTrunc = Nothing,
+          lineTrunc = Nothing
+        }
+    log =
+      MkLog
+        { cmd = Nothing,
+          msg = "\NUL",
+          lvl = LevelCommand,
+          mode = LogModeSet
+        }
+
+testFormatConsoleNullTrunc0 :: TestTree
+testFormatConsoleNullTrunc0 = testCase "Null byte with truncation 0" $ do
+  let result = formatConsoleLog env log
+
+  "\ESC[97m[Command] \NUL\ESC[0m" @=? result
+  where
+    env =
+      MkEnv
+        { keyHide = KeyHideOff,
+          cmdTrunc = Just 0,
+          lineTrunc = Just 0
+        }
+    log =
+      MkLog
+        { cmd = Nothing,
+          msg = "\NUL",
+          lvl = LevelCommand,
+          mode = LogModeSet
+        }
 
 prefixProps :: TestTree
 prefixProps =
@@ -199,7 +223,7 @@ displayCmdProps =
     $ property
     $ do
       env <- forAll genEnvDispCmd
-      log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
+      log@MkLog {cmd = Just (MkCommandP _ cmd')} <- forAll LGens.genLogWithCmd
       let result = formatConsoleLog env log
       includesOrTruncated (Utils.stripControlAll cmd') result
 
@@ -209,7 +233,7 @@ displayKeyProps =
     $ property
     $ do
       env <- forAll genEnvDispKey
-      log@MkLog {cmd = Just (MkCommand (Just key) _)} <- forAll LGens.genLogWithCmdKey
+      log@MkLog {cmd = Just (MkCommandP (Just key) _)} <- forAll LGens.genLogWithCmdKey
       let result = formatConsoleLog env log
       includesOrTruncated (Utils.stripControlAll key) result
 
@@ -223,7 +247,7 @@ cmdTruncProps =
       cmdTxt <- forAll genLongCmdText
       log <- forAll LGens.genLog
 
-      let log' = set' #cmd (Just (MkCommand Nothing cmdTxt)) log
+      let log' = set' #cmd (Just (MkCommandP Nothing cmdTxt)) log
           result = formatConsoleLog env' log'
           cmdNameTruncInt = unsafeConvertIntegral $ cmdNameTrunc ^. #unTruncation
 
@@ -250,17 +274,30 @@ lineTruncProps =
       log <- forAll LGens.genLog
 
       -- only perform line truncation for LevelCommand (also requires a command)
-      let log' = log {msg = msg', cmd = Just (MkCommand (Just "") ""), lvl = LevelCommand}
+      let log' = log {msg = msg', cmd = Just (MkCommandP (Just "") ""), lvl = LevelCommand}
           result = formatConsoleLog env log'
 
       annotate $ T.unpack result
       assert $ "..." `T.isInfixOf` result
       diff result (\t l -> T.length t < l + colorLen) lineTruncLimit
 
-formatConsoleLog :: forall env. (HasLogging env ()) => env -> Log -> Text
+formatConsoleLog :: Env -> Log -> Text
 formatConsoleLog env =
   view #unConsoleLog
-    . Formatting.formatConsoleLog (getLogging @env @() env)
+    . Formatting.formatConsoleLog keyHide consoleLogging
+  where
+    keyHide = env ^. #keyHide
+    consoleLogging =
+      MkConsoleLoggingP
+        { cmdLogging = False,
+          cmdNameTrunc = env ^. #cmdTrunc,
+          lineTrunc = env ^. #lineTrunc,
+          -- Important: Tests rely on this being None. Previously it was Smart,
+          -- but we didn't use it because cmdLogging was False. Now, however,
+          -- we always use this field. Thus, in order for tests to pass without
+          -- changing them, we use None.
+          stripControl = StripControlNone
+        }
 
 -- Colorization adds chars that the shell interprets as color commands.
 -- This affects the length, so if we do anything that tests the length
@@ -285,21 +322,6 @@ sysTimeNE :: Text
 sysTimeNE = "[" <> sysTime <> "]"
 
 newtype MockEnv = MkMockEnv ()
-
-instance HasLogging MockEnv () where
-  getLogging _ =
-    MkLogging
-      { keyHide = KeyHideOff,
-        pollInterval = 10,
-        timerFormat = ProseCompact,
-        cmdNameTrunc = Nothing,
-        cmdLogReadSize = MkBytes 0,
-        cmdLog = Nothing,
-        consoleLog = error err,
-        fileLog = Nothing
-      }
-    where
-      err = "[Unit.Shrun.Logging.Formatting]: Unit tests should not be using consoleLog"
 
 -- Monad with mock implementation for 'MonadTime'.
 newtype MockTime a = MkMockTime
@@ -367,7 +389,7 @@ commandProps =
   testPropertyNamed "Formats command" "commandProps"
     $ property
     $ do
-      log@MkLog {cmd = Just (MkCommand _ cmd')} <- forAll LGens.genLogWithCmd
+      log@MkLog {cmd = Just (MkCommandP _ cmd')} <- forAll LGens.genLogWithCmd
       let cmdTxt = "[" <> Utils.stripControlAll cmd' <> "]"
           result = formatFileLog KeyHideOn log
       annotate $ T.unpack cmdTxt
@@ -379,7 +401,7 @@ commandPropsShowKey =
   testPropertyNamed "Formats command with KeyHideOff" "commandProps"
     $ property
     $ do
-      log@MkLog {cmd = Just (MkCommand mk cmd')} <- forAll LGens.genLogWithCmd
+      log@MkLog {cmd = Just (MkCommandP mk cmd')} <- forAll LGens.genLogWithCmd
       let cmdTxt = case mk of
             Nothing -> "[" <> Utils.stripControlAll cmd' <> "]"
             Just k -> "[" <> Utils.stripControlAll k <> "]"
@@ -427,15 +449,27 @@ formatFileLog = formatFile' Nothing
 formatFile' :: Maybe (Truncation TCmdName) -> KeyHide -> Log -> Text
 formatFile' mCmdNameTrunc keyHide log =
   view #unFileLog
-    $ Formatting.formatFileLog @MockTime keyHide fileLog' log
+    $ Formatting.formatFileLog @MockTime keyHide fileLogging' log
     ^. #runMockTime
   where
-    fileLog' = set' #cmdNameTrunc mCmdNameTrunc fileLog
+    fileLogging' = set' #cmdNameTrunc mCmdNameTrunc fileLogging
 
-fileLog :: FileLogging
-fileLog = MkFileLogging StripControlNone Nothing (error err)
+fileLogging :: FileLoggingEnv
+fileLogging =
+  MkFileLoggingP
+    { file =
+        MkFileLogOpened
+          { handle = err "handle",
+            queue = err "queue"
+          },
+      cmdNameTrunc = Nothing,
+      stripControl = StripControlNone
+    }
   where
-    err = "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLog"
+    err f =
+      error
+        $ "[Unit.Props.Shrun.Logging.Queue]: Unit tests should not be using fileLogOpened."
+        ++ f
 
 stripCharsSpecs :: TestTree
 stripCharsSpecs =
@@ -452,7 +486,7 @@ stripNone =
     "" @=? stripNone' ""
     "\ESC[ foo \ESC[A  bar \n baz" @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
   where
-    stripNone' = flip Formatting.stripChars (Just StripControlNone)
+    stripNone' = flip Formatting.stripChars StripControlNone
 
 stripAll :: TestTree
 stripAll =
@@ -460,7 +494,7 @@ stripAll =
     "" @=? stripAll' ""
     "oo    bar baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
-    stripAll' = flip Formatting.stripChars (Just StripControlAll)
+    stripAll' = flip Formatting.stripChars StripControlAll
 
 stripSmart :: TestTree
 stripSmart =
@@ -468,16 +502,15 @@ stripSmart =
     "" @=? stripSmart' ""
     "foo \ESC[m   bar baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
-    stripSmart' = flip Formatting.stripChars (Just StripControlSmart)
+    stripSmart' = flip Formatting.stripChars StripControlSmart
 
 -- Tests that either the expected string is in the result, or we have
 -- done some truncation
 includesOrTruncated :: Text -> Text -> PropertyT IO ()
 includesOrTruncated expected result = do
-  annotate (T.unpack expected)
-  annotate (T.unpack result)
-  assert
-    $ T.strip expected
-    `T.isInfixOf` result
-    || "..."
-    `T.isInfixOf` result
+  let b1 = T.strip expected `T.isInfixOf` result
+      b2 = "..." `T.isInfixOf` result
+
+  annotateShow b1
+  annotateShow b2
+  assert (b1 || b2)

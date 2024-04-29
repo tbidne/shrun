@@ -4,19 +4,19 @@
 
 -- | Provides type for notifications.
 module Shrun.Notify.Types
-  ( -- * Main type
-    NotifyConfig (..),
-
-    -- * Notify system
-    NotifySystem (..),
+  ( -- * Notify system
+    NotifySystemP (..),
+    NotifySystemArgs,
+    NotifySystemToml,
+    NotifySystemMerged,
+    NotifySystemEnv,
     parseNotifySystem,
     notifySystemStr,
     defaultNotifySystem,
     showNotifySystem,
     displayNotifySystem,
-    NotifySystemP1,
-    NotifySystemP2,
     DBusF,
+    mergeNotifySystem,
 
     -- ** Optics
     _DBus,
@@ -50,9 +50,16 @@ import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Word (Word16)
 import GHC.Num (Num (fromInteger))
-import Shrun.Data.Phase
-  ( AdvancePhase (NextPhase, advancePhase),
-    Phase (Phase1, Phase2),
+import Shrun.Configuration.Data.ConfigPhase
+  ( ConfigPhase
+      ( ConfigPhaseArgs,
+        ConfigPhaseEnv,
+        ConfigPhaseMerged,
+        ConfigPhaseToml
+      ),
+  )
+import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled (Disabled, With, Without),
   )
 import Shrun.Prelude
 import TOML (Value (Integer, String))
@@ -94,17 +101,24 @@ notifyActionStr :: (IsString a) => a
 notifyActionStr = "(final |command | all)"
 
 -- | Maps DBus to its phased param.
+type DBusF :: ConfigPhase -> Type
 type family DBusF p where
-  DBusF Phase1 = ()
-  DBusF Phase2 = Client
+  DBusF ConfigPhaseArgs = ()
+  DBusF ConfigPhaseToml = ()
+  DBusF ConfigPhaseMerged = ()
+  DBusF ConfigPhaseEnv = Client
 
-type NotifySystemP1 = NotifySystem Phase1
+type NotifySystemArgs = NotifySystemP ConfigPhaseArgs
 
-type NotifySystemP2 = NotifySystem Phase2
+type NotifySystemToml = NotifySystemP ConfigPhaseToml
+
+type NotifySystemMerged = NotifySystemP ConfigPhaseMerged
+
+type NotifySystemEnv = NotifySystemP ConfigPhaseEnv
 
 -- | Notification systems.
-type NotifySystem :: Phase -> Type
-data NotifySystem p
+type NotifySystemP :: ConfigPhase -> Type
+data NotifySystemP p
   = -- | Uses DBus.
     DBus (DBusF p)
   | -- | Uses notify-send.
@@ -112,51 +126,52 @@ data NotifySystem p
   | -- | Uses apple-script.
     AppleScript
 
-makePrisms ''NotifySystem
+makePrisms ''NotifySystemP
 
-deriving stock instance Eq (NotifySystem Phase1)
+deriving stock instance Eq NotifySystemArgs
 
-deriving stock instance Show (NotifySystem Phase1)
+deriving stock instance Show NotifySystemArgs
 
-showNotifySystem :: (IsString a) => NotifySystem p -> a
+deriving stock instance Eq NotifySystemToml
+
+deriving stock instance Show NotifySystemToml
+
+deriving stock instance Eq NotifySystemMerged
+
+deriving stock instance Show NotifySystemMerged
+
+-- | "Merges" notify systems.
+mergeNotifySystem ::
+  WithDisabled NotifySystemArgs ->
+  Maybe NotifySystemToml ->
+  NotifySystemMerged
+mergeNotifySystem mArgs mToml =
+  case mArgs of
+    Disabled -> defaultNotifySystem
+    With (DBus ()) -> DBus ()
+    With NotifySend -> NotifySend
+    With AppleScript -> AppleScript
+    Without -> case mToml of
+      Just (DBus ()) -> DBus ()
+      Just NotifySend -> NotifySend
+      Just AppleScript -> AppleScript
+      Nothing -> defaultNotifySystem
+
+showNotifySystem :: (IsString a) => NotifySystemP p -> a
 showNotifySystem (DBus _) = "DBus"
 showNotifySystem NotifySend = "NotifySend"
 showNotifySystem AppleScript = "AppleScript"
 
-displayNotifySystem :: (IsString a) => NotifySystem p -> a
+displayNotifySystem :: (IsString a) => NotifySystemP p -> a
 displayNotifySystem (DBus _) = "dbus"
 displayNotifySystem NotifySend = "notify-send"
 displayNotifySystem AppleScript = "apple-script"
 
-instance DecodeTOML (NotifySystem Phase1) where
+instance DecodeTOML NotifySystemToml where
   tomlDecoder = parseNotifySystem tomlDecoder
 
-instance AdvancePhase (NotifySystem Phase1) where
-  type NextPhase (NotifySystem Phase1) = Either (NotifySystem Phase2) (Client -> NotifySystem Phase2)
-  advancePhase NotifySend = Left NotifySend
-  advancePhase AppleScript = Left AppleScript
-  advancePhase (DBus _) = Right DBus
-
--- NOTE: It would be nice if we could guarantee that the above is "doing the
--- right thing" i.e. NotifySend -> NotifySend and DBus -> DBus, but that
--- would require dependent types e.g. (dependent visible kinds for clarity):
---
---     type ConsNS :: forall k -> k -> Type
---     type family ConsNS l k where
---       ConsNS (NotifySystem p) NotifySend = ()
---       ConsNS (NotifySystem p) (DBus _) = Client
---
---     advancePhase :: foreach (x :: NotifySystem Phase1) -> ConsNS (NotifySystem Phase1) x -> NotifySystem Phase2
---
---     -- call this like
---     advancePhase NotifySend ()
---     advancePhase (DBus ()) client
---
--- That is, we want to pick the _type_ of the "extra" parameter based on the
--- _value_ of the first parameter.
-
 -- | Parses 'NotifySystem'.
-parseNotifySystem :: (MonadFail m) => m Text -> m (NotifySystem Phase1)
+parseNotifySystem :: (DBusF p ~ (), MonadFail m) => m Text -> m (NotifySystemP p)
 parseNotifySystem getTxt =
   getTxt >>= \case
     "dbus" -> pure $ DBus ()
@@ -175,10 +190,11 @@ parseNotifySystem getTxt =
 notifySystemStr :: (IsString a) => a
 notifySystemStr = "(dbus | notify-send | apple-script)"
 
-defaultNotifySystem :: NotifySystem Phase1
 #if OSX
+defaultNotifySystem :: NotifySystemP p
 defaultNotifySystem = AppleScript
 #else
+defaultNotifySystem :: (DBusF p ~ ()) => NotifySystemP p
 defaultNotifySystem = DBus ()
 #endif
 
@@ -233,17 +249,6 @@ parseNotifyTimeout getTxt =
 -- | Available 'NotifyTimeout' strings.
 notifyTimeoutStr :: (IsString a) => a
 notifyTimeoutStr = "(never | NAT)"
-
--- | Holds notification config.
-data NotifyConfig = MkNotifyConfig
-  { -- | Notification action.
-    action :: NotifyAction,
-    -- | Timeout to use for notifications.
-    timeout :: NotifyTimeout
-  }
-  deriving stock (Eq, Show)
-
-makeFieldLabelsNoPrefix ''NotifyConfig
 
 data OsxNotifySystemMismatch
   = OsxNotifySystemMismatchDBus
