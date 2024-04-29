@@ -50,32 +50,35 @@ logsNoBuffer =
     -- Having the same interval yet an offset make this more reliable.
     cmdPrefix = "sleep 0.5 ; ..."
     expecteds =
-      [ withCommandPrefix cmdPrefix "Starting...",
-        withCommandPrefix cmdPrefix "0.5",
-        withTimerPrefix "1 second",
-        withCommandPrefix cmdPrefix "1.5",
-        withTimerPrefix "2 seconds",
-        withCommandPrefix cmdPrefix "2.5",
-        withTimerPrefix "3 seconds",
-        withCommandPrefix cmdPrefix "3.5",
-        withTimerPrefix "4 seconds",
+      [ (!) $ withCommandPrefix cmdPrefix "Starting...",
+        (!) $ withCommandPrefix cmdPrefix "0.5",
+        (!) $ withTimerPrefix "1 second",
+        (!) $ withCommandPrefix cmdPrefix "1.5",
+        (!) $ withTimerPrefix "2 seconds",
+        (!) $ withCommandPrefix cmdPrefix "2.5",
+        (!) $ withTimerPrefix "3 seconds",
+        (!) $ withCommandPrefix cmdPrefix "3.5",
+        (!) $ withTimerPrefix "4 seconds",
+        -- This one is flaky, tends to show up on OSX, presumably because
+        -- OSX starts more slowly.
+        (?) $ withTimerPrefix "5 seconds",
         -- No seconds here because it is flaky (e.g. can be either 4/5 seconds)
-        withSuccessPrefix cmdPrefix,
-        withFinishedPrefix ""
+        (!) $ withSuccessPrefix cmdPrefix,
+        (!) $ withFinishedPrefix ""
       ]
 
-assertLogsEq :: List Text -> List Text -> IO ()
+assertLogsEq :: List TextSearch -> List Text -> IO ()
 assertLogsEq expecteds results = case go expecteds results of
   Nothing -> pure ()
   Just errMsg -> assertFailure $ unpack errMsg
   where
-    go :: List Text -> List Text -> Maybe Text
+    go :: List TextSearch -> List Text -> Maybe Text
     go [] [] = Nothing
     go (_ : _) [] =
       Just
         $ mconcat
           [ "Num expected > results.\n\nExpected:\n",
-            prettyList expecteds,
+            prettyTextSearch expecteds,
             "\n\nResults:\n",
             prettyList results
           ]
@@ -83,26 +86,45 @@ assertLogsEq expecteds results = case go expecteds results of
       Just
         $ mconcat
           [ "Num results > expected.\n\nExpected:\n",
-            prettyList expecteds,
+            prettyTextSearch expecteds,
             "\n\nResults:\n",
             prettyList results
           ]
-    go (e : es) (r : rs) =
-      case logEq e r of
-        Nothing -> go es rs
-        Just errMsg ->
-          Just
-            $ mconcat
-              [ errMsg,
-                "\n\nAll expecteds:\n",
-                prettyList expecteds,
-                "\n\nAll results:\n",
-                prettyList results
-              ]
+    go (eSearch : es) (r : rs) =
+      case eSearch of
+        Required e ->
+          case logEq e r of
+            Nothing -> go es rs
+            Just errMsg ->
+              Just
+                $ mconcat
+                  [ errMsg,
+                    "\n\nAll expecteds:\n",
+                    prettyTextSearch expecteds,
+                    "\n\nAll results:\n",
+                    prettyList results
+                  ]
+        -- If the text is optional (i.e. only sometimes shows up), try a
+        -- a comparison. If it fails, skip and move on.
+        Optional e ->
+          case logEq e r of
+            Nothing -> go es results
+            Just _ -> go es (r : rs)
+
+    prettyTextSearch :: List TextSearch -> Text
+    prettyTextSearch = prettyList' toText
+      where
+        toText (Required e) = "!" <> e
+        toText (Optional e) = "?" <> e
 
     prettyList :: List Text -> Text
-    prettyList [] = ""
-    prettyList (x : xs) = x <> "\n" <> prettyList xs
+    prettyList = prettyList' id
+
+    prettyList' :: (a -> Text) -> List a -> Text
+    prettyList' toText = goPretty
+      where
+        goPretty [] = ""
+        goPretty (x : xs) = toText x <> "\n" <> goPretty xs
 
 logEq :: Text -> Text -> Maybe Text
 logEq expected result =
@@ -118,3 +140,13 @@ logEq expected result =
           result,
           "'"
         ]
+
+data TextSearch
+  = Required Text
+  | Optional Text
+
+(!) :: Text -> TextSearch
+(!) = Required
+
+(?) :: Text -> TextSearch
+(?) = Optional
