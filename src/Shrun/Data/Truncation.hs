@@ -17,8 +17,7 @@ data TruncRegion
   = -- | Apply truncation rules to commands/key names.
     TCmdName
   | -- | Apply truncation rules to command log entire lines.
-    -- TODO: Rename this
-    TCmdLine
+    TLine
   deriving stock (Eq, Show)
 
 -- | The maximum number of command characters to display in the logs.
@@ -41,7 +40,7 @@ parseTruncation getNat = MkTruncation <$> getNat
 -- type from 'Truncation' to add a third option, to detect the terminal size
 -- automatically.
 data LineTruncation
-  = Undetected (Truncation TCmdLine)
+  = Undetected (Truncation TLine)
   | Detected
   deriving stock (Eq, Show)
 

@@ -44,7 +44,7 @@ import Shrun.Data.StripControl
       ),
   )
 import Shrun.Data.Truncation
-  ( TruncRegion (TCmdLine, TCmdName),
+  ( TruncRegion (TCmdName, TLine),
     Truncation (MkTruncation),
   )
 import Shrun.Logging.Formatting qualified as Formatting
@@ -61,7 +61,7 @@ import Unit.Shrun.Logging.Generators qualified as LGens
 data Env = MkEnv
   { keyHide :: KeyHide,
     cmdTrunc :: Maybe (Truncation TCmdName),
-    lineTrunc :: Maybe (Truncation TCmdLine)
+    lineTrunc :: Maybe (Truncation TLine)
   }
   deriving stock (Eq, Show)
 

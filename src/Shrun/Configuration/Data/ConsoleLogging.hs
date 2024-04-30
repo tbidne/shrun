@@ -32,7 +32,7 @@ import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Data.StripControl (StripControl, defaultConsoleLogStripControl)
 import Shrun.Data.Truncation
   ( LineTruncation (Detected, Undetected),
-    TruncRegion (TCmdLine, TCmdName),
+    TruncRegion (TCmdName, TLine),
     Truncation (MkTruncation),
   )
 import Shrun.Prelude
@@ -49,8 +49,8 @@ type CmdLogLineTruncF :: ConfigPhase -> Type
 type family CmdLogLineTruncF p where
   CmdLogLineTruncF ConfigPhaseArgs = WithDisabled LineTruncation
   CmdLogLineTruncF ConfigPhaseToml = Maybe LineTruncation
-  CmdLogLineTruncF ConfigPhaseMerged = Maybe (Truncation TCmdLine)
-  CmdLogLineTruncF ConfigPhaseEnv = Maybe (Truncation TCmdLine)
+  CmdLogLineTruncF ConfigPhaseMerged = Maybe (Truncation TLine)
+  CmdLogLineTruncF ConfigPhaseEnv = Maybe (Truncation TLine)
 
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
@@ -163,7 +163,7 @@ toLineTrunc ::
     MonadTerminal m
   ) =>
   WithDisabled LineTruncation ->
-  m (Maybe (Truncation TCmdLine))
+  m (Maybe (Truncation TLine))
 toLineTrunc Disabled = pure Nothing
 toLineTrunc Without = pure Nothing
 toLineTrunc (With Detected) = Just . MkTruncation <$> getTerminalWidth
