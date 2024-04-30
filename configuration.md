@@ -380,7 +380,7 @@ Config related to file logs.
 <span style="color:">[2024-04-23 01:05:22][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
 <span style="color:">[2024-04-23 01:05:23][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
 <span style="color:">[2024-04-23 01:05:24][Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
-<span style="color:">[2024-04-23 01:05:24][Finished] 3 seconds</span>
+<span style="color:">[2024-04-23 01:05:24][Finished] 3 seconds</span></code>
 </pre>
 
 #### File Log Mode
