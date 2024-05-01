@@ -363,17 +363,17 @@ Config related to file logs.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log out.log --file-log-cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
-<span style="color: #69ff94">[Success][for i i...] 3 seconds</span>
+<span style="color: #69ff94">[Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
 <span style="color: #d6acff">[Finished] 3 seconds</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> cat out.log</span>
-<span style="color:">[2024-04-23 01:05:21][Command][for i in {1..3}; do echo hi; sleep 1; done] Starting...</span>
-<span style="color:">[2024-04-23 01:05:21][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
-<span style="color:">[2024-04-23 01:05:22][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
-<span style="color:">[2024-04-23 01:05:23][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
-<span style="color:">[2024-04-23 01:05:24][Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
+<span style="color:">[2024-04-23 01:05:21][Command][for i i...] Starting...</span>
+<span style="color:">[2024-04-23 01:05:21][Command][for i i...] hi</span>
+<span style="color:">[2024-04-23 01:05:22][Command][for i i...] hi</span>
+<span style="color:">[2024-04-23 01:05:23][Command][for i i...] hi</span>
+<span style="color:">[2024-04-23 01:05:24][Success][for i i...] 3 seconds</span>
 <span style="color:">[2024-04-23 01:05:24][Finished] 3 seconds</span></code>
 </pre>
 
