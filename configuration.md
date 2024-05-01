@@ -281,13 +281,7 @@ vs.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
-<span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessar...</span>
-<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-line-trunc detect "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
-<span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 5] some ridiculously long command...</span>
+<span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 5] ...</span>
 <span style="color: #a3fefe">[Timer] 3 seconds</span></code>
 </pre>
 

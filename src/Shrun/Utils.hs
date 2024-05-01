@@ -20,6 +20,7 @@ module Shrun.Utils
     whenLeft,
     untilJust,
     unsafeListToNESeq,
+    (∸),
   )
 where
 
@@ -293,3 +294,12 @@ escapeDoubleQuotes = TL.toStrict . TLB.toLazyText . T.foldl' go ""
     go :: Builder -> Char -> Builder
     go acc '"' = acc <> "\\\""
     go acc c = acc <> TLB.singleton c
+
+-- | "monus" i.e. subtraction clamped to zero
+(∸) :: (Ord a, Num a) => a -> a -> a
+x ∸ y =
+  if y > x
+    then 0
+    else x - y
+
+infixl 6 ∸

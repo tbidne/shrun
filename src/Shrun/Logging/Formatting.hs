@@ -12,6 +12,7 @@ module Shrun.Logging.Formatting
 
     -- ** Utils
     formatCommand,
+    concatWithLineTrunc,
     displayCmd,
     stripChars,
     brackets,
@@ -27,7 +28,7 @@ import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
 import Shrun.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
+import Shrun.Data.Truncation (TruncRegion (TCmdName, TLine), Truncation (MkTruncation))
 import Shrun.Logging.Types
   ( Log,
     LogLevel
@@ -45,7 +46,7 @@ import Shrun.Logging.Types.Internal
     FileLog (UnsafeFileLog),
   )
 import Shrun.Prelude
-import Shrun.Utils qualified as U
+import Shrun.Utils ((∸))
 import Shrun.Utils qualified as Utils
 import System.Console.Pretty (Color (Blue, Cyan, Green, Red, White, Yellow))
 import System.Console.Pretty qualified as P
@@ -56,50 +57,26 @@ formatConsoleLog ::
   ConsoleLoggingEnv ->
   Log ->
   ConsoleLog
-formatConsoleLog keyHide consoleLogging log =
-  let line = case log ^. #cmd of
-        -- FIXME: Line truncation is inconsistently applied here i.e. if the
-        -- the log has a command or not. But that means all messages will have
-        -- it applied _except_ command logs w/ an actual command name.
-        --
-        -- We should make line truncation apply to all logs but _always_ skip
-        -- prefixes.
-        Nothing -> brackets True prefix <> msgStripped
-        Just cmd ->
-          let cmd' =
-                formatCommand
-                  keyHide
-                  (consoleLogging ^. #cmdNameTrunc)
-                  cmd
-           in -- truncate entire line if necessary
-              truncateCmdLineFn
-                $ mconcat
-                  [ brackets False prefix,
-                    cmd',
-                    msgStripped
-                  ]
-   in -- NOTE: We want colorize on the outside for two reasons:
-      --
-      -- 1. Truncation calculation should not take colorization into account,
-      --    as chars are invisible.
-      -- 2. Having colorization _inside_ can accidentally cause the "end color"
-      --    chars to be stripped, leading to bugs where colorizing bleeds.
-      --
-      -- This 2nd point is likely the cause for some "color bleeding" that was
-      -- occasionally noticed.
-      UnsafeConsoleLog (colorize line)
+formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
   where
-    msgStripped = stripChars (log ^. #msg) (consoleLogging ^. #stripControl)
-
-    -- truncate entire line if necessary (flag on)
-    truncateCmdLineFn =
-      maybe
-        id
-        U.truncateIfNeeded
-        (consoleLogging ^? #lineTrunc %? #unTruncation)
-
+    -- NOTE: We want colorize on the outside for two reasons:
+    --
+    -- 1. Truncation calculation should not take colorization into account,
+    --    as chars are invisible.
+    -- 2. Having colorization _inside_ can accidentally cause the "end color"
+    --    chars to be stripped, leading to bugs where colorizing bleeds.
+    --
+    -- This 2nd point is likely the cause for some "color bleeding" that was
+    -- occasionally noticed.
     colorize = P.color $ logToColor log
-    prefix = logToPrefix log
+
+    line =
+      coreFormatting
+        (consoleLogging ^. #lineTrunc)
+        (consoleLogging ^. #cmdNameTrunc)
+        (consoleLogging ^. #stripControl)
+        keyHide
+        log
 
 maybeApply :: (a -> b -> b) -> Maybe a -> b -> b
 maybeApply = maybe id
@@ -114,30 +91,74 @@ formatFileLog ::
   m FileLog
 formatFileLog keyHide fileLogging log = do
   currTime <- getSystemTimeString
-  let formatted = case log ^. #cmd of
-        Nothing -> brackets True prefix <> msgStripped
-        Just cmd ->
-          let cmd' =
-                formatCommand
-                  keyHide
-                  (fileLogging ^. #cmdNameTrunc)
-                  cmd
-           in mconcat
-                [ brackets False prefix,
-                  cmd',
-                  msgStripped
-                ]
-      withTimestamp =
+  let withTimestamp =
         mconcat
           [ brackets False (pack currTime),
-            formatted,
+            line,
             "\n"
           ]
   pure $ UnsafeFileLog withTimestamp
   where
+    line =
+      coreFormatting
+        Nothing
+        (fileLogging ^. #cmdNameTrunc)
+        (fileLogging ^. #stripControl)
+        keyHide
+        log
+
+-- | Core formatting, shared by console and file logs. Basic idea:
+--
+-- 1. If the log contains a command, it is formatted according to
+--    'formatCommand' and command name truncation.
+--
+-- 2. The message is stripped of control chars according to strip control.
+--
+-- 3. Line truncation is applied if applicable. Note this applies only to
+--    the stripped message. The prefix (e.g. level label, timestamp, command
+--    name) are always present, though they __do__ count towards the
+--    truncation count. I.e. if the prefixes add up to 10 chars, and the
+--    line truncation is 15, then we only have 5 chars for the message before
+--    truncation kicks in.
+coreFormatting ::
+  -- | Optional line truncation
+  Maybe (Truncation TLine) ->
+  -- | Optional cmd name truncation
+  Maybe (Truncation TCmdName) ->
+  -- | Strip control
+  StripControl ->
+  -- | Key hide
+  KeyHide ->
+  -- | Log to format
+  Log ->
+  Text
+coreFormatting mLineTrunc mCmdNameTrunc stripControl keyHide log =
+  let line = case log ^. #cmd of
+        Nothing ->
+          let totalPrefix = brackets True logPrefix
+           in concatWithLineTrunc
+                mLineTrunc
+                totalPrefix
+                msgStripped
+        Just cmd ->
+          let cmd' =
+                formatCommand
+                  keyHide
+                  mCmdNameTrunc
+                  cmd
+              totalPrefix =
+                mconcat
+                  [ brackets False logPrefix,
+                    cmd'
+                  ]
+           in concatWithLineTrunc
+                mLineTrunc
+                totalPrefix
+                msgStripped
+   in line
+  where
     msgStripped = stripChars (log ^. #msg) stripControl
-    stripControl = fileLogging ^. #stripControl
-    prefix = logToPrefix log
+    logPrefix = logToPrefix log
 
 formatCommand ::
   KeyHide ->
@@ -153,8 +174,31 @@ formatCommand keyHide cmdNameTrunc com = brackets True (truncateNameFn cmdName)
     -- truncate cmd/name if necessary
     truncateNameFn =
       maybeApply
-        U.truncateIfNeeded
+        Utils.truncateIfNeeded
         (cmdNameTrunc ^? (_Just % #unTruncation))
+
+-- | Combines a prefix @p@ and msg @m@ with possible line truncation. If no
+-- truncation is given then concatWithLineTrunc is equivalent to @p <> m@.
+-- If we are given some line truncation @l@, then we derive
+--
+-- @
+--    k := l - prefix_len -- k is clamped to zero
+-- @
+--
+-- and return
+--
+-- @
+--    prefix <> t'
+-- @
+--
+-- where @t'@ is @t@ truncated to @k@ chars. Notice the prefix is always
+-- included untarnished.
+concatWithLineTrunc :: Maybe (Truncation TLine) -> Text -> Text -> Text
+concatWithLineTrunc Nothing prefix msg = prefix <> msg
+concatWithLineTrunc (Just (MkTruncation lineTrunc)) prefix msg =
+  prefix <> Utils.truncateIfNeeded lineTrunc' msg
+  where
+    lineTrunc' = lineTrunc ∸ unsafeConvertIntegral (T.length prefix)
 
 -- | Pretty show for 'Command'. If the command has a key, and 'KeyHide' is
 -- 'KeyHideOff' then we return the key. Otherwise we return the command itself.

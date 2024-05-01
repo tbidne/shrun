@@ -9,11 +9,15 @@ module Unit.Shrun.Logging.Generators
     -- * Helpers
     genLogLevel,
     genLogMode,
+
+    -- * Misc
+    genKeyHide,
   )
 where
 
 import Hedgehog.Gen qualified as HGen
 import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
+import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel,
@@ -76,6 +80,9 @@ genLogNoCmd = do
         lvl,
         mode
       }
+
+genKeyHide :: Gen KeyHide
+genKeyHide = HGen.enumBounded
 
 genLogLevel :: Gen LogLevel
 genLogLevel = HGen.enumBounded

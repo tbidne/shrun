@@ -383,7 +383,7 @@ cmdLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
           "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"
         ]
     expected =
-      [ "[Command][echo 'some ridiculously long command i mean is this really necessar..."
+      [ "[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 5] ..."
       ]
 
 stripControlAll :: TestTree
