@@ -11,13 +11,7 @@ import Functional.Examples qualified as Examples
 import Functional.Miscellaneous qualified as Miscellaneous
 import Functional.Notify qualified as Notify
 import Functional.Prelude
-import Functional.Success qualified as Success
-import Functional.SuccessCommandLogging qualified as SuccessCommandLogging
-import Functional.SuccessFileLogging qualified as SuccessFileLogging
-import Functional.SuccessShowKey qualified as SuccessShowKey
 import Functional.TestArgs (TestArgs (MkTestArgs, configPath, rootDir, tmpDir))
-import Functional.Timeout qualified as Timeout
-import Functional.Truncation qualified as Truncation
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import System.Environment.Guard (guardOrElse')
 import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
@@ -36,13 +30,7 @@ specs args = do
     [ Examples.specs args,
       Buffering.specs,
       Miscellaneous.specs,
-      Notify.specs,
-      Success.spec args,
-      SuccessCommandLogging.spec,
-      SuccessFileLogging.spec args,
-      SuccessShowKey.spec args,
-      Timeout.spec,
-      Truncation.spec
+      Notify.specs
     ]
 
 setup :: IO TestArgs

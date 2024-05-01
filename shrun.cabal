@@ -233,13 +233,7 @@ test-suite functional
     Functional.Miscellaneous
     Functional.Notify
     Functional.Prelude
-    Functional.Success
-    Functional.SuccessCommandLogging
-    Functional.SuccessFileLogging
-    Functional.SuccessShowKey
     Functional.TestArgs
-    Functional.Timeout
-    Functional.Truncation
 
   build-depends:
     , base

@@ -150,14 +150,14 @@ timeout =
     args =
       withNoConfig
         [ "-t",
-          "8",
-          "sleep 5",
-          "sleep 10",
-          "sleep 15"
+          "4",
+          "sleep 2",
+          "sleep 6",
+          "sleep 8"
         ]
     expected =
-      [ withSuccessPrefix "sleep 5",
-        withTimeoutPrefix "sleep 10, sleep 15",
+      [ withSuccessPrefix "sleep 2",
+        withTimeoutPrefix "sleep 6, sleep 8",
         finishedPrefix
       ]
 
@@ -170,17 +170,15 @@ keyHideOn =
     args =
       withBaseArgs
         [ "--log-key-hide",
-          "skynet"
+          "some-key"
         ]
     expected =
-      [ withCommandPrefix
-          "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
-          "preparing nuclear missil-- i mean gift baskets",
-        withSuccessPrefix "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
+      [ withCommandPrefix "echo hi && sleep 2" "hi",
+        withSuccessPrefix "echo hi && sleep 2"
       ]
     unexpected =
-      [ withCommandPrefix "skynet" "",
-        withSuccessPrefix "skynet"
+      [ withCommandPrefix "some-key" "",
+        withSuccessPrefix "some-key"
       ]
 
 keyHideOff :: TestTree
@@ -191,17 +189,15 @@ keyHideOff =
   where
     args =
       withBaseArgs
-        [ "skynet"
+        [ "some-key"
         ]
     expected =
-      [ withCommandPrefix "skynet" "",
-        withSuccessPrefix "skynet"
+      [ withCommandPrefix "some-key" "hi",
+        withSuccessPrefix "some-key"
       ]
     unexpected =
-      [ withCommandPrefix
-          "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
-          "preparing nuclear missil-- i mean gift baskets",
-        withSuccessPrefix "echo \"preparing nuclear missil-- i mean gift baskets\"; sleep 13"
+      [ withCommandPrefix "echo hi && sleep 2" "",
+        withSuccessPrefix "echo hi && sleep 2"
       ]
 
 timerFormatDigitalCompact :: TestTree
@@ -320,10 +316,10 @@ cmdlogOn =
     args =
       withNoConfig
         [ "--console-log-cmd",
-          "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
+          "for i in 1 2; do echo hi; sleep 1; done"
         ]
     expected =
-      [ withCommandPrefix "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done" "hi"
+      [ withCommandPrefix "for i in 1 2; do echo hi; sleep 1; done" "hi"
       ]
 
 cmdlogOnDefault :: TestTree
@@ -335,10 +331,10 @@ cmdlogOnDefault =
     args =
       withNoConfig
         [ "--console-log-cmd",
-          "for i in 1 2 3; do sleep 1; done"
+          "for i in 1 2; do sleep 1; done"
         ]
     expected =
-      [ withCommandPrefix "for i in 1 2 3; do sleep 1; done" "Starting..."
+      [ withCommandPrefix "for i in 1 2; do sleep 1; done" "Starting..."
       ]
 
 cmdlogOff :: TestTree
@@ -349,7 +345,7 @@ cmdlogOff =
   where
     args =
       withNoConfig
-        [ "for i in 1 2 3 4 5 6 7 8 9 10; do echo hi; sleep 1; done"
+        [ "for i in 1 2; do echo hi; sleep 1; done"
         ]
     unexpected = [commandPrefix]
 
@@ -380,10 +376,10 @@ cmdLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
         [ "--console-log-cmd",
           "--console-log-line-trunc",
           "80",
-          "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"
+          "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"
         ]
     expected =
-      [ "[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 5] ..."
+      [ "[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ..."
       ]
 
 stripControlAll :: TestTree
@@ -398,7 +394,7 @@ stripControlAll = testCase "Runs --console-log-strip-control all example" $ do
           "10",
           "--console-log-strip-control",
           "all",
-          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
         ]
     -- NOTE: printf over echo -e for portability (echo fails on CI). Also to
     -- try these out manually, note that \ESC will have to be substituted with
@@ -419,13 +415,13 @@ stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
         [ "--console-log-cmd",
           "--console-log-strip-control",
           "none",
-          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
         ]
     -- i.e. ansi codes are not being stripped (because =none), yet they are
     -- gone from the command names
     expected =
-      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 5" "foo \ESC[35m hello \ESC[3D bye",
-        withSuccessPrefix "printf ' foo  hello  bye '; sleep 5"
+      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 2" "foo \ESC[35m hello \ESC[3D bye",
+        withSuccessPrefix "printf ' foo  hello  bye '; sleep 2"
       ]
 
 stripControlNone :: TestTree
@@ -440,7 +436,7 @@ stripControlNone = testCase "Runs --console-log-strip-control none example" $ do
           "10",
           "--console-log-strip-control",
           "none",
-          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
         ]
     expected =
       [ withCommandPrefix "printf ..." "foo \ESC[35m hello \ESC[3D bye"
@@ -457,7 +453,7 @@ stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ 
           "--console-log-cmd-name-trunc",
           "10",
           "--console-log-strip-control=smart",
-          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
         ]
     expected =
       [ withCommandPrefix "printf ..." "foo \ESC[35m hello  bye"
@@ -531,7 +527,7 @@ fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all exam
             outFileStr,
             "--file-log-strip-control",
             "all",
-            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
           ]
 
   _ <- fmap MkResultText <$> (readIORef =<< run args)
@@ -540,7 +536,7 @@ fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all exam
   V.verifyExpected resultsFile expectedFile
   where
     expectedFile =
-      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 5" "foo  hello  bye"
+      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 2" "foo  hello  bye"
       ]
 
 fileLogStripControlNone :: IO TestArgs -> TestTree
@@ -553,7 +549,7 @@ fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none ex
             outFileStr,
             "--file-log-strip-control",
             "none",
-            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
           ]
 
   _ <- fmap MkResultText <$> (readIORef =<< run args)
@@ -563,7 +559,7 @@ fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none ex
   where
     expectedFile =
       [ withCommandPrefix
-          "printf ' foo  hello  bye '; sleep 5"
+          "printf ' foo  hello  bye '; sleep 2"
           "foo \ESC[35m hello \ESC[3D bye"
       ]
 
@@ -577,7 +573,7 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
             outFileStr,
             "--file-log-strip-control",
             "smart",
-            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 5"
+            "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
           ]
 
   _ <- fmap MkResultText <$> (readIORef =<< run args)
@@ -587,7 +583,7 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
   where
     expectedFile =
       [ withCommandPrefix
-          "printf ' foo  hello  bye '; sleep 5"
+          "printf ' foo  hello  bye '; sleep 2"
           "foo \ESC[35m hello  bye"
       ]
 

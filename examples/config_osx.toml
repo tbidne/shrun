@@ -32,6 +32,9 @@ legend = [
   { key = 'ui', val = 'echo "adding emojis. we like to have fun :-)"; sleep 10' },
   { key = 'takeover', val = ['querying-targets', 'ui', 'skynet'] },
 
+  # fast key-hide example
+  { key = 'some-key', val = 'echo hi && sleep 2' },
+
   # README Legend Example
   { key = 'cmd1', val = 'echo "command one"' },
 

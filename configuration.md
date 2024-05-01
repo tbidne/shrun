@@ -116,9 +116,9 @@ vs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --timeout 8 "sleep 5" "sleep 10" "sleep 15"</span>
-<span style="color: #69ff94">[Success][sleep 5] 5 seconds</span>
-<span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 10, sleep 15</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --timeout 4 "sleep 2" "sleep 6" "sleep 8"</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 6, sleep 8</span>
 <span style="color: #d6acff">[Finished] 9 seconds</span></code>
 </pre>
 
@@ -137,17 +137,17 @@ This is general logging config.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-key-hide --config=examples/config.toml skynet</span>
-<span style="color: #69ff94">[Success][echo "preparing nuclear missil-- i mean gift baskets"; sleep 13] 13 seconds</span>
-<span style="color: #d6acff">[Finished] 13 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --log-key-hide --config=examples/config.toml some-key</span>
+<span style="color: #69ff94">[Success][echo hi && sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
 </pre>
 
 rather than the usual
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --config=examples/config.toml skynet</span>
-<span style="color: #69ff94">[Success][skynet] 13 seconds</span>
-<span style="color: #d6acff">[Finished] 13 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --config=examples/config.toml some-key</span>
+<span style="color: #69ff94">[Success][some-key] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
 </pre>
 
 Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
@@ -240,16 +240,16 @@ Config related to console logs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd "for i in {1..10}; do echo hi; sleep 1; done"</span>
-<span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
-<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd "for i in {1..2}; do echo hi; sleep 1; done"</span>
+<span style="color:">[Command][for i in {1..2}; do echo hi; sleep 1; done] hi</span>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 vs.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun "for i in {1..10}; do echo hi; sleep 1; done"</span>
-<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun "for i in {1..2}; do echo hi; sleep 1; done"</span>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 > [!NOTE]
@@ -280,9 +280,9 @@ vs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 5"</span>
-<span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 5] ...</span>
-<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
+<span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 #### Strip Control
@@ -302,23 +302,23 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo  hello  bye</span>
-<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 `none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
-<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 5"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
-<span style="color: #a3fefe">[Timer] 3 seconds</span></code>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 ### File Logging
