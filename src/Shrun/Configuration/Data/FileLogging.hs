@@ -36,6 +36,7 @@ import Shrun.Configuration.Data.ConfigPhase
       ),
     ConfigPhaseF,
     ConfigPhaseMaybeF,
+    LineTruncF,
   )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
@@ -47,7 +48,7 @@ import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite), defaultFil
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
 import Shrun.Data.FileSizeMode (FileSizeMode (..), defaultFileSizeMode)
 import Shrun.Data.StripControl (StripControl, defaultFileLogStripControl)
-import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
+import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation, configToLineTrunc, decodeCmdNameTrunc, decodeLineTrunc)
 import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
 
@@ -150,6 +151,7 @@ data FileLoggingP p = MkFileLoggingP
     deleteOnSuccess :: BoolF p,
     -- | Determines to what extent we should remove control characters
     -- from file logs.
+    lineTrunc :: LineTruncF p,
     stripControl :: ConfigPhaseF p StripControl
   }
 
@@ -177,19 +179,25 @@ deriving stock instance Show (FileLoggingP ConfigPhaseMerged)
 
 -- | Merges args and toml configs.
 mergeFileLogging ::
+  ( HasCallStack,
+    MonadTerminal m
+  ) =>
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
-  Maybe FileLoggingMerged
+  m (Maybe FileLoggingMerged)
 mergeFileLogging args mToml =
   case args ^. (#file % #path) of
     -- 1. Logging globally disabled
-    Disabled -> Nothing
+    Disabled -> pure Nothing
     Without -> case mToml of
       -- 2. No Args and no Toml
-      Nothing -> Nothing
+      Nothing -> pure Nothing
       -- 3. No Args and yes Toml
-      Just toml ->
-        Just
+      Just toml -> do
+        lineTrunc <-
+          configToLineTrunc $ view #lineTrunc args <>? view #lineTrunc toml
+        pure
+          $ Just
           $ MkFileLoggingP
             { file =
                 MkFileLogInitP
@@ -213,6 +221,7 @@ mergeFileLogging args mToml =
                 WD.fromWithDisabled
                   False
                   (argsDeleteOnSuccess <>? (toml ^. #deleteOnSuccess)),
+              lineTrunc,
               stripControl =
                 plusDefault
                   defaultFileLogStripControl
@@ -221,8 +230,10 @@ mergeFileLogging args mToml =
             }
     With path -> case mToml of
       -- 3. Yes Args and no Toml
-      Nothing ->
-        Just
+      Nothing -> do
+        lineTrunc <- configToLineTrunc (args ^. #lineTrunc)
+        pure
+          $ Just
           $ MkFileLoggingP
             { file =
                 MkFileLogInitP
@@ -235,14 +246,18 @@ mergeFileLogging args mToml =
               cmdNameTrunc =
                 WD.toMaybe (args ^. #cmdNameTrunc),
               deleteOnSuccess = is (#deleteOnSuccess % _With) args,
+              lineTrunc,
               stripControl =
                 WD.fromWithDisabled
                   defaultFileLogStripControl
                   (args ^. #stripControl)
             }
       -- 4. Yes Args and yes Toml
-      Just toml ->
-        Just
+      Just toml -> do
+        lineTrunc <-
+          configToLineTrunc $ view #lineTrunc args <>? view #lineTrunc toml
+        pure
+          $ Just
           $ MkFileLoggingP
             { file =
                 MkFileLogInitP
@@ -266,6 +281,7 @@ mergeFileLogging args mToml =
                 WD.fromWithDisabled
                   False
                   (argsDeleteOnSuccess <>? (toml ^. #deleteOnSuccess)),
+              lineTrunc,
               stripControl =
                 plusDefault
                   defaultFileLogStripControl
@@ -287,12 +303,10 @@ instance DecodeTOML FileLoggingToml where
   tomlDecoder =
     MkFileLoggingP
       <$> tomlDecoder
-      <*> decodeFileCmdNameTrunc
+      <*> decodeCmdNameTrunc
       <*> decodeFileDeleteOnSuccess
+      <*> decodeLineTrunc
       <*> decodeFileLogStripControl
-
-decodeFileCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
-decodeFileCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
 
 decodeFileDeleteOnSuccess :: Decoder (Maybe Bool)
 decodeFileDeleteOnSuccess = getFieldOptWith tomlDecoder "delete-on-success"
@@ -329,6 +343,7 @@ withFileLoggingEnv mFileLogging onFileLoggingEnv = do
                     queue = q
                   },
               cmdNameTrunc = fl ^. #cmdNameTrunc,
+              lineTrunc = fl ^. #lineTrunc,
               deleteOnSuccess = fl ^. #deleteOnSuccess,
               stripControl = fl ^. #stripControl
             }

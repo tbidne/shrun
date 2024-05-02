@@ -34,6 +34,7 @@ import Shrun.Configuration.Data.FileLogging
         cmdNameTrunc,
         deleteOnSuccess,
         file,
+        lineTrunc,
         stripControl
       ),
   )
@@ -282,7 +283,8 @@ fileLogTests =
     [ testFormatsFLNoCmd,
       testFormatsFLCmdKey,
       testFormatsFLCmdNoKey,
-      testFormatsFLCmdNameTrunc
+      testFormatsFLCmdNameTrunc,
+      testFormatsFLLineTrunc
     ]
 
 testFormatsFLNoCmd :: TestTree
@@ -442,6 +444,40 @@ testFormatsFLCmdNameTrunc = testCase desc $ do
     fmt n = runFormatFileLog KeyHideOff (set' #cmdNameTrunc (Just n) baseFileLoggingEnv)
     fmtKh n = runFormatFileLog KeyHideOn (set' #cmdNameTrunc (Just n) baseFileLoggingEnv)
 
+testFormatsFLLineTrunc :: TestTree
+testFormatsFLLineTrunc = testCase desc $ do
+  -- 20 is just at the limit. Note that ASCII codes do not count
+  sysTimeNE <> "[Success] msg len 10\n" @=? fmt 20 baseLog
+  -- 19 is too low, we start to truncate
+  sysTimeNE <> "[Success] msg le...\n" @=? fmt 19 baseLog
+  -- we always print the prefix
+  sysTimeNE <> "[Success] ...\n" @=? fmt 0 baseLog
+
+  let logCmd =
+        set'
+          #cmd
+          (Just $ MkCommandP (Just "key") "some cmd")
+          (set' #lvl LevelFinished baseLog)
+
+  sysTimeNE <> "[Finished][key] msg len 10\n" @=? fmt 26 logCmd
+  sysTimeNE <> "[Finished][key] msg le...\n" @=? fmt 25 logCmd
+  sysTimeNE <> "[Finished][some cmd] msg len 10\n" @=? fmtKh 31 logCmd
+  sysTimeNE <> "[Finished][some cmd] msg le...\n" @=? fmtKh 30 logCmd
+  sysTimeNE <> "[Finished][some cmd] ...\n" @=? fmtKh 0 logCmd
+  where
+    baseLog =
+      MkLog
+        { cmd = Nothing,
+          lvl = LevelSuccess,
+          msg = "msg len 10",
+          mode = LogModeSet
+        }
+    desc = "Formats with line truncation"
+    -- key hide has no effect other than using the key over the cmd, which
+    -- could have a different length, of course
+    fmt n = runFormatFileLog KeyHideOff (set' #lineTrunc (Just n) baseFileLoggingEnv)
+    fmtKh n = runFormatFileLog KeyHideOn (set' #lineTrunc (Just n) baseFileLoggingEnv)
+
 runFormatFileLog :: KeyHide -> FileLoggingEnv -> Log -> Text
 runFormatFileLog keyHide env log =
   view #unFileLog
@@ -483,6 +519,7 @@ baseFileLoggingEnv =
             queue = err "queue"
           },
       cmdNameTrunc = Nothing,
+      lineTrunc = Nothing,
       deleteOnSuccess = False,
       stripControl = StripControlNone
     }

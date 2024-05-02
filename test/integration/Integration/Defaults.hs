@@ -58,6 +58,7 @@ import Shrun.Configuration.Data.FileLogging
         cmdNameTrunc,
         deleteOnSuccess,
         file,
+        lineTrunc,
         stripControl
       ),
   )
@@ -172,6 +173,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                               sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
                             },
                         cmdNameTrunc = Just 45,
+                        lineTrunc = Just 200,
                         deleteOnSuccess = False,
                         stripControl = StripControlNone
                       },
@@ -215,6 +217,8 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "--file-log-cmd-name-trunc",
         "35",
         "--file-log-delete-on-success",
+        "--file-log-line-trunc",
+        "180",
         "--console-log-cmd",
         "--log-key-hide",
         "--cmd-log-poll-interval",
@@ -270,6 +274,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                             },
                         cmdNameTrunc = Just 35,
                         deleteOnSuccess = True,
+                        lineTrunc = Just 180,
                         stripControl = StripControlNone
                       },
                 notify =
@@ -329,6 +334,8 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         "--file-log-cmd-name-trunc",
         "55",
         "--file-log-delete-on-success",
+        "--file-log-line-trunc",
+        "180",
         "--file-log-mode",
         "write",
         "--file-log-strip-control",
@@ -341,6 +348,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
     expected =
       [ #coreConfig % #fileLogging %? #cmdNameTrunc ^?=@ Just (Just 55),
         #coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just True,
+        #coreConfig % #fileLogging %? #lineTrunc ^?=@ Just (Just 180),
         #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
         #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeWrite,
         #coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)

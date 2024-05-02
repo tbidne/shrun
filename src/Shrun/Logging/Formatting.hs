@@ -101,7 +101,7 @@ formatFileLog keyHide fileLogging log = do
   where
     line =
       coreFormatting
-        Nothing
+        (fileLogging ^. #lineTrunc)
         (fileLogging ^. #cmdNameTrunc)
         (fileLogging ^. #stripControl)
         keyHide

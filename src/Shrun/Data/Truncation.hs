@@ -7,9 +7,16 @@ module Shrun.Data.Truncation
     parseTruncation,
     LineTruncation (..),
     parseLineTruncation,
+
+    -- * Misc
+    decodeCmdNameTrunc,
+    decodeLineTrunc,
+    configToLineTrunc,
   )
 where
 
+import Effects.System.Terminal (getTerminalWidth)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (..))
 import Shrun.Prelude
 
 -- | The different regions to apply truncation rules.
@@ -62,3 +69,21 @@ parseDetected getTxt =
   getTxt >>= \case
     "detect" -> pure Detected
     other -> fail $ "Wanted other, received: " <> unpack other
+
+decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
+decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
+
+decodeLineTrunc :: Decoder (Maybe LineTruncation)
+decodeLineTrunc = getFieldOptWith tomlDecoder "line-trunc"
+
+-- | Maps line trunc config to actual value.
+configToLineTrunc ::
+  ( HasCallStack,
+    MonadTerminal m
+  ) =>
+  WithDisabled LineTruncation ->
+  m (Maybe (Truncation TLine))
+configToLineTrunc Disabled = pure Nothing
+configToLineTrunc Without = pure Nothing
+configToLineTrunc (With Detected) = Just . MkTruncation <$> getTerminalWidth
+configToLineTrunc (With (Undetected x)) = pure $ Just x

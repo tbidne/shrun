@@ -140,6 +140,9 @@ legend = [
 # file if shrun exited via failure.
 #delete-on-success = false
 
+# Like console-log.line-trunc, but for file logs.
+# line-trunc = 150
+
 # Mode in which to open the log file. Can be "write" (the default) or
 # "append".
 #mode = "write"

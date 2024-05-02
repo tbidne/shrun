@@ -21,6 +21,7 @@
       - [File Log](#file-log)
       - [File Command Name Truncation](#file-command-name-truncation)
       - [File Delete On Success](#file-delete-on-success)
+      - [File Line Truncation](#file-line-trunc)
       - [File Log Mode](#file-log-mode)
       - [File Log Size Mode](#file-log-size-mode)
       - [File Log Strip Control](#file-log-strip-control)
@@ -412,6 +413,28 @@ vs.
 <span style="color:">[2024-04-23 01:05:21][Command][sleep 2] Starting...</span>
 <span style="color:">[2024-04-23 01:05:21][Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
 <span style="color:">[2024-04-23 01:05:24][Success][sleep 2] 2 seconds</span>
+<span style="color:">[2024-04-23 01:05:24][Finished] 2 seconds</span></code>
+</pre>
+
+#### File Line Truncation
+
+**Arg:** `--file-log-line-trunc`
+
+**Description:** Like [`--console-log-line-trunc`](#line-truncation), but for file logs.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log line-trunc.log --file-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat line-trunc.log</span>
+<span style="color:">[2024-04-23 01:05:21][Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
+<span style="color:">[2024-04-23 01:05:22][Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
+<span style="color:">[2024-04-23 01:05:24][Success][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
 <span style="color:">[2024-04-23 01:05:24][Finished] 2 seconds</span></code>
 </pre>
 

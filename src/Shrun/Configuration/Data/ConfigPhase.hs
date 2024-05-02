@@ -2,13 +2,17 @@
 module Shrun.Configuration.Data.ConfigPhase
   ( -- * Types
     ConfigPhase (..),
+
+    -- * Type families
+    BoolF,
     ConfigPhaseF,
     ConfigPhaseMaybeF,
-    BoolF,
+    LineTruncF,
   )
 where
 
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
+import Shrun.Data.Truncation (LineTruncation, TruncRegion (TLine), Truncation)
 import Shrun.Prelude
 
 -- | Data "phases" related to configuration.
@@ -57,3 +61,11 @@ type family BoolF p where
   BoolF ConfigPhaseToml = Maybe Bool
   BoolF ConfigPhaseMerged = Bool
   BoolF ConfigPhaseEnv = Bool
+
+-- | Line truncation is truly optional, the default being none.
+type LineTruncF :: ConfigPhase -> Type
+type family LineTruncF p where
+  LineTruncF ConfigPhaseArgs = WithDisabled LineTruncation
+  LineTruncF ConfigPhaseToml = Maybe LineTruncation
+  LineTruncF ConfigPhaseMerged = Maybe (Truncation TLine)
+  LineTruncF ConfigPhaseEnv = Maybe (Truncation TLine)

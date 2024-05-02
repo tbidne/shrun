@@ -25,6 +25,7 @@ strip-control = "all"
 path = "default"
 cmd-name-trunc = 20
 delete-on-success = true
+line-trunc = 200
 mode = "append"
 
 [notify]

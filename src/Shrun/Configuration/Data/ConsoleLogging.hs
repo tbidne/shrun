@@ -12,7 +12,6 @@ module Shrun.Configuration.Data.ConsoleLogging
   )
 where
 
-import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.ConfigPhase
   ( BoolF,
     ConfigPhase
@@ -23,35 +22,30 @@ import Shrun.Configuration.Data.ConfigPhase
       ),
     ConfigPhaseF,
     ConfigPhaseMaybeF,
+    LineTruncF,
   )
 import Shrun.Configuration.Data.WithDisabled
-  ( WithDisabled (Disabled, With, Without),
+  ( WithDisabled,
     (<>?),
     _With,
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Data.StripControl (StripControl, defaultConsoleLogStripControl)
 import Shrun.Data.Truncation
-  ( LineTruncation (Detected, Undetected),
-    TruncRegion (TCmdName, TLine),
-    Truncation (MkTruncation),
+  ( TruncRegion (TCmdName),
+    Truncation,
+    configToLineTrunc,
+    decodeCmdNameTrunc,
+    decodeLineTrunc,
   )
 import Shrun.Prelude
-
--- | Cmd log line truncation is truly optional, the default being none.
-type CmdLogLineTruncF :: ConfigPhase -> Type
-type family CmdLogLineTruncF p where
-  CmdLogLineTruncF ConfigPhaseArgs = WithDisabled LineTruncation
-  CmdLogLineTruncF ConfigPhaseToml = Maybe LineTruncation
-  CmdLogLineTruncF ConfigPhaseMerged = Maybe (Truncation TLine)
-  CmdLogLineTruncF ConfigPhaseEnv = Maybe (Truncation TLine)
 
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
 data ConsoleLoggingP p = MkConsoleLoggingP
   { cmdLogging :: BoolF p,
     cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
-    lineTrunc :: CmdLogLineTruncF p,
+    lineTrunc :: LineTruncF p,
     stripControl :: ConfigPhaseF p StripControl
   }
 
@@ -87,22 +81,22 @@ mergeConsoleLogging ::
   m ConsoleLoggingMerged
 mergeConsoleLogging args = \case
   Nothing -> do
-    cmdLogLineTrunc <- toLineTrunc (view #lineTrunc args)
+    lineTrunc <- configToLineTrunc (args ^. #lineTrunc)
 
     pure
       $ MkConsoleLoggingP
         { cmdLogging = is (#cmdLogging % _With) args,
           cmdNameTrunc =
             WD.toMaybe (args ^. #cmdNameTrunc),
-          lineTrunc = cmdLogLineTrunc,
+          lineTrunc,
           stripControl =
             WD.fromWithDisabled
               defaultConsoleLogStripControl
               (view #stripControl args)
         }
   Just toml -> do
-    cmdLogLineTrunc <-
-      toLineTrunc $ view #lineTrunc args <>? view #lineTrunc toml
+    lineTrunc <-
+      configToLineTrunc $ view #lineTrunc args <>? view #lineTrunc toml
 
     pure
       $ MkConsoleLoggingP
@@ -114,7 +108,7 @@ mergeConsoleLogging args = \case
             plusNothing
               #cmdNameTrunc
               (toml ^. #cmdNameTrunc),
-          lineTrunc = cmdLogLineTrunc,
+          lineTrunc,
           stripControl =
             plusDefault
               defaultConsoleLogStripControl
@@ -143,25 +137,8 @@ instance DecodeTOML ConsoleLoggingToml where
 decodeCmdLogging :: Decoder (Maybe Bool)
 decodeCmdLogging = getFieldOptWith tomlDecoder "cmd"
 
-decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
-decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
-
-decodeLineTrunc :: Decoder (Maybe LineTruncation)
-decodeLineTrunc = getFieldOptWith tomlDecoder "line-trunc"
-
 decodeStripControl :: Decoder (Maybe StripControl)
 decodeStripControl = getFieldOptWith tomlDecoder "strip-control"
-
-toLineTrunc ::
-  ( HasCallStack,
-    MonadTerminal m
-  ) =>
-  WithDisabled LineTruncation ->
-  m (Maybe (Truncation TLine))
-toLineTrunc Disabled = pure Nothing
-toLineTrunc Without = pure Nothing
-toLineTrunc (With Detected) = Just . MkTruncation <$> getTerminalWidth
-toLineTrunc (With (Undetected x)) = pure $ Just x
 
 toEnv :: ConsoleLoggingMerged -> ConsoleLoggingEnv
 toEnv merged =

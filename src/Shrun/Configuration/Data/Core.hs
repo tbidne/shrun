@@ -109,6 +109,11 @@ mergeCoreConfig args = \case
         (args ^. #consoleLogging)
         Nothing
 
+    fileLogging <-
+      mergeFileLogging
+        (args ^. #fileLogging)
+        Nothing
+
     pure
       $ MkCoreConfigP
         { timeout = WD.toMaybe (args ^. #timeout),
@@ -122,10 +127,7 @@ mergeCoreConfig args = \case
             mergeCmdLogging
               (args ^. #cmdLogging)
               Nothing,
-          fileLogging =
-            mergeFileLogging
-              (args ^. #fileLogging)
-              Nothing,
+          fileLogging,
           notify =
             mergeNotifyLogging
               (args ^. #notify)
@@ -136,6 +138,11 @@ mergeCoreConfig args = \case
       mergeConsoleLogging
         (args ^. #consoleLogging)
         (toml ^. #consoleLogging)
+
+    fileLogging <-
+      mergeFileLogging
+        (args ^. #fileLogging)
+        (toml ^. #fileLogging)
 
     pure
       $ MkCoreConfigP
@@ -152,10 +159,7 @@ mergeCoreConfig args = \case
             mergeCmdLogging
               (args ^. #cmdLogging)
               (toml ^. #cmdLogging),
-          fileLogging =
-            mergeFileLogging
-              (args ^. #fileLogging)
-              (toml ^. #fileLogging),
+          fileLogging,
           notify =
             mergeNotifyLogging
               (args ^. #notify)

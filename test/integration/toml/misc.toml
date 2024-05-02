@@ -1,2 +1,6 @@
 [console-log]
 line-trunc = "detect"
+
+[file-log]
+path = "some path"
+line-trunc = "detect"

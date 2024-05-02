@@ -20,6 +20,7 @@ import Shrun.Configuration.Data.FileLogging
         cmdNameTrunc,
         deleteOnSuccess,
         file,
+        lineTrunc,
         stripControl
       ),
   )
@@ -32,7 +33,7 @@ import Shrun.Data.FileSizeMode (FileSizeMode)
 import Shrun.Data.FileSizeMode qualified as FileSizeMode
 import Shrun.Data.StripControl (StripControl)
 import Shrun.Data.StripControl qualified as StripControl
-import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation)
+import Shrun.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
 import Shrun.Data.Truncation qualified as Trunc
 import Shrun.Prelude
 
@@ -41,6 +42,7 @@ fileLoggingParser = do
   path <- fileLogParser
   cmdNameTrunc <- fileLogCmdNameTruncParser
   deleteOnSuccess <- deleteOnSuccessParser
+  lineTrunc <- lineTruncParser
   mode <- fileLogModeParser
   sizeMode <- fileLogSizeModeParser
   stripControl <- fileLogStripControlParser
@@ -55,6 +57,7 @@ fileLoggingParser = do
             },
         cmdNameTrunc,
         deleteOnSuccess,
+        lineTrunc,
         stripControl
       }
 
@@ -119,6 +122,21 @@ deleteOnSuccessParser = Utils.withDisabledParser mainParser "file-log-delete-on-
         [ "If --file-log is active, deletes the file on a successful exit. ",
           "Does not delete the file if shrun exited via failure."
         ]
+
+lineTruncParser :: Parser (WithDisabled LineTruncation)
+lineTruncParser = Utils.withDisabledParser mainParser "file-log-line-trunc"
+  where
+    mainParser =
+      OA.optional
+        $ OA.option
+          (Trunc.parseLineTruncation OA.auto OA.str)
+          ( mconcat
+              [ OA.long "file-log-line-trunc",
+                Utils.mkHelp helpTxt,
+                OA.metavar "(NATURAL | detect)"
+              ]
+          )
+    helpTxt = "Like --console-log-line-trunc, but for --file-log."
 
 fileLogStripControlParser :: Parser (WithDisabled StripControl)
 fileLogStripControlParser =

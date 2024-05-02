@@ -18,6 +18,7 @@ import Shrun.Data.FileSizeMode
 import Shrun.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
+import Shrun.Data.Truncation (LineTruncation (Detected, Undetected))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 
@@ -29,6 +30,7 @@ tests =
     [ fileLoggingTests,
       cmdNameTruncTests,
       deleteOnSuccessTests,
+      lineTruncTests,
       modeTests,
       stripControlTests,
       sizeModeTests
@@ -158,6 +160,42 @@ testNoDeleteOnSuccess =
   where
     argList = ["--no-file-log-delete-on-success", "command"]
     expected = U.disableDefCoreArgs (#fileLogging % #deleteOnSuccess)
+
+lineTruncTests :: TestTree
+lineTruncTests =
+  testGroup
+    "--file-log-line-trunc"
+    [ testLineTrunc,
+      testLineTruncDetect,
+      testNoLineTrunc
+    ]
+
+testLineTrunc :: TestTree
+testLineTrunc =
+  testPropertyNamed
+    "Parses --file-log-line-trunc"
+    "testLineTrunc"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--file-log-line-trunc", "15", "command"]
+    expected = updateDefFileLogArgs #lineTrunc (Undetected 15)
+
+testLineTruncDetect :: TestTree
+testLineTruncDetect =
+  testPropertyNamed desc "testLineTruncDetect"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --file-log-line-trunc detect"
+    argList = ["--file-log-line-trunc", "detect", "command"]
+    expected = updateDefFileLogArgs #lineTrunc Detected
+
+testNoLineTrunc :: TestTree
+testNoLineTrunc =
+  testPropertyNamed "Parses --no-file-log-line-trunc" "testNoLineTrunc"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--no-file-log-line-trunc", "command"]
+    expected = disableDefFileLogArgs #lineTrunc
 
 modeTests :: TestTree
 modeTests =

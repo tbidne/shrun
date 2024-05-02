@@ -51,6 +51,7 @@ import Shrun.Configuration.Data.FileLogging
         cmdNameTrunc,
         deleteOnSuccess,
         file,
+        lineTrunc,
         stripControl
       ),
   )
@@ -94,6 +95,7 @@ defaultArgs commands =
                       },
                   cmdNameTrunc = mempty,
                   deleteOnSuccess = mempty,
+                  lineTrunc = mempty,
                   stripControl = mempty
                 },
             notify =

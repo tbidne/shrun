@@ -59,6 +59,7 @@ specs args =
       fileLogCmdNameTruncN args,
       fileLogDeleteOnSuccess args,
       fileLogDeleteOnSuccessFail args,
+      fileLogLineTruncN args,
       fileLogStripControlAll args,
       fileLogStripControlNone args,
       fileLogStripControlSmart args,
@@ -577,6 +578,28 @@ fileLogDeleteOnSuccessFail testArgs = testCase desc $ do
         finishedPrefix
       ]
     expectedFile = expectedConsole
+
+fileLogLineTruncN :: IO TestArgs -> TestTree
+fileLogLineTruncN testArgs = testCase "Runs --file-log-line-trunc 80 example" $ do
+  outFile <- (</> [osp|line-trunc.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--file-log-line-trunc",
+            "80",
+            "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"
+          ]
+
+  _ <- fmap MkResultText <$> (readIORef =<< run args)
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedFile =
+      [ withCommandPrefix "echo 'some ridiculously long command i mean is this really necessary' && sleep 2" "..."
+      ]
 
 fileLogStripControlAll :: IO TestArgs -> TestTree
 fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all example" $ do

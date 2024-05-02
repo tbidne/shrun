@@ -58,6 +58,8 @@ the major/minor/patch definitions apply to the application's interface / usage
 * New option `--file-log-delete-on-success`
   (toml: `file-log.delete-on-success`) that deletes the log file upon a
   successful exit.
+* New option `--file-log-line-trunc`
+  (toml: `file-log.line-trunc`) for line truncation in the file logs.
 
 ### Fixed
 * Improved `strip-control` options `all` and `smart` to replace newlines with
