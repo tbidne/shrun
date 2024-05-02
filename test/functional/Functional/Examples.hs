@@ -465,7 +465,7 @@ stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ 
 
 fileLog :: IO TestArgs -> TestTree
 fileLog testArgs = testCase "Runs file-log example" $ do
-  outFile <- (</>! "readme-file-out.log") . view #tmpDir <$> testArgs
+  outFile <- (</> [osp|readme-file-out.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
         withNoConfig
@@ -495,7 +495,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
 
 fileLogCmdNameTruncN :: IO TestArgs -> TestTree
 fileLogCmdNameTruncN testArgs = testCase desc $ do
-  outFile <- (</>! "readme-file-log-cmd-name-trunc-out.log") . view #tmpDir <$> testArgs
+  outFile <- (</> [osp|readme-file-log-cmd-name-trunc-out.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
         withNoConfig
@@ -580,7 +580,7 @@ fileLogDeleteOnSuccessFail testArgs = testCase desc $ do
 
 fileLogStripControlAll :: IO TestArgs -> TestTree
 fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all example" $ do
-  outFile <- (</>! "readme-file-out-strip-control-all.log") . view #tmpDir <$> testArgs
+  outFile <- (</> [osp|readme-file-out-strip-control-all.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
         withNoConfig
@@ -602,7 +602,7 @@ fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all exam
 
 fileLogStripControlNone :: IO TestArgs -> TestTree
 fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none example" $ do
-  outFile <- (</>! "readme-file-out-strip-control-none.log") . view #tmpDir <$> testArgs
+  outFile <- (</> [osp|readme-file-out-strip-control-none.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
         withNoConfig
@@ -626,7 +626,7 @@ fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none ex
 
 fileLogStripControlSmart :: IO TestArgs -> TestTree
 fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart example" $ do
-  outFile <- (</>! "readme-file-out-strip-control-smart.log") . view #tmpDir <$> testArgs
+  outFile <- (</> [osp|readme-file-out-strip-control-smart.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
         withNoConfig
