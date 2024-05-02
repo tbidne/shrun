@@ -305,7 +305,7 @@ cmdLogReadSize =
           cmd
         ]
     cmd :: (IsString a) => a
-    cmd = "echo abcdef && sleep 2"
+    cmd = "echo abcdef && sleep 3"
     expected =
       [ withCommandPrefix cmd "abcde",
         withCommandPrefix cmd "f"
