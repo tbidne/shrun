@@ -20,6 +20,7 @@
     - [File Logging](#file-logging)
       - [File Log](#file-log)
       - [File Command Name Truncation](#file-command-name-truncation)
+      - [File Delete On Success](#file-delete-on-success)
       - [File Log Mode](#file-log-mode)
       - [File Log Size Mode](#file-log-size-mode)
       - [File Log Strip Control](#file-log-strip-control)
@@ -375,6 +376,43 @@ Config related to file logs.
 <span style="color:">[2024-04-23 01:05:23][Command][for i i...] hi</span>
 <span style="color:">[2024-04-23 01:05:24][Success][for i i...] 3 seconds</span>
 <span style="color:">[2024-04-23 01:05:24][Finished] 3 seconds</span></code>
+</pre>
+
+#### File Delete On Success
+
+**Arg:** `--file-log-delete-on-success`
+
+**Description:** If `--file-log` is active, deletes the file on a successful exit. Does not delete the file if shrun exited via failure.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success "sleep 2"</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat del-on-success.log</span>
+<span style="color:">cat: del-on-success.log: No such file or directory</span></code>
+</pre>
+
+vs.
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success bad "sleep 2"</span>
+<span style="color: #ff6e6e">[Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat del-on-success.log</span>
+<span style="color:">[2024-04-23 01:05:21][Command][bad] Starting...</span>
+<span style="color:">[2024-04-23 01:05:21][Command][sleep 2] Starting...</span>
+<span style="color:">[2024-04-23 01:05:21][Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
+<span style="color:">[2024-04-23 01:05:24][Success][sleep 2] 2 seconds</span>
+<span style="color:">[2024-04-23 01:05:24][Finished] 2 seconds</span></code>
 </pre>
 
 #### File Log Mode

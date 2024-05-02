@@ -4,6 +4,7 @@ module Shrun.Configuration.Data.ConfigPhase
     ConfigPhase (..),
     ConfigPhaseF,
     ConfigPhaseMaybeF,
+    BoolF,
   )
 where
 
@@ -44,3 +45,15 @@ type family ConfigPhaseMaybeF p a where
   ConfigPhaseMaybeF ConfigPhaseToml a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseMerged a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseEnv a = Maybe a
+
+-- | General type family representing a bool:
+--
+-- - Args: WithDisabled () (isomorphic to Disabled | Bool)
+-- - Toml: Maybe Bool
+-- - Merged: Bool
+type BoolF :: ConfigPhase -> Type
+type family BoolF p where
+  BoolF ConfigPhaseArgs = WithDisabled ()
+  BoolF ConfigPhaseToml = Maybe Bool
+  BoolF ConfigPhaseMerged = Bool
+  BoolF ConfigPhaseEnv = Bool

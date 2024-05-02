@@ -28,6 +28,7 @@ read-size = 20
 [console-log]
 cmd = true
 cmd-name-trunc = 80
+delete-on-success = true
 line-trunc = 150
 strip-control = "all"
 

@@ -34,6 +34,7 @@ specs testArgs =
       usesRecursiveCmdExample,
       usesRecursiveCmd,
       lineTruncDetect,
+      testFileLogDeleteOnSuccess,
       testFileSizeModeNothing,
       testDefaultConfigs
     ]
@@ -243,6 +244,22 @@ testFileSizeModeNothing = testPropertyNamed desc "testFileSizeModeNothing"
     args = ["-c", getIntConfig "basic-file-log", "cmd"]
 
     expected = [#coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just FileSizeModeNothing]
+
+testFileLogDeleteOnSuccess :: TestTree
+testFileLogDeleteOnSuccess = testPropertyNamed desc "testFileLogDeleteOnSuccess"
+  $ withTests 1
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+    logs <- liftIO $ readIORef logsRef
+    logs === []
+  where
+    desc = "delete-on-success reads true"
+    args = ["-c", getIntConfig "basic-file-log", "cmd"]
+
+    expected = [#coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just True]
 
 newtype TermIO a = MkTermIO (IO a)
   deriving (Applicative, Functor, Monad, MonadThrow) via IO

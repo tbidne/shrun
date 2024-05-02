@@ -24,6 +24,7 @@ strip-control = "all"
 [file-log]
 path = "default"
 cmd-name-trunc = 20
+delete-on-success = true
 mode = "append"
 
 [notify]

@@ -56,6 +56,7 @@ import Shrun.Configuration.Data.FileLogging
     FileLoggingP
       ( MkFileLoggingP,
         cmdNameTrunc,
+        deleteOnSuccess,
         file,
         stripControl
       ),
@@ -171,6 +172,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                               sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
                             },
                         cmdNameTrunc = Just 45,
+                        deleteOnSuccess = False,
                         stripControl = StripControlNone
                       },
                 notify =
@@ -212,6 +214,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "none",
         "--file-log-cmd-name-trunc",
         "35",
+        "--file-log-delete-on-success",
         "--console-log-cmd",
         "--log-key-hide",
         "--cmd-log-poll-interval",
@@ -266,6 +269,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                               sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
                             },
                         cmdNameTrunc = Just 35,
+                        deleteOnSuccess = True,
                         stripControl = StripControlNone
                       },
                 notify =
@@ -324,6 +328,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         getIntConfigOS "overridden",
         "--file-log-cmd-name-trunc",
         "55",
+        "--file-log-delete-on-success",
         "--file-log-mode",
         "write",
         "--file-log-strip-control",
@@ -335,6 +340,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
 
     expected =
       [ #coreConfig % #fileLogging %? #cmdNameTrunc ^?=@ Just (Just 55),
+        #coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just True,
         #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
         #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeWrite,
         #coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)

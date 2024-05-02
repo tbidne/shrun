@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Functional tests for readme examples.
 module Functional.Examples (specs) where
 
@@ -55,6 +57,8 @@ specs args =
       stripControlSmart,
       fileLog args,
       fileLogCmdNameTruncN args,
+      fileLogDeleteOnSuccess args,
+      fileLogDeleteOnSuccessFail args,
       fileLogStripControlAll args,
       fileLogStripControlNone args,
       fileLogStripControlSmart args,
@@ -490,7 +494,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
            ]
 
 fileLogCmdNameTruncN :: IO TestArgs -> TestTree
-fileLogCmdNameTruncN testArgs = testCase "Runs --file-log-cmd-name-trunc 10 example" $ do
+fileLogCmdNameTruncN testArgs = testCase desc $ do
   outFile <- (</>! "readme-file-log-cmd-name-trunc-out.log") . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
@@ -508,6 +512,7 @@ fileLogCmdNameTruncN testArgs = testCase "Runs --file-log-cmd-name-trunc 10 exam
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
   V.verifyExpected resultsFile expectedFile
   where
+    desc = "Runs --file-log-cmd-name-trunc 10 example"
     expectedConsole =
       [ withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done", -- not truncated
         withFinishedPrefix "3 seconds"
@@ -516,6 +521,62 @@ fileLogCmdNameTruncN testArgs = testCase "Runs --file-log-cmd-name-trunc 10 exam
       [ withCommandPrefix "for i i..." "hi",
         withFinishedPrefix "3 seconds"
       ]
+
+fileLogDeleteOnSuccess :: IO TestArgs -> TestTree
+fileLogDeleteOnSuccess testArgs = testCase desc $ do
+  outFile <- (</> [osp|del-on-success.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--file-log-delete-on-success",
+            "sleep 2"
+          ]
+
+  resultsConsole <- fmap MkResultText <$> (readIORef =<< run args)
+  V.verifyExpected resultsConsole expectedConsole
+
+  exists <- doesFileExist outFile
+
+  assertBool "File should not exist" (not exists)
+  where
+    desc = "Runs file-log-delete-on-success example"
+    expectedConsole =
+      [ withSuccessPrefix "sleep 2",
+        finishedPrefix
+      ]
+
+fileLogDeleteOnSuccessFail :: IO TestArgs -> TestTree
+fileLogDeleteOnSuccessFail testArgs = testCase desc $ do
+  outFile <- (</> [osp|del-on-success-fail.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--file-log-delete-on-success",
+            "bad",
+            "sleep 2"
+          ]
+
+  resultsConsole <- fmap MkResultText <$> (readIORef =<< runOuterExitFailure args)
+  V.verifyExpected resultsConsole expectedConsole
+
+  exists <- doesFileExist outFile
+
+  assertBool "File should exist" exists
+
+  resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    desc = "Runs file-log-delete-on-success failure example"
+    expectedConsole =
+      [ withErrorPrefix "bad",
+        withSuccessPrefix "sleep 2",
+        finishedPrefix
+      ]
+    expectedFile = expectedConsole
 
 fileLogStripControlAll :: IO TestArgs -> TestTree
 fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all example" $ do

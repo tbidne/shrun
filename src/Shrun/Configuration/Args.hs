@@ -49,6 +49,7 @@ import Shrun.Configuration.Data.FileLogging
     FileLoggingP
       ( MkFileLoggingP,
         cmdNameTrunc,
+        deleteOnSuccess,
         file,
         stripControl
       ),
@@ -92,6 +93,7 @@ defaultArgs commands =
                         sizeMode = mempty
                       },
                   cmdNameTrunc = mempty,
+                  deleteOnSuccess = mempty,
                   stripControl = mempty
                 },
             notify =

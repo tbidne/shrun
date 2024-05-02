@@ -29,7 +29,13 @@ import Shrun.Configuration.Data.FileLogging
         queue
       ),
     FileLoggingEnv,
-    FileLoggingP (MkFileLoggingP, cmdNameTrunc, file, stripControl),
+    FileLoggingP
+      ( MkFileLoggingP,
+        cmdNameTrunc,
+        deleteOnSuccess,
+        file,
+        stripControl
+      ),
   )
 import Shrun.Data.Command (CommandP (MkCommandP, command, getKey))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
@@ -477,6 +483,7 @@ baseFileLoggingEnv =
             queue = err "queue"
           },
       cmdNameTrunc = Nothing,
+      deleteOnSuccess = False,
       stripControl = StripControlNone
     }
   where

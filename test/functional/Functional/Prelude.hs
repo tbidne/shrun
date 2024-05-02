@@ -11,6 +11,8 @@ module Functional.Prelude
     runNotes,
     runException,
     runExitFailure,
+    runOuterExitFailure,
+    runOuterException,
 
     -- * Expectations
 
@@ -145,6 +147,11 @@ runExitFailure :: List String -> IO (IORef (List Text))
 runExitFailure =
   fmap fst . runMaybeException (ExJust $ Proxy @(ExceptionCS ExitCode))
 
+-- | 'runOuterException' specialized to ExitFailure.
+runOuterExitFailure :: List String -> IO (IORef (List Text))
+runOuterExitFailure =
+  fmap fst . runOuterException (Proxy @(ExceptionCS ExitCode))
+
 -- | Like 'runException', except it expects an exception.
 runException ::
   forall e.
@@ -159,6 +166,10 @@ data MaybeException where
   ExNothing :: MaybeException
   ExJust :: (Exception e) => Proxy e -> MaybeException
 
+-- | Runs shrun potentially catching an expected exception. Note that we only
+-- catch exceptions from @runShellT shrun@. In particular, this means withEnv
+-- config setup will __not__ perform any exception handling, since the
+-- exception is caught before that.
 runMaybeException ::
   MaybeException ->
   List String ->
@@ -187,6 +198,47 @@ runMaybeException mException argList = do
                   show (typeRep proxy),
                   ">, received none"
                 ]
+
+-- | Like 'runMaybeException' except:
+--
+-- 1. Always expects an exception.
+-- 2. The __entire__ withEnv -> shrun process is surrounded with a catch.
+--    This means an exception thrown by the main shrun process will trigger
+--    withEnv's exception handling logic.
+--
+-- We need this when we want to test any non-happy-path logic in
+-- withEnv, withCoreEnv, withMLogging, etc. i.e. anything at a higher scope
+-- than 'SR.shrun'.
+runOuterException ::
+  forall e.
+  (Exception e) =>
+  Proxy e ->
+  List String ->
+  IO (IORef (List Text), IORef (List ShrunNote))
+runOuterException proxy argList = do
+  ls <- newIORef []
+  shrunNotes <- newIORef []
+
+  let action = do
+        withArgs argList $ Env.withEnv $ \env -> do
+          let funcEnv =
+                MkFuncEnv
+                  { coreEnv = env,
+                    logs = ls,
+                    shrunNotes
+                  }
+
+          SR.runShellT SR.shrun funcEnv
+
+  try @_ @e action >>= \case
+    Left _ -> pure (ls, shrunNotes)
+    Right _ ->
+      error
+        $ mconcat
+          [ "Expected exception <",
+            show (typeRep proxy),
+            ">, received none"
+          ]
 
 commandPrefix :: (IsString s) => s
 commandPrefix = "[Command]"

@@ -18,6 +18,7 @@ import Shrun.Configuration.Data.FileLogging
     FileLoggingP
       ( MkFileLoggingP,
         cmdNameTrunc,
+        deleteOnSuccess,
         file,
         stripControl
       ),
@@ -39,6 +40,7 @@ fileLoggingParser :: Parser FileLoggingArgs
 fileLoggingParser = do
   path <- fileLogParser
   cmdNameTrunc <- fileLogCmdNameTruncParser
+  deleteOnSuccess <- deleteOnSuccessParser
   mode <- fileLogModeParser
   sizeMode <- fileLogSizeModeParser
   stripControl <- fileLogStripControlParser
@@ -52,6 +54,7 @@ fileLoggingParser = do
               sizeMode
             },
         cmdNameTrunc,
+        deleteOnSuccess,
         stripControl
       }
 
@@ -94,6 +97,28 @@ fileLogCmdNameTruncParser =
               ]
           )
     helpTxt = "Like --console-log-cmd-name-trunc, but for --file-logs."
+
+deleteOnSuccessParser :: Parser (WithDisabled ())
+deleteOnSuccessParser = Utils.withDisabledParser mainParser "file-log-delete-on-success"
+  where
+    switchParser =
+      OA.switch
+        ( mconcat
+            [ OA.long "file-log-delete-on-success",
+              Utils.mkHelp helpTxt
+            ]
+        )
+    mainParser = do
+      b <- switchParser
+      pure
+        $ if b
+          then Just ()
+          else Nothing
+    helpTxt =
+      mconcat
+        [ "If --file-log is active, deletes the file on a successful exit. ",
+          "Does not delete the file if shrun exited via failure."
+        ]
 
 fileLogStripControlParser :: Parser (WithDisabled StripControl)
 fileLogStripControlParser =

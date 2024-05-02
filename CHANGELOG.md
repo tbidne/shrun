@@ -55,6 +55,9 @@ the major/minor/patch definitions apply to the application's interface / usage
   `--file-log`.
 * New option `--file-log-cmd-name-trunc` (toml: `file-log.cmd-name-trunc`)
   for command name truncation in the file logs.
+* New option `--file-log-delete-on-success`
+  (toml: `file-log.delete-on-success`) that deletes the log file upon a
+  successful exit.
 
 ### Fixed
 * Improved `strip-control` options `all` and `smart` to replace newlines with

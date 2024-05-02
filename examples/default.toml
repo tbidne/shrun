@@ -136,6 +136,10 @@ legend = [
 # Like cmd-name-trunc, but for file logs.
 #cmd-name-trunc = 40
 
+# If true, the log file is deleted on a successful exit. Does not delete the
+# file if shrun exited via failure.
+#delete-on-success = false
+
 # Mode in which to open the log file. Can be "write" (the default) or
 # "append".
 #mode = "write"

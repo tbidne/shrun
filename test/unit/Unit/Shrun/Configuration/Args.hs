@@ -54,6 +54,7 @@ tests =
       initSpecs,
       fileLoggingSpecs,
       fileLoggingCmdNameTruncSpecs,
+      fileLoggingDeleteOnSuccessSpecs,
       fileLogModeSpecs,
       fileLogStripControlSpecs,
       fileLogSizeModeSpecs,
@@ -324,6 +325,34 @@ parseNoFileLogCmdNameTrunc =
     argList = ["--no-file-log-cmd-name-trunc", "command"]
     expected = disableDefFileLogArgs #cmdNameTrunc
 
+fileLoggingDeleteOnSuccessSpecs :: TestTree
+fileLoggingDeleteOnSuccessSpecs =
+  testGroup
+    "FileLog delete-on-success arg parsing"
+    [ parseFileLogDeleteOnSuccess,
+      parseFileLogNoDeleteOnSuccess
+    ]
+
+parseFileLogDeleteOnSuccess :: TestTree
+parseFileLogDeleteOnSuccess =
+  testPropertyNamed
+    "Should parse --file-log-delete-on-success"
+    "parseFileLogDeleteOnSuccess"
+    $ verifyResult argList expected
+  where
+    argList = ["--file-log-delete-on-success", "command"]
+    expected = updateDefFileLogArgs #deleteOnSuccess ()
+
+parseFileLogNoDeleteOnSuccess :: TestTree
+parseFileLogNoDeleteOnSuccess =
+  testPropertyNamed
+    "Should parse --no-file-log-delete-on-success"
+    "parseFileLogDeleteOnSuccess"
+    $ verifyResult argList expected
+  where
+    argList = ["--no-file-log-delete-on-success", "command"]
+    expected = disableDefCoreArgs (#fileLogging % #deleteOnSuccess)
+
 fileLogModeSpecs :: TestTree
 fileLogModeSpecs =
   testGroup
@@ -463,12 +492,12 @@ cmdLogReadSizeSpecs :: TestTree
 cmdLogReadSizeSpecs =
   testGroup
     "Command log size arg parsing"
-    [ parsecmdLogReadSize,
-      parseNocmdLogReadSize
+    [ parseCmdLogReadSize,
+      parseNoCmdLogReadSize
     ]
 
-parsecmdLogReadSize :: TestTree
-parsecmdLogReadSize =
+parseCmdLogReadSize :: TestTree
+parseCmdLogReadSize =
   testPropertyNamed
     "Should parse --cmd-log-read-size as command log size"
     "parsecmdLogReadSize"
@@ -477,8 +506,8 @@ parsecmdLogReadSize =
     argList = ["--cmd-log-read-size", "2048", "command"]
     expected = updateDefCoreArgs (#cmdLogging % #readSize) (MkBytes 2048)
 
-parseNocmdLogReadSize :: TestTree
-parseNocmdLogReadSize =
+parseNoCmdLogReadSize :: TestTree
+parseNoCmdLogReadSize =
   testPropertyNamed "Parse --no-cmd-log-read-size" "parseNocmdLogReadSize"
     $ verifyResult argList expected
   where

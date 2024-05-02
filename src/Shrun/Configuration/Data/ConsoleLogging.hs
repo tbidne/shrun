@@ -14,7 +14,8 @@ where
 
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase
+  ( BoolF,
+    ConfigPhase
       ( ConfigPhaseArgs,
         ConfigPhaseEnv,
         ConfigPhaseMerged,
@@ -37,13 +38,6 @@ import Shrun.Data.Truncation
   )
 import Shrun.Prelude
 
-type CmdLoggingF :: ConfigPhase -> Type
-type family CmdLoggingF p where
-  CmdLoggingF ConfigPhaseArgs = WithDisabled ()
-  CmdLoggingF ConfigPhaseToml = Maybe Bool
-  CmdLoggingF ConfigPhaseMerged = Bool
-  CmdLoggingF ConfigPhaseEnv = Bool
-
 -- | Cmd log line truncation is truly optional, the default being none.
 type CmdLogLineTruncF :: ConfigPhase -> Type
 type family CmdLogLineTruncF p where
@@ -55,7 +49,7 @@ type family CmdLogLineTruncF p where
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
 data ConsoleLoggingP p = MkConsoleLoggingP
-  { cmdLogging :: CmdLoggingF p,
+  { cmdLogging :: BoolF p,
     cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
     lineTrunc :: CmdLogLineTruncF p,
     stripControl :: ConfigPhaseF p StripControl
@@ -110,10 +104,6 @@ mergeConsoleLogging args = \case
     cmdLogLineTrunc <-
       toLineTrunc $ view #lineTrunc args <>? view #lineTrunc toml
 
-    -- Convert WithDisabled () -> WithDisabled Bool for below operation.
-    let argsCmdLogging :: WithDisabled Bool
-        argsCmdLogging = args ^. #cmdLogging $> True
-
     pure
       $ MkConsoleLoggingP
         { cmdLogging =
@@ -132,6 +122,10 @@ mergeConsoleLogging args = \case
               (toml ^. #stripControl)
         }
   where
+    -- Convert WithDisabled () -> WithDisabled Bool for below operation.
+    argsCmdLogging :: WithDisabled Bool
+    argsCmdLogging = args ^. #cmdLogging $> True
+
     plusDefault :: a -> Lens' ConsoleLoggingArgs (WithDisabled a) -> Maybe a -> a
     plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
 

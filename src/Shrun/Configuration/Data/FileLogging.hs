@@ -27,7 +27,8 @@ import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing)
 import Effects.FileSystem.Utils qualified as FsUtils
 import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase
+  ( BoolF,
+    ConfigPhase
       ( ConfigPhaseArgs,
         ConfigPhaseEnv,
         ConfigPhaseMerged,
@@ -39,6 +40,7 @@ import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
     (<>?),
+    _With,
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite), defaultFileMode)
@@ -144,6 +146,8 @@ data FileLoggingP p = MkFileLoggingP
     file :: FileLogFileF p,
     -- | The max number of command characters to display in the file logs.
     cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
+    -- | If active, deletes the log file upon success.
+    deleteOnSuccess :: BoolF p,
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     stripControl :: ConfigPhaseF p StripControl
@@ -205,6 +209,10 @@ mergeFileLogging args mToml =
                 plusNothing
                   #cmdNameTrunc
                   (toml ^. #cmdNameTrunc),
+              deleteOnSuccess =
+                WD.fromWithDisabled
+                  False
+                  (argsDeleteOnSuccess <>? (toml ^. #deleteOnSuccess)),
               stripControl =
                 plusDefault
                   defaultFileLogStripControl
@@ -226,6 +234,7 @@ mergeFileLogging args mToml =
                   },
               cmdNameTrunc =
                 WD.toMaybe (args ^. #cmdNameTrunc),
+              deleteOnSuccess = is (#deleteOnSuccess % _With) args,
               stripControl =
                 WD.fromWithDisabled
                   defaultFileLogStripControl
@@ -253,6 +262,10 @@ mergeFileLogging args mToml =
                 plusNothing
                   #cmdNameTrunc
                   (toml ^. #cmdNameTrunc),
+              deleteOnSuccess =
+                WD.fromWithDisabled
+                  False
+                  (argsDeleteOnSuccess <>? (toml ^. #deleteOnSuccess)),
               stripControl =
                 plusDefault
                   defaultFileLogStripControl
@@ -260,6 +273,10 @@ mergeFileLogging args mToml =
                   (view #stripControl toml)
             }
   where
+    -- Convert WithDisabled () -> WithDisabled Bool for below operation.
+    argsDeleteOnSuccess :: WithDisabled Bool
+    argsDeleteOnSuccess = args ^. #deleteOnSuccess $> True
+
     plusDefault :: a -> Lens' FileLoggingArgs (WithDisabled a) -> Maybe a -> a
     plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
 
@@ -271,10 +288,14 @@ instance DecodeTOML FileLoggingToml where
     MkFileLoggingP
       <$> tomlDecoder
       <*> decodeFileCmdNameTrunc
+      <*> decodeFileDeleteOnSuccess
       <*> decodeFileLogStripControl
 
 decodeFileCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
 decodeFileCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
+
+decodeFileDeleteOnSuccess :: Decoder (Maybe Bool)
+decodeFileDeleteOnSuccess = getFieldOptWith tomlDecoder "delete-on-success"
 
 decodeFileLogStripControl :: Decoder (Maybe StripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "strip-control"
@@ -308,6 +329,7 @@ withFileLoggingEnv mFileLogging onFileLoggingEnv = do
                     queue = q
                   },
               cmdNameTrunc = fl ^. #cmdNameTrunc,
+              deleteOnSuccess = fl ^. #deleteOnSuccess,
               stripControl = fl ^. #stripControl
             }
 
@@ -347,8 +369,17 @@ withMLogging (Just fileLogging) onLogging = do
   handleLogFileSize (fileLogging ^. #file % #sizeMode) fp
   fileQueue <- newTBQueueA 1000
 
-  withBinaryFile fp ioMode $ \h ->
-    onLogging (Just (fileLogging, h, fileQueue))
+  result <-
+    withBinaryFile fp ioMode $ \h ->
+      onLogging (Just (fileLogging, h, fileQueue))
+
+  -- If the above command succeeded and deleteOnSuccess is true, delete the
+  -- log file. Otherwise we will not reach here due to withBinaryFile
+  -- rethrowing an exception, so the file will not be deleted.
+  when (fileLogging ^. #deleteOnSuccess)
+    $ removeFileIfExists fp
+
+  pure result
 
 handleLogFileSize ::
   ( HasCallStack,
