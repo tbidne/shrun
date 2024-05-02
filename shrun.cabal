@@ -171,7 +171,14 @@ test-suite unit
   other-modules:
     Unit.Generators
     Unit.Prelude
-    Unit.Shrun.Configuration.Args
+    Unit.Shrun.Configuration.Args.Parsing
+    Unit.Shrun.Configuration.Args.Parsing.CmdLogging
+    Unit.Shrun.Configuration.Args.Parsing.CommonLogging
+    Unit.Shrun.Configuration.Args.Parsing.ConsoleLogging
+    Unit.Shrun.Configuration.Args.Parsing.Core
+    Unit.Shrun.Configuration.Args.Parsing.FileLogging
+    Unit.Shrun.Configuration.Args.Parsing.Notify
+    Unit.Shrun.Configuration.Args.Parsing.TestUtils
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
     Unit.Shrun.Data.Text
@@ -181,6 +188,7 @@ test-suite unit
 
   build-depends:
     , base
+    , containers
     , effects-time
     , hedgehog              >=1.0.2   && <1.5
     , optparse-applicative

@@ -2,7 +2,7 @@
 module Main (main) where
 
 import Unit.Prelude
-import Unit.Shrun.Configuration.Args qualified
+import Unit.Shrun.Configuration.Args.Parsing qualified
 import Unit.Shrun.Configuration.Data.WithDisabled qualified
 import Unit.Shrun.Configuration.Legend qualified
 import Unit.Shrun.Data.Text qualified
@@ -15,7 +15,7 @@ main =
   defaultMain
     $ testGroup
       "Unit tests"
-      [ Unit.Shrun.Configuration.Args.tests,
+      [ Unit.Shrun.Configuration.Args.Parsing.tests,
         Unit.Shrun.Configuration.Data.WithDisabled.tests,
         Unit.Shrun.Configuration.Legend.tests,
         Unit.Shrun.Data.Text.tests,
