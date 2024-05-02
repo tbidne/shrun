@@ -52,8 +52,7 @@ loops :: List (String, String)
 loops =
   force
     [ ("10_000", bashLoop "10000"),
-      ("100_000", bashLoop "100000"),
-      ("1_000_000", bashLoop "1000000")
+      ("100_000", bashLoop "100000")
     ]
 
 -- We have trouble with CI not interpolating brace syntax correctly, but
