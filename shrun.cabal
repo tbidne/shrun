@@ -238,6 +238,12 @@ test-suite functional
   other-modules:
     Functional.Buffering
     Functional.Examples
+    Functional.Examples.CmdLogging
+    Functional.Examples.CommonLogging
+    Functional.Examples.ConsoleLogging
+    Functional.Examples.Core
+    Functional.Examples.FileLogging
+    Functional.Examples.Notify
     Functional.Miscellaneous
     Functional.Notify
     Functional.Prelude

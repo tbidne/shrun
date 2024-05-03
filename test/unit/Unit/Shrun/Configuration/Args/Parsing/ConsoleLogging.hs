@@ -13,9 +13,9 @@ tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.ConsoleLogging"
     [ commandLoggingTests,
-      stripControlTests,
       cmdNameTruncTests,
-      lineTruncTests
+      lineTruncTests,
+      stripControlTests
     ]
 
 commandLoggingTests :: TestTree

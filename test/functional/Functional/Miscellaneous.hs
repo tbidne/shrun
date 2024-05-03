@@ -10,7 +10,8 @@ specs =
   testGroup
     "Miscellaneous"
     [ splitNewlineLogs,
-      spaceStderrLogs
+      spaceStderrLogs,
+      stripControlAlwaysCmdNames
     ]
 
 splitNewlineLogs :: TestTree
@@ -55,4 +56,27 @@ spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
       ]
     unexpected =
       [ withErrorPrefix "sleep 1 && echo 'abc def' && exit 1" <> "1 second: abcdef"
+      ]
+
+-- NOTE: This used to be in Examples (subsequently Examples.ConsoleLogging),
+-- as it fit in alongside the other tests. However, we prefer those tests to
+-- match Configuration.md as closely as possible, to make maintaining the
+-- markdown file as easy as possible. Thus we move it here.
+stripControlAlwaysCmdNames :: TestTree
+stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
+  results <- fmap MkResultText <$> (readIORef =<< run args)
+  V.verifyExpected results expected
+  where
+    args =
+      withNoConfig
+        [ "--console-log-cmd",
+          "--console-log-strip-control",
+          "none",
+          "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
+        ]
+    -- i.e. ansi codes are not being stripped (because =none), yet they are
+    -- gone from the command names
+    expected =
+      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 2" "foo \ESC[35m hello \ESC[3D bye",
+        withSuccessPrefix "printf ' foo  hello  bye '; sleep 2"
       ]
