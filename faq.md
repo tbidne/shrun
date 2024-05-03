@@ -1,5 +1,15 @@
 # FAQ
 
+## If I don't run multiple commands all that often, does shrun hold any value?
+
+I use `shrun` all the time for single-commands if they are going to take at least several minutes. Reasons:
+
+- Desktop notifications means I can "fire-and-forget" commands. That is, I can run a command in one window, switch windows/desktops to do something else, then be notified when the command finishes. Otherwise I have to manually switch back to check if the command finished, which is mildly annoying.
+
+- Automatic file logging often makes debugging failures easier. I don't know about you, but I much prefer searching a file for relevant logs, rather than scrolling (possibly large) terminal output. The `--file-log-delete-on-success` option makes this workflow even nicer, as we do not leave log files around unless something goes wrong.
+
+- I find having a running timer psychologically reassuring, not to mention useful if I have any idea of how long a command _should_ take.
+
 ## What if a command needs sudo?
 
 Commands _can_ receive `stdin`, so running e.g. `shrun "sudo some command"` will launch the sudo prompt. From there we can type the password and hit `enter` as usual.
@@ -53,7 +63,7 @@ $ shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"
 
 > [!TIP]
 >
-> An extensive `~/.bashrc` may contain code that does not work well when loading non-interactively e.g. mine has the line `[[ $- == *i* ]] || return`, which `shrun` chokes on. Instead, you may want to create a file for your functions e.g. `~/.bash_functions.sh`, source _that_ in `~/.bashrc`, and then use it with `shrun` instead:
+> An extensive `~/.bashrc` may contain code that does not work well when loading non-interactively e.g. the common idiom `[[ $- == *i* ]] || return` will cause `shrun` to choke. Instead, you may want to create a file for your functions e.g. `~/.bash_functions.sh`, source _that_ in `~/.bashrc`, and then use it with `shrun` instead:
 >
 > ```sh
 > $ shrun --init ". ~/.bash_functions.sh" ...
