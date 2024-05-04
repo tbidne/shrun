@@ -4,6 +4,8 @@ module Functional.Buffering (specs) where
 import Data.List qualified as L
 import Data.Text qualified as T
 import Functional.Prelude
+import Test.Shrun.Verifier (ExpectedText (MkExpectedText), ResultText (MkResultText))
+import Test.Shrun.Verifier qualified as V
 
 specs :: TestTree
 specs =
@@ -19,7 +21,9 @@ logsNoBuffer =
   testCase "Command logs should not buffer" $ do
     results <- L.reverse <$> (readIORef =<< run args)
 
-    assertLogsEq expecteds results
+    assertLogsEq expectedOrdered results
+
+    V.verifyExpected (MkResultText <$> results) (MkExpectedText <$> allExpected)
   where
     -- NOTE: [Bash brace loop interpolation]
     --
@@ -49,82 +53,61 @@ logsNoBuffer =
     --
     -- Having the same interval yet an offset make this more reliable.
     cmdPrefix = "sleep 0.5 ; ..."
-    expecteds =
-      [ (!) $ withCommandPrefix cmdPrefix "Starting...",
-        (!) $ withCommandPrefix cmdPrefix "0.5",
-        (!) $ withTimerPrefix "1 second",
-        (!) $ withCommandPrefix cmdPrefix "1.5",
-        (!) $ withTimerPrefix "2 seconds",
-        (!) $ withCommandPrefix cmdPrefix "2.5",
-        (!) $ withTimerPrefix "3 seconds",
-        (!) $ withCommandPrefix cmdPrefix "3.5",
-        (!) $ withTimerPrefix "4 seconds",
-        -- This one is flaky, tends to show up on OSX, presumably because
-        -- OSX starts more slowly.
-        (?) $ withTimerPrefix "5 seconds",
-        -- No seconds here because it is flaky (e.g. can be either 4/5 seconds)
-        (!) $ withSuccessPrefix cmdPrefix,
-        (!) $ withFinishedPrefix ""
+
+    expectedOrdered =
+      [ withCommandPrefix cmdPrefix "Starting...",
+        withCommandPrefix cmdPrefix "0.5",
+        withTimerPrefix "1 second",
+        withCommandPrefix cmdPrefix "1.5",
+        withTimerPrefix "2 seconds",
+        withCommandPrefix cmdPrefix "2.5",
+        withTimerPrefix "3 seconds",
+        withCommandPrefix cmdPrefix "3.5",
+        withTimerPrefix "4 seconds"
       ]
 
-assertLogsEq :: List TextSearch -> List Text -> IO ()
-assertLogsEq expecteds results = case go expecteds results of
+    -- The order of these last few messages is flaky on OSX, so just look for
+    -- existence.
+    allExpected =
+      expectedOrdered
+        ++ [ withSuccessPrefix cmdPrefix,
+             withFinishedPrefix ""
+           ]
+
+assertLogsEq :: List Text -> List Text -> IO ()
+assertLogsEq expectedOrdered results = case go expectedOrdered results of
   Nothing -> pure ()
   Just errMsg -> assertFailure $ unpack errMsg
   where
-    go :: List TextSearch -> List Text -> Maybe Text
+    go :: List Text -> List Text -> Maybe Text
     go [] [] = Nothing
     go (_ : _) [] =
       Just
         $ mconcat
           [ "Num expected > results.\n\nExpected:\n",
-            prettyTextSearch expecteds,
+            prettyList expectedOrdered,
             "\n\nResults:\n",
             prettyList results
           ]
-    go [] (_ : _) =
-      Just
-        $ mconcat
-          [ "Num results > expected.\n\nExpected:\n",
-            prettyTextSearch expecteds,
-            "\n\nResults:\n",
-            prettyList results
-          ]
-    go (eSearch : es) (r : rs) =
-      case eSearch of
-        Required e ->
-          case logEq e r of
-            Nothing -> go es rs
-            Just errMsg ->
-              Just
-                $ mconcat
-                  [ errMsg,
-                    "\n\nAll expecteds:\n",
-                    prettyTextSearch expecteds,
-                    "\n\nAll results:\n",
-                    prettyList results
-                  ]
-        -- If the text is optional (i.e. only sometimes shows up), try a
-        -- a comparison. If it fails, skip and move on.
-        Optional e ->
-          case logEq e r of
-            Nothing -> go es results
-            Just _ -> go es (r : rs)
-
-    prettyTextSearch :: List TextSearch -> Text
-    prettyTextSearch = prettyList' toText
-      where
-        toText (Required e) = "!" <> e
-        toText (Optional e) = "?" <> e
+    -- Having leftover results is fine, since the last few messages are quite
+    -- non-deterministic, so we don't bother.
+    go [] (_ : _) = Nothing
+    go (e : es) (r : rs) =
+      case logEq e r of
+        Nothing -> go es rs
+        Just errMsg ->
+          Just
+            $ mconcat
+              [ errMsg,
+                "\n\nAll expected:\n",
+                prettyList expectedOrdered,
+                "\n\nAll results:\n",
+                prettyList results
+              ]
 
     prettyList :: List Text -> Text
-    prettyList = prettyList' id
-
-    prettyList' :: (a -> Text) -> List a -> Text
-    prettyList' toText = goPretty
-      where
-        goPretty [] = ""
-        goPretty (x : xs) = toText x <> "\n" <> goPretty xs
+    prettyList [] = ""
+    prettyList (x : xs) = x <> "\n" <> prettyList xs
 
 logEq :: Text -> Text -> Maybe Text
 logEq expected result =
@@ -140,13 +123,3 @@ logEq expected result =
           result,
           "'"
         ]
-
-data TextSearch
-  = Required Text
-  | Optional Text
-
-(!) :: Text -> TextSearch
-(!) = Required
-
-(?) :: Text -> TextSearch
-(?) = Optional
