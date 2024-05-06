@@ -144,3 +144,11 @@ If, instead, you don't want the alias in `~/.bashrc` or you regularly run it wit
 > ```sh
 > $ shrun --init ". ~/.bashrc" -c config.toml all
 > ```
+
+## Bash auto-completions
+
+To get bash auto-completions for `shrun` options, add the following to your `.bashrc` (assuming `shrun` is on the `PATH`):
+
+```sh
+. <(shrun --bash-completion-script `which shrun`)
+```
