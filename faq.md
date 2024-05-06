@@ -1,14 +1,24 @@
 # FAQ
 
+---
+
+### Table of Contents
+
+- [If I don't run multiple commands all that often, does shrun hold any value?](#if-i-dont-run-multiple-commands-all-that-often-does-shrun-hold-any-value)
+- [What if a command needs sudo?](#what-if-a-command-needs-sudo)
+- [What if my command relies on interactive shell](#what-if-my-command-relies-on-interactive-shell)
+- [Init vs. Legend](#init-vs-legend)
+- [Bash auto-completions](#bash-auto-completions)
+
 ## If I don't run multiple commands all that often, does shrun hold any value?
 
-I use `shrun` all the time for single-commands if they are going to take at least several minutes. Reasons:
+`shrun` offers several advantages over running raw commands, beyond concurrency.
 
-- Desktop notifications means I can "fire-and-forget" commands. That is, I can run a command in one window, switch windows/desktops to do something else, then be notified when the command finishes. Otherwise I have to manually switch back to check if the command finished, which is mildly annoying.
+- Desktop notifications means we can "fire-and-forget" commands. That is, we can run a command in one window, switch windows/desktops to do something else, then be notified when the command finishes. Otherwise we have to manually switch back to check if the command finished, which is mildly annoying.
 
-- Automatic file logging often makes debugging failures easier. I don't know about you, but I much prefer searching a file for relevant logs, rather than scrolling (possibly large) terminal output. The `--file-log-delete-on-success` option makes this workflow even nicer, as we do not leave log files around unless something goes wrong.
+- Automatic file logging often makes debugging failures easier. It is usually easier searching a file for relevant logs, as opposed to scrolling (possibly large) terminal output. The `--file-log-delete-on-success` option makes this workflow even nicer, as we do not leave log files around unless something goes wrong.
 
-- I find having a running timer psychologically reassuring, not to mention useful if I have any idea of how long a command _should_ take.
+- Having a running timer is useful when we have some idea how long a command _should_ take. Not to mention it is psychologically reassuring 🙂.
 
 ## What if a command needs sudo?
 
@@ -27,7 +37,7 @@ $ sudo ls
 $ shrun ...
 ```
 
-## What if my command relies on interactive shell e.g. loading ~/.bashrc?
+## What if my command relies on interactive shell?
 
 Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc` or `~/.bash_profile`. This can be annoying if we want to run any of these functions/aliases.
 
