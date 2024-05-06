@@ -71,9 +71,9 @@ library
     Shrun.Configuration.Data.CommandLogging.ReadSize
     Shrun.Configuration.Data.CommonLogging
     Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-    Shrun.Configuration.Data.CommonLogging.TimerFormat
     Shrun.Configuration.Data.ConfigPhase
     Shrun.Configuration.Data.ConsoleLogging
+    Shrun.Configuration.Data.ConsoleLogging.TimerFormat
     Shrun.Configuration.Data.Core
     Shrun.Configuration.Data.Core.Timeout
     Shrun.Configuration.Data.FileLogging

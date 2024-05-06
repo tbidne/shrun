@@ -9,24 +9,14 @@ import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingArgs,
-    CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
+    CommonLoggingP (MkCommonLoggingP),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOn))
-import Shrun.Configuration.Data.CommonLogging.TimerFormat (TimerFormat)
-import Shrun.Configuration.Data.CommonLogging.TimerFormat qualified as TimerFormat
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
 commonLoggingParser :: Parser CommonLoggingArgs
-commonLoggingParser = do
-  keyHide <- keyHideParser
-  timerFormat <- timerFormatParser
-
-  pure
-    $ MkCommonLoggingP
-      { keyHide,
-        timerFormat
-      }
+commonLoggingParser = MkCommonLoggingP <$> keyHideParser
 
 keyHideParser :: Parser (WithDisabled KeyHideSwitch)
 keyHideParser = Utils.withDisabledParser mainParser "log-key-hide"
@@ -46,21 +36,4 @@ keyHideParser = Utils.withDisabledParser mainParser "log-key-hide"
           "actual command that was run, if the former exists. This flag ",
           "instead shows the literal command. Commands without keys are ",
           "unaffected."
-        ]
-
-timerFormatParser :: Parser (WithDisabled TimerFormat)
-timerFormatParser = Utils.withDisabledParser mainParser "log-timer-format"
-  where
-    mainParser =
-      OA.optional
-        $ OA.option (TimerFormat.parseTimerFormat OA.str)
-        $ mconcat
-          [ OA.long "log-timer-format",
-            Utils.mkHelp helpTxt,
-            OA.metavar TimerFormat.timerFormatStr
-          ]
-    helpTxt =
-      mconcat
-        [ "How to format the timer. Defaults to prose_compact e.g. ",
-          "'2 hours, 3 seconds'."
         ]

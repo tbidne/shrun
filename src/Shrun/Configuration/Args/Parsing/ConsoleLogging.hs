@@ -8,9 +8,25 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.ConsoleLogging
+  ( ConsoleLoggingArgs,
+    ConsoleLoggingP
+      ( MkConsoleLoggingP,
+        commandLogging,
+        commandNameTrunc,
+        lineTrunc,
+        stripControl,
+        timerFormat
+      ),
+  )
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat)
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
 import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
 import Shrun.Configuration.Data.StripControl qualified as StripControl
-import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TruncCommandName), Truncation)
+import Shrun.Configuration.Data.Truncation
+  ( LineTruncation,
+    TruncRegion (TruncCommandName),
+    Truncation,
+  )
 import Shrun.Configuration.Data.Truncation qualified as Trunc
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
@@ -21,13 +37,15 @@ consoleLoggingParser = do
   commandNameTrunc <- commandNameTruncParser
   lineTrunc <- lineTruncParser
   stripControl <- stripControlParser
+  timerFormat <- timerFormatParser
 
   pure
     $ MkConsoleLoggingP
       { commandLogging,
         commandNameTrunc,
         lineTrunc,
-        stripControl
+        stripControl,
+        timerFormat
       }
 
 commandLoggingParser :: Parser (WithDisabled ())
@@ -117,4 +135,21 @@ stripControlParser =
           " leaves others unaffected (e.g. colors). This has the potential",
           " to be the 'prettiest' though it is possible to miss some chars.",
           " This option is experimental and subject to change."
+        ]
+
+timerFormatParser :: Parser (WithDisabled TimerFormat)
+timerFormatParser = Utils.withDisabledParser mainParser "console-log-timer-format"
+  where
+    mainParser =
+      OA.optional
+        $ OA.option (TimerFormat.parseTimerFormat OA.str)
+        $ mconcat
+          [ OA.long "console-log-timer-format",
+            Utils.mkHelp helpTxt,
+            OA.metavar TimerFormat.timerFormatStr
+          ]
+    helpTxt =
+      mconcat
+        [ "How to format the timer. Defaults to prose_compact e.g. ",
+          "'2 hours, 3 seconds'."
         ]

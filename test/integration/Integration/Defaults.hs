@@ -24,19 +24,12 @@ import Shrun.Configuration.Data.CommandLogging
   )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
-  ( CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
+  ( CommonLoggingP (MkCommonLoggingP, keyHide),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch
       ( KeyHideOff,
         KeyHideOn
-      ),
-  )
-import Shrun.Configuration.Data.CommonLogging.TimerFormat
-  ( TimerFormat
-      ( DigitalCompact,
-        DigitalFull,
-        ProseCompact
       ),
   )
 import Shrun.Configuration.Data.ConsoleLogging
@@ -46,7 +39,15 @@ import Shrun.Configuration.Data.ConsoleLogging
         commandLogging,
         commandNameTrunc,
         lineTrunc,
-        stripControl
+        stripControl,
+        timerFormat
+      ),
+  )
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
+  ( TimerFormat
+      ( DigitalCompact,
+        DigitalFull,
+        ProseCompact
       ),
   )
 import Shrun.Configuration.Data.Core
@@ -78,9 +79,21 @@ import Shrun.Configuration.Data.FileLogging
         stripControl
       ),
   )
-import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeAppend, FileModeWrite))
-import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault (FPDefault, FPManual))
-import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode (FileSizeModeWarn))
+import Shrun.Configuration.Data.FileLogging.FileMode
+  ( FileMode
+      ( FileModeAppend,
+        FileModeWrite
+      ),
+  )
+import Shrun.Configuration.Data.FileLogging.FilePathDefault
+  ( FilePathDefault
+      ( FPDefault,
+        FPManual
+      ),
+  )
+import Shrun.Configuration.Data.FileLogging.FileSizeMode
+  ( FileSizeMode (FileSizeModeWarn),
+  )
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
@@ -156,15 +169,15 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                 init = Just ". some file",
                 commonLogging =
                   MkCommonLoggingP
-                    { keyHide = KeyHideOn,
-                      timerFormat = DigitalFull
+                    { keyHide = KeyHideOn
                     },
                 consoleLogging =
                   MkConsoleLoggingP
                     { commandLogging = ConsoleLogCmdOn,
                       commandNameTrunc = Just 80,
                       lineTrunc = Just 150,
-                      stripControl = StripControlAll
+                      stripControl = StripControlAll,
+                      timerFormat = DigitalFull
                     },
                 commandLogging =
                   MkCommandLoggingP
@@ -233,7 +246,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "127",
         "--command-log-read-size",
         "512",
-        "--log-timer-format",
+        "--console-log-timer-format",
         "digital_compact",
         "--console-log-command-name-trunc",
         "10",
@@ -256,15 +269,15 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                 init = Just ". another file",
                 commonLogging =
                   MkCommonLoggingP
-                    { keyHide = KeyHideOn,
-                      timerFormat = DigitalCompact
+                    { keyHide = KeyHideOn
                     },
                 consoleLogging =
                   MkConsoleLoggingP
                     { commandLogging = ConsoleLogCmdOn,
                       commandNameTrunc = Just 10,
                       lineTrunc = Just 60,
-                      stripControl = StripControlNone
+                      stripControl = StripControlNone,
+                      timerFormat = DigitalCompact
                     },
                 commandLogging =
                   MkCommandLoggingP
@@ -432,7 +445,7 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
         "--no-log-key-hide",
         "--no-command-log-poll-interval",
         "--no-command-log-read-size",
-        "--no-log-timer-format",
+        "--no-console-log-timer-format",
         "--no-console-log-command-name-trunc",
         "--no-console-log-command",
         "--no-console-log-strip-control",
@@ -472,9 +485,9 @@ noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
         "--command-log-read-size",
         "512",
         "--no-command-log-read-size",
-        "--log-timer-format",
+        "--console-log-timer-format",
         "prose_full",
-        "--no-log-timer-format",
+        "--no-console-log-timer-format",
         "--log-key-hide",
         "--no-log-key-hide",
         "--console-log-command-name-trunc",

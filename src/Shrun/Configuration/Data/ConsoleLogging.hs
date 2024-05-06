@@ -31,6 +31,7 @@ import Shrun.Configuration.Data.ConfigPhase
     LineTruncF,
     SwitchF,
   )
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat)
 import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
 import Shrun.Configuration.Data.Truncation
   ( TruncRegion (TruncCommandName),
@@ -74,10 +75,16 @@ instance
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
 data ConsoleLoggingP p = MkConsoleLoggingP
-  { commandLogging :: SwitchF p ConsoleLogCmdSwitch,
+  { -- | Whether command logging is enabled.
+    commandLogging :: SwitchF p ConsoleLogCmdSwitch,
+    -- | Command name truncation.
     commandNameTrunc :: ConfigPhaseMaybeF p (Truncation TruncCommandName),
+    -- | Line truncation.
     lineTrunc :: LineTruncF p,
-    stripControl :: ConfigPhaseF p ConsoleLogStripControl
+    -- | Strip control.
+    stripControl :: ConfigPhaseF p ConsoleLogStripControl,
+    -- | How to format the timer.
+    timerFormat :: ConfigPhaseF p TimerFormat
   }
 
 makeFieldLabelsNoPrefix ''ConsoleLoggingP
@@ -125,7 +132,9 @@ mergeConsoleLogging args mToml = do
         commandNameTrunc = (args ^. #commandNameTrunc) <>?? (toml ^. #commandNameTrunc),
         lineTrunc,
         stripControl =
-          (args ^. #stripControl) <>?. (toml ^. #stripControl)
+          (args ^. #stripControl) <>?. (toml ^. #stripControl),
+        timerFormat =
+          (args ^. #timerFormat) <>?. (toml ^. #timerFormat)
       }
   where
     -- Convert WithDisabled () -> WithDisabled Bool for below operation.
@@ -141,6 +150,7 @@ instance DecodeTOML ConsoleLoggingToml where
       <*> decodeCommandNameTrunc
       <*> decodeLineTrunc
       <*> decodeStripControl
+      <*> decodeTimerFormat
 
 decodeCommandLogging :: Decoder (Maybe Bool)
 decodeCommandLogging = getFieldOptWith tomlDecoder "command"
@@ -148,13 +158,17 @@ decodeCommandLogging = getFieldOptWith tomlDecoder "command"
 decodeStripControl :: Decoder (Maybe ConsoleLogStripControl)
 decodeStripControl = getFieldOptWith tomlDecoder "strip-control"
 
+decodeTimerFormat :: Decoder (Maybe TimerFormat)
+decodeTimerFormat = getFieldOptWith tomlDecoder "timer-format"
+
 toEnv :: ConsoleLoggingMerged -> ConsoleLoggingEnv
 toEnv merged =
   MkConsoleLoggingP
     { commandLogging = merged ^. #commandLogging,
       commandNameTrunc = merged ^. #commandNameTrunc,
       lineTrunc = merged ^. #lineTrunc,
-      stripControl = merged ^. #stripControl
+      stripControl = merged ^. #stripControl,
+      timerFormat = merged ^. #timerFormat
     }
 
 defaultToml :: ConsoleLoggingToml
@@ -163,7 +177,8 @@ defaultToml =
     { commandLogging = Nothing,
       commandNameTrunc = Nothing,
       lineTrunc = Nothing,
-      stripControl = Nothing
+      stripControl = Nothing,
+      timerFormat = Nothing
     }
 
 defaultMerged :: ConsoleLoggingMerged
@@ -172,5 +187,6 @@ defaultMerged =
     { commandLogging = def,
       commandNameTrunc = Nothing,
       lineTrunc = Nothing,
-      stripControl = def
+      stripControl = def,
+      timerFormat = def
     }

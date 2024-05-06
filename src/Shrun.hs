@@ -13,7 +13,7 @@ import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
-import Shrun.Configuration.Data.CommonLogging.TimerFormat qualified as TimerFormat
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
 import Shrun.Configuration.Data.Core.Timeout (Timeout (MkTimeout))
 import Shrun.Configuration.Data.FileLogging
   ( FileLogOpened (MkFileLogOpened),
@@ -168,7 +168,7 @@ runCommand cmd = do
   commonLogging <- asks getCommonLogging
   (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
 
-  let timerFormat = commonLogging ^. #timerFormat
+  let timerFormat = consoleLogging ^. #timerFormat
       (urgency, msg', lvl, timeElapsed) = case cmdResult of
         CommandFailure t (MkStderr err) -> (Critical, ": " <> err, LevelError, t)
         CommandSuccess t -> (Normal, "", LevelSuccess, t)
@@ -231,8 +231,11 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
     -- update anyError
     setAnyErrorTrue
 
-  timerFormat <- asks (view #timerFormat . getCommonLogging)
-  let totalTimeTxt = TimerFormat.formatRelativeTime timerFormat (Utils.timeSpecToRelTime totalTime)
+  timerFormat <- asks (view (_1 % #timerFormat) . getConsoleLogging @_ @(Region m))
+  let totalTimeTxt =
+        TimerFormat.formatRelativeTime
+          timerFormat
+          (Utils.timeSpecToRelTime totalTime)
       finalLog =
         MkLog
           { cmd = Nothing,
@@ -283,6 +286,7 @@ counter = do
       logCounter r elapsed
 
 logCounter ::
+  forall m env.
   ( HasCommonLogging env,
     HasConsoleLogging env (Region m),
     MonadReader env m,
@@ -292,7 +296,7 @@ logCounter ::
   Natural ->
   m ()
 logCounter region elapsed = do
-  timerFormat <- asks (view #timerFormat . getCommonLogging)
+  timerFormat <- asks (view (_1 % #timerFormat) . getConsoleLogging @_ @(Region m))
 
   let msg = TimerFormat.formatSeconds timerFormat elapsed
       lg =

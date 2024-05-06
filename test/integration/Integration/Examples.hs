@@ -20,15 +20,11 @@ import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP
       ( MkCommonLoggingP,
-        keyHide,
-        timerFormat
+        keyHide
       ),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOff),
-  )
-import Shrun.Configuration.Data.CommonLogging.TimerFormat
-  ( TimerFormat (ProseCompact),
   )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
@@ -37,8 +33,12 @@ import Shrun.Configuration.Data.ConsoleLogging
         commandLogging,
         commandNameTrunc,
         lineTrunc,
-        stripControl
+        stripControl,
+        timerFormat
       ),
+  )
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
+  ( TimerFormat (ProseCompact),
   )
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
@@ -95,15 +95,15 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 init = Just ". examples/bashrc",
                 commonLogging =
                   MkCommonLoggingP
-                    { keyHide = KeyHideOff,
-                      timerFormat = ProseCompact
+                    { keyHide = KeyHideOff
                     },
                 consoleLogging =
                   MkConsoleLoggingP
                     { commandLogging = ConsoleLogCmdOn,
                       commandNameTrunc = Just 80,
                       lineTrunc = Just 150,
-                      stripControl = StripControlSmart
+                      stripControl = StripControlSmart,
+                      timerFormat = ProseCompact
                     },
                 commandLogging =
                   MkCommandLoggingP

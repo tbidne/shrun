@@ -1,9 +1,22 @@
 module Unit.Shrun.Configuration.Args.Parsing.ConsoleLogging (tests) where
 
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
+  ( TimerFormat
+      ( DigitalCompact,
+        DigitalFull,
+        ProseCompact,
+        ProseFull
+      ),
+  )
 import Shrun.Configuration.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Configuration.Data.Truncation (LineTruncation (Detected, Undetected))
+import Shrun.Configuration.Data.Truncation
+  ( LineTruncation
+      ( Detected,
+        Undetected
+      ),
+  )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
@@ -15,7 +28,8 @@ tests =
     [ commandLoggingTests,
       commandNameTruncTests,
       lineTruncTests,
-      stripControlTests
+      stripControlTests,
+      timerFormatTests
     ]
 
 commandLoggingTests :: TestTree
@@ -172,3 +186,60 @@ testNoLineTrunc =
   where
     argList = ["--no-console-log-line-trunc", "command"]
     expected = U.disableDefCoreArgs (#consoleLogging % #lineTrunc)
+
+timerFormatTests :: TestTree
+timerFormatTests =
+  testGroup
+    "--console-log-timer-format"
+    [ testTimerFormatDigitalCompact,
+      testTimerFormatDigitalFull,
+      testTimerFormatProseCompact,
+      testTimerFormatProseFull,
+      testNoTimerFormat
+    ]
+
+testTimerFormatDigitalCompact :: TestTree
+testTimerFormatDigitalCompact =
+  testPropertyNamed desc "testTimerFormatDigitalCompact"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --console-log-timer-format digital_compact"
+    argList = ["--console-log-timer-format", "digital_compact", "command"]
+    expected = U.updateDefCoreArgs (#consoleLogging % #timerFormat) DigitalCompact
+
+testTimerFormatDigitalFull :: TestTree
+testTimerFormatDigitalFull =
+  testPropertyNamed
+    "Parses --console-log-timer-format digital_full as DigitalFull"
+    "testTimerFormatDigitalFull"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--console-log-timer-format", "digital_full", "command"]
+    expected = U.updateDefCoreArgs (#consoleLogging % #timerFormat) DigitalFull
+
+testTimerFormatProseCompact :: TestTree
+testTimerFormatProseCompact =
+  testPropertyNamed
+    "Parse --console-log-timer-format prose_compact"
+    "testTimerFormatProseCompact"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--console-log-timer-format", "prose_compact", "command"]
+    expected = U.updateDefCoreArgs (#consoleLogging % #timerFormat) ProseCompact
+
+testTimerFormatProseFull :: TestTree
+testTimerFormatProseFull =
+  testPropertyNamed desc "testTimerFormatProseFull"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --console-log-timer-format prose_full"
+    argList = ["--console-log-timer-format", "prose_full", "command"]
+    expected = U.updateDefCoreArgs (#consoleLogging % #timerFormat) ProseFull
+
+testNoTimerFormat :: TestTree
+testNoTimerFormat =
+  testPropertyNamed "Parses --no-console-log-timer-format" "testNoTimerFormat"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--no-console-log-timer-format", "command"]
+    expected = U.disableDefCoreArgs (#consoleLogging % #timerFormat)

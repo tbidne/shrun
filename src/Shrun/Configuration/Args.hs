@@ -16,7 +16,7 @@ import Shrun.Configuration.Data.CommandLogging
   ( CommandLoggingP (MkCommandLoggingP, pollInterval, readSize),
   )
 import Shrun.Configuration.Data.CommonLogging
-  ( CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
+  ( CommonLoggingP (MkCommonLoggingP, keyHide),
   )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLoggingP
@@ -24,7 +24,8 @@ import Shrun.Configuration.Data.ConsoleLogging
         commandLogging,
         commandNameTrunc,
         lineTrunc,
-        stripControl
+        stripControl,
+        timerFormat
       ),
   )
 import Shrun.Configuration.Data.Core
@@ -70,15 +71,15 @@ defaultArgs commands =
             init = mempty,
             commonLogging =
               MkCommonLoggingP
-                { keyHide = mempty,
-                  timerFormat = mempty
+                { keyHide = mempty
                 },
             consoleLogging =
               MkConsoleLoggingP
                 { commandLogging = mempty,
                   commandNameTrunc = mempty,
                   lineTrunc = mempty,
-                  stripControl = mempty
+                  stripControl = mempty,
+                  timerFormat = mempty
                 },
             commandLogging =
               MkCommandLoggingP

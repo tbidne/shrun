@@ -9,7 +9,6 @@ init = "blah"
 
 [log]
 key-hide = false
-timer-format = "digital_full"
 
 [command-log]
 poll-interval = 100
@@ -20,6 +19,7 @@ command = true
 command-name-trunc = 80
 line-trunc = 150
 strip-control = "all"
+timer-format = "digital_full"
 
 [file-log]
 path = "default"

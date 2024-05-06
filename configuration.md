@@ -8,7 +8,6 @@
   - [Logging](#logging)
     - [Common Logging](#common-logging)
       - [Key Hide](#key-hide)
-      - [Timer Format](#timer-format)
     - [Command Logging](#command-logging)
       - [Poll Interval](#poll-interval)
       - [Read Size](#read-size)
@@ -17,6 +16,7 @@
       - [Command Name Truncation](#command-name-truncation)
       - [Line Truncation](#line-truncation)
       - [Strip Control](#strip-control)
+      - [Timer Format](#timer-format)
     - [File Logging](#file-logging)
       - [File Log](#file-log)
       - [File Command Name Truncation](#file-command-name-truncation)
@@ -153,34 +153,6 @@ rather than the usual
 </pre>
 
 Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
-
-#### Timer Format
-
-**Arg:** `--log-timer-format (digital_compact | digital_full | prose_compact | prose_full)`
-
-**Description:** How to format the timer. Defaults to `prose_compact` e.g. `2 hours, 3 seconds`.
-
-**Example:**
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format digital_compact "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 01</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format digital_full "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 00:00:00:01</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format prose_compact "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
-</pre>
-
-<pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-timer-format prose_full "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 0 days, 0 hours, 0 minutes, 1 second</span></code>
-</pre>
 
 ### Command Logging
 
@@ -321,6 +293,34 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
+</pre>
+
+#### Timer Format
+
+**Arg:** `--console-log-timer-format (digital_compact | digital_full | prose_compact | prose_full)`
+
+**Description:** How to format the timer. Defaults to `prose_compact` e.g. `2 hours, 3 seconds`.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format digital_compact "sleep 2"</span>
+<span style="color: #a3fefe">[Timer] 01</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format digital_full "sleep 2"</span>
+<span style="color: #a3fefe">[Timer] 00:00:00:01</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format prose_compact "sleep 2"</span>
+<span style="color: #a3fefe">[Timer] 1 second</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format prose_full "sleep 2"</span>
+<span style="color: #a3fefe">[Timer] 0 days, 0 hours, 0 minutes, 1 second</span></code>
 </pre>
 
 ### File Logging

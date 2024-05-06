@@ -24,8 +24,8 @@ the major/minor/patch definitions apply to the application's interface / usage
     * Toml: `log.key-hide`.
     * `-k` removed.
   * `--timer-format`:
-    * CLI: `--log-timer-format`.
-    * Toml: `log.timer-format`.
+    * CLI: `--console-log-timer-format`.
+    * Toml: `console-log.timer-format`.
   * `--poll-interval`:
     * CLI: `--command-log-poll-interval`.
     * Toml: `command-log.poll-interval`.

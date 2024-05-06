@@ -69,17 +69,6 @@ legend = [
 # 'some long command'. With key-hide = false, they will instead print 'cmd1'.
 #key-hide = false
 
-# String that determines how the timers is formatted. Options (and examples)
-# are:
-#
-# digital_compact:   03:00:20
-# digital_full:      00:03:00:20
-# prose_compact:     3 hours, 20 seconds
-# prose_full:        0 days, 3 hours, 0 minutes, 20 seconds
-#
-# Defaults to prose_compact
-#timer-format = "prose_compact"
-
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.
 #[command-log]
@@ -126,6 +115,17 @@ legend = [
 #    else. This has the potential to be the prettiest, though it is possible
 #    some 'bad' sequences remain.
 #strip-control = "smart"
+
+# String that determines how the timers is formatted. Options (and examples)
+# are:
+#
+# digital_compact:   03:00:20
+# digital_full:      00:03:00:20
+# prose_compact:     3 hours, 20 seconds
+# prose_full:        0 days, 3 hours, 0 minutes, 20 seconds
+#
+# Defaults to prose_compact
+#timer-format = "prose_compact"
 
 #[file-log]
 # Writes all logs to a file. The "default" option writes to the XDG state

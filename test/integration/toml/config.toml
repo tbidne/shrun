@@ -18,7 +18,6 @@ legend = [
 
 [log]
 key-hide = true
-timer-format = "digital_full"
 
 [command-log]
 poll-interval = 127
@@ -30,6 +29,7 @@ command-name-trunc = 80
 delete-on-success = true
 line-trunc = 150
 strip-control = "all"
+timer-format = "digital_full"
 
 [file-log]
 path = "default"

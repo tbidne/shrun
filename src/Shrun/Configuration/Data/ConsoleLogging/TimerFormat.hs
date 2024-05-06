@@ -1,5 +1,5 @@
 -- | Provides the 'TimerFormat' type.
-module Shrun.Configuration.Data.CommonLogging.TimerFormat
+module Shrun.Configuration.Data.ConsoleLogging.TimerFormat
   ( -- * Type
     TimerFormat (..),
 

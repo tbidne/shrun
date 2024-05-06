@@ -12,7 +12,12 @@ import Effects.Time
     MonadTime (getMonotonicTime, getSystemZonedTime),
     ZonedTime (ZonedTime),
   )
-import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOff, KeyHideOn))
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch
+      ( KeyHideOff,
+        KeyHideOn
+      ),
+  )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (ConsoleLogCmdOff),
     ConsoleLoggingEnv,
@@ -21,9 +26,11 @@ import Shrun.Configuration.Data.ConsoleLogging
         commandLogging,
         commandNameTrunc,
         lineTrunc,
-        stripControl
+        stripControl,
+        timerFormat
       ),
   )
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (DeleteOnSuccessOff),
     FileLogOpened
@@ -275,7 +282,8 @@ baseConsoleLoggingEnv =
     { commandLogging = ConsoleLogCmdOff,
       commandNameTrunc = Nothing,
       lineTrunc = Nothing,
-      stripControl = StripControlNone
+      stripControl = StripControlNone,
+      timerFormat = ProseCompact
     }
 
 fileLogTests :: TestTree
