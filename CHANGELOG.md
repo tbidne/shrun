@@ -27,8 +27,8 @@ the major/minor/patch definitions apply to the application's interface / usage
     * CLI: `--log-timer-format`.
     * Toml: `log.timer-format`.
   * `--poll-interval`:
-    * CLI: `--cmd-log-poll-interval`.
-    * Toml: `cmd-log.timer-format`.
+    * CLI: `--command-log-poll-interval`.
+    * Toml: `command-log.poll-interval`.
     * `-p` removed.
   * `--cmd-log`:
     * CLI: `--console-log-command`.
