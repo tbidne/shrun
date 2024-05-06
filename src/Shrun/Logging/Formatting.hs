@@ -21,14 +21,14 @@ where
 
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOff))
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
-import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
-import Shrun.Data.StripControl
+import Shrun.Configuration.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Data.Truncation (TruncRegion (TCmdName, TLine), Truncation (MkTruncation))
+import Shrun.Configuration.Data.Truncation (TruncRegion (TCmdName, TLine), Truncation (MkTruncation))
+import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
 import Shrun.Logging.Types
   ( Log,
     LogLevel
@@ -53,7 +53,7 @@ import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.
 formatConsoleLog ::
-  KeyHide ->
+  KeyHideSwitch ->
   ConsoleLoggingEnv ->
   Log ->
   ConsoleLog
@@ -85,7 +85,7 @@ maybeApply = maybe id
 formatFileLog ::
   ( MonadTime m
   ) =>
-  KeyHide ->
+  KeyHideSwitch ->
   FileLoggingEnv ->
   Log ->
   m FileLog
@@ -128,7 +128,7 @@ coreFormatting ::
   -- | Strip control
   StripControl t ->
   -- | Key hide
-  KeyHide ->
+  KeyHideSwitch ->
   -- | Log to format
   Log ->
   Text
@@ -161,7 +161,7 @@ coreFormatting mLineTrunc mCmdNameTrunc stripControl keyHide log =
     logPrefix = logToPrefix log
 
 formatCommand ::
-  KeyHide ->
+  KeyHideSwitch ->
   Maybe (Truncation TCmdName) ->
   CommandP1 ->
   Text
@@ -200,7 +200,7 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc)) prefix msg =
   where
     lineTrunc' = lineTrunc ∸ unsafeConvertIntegral (T.length prefix)
 
--- | Pretty show for 'Command'. If the command has a key, and 'KeyHide' is
+-- | Pretty show for 'Command'. If the command has a key, and 'KeyHideSwitch' is
 -- 'KeyHideOff' then we return the key. Otherwise we return the command itself.
 --
 -- >>> displayCmd (MkCommandP Nothing "some long command") KeyHideOn
@@ -214,7 +214,7 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc)) prefix msg =
 --
 -- >>> displayCmd (MkCommandP (Just "long") "some long command") KeyHideOff
 -- "long"
-displayCmd :: CommandP1 -> KeyHide -> Text
+displayCmd :: CommandP1 -> KeyHideSwitch -> Text
 displayCmd (MkCommandP (Just key) _) KeyHideOff = key
 displayCmd (MkCommandP _ cmd) _ = cmd
 

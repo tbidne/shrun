@@ -1,10 +1,10 @@
 module Unit.Shrun.Configuration.Args.Parsing.ConsoleLogging (tests) where
 
-import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
-import Shrun.Data.StripControl
+import Shrun.Configuration.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Data.Truncation (LineTruncation (Detected, Undetected))
+import Shrun.Configuration.Data.Truncation (LineTruncation (Detected, Undetected))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 

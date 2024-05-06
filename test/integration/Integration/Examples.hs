@@ -16,12 +16,19 @@ import Integration.Utils
 import Shrun.Configuration.Data.CmdLogging
   ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
   )
+import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP
       ( MkCommonLoggingP,
         keyHide,
         timerFormat
       ),
+  )
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch (KeyHideOff),
+  )
+import Shrun.Configuration.Data.CommonLogging.TimerFormat
+  ( TimerFormat (ProseCompact),
   )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
@@ -51,11 +58,8 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
-import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
+import Shrun.Configuration.Data.StripControl (StripControl (StripControlSmart))
 import Shrun.Data.Command (CommandP (MkCommandP))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
-import Shrun.Data.StripControl (StripControl (StripControlSmart))
-import Shrun.Data.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Notify.Types
   ( NotifyAction (NotifyCommand),
     NotifySystemP (AppleScript, NotifySend),
@@ -104,7 +108,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 cmdLogging =
                   MkCmdLoggingP
                     { pollInterval = 100,
-                      readSize = MkCmdLogReadSize $ MkBytes 2048
+                      readSize = MkReadSize $ MkBytes 2048
                     },
                 fileLogging = Nothing,
                 notify =

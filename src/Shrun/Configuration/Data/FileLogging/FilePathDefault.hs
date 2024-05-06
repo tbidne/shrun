@@ -1,5 +1,5 @@
 -- | Provides the 'FilePathDefault' type.
-module Shrun.Data.FilePathDefault
+module Shrun.Configuration.Data.FileLogging.FilePathDefault
   ( FilePathDefault (..),
     parseFilePathDefault,
   )

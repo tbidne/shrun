@@ -20,8 +20,8 @@ import Shrun.Configuration.Data.Core
       ),
     CoreConfigToml,
   )
-import Shrun.Data.Legend (KeyVal)
-import Shrun.Data.Timeout (Timeout)
+import Shrun.Configuration.Data.Core.Timeout (Timeout)
+import Shrun.Configuration.Toml.Legend (KeyVal)
 import Shrun.Prelude
 
 -- | Holds toml config.

@@ -22,13 +22,13 @@ module Shrun.Logging
   )
 where
 
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Env.Types
   ( HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
   )
-import Shrun.Data.KeyHide (KeyHide)
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types
@@ -88,7 +88,7 @@ logToFileQueue ::
     MonadTime m
   ) =>
   -- | How to display the command.
-  KeyHide ->
+  KeyHideSwitch ->
   -- | FileLogging config.
   FileLoggingEnv ->
   -- | Log to send.

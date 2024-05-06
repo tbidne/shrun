@@ -2,7 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types for the legend.
-module Shrun.Data.Legend
+module Shrun.Configuration.Toml.Legend
   ( LegendMap,
     KeyVal (MkKeyVal),
     mkKeyVal,
@@ -60,10 +60,10 @@ mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.nonEmptySeq (Seq.fromList vals)
 
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
 unsafeKeyVal :: (HasCallStack) => Text -> List Text -> KeyVal
-unsafeKeyVal "" _ = error "[Shrun.Data.Legend.unsafeKeyVal]: empty key"
+unsafeKeyVal "" _ = error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty key"
 unsafeKeyVal k vals = case mkKeyVal k vals of
   Just kv -> kv
-  Nothing -> error "[Shrun.Data.Legend.unsafeKeyVal]: empty val"
+  Nothing -> error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty val"
 
 decodeKey :: Decoder Text
 decodeKey = getFieldWith decodeNonEmptyText "key"

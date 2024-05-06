@@ -22,8 +22,22 @@ import Integration.Utils
 import Shrun.Configuration.Data.CmdLogging
   ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
   )
+import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
+  )
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch
+      ( KeyHideOff,
+        KeyHideOn
+      ),
+  )
+import Shrun.Configuration.Data.CommonLogging.TimerFormat
+  ( TimerFormat
+      ( DigitalCompact,
+        DigitalFull,
+        ProseCompact
+      ),
   )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
@@ -64,6 +78,9 @@ import Shrun.Configuration.Data.FileLogging
         stripControl
       ),
   )
+import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeAppend, FileModeWrite))
+import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode (FileSizeModeWarn))
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
@@ -74,26 +91,14 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
-import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
-import Shrun.Data.Command (CommandP (MkCommandP))
-import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
-import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
-import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeWarn))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
-import Shrun.Data.StripControl
+import Shrun.Configuration.Data.StripControl
   ( StripControl
       ( StripControlAll,
         StripControlNone,
         StripControlSmart
       ),
   )
-import Shrun.Data.TimerFormat
-  ( TimerFormat
-      ( DigitalCompact,
-        DigitalFull,
-        ProseCompact
-      ),
-  )
+import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Notify.Types
   ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
     NotifySystemP (AppleScript, DBus, NotifySend),
@@ -164,7 +169,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                 cmdLogging =
                   MkCmdLoggingP
                     { pollInterval = 127,
-                      readSize = MkCmdLogReadSize $ MkBytes 20
+                      readSize = MkReadSize $ MkBytes 20
                     },
                 fileLogging =
                   Just
@@ -264,7 +269,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                 cmdLogging =
                   MkCmdLoggingP
                     { pollInterval = 127,
-                      readSize = MkCmdLogReadSize $ MkBytes 512
+                      readSize = MkReadSize $ MkBytes 512
                     },
                 fileLogging =
                   Just

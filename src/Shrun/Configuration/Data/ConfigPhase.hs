@@ -11,8 +11,8 @@ module Shrun.Configuration.Data.ConfigPhase
   )
 where
 
+import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TLine), Truncation)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Data.Truncation (LineTruncation, TruncRegion (TLine), Truncation)
 import Shrun.Prelude
 
 -- | Data "phases" related to configuration.

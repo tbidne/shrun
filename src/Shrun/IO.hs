@@ -269,7 +269,7 @@ streamOutput logFn cmd p = do
       blockSize =
         unsafeConvertIntegral
           $ cmdLogging
-          ^. (#readSize % #unCmdLogReadSize % _MkBytes)
+          ^. (#readSize % #unReadSize % _MkBytes)
 
       readBlock :: Handle -> m ReadHandleResult
       readBlock = readHandle blockSize

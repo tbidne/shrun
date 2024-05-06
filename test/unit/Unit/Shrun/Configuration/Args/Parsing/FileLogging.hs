@@ -5,20 +5,20 @@ module Unit.Shrun.Configuration.Args.Parsing.FileLogging (tests) where
 
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.FileLogging (FileLoggingArgs)
-import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
-import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
-import Shrun.Data.FilePathDefault (FilePathDefault (FPDefault, FPManual))
-import Shrun.Data.FileSizeMode
+import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeAppend, FileModeWrite))
+import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode
       ( FileSizeModeDelete,
         FileSizeModeNothing,
         FileSizeModeWarn
       ),
   )
-import Shrun.Data.StripControl
+import Shrun.Configuration.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Data.Truncation (LineTruncation (Detected, Undetected))
+import Shrun.Configuration.Data.Truncation (LineTruncation (Detected, Undetected))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 

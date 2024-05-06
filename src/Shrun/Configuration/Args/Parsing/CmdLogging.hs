@@ -16,11 +16,11 @@ import Shrun.Configuration.Data.CmdLogging
         readSize
       ),
   )
+import Shrun.Configuration.Data.CmdLogging.PollInterval (PollInterval)
+import Shrun.Configuration.Data.CmdLogging.PollInterval qualified as PollInterval
+import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Configuration.Default (Default (def))
-import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
-import Shrun.Data.PollInterval (PollInterval)
-import Shrun.Data.PollInterval qualified as PollInterval
 import Shrun.Prelude
 
 cmdLoggingParser :: Parser CmdLoggingArgs
@@ -68,7 +68,7 @@ pollIntervalParser = Utils.withDisabledParser mainParser "cmd-log-poll-interval"
         . showt
         . view #unPollInterval
 
-readSizeParser :: Parser (WithDisabled CmdLogReadSize)
+readSizeParser :: Parser (WithDisabled ReadSize)
 readSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
   where
     mainParser =
@@ -81,7 +81,7 @@ readSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
                 OA.metavar "NATURAL"
               ]
           )
-    readcmdLogReadSize = MkCmdLogReadSize . MkBytes <$> OA.auto
+    readcmdLogReadSize = MkReadSize . MkBytes <$> OA.auto
     helpTxt =
       mconcat
         [ "Non-negative integer that determines that max number of bytes in ",

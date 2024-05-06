@@ -1,4 +1,4 @@
-module Shrun.Data.FileMode
+module Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode (..),
     parseFileMode,
   )

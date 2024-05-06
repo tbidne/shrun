@@ -39,6 +39,28 @@ import Shrun.Configuration.Data.ConfigPhase
     LineTruncF,
     SwitchF,
   )
+import Shrun.Configuration.Data.FileLogging.FileMode
+  ( FileMode
+      ( FileModeAppend,
+        FileModeWrite
+      ),
+  )
+import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Configuration.Data.FileLogging.FileSizeMode
+  ( FileSizeMode
+      ( FileSizeModeDelete,
+        FileSizeModeNothing,
+        FileSizeModeWarn
+      ),
+  )
+import Shrun.Configuration.Data.StripControl (FileLogStripControl)
+import Shrun.Configuration.Data.Truncation
+  ( TruncRegion (TCmdName),
+    Truncation,
+    configToLineTrunc,
+    decodeCmdNameTrunc,
+    decodeLineTrunc,
+  )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
     (<>?),
@@ -47,24 +69,13 @@ import Shrun.Configuration.Data.WithDisabled
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (..))
-import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
-import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.FileSizeMode (FileSizeMode (..))
-import Shrun.Data.StripControl (FileLogStripControl)
-import Shrun.Data.Truncation
-  ( TruncRegion (TCmdName),
-    Truncation,
-    configToLineTrunc,
-    decodeCmdNameTrunc,
-    decodeLineTrunc,
-  )
 import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
 
 -- | Switch for deleting the log file upon success.
 data DeleteOnSuccessSwitch
-  = DeleteOnSuccessOn
-  | DeleteOnSuccessOff
+  = DeleteOnSuccessOff
+  | DeleteOnSuccessOn
   deriving stock (Eq, Show)
 
 instance Default DeleteOnSuccessSwitch where

@@ -8,11 +8,11 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.ConsoleLogging
+import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
+import Shrun.Configuration.Data.StripControl qualified as StripControl
+import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
+import Shrun.Configuration.Data.Truncation qualified as Trunc
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Data.StripControl (ConsoleLogStripControl)
-import Shrun.Data.StripControl qualified as StripControl
-import Shrun.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
-import Shrun.Data.Truncation qualified as Trunc
 import Shrun.Prelude
 
 consoleLoggingParser :: Parser ConsoleLoggingArgs

@@ -18,6 +18,8 @@ module Shrun.Configuration.Data.CmdLogging
   )
 where
 
+import Shrun.Configuration.Data.CmdLogging.PollInterval (PollInterval)
+import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -29,9 +31,9 @@ import Shrun.Configuration.Data.ConfigPhase
   )
 import Shrun.Configuration.Data.WithDisabled ((<>?.))
 import Shrun.Configuration.Default (Default (def))
-import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
-import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Prelude
+
+-- FIXME: Rename to CommandLogging
 
 -- | Holds config related to (console and file) command logging.
 type CmdLoggingP :: ConfigPhase -> Type
@@ -40,7 +42,7 @@ data CmdLoggingP p = MkCmdLoggingP
     pollInterval :: ConfigPhaseF p PollInterval,
     -- | Determines the max log size we read from commands in one go.
     -- Note this is not on cmdLogging or fileLogging since it affects both.
-    readSize :: ConfigPhaseF p CmdLogReadSize
+    readSize :: ConfigPhaseF p ReadSize
   }
 
 makeFieldLabelsNoPrefix ''CmdLoggingP
@@ -89,10 +91,10 @@ instance DecodeTOML CmdLoggingToml where
 decodePollInterval :: Decoder (Maybe PollInterval)
 decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
 
-decodeReadSize :: Decoder (Maybe CmdLogReadSize)
+decodeReadSize :: Decoder (Maybe ReadSize)
 decodeReadSize =
   getFieldOptWith
-    (fmap (MkCmdLogReadSize . MkBytes) tomlDecoder)
+    (fmap (MkReadSize . MkBytes) tomlDecoder)
     "read-size"
 
 -- | Creates env version from merged.

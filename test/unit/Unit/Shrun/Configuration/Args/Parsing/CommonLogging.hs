@@ -1,8 +1,10 @@
 -- | Tests for Shrun.Args
 module Unit.Shrun.Configuration.Args.Parsing.CommonLogging (tests) where
 
-import Shrun.Data.KeyHide (KeyHide (KeyHideOn))
-import Shrun.Data.TimerFormat
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch (KeyHideOn),
+  )
+import Shrun.Configuration.Data.CommonLogging.TimerFormat
   ( TimerFormat
       ( DigitalCompact,
         DigitalFull,

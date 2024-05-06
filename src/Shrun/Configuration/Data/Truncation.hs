@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Shrun.Data.Truncation
+module Shrun.Configuration.Data.Truncation
   ( TruncRegion (..),
     Truncation (..),
     parseTruncation,

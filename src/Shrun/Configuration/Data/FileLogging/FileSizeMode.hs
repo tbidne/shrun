@@ -1,4 +1,4 @@
-module Shrun.Data.FileSizeMode
+module Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode (..),
     parseFileSizeMode,
     expectedStr,

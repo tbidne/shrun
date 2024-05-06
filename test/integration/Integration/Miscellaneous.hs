@@ -19,11 +19,11 @@ import Integration.Utils
 import Shrun.Configuration qualified as Configuration
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Data.FileLogging (DeleteOnSuccessSwitch (DeleteOnSuccessOn))
+import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode (FileSizeModeNothing))
 import Shrun.Configuration.Data.MergedConfig qualified as Merged
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Data.Command (CommandP (MkCommandP))
-import Shrun.Data.FileSizeMode (FileSizeMode (FileSizeModeNothing))
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =

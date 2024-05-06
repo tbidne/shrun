@@ -31,23 +31,23 @@ import Shrun.Configuration.Data.ConfigPhase
     LineTruncF,
     SwitchF,
   )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.), (<>??))
-import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Configuration.Default (Default (def))
-import Shrun.Data.StripControl (ConsoleLogStripControl)
-import Shrun.Data.Truncation
+import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
+import Shrun.Configuration.Data.Truncation
   ( TruncRegion (TCmdName),
     Truncation,
     configToLineTrunc,
     decodeCmdNameTrunc,
     decodeLineTrunc,
   )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.), (<>??))
+import Shrun.Configuration.Data.WithDisabled qualified as WD
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
 -- | Switch for command logging in console logs.
 data ConsoleLogCmdSwitch
-  = ConsoleLogCmdOn
-  | ConsoleLogCmdOff
+  = ConsoleLogCmdOff
+  | ConsoleLogCmdOn
   deriving stock (Eq, Show)
 
 instance Default ConsoleLogCmdSwitch where

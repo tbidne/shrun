@@ -2,7 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'PollInterval' type.
-module Shrun.Data.PollInterval
+module Shrun.Configuration.Data.CmdLogging.PollInterval
   ( PollInterval (..),
     parsePollInterval,
   )

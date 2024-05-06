@@ -18,6 +18,8 @@ module Shrun.Configuration.Data.CommonLogging
   )
 where
 
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
+import Shrun.Configuration.Data.CommonLogging.TimerFormat (TimerFormat)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -29,15 +31,13 @@ import Shrun.Configuration.Data.ConfigPhase
   )
 import Shrun.Configuration.Data.WithDisabled ((<>?.))
 import Shrun.Configuration.Default (Default (def))
-import Shrun.Data.KeyHide (KeyHide)
-import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Prelude
 
 -- | Holds command logging config.
 type CommonLoggingP :: ConfigPhase -> Type
 data CommonLoggingP p = MkCommonLoggingP
   { -- | Whether to display command by (key) name or command.
-    keyHide :: ConfigPhaseF p KeyHide,
+    keyHide :: ConfigPhaseF p KeyHideSwitch,
     -- | How to format the timer.
     timerFormat :: ConfigPhaseF p TimerFormat
   }
@@ -82,11 +82,11 @@ mergeCommonLogging args mToml =
 instance DecodeTOML CommonLoggingToml where
   tomlDecoder =
     MkCommonLoggingP
-      <$> decodeStripControl
+      <$> decodeKeyHideSwitch
       <*> decodeCmdLineTrunc
 
-decodeStripControl :: Decoder (Maybe KeyHide)
-decodeStripControl = getFieldOptWith tomlDecoder "key-hide"
+decodeKeyHideSwitch :: Decoder (Maybe KeyHideSwitch)
+decodeKeyHideSwitch = getFieldOptWith tomlDecoder "key-hide"
 
 decodeCmdLineTrunc :: Decoder (Maybe TimerFormat)
 decodeCmdLineTrunc = getFieldOptWith tomlDecoder "timer-format"

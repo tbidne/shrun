@@ -26,10 +26,10 @@ import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConfigPhase (ConfigPhase (ConfigPhaseEnv))
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.Core (CoreConfigP)
+import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Data.Notify (NotifyEnv)
 import Shrun.Data.Command (CommandP1)
-import Shrun.Data.Timeout (Timeout)
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
 

@@ -17,8 +17,8 @@ import Shrun.Configuration.Legend
     linesToMap,
     translateCommands,
   )
+import Shrun.Configuration.Toml.Legend (KeyVal, unsafeKeyVal)
 import Shrun.Data.Command (CommandP (MkCommandP))
-import Shrun.Data.Legend (KeyVal, unsafeKeyVal)
 import Shrun.Utils (unsafeListToNESeq)
 import Unit.Prelude
 

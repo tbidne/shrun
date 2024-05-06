@@ -1,5 +1,5 @@
-module Shrun.Data.KeyHide
-  ( KeyHide (..),
+module Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch (..),
   )
 where
 
@@ -8,7 +8,7 @@ import Shrun.Prelude
 
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
-data KeyHide
+data KeyHideSwitch
   = -- | Display the command's key, if it exists, rather
     -- than the key itself.
     KeyHideOff
@@ -16,11 +16,11 @@ data KeyHide
     KeyHideOn
   deriving stock (Bounded, Enum, Eq, Ord, Show)
 
-instance DecodeTOML KeyHide where
+instance DecodeTOML KeyHideSwitch where
   tomlDecoder =
     tomlDecoder <&> \case
       True -> KeyHideOn
       False -> KeyHideOff
 
-instance Default KeyHide where
+instance Default KeyHideSwitch where
   def = KeyHideOff

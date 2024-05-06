@@ -2,7 +2,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'Timeout' type.
-module Shrun.Data.Timeout
+module Shrun.Configuration.Data.Core.Timeout
   ( Timeout (..),
     parseTimeout,
     parseTimeoutStr,

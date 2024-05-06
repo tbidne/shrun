@@ -25,9 +25,9 @@ import Shrun.Configuration.Data.Core
         timeout
       ),
   )
+import Shrun.Configuration.Data.Core.Timeout (Timeout)
+import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Data.Timeout (Timeout)
-import Shrun.Data.Timeout qualified as Timeout
 import Shrun.Prelude
 
 coreParser :: Parser CoreConfigArgs

@@ -32,12 +32,12 @@ import Shrun.Configuration.Data.ConfigPhase
   )
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingP, mergeConsoleLogging)
 import Shrun.Configuration.Data.ConsoleLogging qualified as ConsoleLogging
+import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
 import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.WithDisabled ((<>??))
-import Shrun.Data.Timeout (Timeout)
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Prelude
 

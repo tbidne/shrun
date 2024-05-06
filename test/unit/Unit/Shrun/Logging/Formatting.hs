@@ -12,6 +12,7 @@ import Effects.Time
     MonadTime (getMonotonicTime, getSystemZonedTime),
     ZonedTime (ZonedTime),
   )
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOff, KeyHideOn))
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (ConsoleLogCmdOff),
     ConsoleLoggingEnv,
@@ -40,15 +41,14 @@ import Shrun.Configuration.Data.FileLogging
         stripControl
       ),
   )
-import Shrun.Data.Command (CommandP (MkCommandP, command, getKey))
-import Shrun.Data.KeyHide (KeyHide (KeyHideOff, KeyHideOn))
-import Shrun.Data.StripControl
+import Shrun.Configuration.Data.StripControl
   ( StripControl
       ( StripControlAll,
         StripControlNone,
         StripControlSmart
       ),
   )
+import Shrun.Data.Command (CommandP (MkCommandP, command, getKey))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
@@ -480,7 +480,7 @@ testFormatsFLLineTrunc = testCase desc $ do
     fmt n = runFormatFileLog KeyHideOff (set' #lineTrunc (Just n) baseFileLoggingEnv)
     fmtKh n = runFormatFileLog KeyHideOn (set' #lineTrunc (Just n) baseFileLoggingEnv)
 
-runFormatFileLog :: KeyHide -> FileLoggingEnv -> Log -> Text
+runFormatFileLog :: KeyHideSwitch -> FileLoggingEnv -> Log -> Text
 runFormatFileLog keyHide env log =
   view #unFileLog
     $ Formatting.formatFileLog @MockTime keyHide env log

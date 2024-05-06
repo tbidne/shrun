@@ -24,17 +24,17 @@ import Shrun.Configuration.Data.FileLogging
         stripControl
       ),
   )
+import Shrun.Configuration.Data.FileLogging.FileMode (FileMode)
+import Shrun.Configuration.Data.FileLogging.FileMode qualified as FileMode
+import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault)
+import Shrun.Configuration.Data.FileLogging.FilePathDefault qualified as FilePathDefault
+import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode)
+import Shrun.Configuration.Data.FileLogging.FileSizeMode qualified as FileSizeMode
+import Shrun.Configuration.Data.StripControl (FileLogStripControl)
+import Shrun.Configuration.Data.StripControl qualified as StripControl
+import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
+import Shrun.Configuration.Data.Truncation qualified as Trunc
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Data.FileMode (FileMode)
-import Shrun.Data.FileMode qualified as FileMode
-import Shrun.Data.FilePathDefault (FilePathDefault)
-import Shrun.Data.FilePathDefault qualified as FilePathDefault
-import Shrun.Data.FileSizeMode (FileSizeMode)
-import Shrun.Data.FileSizeMode qualified as FileSizeMode
-import Shrun.Data.StripControl (FileLogStripControl)
-import Shrun.Data.StripControl qualified as StripControl
-import Shrun.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
-import Shrun.Data.Truncation qualified as Trunc
 import Shrun.Prelude
 
 fileLoggingParser :: Parser FileLoggingArgs

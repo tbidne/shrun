@@ -11,10 +11,10 @@ import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingArgs,
     CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
   )
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOn))
+import Shrun.Configuration.Data.CommonLogging.TimerFormat (TimerFormat)
+import Shrun.Configuration.Data.CommonLogging.TimerFormat qualified as TimerFormat
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Data.KeyHide (KeyHide (KeyHideOn))
-import Shrun.Data.TimerFormat (TimerFormat)
-import Shrun.Data.TimerFormat qualified as TimerFormat
 import Shrun.Prelude
 
 commonLoggingParser :: Parser CommonLoggingArgs
@@ -28,7 +28,7 @@ commonLoggingParser = do
         timerFormat
       }
 
-keyHideParser :: Parser (WithDisabled KeyHide)
+keyHideParser :: Parser (WithDisabled KeyHideSwitch)
 keyHideParser = Utils.withDisabledParser mainParser "log-key-hide"
   where
     mainParser =

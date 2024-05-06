@@ -1,4 +1,4 @@
-module Shrun.Data.StripControl
+module Shrun.Configuration.Data.StripControl
   ( StripControl (..),
     parseStripControl,
     ConsoleLogStripControl,
