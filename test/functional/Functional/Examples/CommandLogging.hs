@@ -1,4 +1,4 @@
-module Functional.Examples.CmdLogging (tests) where
+module Functional.Examples.CommandLogging (tests) where
 
 import Data.Text qualified as T
 import Functional.Prelude
@@ -10,21 +10,21 @@ import Test.Shrun.Verifier qualified as V
 tests :: TestTree
 tests =
   testGroup
-    "CmdLogging"
-    [ cmdLogReadSizeDefault,
-      cmdLogReadSize
+    "CommandLogging"
+    [ readSizeDefault,
+      readSize
     ]
 
-cmdLogReadSizeDefault :: TestTree
-cmdLogReadSizeDefault =
+readSizeDefault :: TestTree
+readSizeDefault =
   testCase "Default --read-size splits 1024" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-cmd-name-trunc",
+        [ "--console-log-command",
+          "--console-log-command-name-trunc",
           "5",
           cmd
         ]
@@ -36,18 +36,18 @@ cmdLogReadSizeDefault =
         withCommandPrefix "sl..." "b"
       ]
 
-cmdLogReadSize :: TestTree
-cmdLogReadSize =
-  testCase "Runs --cmd-log-read-size example" $ do
+readSize :: TestTree
+readSize =
+  testCase "Runs --command-log-read-size example" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
-          "--cmd-log-read-size",
+        [ "--console-log-command",
+          "--command-log-read-size",
           "5",
-          "--cmd-log-poll-interval",
+          "--command-log-poll-interval",
           "1000000",
           cmd
         ]

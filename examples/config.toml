@@ -85,7 +85,7 @@ timer-format = "prose_compact"
 
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.
-[cmd-log]
+[command-log]
 # Non-negative integer used in conjunction with console-log.cmd and file-log
 # that determines how quickly we poll commands for logs, in microseconds.
 # A value of 0 is interpreted as infinite i.e. limited only by the CPU.
@@ -103,7 +103,7 @@ read-size = 2048
 [console-log]
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.
-cmd = true
+command = true
 
 # If set, this truncates command names in the logs to the specified number of
 # characters. This setting is useful when:
@@ -111,7 +111,7 @@ cmd = true
 # 1. You do not want a long command to clutter the logs
 # 2. The command is not run with an alias (so it cannot be hidden with
 #    key-hide = false).
-cmd-name-trunc = 80
+command-name-trunc = 80
 
 # If set, this truncates the entire line to the specified number of
 # characters. It can either be a non-negative integer or the string 'detect',
@@ -136,8 +136,8 @@ strip-control = "smart"
 # a PATH.
 #path = "default"
 
-# Like cmd-name-trunc, but for file logs.
-#cmd-name-trunc = 40
+# Like command-name-trunc, but for file logs.
+#command-name-trunc = 40
 
 # If true, the log file is deleted on a successful exit. Does not delete the
 # file if shrun exited via failure.
@@ -150,7 +150,7 @@ strip-control = "smart"
 # "append".
 #mode = "write"
 
-# Like cmd-log.strip-control, but for file logs. Defaults to all.
+# Like command-log.strip-control, but for file logs. Defaults to all.
 #strip-control = "all"
 
 # Sets a threshold for the file log size, upon which we either print a

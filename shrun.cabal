@@ -58,7 +58,7 @@ library
     Shrun.Configuration
     Shrun.Configuration.Args
     Shrun.Configuration.Args.Parsing
-    Shrun.Configuration.Args.Parsing.CmdLogging
+    Shrun.Configuration.Args.Parsing.CommandLogging
     Shrun.Configuration.Args.Parsing.CommonLogging
     Shrun.Configuration.Args.Parsing.ConsoleLogging
     Shrun.Configuration.Args.Parsing.Core
@@ -66,9 +66,9 @@ library
     Shrun.Configuration.Args.Parsing.Notify
     Shrun.Configuration.Args.Parsing.Utils
     Shrun.Configuration.Args.TH
-    Shrun.Configuration.Data.CmdLogging
-    Shrun.Configuration.Data.CmdLogging.PollInterval
-    Shrun.Configuration.Data.CmdLogging.ReadSize
+    Shrun.Configuration.Data.CommandLogging
+    Shrun.Configuration.Data.CommandLogging.PollInterval
+    Shrun.Configuration.Data.CommandLogging.ReadSize
     Shrun.Configuration.Data.CommonLogging
     Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
     Shrun.Configuration.Data.CommonLogging.TimerFormat
@@ -174,7 +174,7 @@ test-suite unit
     Unit.Generators
     Unit.Prelude
     Unit.Shrun.Configuration.Args.Parsing
-    Unit.Shrun.Configuration.Args.Parsing.CmdLogging
+    Unit.Shrun.Configuration.Args.Parsing.CommandLogging
     Unit.Shrun.Configuration.Args.Parsing.CommonLogging
     Unit.Shrun.Configuration.Args.Parsing.ConsoleLogging
     Unit.Shrun.Configuration.Args.Parsing.Core
@@ -240,7 +240,7 @@ test-suite functional
   other-modules:
     Functional.Buffering
     Functional.Examples
-    Functional.Examples.CmdLogging
+    Functional.Examples.CommandLogging
     Functional.Examples.CommonLogging
     Functional.Examples.ConsoleLogging
     Functional.Examples.Core

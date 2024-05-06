@@ -1,16 +1,16 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Shrun.Configuration.Data.CmdLogging
+module Shrun.Configuration.Data.CommandLogging
   ( -- * Types
-    CmdLoggingP (..),
-    CmdLoggingArgs,
-    CmdLoggingToml,
-    CmdLoggingMerged,
-    CmdLoggingEnv,
+    CommandLoggingP (..),
+    CommandLoggingArgs,
+    CommandLoggingToml,
+    CommandLoggingMerged,
+    CommandLoggingEnv,
 
     -- * Functions
-    mergeCmdLogging,
+    mergeCommandLogging,
     toEnv,
 
     -- * Misc
@@ -18,8 +18,8 @@ module Shrun.Configuration.Data.CmdLogging
   )
 where
 
-import Shrun.Configuration.Data.CmdLogging.PollInterval (PollInterval)
-import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -33,47 +33,45 @@ import Shrun.Configuration.Data.WithDisabled ((<>?.))
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
--- FIXME: Rename to CommandLogging
-
 -- | Holds config related to (console and file) command logging.
-type CmdLoggingP :: ConfigPhase -> Type
-data CmdLoggingP p = MkCmdLoggingP
+type CommandLoggingP :: ConfigPhase -> Type
+data CommandLoggingP p = MkCommandLoggingP
   { -- | How often to poll commands for logs, in microseconds.
     pollInterval :: ConfigPhaseF p PollInterval,
     -- | Determines the max log size we read from commands in one go.
-    -- Note this is not on cmdLogging or fileLogging since it affects both.
+    -- Note this is not on commandLogging or fileLogging since it affects both.
     readSize :: ConfigPhaseF p ReadSize
   }
 
-makeFieldLabelsNoPrefix ''CmdLoggingP
+makeFieldLabelsNoPrefix ''CommandLoggingP
 
-type CmdLoggingArgs = CmdLoggingP ConfigPhaseArgs
+type CommandLoggingArgs = CommandLoggingP ConfigPhaseArgs
 
-type CmdLoggingToml = CmdLoggingP ConfigPhaseToml
+type CommandLoggingToml = CommandLoggingP ConfigPhaseToml
 
-type CmdLoggingMerged = CmdLoggingP ConfigPhaseMerged
+type CommandLoggingMerged = CommandLoggingP ConfigPhaseMerged
 
-type CmdLoggingEnv = CmdLoggingP ConfigPhaseEnv
+type CommandLoggingEnv = CommandLoggingP ConfigPhaseEnv
 
-deriving stock instance Eq (CmdLoggingP ConfigPhaseArgs)
+deriving stock instance Eq (CommandLoggingP ConfigPhaseArgs)
 
-deriving stock instance Show (CmdLoggingP ConfigPhaseArgs)
+deriving stock instance Show (CommandLoggingP ConfigPhaseArgs)
 
-deriving stock instance Eq (CmdLoggingP ConfigPhaseToml)
+deriving stock instance Eq (CommandLoggingP ConfigPhaseToml)
 
-deriving stock instance Show (CmdLoggingP ConfigPhaseToml)
+deriving stock instance Show (CommandLoggingP ConfigPhaseToml)
 
-deriving stock instance Eq (CmdLoggingP ConfigPhaseMerged)
+deriving stock instance Eq (CommandLoggingP ConfigPhaseMerged)
 
-deriving stock instance Show (CmdLoggingP ConfigPhaseMerged)
+deriving stock instance Show (CommandLoggingP ConfigPhaseMerged)
 
 -- | Merges args and toml configs.
-mergeCmdLogging ::
-  CmdLoggingArgs ->
-  Maybe CmdLoggingToml ->
-  CmdLoggingMerged
-mergeCmdLogging args mToml =
-  MkCmdLoggingP
+mergeCommandLogging ::
+  CommandLoggingArgs ->
+  Maybe CommandLoggingToml ->
+  CommandLoggingMerged
+mergeCommandLogging args mToml =
+  MkCommandLoggingP
     { pollInterval =
         (args ^. #pollInterval) <>?. (toml ^. #pollInterval),
       readSize =
@@ -82,9 +80,9 @@ mergeCmdLogging args mToml =
   where
     toml = fromMaybe defaultToml mToml
 
-instance DecodeTOML CmdLoggingToml where
+instance DecodeTOML CommandLoggingToml where
   tomlDecoder =
-    MkCmdLoggingP
+    MkCommandLoggingP
       <$> decodePollInterval
       <*> decodeReadSize
 
@@ -98,23 +96,23 @@ decodeReadSize =
     "read-size"
 
 -- | Creates env version from merged.
-toEnv :: CmdLoggingMerged -> CmdLoggingEnv
+toEnv :: CommandLoggingMerged -> CommandLoggingEnv
 toEnv merged =
-  MkCmdLoggingP
+  MkCommandLoggingP
     { pollInterval = merged ^. #pollInterval,
       readSize = merged ^. #readSize
     }
 
-defaultToml :: CmdLoggingToml
+defaultToml :: CommandLoggingToml
 defaultToml =
-  MkCmdLoggingP
+  MkCommandLoggingP
     { pollInterval = Nothing,
       readSize = Nothing
     }
 
-defaultMerged :: CmdLoggingMerged
+defaultMerged :: CommandLoggingMerged
 defaultMerged =
-  MkCmdLoggingP
+  MkCommandLoggingP
     { pollInterval = def,
       readSize = def
     }

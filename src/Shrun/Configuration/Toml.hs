@@ -10,7 +10,7 @@ where
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogging,
+        commandLogging,
         commonLogging,
         consoleLogging,
         fileLogging,
@@ -40,7 +40,7 @@ instance DecodeTOML Toml where
     timeout <- decodeTimeout
     init <- decodeInit
     commonLogging <- getFieldOptWith tomlDecoder "log"
-    cmdLogging <- getFieldOptWith tomlDecoder "cmd-log"
+    commandLogging <- getFieldOptWith tomlDecoder "command-log"
     consoleLogging <- getFieldOptWith tomlDecoder "console-log"
     fileLogging <- getFieldOptWith tomlDecoder "file-log"
     notify <- getFieldOptWith tomlDecoder "notify"
@@ -53,7 +53,7 @@ instance DecodeTOML Toml where
               { timeout,
                 init,
                 commonLogging,
-                cmdLogging,
+                commandLogging,
                 consoleLogging,
                 fileLogging,
                 notify
@@ -70,7 +70,7 @@ defaultToml =
             init = Nothing,
             commonLogging = Nothing,
             consoleLogging = Nothing,
-            cmdLogging = Nothing,
+            commandLogging = Nothing,
             fileLogging = Nothing,
             notify = Nothing
           },

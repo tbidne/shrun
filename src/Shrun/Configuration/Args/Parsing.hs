@@ -83,9 +83,9 @@ parserInfoArgs =
             $ mconcat
               [ "In general, each option --foo has a --no-foo variant that ",
                 "disables cli and toml configuration for that field. For ",
-                "example, the --no-cmd-log option will instruct shrun to ",
-                "ignore both cli --cmd-log and toml cmd-log, ensuring the ",
-                "default behavior is used (i.e. no command logging)."
+                "example, the --no-console-log-command option will instruct shrun to ",
+                "ignore both cli --console-log-command and toml console-log.command, ",
+                "ensuring the default behavior is used (i.e. no command logging)."
               ],
           Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation."
         ]

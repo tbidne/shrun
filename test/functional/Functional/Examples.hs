@@ -2,7 +2,7 @@
 -- (plus a few more, where noted). Thus these should be kept in sync.
 module Functional.Examples (specs) where
 
-import Functional.Examples.CmdLogging qualified as Examples.CmdLogging
+import Functional.Examples.CommandLogging qualified as Examples.CommandLogging
 import Functional.Examples.CommonLogging qualified as Examples.CommonLogging
 import Functional.Examples.ConsoleLogging qualified as Examples.ConsoleLogging
 import Functional.Examples.Core qualified as Examples.Core
@@ -24,7 +24,7 @@ specs args =
       core,
       Examples.Core.tests,
       Examples.CommonLogging.tests,
-      Examples.CmdLogging.tests,
+      Examples.CommandLogging.tests,
       Examples.ConsoleLogging.tests,
       Examples.FileLogging.tests args,
       Examples.Notify.tests

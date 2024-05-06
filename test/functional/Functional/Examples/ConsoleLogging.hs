@@ -10,49 +10,49 @@ tests :: TestTree
 tests =
   testGroup
     "ConsoleLogging"
-    [ cmdlogOn,
-      cmdlogOnDefault,
-      cmdlogOff,
-      cmdNameTruncN,
-      cmdLogLineTruncN,
+    [ commandLogOn,
+      commandLogOnDefault,
+      commandLogOff,
+      commandNameTruncN,
+      commandLogLineTruncN,
       stripControlAll,
       stripControlNone,
       stripControlSmart
     ]
 
-cmdlogOn :: TestTree
-cmdlogOn =
-  testCase "Runs cmdlog example with --console-log-cmd" $ do
+commandLogOn :: TestTree
+commandLogOn =
+  testCase "Runs commandLog example with --console-log-command" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
+        [ "--console-log-command",
           "for i in 1 2; do echo hi; sleep 1; done"
         ]
     expected =
       [ withCommandPrefix "for i in 1 2; do echo hi; sleep 1; done" "hi"
       ]
 
-cmdlogOnDefault :: TestTree
-cmdlogOnDefault =
-  testCase "Runs --console-log-cmd with no output shows default message" $ do
+commandLogOnDefault :: TestTree
+commandLogOnDefault =
+  testCase "Runs --console-log-command with no output shows default message" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
+        [ "--console-log-command",
           "for i in 1 2; do sleep 1; done"
         ]
     expected =
       [ withCommandPrefix "for i in 1 2; do sleep 1; done" "Starting..."
       ]
 
-cmdlogOff :: TestTree
-cmdlogOff =
-  testCase "Runs cmdlog example without --console-log-cmd" $ do
+commandLogOff :: TestTree
+commandLogOff =
+  testCase "Runs commandLog example without --console-log-command" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyUnexpected results unexpected
   where
@@ -62,15 +62,15 @@ cmdlogOff =
         ]
     unexpected = [commandPrefix]
 
-cmdNameTruncN :: TestTree
-cmdNameTruncN = testCase "Runs --console-log-cmd-name-trunc 10 example" $ do
+commandNameTruncN :: TestTree
+commandNameTruncN = testCase "Runs --console-log-command-name-trunc 10 example" $ do
   results <- fmap MkResultText <$> (readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-cmd-name-trunc",
+        [ "--console-log-command",
+          "--console-log-command-name-trunc",
           "10",
           "for i in 1 2 3; do echo hi; sleep 1; done"
         ]
@@ -79,14 +79,14 @@ cmdNameTruncN = testCase "Runs --console-log-cmd-name-trunc 10 example" $ do
         withSuccessPrefix "for i i..."
       ]
 
-cmdLogLineTruncN :: TestTree
-cmdLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
+commandLogLineTruncN :: TestTree
+commandLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
   results <- fmap MkResultText <$> (readIORef =<< run args)
   V.verifyExpected results expected
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
+        [ "--console-log-command",
           "--console-log-line-trunc",
           "80",
           "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"
@@ -102,8 +102,8 @@ stripControlAll = testCase "Runs --console-log-strip-control all example" $ do
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-cmd-name-trunc",
+        [ "--console-log-command",
+          "--console-log-command-name-trunc",
           "10",
           "--console-log-strip-control",
           "all",
@@ -123,8 +123,8 @@ stripControlNone = testCase "Runs --console-log-strip-control none example" $ do
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-cmd-name-trunc",
+        [ "--console-log-command",
+          "--console-log-command-name-trunc",
           "10",
           "--console-log-strip-control",
           "none",
@@ -141,8 +141,8 @@ stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ 
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
-          "--console-log-cmd-name-trunc",
+        [ "--console-log-command",
+          "--console-log-command-name-trunc",
           "10",
           "--console-log-strip-control=smart",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"

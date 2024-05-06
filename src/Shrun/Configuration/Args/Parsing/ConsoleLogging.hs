@@ -10,33 +10,33 @@ import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.ConsoleLogging
 import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
 import Shrun.Configuration.Data.StripControl qualified as StripControl
-import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
+import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TruncCommandName), Truncation)
 import Shrun.Configuration.Data.Truncation qualified as Trunc
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
 consoleLoggingParser :: Parser ConsoleLoggingArgs
 consoleLoggingParser = do
-  cmdLogging <- cmdLoggingParser
-  cmdNameTrunc <- cmdNameTruncParser
+  commandLogging <- commandLoggingParser
+  commandNameTrunc <- commandNameTruncParser
   lineTrunc <- lineTruncParser
   stripControl <- stripControlParser
 
   pure
     $ MkConsoleLoggingP
-      { cmdLogging,
-        cmdNameTrunc,
+      { commandLogging,
+        commandNameTrunc,
         lineTrunc,
         stripControl
       }
 
-cmdLoggingParser :: Parser (WithDisabled ())
-cmdLoggingParser = Utils.withDisabledParser mainParser "console-log-cmd"
+commandLoggingParser :: Parser (WithDisabled ())
+commandLoggingParser = Utils.withDisabledParser mainParser "console-log-command"
   where
     switchParser =
       OA.switch
         ( mconcat
-            [ OA.long "console-log-cmd",
+            [ OA.long "console-log-command",
               Utils.mkHelp helpTxt
             ]
         )
@@ -54,15 +54,15 @@ cmdLoggingParser = Utils.withDisabledParser mainParser "console-log-cmd"
           "is show at a given time."
         ]
 
-cmdNameTruncParser :: Parser (WithDisabled (Truncation TCmdName))
-cmdNameTruncParser = Utils.withDisabledParser mainParser "console-log-cmd-name-trunc"
+commandNameTruncParser :: Parser (WithDisabled (Truncation TruncCommandName))
+commandNameTruncParser = Utils.withDisabledParser mainParser "console-log-command-name-trunc"
   where
     mainParser =
       OA.optional
         $ OA.option
           (Trunc.parseTruncation OA.auto)
           ( mconcat
-              [ OA.long "console-log-cmd-name-trunc",
+              [ OA.long "console-log-command-name-trunc",
                 Utils.mkHelp helpTxt,
                 OA.metavar "NATURAL"
               ]

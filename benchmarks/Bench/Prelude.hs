@@ -9,7 +9,7 @@ import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError,
-    HasCmdLogging,
+    HasCommandLogging,
     HasCommands,
     HasCommonLogging,
     HasConsoleLogging (getConsoleLogging),
@@ -36,7 +36,7 @@ newtype BenchEnv = MkBenchEnv
   {unCoreEnv :: Env ()}
   deriving
     ( HasAnyError,
-      HasCmdLogging,
+      HasCommandLogging,
       HasCommands,
       HasCommonLogging,
       HasFileLogging,

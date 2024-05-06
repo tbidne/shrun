@@ -17,7 +17,7 @@ import Shrun.Configuration.Data.FileLogging
     FileLoggingArgs,
     FileLoggingP
       ( MkFileLoggingP,
-        cmdNameTrunc,
+        commandNameTrunc,
         deleteOnSuccess,
         file,
         lineTrunc,
@@ -32,7 +32,11 @@ import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode)
 import Shrun.Configuration.Data.FileLogging.FileSizeMode qualified as FileSizeMode
 import Shrun.Configuration.Data.StripControl (FileLogStripControl)
 import Shrun.Configuration.Data.StripControl qualified as StripControl
-import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
+import Shrun.Configuration.Data.Truncation
+  ( LineTruncation,
+    TruncRegion (TruncCommandName),
+    Truncation,
+  )
 import Shrun.Configuration.Data.Truncation qualified as Trunc
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
@@ -40,7 +44,7 @@ import Shrun.Prelude
 fileLoggingParser :: Parser FileLoggingArgs
 fileLoggingParser = do
   path <- fileLogParser
-  cmdNameTrunc <- fileLogCmdNameTruncParser
+  commandNameTrunc <- fileLogCommandNameTruncParser
   deleteOnSuccess <- deleteOnSuccessParser
   lineTrunc <- lineTruncParser
   mode <- fileLogModeParser
@@ -55,7 +59,7 @@ fileLoggingParser = do
               path,
               sizeMode
             },
-        cmdNameTrunc,
+        commandNameTrunc,
         deleteOnSuccess,
         lineTrunc,
         stripControl
@@ -79,27 +83,27 @@ fileLogParser = Utils.withDisabledParser mainParser "file-log"
       mconcat
         [ "If a path is supplied, all logs will additionally be written to ",
           "the supplied file. Furthermore, command logs will be written to ",
-          "the file irrespective of --cmd-log. Console logging is unaffected. ",
+          "the file irrespective of --command-log. Console logging is unaffected. ",
           "This can be useful for investigating command failures. ",
           "If the string 'default' is given, then we write to the XDG state ",
           "directory e.g. ~/.local/state/shrun/shrun.log."
         ]
 
-fileLogCmdNameTruncParser :: Parser (WithDisabled (Truncation TCmdName))
-fileLogCmdNameTruncParser =
-  Utils.withDisabledParser mainParser "file-log-cmd-name-trunc"
+fileLogCommandNameTruncParser :: Parser (WithDisabled (Truncation TruncCommandName))
+fileLogCommandNameTruncParser =
+  Utils.withDisabledParser mainParser "file-log-command-name-trunc"
   where
     mainParser =
       OA.optional
         $ OA.option
           (Trunc.parseTruncation OA.auto)
           ( mconcat
-              [ OA.long "file-log-cmd-name-trunc",
+              [ OA.long "file-log-command-name-trunc",
                 Utils.mkHelp helpTxt,
                 OA.metavar "NATURAL"
               ]
           )
-    helpTxt = "Like --console-log-cmd-name-trunc, but for --file-logs."
+    helpTxt = "Like --console-log-command-name-trunc, but for --file-logs."
 
 deleteOnSuccessParser :: Parser (WithDisabled ())
 deleteOnSuccessParser = Utils.withDisabledParser mainParser "file-log-delete-on-success"

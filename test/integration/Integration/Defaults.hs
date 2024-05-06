@@ -19,10 +19,10 @@ import Integration.Utils
     (^=@),
     (^?=@),
   )
-import Shrun.Configuration.Data.CmdLogging
-  ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
+import Shrun.Configuration.Data.CommandLogging
+  ( CommandLoggingP (MkCommandLoggingP, pollInterval, readSize),
   )
-import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
   )
@@ -43,8 +43,8 @@ import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
     ConsoleLoggingP
       ( MkConsoleLoggingP,
-        cmdLogging,
-        cmdNameTrunc,
+        commandLogging,
+        commandNameTrunc,
         lineTrunc,
         stripControl
       ),
@@ -52,7 +52,7 @@ import Shrun.Configuration.Data.ConsoleLogging
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogging,
+        commandLogging,
         commonLogging,
         consoleLogging,
         fileLogging,
@@ -71,7 +71,7 @@ import Shrun.Configuration.Data.FileLogging
       ),
     FileLoggingP
       ( MkFileLoggingP,
-        cmdNameTrunc,
+        commandNameTrunc,
         deleteOnSuccess,
         file,
         lineTrunc,
@@ -161,13 +161,13 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                     },
                 consoleLogging =
                   MkConsoleLoggingP
-                    { cmdLogging = ConsoleLogCmdOn,
-                      cmdNameTrunc = Just 80,
+                    { commandLogging = ConsoleLogCmdOn,
+                      commandNameTrunc = Just 80,
                       lineTrunc = Just 150,
                       stripControl = StripControlAll
                     },
-                cmdLogging =
-                  MkCmdLoggingP
+                commandLogging =
+                  MkCommandLoggingP
                     { pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 20
                     },
@@ -180,7 +180,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                               mode = FileModeAppend,
                               sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
                             },
-                        cmdNameTrunc = Just 45,
+                        commandNameTrunc = Just 45,
                         lineTrunc = Just 200,
                         deleteOnSuccess = DeleteOnSuccessOff,
                         stripControl = StripControlNone
@@ -222,20 +222,20 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         logPath,
         "--file-log-strip-control",
         "none",
-        "--file-log-cmd-name-trunc",
+        "--file-log-command-name-trunc",
         "35",
         "--file-log-delete-on-success",
         "--file-log-line-trunc",
         "180",
-        "--console-log-cmd",
+        "--console-log-command",
         "--log-key-hide",
-        "--cmd-log-poll-interval",
+        "--command-log-poll-interval",
         "127",
-        "--cmd-log-read-size",
+        "--command-log-read-size",
         "512",
         "--log-timer-format",
         "digital_compact",
-        "--console-log-cmd-name-trunc",
+        "--console-log-command-name-trunc",
         "10",
         "--console-log-line-trunc",
         "60",
@@ -261,13 +261,13 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                     },
                 consoleLogging =
                   MkConsoleLoggingP
-                    { cmdLogging = ConsoleLogCmdOn,
-                      cmdNameTrunc = Just 10,
+                    { commandLogging = ConsoleLogCmdOn,
+                      commandNameTrunc = Just 10,
                       lineTrunc = Just 60,
                       stripControl = StripControlNone
                     },
-                cmdLogging =
-                  MkCmdLoggingP
+                commandLogging =
+                  MkCommandLoggingP
                     { pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 512
                     },
@@ -280,7 +280,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                               mode = FileModeAppend,
                               sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
                             },
-                        cmdNameTrunc = Just 35,
+                        commandNameTrunc = Just 35,
                         deleteOnSuccess = DeleteOnSuccessOn,
                         lineTrunc = Just 180,
                         stripControl = StripControlNone
@@ -308,7 +308,7 @@ cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmd
     logs <- liftIO $ readIORef logsRef
     [] === logs
   where
-    desc = "CLI overrides config file cmd-log fields even when CLI --console-log-cmd is not specified"
+    desc = "CLI overrides config file command-log fields even when CLI --console-log-command is not specified"
     args =
       [ "--config",
         getIntConfigOS "overridden",
@@ -339,7 +339,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
     args =
       [ "--config",
         getIntConfigOS "overridden",
-        "--file-log-cmd-name-trunc",
+        "--file-log-command-name-trunc",
         "55",
         "--file-log-delete-on-success",
         "--file-log-line-trunc",
@@ -354,7 +354,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
       ]
 
     expected =
-      [ #coreConfig % #fileLogging %? #cmdNameTrunc ^?=@ Just (Just 55),
+      [ #coreConfig % #fileLogging %? #commandNameTrunc ^?=@ Just (Just 55),
         #coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just DeleteOnSuccessOn,
         #coreConfig % #fileLogging %? #lineTrunc ^?=@ Just (Just 180),
         #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
@@ -430,11 +430,11 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
         "--no-timeout",
         "--no-init",
         "--no-log-key-hide",
-        "--no-cmd-log-poll-interval",
-        "--no-cmd-log-read-size",
+        "--no-command-log-poll-interval",
+        "--no-command-log-read-size",
         "--no-log-timer-format",
-        "--no-console-log-cmd-name-trunc",
-        "--no-console-log-cmd",
+        "--no-console-log-command-name-trunc",
+        "--no-console-log-command",
         "--no-console-log-strip-control",
         "--no-console-log-line-trunc",
         "--no-file-log",
@@ -466,22 +466,22 @@ noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
         "--init",
         "blah",
         "--no-init",
-        "--cmd-log-poll-interval",
+        "--command-log-poll-interval",
         "555",
-        "--no-cmd-log-poll-interval",
-        "--cmd-log-read-size",
+        "--no-command-log-poll-interval",
+        "--command-log-read-size",
         "512",
-        "--no-cmd-log-read-size",
+        "--no-command-log-read-size",
         "--log-timer-format",
         "prose_full",
         "--no-log-timer-format",
         "--log-key-hide",
         "--no-log-key-hide",
-        "--console-log-cmd-name-trunc",
+        "--console-log-command-name-trunc",
         "80",
-        "--no-console-log-cmd-name-trunc",
-        "--console-log-cmd",
-        "--no-console-log-cmd",
+        "--no-console-log-command-name-trunc",
+        "--console-log-command",
+        "--no-console-log-command",
         "--console-log-strip-control",
         "all",
         "--no-console-log-strip-control",

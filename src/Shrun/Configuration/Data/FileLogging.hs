@@ -45,7 +45,12 @@ import Shrun.Configuration.Data.FileLogging.FileMode
         FileModeWrite
       ),
   )
-import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Configuration.Data.FileLogging.FilePathDefault
+  ( FilePathDefault
+      ( FPDefault,
+        FPManual
+      ),
+  )
 import Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode
       ( FileSizeModeDelete,
@@ -55,10 +60,10 @@ import Shrun.Configuration.Data.FileLogging.FileSizeMode
   )
 import Shrun.Configuration.Data.StripControl (FileLogStripControl)
 import Shrun.Configuration.Data.Truncation
-  ( TruncRegion (TCmdName),
+  ( TruncRegion (TruncCommandName),
     Truncation,
     configToLineTrunc,
-    decodeCmdNameTrunc,
+    decodeCommandNameTrunc,
     decodeLineTrunc,
   )
 import Shrun.Configuration.Data.WithDisabled
@@ -193,7 +198,7 @@ data FileLoggingP p = MkFileLoggingP
   { -- | File-related params.
     file :: FileLogFileF p,
     -- | The max number of command characters to display in the file logs.
-    cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
+    commandNameTrunc :: ConfigPhaseMaybeF p (Truncation TruncCommandName),
     -- | If active, deletes the log file upon success.
     deleteOnSuccess :: SwitchF p DeleteOnSuccessSwitch,
     -- | Determines to what extent we should remove control characters
@@ -252,8 +257,8 @@ mergeFileLogging args mToml = case mPath of
                 sizeMode =
                   (args ^. #file % #sizeMode) <>?. (toml ^. #file % #sizeMode)
               },
-          cmdNameTrunc =
-            (args ^. #cmdNameTrunc) <>?? (toml ^. #cmdNameTrunc),
+          commandNameTrunc =
+            (args ^. #commandNameTrunc) <>?? (toml ^. #commandNameTrunc),
           deleteOnSuccess =
             WD.fromDefault
               ( review #boolIso
@@ -302,7 +307,7 @@ instance DecodeTOML FileLoggingToml where
   tomlDecoder =
     MkFileLoggingP
       <$> tomlDecoder
-      <*> decodeCmdNameTrunc
+      <*> decodeCommandNameTrunc
       <*> decodeFileDeleteOnSuccess
       <*> decodeLineTrunc
       <*> decodeFileLogStripControl
@@ -341,7 +346,7 @@ withFileLoggingEnv mFileLogging onFileLoggingEnv = do
                   { handle = h,
                     queue = q
                   },
-              cmdNameTrunc = fl ^. #cmdNameTrunc,
+              commandNameTrunc = fl ^. #commandNameTrunc,
               lineTrunc = fl ^. #lineTrunc,
               deleteOnSuccess = fl ^. #deleteOnSuccess,
               stripControl = fl ^. #stripControl
@@ -462,7 +467,7 @@ defaultToml path =
             mode = Nothing,
             sizeMode = Nothing
           },
-      cmdNameTrunc = Nothing,
+      commandNameTrunc = Nothing,
       deleteOnSuccess = Nothing,
       lineTrunc = Nothing,
       stripControl = Nothing

@@ -11,7 +11,7 @@ module Shrun.Configuration.Data.ConfigPhase
   )
 where
 
-import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TLine), Truncation)
+import Shrun.Configuration.Data.Truncation (LineTruncation, TruncRegion (TruncLine), Truncation)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
@@ -69,5 +69,5 @@ type LineTruncF :: ConfigPhase -> Type
 type family LineTruncF p where
   LineTruncF ConfigPhaseArgs = WithDisabled LineTruncation
   LineTruncF ConfigPhaseToml = Maybe LineTruncation
-  LineTruncF ConfigPhaseMerged = Maybe (Truncation TLine)
-  LineTruncF ConfigPhaseEnv = Maybe (Truncation TLine)
+  LineTruncF ConfigPhaseMerged = Maybe (Truncation TruncLine)
+  LineTruncF ConfigPhaseEnv = Maybe (Truncation TruncLine)

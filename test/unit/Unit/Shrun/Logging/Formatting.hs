@@ -18,8 +18,8 @@ import Shrun.Configuration.Data.ConsoleLogging
     ConsoleLoggingEnv,
     ConsoleLoggingP
       ( MkConsoleLoggingP,
-        cmdLogging,
-        cmdNameTrunc,
+        commandLogging,
+        commandNameTrunc,
         lineTrunc,
         stripControl
       ),
@@ -34,7 +34,7 @@ import Shrun.Configuration.Data.FileLogging
     FileLoggingEnv,
     FileLoggingP
       ( MkFileLoggingP,
-        cmdNameTrunc,
+        commandNameTrunc,
         deleteOnSuccess,
         file,
         lineTrunc,
@@ -77,7 +77,7 @@ consoleLogTests =
     [ testFormatsCLNoCmd,
       testFormatsCLCmdKey,
       testFormatsCLCmdNoKey,
-      testFormatsCLCmdNameTrunc,
+      testFormatsCLCommandNameTrunc,
       testFormatsCLLineTrunc
     ]
 
@@ -212,8 +212,8 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
       ]
     suffixes = L.repeat "\ESC[0m"
 
-testFormatsCLCmdNameTrunc :: TestTree
-testFormatsCLCmdNameTrunc = testCase desc $ do
+testFormatsCLCommandNameTrunc :: TestTree
+testFormatsCLCommandNameTrunc = testCase desc $ do
   "\ESC[92m[Success][some long key] msg len 10\ESC[0m" @=? fmt 13 baseLog ^. #unConsoleLog
   "\ESC[92m[Success][some long...] msg len 10\ESC[0m" @=? fmt 12 baseLog ^. #unConsoleLog
   "\ESC[92m[Success][...] msg len 10\ESC[0m" @=? fmt 0 baseLog ^. #unConsoleLog
@@ -232,8 +232,8 @@ testFormatsCLCmdNameTrunc = testCase desc $ do
     desc = "Formats with cmd name truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = Formatting.formatConsoleLog KeyHideOff (set' #cmdNameTrunc (Just n) baseConsoleLoggingEnv)
-    fmtKh n = Formatting.formatConsoleLog KeyHideOn (set' #cmdNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmt n = Formatting.formatConsoleLog KeyHideOff (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmtKh n = Formatting.formatConsoleLog KeyHideOn (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
 
 testFormatsCLLineTrunc :: TestTree
 testFormatsCLLineTrunc = testCase desc $ do
@@ -272,8 +272,8 @@ testFormatsCLLineTrunc = testCase desc $ do
 baseConsoleLoggingEnv :: ConsoleLoggingEnv
 baseConsoleLoggingEnv =
   MkConsoleLoggingP
-    { cmdLogging = ConsoleLogCmdOff,
-      cmdNameTrunc = Nothing,
+    { commandLogging = ConsoleLogCmdOff,
+      commandNameTrunc = Nothing,
       lineTrunc = Nothing,
       stripControl = StripControlNone
     }
@@ -285,7 +285,7 @@ fileLogTests =
     [ testFormatsFLNoCmd,
       testFormatsFLCmdKey,
       testFormatsFLCmdNoKey,
-      testFormatsFLCmdNameTrunc,
+      testFormatsFLCommandNameTrunc,
       testFormatsFLLineTrunc
     ]
 
@@ -423,8 +423,8 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
             ]
     suffixes = L.repeat "\n"
 
-testFormatsFLCmdNameTrunc :: TestTree
-testFormatsFLCmdNameTrunc = testCase desc $ do
+testFormatsFLCommandNameTrunc :: TestTree
+testFormatsFLCommandNameTrunc = testCase desc $ do
   sysTimeNE <> "[Success][some long key] msg len 10\n" @=? fmt 13 baseLog
   sysTimeNE <> "[Success][some long...] msg len 10\n" @=? fmt 12 baseLog
   sysTimeNE <> "[Success][...] msg len 10\n" @=? fmt 0 baseLog
@@ -443,8 +443,8 @@ testFormatsFLCmdNameTrunc = testCase desc $ do
     desc = "Formats with cmd name truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = runFormatFileLog KeyHideOff (set' #cmdNameTrunc (Just n) baseFileLoggingEnv)
-    fmtKh n = runFormatFileLog KeyHideOn (set' #cmdNameTrunc (Just n) baseFileLoggingEnv)
+    fmt n = runFormatFileLog KeyHideOff (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
+    fmtKh n = runFormatFileLog KeyHideOn (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
 
 testFormatsFLLineTrunc :: TestTree
 testFormatsFLLineTrunc = testCase desc $ do
@@ -520,7 +520,7 @@ baseFileLoggingEnv =
           { handle = err "handle",
             queue = err "queue"
           },
-      cmdNameTrunc = Nothing,
+      commandNameTrunc = Nothing,
       lineTrunc = Nothing,
       deleteOnSuccess = DeleteOnSuccessOff,
       stripControl = StripControlNone

@@ -21,8 +21,8 @@ import Shrun.Configuration.Data.FileLogging
   )
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
-    HasCmdLogging,
-    HasCommands (getCommands, getCompletedCmds),
+    HasCommandLogging,
+    HasCommands (getCommands, getCompletedCommands),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -78,7 +78,7 @@ shrun ::
   ( HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasCmdLogging env,
+    HasCommandLogging env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,
@@ -145,7 +145,7 @@ runCommand ::
   ( HasAnyError env,
     HasCommands env,
     HasInit env,
-    HasCmdLogging env,
+    HasCommandLogging env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,
@@ -183,9 +183,9 @@ runCommand cmd = do
           mode = LogModeFinish
         }
 
-  let cmdNameTrunc = consoleLogging ^. #cmdNameTrunc
+  let commandNameTrunc = consoleLogging ^. #commandNameTrunc
       keyHide = commonLogging ^. #keyHide
-      formattedCmd = LogFmt.formatCommand keyHide cmdNameTrunc cmd
+      formattedCmd = LogFmt.formatCommand keyHide commandNameTrunc cmd
 
   -- Sent off notif if NotifyAll or NotifyCommand is set
   cfg <- asks getNotifyConfig
@@ -326,15 +326,15 @@ keepRunning region timer mto = do
     then do
       keyHide <- asks (view #keyHide . getCommonLogging)
       allCmds <- asks getCommands
-      completedCmdsTVar <- asks getCompletedCmds
-      completedCmds <- readTVarA completedCmdsTVar
+      completedCommandsTVar <- asks getCompletedCommands
+      completedCommands <- readTVarA completedCommandsTVar
 
       -- update anyError
       setAnyErrorTrue
 
-      let completedCmdsSet = Set.fromList $ toList completedCmds
+      let completedCommandsSet = Set.fromList $ toList completedCommands
           allCmdsSet = Set.fromList $ toList allCmds
-          incompleteCmds = Set.difference allCmdsSet completedCmdsSet
+          incompleteCmds = Set.difference allCmdsSet completedCommandsSet
           toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
           unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
 

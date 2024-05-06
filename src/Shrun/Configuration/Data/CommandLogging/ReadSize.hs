@@ -1,6 +1,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 
-module Shrun.Configuration.Data.CmdLogging.ReadSize
+module Shrun.Configuration.Data.CommandLogging.ReadSize
   ( ReadSize (..),
   )
 where

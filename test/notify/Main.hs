@@ -12,8 +12,8 @@ import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
-    HasCmdLogging (getCmdLogging),
-    HasCommands (getCommands, getCompletedCmds),
+    HasCommandLogging (getCommandLogging),
+    HasCommands (getCommands, getCompletedCommands),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -120,10 +120,10 @@ instance HasAnyError NotifyEnv where
 
 instance HasCommands NotifyEnv where
   getCommands = getCommands . (.unNotifyEnv)
-  getCompletedCmds = getCompletedCmds . (.unNotifyEnv)
+  getCompletedCommands = getCompletedCommands . (.unNotifyEnv)
 
-instance HasCmdLogging NotifyEnv where
-  getCmdLogging = getCmdLogging . (.unNotifyEnv)
+instance HasCommandLogging NotifyEnv where
+  getCommandLogging = getCommandLogging . (.unNotifyEnv)
 
 instance HasCommonLogging NotifyEnv where
   getCommonLogging = getCommonLogging . (.unNotifyEnv)

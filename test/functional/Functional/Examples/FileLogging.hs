@@ -16,7 +16,7 @@ tests args =
   testGroup
     "FileLogging"
     [ fileLog args,
-      fileLogCmdNameTruncN args,
+      fileLogCommandNameTruncN args,
       fileLogDeleteOnSuccess args,
       fileLogDeleteOnSuccessFail args,
       fileLogLineTruncN args,
@@ -55,15 +55,15 @@ fileLog testArgs = testCase "Runs file-log example" $ do
         ++ [ withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi"
            ]
 
-fileLogCmdNameTruncN :: IO TestArgs -> TestTree
-fileLogCmdNameTruncN testArgs = testCase desc $ do
-  outFile <- (</> [osp|readme-file-log-cmd-name-trunc-out.log|]) . view #tmpDir <$> testArgs
+fileLogCommandNameTruncN :: IO TestArgs -> TestTree
+fileLogCommandNameTruncN testArgs = testCase desc $ do
+  outFile <- (</> [osp|readme-file-log-command-name-trunc-out.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
         withNoConfig
           [ "--file-log",
             outFileStr,
-            "--file-log-cmd-name-trunc",
+            "--file-log-command-name-trunc",
             "10",
             "for i in 1 2 3; do echo hi; sleep 1; done"
           ]
@@ -74,7 +74,7 @@ fileLogCmdNameTruncN testArgs = testCase desc $ do
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
   V.verifyExpected resultsFile expectedFile
   where
-    desc = "Runs --file-log-cmd-name-trunc 10 example"
+    desc = "Runs --file-log-command-name-trunc 10 example"
     expectedConsole =
       [ withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done", -- not truncated
         withFinishedPrefix "3 seconds"

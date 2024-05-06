@@ -11,19 +11,19 @@ init = "blah"
 key-hide = false
 timer-format = "digital_full"
 
-[cmd-log]
+[command-log]
 poll-interval = 100
 read-size = 50
 
 [console-log]
-cmd = true
-cmd-name-trunc = 80
+command = true
+command-name-trunc = 80
 line-trunc = 150
 strip-control = "all"
 
 [file-log]
 path = "default"
-cmd-name-trunc = 20
+command-name-trunc = 20
 delete-on-success = true
 line-trunc = 200
 mode = "append"

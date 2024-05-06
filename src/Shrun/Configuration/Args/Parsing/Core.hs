@@ -6,7 +6,7 @@ where
 
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
-import Shrun.Configuration.Args.Parsing.CmdLogging qualified as CmdLogging
+import Shrun.Configuration.Args.Parsing.CommandLogging qualified as CommandLogging
 import Shrun.Configuration.Args.Parsing.CommonLogging qualified as CommonLogging
 import Shrun.Configuration.Args.Parsing.ConsoleLogging qualified as ConsoleLogging
 import Shrun.Configuration.Args.Parsing.FileLogging qualified as FileLogging
@@ -16,7 +16,7 @@ import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
       ( MkCoreConfigP,
-        cmdLogging,
+        commandLogging,
         commonLogging,
         consoleLogging,
         fileLogging,
@@ -35,7 +35,7 @@ coreParser = do
   init <- initParser
   timeout <- timeoutParser
   commonLogging <- CommonLogging.commonLoggingParser
-  cmdLogging <- CmdLogging.cmdLoggingParser
+  commandLogging <- CommandLogging.commandLoggingParser
   consoleLogging <- ConsoleLogging.consoleLoggingParser
   fileLogging <- FileLogging.fileLoggingParser
   notify <- Notify.notifyParser
@@ -46,7 +46,7 @@ coreParser = do
         init,
         commonLogging,
         consoleLogging,
-        cmdLogging,
+        commandLogging,
         fileLogging,
         notify
       }

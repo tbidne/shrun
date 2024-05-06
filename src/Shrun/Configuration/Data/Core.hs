@@ -17,8 +17,8 @@ module Shrun.Configuration.Data.Core
   )
 where
 
-import Shrun.Configuration.Data.CmdLogging (CmdLoggingP, mergeCmdLogging)
-import Shrun.Configuration.Data.CmdLogging qualified as CmdLogging
+import Shrun.Configuration.Data.CommandLogging (CommandLoggingP, mergeCommandLogging)
+import Shrun.Configuration.Data.CommandLogging qualified as CommandLogging
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingP, mergeCommonLogging)
 import Shrun.Configuration.Data.CommonLogging qualified as CommonLogging
 import Shrun.Configuration.Data.ConfigPhase
@@ -42,7 +42,7 @@ import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Prelude
 
 -- | For types that are only guaranteed to exist for Args. Generally this
--- describes "aggregate" types e.g. CmdLoggingP, which always exists for
+-- describes "aggregate" types e.g. CommandLoggingP, which always exists for
 -- Args (as subfields can independently override toml), but is not
 -- guaranteed to exist on toml/merged, since its presence in the latter two
 -- indicates active status.
@@ -69,7 +69,7 @@ data CoreConfigP p = MkCoreConfigP
     -- | Holds common logging config.
     commonLogging :: TomlOptF p (CommonLoggingP p),
     -- | Command log config.
-    cmdLogging :: TomlOptF p (CmdLoggingP p),
+    commandLogging :: TomlOptF p (CommandLoggingP p),
     -- | Holds console logging config.
     consoleLogging :: TomlOptF p (ConsoleLoggingP p),
     -- | File log config.
@@ -127,10 +127,10 @@ mergeCoreConfig args mToml = do
             (args ^. #commonLogging)
             (toml ^. #commonLogging),
         consoleLogging,
-        cmdLogging =
-          mergeCmdLogging
-            (args ^. #cmdLogging)
-            (toml ^. #cmdLogging),
+        commandLogging =
+          mergeCommandLogging
+            (args ^. #commandLogging)
+            (toml ^. #commandLogging),
         fileLogging,
         notify =
           mergeNotifyLogging
@@ -166,7 +166,7 @@ withCoreEnv merged onCoreConfigEnv = do
             { init = merged ^. #init,
               timeout = merged ^. #timeout,
               commonLogging = CommonLogging.toEnv (merged ^. #commonLogging),
-              cmdLogging = CmdLogging.toEnv (merged ^. #cmdLogging),
+              commandLogging = CommandLogging.toEnv (merged ^. #commandLogging),
               consoleLogging = ConsoleLogging.toEnv (merged ^. #consoleLogging),
               fileLogging = fileLoggingEnv,
               notify
@@ -179,7 +179,7 @@ defaultToml =
     { init = Nothing,
       timeout = Nothing,
       commonLogging = Nothing,
-      cmdLogging = Nothing,
+      commandLogging = Nothing,
       consoleLogging = Nothing,
       fileLogging = Nothing,
       notify = Nothing
@@ -191,7 +191,7 @@ defaultMerged =
     { init = Nothing,
       timeout = Nothing,
       commonLogging = CommonLogging.defaultMerged,
-      cmdLogging = CmdLogging.defaultMerged,
+      commandLogging = CommandLogging.defaultMerged,
       consoleLogging = ConsoleLogging.defaultMerged,
       fileLogging = Nothing,
       notify = Nothing

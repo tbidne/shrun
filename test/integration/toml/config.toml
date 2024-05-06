@@ -20,20 +20,20 @@ legend = [
 key-hide = true
 timer-format = "digital_full"
 
-[cmd-log]
+[command-log]
 poll-interval = 127
 read-size = 20
 
 [console-log]
-cmd = true
-cmd-name-trunc = 80
+command = true
+command-name-trunc = 80
 delete-on-success = true
 line-trunc = 150
 strip-control = "all"
 
 [file-log]
 path = "default"
-cmd-name-trunc = 45
+command-name-trunc = 45
 line-trunc = 200
 mode = "append"
 strip-control = "none"

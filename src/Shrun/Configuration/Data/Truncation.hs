@@ -9,22 +9,28 @@ module Shrun.Configuration.Data.Truncation
     parseLineTruncation,
 
     -- * Misc
-    decodeCmdNameTrunc,
+    decodeCommandNameTrunc,
     decodeLineTrunc,
     configToLineTrunc,
   )
 where
 
 import Effects.System.Terminal (getTerminalWidth)
-import Shrun.Configuration.Data.WithDisabled (WithDisabled (..))
+import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled
+      ( Disabled,
+        With,
+        Without
+      ),
+  )
 import Shrun.Prelude
 
 -- | The different regions to apply truncation rules.
 data TruncRegion
   = -- | Apply truncation rules to commands/key names.
-    TCmdName
+    TruncCommandName
   | -- | Apply truncation rules to command log entire lines.
-    TLine
+    TruncLine
   deriving stock (Eq, Show)
 
 -- | The maximum number of command characters to display in the logs.
@@ -47,7 +53,7 @@ parseTruncation getNat = MkTruncation <$> getNat
 -- type from 'Truncation' to add a third option, to detect the terminal size
 -- automatically.
 data LineTruncation
-  = Undetected (Truncation TLine)
+  = Undetected (Truncation TruncLine)
   | Detected
   deriving stock (Eq, Show)
 
@@ -70,8 +76,8 @@ parseDetected getTxt =
     "detect" -> pure Detected
     other -> fail $ "Wanted other, received: " <> unpack other
 
-decodeCmdNameTrunc :: Decoder (Maybe (Truncation TCmdName))
-decodeCmdNameTrunc = getFieldOptWith tomlDecoder "cmd-name-trunc"
+decodeCommandNameTrunc :: Decoder (Maybe (Truncation TruncCommandName))
+decodeCommandNameTrunc = getFieldOptWith tomlDecoder "command-name-trunc"
 
 decodeLineTrunc :: Decoder (Maybe LineTruncation)
 decodeLineTrunc = getFieldOptWith tomlDecoder "line-trunc"
@@ -82,7 +88,7 @@ configToLineTrunc ::
     MonadTerminal m
   ) =>
   WithDisabled LineTruncation ->
-  m (Maybe (Truncation TLine))
+  m (Maybe (Truncation TruncLine))
 configToLineTrunc Disabled = pure Nothing
 configToLineTrunc Without = pure Nothing
 configToLineTrunc (With Detected) = Just . MkTruncation <$> getTerminalWidth

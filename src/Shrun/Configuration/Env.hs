@@ -31,7 +31,7 @@ import Shrun.Configuration.Env.Types
       ( MkEnv,
         anyError,
         commands,
-        completedCmds,
+        completedCommands,
         config,
         consoleLogQueue
       ),
@@ -149,7 +149,7 @@ fromMergedConfig ::
   (Env r -> m a) ->
   m a
 fromMergedConfig cfg onEnv = do
-  completedCmds <- newTVarA Seq.empty
+  completedCommands <- newTVarA Seq.empty
   anyError <- newTVarA False
   consoleLogQueue <- newTBQueueA 1_000
 
@@ -158,7 +158,7 @@ fromMergedConfig cfg onEnv = do
           MkEnv
             { config = coreConfigEnv,
               anyError,
-              completedCmds,
+              completedCommands,
               consoleLogQueue,
               commands = cfg ^. #commands
             }

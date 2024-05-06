@@ -13,7 +13,7 @@ tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.ConsoleLogging"
     [ commandLoggingTests,
-      cmdNameTruncTests,
+      commandNameTruncTests,
       lineTruncTests,
       stripControlTests
     ]
@@ -21,7 +21,7 @@ tests =
 commandLoggingTests :: TestTree
 commandLoggingTests =
   testGroup
-    "--console-log-cmd"
+    "--console-log-command"
     [ testCommandLogging,
       testNoCommandLogging
     ]
@@ -31,23 +31,23 @@ testCommandLogging =
   testPropertyNamed desc "testCommandLogging"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --console-log-cmd"
-    argList = ["--console-log-cmd", "command"]
+    desc = "Parses --console-log-command"
+    argList = ["--console-log-command", "command"]
     expected =
       set'
-        (_Just % #coreConfig % #consoleLogging % #cmdLogging)
+        (_Just % #coreConfig % #consoleLogging % #commandLogging)
         (With ())
         U.defArgs
 
 testNoCommandLogging :: TestTree
 testNoCommandLogging =
-  testPropertyNamed "Parses --no-console-log-cmd" "testNoCommandLogging"
+  testPropertyNamed "Parses --no-console-log-command" "testNoCommandLogging"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-console-log-cmd", "command"]
+    argList = ["--no-console-log-command", "command"]
     expected =
       set'
-        (_Just % #coreConfig % #consoleLogging % #cmdLogging)
+        (_Just % #coreConfig % #consoleLogging % #commandLogging)
         Disabled
         U.defArgs
 
@@ -106,33 +106,33 @@ testNoStripControl =
     argList = ["--no-console-log-strip-control", "command"]
     expected = U.disableDefCoreArgs (#consoleLogging % #stripControl)
 
-cmdNameTruncTests :: TestTree
-cmdNameTruncTests =
+commandNameTruncTests :: TestTree
+commandNameTruncTests =
   testGroup
-    "--console-log-cmd-name-trunc"
-    [ testCmdNameTrunc,
-      testNoCmdNameTrunc
+    "--console-log-command-name-trunc"
+    [ testCommandNameTrunc,
+      testNoCommandNameTrunc
     ]
 
-testCmdNameTrunc :: TestTree
-testCmdNameTrunc =
+testCommandNameTrunc :: TestTree
+testCommandNameTrunc =
   testPropertyNamed
-    "Parses --console-log-cmd-name-trunc"
-    "testCmdNameTrunc"
+    "Parses --console-log-command-name-trunc"
+    "testCommandNameTrunc"
     $ U.verifyResult argList expected
   where
-    argList = ["--console-log-cmd-name-trunc", "15", "command"]
-    expected = U.updateDefCoreArgs (#consoleLogging % #cmdNameTrunc) 15
+    argList = ["--console-log-command-name-trunc", "15", "command"]
+    expected = U.updateDefCoreArgs (#consoleLogging % #commandNameTrunc) 15
 
-testNoCmdNameTrunc :: TestTree
-testNoCmdNameTrunc =
+testNoCommandNameTrunc :: TestTree
+testNoCommandNameTrunc =
   testPropertyNamed
-    "Parses --no-console-log-cmd-name-trunc"
-    "testNoCmdNameTrunc"
+    "Parses --no-console-log-command-name-trunc"
+    "testNoCommandNameTrunc"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-console-log-cmd-name-trunc", "command"]
-    expected = U.disableDefCoreArgs (#consoleLogging % #cmdNameTrunc)
+    argList = ["--no-console-log-command-name-trunc", "command"]
+    expected = U.disableDefCoreArgs (#consoleLogging % #commandNameTrunc)
 
 lineTruncTests :: TestTree
 lineTruncTests =

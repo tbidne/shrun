@@ -1,7 +1,7 @@
 module Unit.Shrun.Configuration.Args.Parsing.Core (tests) where
 
 import Unit.Prelude
-import Unit.Shrun.Configuration.Args.Parsing.CmdLogging qualified as CmdLogging
+import Unit.Shrun.Configuration.Args.Parsing.CommandLogging qualified as CommandLogging
 import Unit.Shrun.Configuration.Args.Parsing.CommonLogging qualified as CommonLogging
 import Unit.Shrun.Configuration.Args.Parsing.ConsoleLogging qualified as ConsoleLogging
 import Unit.Shrun.Configuration.Args.Parsing.FileLogging qualified as FileLogging
@@ -15,7 +15,7 @@ tests =
     [ initTests,
       timeoutTests,
       CommonLogging.tests,
-      CmdLogging.tests,
+      CommandLogging.tests,
       ConsoleLogging.tests,
       FileLogging.tests,
       Notify.tests

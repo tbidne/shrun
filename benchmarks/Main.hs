@@ -24,15 +24,15 @@ main = bracket setup teardown runBenchmarks
     runBenchmarks testDir =
       defaultMain
         [ basicLogs,
-          cmdLogs,
+          commandLogs,
           fileLogs testDir
         ]
 
 basicLogs :: Benchmark
 basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
 
-cmdLogs :: Benchmark
-cmdLogs = bgroup "Command Logging" (runLoops ["--console-log-cmd", "--no-config"])
+commandLogs :: Benchmark
+commandLogs = bgroup "Command Logging" (runLoops ["--console-log-command", "--no-config"])
 
 fileLogs :: OsPath -> Benchmark
 fileLogs testDir = bgroup "File Logging" (runLoops ["-f", FsUtils.unsafeDecodeOsToFp fp, "--no-config"])
@@ -42,8 +42,8 @@ fileLogs testDir = bgroup "File Logging" (runLoops ["-f", FsUtils.unsafeDecodeOs
 runLoops :: List String -> List Benchmark
 runLoops args = fmap f loops
   where
-    f (!desc, !cmd) =
-      run desc (cmd : args)
+    f (!desc, !command) =
+      run desc (command : args)
 
 run :: String -> List String -> Benchmark
 run desc = bench desc . nfIO . runBench

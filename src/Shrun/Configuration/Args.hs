@@ -12,8 +12,8 @@ import Shrun.Configuration.Args.Parsing
         coreConfig
       ),
   )
-import Shrun.Configuration.Data.CmdLogging
-  ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
+import Shrun.Configuration.Data.CommandLogging
+  ( CommandLoggingP (MkCommandLoggingP, pollInterval, readSize),
   )
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP (MkCommonLoggingP, keyHide, timerFormat),
@@ -21,8 +21,8 @@ import Shrun.Configuration.Data.CommonLogging
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLoggingP
       ( MkConsoleLoggingP,
-        cmdLogging,
-        cmdNameTrunc,
+        commandLogging,
+        commandNameTrunc,
         lineTrunc,
         stripControl
       ),
@@ -30,7 +30,7 @@ import Shrun.Configuration.Data.ConsoleLogging
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogging,
+        commandLogging,
         commonLogging,
         consoleLogging,
         fileLogging,
@@ -48,7 +48,7 @@ import Shrun.Configuration.Data.FileLogging
       ),
     FileLoggingP
       ( MkFileLoggingP,
-        cmdNameTrunc,
+        commandNameTrunc,
         deleteOnSuccess,
         file,
         lineTrunc,
@@ -75,13 +75,13 @@ defaultArgs commands =
                 },
             consoleLogging =
               MkConsoleLoggingP
-                { cmdLogging = mempty,
-                  cmdNameTrunc = mempty,
+                { commandLogging = mempty,
+                  commandNameTrunc = mempty,
                   lineTrunc = mempty,
                   stripControl = mempty
                 },
-            cmdLogging =
-              MkCmdLoggingP
+            commandLogging =
+              MkCommandLoggingP
                 { pollInterval = mempty,
                   readSize = mempty
                 },
@@ -93,7 +93,7 @@ defaultArgs commands =
                         mode = mempty,
                         sizeMode = mempty
                       },
-                  cmdNameTrunc = mempty,
+                  commandNameTrunc = mempty,
                   deleteOnSuccess = mempty,
                   lineTrunc = mempty,
                   stripControl = mempty

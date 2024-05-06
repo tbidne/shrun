@@ -46,8 +46,8 @@ import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
-    HasCmdLogging (getCmdLogging),
-    HasCommands (getCommands, getCompletedCmds),
+    HasCommandLogging (getCommandLogging),
+    HasCommands (getCommands, getCompletedCommands),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -95,13 +95,13 @@ instance HasInit FuncEnv where
 
 instance HasCommands FuncEnv where
   getCommands = getCommands . view #coreEnv
-  getCompletedCmds = getCompletedCmds . view #coreEnv
+  getCompletedCommands = getCompletedCommands . view #coreEnv
 
 instance HasAnyError FuncEnv where
   getAnyError = getAnyError . view #coreEnv
 
-instance HasCmdLogging FuncEnv where
-  getCmdLogging = getCmdLogging . view #coreEnv
+instance HasCommandLogging FuncEnv where
+  getCommandLogging = getCommandLogging . view #coreEnv
 
 instance HasCommonLogging FuncEnv where
   getCommonLogging = getCommonLogging . view #coreEnv

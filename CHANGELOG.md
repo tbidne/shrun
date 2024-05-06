@@ -31,12 +31,12 @@ the major/minor/patch definitions apply to the application's interface / usage
     * Toml: `cmd-log.timer-format`.
     * `-p` removed.
   * `--cmd-log`:
-    * CLI: `--console-log-cmd`.
-    * Toml: `console-log.cmd`.
+    * CLI: `--console-log-command`.
+    * Toml: `console-log.command`.
     * `-l` removed.
   * `--cmd-name-trunc`:
-    * CLI: `--console-log-cmd-name-trunc`.
-    * Toml: `console-log.cmd-name-trunc`.
+    * CLI: `--console-log-command-name-trunc`.
+    * Toml: `console-log.command-name-trunc`.
     * `-x` removed.
     * Applies to all console logs, not just command logs.
   * `--cmd-log-line-trunc`:
@@ -50,10 +50,10 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 ### Added
 * Added stack support back.
-* New option `--cmd-log-read-size` (toml: `cmd-log.read-size`) that controls
+* New option `--command-log-read-size` (toml: `command-log.read-size`) that controls
   the size of logs we read from command with `--console-cmd-log` and
   `--file-log`.
-* New option `--file-log-cmd-name-trunc` (toml: `file-log.cmd-name-trunc`)
+* New option `--file-log-command-name-trunc` (toml: `file-log.command-name-trunc`)
   for command name truncation in the file logs.
 * New option `--file-log-delete-on-success`
   (toml: `file-log.delete-on-success`) that deletes the log file upon a

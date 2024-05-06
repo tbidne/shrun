@@ -21,7 +21,7 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
+        [ "--console-log-command",
           "sleep 1 && echo 'line one\nline two' && sleep 2"
         ]
 
@@ -45,7 +45,7 @@ spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
+        [ "--console-log-command",
           "sleep 1 && echo 'abc\n  def' && exit 1"
         ]
 
@@ -69,7 +69,7 @@ stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
   where
     args =
       withNoConfig
-        [ "--console-log-cmd",
+        [ "--console-log-command",
           "--console-log-strip-control",
           "none",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"

@@ -28,7 +28,7 @@ tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.FileLogging"
     [ fileLoggingTests,
-      cmdNameTruncTests,
+      commandNameTruncTests,
       deleteOnSuccessTests,
       lineTruncTests,
       modeTests,
@@ -107,31 +107,31 @@ parseNoFileLog =
     argList = ["--no-file-log", "command"]
     expected = U.disableDefCoreArgs (#fileLogging % #file % #path)
 
-cmdNameTruncTests :: TestTree
-cmdNameTruncTests =
+commandNameTruncTests :: TestTree
+commandNameTruncTests =
   testGroup
-    "--file-log-cmd-name-trunc"
-    [ testCmdNameTrunc,
-      testNoCmdNameTrunc
+    "--file-log-command-name-trunc"
+    [ testCommandNameTrunc,
+      testNoCommandNameTrunc
     ]
 
-testCmdNameTrunc :: TestTree
-testCmdNameTrunc =
+testCommandNameTrunc :: TestTree
+testCommandNameTrunc =
   testPropertyNamed
-    "Parses --file-log-cmd-name-trunc"
-    "testCmdNameTrunc"
+    "Parses --file-log-command-name-trunc"
+    "testCommandNameTrunc"
     $ U.verifyResult argList expected
   where
-    argList = ["--file-log-cmd-name-trunc", "15", "command"]
-    expected = updateDefFileLogArgs #cmdNameTrunc 15
+    argList = ["--file-log-command-name-trunc", "15", "command"]
+    expected = updateDefFileLogArgs #commandNameTrunc 15
 
-testNoCmdNameTrunc :: TestTree
-testNoCmdNameTrunc =
-  testPropertyNamed "Parses --no-file-log-cmd-name-trunc" "testNoCmdNameTrunc"
+testNoCommandNameTrunc :: TestTree
+testNoCommandNameTrunc =
+  testPropertyNamed "Parses --no-file-log-command-name-trunc" "testNoCommandNameTrunc"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-file-log-cmd-name-trunc", "command"]
-    expected = disableDefFileLogArgs #cmdNameTrunc
+    argList = ["--no-file-log-command-name-trunc", "command"]
+    expected = disableDefFileLogArgs #commandNameTrunc
 
 deleteOnSuccessTests :: TestTree
 deleteOnSuccessTests =

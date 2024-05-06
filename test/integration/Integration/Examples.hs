@@ -13,10 +13,10 @@ import Integration.Utils
     notifySystemOSNotifySend,
     runConfigIO,
   )
-import Shrun.Configuration.Data.CmdLogging
-  ( CmdLoggingP (MkCmdLoggingP, pollInterval, readSize),
+import Shrun.Configuration.Data.CommandLogging
+  ( CommandLoggingP (MkCommandLoggingP, pollInterval, readSize),
   )
-import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP
       ( MkCommonLoggingP,
@@ -34,8 +34,8 @@ import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
     ConsoleLoggingP
       ( MkConsoleLoggingP,
-        cmdLogging,
-        cmdNameTrunc,
+        commandLogging,
+        commandNameTrunc,
         lineTrunc,
         stripControl
       ),
@@ -43,7 +43,7 @@ import Shrun.Configuration.Data.ConsoleLogging
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        cmdLogging,
+        commandLogging,
         commonLogging,
         consoleLogging,
         fileLogging,
@@ -100,13 +100,13 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                     },
                 consoleLogging =
                   MkConsoleLoggingP
-                    { cmdLogging = ConsoleLogCmdOn,
-                      cmdNameTrunc = Just 80,
+                    { commandLogging = ConsoleLogCmdOn,
+                      commandNameTrunc = Just 80,
                       lineTrunc = Just 150,
                       stripControl = StripControlSmart
                     },
-                cmdLogging =
-                  MkCmdLoggingP
+                commandLogging =
+                  MkCommandLoggingP
                     { pollInterval = 100,
                       readSize = MkReadSize $ MkBytes 2048
                     },

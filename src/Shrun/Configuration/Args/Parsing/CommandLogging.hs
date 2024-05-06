@@ -1,6 +1,6 @@
--- | CLI parsing for CmdLoggingArgs
-module Shrun.Configuration.Args.Parsing.CmdLogging
-  ( cmdLoggingParser,
+-- | CLI parsing for CommandLoggingArgs
+module Shrun.Configuration.Args.Parsing.CommandLogging
+  ( commandLoggingParser,
   )
 where
 
@@ -8,48 +8,48 @@ import Data.Text qualified as T
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
-import Shrun.Configuration.Data.CmdLogging
-  ( CmdLoggingArgs,
-    CmdLoggingP
-      ( MkCmdLoggingP,
+import Shrun.Configuration.Data.CommandLogging
+  ( CommandLoggingArgs,
+    CommandLoggingP
+      ( MkCommandLoggingP,
         pollInterval,
         readSize
       ),
   )
-import Shrun.Configuration.Data.CmdLogging.PollInterval (PollInterval)
-import Shrun.Configuration.Data.CmdLogging.PollInterval qualified as PollInterval
-import Shrun.Configuration.Data.CmdLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
+import Shrun.Configuration.Data.CommandLogging.PollInterval qualified as PollInterval
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
-cmdLoggingParser :: Parser CmdLoggingArgs
-cmdLoggingParser = do
+commandLoggingParser :: Parser CommandLoggingArgs
+commandLoggingParser = do
   pollInterval <- pollIntervalParser
   readSize <- readSizeParser
 
   pure
-    $ MkCmdLoggingP
+    $ MkCommandLoggingP
       { pollInterval,
         readSize
       }
 
 pollIntervalParser :: Parser (WithDisabled PollInterval)
-pollIntervalParser = Utils.withDisabledParser mainParser "cmd-log-poll-interval"
+pollIntervalParser = Utils.withDisabledParser mainParser "command-log-poll-interval"
   where
     mainParser =
       OA.optional
         $ OA.option
           (PollInterval.parsePollInterval OA.auto)
           ( mconcat
-              [ OA.long "cmd-log-poll-interval",
+              [ OA.long "command-log-poll-interval",
                 Utils.mkHelp helpTxt,
                 OA.metavar "NATURAL"
               ]
           )
     helpTxt =
       mconcat
-        [ "Non-negative integer used in conjunction with --console-log-cmd and ",
+        [ "Non-negative integer used in conjunction with --console-log-command and ",
           "--file-log that determines how quickly we poll commands for ",
           "logs, in microseconds. A value of 0 is interpreted as infinite ",
           "i.e. limited only by the CPU. Defaults to ",
@@ -69,23 +69,23 @@ pollIntervalParser = Utils.withDisabledParser mainParser "cmd-log-poll-interval"
         . view #unPollInterval
 
 readSizeParser :: Parser (WithDisabled ReadSize)
-readSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
+readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"
   where
     mainParser =
       OA.optional
         $ OA.option
-          readcmdLogReadSize
+          readReadSize
           ( mconcat
-              [ OA.long "cmd-log-read-size",
+              [ OA.long "command-log-read-size",
                 Utils.mkHelp helpTxt,
                 OA.metavar "NATURAL"
               ]
           )
-    readcmdLogReadSize = MkReadSize . MkBytes <$> OA.auto
+    readReadSize = MkReadSize . MkBytes <$> OA.auto
     helpTxt =
       mconcat
         [ "Non-negative integer that determines that max number of bytes in ",
-          "a single read when streaming command logs (--console-log-cmd and ",
-          "--file-log). Logs larger than --cmd-log-read-size will be read in ",
+          "a single read when streaming command logs (--console-log-command and ",
+          "--file-log). Logs larger than --command-log-read-size will be read in ",
           "a subsequent read, hence broken across lines. The default is 1024."
         ]

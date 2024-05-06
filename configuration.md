@@ -38,7 +38,7 @@
 
 > [!TIP]
 >
-> In general, each option `--foo` has a `--no-foo` variant that disables CLI and toml configuration for that field. For example, the `--no-console-log-cmd` option will instruct shrun to ignore both CLI `--console-log-cmd` and toml `console-log.cmd`, ensuring the default behavior is used (i.e. no command logging).
+> In general, each option `--foo` has a `--no-foo` variant that disables CLI and toml configuration for that field. For example, the `--no-console-log-command` option will instruct `shrun` to ignore both CLI `--console-log-command` and toml `console-log.command`, ensuring the default behavior is used (i.e. no command logging).
 
 
 ## Core Functionality
@@ -188,9 +188,9 @@ Config related to **command logs** (both console and file).
 
 #### Poll Interval
 
-**Arg:** `--cmd-log-poll-interval NATURAL`
+**Arg:** `--command-log-poll-interval NATURAL`
 
-**Description:** Non-negative integer used in conjunction with [`--console-log-cmd`](#command-log) and [`--file-log`](#file-log) that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
+**Description:** Non-negative integer used in conjunction with [`--console-log-command`](#command-log) and [`--file-log`](#file-log) that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
 
 > [!WARNING]
 > Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
@@ -198,30 +198,30 @@ Config related to **command logs** (both console and file).
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --cmd-log-poll-interval 100 --console-log-cmd "for i in {1..10}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-poll-interval 100 --console-log-command "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
 
 #### Read Size
 
-**Arg:** `--cmd-log-read-size NATURAL`
+**Arg:** `--command-log-read-size NATURAL`
 
-**Description:** Non-negative integer that determines that max number of bytes in a single read when streaming command logs ([`--console-log-cmd`](#command-log) and [`--file-log`](#file-log)). Logs larger than `--cmd-log-read-size` will be read in a subsequent read, hence broken across lines. The default is 1024.
+**Description:** Non-negative integer that determines that max number of bytes in a single read when streaming command logs ([`--console-log-command`](#command-log) and [`--file-log`](#file-log)). Logs larger than `--command-log-read-size` will be read in a subsequent read, hence broken across lines. The default is 1024.
 
 **Example:**
 
 > [!NOTE]
-> In this example we also use `--cmd-log-poll-interval 1000000` to slow down the reads, so that we can see `acbde` and `f` are indeed read separately. Ordinarily this would be too fast to see the difference.
+> In this example we also use `--command-log-poll-interval 1000000` to slow down the reads, so that we can see `acbde` and `f` are indeed read separately. Ordinarily this would be too fast to see the difference.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --cmd-log-read-size 5 --cmd-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5 --command-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcde</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --cmd-log-read-size 5 --cmd-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5 --command-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] f</span>
 <span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
@@ -232,7 +232,7 @@ Config related to console logs.
 
 #### Command Log
 
-**Arg:** `--console-log-cmd`
+**Arg:** `--console-log-command`
 
 **Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is shown at a given time.
 
@@ -242,7 +242,7 @@ Config related to console logs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd "for i in {1..2}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command "for i in {1..2}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..2}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
@@ -257,18 +257,18 @@ vs.
 > [!NOTE]
 > Both the commands' `stdout` and `stderr` are treated the same, logged with the same formatting. This is because many shell programs perform redirection like `echo ... >&2` (i.e. redirect `stdout` to `stderr`). Not only does this mean we need to take both if we do not want to skip any output, but it also means it does not make sense to try to differentiate the two anymore, as that information has been lost.
 >
-> Practically speaking, this does not have much effect, just that if a command dies while `--console-log-cmd` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [`--file-log`](#file-log) for details on investigating command failure.
+> Practically speaking, this does not have much effect, just that if a command dies while `--console-log-command` is enabled, then the final `[Error] ...` output may not have the most relevant information. See [`--file-log`](#file-log) for details on investigating command failure.
 
 #### Command Name Truncation
 
-**Arg:** `--console-log-cmd-name-trunc NATURAL`
+**Arg:** `--console-log-command-name-trunc NATURAL`
 
 **Description:** Non-negative integer that limits the length of commands/key-names in the console logs. Defaults to no truncation.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #69ff94">[Success][for i i...] 3 seconds</span>
 <span style="color: #d6acff">[Finished] 3 seconds</span></code>
 </pre>
@@ -282,7 +282,7 @@ vs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
 <span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
@@ -300,25 +300,25 @@ Though it is possible to miss some chars. This option is experimental and subjec
 
 **Example:**
 
-Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes. The former sets the text color to magenta, and the latter resets the cursor to the left by 3 places i.e. partially overwrites the previous characters. We also include the options `--console-log-cmd --console-log-cmd-name-trunc 10` (show command logs and truncate command name to 10 chars) to make the output easier to read.
+Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes. The former sets the text color to magenta, and the latter resets the cursor to the left by 3 places i.e. partially overwrites the previous characters. We also include the options `--console-log-command --console-log-command-name-trunc 10` (show command logs and truncate command name to 10 chars) to make the output easier to read.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 `none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-cmd --console-log-cmd-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
@@ -331,7 +331,7 @@ Config related to file logs.
 
 **Arg:** `-f, --file-log (default | PATH)`
 
-**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of [`--console-log-cmd`](#command-log). Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the XDG state directory e.g. `~/.local/state/shrun/shrun.log`.
+**Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of [`--console-log-command`](#command-log). Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the XDG state directory e.g. `~/.local/state/shrun/shrun.log`.
 
 **Example:**
 
@@ -357,14 +357,14 @@ Config related to file logs.
 
 #### File Command Name Truncation
 
-**Arg:** `--file-log-cmd-name-trunc NATURAL`
+**Arg:** `--file-log-command-name-trunc NATURAL`
 
-**Description:** Like [`--console-log-cmd-name-trunc`](#command-name-truncation), but for `--file-logs`.
+**Description:** Like [`--console-log-command-name-trunc`](#command-name-truncation), but for `--file-logs`.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --file-log out.log --file-log-cmd-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log out.log --file-log-command-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #69ff94">[Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
 <span style="color: #d6acff">[Finished] 3 seconds</span></code>
 </pre>
@@ -469,7 +469,7 @@ vs.
 
 **Arg:** `--file-log-strip-control (all | smart | none)`
 
-**Description**: `--cmd-log-strip-control` for file logs created with `--file-log`. Defaults to all.
+**Description**: `--console-log-strip-control` for file logs created with `--file-log`. Defaults to all.
 
 ## Notifications
 

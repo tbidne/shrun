@@ -21,13 +21,21 @@ where
 
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
-import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOff))
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch (KeyHideOff),
+  )
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Configuration.Data.Truncation (TruncRegion (TCmdName, TLine), Truncation (MkTruncation))
+import Shrun.Configuration.Data.Truncation
+  ( TruncRegion
+      ( TruncCommandName,
+        TruncLine
+      ),
+    Truncation (MkTruncation),
+  )
 import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
 import Shrun.Logging.Types
   ( Log,
@@ -73,7 +81,7 @@ formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
     line =
       coreFormatting
         (consoleLogging ^. #lineTrunc)
-        (consoleLogging ^. #cmdNameTrunc)
+        (consoleLogging ^. #commandNameTrunc)
         (consoleLogging ^. #stripControl)
         keyHide
         log
@@ -102,7 +110,7 @@ formatFileLog keyHide fileLogging log = do
     line =
       coreFormatting
         (fileLogging ^. #lineTrunc)
-        (fileLogging ^. #cmdNameTrunc)
+        (fileLogging ^. #commandNameTrunc)
         (fileLogging ^. #stripControl)
         keyHide
         log
@@ -122,9 +130,9 @@ formatFileLog keyHide fileLogging log = do
 --    truncation kicks in.
 coreFormatting ::
   -- | Optional line truncation
-  Maybe (Truncation TLine) ->
+  Maybe (Truncation TruncLine) ->
   -- | Optional cmd name truncation
-  Maybe (Truncation TCmdName) ->
+  Maybe (Truncation TruncCommandName) ->
   -- | Strip control
   StripControl t ->
   -- | Key hide
@@ -132,7 +140,7 @@ coreFormatting ::
   -- | Log to format
   Log ->
   Text
-coreFormatting mLineTrunc mCmdNameTrunc stripControl keyHide log =
+coreFormatting mLineTrunc mCommandNameTrunc stripControl keyHide log =
   let line = case log ^. #cmd of
         Nothing ->
           let totalPrefix = brackets True logPrefix
@@ -144,7 +152,7 @@ coreFormatting mLineTrunc mCmdNameTrunc stripControl keyHide log =
           let cmd' =
                 formatCommand
                   keyHide
-                  mCmdNameTrunc
+                  mCommandNameTrunc
                   cmd
               totalPrefix =
                 mconcat
@@ -162,10 +170,10 @@ coreFormatting mLineTrunc mCmdNameTrunc stripControl keyHide log =
 
 formatCommand ::
   KeyHideSwitch ->
-  Maybe (Truncation TCmdName) ->
+  Maybe (Truncation TruncCommandName) ->
   CommandP1 ->
   Text
-formatCommand keyHide cmdNameTrunc com = brackets True (truncateNameFn cmdName)
+formatCommand keyHide commandNameTrunc com = brackets True (truncateNameFn cmdName)
   where
     -- Get cmd name to display. Always strip control sequences.
     cmdName =
@@ -175,7 +183,7 @@ formatCommand keyHide cmdNameTrunc com = brackets True (truncateNameFn cmdName)
     truncateNameFn =
       maybeApply
         Utils.truncateIfNeeded
-        (cmdNameTrunc ^? (_Just % #unTruncation))
+        (commandNameTrunc ^? (_Just % #unTruncation))
 
 -- | Combines a prefix @p@ and msg @m@ with possible line truncation. If no
 -- truncation is given then concatWithLineTrunc is equivalent to @p <> m@.
@@ -193,7 +201,7 @@ formatCommand keyHide cmdNameTrunc com = brackets True (truncateNameFn cmdName)
 --
 -- where @t'@ is @t@ truncated to @k@ chars. Notice the prefix is always
 -- included untarnished.
-concatWithLineTrunc :: Maybe (Truncation TLine) -> Text -> Text -> Text
+concatWithLineTrunc :: Maybe (Truncation TruncLine) -> Text -> Text -> Text
 concatWithLineTrunc Nothing prefix msg = prefix <> msg
 concatWithLineTrunc (Just (MkTruncation lineTrunc)) prefix msg =
   prefix <> Utils.truncateIfNeeded lineTrunc' msg

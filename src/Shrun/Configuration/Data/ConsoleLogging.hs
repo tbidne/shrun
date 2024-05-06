@@ -33,10 +33,10 @@ import Shrun.Configuration.Data.ConfigPhase
   )
 import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
 import Shrun.Configuration.Data.Truncation
-  ( TruncRegion (TCmdName),
+  ( TruncRegion (TruncCommandName),
     Truncation,
     configToLineTrunc,
-    decodeCmdNameTrunc,
+    decodeCommandNameTrunc,
     decodeLineTrunc,
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.), (<>??))
@@ -74,8 +74,8 @@ instance
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
 data ConsoleLoggingP p = MkConsoleLoggingP
-  { cmdLogging :: SwitchF p ConsoleLogCmdSwitch,
-    cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
+  { commandLogging :: SwitchF p ConsoleLogCmdSwitch,
+    commandNameTrunc :: ConfigPhaseMaybeF p (Truncation TruncCommandName),
     lineTrunc :: LineTruncF p,
     stripControl :: ConfigPhaseF p ConsoleLogStripControl
   }
@@ -116,34 +116,34 @@ mergeConsoleLogging args mToml = do
 
   pure
     $ MkConsoleLoggingP
-      { cmdLogging =
+      { commandLogging =
           WD.fromDefault
             ( review #boolIso
-                <$> argsCmdLogging
-                <>? (toml ^. #cmdLogging)
+                <$> argsCommandLogging
+                <>? (toml ^. #commandLogging)
             ),
-        cmdNameTrunc = (args ^. #cmdNameTrunc) <>?? (toml ^. #cmdNameTrunc),
+        commandNameTrunc = (args ^. #commandNameTrunc) <>?? (toml ^. #commandNameTrunc),
         lineTrunc,
         stripControl =
           (args ^. #stripControl) <>?. (toml ^. #stripControl)
       }
   where
     -- Convert WithDisabled () -> WithDisabled Bool for below operation.
-    argsCmdLogging :: WithDisabled Bool
-    argsCmdLogging = args ^. #cmdLogging $> True
+    argsCommandLogging :: WithDisabled Bool
+    argsCommandLogging = args ^. #commandLogging $> True
 
     toml = fromMaybe defaultToml mToml
 
 instance DecodeTOML ConsoleLoggingToml where
   tomlDecoder =
     MkConsoleLoggingP
-      <$> decodeCmdLogging
-      <*> decodeCmdNameTrunc
+      <$> decodeCommandLogging
+      <*> decodeCommandNameTrunc
       <*> decodeLineTrunc
       <*> decodeStripControl
 
-decodeCmdLogging :: Decoder (Maybe Bool)
-decodeCmdLogging = getFieldOptWith tomlDecoder "cmd"
+decodeCommandLogging :: Decoder (Maybe Bool)
+decodeCommandLogging = getFieldOptWith tomlDecoder "command"
 
 decodeStripControl :: Decoder (Maybe ConsoleLogStripControl)
 decodeStripControl = getFieldOptWith tomlDecoder "strip-control"
@@ -151,8 +151,8 @@ decodeStripControl = getFieldOptWith tomlDecoder "strip-control"
 toEnv :: ConsoleLoggingMerged -> ConsoleLoggingEnv
 toEnv merged =
   MkConsoleLoggingP
-    { cmdLogging = merged ^. #cmdLogging,
-      cmdNameTrunc = merged ^. #cmdNameTrunc,
+    { commandLogging = merged ^. #commandLogging,
+      commandNameTrunc = merged ^. #commandNameTrunc,
       lineTrunc = merged ^. #lineTrunc,
       stripControl = merged ^. #stripControl
     }
@@ -160,8 +160,8 @@ toEnv merged =
 defaultToml :: ConsoleLoggingToml
 defaultToml =
   MkConsoleLoggingP
-    { cmdLogging = Nothing,
-      cmdNameTrunc = Nothing,
+    { commandLogging = Nothing,
+      commandNameTrunc = Nothing,
       lineTrunc = Nothing,
       stripControl = Nothing
     }
@@ -169,8 +169,8 @@ defaultToml =
 defaultMerged :: ConsoleLoggingMerged
 defaultMerged =
   MkConsoleLoggingP
-    { cmdLogging = def,
-      cmdNameTrunc = Nothing,
+    { commandLogging = def,
+      commandNameTrunc = Nothing,
       lineTrunc = Nothing,
       stripControl = def
     }

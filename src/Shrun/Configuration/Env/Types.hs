@@ -6,7 +6,7 @@ module Shrun.Configuration.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
     prependCompletedCommand,
-    HasCmdLogging (..),
+    HasCommandLogging (..),
     HasCommonLogging (..),
     HasConsoleLogging (..),
     HasFileLogging (..),
@@ -21,7 +21,7 @@ module Shrun.Configuration.Env.Types
   )
 where
 
-import Shrun.Configuration.Data.CmdLogging (CmdLoggingEnv)
+import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConfigPhase (ConfigPhase (ConfigPhaseEnv))
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
@@ -37,7 +37,7 @@ import Shrun.Prelude
 class HasCommands env where
   getCommands :: env -> NESeq CommandP1
 
-  getCompletedCmds :: env -> TVar (Seq CommandP1)
+  getCompletedCommands :: env -> TVar (Seq CommandP1)
 
 -- | Timeout, if any.
 class HasTimeout env where
@@ -47,8 +47,8 @@ class HasTimeout env where
 class HasInit env where
   getInit :: env -> Maybe Text
 
-class HasCmdLogging env where
-  getCmdLogging :: env -> CmdLoggingEnv
+class HasCommandLogging env where
+  getCommandLogging :: env -> CommandLoggingEnv
 
 class HasCommonLogging env where
   getCommonLogging :: env -> CommonLoggingEnv
@@ -68,7 +68,7 @@ data Env r = MkEnv
   { config :: CoreConfigP ConfigPhaseEnv,
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
-    completedCmds :: TVar (Seq CommandP1),
+    completedCommands :: TVar (Seq CommandP1),
     -- | Console log queue.
     consoleLogQueue :: ~(TBQueue (LogRegion r)),
     -- | Holds the anyError flag, signaling if any command exited with an
@@ -87,8 +87,8 @@ instance HasTimeout (Env r) where
 instance HasInit (Env r) where
   getInit = view (#config % #init)
 
-instance HasCmdLogging (Env r) where
-  getCmdLogging = view (#config % #cmdLogging)
+instance HasCommandLogging (Env r) where
+  getCommandLogging = view (#config % #commandLogging)
 
 instance HasCommonLogging (Env r) where
   getCommonLogging = view (#config % #commonLogging)
@@ -104,7 +104,7 @@ instance HasFileLogging (Env r) where
 
 instance HasCommands (Env r) where
   getCommands = view #commands
-  getCompletedCmds = view #completedCmds
+  getCompletedCommands = view #completedCommands
 
 -- | Prepends a completed command.
 prependCompletedCommand ::
@@ -116,8 +116,8 @@ prependCompletedCommand ::
   CommandP1 ->
   m ()
 prependCompletedCommand command = do
-  completedCmds <- asks getCompletedCmds
-  modifyTVarA' completedCmds (command :<|)
+  completedCommands <- asks getCompletedCommands
+  modifyTVarA' completedCommands (command :<|)
 
 instance HasAnyError (Env r) where
   getAnyError = view #anyError
