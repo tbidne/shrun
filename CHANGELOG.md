@@ -20,8 +20,8 @@ the major/minor/patch definitions apply to the application's interface / usage
 * `--no-x` disable args now hidden from help page.
 * Extensive CLI/toml option changes/renaming:
   * `--key-hide`:
-    * CLI: `--log-key-hide`.
-    * Toml: `log.key-hide`.
+    * CLI: `--common-log-key-hide`.
+    * Toml: `common-log.key-hide`.
     * `-k` removed.
   * `--timer-format`:
     * CLI: `--console-log-timer-format`.

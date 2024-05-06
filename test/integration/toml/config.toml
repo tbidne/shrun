@@ -16,7 +16,7 @@ legend = [
   { key = 'c', val = 'a' },
 ]
 
-[log]
+[common-log]
 key-hide = true
 
 [command-log]

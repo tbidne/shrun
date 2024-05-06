@@ -59,7 +59,7 @@ legend = [
 ]
 
 # Common logging configuation.
-#[log]
+#[common-log]
 # By default (key-hide = false), logs will refer to the key name, as defined in
 # legend section. If set to true, logs will instead reference the literal
 # command.

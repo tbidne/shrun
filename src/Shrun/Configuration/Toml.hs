@@ -39,7 +39,7 @@ instance DecodeTOML Toml where
   tomlDecoder = do
     timeout <- decodeTimeout
     init <- decodeInit
-    commonLogging <- getFieldOptWith tomlDecoder "log"
+    commonLogging <- getFieldOptWith tomlDecoder "common-log"
     commandLogging <- getFieldOptWith tomlDecoder "command-log"
     consoleLogging <- getFieldOptWith tomlDecoder "console-log"
     fileLogging <- getFieldOptWith tomlDecoder "file-log"

@@ -58,7 +58,7 @@ shrunToNotifySend shrunNote = txt
         ]
 
     -- Encountered a bug where notify-send would error when given commands
-    -- from the legend that contained quotes and --log-key-hide was active.
+    -- from the legend that contained quotes and --common-log-key-hide was active.
     -- This is presumably due to the command in the logs like
     --
     --     [Command][some cmd "with quotes"]...
@@ -66,7 +66,7 @@ shrunToNotifySend shrunNote = txt
     -- which was then not properly escaped when sent off to notify-send.
     -- Technically the reproducer:
     --
-    --     shrun --log-key-hide --notify-system notify-send --config=examples/config.toml ui
+    --     shrun --common-log-key-hide --notify-system notify-send --config=examples/config.toml ui
     --
     -- only required escaping the summary, but we do the same to the body out
     -- of paranoia.

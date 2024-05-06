@@ -132,14 +132,14 @@ This is general logging config.
 
 #### Key Hide
 
-**Arg:** `--log-key-hide`
+**Arg:** `--common-log-key-hide`
 
 **Description:** By default, we display the key name from the legend file over the actual command that was run, if the former exists. This flag instead shows the literal command. Commands without keys are unaffected.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --log-key-hide --config=examples/config.toml some-key</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --common-log-key-hide --config=examples/config.toml some-key</span>
 <span style="color: #69ff94">[Success][echo hi && sleep 2] 2 seconds</span>
 <span style="color: #d6acff">[Finished] 2 seconds</span></code>
 </pre>

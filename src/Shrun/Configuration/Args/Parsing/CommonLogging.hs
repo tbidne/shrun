@@ -11,7 +11,9 @@ import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingArgs,
     CommonLoggingP (MkCommonLoggingP),
   )
-import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOn))
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch (KeyHideOn),
+  )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
@@ -19,14 +21,14 @@ commonLoggingParser :: Parser CommonLoggingArgs
 commonLoggingParser = MkCommonLoggingP <$> keyHideParser
 
 keyHideParser :: Parser (WithDisabled KeyHideSwitch)
-keyHideParser = Utils.withDisabledParser mainParser "log-key-hide"
+keyHideParser = Utils.withDisabledParser mainParser "common-log-key-hide"
   where
     mainParser =
       OA.optional
         $ OA.flag'
           KeyHideOn
           ( mconcat
-              [ OA.long "log-key-hide",
+              [ OA.long "common-log-key-hide",
                 Utils.mkHelp helpTxt
               ]
           )

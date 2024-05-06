@@ -18,23 +18,23 @@ tests =
 keyHideTests :: TestTree
 keyHideTests =
   testGroup
-    "--log-key-hide"
+    "--common-log-key-hide"
     [ testKeyHide,
       testNoKeyHide
     ]
 
 testKeyHide :: TestTree
 testKeyHide =
-  testPropertyNamed "Parses --log-key-hide" "testKeyHide"
+  testPropertyNamed "Parses --common-log-key-hide" "testKeyHide"
     $ U.verifyResult argList expected
   where
-    argList = ["--log-key-hide", "command"]
+    argList = ["--common-log-key-hide", "command"]
     expected = U.updateDefCoreArgs (#commonLogging % #keyHide) KeyHideOn
 
 testNoKeyHide :: TestTree
 testNoKeyHide =
-  testPropertyNamed "Parses --no-log-key-hide" "testNoKeyHide"
+  testPropertyNamed "Parses --no-common-log-key-hide" "testNoKeyHide"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-log-key-hide", "command"]
+    argList = ["--no-common-log-key-hide", "command"]
     expected = U.disableDefCoreArgs (#commonLogging % #keyHide)

@@ -7,7 +7,7 @@
 timeout = "1h"
 init = "blah"
 
-[log]
+[common-log]
 key-hide = false
 
 [command-log]

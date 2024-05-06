@@ -17,7 +17,7 @@ legend = [
   { key = 'c', val = 'a' },
 ]
 
-[log]
+[common-log]
 key-hide = true
 timer-format = "digital_full"
 
