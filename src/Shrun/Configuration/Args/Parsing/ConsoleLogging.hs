@@ -9,7 +9,7 @@ import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.ConsoleLogging
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
-import Shrun.Data.StripControl (StripControl)
+import Shrun.Data.StripControl (ConsoleLogStripControl)
 import Shrun.Data.StripControl qualified as StripControl
 import Shrun.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
 import Shrun.Data.Truncation qualified as Trunc
@@ -93,7 +93,7 @@ lineTruncParser = Utils.withDisabledParser mainParser "console-log-line-trunc"
           "automatically. Defaults to no truncation."
         ]
 
-stripControlParser :: Parser (WithDisabled StripControl)
+stripControlParser :: Parser (WithDisabled ConsoleLogStripControl)
 stripControlParser =
   Utils.withDisabledParser mainParser "console-log-strip-control"
   where

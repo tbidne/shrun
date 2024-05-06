@@ -18,6 +18,7 @@ import Integration.Utils
   )
 import Shrun.Configuration qualified as Configuration
 import Shrun.Configuration.Args qualified as Args
+import Shrun.Configuration.Data.FileLogging (DeleteOnSuccessSwitch (DeleteOnSuccessOn))
 import Shrun.Configuration.Data.MergedConfig qualified as Merged
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Toml qualified as Toml
@@ -262,7 +263,7 @@ testFileLogDeleteOnSuccess = testPropertyNamed desc "testFileLogDeleteOnSuccess"
     desc = "delete-on-success reads true"
     args = ["-c", getIntConfig "basic-file-log", "cmd"]
 
-    expected = [#coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just True]
+    expected = [#coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just DeleteOnSuccessOn]
 
 newtype TermIO a = MkTermIO (IO a)
   deriving (Applicative, Functor, Monad, MonadThrow) via IO

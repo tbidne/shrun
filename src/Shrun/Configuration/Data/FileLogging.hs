@@ -10,6 +10,7 @@ module Shrun.Configuration.Data.FileLogging
     FileLoggingToml,
     FileLoggingMerged,
     FileLoggingEnv,
+    DeleteOnSuccessSwitch (..),
     mergeFileLogging,
     withFileLoggingEnv,
   )
@@ -27,8 +28,7 @@ import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing)
 import Effects.FileSystem.Utils qualified as FsUtils
 import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Data.ConfigPhase
-  ( BoolF,
-    ConfigPhase
+  ( ConfigPhase
       ( ConfigPhaseArgs,
         ConfigPhaseEnv,
         ConfigPhaseMerged,
@@ -37,20 +37,56 @@ import Shrun.Configuration.Data.ConfigPhase
     ConfigPhaseF,
     ConfigPhaseMaybeF,
     LineTruncF,
+    SwitchF,
   )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
     (<>?),
-    _With,
+    (<>?.),
+    (<>??),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite), defaultFileMode)
+import Shrun.Configuration.Default (Default (..))
+import Shrun.Data.FileMode (FileMode (FileModeAppend, FileModeWrite))
 import Shrun.Data.FilePathDefault (FilePathDefault (..))
-import Shrun.Data.FileSizeMode (FileSizeMode (..), defaultFileSizeMode)
-import Shrun.Data.StripControl (StripControl, defaultFileLogStripControl)
-import Shrun.Data.Truncation (TruncRegion (TCmdName), Truncation, configToLineTrunc, decodeCmdNameTrunc, decodeLineTrunc)
+import Shrun.Data.FileSizeMode (FileSizeMode (..))
+import Shrun.Data.StripControl (FileLogStripControl)
+import Shrun.Data.Truncation
+  ( TruncRegion (TCmdName),
+    Truncation,
+    configToLineTrunc,
+    decodeCmdNameTrunc,
+    decodeLineTrunc,
+  )
 import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
+
+-- | Switch for deleting the log file upon success.
+data DeleteOnSuccessSwitch
+  = DeleteOnSuccessOn
+  | DeleteOnSuccessOff
+  deriving stock (Eq, Show)
+
+instance Default DeleteOnSuccessSwitch where
+  def = DeleteOnSuccessOff
+
+instance
+  ( k ~ An_Iso,
+    a ~ Bool,
+    b ~ Bool
+  ) =>
+  LabelOptic
+    "boolIso"
+    k
+    DeleteOnSuccessSwitch
+    DeleteOnSuccessSwitch
+    a
+    b
+  where
+  labelOptic =
+    iso
+      (\cases DeleteOnSuccessOn -> True; DeleteOnSuccessOff -> False)
+      (\cases True -> DeleteOnSuccessOn; False -> DeleteOnSuccessOff)
 
 -- NOTE: [Args vs. Toml mandatory fields]
 --
@@ -148,11 +184,12 @@ data FileLoggingP p = MkFileLoggingP
     -- | The max number of command characters to display in the file logs.
     cmdNameTrunc :: ConfigPhaseMaybeF p (Truncation TCmdName),
     -- | If active, deletes the log file upon success.
-    deleteOnSuccess :: BoolF p,
+    deleteOnSuccess :: SwitchF p DeleteOnSuccessSwitch,
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     lineTrunc :: LineTruncF p,
-    stripControl :: ConfigPhaseF p StripControl
+    -- | Strip control
+    stripControl :: ConfigPhaseF p FileLogStripControl
   }
 
 makeFieldLabelsNoPrefix ''FileLoggingP
@@ -185,119 +222,70 @@ mergeFileLogging ::
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
   m (Maybe FileLoggingMerged)
-mergeFileLogging args mToml =
-  case args ^. (#file % #path) of
-    -- 1. Logging globally disabled
-    Disabled -> pure Nothing
-    Without -> case mToml of
-      -- 2. No Args and no Toml
-      Nothing -> pure Nothing
-      -- 3. No Args and yes Toml
-      Just toml -> do
-        lineTrunc <-
-          configToLineTrunc $ view #lineTrunc args <>? view #lineTrunc toml
-        pure
-          $ Just
-          $ MkFileLoggingP
-            { file =
-                MkFileLogInitP
-                  { path = toml ^. (#file % #path),
-                    mode =
-                      plusDefault
-                        defaultFileMode
-                        (#file % #mode)
-                        (toml ^. #file % #mode),
-                    sizeMode =
-                      plusDefault
-                        defaultFileSizeMode
-                        (#file % #sizeMode)
-                        (toml ^. #file % #sizeMode)
-                  },
-              cmdNameTrunc =
-                plusNothing
-                  #cmdNameTrunc
-                  (toml ^. #cmdNameTrunc),
-              deleteOnSuccess =
-                WD.fromWithDisabled
-                  False
-                  (argsDeleteOnSuccess <>? (toml ^. #deleteOnSuccess)),
-              lineTrunc,
-              stripControl =
-                plusDefault
-                  defaultFileLogStripControl
-                  #stripControl
-                  (toml ^. #stripControl)
-            }
-    With path -> case mToml of
-      -- 3. Yes Args and no Toml
-      Nothing -> do
-        lineTrunc <- configToLineTrunc (args ^. #lineTrunc)
-        pure
-          $ Just
-          $ MkFileLoggingP
-            { file =
-                MkFileLogInitP
-                  { path,
-                    mode =
-                      WD.fromWithDisabled defaultFileMode (args ^. #file % #mode),
-                    sizeMode =
-                      WD.fromWithDisabled defaultFileSizeMode (args ^. #file % #sizeMode)
-                  },
-              cmdNameTrunc =
-                WD.toMaybe (args ^. #cmdNameTrunc),
-              deleteOnSuccess = is (#deleteOnSuccess % _With) args,
-              lineTrunc,
-              stripControl =
-                WD.fromWithDisabled
-                  defaultFileLogStripControl
-                  (args ^. #stripControl)
-            }
-      -- 4. Yes Args and yes Toml
-      Just toml -> do
-        lineTrunc <-
-          configToLineTrunc $ view #lineTrunc args <>? view #lineTrunc toml
-        pure
-          $ Just
-          $ MkFileLoggingP
-            { file =
-                MkFileLogInitP
-                  { path,
-                    mode =
-                      plusDefault
-                        defaultFileMode
-                        (#file % #mode)
-                        (toml ^. #file % #mode),
-                    sizeMode =
-                      plusDefault
-                        defaultFileSizeMode
-                        (#file % #sizeMode)
-                        (toml ^. #file % #sizeMode)
-                  },
-              cmdNameTrunc =
-                plusNothing
-                  #cmdNameTrunc
-                  (toml ^. #cmdNameTrunc),
-              deleteOnSuccess =
-                WD.fromWithDisabled
-                  False
-                  (argsDeleteOnSuccess <>? (toml ^. #deleteOnSuccess)),
-              lineTrunc,
-              stripControl =
-                plusDefault
-                  defaultFileLogStripControl
-                  #stripControl
-                  (view #stripControl toml)
-            }
+mergeFileLogging args mToml = case mPath of
+  Nothing -> pure Nothing
+  Just path -> do
+    let toml = fromMaybe (defaultToml path) mToml
+
+    lineTrunc <-
+      configToLineTrunc $ (args ^. #lineTrunc) <>? (toml ^. #lineTrunc)
+
+    pure
+      $ Just
+      $ MkFileLoggingP
+        { file =
+            MkFileLogInitP
+              { path,
+                mode =
+                  (args ^. #file % #mode) <>?. (toml ^. #file % #mode),
+                sizeMode =
+                  (args ^. #file % #sizeMode) <>?. (toml ^. #file % #sizeMode)
+              },
+          cmdNameTrunc =
+            (args ^. #cmdNameTrunc) <>?? (toml ^. #cmdNameTrunc),
+          deleteOnSuccess =
+            WD.fromDefault
+              ( review #boolIso
+                  <$> argsDeleteOnSuccess
+                  <>? (toml ^. #deleteOnSuccess)
+              ),
+          lineTrunc,
+          stripControl =
+            (args ^. #stripControl) <>?. (toml ^. #stripControl)
+        }
   where
     -- Convert WithDisabled () -> WithDisabled Bool for below operation.
     argsDeleteOnSuccess :: WithDisabled Bool
     argsDeleteOnSuccess = args ^. #deleteOnSuccess $> True
 
-    plusDefault :: a -> Lens' FileLoggingArgs (WithDisabled a) -> Maybe a -> a
-    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
-
-    plusNothing :: Lens' FileLoggingArgs (WithDisabled a) -> Maybe a -> Maybe a
-    plusNothing l r = WD.toMaybe $ (args ^. l) <>? r
+    -- NOTE: [Config two-part pattern matching]
+    --
+    -- Why do we pattern match here and in the main body of mergeFileLogging,
+    -- rather than just once? If we did all of it in the body we'd have logic
+    -- like:
+    --
+    --     if Disabled and No Toml
+    --       Nothing
+    --     else if No args and No Toml
+    --       Nothing
+    --     else if Args and No Toml
+    --       Just fileLogging ...
+    --     else if No Args and Toml
+    --       Just fileLogging ...
+    --     else Args and Toml
+    --       Just fileLogging ..
+    --
+    -- That is, we'd repeate the "Just fileLogging" step several types, and
+    -- since it is already quite wordy, readability suffers. It is easier to
+    -- reduce the pattern matching down to a "go no-go" switch first, then
+    -- make the fileLogging based on that.
+    mPath = case (args ^. #file % #path, mToml) of
+      -- 1. Logging globally disabled
+      (Disabled, _) -> Nothing
+      -- 2. No Args and no Toml
+      (Without, Nothing) -> Nothing
+      (With p, _) -> Just p
+      (_, Just toml) -> Just $ toml ^. #file % #path
 
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =
@@ -311,7 +299,7 @@ instance DecodeTOML FileLoggingToml where
 decodeFileDeleteOnSuccess :: Decoder (Maybe Bool)
 decodeFileDeleteOnSuccess = getFieldOptWith tomlDecoder "delete-on-success"
 
-decodeFileLogStripControl :: Decoder (Maybe StripControl)
+decodeFileLogStripControl :: Decoder (Maybe FileLogStripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "strip-control"
 
 type MLogging = Maybe (Tuple3 FileLoggingMerged Handle (TBQueue FileLog))
@@ -391,7 +379,7 @@ withMLogging (Just fileLogging) onLogging = do
   -- If the above command succeeded and deleteOnSuccess is true, delete the
   -- log file. Otherwise we will not reach here due to withBinaryFile
   -- rethrowing an exception, so the file will not be deleted.
-  when (fileLogging ^. #deleteOnSuccess)
+  when (fileLogging ^. #deleteOnSuccess % #boolIso)
     $ removeFileIfExists fp
 
   pure result
@@ -453,3 +441,18 @@ ensureFileExists fp = do
 
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgState = getXdgState [osp|shrun|]
+
+defaultToml :: FilePathDefault -> FileLoggingToml
+defaultToml path =
+  MkFileLoggingP
+    { file =
+        MkFileLogInitP
+          { path,
+            mode = Nothing,
+            sizeMode = Nothing
+          },
+      cmdNameTrunc = Nothing,
+      deleteOnSuccess = Nothing,
+      lineTrunc = Nothing,
+      stripControl = Nothing
+    }

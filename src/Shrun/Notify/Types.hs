@@ -12,7 +12,6 @@ module Shrun.Notify.Types
     NotifySystemEnv,
     parseNotifySystem,
     notifySystemStr,
-    defaultNotifySystem,
     showNotifySystem,
     displayNotifySystem,
     DBusF,
@@ -36,7 +35,6 @@ module Shrun.Notify.Types
     NotifyTimeout (..),
     parseNotifyTimeout,
     notifyTimeoutStr,
-    defaultNotifyTimeout,
 
     -- * Exceptions
     OsxNotifySystemMismatch (..),
@@ -61,6 +59,7 @@ import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
   )
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import TOML (Value (Integer, String))
 import Text.Read qualified as TR
@@ -147,7 +146,7 @@ mergeNotifySystem ::
   NotifySystemMerged
 mergeNotifySystem mArgs mToml =
   case mArgs of
-    Disabled -> defaultNotifySystem
+    Disabled -> def
     With (DBus ()) -> DBus ()
     With NotifySend -> NotifySend
     With AppleScript -> AppleScript
@@ -155,7 +154,7 @@ mergeNotifySystem mArgs mToml =
       Just (DBus ()) -> DBus ()
       Just NotifySend -> NotifySend
       Just AppleScript -> AppleScript
-      Nothing -> defaultNotifySystem
+      Nothing -> def
 
 showNotifySystem :: (IsString a) => NotifySystemP p -> a
 showNotifySystem (DBus _) = "DBus"
@@ -191,11 +190,11 @@ notifySystemStr :: (IsString a) => a
 notifySystemStr = "(dbus | notify-send | apple-script)"
 
 #if OSX
-defaultNotifySystem :: NotifySystemP p
-defaultNotifySystem = AppleScript
+instance Default (NotifySystemP p) where
+  def = AppleScript
 #else
-defaultNotifySystem :: (DBusF p ~ ()) => NotifySystemP p
-defaultNotifySystem = DBus ()
+instance (DBusF p ~ ()) => Default (NotifySystemP p) where
+  def = DBus ()
 #endif
 
 -- | Determines notification timeout.
@@ -206,8 +205,8 @@ data NotifyTimeout
     NotifyTimeoutNever
   deriving stock (Eq, Show)
 
-defaultNotifyTimeout :: NotifyTimeout
-defaultNotifyTimeout = NotifyTimeoutSeconds 10
+instance Default NotifyTimeout where
+  def = NotifyTimeoutSeconds 10
 
 instance FromInteger NotifyTimeout where
   afromInteger = NotifyTimeoutSeconds . fromInteger

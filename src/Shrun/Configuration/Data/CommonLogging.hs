@@ -2,14 +2,19 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.CommonLogging
-  ( CommonLoggingP (..),
+  ( -- * Types
+    CommonLoggingP (..),
     CommonLoggingArgs,
     CommonLoggingToml,
     CommonLoggingMerged,
     CommonLoggingEnv,
+
+    -- * Functions
     mergeCommonLogging,
-    defaultCommonLoggingMerged,
     toEnv,
+
+    -- * Misc
+    defaultMerged,
   )
 where
 
@@ -22,10 +27,10 @@ import Shrun.Configuration.Data.ConfigPhase
       ),
     ConfigPhaseF,
   )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
-import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Data.KeyHide (KeyHide, defaultKeyHide)
-import Shrun.Data.TimerFormat (TimerFormat, defaultTimerFormat)
+import Shrun.Configuration.Data.WithDisabled ((<>?.))
+import Shrun.Configuration.Default (Default (def))
+import Shrun.Data.KeyHide (KeyHide)
+import Shrun.Data.TimerFormat (TimerFormat)
 import Shrun.Prelude
 
 -- | Holds command logging config.
@@ -64,34 +69,15 @@ mergeCommonLogging ::
   CommonLoggingArgs ->
   Maybe CommonLoggingToml ->
   CommonLoggingMerged
-mergeCommonLogging args = \case
-  Nothing ->
-    MkCommonLoggingP
-      { keyHide =
-          WD.fromWithDisabled
-            defaultKeyHide
-            (args ^. #keyHide),
-        timerFormat =
-          WD.fromWithDisabled
-            defaultTimerFormat
-            (args ^. #timerFormat)
-      }
-  Just toml ->
-    MkCommonLoggingP
-      { keyHide =
-          plusDefault
-            defaultKeyHide
-            #keyHide
-            (toml ^. #keyHide),
-        timerFormat =
-          plusDefault
-            defaultTimerFormat
-            #timerFormat
-            (toml ^. #timerFormat)
-      }
+mergeCommonLogging args mToml =
+  MkCommonLoggingP
+    { keyHide =
+        (args ^. #keyHide) <>?. (toml ^. #keyHide),
+      timerFormat =
+        (args ^. #timerFormat) <>?. (toml ^. #timerFormat)
+    }
   where
-    plusDefault :: a -> Lens' CommonLoggingArgs (WithDisabled a) -> Maybe a -> a
-    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
+    toml = fromMaybe defaultToml mToml
 
 instance DecodeTOML CommonLoggingToml where
   tomlDecoder =
@@ -105,17 +91,24 @@ decodeStripControl = getFieldOptWith tomlDecoder "key-hide"
 decodeCmdLineTrunc :: Decoder (Maybe TimerFormat)
 decodeCmdLineTrunc = getFieldOptWith tomlDecoder "timer-format"
 
-defaultCommonLoggingMerged :: CommonLoggingMerged
-defaultCommonLoggingMerged =
-  MkCommonLoggingP
-    { keyHide = defaultKeyHide,
-      timerFormat = defaultTimerFormat
-    }
-
 -- | Creates env version from merged.
 toEnv :: CommonLoggingMerged -> CommonLoggingEnv
 toEnv merged =
   MkCommonLoggingP
     { keyHide = merged ^. #keyHide,
       timerFormat = merged ^. #timerFormat
+    }
+
+defaultToml :: CommonLoggingToml
+defaultToml =
+  MkCommonLoggingP
+    { keyHide = Nothing,
+      timerFormat = Nothing
+    }
+
+defaultMerged :: CommonLoggingMerged
+defaultMerged =
+  MkCommonLoggingP
+    { keyHide = def,
+      timerFormat = def
     }

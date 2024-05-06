@@ -1,3 +1,6 @@
+{-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE MagicHash #-}
+
 -- | Custom prelude. The idea is to:
 --
 -- * Re-export useful prelude functions/types
@@ -18,6 +21,7 @@ module Shrun.Prelude
     (<<&>>),
     (.>),
     unsafeConvertIntegral,
+    todo,
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
@@ -188,6 +192,8 @@ import Effects.System.Terminal as X
 import Effects.Time as X (MonadTime)
 import GHC.Enum as X (Bounded (maxBound, minBound), Enum (toEnum))
 import GHC.Err as X (error, undefined)
+import GHC.Exception (errorCallWithCallStackException)
+import GHC.Exts (RuntimeRep, TYPE, raise#)
 import GHC.Float as X (Double, Float)
 import GHC.Generics as X (Generic)
 import GHC.Integer as X (Integer)
@@ -202,6 +208,7 @@ import Optics.Core as X
     AffineTraversal',
     An_AffineFold,
     An_AffineTraversal,
+    An_Iso,
     Getter,
     Is,
     Iso',
@@ -352,3 +359,7 @@ unsafeConvertIntegral x = case toIntegralSized x of
           " to ",
           show $ Typeable.typeOf (undefined :: b)
         ]
+
+todo :: forall {r :: RuntimeRep} (a :: TYPE r). (HasCallStack) => a
+todo = raise# (errorCallWithCallStackException "Prelude.todo: not yet implemented" ?callStack)
+{-# WARNING todo "todo remains in code" #-}

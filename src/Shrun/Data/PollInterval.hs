@@ -5,10 +5,10 @@
 module Shrun.Data.PollInterval
   ( PollInterval (..),
     parsePollInterval,
-    defaultPollInterval,
   )
 where
 
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
 -- | Represents how often to poll for command logs, in microseconds.
@@ -25,9 +25,5 @@ instance DecodeTOML PollInterval where
 parsePollInterval :: (Functor m) => m Natural -> m PollInterval
 parsePollInterval getNat = MkPollInterval <$> getNat
 
--- | Default 'PollInterval'.
---
--- >>> defaultPollInterval
--- MkPollInterval {unPollInterval = 10000}
-defaultPollInterval :: PollInterval
-defaultPollInterval = MkPollInterval 10_000
+instance Default PollInterval where
+  def = MkPollInterval 10_000

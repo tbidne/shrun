@@ -1,5 +1,6 @@
 module Unit.Shrun.Configuration.Args.Parsing.CmdLogging (tests) where
 
+import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 
@@ -53,7 +54,7 @@ testReadSize =
     $ U.verifyResult argList expected
   where
     argList = ["--cmd-log-read-size", "2048", "command"]
-    expected = U.updateDefCoreArgs (#cmdLogging % #readSize) (MkBytes 2048)
+    expected = U.updateDefCoreArgs (#cmdLogging % #readSize) (MkCmdLogReadSize $ MkBytes 2048)
 
 testNoReadSize :: TestTree
 testNoReadSize =

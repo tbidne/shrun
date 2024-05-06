@@ -31,7 +31,7 @@ import Shrun.Data.FilePathDefault (FilePathDefault)
 import Shrun.Data.FilePathDefault qualified as FilePathDefault
 import Shrun.Data.FileSizeMode (FileSizeMode)
 import Shrun.Data.FileSizeMode qualified as FileSizeMode
-import Shrun.Data.StripControl (StripControl)
+import Shrun.Data.StripControl (FileLogStripControl)
 import Shrun.Data.StripControl qualified as StripControl
 import Shrun.Data.Truncation (LineTruncation, TruncRegion (TCmdName), Truncation)
 import Shrun.Data.Truncation qualified as Trunc
@@ -138,7 +138,7 @@ lineTruncParser = Utils.withDisabledParser mainParser "file-log-line-trunc"
           )
     helpTxt = "Like --console-log-line-trunc, but for --file-log."
 
-fileLogStripControlParser :: Parser (WithDisabled StripControl)
+fileLogStripControlParser :: Parser (WithDisabled FileLogStripControl)
 fileLogStripControlParser =
   Utils.withDisabledParser mainParser "file-log-strip-control"
   where

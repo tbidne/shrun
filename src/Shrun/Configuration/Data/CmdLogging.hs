@@ -2,13 +2,19 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.CmdLogging
-  ( CmdLoggingP (..),
+  ( -- * Types
+    CmdLoggingP (..),
     CmdLoggingArgs,
     CmdLoggingToml,
     CmdLoggingMerged,
     CmdLoggingEnv,
+
+    -- * Functions
     mergeCmdLogging,
     toEnv,
+
+    -- * Misc
+    defaultMerged,
   )
 where
 
@@ -21,10 +27,10 @@ import Shrun.Configuration.Data.ConfigPhase
       ),
     ConfigPhaseF,
   )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
-import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Data.PollInterval (PollInterval, defaultPollInterval)
-import Shrun.Logging.Types (defaultCmdLogReadSize)
+import Shrun.Configuration.Data.WithDisabled ((<>?.))
+import Shrun.Configuration.Default (Default (def))
+import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
+import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Prelude
 
 -- | Holds config related to (console and file) command logging.
@@ -34,7 +40,7 @@ data CmdLoggingP p = MkCmdLoggingP
     pollInterval :: ConfigPhaseF p PollInterval,
     -- | Determines the max log size we read from commands in one go.
     -- Note this is not on cmdLogging or fileLogging since it affects both.
-    readSize :: ConfigPhaseF p (Bytes B Natural)
+    readSize :: ConfigPhaseF p CmdLogReadSize
   }
 
 makeFieldLabelsNoPrefix ''CmdLoggingP
@@ -64,34 +70,15 @@ mergeCmdLogging ::
   CmdLoggingArgs ->
   Maybe CmdLoggingToml ->
   CmdLoggingMerged
-mergeCmdLogging args = \case
-  Nothing ->
-    MkCmdLoggingP
-      { pollInterval =
-          WD.fromWithDisabled
-            defaultPollInterval
-            (args ^. #pollInterval),
-        readSize =
-          WD.fromWithDisabled
-            defaultCmdLogReadSize
-            (args ^. #readSize)
-      }
-  Just toml ->
-    MkCmdLoggingP
-      { pollInterval =
-          plusDefault
-            defaultPollInterval
-            #pollInterval
-            (toml ^. #pollInterval),
-        readSize =
-          plusDefault
-            defaultCmdLogReadSize
-            #readSize
-            (toml ^. #readSize)
-      }
+mergeCmdLogging args mToml =
+  MkCmdLoggingP
+    { pollInterval =
+        (args ^. #pollInterval) <>?. (toml ^. #pollInterval),
+      readSize =
+        (args ^. #readSize) <>?. (toml ^. #readSize)
+    }
   where
-    plusDefault :: a -> Lens' CmdLoggingArgs (WithDisabled a) -> Maybe a -> a
-    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
+    toml = fromMaybe defaultToml mToml
 
 instance DecodeTOML CmdLoggingToml where
   tomlDecoder =
@@ -102,8 +89,11 @@ instance DecodeTOML CmdLoggingToml where
 decodePollInterval :: Decoder (Maybe PollInterval)
 decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
 
-decodeReadSize :: Decoder (Maybe (Bytes B Natural))
-decodeReadSize = getFieldOptWith (fmap MkBytes tomlDecoder) "read-size"
+decodeReadSize :: Decoder (Maybe CmdLogReadSize)
+decodeReadSize =
+  getFieldOptWith
+    (fmap (MkCmdLogReadSize . MkBytes) tomlDecoder)
+    "read-size"
 
 -- | Creates env version from merged.
 toEnv :: CmdLoggingMerged -> CmdLoggingEnv
@@ -111,4 +101,18 @@ toEnv merged =
   MkCmdLoggingP
     { pollInterval = merged ^. #pollInterval,
       readSize = merged ^. #readSize
+    }
+
+defaultToml :: CmdLoggingToml
+defaultToml =
+  MkCmdLoggingP
+    { pollInterval = Nothing,
+      readSize = Nothing
+    }
+
+defaultMerged :: CmdLoggingMerged
+defaultMerged =
+  MkCmdLoggingP
+    { pollInterval = def,
+      readSize = def
     }

@@ -1,10 +1,10 @@
 module Shrun.Data.FileMode
   ( FileMode (..),
     parseFileMode,
-    defaultFileMode,
   )
 where
 
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
 -- | File mode.
@@ -23,5 +23,5 @@ parseFileMode getTxt =
     "write" -> pure FileModeWrite
     bad -> fail $ "Unrecognized file-mode: " <> unpack bad
 
-defaultFileMode :: FileMode
-defaultFileMode = FileModeWrite
+instance Default FileMode where
+  def = FileModeWrite

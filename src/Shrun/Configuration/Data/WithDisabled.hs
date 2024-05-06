@@ -12,9 +12,12 @@ module Shrun.Configuration.Data.WithDisabled
     toMaybe,
     toBool,
     fromWithDisabled,
+    fromDefault,
 
     -- * Misc
     (<>?),
+    (<>?.),
+    (<>??),
 
     -- * Optics
     _With,
@@ -23,6 +26,7 @@ module Shrun.Configuration.Data.WithDisabled
   )
 where
 
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude hiding (fromMaybe)
 
 -- | Like Maybe but adds an extra constructor representing a "disabled" state.
@@ -101,9 +105,24 @@ fromWithDisabled :: a -> WithDisabled a -> a
 fromWithDisabled _ (With y) = y
 fromWithDisabled x _ = x
 
+fromDefault :: (Default a) => WithDisabled a -> a
+fromDefault = fromWithDisabled def
+
 -- | @l <>? r@ lifts 'Maybe' @r@ into a 'WithDisabled' per
 -- 'Shrun.Configuration.Data.WithDisabled.fromMaybe' then runs the 'Semigroup'.
 (<>?) :: WithDisabled a -> Maybe a -> WithDisabled a
 wd <>? m = wd <> fromMaybe m
 
 infixr 6 <>?
+
+-- | Like '(<>?)' except we extract a result via 'fromWithDisabled'.
+(<>?.) :: (Default a) => WithDisabled a -> Maybe a -> a
+x <>?. y = fromWithDisabled def (x <>? y)
+
+infixr 6 <>?.
+
+-- | Like '(<>?)' except we extract a Maybe via 'toMaybe'.
+(<>??) :: WithDisabled a -> Maybe a -> Maybe a
+x <>?? y = toMaybe (x <>? y)
+
+infixr 6 <>??

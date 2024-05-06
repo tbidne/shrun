@@ -75,10 +75,12 @@ library
     Shrun.Configuration.Data.MergedConfig
     Shrun.Configuration.Data.Notify
     Shrun.Configuration.Data.WithDisabled
+    Shrun.Configuration.Default
     Shrun.Configuration.Env
     Shrun.Configuration.Env.Types
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
+    Shrun.Data.CmdLogReadSize
     Shrun.Data.Command
     Shrun.Data.FileMode
     Shrun.Data.FilePathDefault

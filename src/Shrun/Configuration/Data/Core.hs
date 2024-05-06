@@ -2,12 +2,18 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.Core
-  ( CoreConfigP (..),
+  ( -- * Types
+    CoreConfigP (..),
     CoreConfigArgs,
     CoreConfigToml,
     CoreConfigMerged,
+
+    -- * Functions
     mergeCoreConfig,
     withCoreEnv,
+
+    -- * Misc
+    defaultMerged,
   )
 where
 
@@ -30,8 +36,7 @@ import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
 import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?))
-import Shrun.Configuration.Data.WithDisabled qualified as WD
+import Shrun.Configuration.Data.WithDisabled ((<>??))
 import Shrun.Data.Timeout (Timeout)
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Prelude
@@ -102,72 +107,38 @@ mergeCoreConfig ::
   CoreConfigArgs ->
   Maybe CoreConfigToml ->
   m CoreConfigMerged
-mergeCoreConfig args = \case
-  Nothing -> do
-    consoleLogging <-
-      mergeConsoleLogging
-        (args ^. #consoleLogging)
-        Nothing
+mergeCoreConfig args mToml = do
+  consoleLogging <-
+    mergeConsoleLogging
+      (args ^. #consoleLogging)
+      (toml ^. #consoleLogging)
 
-    fileLogging <-
-      mergeFileLogging
-        (args ^. #fileLogging)
-        Nothing
+  fileLogging <-
+    mergeFileLogging
+      (args ^. #fileLogging)
+      (toml ^. #fileLogging)
 
-    pure
-      $ MkCoreConfigP
-        { timeout = WD.toMaybe (args ^. #timeout),
-          init = WD.toMaybe (args ^. #init),
-          commonLogging =
-            mergeCommonLogging
-              (args ^. #commonLogging)
-              Nothing,
-          consoleLogging,
-          cmdLogging =
-            mergeCmdLogging
-              (args ^. #cmdLogging)
-              Nothing,
-          fileLogging,
-          notify =
-            mergeNotifyLogging
-              (args ^. #notify)
-              Nothing
-        }
-  Just toml -> do
-    consoleLogging <-
-      mergeConsoleLogging
-        (args ^. #consoleLogging)
-        (toml ^. #consoleLogging)
-
-    fileLogging <-
-      mergeFileLogging
-        (args ^. #fileLogging)
-        (toml ^. #fileLogging)
-
-    pure
-      $ MkCoreConfigP
-        { timeout =
-            plusNothing #timeout (toml ^. #timeout),
-          init =
-            plusNothing #init (toml ^. #init),
-          commonLogging =
-            mergeCommonLogging
-              (args ^. #commonLogging)
-              (toml ^. #commonLogging),
-          consoleLogging,
-          cmdLogging =
-            mergeCmdLogging
-              (args ^. #cmdLogging)
-              (toml ^. #cmdLogging),
-          fileLogging,
-          notify =
-            mergeNotifyLogging
-              (args ^. #notify)
-              (toml ^. #notify)
-        }
+  pure
+    $ MkCoreConfigP
+      { timeout = (args ^. #timeout) <>?? (toml ^. #timeout),
+        init = (args ^. #init) <>?? (toml ^. #init),
+        commonLogging =
+          mergeCommonLogging
+            (args ^. #commonLogging)
+            (toml ^. #commonLogging),
+        consoleLogging,
+        cmdLogging =
+          mergeCmdLogging
+            (args ^. #cmdLogging)
+            (toml ^. #cmdLogging),
+        fileLogging,
+        notify =
+          mergeNotifyLogging
+            (args ^. #notify)
+            (toml ^. #notify)
+      }
   where
-    plusNothing :: Lens' CoreConfigArgs (WithDisabled a) -> Maybe a -> Maybe a
-    plusNothing l r = WD.toMaybe $ (args ^. l) <>? r
+    toml = fromMaybe defaultToml mToml
 
 -- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
 -- continuation.
@@ -201,3 +172,27 @@ withCoreEnv merged onCoreConfigEnv = do
               notify
             }
      in onCoreConfigEnv coreConfigEnv
+
+defaultToml :: CoreConfigToml
+defaultToml =
+  MkCoreConfigP
+    { init = Nothing,
+      timeout = Nothing,
+      commonLogging = Nothing,
+      cmdLogging = Nothing,
+      consoleLogging = Nothing,
+      fileLogging = Nothing,
+      notify = Nothing
+    }
+
+defaultMerged :: CoreConfigMerged
+defaultMerged =
+  MkCoreConfigP
+    { init = Nothing,
+      timeout = Nothing,
+      commonLogging = CommonLogging.defaultMerged,
+      cmdLogging = CmdLogging.defaultMerged,
+      consoleLogging = ConsoleLogging.defaultMerged,
+      fileLogging = Nothing,
+      notify = Nothing
+    }

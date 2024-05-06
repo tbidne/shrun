@@ -26,6 +26,7 @@ import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
     (<>?),
+    (<>?.),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
@@ -33,13 +34,13 @@ import Shrun.Notify.Types
   ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
     NotifyAction,
     NotifySystemEnv,
-    NotifySystemP (..),
+    NotifySystemP (AppleScript, DBus, NotifySend),
     NotifyTimeout,
     OsxNotifySystemMismatch
       ( OsxNotifySystemMismatchDBus,
         OsxNotifySystemMismatchNotifySend
       ),
-    defaultNotifyTimeout,
+    displayNotifySystem,
     mergeNotifySystem,
   )
 import Shrun.Prelude
@@ -93,44 +94,24 @@ mergeNotifyLogging ::
   Maybe NotifyToml ->
   Maybe NotifyMerged
 mergeNotifyLogging args mToml =
-  case args ^. #action of
-    Disabled -> Nothing
-    Without -> case mToml of
-      Nothing -> Nothing
-      Just toml ->
-        Just
-          $ MkNotifyP
-            { action = toml ^. #action,
-              system = mergeNotifySystem (args ^. #system) (toml ^. #system),
-              timeout =
-                plusDefault
-                  defaultNotifyTimeout
-                  #timeout
-                  (toml ^. #timeout)
-            }
-    With action -> case mToml of
-      Nothing ->
-        Just
-          $ MkNotifyP
-            { action,
-              system = mergeNotifySystem (args ^. #system) Nothing,
-              timeout = WD.fromWithDisabled (afromInteger 10) (args ^. #timeout)
-            }
-      Just toml ->
-        Just
-          $ MkNotifyP
-            { action,
-              system =
-                mergeNotifySystem (args ^. #system) (toml ^. #system),
-              timeout =
-                plusDefault
-                  (afromInteger 10)
-                  #timeout
-                  (toml ^. #timeout)
-            }
+  mAction <&> \action ->
+    let toml :: NotifyToml
+        toml = fromMaybe (mkDefaultToml action) mToml
+     in MkNotifyP
+          { action,
+            system =
+              mergeNotifySystem (args ^. #system) (toml ^. #system),
+            timeout =
+              (args ^. #timeout) <>?. (toml ^. #timeout)
+          }
   where
-    plusDefault :: a -> Lens' NotifyArgs (WithDisabled a) -> Maybe a -> a
-    plusDefault defA l r = WD.fromWithDisabled defA $ (args ^. l) <>? r
+    mAction = case (args ^. #action, mToml) of
+      -- 1. Logging globally disabled
+      (Disabled, _) -> Nothing
+      -- 2. No Args and no Toml
+      (Without, Nothing) -> Nothing
+      (With p, _) -> Just p
+      (_, Just toml) -> Just $ toml ^. #action
 
 instance DecodeTOML NotifyToml where
   tomlDecoder =
@@ -176,4 +157,12 @@ mkNotify notifyToml systemP2 =
     { system = systemP2,
       action = notifyToml ^. #action,
       timeout = notifyToml ^. #timeout
+    }
+
+mkDefaultToml :: NotifyAction -> NotifyToml
+mkDefaultToml action =
+  MkNotifyP
+    { system = Nothing,
+      action = action,
+      timeout = Nothing
     }

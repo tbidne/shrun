@@ -1,16 +1,22 @@
 module Shrun.Data.StripControl
   ( StripControl (..),
     parseStripControl,
-    defaultConsoleLogStripControl,
-    defaultFileLogStripControl,
+    ConsoleLogStripControl,
+    FileLogStripControl,
   )
 where
 
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
+
+data StripControlType
+  = StripControlConsoleLog
+  | StripControlFileLog
 
 -- | Determines how we should treat control characters encountered in
 -- logs.
-data StripControl
+type StripControl :: StripControlType -> Type
+data StripControl t
   = -- | \"Intelligently\" strip control characters e.g. colors are fine,
     -- ones that affect the cursor should be removed.
     StripControlSmart
@@ -20,10 +26,14 @@ data StripControl
     StripControlAll
   deriving stock (Bounded, Enum, Eq, Ord, Show)
 
-instance DecodeTOML StripControl where
+instance DecodeTOML (StripControl t) where
   tomlDecoder = parseStripControl tomlDecoder
 
-parseStripControl :: (MonadFail m) => m Text -> m StripControl
+type ConsoleLogStripControl = StripControl StripControlConsoleLog
+
+type FileLogStripControl = StripControl StripControlFileLog
+
+parseStripControl :: (MonadFail m) => m Text -> m (StripControl t)
 parseStripControl getTxt =
   getTxt >>= \case
     "all" -> pure StripControlAll
@@ -36,8 +46,8 @@ parseStripControl getTxt =
             unpack bad
           ]
 
-defaultConsoleLogStripControl :: StripControl
-defaultConsoleLogStripControl = StripControlSmart
+instance Default ConsoleLogStripControl where
+  def = StripControlSmart
 
-defaultFileLogStripControl :: StripControl
-defaultFileLogStripControl = StripControlAll
+instance Default FileLogStripControl where
+  def = StripControlAll

@@ -126,7 +126,7 @@ coreFormatting ::
   -- | Optional cmd name truncation
   Maybe (Truncation TCmdName) ->
   -- | Strip control
-  StripControl ->
+  StripControl t ->
   -- | Key hide
   KeyHide ->
   -- | Log to format
@@ -223,7 +223,7 @@ displayCmd (MkCommandP _ cmd) _ = cmd
 -- * 'StripControlAll': Strips whitespace + all control chars.
 -- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.
 -- * 'StripControlNone': Strips whitespace.
-stripChars :: Text -> StripControl -> Text
+stripChars :: Text -> StripControl t -> Text
 stripChars txt = \case
   StripControlAll -> Utils.stripControlAll txt
   -- whitespace

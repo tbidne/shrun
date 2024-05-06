@@ -1,7 +1,6 @@
 module Shrun.Data.FileSizeMode
   ( FileSizeMode (..),
     parseFileSizeMode,
-    defaultFileSizeMode,
     expectedStr,
   )
 where
@@ -10,6 +9,7 @@ import Data.Bytes (Conversion (convert))
 import Data.Bytes.Size (Size (M))
 import Data.Char qualified as Ch
 import Data.Text qualified as T
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 
@@ -50,12 +50,11 @@ parseFileSizeMode getTxt = do
         Right b -> pure $ cons b
         Left err -> fail $ "Could not parse --file-log-size-mode size: " <> unpack err
 
--- | Warns at 50 mb.
-defaultFileSizeMode :: FileSizeMode
-defaultFileSizeMode = FileSizeModeWarn $ convert (Proxy @B) defBytes
-  where
-    defBytes :: Bytes M Natural
-    defBytes = MkBytes 50
+instance Default FileSizeMode where
+  def = FileSizeModeWarn $ convert (Proxy @B) defBytes
+    where
+      defBytes :: Bytes M Natural
+      defBytes = MkBytes 50
 
 expectedStr :: String
 expectedStr = "(warn SIZE | delete SIZE | nothing)"

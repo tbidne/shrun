@@ -17,6 +17,8 @@ import Shrun.Configuration.Data.CmdLogging
       ),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
+import Shrun.Configuration.Default (Default (def))
+import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
 import Shrun.Data.PollInterval (PollInterval)
 import Shrun.Data.PollInterval qualified as PollInterval
 import Shrun.Prelude
@@ -51,11 +53,12 @@ pollIntervalParser = Utils.withDisabledParser mainParser "cmd-log-poll-interval"
           "--file-log that determines how quickly we poll commands for ",
           "logs, in microseconds. A value of 0 is interpreted as infinite ",
           "i.e. limited only by the CPU. Defaults to ",
-          prettyPollInterval PollInterval.defaultPollInterval,
+          prettyPollInterval def,
           ". Note that lower values will increase CPU usage. In particular, ",
           "0 will max out a CPU thread."
         ]
 
+    prettyPollInterval :: PollInterval -> String
     prettyPollInterval =
       unpack
         . T.reverse
@@ -65,7 +68,7 @@ pollIntervalParser = Utils.withDisabledParser mainParser "cmd-log-poll-interval"
         . showt
         . view #unPollInterval
 
-readSizeParser :: Parser (WithDisabled (Bytes B Natural))
+readSizeParser :: Parser (WithDisabled CmdLogReadSize)
 readSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
   where
     mainParser =
@@ -78,7 +81,7 @@ readSizeParser = Utils.withDisabledParser mainParser "cmd-log-read-size"
                 OA.metavar "NATURAL"
               ]
           )
-    readcmdLogReadSize = MkBytes <$> OA.auto
+    readcmdLogReadSize = MkCmdLogReadSize . MkBytes <$> OA.auto
     helpTxt =
       mconcat
         [ "Non-negative integer that determines that max number of bytes in ",

@@ -13,6 +13,12 @@ import Data.Text qualified as T
 import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
 import Effects.Time (withTiming)
+import Shrun.Configuration.Data.ConsoleLogging
+  ( ConsoleLogCmdSwitch
+      ( ConsoleLogCmdOff,
+        ConsoleLogCmdOn
+      ),
+  )
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCmdLogging (getCmdLogging),
@@ -122,9 +128,9 @@ tryCommandLogging command = do
 
   let cmdFn = case (consoleLogging ^. #cmdLogging, mFileLogging) of
         -- 1. No CmdLogging and no FileLogging: No streaming at all.
-        (False, Nothing) -> tryShExitCode
+        (ConsoleLogCmdOff, Nothing) -> tryShExitCode
         -- 3. CmdLogging but no FileLogging. Stream.
-        (True, Nothing) -> \cmd ->
+        (ConsoleLogCmdOn, Nothing) -> \cmd ->
           withRegion Linear $ \region -> do
             let logFn = logConsole keyHide consoleLogQueue region consoleLogging
 
@@ -133,7 +139,7 @@ tryCommandLogging command = do
             tryCommandStream logFn cmd
         -- 3. No CmdLogging but FileLogging: Stream (to file) but no console
         --    region.
-        (False, Just fileLogging) -> \cmd -> do
+        (ConsoleLogCmdOff, Just fileLogging) -> \cmd -> do
           let logFn :: Log -> m ()
               logFn = logFile keyHide fileLogging
 
@@ -142,7 +148,7 @@ tryCommandLogging command = do
           tryCommandStream logFn cmd
         -- 4. CmdLogging and FileLogging: Stream (to both) and create console
         --    region.
-        (True, Just fileLogging) -> \cmd ->
+        (ConsoleLogCmdOn, Just fileLogging) -> \cmd ->
           withRegion Linear $ \region -> do
             let logFn log = do
                   logConsole keyHide consoleLogQueue region consoleLogging log
@@ -260,7 +266,10 @@ streamOutput logFn cmd p = do
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
 
       blockSize :: Int
-      blockSize = unsafeConvertIntegral $ cmdLogging ^. (#readSize % _MkBytes)
+      blockSize =
+        unsafeConvertIntegral
+          $ cmdLogging
+          ^. (#readSize % #unCmdLogReadSize % _MkBytes)
 
       readBlock :: Handle -> m ReadHandleResult
       readBlock = readHandle blockSize

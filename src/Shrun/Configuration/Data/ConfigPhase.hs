@@ -4,10 +4,10 @@ module Shrun.Configuration.Data.ConfigPhase
     ConfigPhase (..),
 
     -- * Type families
-    BoolF,
     ConfigPhaseF,
     ConfigPhaseMaybeF,
     LineTruncF,
+    SwitchF,
   )
 where
 
@@ -50,17 +50,19 @@ type family ConfigPhaseMaybeF p a where
   ConfigPhaseMaybeF ConfigPhaseMerged a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseEnv a = Maybe a
 
--- | General type family representing a bool:
+-- | General type family representing a boolean switch for a type @t@ that
+-- is isomorphic to Bool:
 --
 -- - Args: WithDisabled () (isomorphic to Disabled | Bool)
 -- - Toml: Maybe Bool
--- - Merged: Bool
-type BoolF :: ConfigPhase -> Type
-type family BoolF p where
-  BoolF ConfigPhaseArgs = WithDisabled ()
-  BoolF ConfigPhaseToml = Maybe Bool
-  BoolF ConfigPhaseMerged = Bool
-  BoolF ConfigPhaseEnv = Bool
+-- - Merged: t
+-- - Env: t
+type SwitchF :: ConfigPhase -> Type -> Type
+type family SwitchF p t where
+  SwitchF ConfigPhaseArgs _ = WithDisabled ()
+  SwitchF ConfigPhaseToml _ = Maybe Bool
+  SwitchF ConfigPhaseMerged t = t
+  SwitchF ConfigPhaseEnv t = t
 
 -- | Line truncation is truly optional, the default being none.
 type LineTruncF :: ConfigPhase -> Type

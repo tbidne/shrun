@@ -1,9 +1,9 @@
 module Shrun.Data.KeyHide
   ( KeyHide (..),
-    defaultKeyHide,
   )
 where
 
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
 -- | Type for determining if we use the command's key
@@ -22,5 +22,5 @@ instance DecodeTOML KeyHide where
       True -> KeyHideOn
       False -> KeyHideOff
 
-defaultKeyHide :: KeyHide
-defaultKeyHide = KeyHideOff
+instance Default KeyHide where
+  def = KeyHideOff

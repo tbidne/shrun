@@ -24,7 +24,8 @@ import Shrun.Configuration.Data.CommonLogging
       ),
   )
 import Shrun.Configuration.Data.ConsoleLogging
-  ( ConsoleLoggingP
+  ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
+    ConsoleLoggingP
       ( MkConsoleLoggingP,
         cmdLogging,
         cmdNameTrunc,
@@ -50,6 +51,7 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
+import Shrun.Data.CmdLogReadSize (CmdLogReadSize (MkCmdLogReadSize))
 import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Data.KeyHide (KeyHide (KeyHideOff))
 import Shrun.Data.StripControl (StripControl (StripControlSmart))
@@ -94,7 +96,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                     },
                 consoleLogging =
                   MkConsoleLoggingP
-                    { cmdLogging = True,
+                    { cmdLogging = ConsoleLogCmdOn,
                       cmdNameTrunc = Just 80,
                       lineTrunc = Just 150,
                       stripControl = StripControlSmart
@@ -102,7 +104,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 cmdLogging =
                   MkCmdLoggingP
                     { pollInterval = 100,
-                      readSize = MkBytes 2048
+                      readSize = MkCmdLogReadSize $ MkBytes 2048
                     },
                 fileLogging = Nothing,
                 notify =

@@ -13,7 +13,8 @@ import Effects.Time
     ZonedTime (ZonedTime),
   )
 import Shrun.Configuration.Data.ConsoleLogging
-  ( ConsoleLoggingEnv,
+  ( ConsoleLogCmdSwitch (ConsoleLogCmdOff),
+    ConsoleLoggingEnv,
     ConsoleLoggingP
       ( MkConsoleLoggingP,
         cmdLogging,
@@ -23,7 +24,8 @@ import Shrun.Configuration.Data.ConsoleLogging
       ),
   )
 import Shrun.Configuration.Data.FileLogging
-  ( FileLogOpened
+  ( DeleteOnSuccessSwitch (DeleteOnSuccessOff),
+    FileLogOpened
       ( MkFileLogOpened,
         handle,
         queue
@@ -270,7 +272,7 @@ testFormatsCLLineTrunc = testCase desc $ do
 baseConsoleLoggingEnv :: ConsoleLoggingEnv
 baseConsoleLoggingEnv =
   MkConsoleLoggingP
-    { cmdLogging = False,
+    { cmdLogging = ConsoleLogCmdOff,
       cmdNameTrunc = Nothing,
       lineTrunc = Nothing,
       stripControl = StripControlNone
@@ -520,7 +522,7 @@ baseFileLoggingEnv =
           },
       cmdNameTrunc = Nothing,
       lineTrunc = Nothing,
-      deleteOnSuccess = False,
+      deleteOnSuccess = DeleteOnSuccessOff,
       stripControl = StripControlNone
     }
   where

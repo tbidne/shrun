@@ -4,7 +4,6 @@ module Shrun.Data.TimerFormat
     TimerFormat (..),
 
     -- * Parsing
-    defaultTimerFormat,
     parseTimerFormat,
     timerFormatStr,
 
@@ -26,6 +25,7 @@ import Data.Time.Relative
     RelativeTime,
   )
 import Data.Time.Relative qualified as RT
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
 -- | Determines how to format the timer.
@@ -39,9 +39,8 @@ data TimerFormat
 instance DecodeTOML TimerFormat where
   tomlDecoder = parseTimerFormat tomlDecoder
 
--- | Prose Compact
-defaultTimerFormat :: TimerFormat
-defaultTimerFormat = ProseCompact
+instance Default TimerFormat where
+  def = ProseCompact
 
 -- | Parse timer format.
 parseTimerFormat :: (MonadFail m) => m Text -> m TimerFormat
