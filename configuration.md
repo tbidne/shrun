@@ -40,6 +40,10 @@
 >
 > In general, each option `--foo` has a `--no-foo` variant that disables CLI and toml configuration for that field. For example, the `--no-console-log-command` option will instruct `shrun` to ignore both CLI `--console-log-command` and toml `console-log.command`, ensuring the default behavior is used (i.e. no command logging).
 
+> [!NOTE]
+>
+> `shrun` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
+
 
 ## Core Functionality
 

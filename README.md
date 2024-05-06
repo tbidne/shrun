@@ -77,8 +77,6 @@ Will run `some long command` and `another command` concurrently.
 
 A running timer is provided, and stdout will be updated when a command finishes or crashes.
 
-Note: `shrun` colors its logs, and the examples shown here _should_ use these colors. Unfortunately github does not render them, so you will have to view this markdown file somewhere else to see them.
-
 # Installation
 
 The [releases](https://github.com/tbidne/shrun/releases) page has binaries built for several platforms. If there are no binaries for your platform, it is possible to [build shrun](#building) yourself.
