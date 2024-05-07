@@ -20,7 +20,7 @@ import Shrun.Prelude
 
 withDisabledParser :: Parser (Maybe a) -> String -> Parser (WithDisabled a)
 withDisabledParser mainParser name =
-  withDisabledParserHelp mainParser name ("Disables --" ++ name)
+  withDisabledParserHelp mainParser name ("Disables --" ++ name ++ ".")
 
 withDisabledParserHelp ::
   Parser (Maybe a) ->
@@ -41,7 +41,7 @@ withDisabledParserHelp mainParser name helpTxt = do
         True
         ( mconcat
             [ OA.long $ "no-" ++ name,
-              OA.internal,
+              OA.hidden,
               mkHelp helpTxt
             ]
         )

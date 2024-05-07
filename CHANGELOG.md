@@ -17,7 +17,6 @@ the major/minor/patch definitions apply to the application's interface / usage
   that.
 * `--file-log-size-mode` now defaults to `warn 50 mb` (i.e. warn when the log
   file exceeds 50 mb). There is a new option `nothing` to disable this.
-* `--no-x` disable args now hidden from help page.
 * Extensive CLI/toml option changes/renaming:
   * `--key-hide`:
     * CLI: `--common-log-key-hide`.
