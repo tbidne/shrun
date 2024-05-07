@@ -39,7 +39,12 @@ newtype CommonLoggingP p = MkCommonLoggingP
     keyHide :: ConfigPhaseF p KeyHideSwitch
   }
 
-makeFieldLabelsNoPrefix ''CommonLoggingP
+instance
+  (k ~ An_Iso, a ~ ConfigPhaseF p KeyHideSwitch, b ~ ConfigPhaseF p KeyHideSwitch) =>
+  LabelOptic "keyHide" k (CommonLoggingP p) (CommonLoggingP p) a b
+  where
+  labelOptic = iso (\(MkCommonLoggingP kh) -> kh) MkCommonLoggingP
+  {-# INLINE labelOptic #-}
 
 type CommonLoggingArgs = CommonLoggingP ConfigPhaseArgs
 

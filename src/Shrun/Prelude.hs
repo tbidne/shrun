@@ -204,6 +204,7 @@ import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack)
 import Optics.Core as X
   ( A_Getter,
+    A_Lens,
     A_Setter,
     AffineTraversal',
     An_AffineFold,
@@ -220,8 +221,10 @@ import Optics.Core as X
     Prism,
     Prism',
     iso,
+    lensVL,
     over',
     preview,
+    prism,
     review,
     set',
     to,
@@ -247,7 +250,6 @@ import Optics.TH as X
   ( generateUpdateableOptics,
     makeFieldLabelsNoPrefix,
     makeFieldLabelsWith,
-    makePrisms,
     noPrefixFieldLabels,
   )
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))

@@ -17,19 +17,10 @@ module Shrun.Notify.Types
     DBusF,
     mergeNotifySystem,
 
-    -- ** Optics
-    _DBus,
-    _NotifySend,
-    _AppleScript,
-
     -- * Notify actions
     NotifyAction (..),
     parseNotifyAction,
     notifyActionStr,
-
-    -- ** Optics
-    _NotifyFinal,
-    _NotifyCommand,
 
     -- * Notify timeout
     NotifyTimeout (..),
@@ -73,8 +64,6 @@ data NotifyAction
   | -- | NotifyFinal and NotifyCommand.
     NotifyAll
   deriving stock (Eq, Show)
-
-makePrisms ''NotifyAction
 
 instance DecodeTOML NotifyAction where
   tomlDecoder = parseNotifyAction tomlDecoder
@@ -124,8 +113,6 @@ data NotifySystemP p
     NotifySend
   | -- | Uses apple-script.
     AppleScript
-
-makePrisms ''NotifySystemP
 
 deriving stock instance Eq NotifySystemArgs
 

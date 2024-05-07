@@ -33,7 +33,21 @@ data Toml = MkToml
   }
   deriving stock (Eq, Show)
 
-makeFieldLabelsNoPrefix ''Toml
+instance
+  (k ~ A_Lens, a ~ CoreConfigToml, b ~ CoreConfigToml) =>
+  LabelOptic "coreConfig" k Toml Toml a b
+  where
+  labelOptic = lensVL $ \f (MkToml _coreConfig _legend) ->
+    fmap (`MkToml` _legend) (f _coreConfig)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ Maybe (List KeyVal), b ~ Maybe (List KeyVal)) =>
+  LabelOptic "legend" k Toml Toml a b
+  where
+  labelOptic = lensVL $ \f (MkToml _coreConfig _legend) ->
+    fmap (MkToml _coreConfig) (f _legend)
+  {-# INLINE labelOptic #-}
 
 instance DecodeTOML Toml where
   tomlDecoder = do

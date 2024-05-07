@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.WithDisabled
@@ -51,7 +50,35 @@ data WithDisabled a
     Disabled
   deriving stock (Eq, Functor, Show)
 
-makePrisms ''WithDisabled
+_With :: Prism' (WithDisabled a) a
+_With =
+  prism
+    With
+    ( \case
+        With x -> Right x
+        y -> Left y
+    )
+{-# INLINE _With #-}
+
+_Without :: Prism' (WithDisabled a) ()
+_Without =
+  prism
+    (const Without)
+    ( \case
+        Without -> Right ()
+        y -> Left y
+    )
+{-# INLINE _Without #-}
+
+_Disabled :: Prism' (WithDisabled a) ()
+_Disabled =
+  prism
+    (const Disabled)
+    ( \case
+        Disabled -> Right ()
+        y -> Left y
+    )
+{-# INLINE _Disabled #-}
 
 instance Foldable WithDisabled where
   foldr f e (With x) = f x e

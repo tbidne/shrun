@@ -53,7 +53,29 @@ data Args = MkArgs
   }
   deriving stock (Eq, Show)
 
-makeFieldLabelsNoPrefix ''Args
+instance
+  (k ~ A_Lens, a ~ WithDisabled OsPath, b ~ WithDisabled OsPath) =>
+  LabelOptic "configPath" k Args Args a b
+  where
+  labelOptic = lensVL $ \f (MkArgs _configPath _coreConfig _commands) ->
+    fmap (\configPath' -> MkArgs configPath' _coreConfig _commands) (f _configPath)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ CoreConfigArgs, b ~ CoreConfigArgs) =>
+  LabelOptic "coreConfig" k Args Args a b
+  where
+  labelOptic = lensVL $ \f (MkArgs _configPath _coreConfig _commands) ->
+    fmap (\coreConfig' -> MkArgs _configPath coreConfig' _commands) (f _coreConfig)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ NESeq Text, b ~ NESeq Text) =>
+  LabelOptic "commands" k Args Args a b
+  where
+  labelOptic = lensVL $ \f (MkArgs _configPath _coreConfig _commands) ->
+    fmap (MkArgs _configPath _coreConfig) (f _commands)
+  {-# INLINE labelOptic #-}
 
 -- | 'ParserInfo' type for parsing 'Args'.
 parserInfoArgs :: ParserInfo Args

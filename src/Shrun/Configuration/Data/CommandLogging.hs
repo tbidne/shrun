@@ -43,7 +43,21 @@ data CommandLoggingP p = MkCommandLoggingP
     readSize :: ConfigPhaseF p ReadSize
   }
 
-makeFieldLabelsNoPrefix ''CommandLoggingP
+instance
+  (k ~ A_Lens, a ~ ConfigPhaseF p PollInterval, b ~ ConfigPhaseF p PollInterval) =>
+  LabelOptic "pollInterval" k (CommandLoggingP p) (CommandLoggingP p) a b
+  where
+  labelOptic = lensVL $ \f (MkCommandLoggingP _pollInterval _readSize) ->
+    fmap (`MkCommandLoggingP` _readSize) (f _pollInterval)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ ConfigPhaseF p ReadSize, b ~ ConfigPhaseF p ReadSize) =>
+  LabelOptic "readSize" k (CommandLoggingP p) (CommandLoggingP p) a b
+  where
+  labelOptic = lensVL $ \f (MkCommandLoggingP _pollInterval _readSize) ->
+    fmap (MkCommandLoggingP _pollInterval) (f _readSize)
+  {-# INLINE labelOptic #-}
 
 type CommandLoggingArgs = CommandLoggingP ConfigPhaseArgs
 
