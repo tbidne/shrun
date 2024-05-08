@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.Core
@@ -78,7 +77,234 @@ data CoreConfigP p = MkCoreConfigP
     notify :: ArgsOnlyDetF p (NotifyP p)
   }
 
-makeFieldLabelsNoPrefix ''CoreConfigP
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseMaybeF p Text,
+    b ~ ConfigPhaseMaybeF p Text
+  ) =>
+  LabelOptic "init" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCoreConfigP
+             _init
+             _timeout
+             _commonLogging
+             _commandLogging
+             _consoleLogging
+             _fileLogging
+             _notify
+           ) ->
+          fmap
+            ( \init' ->
+                MkCoreConfigP
+                  init'
+                  _timeout
+                  _commonLogging
+                  _commandLogging
+                  _consoleLogging
+                  _fileLogging
+                  _notify
+            )
+            (f _init)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseMaybeF p Timeout,
+    b ~ ConfigPhaseMaybeF p Timeout
+  ) =>
+  LabelOptic "timeout" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCoreConfigP
+             _init
+             _timeout
+             _commonLogging
+             _commandLogging
+             _consoleLogging
+             _fileLogging
+             _notify
+           ) ->
+          fmap
+            ( \timeout' ->
+                MkCoreConfigP
+                  _init
+                  timeout'
+                  _commonLogging
+                  _commandLogging
+                  _consoleLogging
+                  _fileLogging
+                  _notify
+            )
+            (f _timeout)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TomlOptF p (CommonLoggingP p),
+    b ~ TomlOptF p (CommonLoggingP p)
+  ) =>
+  LabelOptic "commonLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCoreConfigP
+             _init
+             _timeout
+             _commonLogging
+             _commandLogging
+             _consoleLogging
+             _fileLogging
+             _notify
+           ) ->
+          fmap
+            ( \commonLogging' ->
+                MkCoreConfigP
+                  _init
+                  _timeout
+                  commonLogging'
+                  _commandLogging
+                  _consoleLogging
+                  _fileLogging
+                  _notify
+            )
+            (f _commonLogging)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TomlOptF p (CommandLoggingP p),
+    b ~ TomlOptF p (CommandLoggingP p)
+  ) =>
+  LabelOptic "commandLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCoreConfigP
+             _init
+             _timeout
+             _commonLogging
+             _commandLogging
+             _consoleLogging
+             _fileLogging
+             _notify
+           ) ->
+          fmap
+            ( \commandLogging' ->
+                MkCoreConfigP
+                  _init
+                  _timeout
+                  _commonLogging
+                  commandLogging'
+                  _consoleLogging
+                  _fileLogging
+                  _notify
+            )
+            (f _commandLogging)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TomlOptF p (ConsoleLoggingP p),
+    b ~ TomlOptF p (ConsoleLoggingP p)
+  ) =>
+  LabelOptic "consoleLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCoreConfigP
+             _init
+             _timeout
+             _commonLogging
+             _commandLogging
+             _consoleLogging
+             _fileLogging
+             _notify
+           ) ->
+          fmap
+            ( \consoleLogging' ->
+                MkCoreConfigP
+                  _init
+                  _timeout
+                  _commonLogging
+                  _commandLogging
+                  consoleLogging'
+                  _fileLogging
+                  _notify
+            )
+            (f _consoleLogging)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ArgsOnlyDetF p (FileLoggingP p),
+    b ~ ArgsOnlyDetF p (FileLoggingP p)
+  ) =>
+  LabelOptic "fileLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCoreConfigP
+             _init
+             _timeout
+             _commonLogging
+             _commandLogging
+             _consoleLogging
+             _fileLogging
+             _notify
+           ) ->
+          fmap
+            ( \fileLogging' ->
+                MkCoreConfigP
+                  _init
+                  _timeout
+                  _commonLogging
+                  _commandLogging
+                  _consoleLogging
+                  fileLogging'
+                  _notify
+            )
+            (f _fileLogging)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ArgsOnlyDetF p (NotifyP p),
+    b ~ ArgsOnlyDetF p (NotifyP p)
+  ) =>
+  LabelOptic "notify" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCoreConfigP
+             _init
+             _timeout
+             _commonLogging
+             _commandLogging
+             _consoleLogging
+             _fileLogging
+             _notify
+           ) ->
+          fmap
+            ( MkCoreConfigP
+                _init
+                _timeout
+                _commonLogging
+                _commandLogging
+                _consoleLogging
+                _fileLogging
+            )
+            (f _notify)
+  {-# INLINE labelOptic #-}
 
 type CoreConfigArgs = CoreConfigP ConfigPhaseArgs
 

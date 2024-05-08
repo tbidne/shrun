@@ -1,5 +1,4 @@
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.FileLogging
@@ -103,6 +102,7 @@ instance
     iso
       (\cases DeleteOnSuccessOn -> True; DeleteOnSuccessOff -> False)
       (\cases True -> DeleteOnSuccessOn; False -> DeleteOnSuccessOff)
+  {-# INLINE labelOptic #-}
 
 -- NOTE: [Args vs. Toml mandatory fields]
 --
@@ -139,7 +139,53 @@ data FileLogInitP p = MkFileLogInitP
     sizeMode :: ConfigPhaseF p FileSizeMode
   }
 
-makeFieldLabelsNoPrefix ''FileLogInitP
+instance
+  ( k ~ A_Lens,
+    a ~ FileLogPathF p,
+    b ~ FileLogPathF p
+  ) =>
+  LabelOptic "path" k (FileLogInitP p) (FileLogInitP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFileLogInitP _path _mode _sizeMode) ->
+          fmap
+            (\path' -> MkFileLogInitP path' _mode _sizeMode)
+            (f _path)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseF p FileMode,
+    b ~ ConfigPhaseF p FileMode
+  ) =>
+  LabelOptic "mode" k (FileLogInitP p) (FileLogInitP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFileLogInitP _path _mode _sizeMode) ->
+          fmap
+            (\mode' -> MkFileLogInitP _path mode' _sizeMode)
+            (f _mode)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseF p FileSizeMode,
+    b ~ ConfigPhaseF p FileSizeMode
+  ) =>
+  LabelOptic "sizeMode" k (FileLogInitP p) (FileLogInitP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFileLogInitP _path _mode _sizeMode) ->
+          fmap
+            (MkFileLogInitP _path _mode)
+            (f _sizeMode)
+  {-# INLINE labelOptic #-}
 
 type FileLogInitArgs = FileLogInitP ConfigPhaseArgs
 
@@ -183,7 +229,37 @@ data FileLogOpened = MkFileLogOpened
     queue :: ~(TBQueue FileLog)
   }
 
-makeFieldLabelsNoPrefix ''FileLogOpened
+instance
+  ( k ~ A_Lens,
+    a ~ Handle,
+    b ~ Handle
+  ) =>
+  LabelOptic "handle" k FileLogOpened FileLogOpened a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFileLogOpened _handle _queue) ->
+          fmap
+            (`MkFileLogOpened` _queue)
+            (f _handle)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TBQueue FileLog,
+    b ~ TBQueue FileLog
+  ) =>
+  LabelOptic "queue" k FileLogOpened FileLogOpened a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFileLogOpened _handle _queue) ->
+          fmap
+            (MkFileLogOpened _handle)
+            (f _queue)
+  {-# INLINE labelOptic #-}
 
 type FileLogFileF :: ConfigPhase -> Type
 type family FileLogFileF p where
@@ -208,7 +284,148 @@ data FileLoggingP p = MkFileLoggingP
     stripControl :: ConfigPhaseF p FileLogStripControl
   }
 
-makeFieldLabelsNoPrefix ''FileLoggingP
+instance
+  ( k ~ A_Lens,
+    a ~ FileLogFileF p,
+    b ~ FileLogFileF p
+  ) =>
+  LabelOptic "file" k (FileLoggingP p) (FileLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkFileLoggingP
+             _file
+             _commandNameTrunc
+             _deleteOnSuccess
+             _lineTrunc
+             _stripControl
+           ) ->
+          fmap
+            ( \file' ->
+                MkFileLoggingP
+                  file'
+                  _commandNameTrunc
+                  _deleteOnSuccess
+                  _lineTrunc
+                  _stripControl
+            )
+            (f _file)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseMaybeF p (Truncation TruncCommandName),
+    b ~ ConfigPhaseMaybeF p (Truncation TruncCommandName)
+  ) =>
+  LabelOptic "commandNameTrunc" k (FileLoggingP p) (FileLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkFileLoggingP
+             _file
+             _commandNameTrunc
+             _deleteOnSuccess
+             _lineTrunc
+             _stripControl
+           ) ->
+          fmap
+            ( \commandNameTrunc' ->
+                MkFileLoggingP
+                  _file
+                  commandNameTrunc'
+                  _deleteOnSuccess
+                  _lineTrunc
+                  _stripControl
+            )
+            (f _commandNameTrunc)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ SwitchF p DeleteOnSuccessSwitch,
+    b ~ SwitchF p DeleteOnSuccessSwitch
+  ) =>
+  LabelOptic "deleteOnSuccess" k (FileLoggingP p) (FileLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkFileLoggingP
+             _file
+             _commandNameTrunc
+             _deleteOnSuccess
+             _lineTrunc
+             _stripControl
+           ) ->
+          fmap
+            ( \deleteOnSuccess' ->
+                MkFileLoggingP
+                  _file
+                  _commandNameTrunc
+                  deleteOnSuccess'
+                  _lineTrunc
+                  _stripControl
+            )
+            (f _deleteOnSuccess)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ LineTruncF p,
+    b ~ LineTruncF p
+  ) =>
+  LabelOptic "lineTrunc" k (FileLoggingP p) (FileLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkFileLoggingP
+             _file
+             _commandNameTrunc
+             _deleteOnSuccess
+             _lineTrunc
+             _stripControl
+           ) ->
+          fmap
+            ( \lineTrunc' ->
+                MkFileLoggingP
+                  _file
+                  _commandNameTrunc
+                  _deleteOnSuccess
+                  lineTrunc'
+                  _stripControl
+            )
+            (f _lineTrunc)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseF p FileLogStripControl,
+    b ~ ConfigPhaseF p FileLogStripControl
+  ) =>
+  LabelOptic "stripControl" k (FileLoggingP p) (FileLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkFileLoggingP
+             _file
+             _commandNameTrunc
+             _deleteOnSuccess
+             _lineTrunc
+             _stripControl
+           ) ->
+          fmap
+            ( MkFileLoggingP
+                _file
+                _commandNameTrunc
+                _deleteOnSuccess
+                _lineTrunc
+            )
+            (f _stripControl)
+  {-# INLINE labelOptic #-}
 
 type FileLoggingArgs = FileLoggingP ConfigPhaseArgs
 

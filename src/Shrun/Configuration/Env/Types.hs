@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides types and typeclasses for our environment.
@@ -79,7 +78,148 @@ data Env r = MkEnv
     commands :: NESeq CommandP1
   }
 
-makeFieldLabelsNoPrefix ''Env
+instance
+  ( k ~ A_Lens,
+    a ~ CoreConfigP ConfigPhaseEnv,
+    b ~ CoreConfigP ConfigPhaseEnv
+  ) =>
+  LabelOptic "config" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkEnv
+             _config
+             _completedCommands
+             _consoleLogQueue
+             _anyError
+             _commands
+           ) ->
+          fmap
+            ( \config' ->
+                MkEnv
+                  config'
+                  _completedCommands
+                  _consoleLogQueue
+                  _anyError
+                  _commands
+            )
+            (f _config)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TVar (Seq CommandP1),
+    b ~ TVar (Seq CommandP1)
+  ) =>
+  LabelOptic "completedCommands" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkEnv
+             _config
+             _completedCommands
+             _consoleLogQueue
+             _anyError
+             _commands
+           ) ->
+          fmap
+            ( \completedCommands' ->
+                MkEnv
+                  _config
+                  completedCommands'
+                  _consoleLogQueue
+                  _anyError
+                  _commands
+            )
+            (f _completedCommands)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TBQueue (LogRegion r),
+    b ~ TBQueue (LogRegion r)
+  ) =>
+  LabelOptic "consoleLogQueue" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkEnv
+             _config
+             _completedCommands
+             _consoleLogQueue
+             _anyError
+             _commands
+           ) ->
+          fmap
+            ( \consoleLogQueue' ->
+                MkEnv
+                  _config
+                  _completedCommands
+                  consoleLogQueue'
+                  _anyError
+                  _commands
+            )
+            (f _consoleLogQueue)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TVar Bool,
+    b ~ TVar Bool
+  ) =>
+  LabelOptic "anyError" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkEnv
+             _config
+             _completedCommands
+             _consoleLogQueue
+             _anyError
+             _commands
+           ) ->
+          fmap
+            ( \anyError' ->
+                MkEnv
+                  _config
+                  _completedCommands
+                  _consoleLogQueue
+                  anyError'
+                  _commands
+            )
+            (f _anyError)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ NESeq CommandP1,
+    b ~ NESeq CommandP1
+  ) =>
+  LabelOptic "commands" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkEnv
+             _config
+             _completedCommands
+             _consoleLogQueue
+             _anyError
+             _commands
+           ) ->
+          fmap
+            ( MkEnv
+                _config
+                _completedCommands
+                _consoleLogQueue
+                _anyError
+            )
+            (f _commands)
+  {-# INLINE labelOptic #-}
 
 instance HasTimeout (Env r) where
   getTimeout = view (#config % #timeout)

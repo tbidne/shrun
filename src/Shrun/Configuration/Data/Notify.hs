@@ -66,7 +66,53 @@ data NotifyP p = MkNotifyP
     timeout :: ConfigPhaseF p NotifyTimeout
   }
 
-makeFieldLabelsNoPrefix ''NotifyP
+instance
+  ( k ~ A_Lens,
+    a ~ NotifyActionF p,
+    b ~ NotifyActionF p
+  ) =>
+  LabelOptic "action" k (NotifyP p) (NotifyP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkNotifyP _action _system _timeout) ->
+          fmap
+            (\action' -> MkNotifyP action' _system _timeout)
+            (f _action)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseF p (NotifySystemP p),
+    b ~ ConfigPhaseF p (NotifySystemP p)
+  ) =>
+  LabelOptic "system" k (NotifyP p) (NotifyP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkNotifyP _action _system _timeout) ->
+          fmap
+            (\system' -> MkNotifyP _action system' _timeout)
+            (f _system)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseF p NotifyTimeout,
+    b ~ ConfigPhaseF p NotifyTimeout
+  ) =>
+  LabelOptic "timeout" k (NotifyP p) (NotifyP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkNotifyP _action _system _timeout) ->
+          fmap
+            (MkNotifyP _action _system)
+            (f _timeout)
+  {-# INLINE labelOptic #-}
 
 type NotifyArgs = NotifyP ConfigPhaseArgs
 

@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Integration.Prelude
@@ -48,7 +47,37 @@ data TestArgs = MkTestArgs
   }
   deriving stock (Eq, Show)
 
-makeFieldLabelsNoPrefix ''TestArgs
+instance
+  ( k ~ A_Lens,
+    a ~ OsPath,
+    b ~ OsPath
+  ) =>
+  LabelOptic "rootTmpDir" k TestArgs TestArgs a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkTestArgs _rootTmpDir _workingTmpDir) ->
+          fmap
+            (`MkTestArgs` _workingTmpDir)
+            (f _rootTmpDir)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ OsPath,
+    b ~ OsPath
+  ) =>
+  LabelOptic "workingTmpDir" k TestArgs TestArgs a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkTestArgs _rootTmpDir _workingTmpDir) ->
+          fmap
+            (MkTestArgs _rootTmpDir)
+            (f _workingTmpDir)
+  {-# INLINE labelOptic #-}
 
 -- | Retrieves file path from the examples directory, potentially appending
 -- the os onto the filename (e.g. osx).

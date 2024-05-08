@@ -1,6 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Functional.Prelude
@@ -85,7 +84,53 @@ data FuncEnv = MkFuncEnv
     shrunNotes :: IORef (List ShrunNote)
   }
 
-makeFieldLabelsNoPrefix ''FuncEnv
+instance
+  ( k ~ A_Lens,
+    a ~ Env (),
+    b ~ Env ()
+  ) =>
+  LabelOptic "coreEnv" k FuncEnv FuncEnv a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFuncEnv _coreEnv _logs _shrunNotes) ->
+          fmap
+            (\coreEnv' -> MkFuncEnv coreEnv' _logs _shrunNotes)
+            (f _coreEnv)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ IORef (List Text),
+    b ~ IORef (List Text)
+  ) =>
+  LabelOptic "logs" k FuncEnv FuncEnv a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFuncEnv _coreEnv _logs _shrunNotes) ->
+          fmap
+            (\logs' -> MkFuncEnv _coreEnv logs' _shrunNotes)
+            (f _logs)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ IORef (List ShrunNote),
+    b ~ IORef (List ShrunNote)
+  ) =>
+  LabelOptic "shrunNotes" k FuncEnv FuncEnv a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkFuncEnv _coreEnv _logs _shrunNotes) ->
+          fmap
+            (MkFuncEnv _coreEnv _logs)
+            (f _shrunNotes)
+  {-# INLINE labelOptic #-}
 
 instance HasTimeout FuncEnv where
   getTimeout = getTimeout . view #coreEnv

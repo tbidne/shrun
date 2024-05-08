@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides effects for sending notifications.
@@ -29,7 +28,69 @@ data ShrunNote = MkShrunNote
   }
   deriving stock (Eq, Show)
 
-makeFieldLabelsNoPrefix ''ShrunNote
+instance
+  ( k ~ A_Lens,
+    a ~ Text,
+    b ~ Text
+  ) =>
+  LabelOptic "summary" k ShrunNote ShrunNote a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkShrunNote _summary _body _urgency _timeout) ->
+          fmap
+            (\summary' -> MkShrunNote summary' _body _urgency _timeout)
+            (f _summary)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ UrgencyLevel,
+    b ~ UrgencyLevel
+  ) =>
+  LabelOptic "urgency" k ShrunNote ShrunNote a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkShrunNote _summary _body _urgency _timeout) ->
+          fmap
+            (\urgency' -> MkShrunNote _summary _body urgency' _timeout)
+            (f _urgency)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ NotifyTimeout,
+    b ~ NotifyTimeout
+  ) =>
+  LabelOptic "timeout" k ShrunNote ShrunNote a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkShrunNote _summary _body _urgency _timeout) ->
+          fmap
+            (MkShrunNote _summary _body _urgency)
+            (f _timeout)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ Text,
+    b ~ Text
+  ) =>
+  LabelOptic "body" k ShrunNote ShrunNote a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkShrunNote _summary _body _urgency _timeout) ->
+          fmap
+            (\body' -> MkShrunNote _summary body' _urgency _timeout)
+            (f _body)
+  {-# INLINE labelOptic #-}
 
 -- | Exception for sending desktop notifications.
 data NotifyException = MkNotifyException ShrunNote NotifySystemMerged Text

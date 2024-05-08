@@ -246,12 +246,6 @@ import Optics.Core as X
     _Right,
   )
 import Optics.Core.Extras as X (is)
-import Optics.TH as X
-  ( generateUpdateableOptics,
-    makeFieldLabelsNoPrefix,
-    makeFieldLabelsWith,
-    noPrefixFieldLabels,
-  )
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.Exit as X (ExitCode (ExitFailure, ExitSuccess))
 import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)

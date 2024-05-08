@@ -132,7 +132,6 @@ library
     , mtl                    >=2.2.1    && <2.4
     , nonempty-containers    >=0.3.4.2  && <0.4
     , optics-core            ^>=0.4
-    , optics-th              ^>=0.4
     , optparse-applicative   >=0.15     && <0.19
     , pretty-terminal        ^>=0.1
     , relative-time          ^>=0.1
@@ -150,7 +149,6 @@ library shrun-verifier
   build-depends:
     , base
     , optics-core
-    , optics-th
     , tasty-hunit
     , text
 

@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'PollInterval' type.
@@ -17,7 +16,12 @@ newtype PollInterval = MkPollInterval {unPollInterval :: Natural}
   deriving stock (Eq, Ord, Show)
   deriving (Num) via Natural
 
-makeFieldLabelsNoPrefix ''PollInterval
+instance
+  (k ~ An_Iso, a ~ Natural, b ~ Natural) =>
+  LabelOptic "unPollInterval" k PollInterval PollInterval a b
+  where
+  labelOptic = iso (\(MkPollInterval x) -> x) MkPollInterval
+  {-# INLINE labelOptic #-}
 
 instance DecodeTOML PollInterval where
   tomlDecoder = MkPollInterval <$> tomlDecoder

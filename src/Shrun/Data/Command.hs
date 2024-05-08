@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'Command' wrapper for commands.
@@ -35,7 +34,37 @@ data CommandP p = MkCommandP
   deriving stock (Eq, Generic, Show)
   deriving anyclass (Hashable)
 
-makeFieldLabelsNoPrefix ''CommandP
+instance
+  ( k ~ A_Lens,
+    a ~ Maybe Text,
+    b ~ Maybe Text
+  ) =>
+  LabelOptic "getKey" k (CommandP p) (CommandP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkCommandP _getKey _command) ->
+          fmap
+            (`MkCommandP` _command)
+            (f _getKey)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ Text,
+    b ~ Text
+  ) =>
+  LabelOptic "command" k (CommandP p) (CommandP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         (MkCommandP _getKey _command) ->
+          fmap
+            (MkCommandP _getKey)
+            (f _command)
+  {-# INLINE labelOptic #-}
 
 instance IsString (CommandP CommandPhase1) where
   fromString = MkCommandP Nothing . T.pack

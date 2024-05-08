@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides functionality for verifying output.
@@ -18,8 +17,7 @@ where
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Optics.Core (view)
-import Optics.TH (makeFieldLabelsNoPrefix)
+import Optics.Core (An_Iso, LabelOptic (labelOptic), iso, view)
 import Test.Tasty.HUnit (Assertion, assertBool)
 import Prelude
 
@@ -27,19 +25,34 @@ import Prelude
 newtype ResultText = MkResultText {getResultText :: Text}
   deriving (IsString, Monoid, Semigroup, Show) via Text
 
-makeFieldLabelsNoPrefix ''ResultText
+instance
+  (k ~ An_Iso, a ~ Text, b ~ Text) =>
+  LabelOptic "getResultText" k ResultText ResultText a b
+  where
+  labelOptic = iso (\(MkResultText x) -> x) MkResultText
+  {-# INLINE labelOptic #-}
 
 -- | Newtype wrapper for expected 'Text' results.
 newtype ExpectedText = MkExpectedText {getExpectedText :: Text}
   deriving (IsString, Monoid, Semigroup, Show) via Text
 
-makeFieldLabelsNoPrefix ''ExpectedText
+instance
+  (k ~ An_Iso, a ~ Text, b ~ Text) =>
+  LabelOptic "getExpectedText" k ExpectedText ExpectedText a b
+  where
+  labelOptic = iso (\(MkExpectedText x) -> x) MkExpectedText
+  {-# INLINE labelOptic #-}
 
 -- | Newtype wrapper for unexpected 'Text' results.
 newtype UnexpectedText = MkUnexpectedText {getUnexpectedText :: Text}
   deriving (IsString, Monoid, Semigroup, Show) via Text
 
-makeFieldLabelsNoPrefix ''UnexpectedText
+instance
+  (k ~ An_Iso, a ~ Text, b ~ Text) =>
+  LabelOptic "getUnexpectedText" k UnexpectedText UnexpectedText a b
+  where
+  labelOptic = iso (\(MkUnexpectedText x) -> x) MkUnexpectedText
+  {-# INLINE labelOptic #-}
 
 -- | Verifies expected text is found.
 verifyExpected :: [ResultText] -> [ExpectedText] -> Assertion
