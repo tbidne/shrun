@@ -19,7 +19,7 @@ import Shrun.Data.Text qualified as Shrun.Text
 import Shrun.Prelude
 
 -- | Newtype wrapper for stderr.
-newtype Stderr = MkStderr {getStderr :: Text}
+newtype Stderr = MkStderr {unStderr :: Text}
   deriving stock (Eq, Show)
 
 -- | Result of running a command.

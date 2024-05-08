@@ -22,34 +22,34 @@ import Test.Tasty.HUnit (Assertion, assertBool)
 import Prelude
 
 -- | Newtype wrapper for 'Text' results.
-newtype ResultText = MkResultText {getResultText :: Text}
+newtype ResultText = MkResultText {unResultText :: Text}
   deriving (IsString, Monoid, Semigroup, Show) via Text
 
 instance
   (k ~ An_Iso, a ~ Text, b ~ Text) =>
-  LabelOptic "getResultText" k ResultText ResultText a b
+  LabelOptic "unResultText" k ResultText ResultText a b
   where
   labelOptic = iso (\(MkResultText x) -> x) MkResultText
   {-# INLINE labelOptic #-}
 
 -- | Newtype wrapper for expected 'Text' results.
-newtype ExpectedText = MkExpectedText {getExpectedText :: Text}
+newtype ExpectedText = MkExpectedText {unExpectedText :: Text}
   deriving (IsString, Monoid, Semigroup, Show) via Text
 
 instance
   (k ~ An_Iso, a ~ Text, b ~ Text) =>
-  LabelOptic "getExpectedText" k ExpectedText ExpectedText a b
+  LabelOptic "unExpectedText" k ExpectedText ExpectedText a b
   where
   labelOptic = iso (\(MkExpectedText x) -> x) MkExpectedText
   {-# INLINE labelOptic #-}
 
 -- | Newtype wrapper for unexpected 'Text' results.
-newtype UnexpectedText = MkUnexpectedText {getUnexpectedText :: Text}
+newtype UnexpectedText = MkUnexpectedText {unUnexpectedText :: Text}
   deriving (IsString, Monoid, Semigroup, Show) via Text
 
 instance
   (k ~ An_Iso, a ~ Text, b ~ Text) =>
-  LabelOptic "getUnexpectedText" k UnexpectedText UnexpectedText a b
+  LabelOptic "unUnexpectedText" k UnexpectedText UnexpectedText a b
   where
   labelOptic = iso (\(MkUnexpectedText x) -> x) MkUnexpectedText
   {-# INLINE labelOptic #-}
@@ -105,5 +105,5 @@ findOneUnexpected results (MkUnexpectedText unexpected) = do
 formatResults :: [ResultText] -> String
 formatResults results = T.unpack lineSep
   where
-    results' = fmap (view #getResultText) results
+    results' = fmap (view #unResultText) results
     lineSep = T.intercalate "\n" results'

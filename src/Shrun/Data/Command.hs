@@ -27,7 +27,7 @@ data CommandPhase
 type CommandP :: CommandPhase -> Type
 data CommandP p = MkCommandP
   { -- | The key name for the command, for display purposes.
-    getKey :: Maybe Text,
+    key :: Maybe Text,
     -- | The shell command to run.
     command :: Text
   }
@@ -39,15 +39,15 @@ instance
     a ~ Maybe Text,
     b ~ Maybe Text
   ) =>
-  LabelOptic "getKey" k (CommandP p) (CommandP p) a b
+  LabelOptic "key" k (CommandP p) (CommandP p) a b
   where
   labelOptic =
     lensVL
       $ \f
-         (MkCommandP _getKey _command) ->
+         (MkCommandP _key _command) ->
           fmap
             (`MkCommandP` _command)
-            (f _getKey)
+            (f _key)
   {-# INLINE labelOptic #-}
 
 instance
@@ -60,9 +60,9 @@ instance
   labelOptic =
     lensVL
       $ \f
-         (MkCommandP _getKey _command) ->
+         (MkCommandP _key _command) ->
           fmap
-            (MkCommandP _getKey)
+            (MkCommandP _key)
             (f _command)
   {-# INLINE labelOptic #-}
 

@@ -55,7 +55,7 @@ import Shrun.Configuration.Data.StripControl
         StripControlSmart
       ),
   )
-import Shrun.Data.Command (CommandP (MkCommandP, command, getKey))
+import Shrun.Data.Command (CommandP (MkCommandP, command, key))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
@@ -125,7 +125,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
 
   let cmd =
         MkCommandP
-          { getKey = Just cmdKey,
+          { key = Just cmdKey,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
@@ -184,7 +184,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
 
   let cmd =
         MkCommandP
-          { getKey = Nothing,
+          { key = Nothing,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
@@ -335,7 +335,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
 
   let cmd =
         MkCommandP
-          { getKey = Just cmdKey,
+          { key = Just cmdKey,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
@@ -395,7 +395,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
 
   let cmd =
         MkCommandP
-          { getKey = Nothing,
+          { key = Nothing,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
