@@ -238,37 +238,34 @@ mergeFileLogging ::
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
   m (Maybe FileLoggingMerged)
-mergeFileLogging args mToml = case mPath of
-  Nothing -> pure Nothing
-  Just path -> do
-    let toml = fromMaybe (defaultToml path) mToml
+mergeFileLogging args mToml = for mPath $ \path -> do
+  let toml = fromMaybe (defaultToml path) mToml
 
-    lineTrunc <-
-      configToLineTrunc $ (args ^. #lineTrunc) <>? (toml ^. #lineTrunc)
+  lineTrunc <-
+    configToLineTrunc $ (args ^. #lineTrunc) <>? (toml ^. #lineTrunc)
 
-    pure
-      $ Just
-      $ MkFileLoggingP
-        { file =
-            MkFileLogInitP
-              { path,
-                mode =
-                  (args ^. #file % #mode) <>?. (toml ^. #file % #mode),
-                sizeMode =
-                  (args ^. #file % #sizeMode) <>?. (toml ^. #file % #sizeMode)
-              },
-          commandNameTrunc =
-            (args ^. #commandNameTrunc) <>?? (toml ^. #commandNameTrunc),
-          deleteOnSuccess =
-            WD.fromDefault
-              ( review #boolIso
-                  <$> argsDeleteOnSuccess
-                  <>? (toml ^. #deleteOnSuccess)
-              ),
-          lineTrunc,
-          stripControl =
-            (args ^. #stripControl) <>?. (toml ^. #stripControl)
-        }
+  pure
+    $ MkFileLoggingP
+      { file =
+          MkFileLogInitP
+            { path,
+              mode =
+                (args ^. #file % #mode) <>?. (toml ^. #file % #mode),
+              sizeMode =
+                (args ^. #file % #sizeMode) <>?. (toml ^. #file % #sizeMode)
+            },
+        commandNameTrunc =
+          (args ^. #commandNameTrunc) <>?? (toml ^. #commandNameTrunc),
+        deleteOnSuccess =
+          WD.fromDefault
+            ( review #boolIso
+                <$> argsDeleteOnSuccess
+                <>? (toml ^. #deleteOnSuccess)
+            ),
+        lineTrunc,
+        stripControl =
+          (args ^. #stripControl) <>?. (toml ^. #stripControl)
+      }
   where
     -- Convert WithDisabled () -> WithDisabled Bool for below operation.
     argsDeleteOnSuccess :: WithDisabled Bool
