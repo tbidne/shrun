@@ -204,7 +204,7 @@ usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd"
     [] === logs
   where
     desc = "Uses recursive commands"
-    args = ["-c", getExampleConfig "default", "all", "echo cat"]
+    args = ["-c", getExampleConfigOS "config", "all", "echo cat"]
 
     cmds =
       MkCommandP (Just "cmd1") "echo \"command one\""

@@ -160,13 +160,13 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 ### Command Logging
 
-Config related to **command logs** (both console and file).
+Configuration for **command logs**, enabled by `console-log.command` and/or `file-logging`.
 
 #### Poll Interval
 
 **Arg:** `--command-log-poll-interval NATURAL`
 
-**Description:** Non-negative integer used in conjunction with [`--console-log-command`](#command-log) and [`--file-log`](#file-log) that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
+**Description:** Non-negative integer that determines how quickly we poll commands for logs, in microseconds. A value of 0 is interpreted as infinite i.e. limited only by the CPU. Defaults to 10,000.
 
 > [!WARNING]
 > Note that lower values will increase CPU usage. In particular, 0 will max out a CPU thread.
@@ -183,7 +183,7 @@ Config related to **command logs** (both console and file).
 
 **Arg:** `--command-log-read-size NATURAL`
 
-**Description:** Non-negative integer that determines that max number of bytes in a single read when streaming command logs ([`--console-log-command`](#command-log) and [`--file-log`](#file-log)). Logs larger than `--command-log-read-size` will be read in a subsequent read, hence broken across lines. The default is 1024.
+**Description:** Non-negative integer that determines the bytes size of the logs we read from commands. Overrides the default of 1024.
 
 **Example:**
 
@@ -254,6 +254,10 @@ vs.
 **Arg:** `--console-log-line-trunc (NATURAL | detect)`
 
 **Description:** Non-negative integer that limits the length of console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation.
+
+> [!NOTE]
+>
+> "log prefixes" (e.g. labels like `[Success]`, timestamps) are counted towards total length, but are never truncated.
 
 **Example:**
 

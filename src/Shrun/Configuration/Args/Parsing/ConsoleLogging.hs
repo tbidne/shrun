@@ -108,7 +108,9 @@ lineTruncParser = Utils.withDisabledParser mainParser "console-log-line-trunc"
       mconcat
         [ "Non-negative integer that limits the length of console logs. Can ",
           "also be the string literal 'detect', to detect the terminal size ",
-          "automatically. Defaults to no truncation."
+          "automatically. Defaults to no truncation. Note that \"log prefixes\" ",
+          "(e.g. labels like [Success], timestamps) are counted towards the ",
+          "total length but are never truncated."
         ]
 
 stripControlParser :: Parser (WithDisabled ConsoleLogStripControl)

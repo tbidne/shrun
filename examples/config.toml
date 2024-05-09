@@ -72,20 +72,19 @@ legend = [
 # 'some long command'. With key-hide = false, they will instead print 'cmd1'.
 key-hide = false
 
-# If enabled, the output of the commands themselves will be logged. The
-# default behavior is to swallow command logs.
+# Configuration for "command logs", enabled by console-log.command and/or
+# file-logging.
 [command-log]
-# Non-negative integer used in conjunction with console-log.cmd and file-log
-# that determines how quickly we poll commands for logs, in microseconds.
-# A value of 0 is interpreted as infinite i.e. limited only by the CPU.
-# Defaults to 10,000.
+# Non-negative integer that determines how quickly we poll commands for logs,
+# in microseconds. A value of 0 is interpreted as infinite i.e. limited only
+# by the CPU. Defaults to 10,000.
 #
 # Note that lower values will increase CPU usage. In particular, 0 will max
 # out a CPU thread.
 poll-interval = 100
 
-# Determines the size of the logs we read from commands (console-log.cmd and file-log).
-# Overrides the default of 1024.
+# Non-negative integer that determines the bytes size of the logs we read from
+# commands. Overrides the default of 1024.
 read-size = 2048
 
 # Configuration for console logging.
@@ -104,7 +103,9 @@ command-name-trunc = 80
 
 # If set, this truncates the entire line to the specified number of
 # characters. It can either be a non-negative integer or the string 'detect',
-# in which we attempt to detect the terminal width.
+# in which we attempt to detect the terminal width. Note that "log prefixes"
+# (e.g. labels like [Success], timestamps) are counted towards the total
+# length but are never truncated.
 line-trunc = 150
 
 # With command logging, the logs can become garbled in the presence of
@@ -132,8 +133,8 @@ timer-format = "prose_compact"
 
 #[file-log]
 # Writes all logs to a file. The "default" option writes to the XDG state
-# directory e.g. ~/.local/state/shrun/shrun.log. Any other string is interpreted as
-# a PATH.
+# directory e.g. ~/.local/state/shrun/shrun.log. Any other string is
+# interpreted as a PATH.
 #path = "default"
 
 # Like command-name-trunc, but for file logs.
@@ -150,14 +151,14 @@ timer-format = "prose_compact"
 # "append".
 #mode = "write"
 
-# Like command-log.strip-control, but for file logs. Defaults to all.
-#strip-control = "all"
-
 # Sets a threshold for the file log size, upon which we either print a
 # warning or delete the file, if it is exceeded. Format is value and units
 # e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning at
 # 50 mb. Can be disabled with "nothing".
 #size-mode = "warn 1 g"
+
+# Like command-log.strip-control, but for file logs. Defaults to all.
+#strip-control = "all"
 
 # If enabled, sends off notifications when commands/shrun complete.
 [notify]
@@ -176,4 +177,8 @@ system = "notify-send"
 #
 # "never" -> notifications never time out.
 # <natural> -> non-error notifications time out in <natural> seconds.
+#
+# Note that this is subject to the whims of the underlying notification
+# system e.g. some systems ignore timeout args (notify-send), and others
+# require that error notifications never time out (FDO notification spec).
 timeout = "never"
