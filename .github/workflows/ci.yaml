@@ -1,18 +1,14 @@
 name: ci
-
 on:
   push:
     branches:
       - main
       - release
-
   pull_request:
     branches:
       - main
       - release
-
   workflow_dispatch:
-
 jobs:
   cabal:
     strategy:
@@ -31,30 +27,23 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: haskell-actions/setup@v2
         with:
           ghc-version: ${{ matrix.ghc.vers }}
-
       - name: Configure
         run: |
           cabal configure \
             ${{ matrix.ghc.proj-file }} \
             --enable-tests \
             --ghc-options -Werror
-
       - name: Compile
         run: cabal build ${{ matrix.ghc.proj-file }} lib:shrun
-
       - name: Unit Tests
         run: cabal test ${{ matrix.ghc.proj-file }} unit --test-options '--hedgehog-tests 100000'
-
       - name: Integration Tests
         run: cabal test ${{ matrix.ghc.proj-file }} integration
-
       - name: Functional Tests
         run: cabal test ${{ matrix.ghc.proj-file }} functional
-
       - name: Benchmarks
         if: ${{ matrix.os == 'ubuntu-latest' }}
         id: bench
@@ -65,7 +54,6 @@ jobs:
             --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             --fail-if-slower 50
             --fail-if-faster 50'
-
       - uses: actions/upload-artifact@v3
         if: ${{ failure() && steps.bench.conclusion == 'failure' }}
         with:
@@ -78,19 +66,16 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - "macos-latest"
-        - "ubuntu-latest"
+          - "macos-latest"
+          - "ubuntu-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: haskell-actions/setup@v2
         with:
           enable-stack: true
-
       - name: Compile
         run: stack build --ghc-options -Werror
-
       - name: Test
         run: stack test --ghc-options -Werror
   nix:
@@ -98,59 +83,50 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - "macos-latest"
-        - "ubuntu-latest"
+          - "macos-latest"
+          - "ubuntu-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup nix
         uses: cachix/install-nix-action@v25
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           nix_path: nixpkgs=channel:nixos-unstable
-
       - name: Compile & Test
         run: nix build -L
-
   # Unfortunately, notify-tests does not seem to work for linux on CI.
   # Leaving it for osx as that provides some value, and at least we can
   # test linux notifications manually.
-
   notify-tests:
     strategy:
       fail-fast: false
       matrix:
         os:
-        - "macos-latest"
+          - "macos-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup nix
         uses: cachix/install-nix-action@v25
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           nix_path: nixpkgs=channel:nixos-unstable
-
       - name: Test
         run: nix develop .#notifyTests -L -c bash -c '.github/scripts/notify_tests.sh'
   lint:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup nix
         uses: cachix/install-nix-action@v25
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           nix_path: nixpkgs=channel:nixos-unstable
-
       - name: Formatting
         run: |
           nix run .#format
           git diff --exit-code --color=always
-
       - name: HLint
         run: nix run .#lint
   release_osx:
@@ -166,15 +142,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: haskell-actions/setup@v2
         with:
           ghc-version: "9.6.4"
-
       - name: Install binary
         run: |
           .github/scripts/release_osx.sh
-
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
@@ -191,13 +164,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: docker-practice/actions-setup-docker@master
-
       - name: Install binary
         run: |
           .github/scripts/release_linux_static.sh ${{ matrix.dir }}
-
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
@@ -209,11 +179,9 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
-
       - name: Install binary
         run: |
           .github/scripts/release_linux.sh
-
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:

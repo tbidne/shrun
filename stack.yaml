@@ -1,23 +1,8 @@
 resolver: lts-22.17
 packages:
-- .
+  - .
 ghc-options:
-  "$locals":
-    -Wall -Wcompat
-    -Widentities
-    -Wincomplete-record-updates
-    -Wincomplete-uni-patterns
-    -Wmissing-deriving-strategies
-    -Wmissing-export-lists
-    -Wmissing-exported-signatures
-    -Wmissing-home-modules
-    -Wpartial-fields
-    -Wprepositive-qualified-module
-    -Wredundant-constraints
-    -Wunused-binds
-    -Wunused-packages
-    -Wunused-type-patterns
-    -Wno-unticked-promoted-constructors
+  "$locals": -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-deriving-strategies -Wmissing-export-lists -Wmissing-exported-signatures -Wmissing-home-modules -Wpartial-fields -Wprepositive-qualified-module -Wredundant-constraints -Wunused-binds -Wunused-packages -Wunused-type-patterns -Wno-unticked-promoted-constructors
 extra-deps:
   - env-guard-0.2@sha256:bac94c42908e5308ca6726a076ce49538d50d6fb9a01e1b68b4ac264cb435d39,1312
   - text-display-0.0.5.1@sha256:da3515adb03b5c01d8e8f0ca81ac0cce4f3ae36f7b74e8566108220a1da670eb,2670
