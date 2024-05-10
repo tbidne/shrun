@@ -63,7 +63,7 @@ mkdir -p /opt/shrun/bin
 
 arch=$(uname -m)
 
-cp ./dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/x/shrun/opt/build/shrun/shrun "/opt/shrun/bin/shrun_$shrun_vers-$arch-linux"
+cp ./dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/x/shrun/opt/build/shrun/shrun "/opt/shrun/bin/shrun_$shrun_vers-$arch-linux-static"
 
 cd ../../
 
