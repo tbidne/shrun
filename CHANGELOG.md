@@ -10,7 +10,7 @@ Note that PVP is applied to the _application_, **not** the library. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
-## [Unreleased]
+## [0.9] -- 2024-05-10
 ### Changed
 * `--notify-action command` (`notify.action = "command"`) no longer implies
   `--notify-action final`. There is a new option `--notify-action all` for
@@ -59,6 +59,7 @@ the major/minor/patch definitions apply to the application's interface / usage
   successful exit.
 * New option `--file-log-line-trunc`
   (toml: `file-log.line-trunc`) for line truncation in the file logs.
+* Options taking `NATURAL` numbers now allow underscore separators.
 
 ### Fixed
 * Improved `strip-control` options `all` and `smart` to replace newlines with
@@ -220,7 +221,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.8.1...main
+[0.9]: https://github.com/tbidne/shrun/compare/0.8.1...0.9
 [0.8.1]: https://github.com/tbidne/shrun/compare/0.8...0.8.1
 [0.8]: https://github.com/tbidne/shrun/compare/0.7...0.8
 [0.7]: https://github.com/tbidne/shrun/compare/0.6...0.7
