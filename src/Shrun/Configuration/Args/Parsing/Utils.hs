@@ -2,11 +2,13 @@ module Shrun.Configuration.Args.Parsing.Utils
   ( withDisabledParser,
     withDisabledParserHelp,
     mkHelp,
+    autoStripUnderscores,
   )
 where
 
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
+import Options.Applicative.Builder (ReadM)
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Shrun.Configuration.Data.WithDisabled
@@ -17,6 +19,8 @@ import Shrun.Configuration.Data.WithDisabled
       ),
   )
 import Shrun.Prelude
+import Shrun.Utils qualified as ShrunUtils
+import Text.Read (Read)
 
 withDisabledParser :: Parser (Maybe a) -> String -> Parser (WithDisabled a)
 withDisabledParser mainParser name =
@@ -55,3 +59,9 @@ mkHelp =
     . fmap (<> Pretty.hardline)
     . Chunk.unChunk
     . Chunk.paragraph
+
+-- | Reads 'Text', strips underscores, then uses the Read class. This is
+-- essentially 'auto' but removes underscores. This is used for nicer
+-- numeric values e.g. allowing parsing "1_000_000" as a Num.
+autoStripUnderscores :: (Read a) => ReadM a
+autoStripUnderscores = OA.str >>= ShrunUtils.readStripUnderscores

@@ -18,7 +18,7 @@ module Shrun.Configuration.Data.CommandLogging
 where
 
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
-import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -103,10 +103,7 @@ decodePollInterval :: Decoder (Maybe PollInterval)
 decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
 
 decodeReadSize :: Decoder (Maybe ReadSize)
-decodeReadSize =
-  getFieldOptWith
-    (fmap (MkReadSize . MkBytes) tomlDecoder)
-    "read-size"
+decodeReadSize = getFieldOptWith tomlDecoder "read-size"
 
 -- | Creates env version from merged.
 toEnv :: CommandLoggingMerged -> CommandLoggingEnv

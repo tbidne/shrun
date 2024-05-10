@@ -18,7 +18,8 @@ import Shrun.Configuration.Data.CommandLogging
   )
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
 import Shrun.Configuration.Data.CommandLogging.PollInterval qualified as PollInterval
-import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize)
+import Shrun.Configuration.Data.CommandLogging.ReadSize qualified as ReadSize
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
@@ -40,7 +41,7 @@ pollIntervalParser = Utils.withDisabledParser mainParser "command-log-poll-inter
     mainParser =
       OA.optional
         $ OA.option
-          (PollInterval.parsePollInterval OA.auto)
+          (PollInterval.parsePollInterval Utils.autoStripUnderscores)
           ( mconcat
               [ OA.long "command-log-poll-interval",
                 Utils.mkHelp helpTxt,
@@ -74,18 +75,18 @@ readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"
     mainParser =
       OA.optional
         $ OA.option
-          readReadSize
+          (ReadSize.parseReadSize OA.str)
           ( mconcat
               [ OA.long "command-log-read-size",
                 Utils.mkHelp helpTxt,
-                OA.metavar "NATURAL"
+                OA.metavar "BYTES"
               ]
           )
-    readReadSize = MkReadSize . MkBytes <$> OA.auto
+
     helpTxt =
       mconcat
-        [ "Non-negative integer that determines that max number of bytes in ",
-          "a single read when streaming command logs (--console-log-command and ",
-          "--file-log). Logs larger than --command-log-read-size will be read in ",
-          "a subsequent read, hence broken across lines. The default is 1024."
+        [ "The max number of bytes in a single read when streaming command ",
+          "logs (--console-log-command and --file-log). Logs larger than ",
+          "--command-log-read-size will be read in a subsequent read, hence ",
+          "broken across lines. The default is '1 kb'."
         ]

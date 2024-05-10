@@ -51,8 +51,8 @@ import Shrun.Configuration.Data.WithDisabled
   )
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
+import Shrun.Utils qualified as U
 import TOML (Value (Integer, String))
-import Text.Read qualified as TR
 
 -- | Determines for which actions we should send notifications.
 data NotifyAction
@@ -218,22 +218,11 @@ parseNotifyTimeout :: (MonadFail m) => m Text -> m NotifyTimeout
 parseNotifyTimeout getTxt =
   getTxt >>= \case
     "never" -> pure NotifyTimeoutNever
-    other ->
-      let otherStr = T.unpack other
-       in case TR.readMaybe otherStr of
-            Just n -> pure $ NotifyTimeoutSeconds n
-            Nothing ->
-              fail
-                $ mconcat
-                  [ "Unrecognized notify timeout: '",
-                    otherStr,
-                    "'. Expected one of ",
-                    notifyTimeoutStr
-                  ]
+    other -> NotifyTimeoutSeconds <$> U.readStripUnderscores other
 
 -- | Available 'NotifyTimeout' strings.
 notifyTimeoutStr :: (IsString a) => a
-notifyTimeoutStr = "(never | NAT)"
+notifyTimeoutStr = "(never | NATURAL)"
 
 data OsxNotifySystemMismatch
   = OsxNotifySystemMismatchDBus

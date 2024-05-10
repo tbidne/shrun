@@ -21,6 +21,7 @@ module Shrun.Utils
     untilJust,
     unsafeListToNESeq,
     (∸),
+    readStripUnderscores,
   )
 where
 
@@ -37,6 +38,8 @@ import Effects.Time (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
 import Shrun.Data.Text qualified as Shrun.Text
 import Shrun.Prelude
+import Text.Read (Read)
+import Text.Read qualified as TR
 
 -- $setup
 -- >>> :set -XOverloadedLists
@@ -303,3 +306,11 @@ x ∸ y =
     else x - y
 
 infixl 6 ∸
+
+readStripUnderscores :: (MonadFail m, Read a) => Text -> m a
+readStripUnderscores t = case TR.readEither s of
+  Left err -> fail $ "Could not read '" ++ s ++ "': " ++ err
+  Right x -> pure x
+  where
+    noUnderscores = T.replace "_" "" t
+    s = T.unpack noUnderscores

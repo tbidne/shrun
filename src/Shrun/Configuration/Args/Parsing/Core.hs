@@ -57,7 +57,7 @@ timeoutParser = Utils.withDisabledParser mainParser "timeout"
     mainParser =
       OA.optional
         $ OA.option
-          (Timeout.parseTimeout OA.auto OA.str)
+          (Timeout.parseTimeout Utils.autoStripUnderscores OA.str)
           ( mconcat
               [ OA.long "timeout",
                 OA.short 't',

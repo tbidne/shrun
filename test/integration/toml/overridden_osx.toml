@@ -12,7 +12,7 @@ key-hide = false
 
 [command-log]
 poll-interval = 100
-read-size = 50
+read-size = "50 b"
 
 [console-log]
 command = true

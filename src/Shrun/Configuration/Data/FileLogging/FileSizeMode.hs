@@ -57,4 +57,4 @@ instance Default FileSizeMode where
       defBytes = MkBytes 50
 
 expectedStr :: String
-expectedStr = "(warn SIZE | delete SIZE | nothing)"
+expectedStr = "(warn BYTES | delete BYTES | nothing)"

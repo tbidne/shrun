@@ -83,9 +83,10 @@
 # # out a CPU thread.
 # poll-interval = 100
 
-# # Non-negative integer that determines the bytes size of the logs we read from
-# # commands. Overrides the default of 1024.
-# read-size = 2048
+# # The max number of bytes in a single read when streaming command logs.
+# # Logs larger than read-size will be read in a subsequent read, hence broken
+# # across lines. The default is "1 kb".
+# read-size = "2 kb"
 
 # # Configuration for console logging.
 # [console-log]

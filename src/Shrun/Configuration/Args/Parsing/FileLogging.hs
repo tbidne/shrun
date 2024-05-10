@@ -96,7 +96,7 @@ fileLogCommandNameTruncParser =
     mainParser =
       OA.optional
         $ OA.option
-          (Trunc.parseTruncation OA.auto)
+          (Trunc.parseTruncation Utils.autoStripUnderscores)
           ( mconcat
               [ OA.long "file-log-command-name-trunc",
                 Utils.mkHelp helpTxt,
@@ -133,7 +133,7 @@ lineTruncParser = Utils.withDisabledParser mainParser "file-log-line-trunc"
     mainParser =
       OA.optional
         $ OA.option
-          (Trunc.parseLineTruncation OA.auto OA.str)
+          (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
           ( mconcat
               [ OA.long "file-log-line-trunc",
                 Utils.mkHelp helpTxt,
@@ -194,7 +194,7 @@ fileLogSizeModeParser = Utils.withDisabledParser mainParser "file-log-size-mode"
       mconcat
         [ "Sets a threshold for the file log size, upon which we either ",
           "print a warning or delete the file, if it is exceeded. ",
-          "The SIZE should include the value and units e.g. ",
+          "The BYTES should include the value and units e.g. ",
           "warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning ",
           "at 50 mb."
         ]

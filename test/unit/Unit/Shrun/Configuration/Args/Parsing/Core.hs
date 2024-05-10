@@ -27,6 +27,7 @@ timeoutTests =
     "--timeout"
     [ testTimeoutShort,
       testTimeout,
+      testTimeoutUnderscores,
       testTimeoutStringShort,
       testTimeoutString,
       testTimeoutWordFail,
@@ -49,6 +50,14 @@ testTimeout =
   where
     argList = ["--timeout=7", "command"]
     expected = U.updateDefCoreArgs #timeout 7
+
+testTimeoutUnderscores :: TestTree
+testTimeoutUnderscores =
+  testPropertyNamed "Parses --timeout with underscores" "testTimeoutUnderscores"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--timeout=1_000", "command"]
+    expected = U.updateDefCoreArgs #timeout 1_000
 
 testTimeoutStringShort :: TestTree
 testTimeoutStringShort =

@@ -115,6 +115,7 @@ notifyTimeoutTests =
   testGroup
     "--notify-timeout"
     [ testTimeoutSeconds,
+      testTimeoutSecondsUnderscores,
       testTimeoutNever,
       testNoTimeout
     ]
@@ -127,6 +128,15 @@ testTimeoutSeconds =
     desc = "Parses --notify-timeout 5"
     argList = ["--notify-timeout", "5", "command"]
     expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 5)
+
+testTimeoutSecondsUnderscores :: TestTree
+testTimeoutSecondsUnderscores =
+  testPropertyNamed desc "testTimeoutSecondsUnderscores"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --notify-timeout 5_000"
+    argList = ["--notify-timeout", "5_000", "command"]
+    expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 5_000)
 
 testTimeoutNever :: TestTree
 testTimeoutNever =

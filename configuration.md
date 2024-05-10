@@ -181,23 +181,23 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 #### Read Size
 
-**Arg:** `--command-log-read-size NATURAL`
+**Arg:** `--command-log-read-size BYTES`
 
-**Description:** Non-negative integer that determines the bytes size of the logs we read from commands. Overrides the default of 1024.
+**Description:** The max number of bytes in a single read when streaming command logs. Logs larger than `--command-log-read-size` will be read in a subsequent read, hence broken across lines. The default is `1 kb`.
 
 **Example:**
 
 > [!NOTE]
-> In this example we also use `--command-log-poll-interval 1000000` to slow down the reads, so that we can see `acbde` and `f` are indeed read separately. Ordinarily this would be too fast to see the difference.
+> In this example we also use `--command-log-poll-interval 1_000_000` to slow down the reads, so that we can see `acbde` and `f` are indeed read separately. Ordinarily this would be too fast to see the difference.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5 --command-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcde</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5 --command-log-poll-interval 1000000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] f</span>
 <span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
@@ -454,9 +454,9 @@ vs.
 
 #### File Log Size Mode
 
-**Arg:** `--file-log-size-mode (warn SIZE | delete SIZE | nothing)`
+**Arg:** `--file-log-size-mode (warn BYTES | delete BYTES | nothing)`
 
-**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `SIZE` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`. Can be disabled with "nothing".
+**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `BYTES` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`. Can be disabled with "nothing".
 
 **Exmaple:**
 

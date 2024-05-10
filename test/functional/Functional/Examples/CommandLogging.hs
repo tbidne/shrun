@@ -17,7 +17,7 @@ tests =
 
 readSizeDefault :: TestTree
 readSizeDefault =
-  testCase "Default --read-size splits 1024" $ do
+  testCase "Default --read-size splits 1000" $ do
     results <- fmap MkResultText <$> (readIORef =<< run args)
     V.verifyExpected results expected
   where
@@ -28,7 +28,7 @@ readSizeDefault =
           "5",
           cmd
         ]
-    commandLog = replicate 1024 'a'
+    commandLog = replicate 1000 'a'
     cmd = "sleep 1 ; echo " ++ commandLog ++ "b; sleep 1"
     cmdExpected = V.MkExpectedText . T.pack $ commandLog
     expected =
@@ -46,9 +46,9 @@ readSize =
       withNoConfig
         [ "--console-log-command",
           "--command-log-read-size",
-          "5",
+          "5b",
           "--command-log-poll-interval",
-          "1000000",
+          "1_000_000",
           cmd
         ]
     cmd :: (IsString a) => a

@@ -108,7 +108,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 commandLogging =
                   MkCommandLoggingP
                     { pollInterval = 100,
-                      readSize = MkReadSize $ MkBytes 2048
+                      readSize = MkReadSize $ MkBytes 2_000
                     },
                 fileLogging = Nothing,
                 notify =

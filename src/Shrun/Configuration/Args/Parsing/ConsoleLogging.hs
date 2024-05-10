@@ -78,7 +78,7 @@ commandNameTruncParser = Utils.withDisabledParser mainParser "console-log-comman
     mainParser =
       OA.optional
         $ OA.option
-          (Trunc.parseTruncation OA.auto)
+          (Trunc.parseTruncation Utils.autoStripUnderscores)
           ( mconcat
               [ OA.long "console-log-command-name-trunc",
                 Utils.mkHelp helpTxt,
@@ -97,7 +97,7 @@ lineTruncParser = Utils.withDisabledParser mainParser "console-log-line-trunc"
     mainParser =
       OA.optional
         $ OA.option
-          (Trunc.parseLineTruncation OA.auto OA.str)
+          (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
           ( mconcat
               [ OA.long "console-log-line-trunc",
                 Utils.mkHelp helpTxt,

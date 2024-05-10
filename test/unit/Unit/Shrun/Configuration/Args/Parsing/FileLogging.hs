@@ -112,6 +112,7 @@ commandNameTruncTests =
   testGroup
     "--file-log-command-name-trunc"
     [ testCommandNameTrunc,
+      testCommandNameTruncUnderscores,
       testNoCommandNameTrunc
     ]
 
@@ -124,6 +125,16 @@ testCommandNameTrunc =
   where
     argList = ["--file-log-command-name-trunc", "15", "command"]
     expected = updateDefFileLogArgs #commandNameTrunc 15
+
+testCommandNameTruncUnderscores :: TestTree
+testCommandNameTruncUnderscores =
+  testPropertyNamed
+    "Parses --file-log-command-name-trunc with underscores"
+    "testCommandNameTruncUnderscores"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--file-log-command-name-trunc", "12_500", "command"]
+    expected = updateDefFileLogArgs #commandNameTrunc 12_500
 
 testNoCommandNameTrunc :: TestTree
 testNoCommandNameTrunc =
@@ -166,6 +177,7 @@ lineTruncTests =
   testGroup
     "--file-log-line-trunc"
     [ testLineTrunc,
+      testLineTruncUnderscores,
       testLineTruncDetect,
       testNoLineTrunc
     ]
@@ -179,6 +191,16 @@ testLineTrunc =
   where
     argList = ["--file-log-line-trunc", "15", "command"]
     expected = updateDefFileLogArgs #lineTrunc (Undetected 15)
+
+testLineTruncUnderscores :: TestTree
+testLineTruncUnderscores =
+  testPropertyNamed
+    "Parses --file-log-line-trunc with underscores"
+    "testLineTruncUnderscores"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--file-log-line-trunc", "1_50", "command"]
+    expected = updateDefFileLogArgs #lineTrunc (Undetected 150)
 
 testLineTruncDetect :: TestTree
 testLineTruncDetect =

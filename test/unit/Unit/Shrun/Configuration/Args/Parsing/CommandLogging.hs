@@ -26,6 +26,7 @@ pollIntervalTests =
   testGroup
     "--command-log-poll-interval"
     [ testPollInterval,
+      testPollIntervalUnderscores,
       testNoPollInterval
     ]
 
@@ -37,6 +38,15 @@ testPollInterval =
     desc = "Parses --command-log-poll-interval"
     argList = ["--command-log-poll-interval", "1000", "command"]
     expected = U.updateDefCoreArgs (#commandLogging % #pollInterval) 1000
+
+testPollIntervalUnderscores :: TestTree
+testPollIntervalUnderscores =
+  testPropertyNamed desc "testPollIntervalUnderscores"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --command-log-poll-interval with underscores"
+    argList = ["--command-log-poll-interval", "1_000_000", "command"]
+    expected = U.updateDefCoreArgs (#commandLogging % #pollInterval) 1_000_000
 
 testNoPollInterval :: TestTree
 testNoPollInterval =
@@ -53,8 +63,8 @@ testReadSize =
     "testReadSize"
     $ U.verifyResult argList expected
   where
-    argList = ["--command-log-read-size", "2048", "command"]
-    expected = U.updateDefCoreArgs (#commandLogging % #readSize) (MkReadSize $ MkBytes 2048)
+    argList = ["--command-log-read-size", "2 kb", "command"]
+    expected = U.updateDefCoreArgs (#commandLogging % #readSize) (MkReadSize $ MkBytes 2_000)
 
 testNoReadSize :: TestTree
 testNoReadSize =
