@@ -18,7 +18,7 @@ tests =
 readSizeDefault :: TestTree
 readSizeDefault =
   testCase "Default --read-size splits 1000" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =
@@ -39,7 +39,7 @@ readSizeDefault =
 readSize :: TestTree
 readSize =
   testCase "Runs --command-log-read-size example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =

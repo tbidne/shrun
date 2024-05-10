@@ -17,7 +17,7 @@ tests =
 keyHideOn :: TestTree
 keyHideOn =
   testCase "Runs key hide example with --common-log-key-hide" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -37,7 +37,7 @@ keyHideOn =
 keyHideOff :: TestTree
 keyHideOff =
   testCase "Runs key hide example without --common-log-key-hide" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpectedUnexpected results expected unexpected
   where
     args =

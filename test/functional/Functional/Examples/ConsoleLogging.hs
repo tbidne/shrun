@@ -27,7 +27,7 @@ tests =
 commandLogOn :: TestTree
 commandLogOn =
   testCase "Runs commandLog example with --console-log-command" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =
@@ -42,7 +42,7 @@ commandLogOn =
 commandLogOnDefault :: TestTree
 commandLogOnDefault =
   testCase "Runs --console-log-command with no output shows default message" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =
@@ -57,7 +57,7 @@ commandLogOnDefault =
 commandLogOff :: TestTree
 commandLogOff =
   testCase "Runs commandLog example without --console-log-command" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyUnexpected results unexpected
   where
     args =
@@ -68,7 +68,7 @@ commandLogOff =
 
 commandNameTruncN :: TestTree
 commandNameTruncN = testCase "Runs --console-log-command-name-trunc 10 example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> run args
   V.verifyExpected results expected
   where
     args =
@@ -85,7 +85,7 @@ commandNameTruncN = testCase "Runs --console-log-command-name-trunc 10 example" 
 
 commandLogLineTruncN :: TestTree
 commandLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> run args
   V.verifyExpected results expected
   where
     args =
@@ -101,7 +101,7 @@ commandLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
 
 stripControlAll :: TestTree
 stripControlAll = testCase "Runs --console-log-strip-control all example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> run args
   V.verifyExpected results expected
   where
     args =
@@ -122,7 +122,7 @@ stripControlAll = testCase "Runs --console-log-strip-control all example" $ do
 
 stripControlNone :: TestTree
 stripControlNone = testCase "Runs --console-log-strip-control none example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> run args
   V.verifyExpected results expected
   where
     args =
@@ -140,7 +140,7 @@ stripControlNone = testCase "Runs --console-log-strip-control none example" $ do
 
 stripControlSmart :: TestTree
 stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> run args
   V.verifyExpected results expected
   where
     args =
@@ -158,7 +158,7 @@ stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ 
 timerFormatDigitalCompact :: TestTree
 timerFormatDigitalCompact =
   testCase "Runs timer format with digital_compact" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =
@@ -174,7 +174,7 @@ timerFormatDigitalCompact =
 timerFormatDigitalFull :: TestTree
 timerFormatDigitalFull =
   testCase "Runs timer format with digital_full" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =
@@ -190,7 +190,7 @@ timerFormatDigitalFull =
 timerFormatProseCompact :: TestTree
 timerFormatProseCompact =
   testCase "Runs timer format with prose_compact" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =
@@ -206,7 +206,7 @@ timerFormatProseCompact =
 timerFormatProseFull :: TestTree
 timerFormatProseFull =
   testCase "Runs timer format with prose_full" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =

@@ -19,7 +19,7 @@ specs =
 logsNoBuffer :: TestTree
 logsNoBuffer =
   testCase "Command logs should not buffer" $ do
-    results <- L.reverse <$> (readIORef =<< run args)
+    results <- L.reverse <$> run args
 
     assertLogsEq expectedOrdered results
 

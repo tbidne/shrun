@@ -19,7 +19,7 @@ tests =
 initOn :: TestTree
 initOn =
   testCase "Runs init successful example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< run args)
+    results <- fmap MkResultText <$> run args
     V.verifyExpected results expected
   where
     args =
@@ -36,7 +36,7 @@ initOn =
 initOff :: TestTree
 initOff =
   testCase "Runs init failure example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> runExitFailure args
     V.verifyExpected results expected
   where
     args =
@@ -51,7 +51,7 @@ initOff =
 timeout :: TestTree
 timeout =
   testCase "Runs timeout example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> runExitFailure args
     V.verifyExpected results expected
   where
     args =

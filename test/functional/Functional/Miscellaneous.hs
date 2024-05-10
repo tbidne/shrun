@@ -16,7 +16,7 @@ specs =
 
 splitNewlineLogs :: TestTree
 splitNewlineLogs = testCase "Logs with newlines are split" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> run args
   V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -40,7 +40,7 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
 
 spaceStderrLogs :: TestTree
 spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
-  results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+  results <- fmap MkResultText <$> runExitFailure args
   V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -64,7 +64,7 @@ spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
 -- markdown file as easy as possible. Thus we move it here.
 stripControlAlwaysCmdNames :: TestTree
 stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
-  results <- fmap MkResultText <$> (readIORef =<< run args)
+  results <- fmap MkResultText <$> run args
   V.verifyExpected results expected
   where
     args =

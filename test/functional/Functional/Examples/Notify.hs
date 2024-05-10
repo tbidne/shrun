@@ -33,7 +33,7 @@ tests =
 
 notifyActionFinal :: TestTree
 notifyActionFinal = testCase "Runs --notify-action final" $ do
-  results <- readIORef =<< runNotes args
+  results <- runNotes args
   expected @=? results
   where
     args =
@@ -56,7 +56,7 @@ notifyActionFinal = testCase "Runs --notify-action final" $ do
 
 notifyTimeoutNever :: TestTree
 notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
-  results <- readIORef =<< runNotes args
+  results <- runNotes args
   expected @=? results
   where
     args =

@@ -10,8 +10,6 @@ module Functional.Prelude
     runNotes,
     runException,
     runExitFailure,
-    runOuterExitFailure,
-    runOuterException,
 
     -- * Expectations
 
@@ -180,29 +178,24 @@ instance MonadNotify (ShellT FuncEnv IO) where
     pure Nothing
 
 -- | Runs the args and retrieves the logs.
-run :: List String -> IO (IORef (List Text))
+run :: List String -> IO (List Text)
 run = fmap fst . runMaybeException ExNothing
 
 -- | Runs the args and retrieves the sent notifications.
-runNotes :: List String -> IO (IORef (List ShrunNote))
+runNotes :: List String -> IO (List ShrunNote)
 runNotes = fmap snd . runMaybeException ExNothing
 
 -- | 'runException' specialized to ExitFailure.
-runExitFailure :: List String -> IO (IORef (List Text))
+runExitFailure :: List String -> IO (List Text)
 runExitFailure =
   fmap fst . runMaybeException (ExJust $ Proxy @(ExceptionCS ExitCode))
-
--- | 'runOuterException' specialized to ExitFailure.
-runOuterExitFailure :: List String -> IO (IORef (List Text))
-runOuterExitFailure =
-  fmap fst . runOuterException (Proxy @(ExceptionCS ExitCode))
 
 -- | Like 'runException', except it expects an exception.
 runException ::
   forall e.
   (Exception e) =>
   List String ->
-  IO (IORef (List Text))
+  IO (List Text)
 runException = fmap fst . runMaybeException (ExJust (Proxy @e))
 
 -- | So we can hide the exception type and make it so run does not
@@ -211,56 +204,12 @@ data MaybeException where
   ExNothing :: MaybeException
   ExJust :: (Exception e) => Proxy e -> MaybeException
 
--- | Runs shrun potentially catching an expected exception. Note that we only
--- catch exceptions from @runShellT shrun@. In particular, this means withEnv
--- config setup will __not__ perform any exception handling, since the
--- exception is caught before that.
+-- | Runs shrun potentially catching an expected exception.
 runMaybeException ::
   MaybeException ->
   List String ->
-  IO (IORef (List Text), IORef (List ShrunNote))
+  IO (List Text, List ShrunNote)
 runMaybeException mException argList = do
-  withArgs argList $ Env.withEnv $ \env -> do
-    ls <- newIORef []
-    shrunNotes <- newIORef []
-    let funcEnv =
-          MkFuncEnv
-            { coreEnv = env,
-              logs = ls,
-              shrunNotes
-            }
-
-    case mException of
-      ExNothing -> do
-        SR.runShellT SR.shrun funcEnv $> (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
-      ExJust (proxy :: Proxy e) ->
-        try @_ @e (SR.runShellT SR.shrun funcEnv) >>= \case
-          Left _ -> pure (funcEnv ^. #logs, funcEnv ^. #shrunNotes)
-          Right _ ->
-            error
-              $ mconcat
-                [ "Expected exception <",
-                  show (typeRep proxy),
-                  ">, received none"
-                ]
-
--- | Like 'runMaybeException' except:
---
--- 1. Always expects an exception.
--- 2. The __entire__ withEnv -> shrun process is surrounded with a catch.
---    This means an exception thrown by the main shrun process will trigger
---    withEnv's exception handling logic.
---
--- We need this when we want to test any non-happy-path logic in
--- withEnv, withCoreEnv, withMLogging, etc. i.e. anything at a higher scope
--- than 'SR.shrun'.
-runOuterException ::
-  forall e.
-  (Exception e) =>
-  Proxy e ->
-  List String ->
-  IO (IORef (List Text), IORef (List ShrunNote))
-runOuterException proxy argList = do
   ls <- newIORef []
   shrunNotes <- newIORef []
 
@@ -275,15 +224,62 @@ runOuterException proxy argList = do
 
           SR.runShellT SR.shrun funcEnv
 
-  try @_ @e action >>= \case
-    Left _ -> pure (ls, shrunNotes)
-    Right _ ->
-      error
-        $ mconcat
-          [ "Expected exception <",
-            show (typeRep proxy),
-            ">, received none"
-          ]
+  case mException of
+    -- 1. Not expecting an exception
+    ExNothing -> do
+      tryAny action >>= \case
+        -- 1.1: Received an exception: print logs and rethrow
+        Left ex -> printLogsReThrow ex ls
+        -- 1.2: No exception, return logs/notes
+        Right _ -> readRefs ls shrunNotes
+    -- 2. Expecting exception e
+    ExJust @e proxy ->
+      tryAny action >>= \case
+        -- 2.1: Received no exception: print logs and die
+        Right _ -> do
+          printLogs ls
+          error
+            $ mconcat
+              [ "Expected exception <",
+                show (typeRep proxy),
+                ">, received none"
+              ]
+        Left someEx -> do
+          case fromException @e someEx of
+            -- 2.2: Received exception e: return logs/notes
+            Just _ -> readRefs ls shrunNotes
+            -- 2.3: Received some other exception: print logs and die
+            Nothing -> do
+              printLogs ls
+              error
+                $ mconcat
+                  [ "Expected exception <",
+                    show (typeRep proxy),
+                    ">, but received another: ",
+                    displayException someEx
+                  ]
+  where
+    readRefs ::
+      IORef (List Text) ->
+      IORef (List ShrunNote) ->
+      IO (List Text, List ShrunNote)
+    readRefs ls ns = (,) <$> readIORef ls <*> readIORef ns
+
+    printLogsReThrow :: (Exception e) => e -> IORef (List Text) -> IO void
+    printLogsReThrow ex ls = do
+      printLogs ls
+
+      -- rethrow
+      throwM ex
+
+    printLogs :: IORef (List Text) -> IO ()
+    printLogs ls = do
+      logs <- readIORef ls
+
+      putStrLn "\n*** LOGS ***\n"
+
+      for_ logs (putStrLn . unpack)
+      putStrLn ""
 
 commandPrefix :: (IsString s) => s
 commandPrefix = "[Command]"

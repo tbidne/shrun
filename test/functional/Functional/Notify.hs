@@ -35,7 +35,7 @@ notifyTests =
 
 notifySystem :: TestTree
 notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
-  results <- readIORef =<< runNotes args
+  results <- runNotes args
   expected @=? results
   where
     args =
@@ -64,7 +64,7 @@ notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
 
 notifyActionCommand :: TestTree
 notifyActionCommand = testCase "Runs --notify-action command" $ do
-  results <- readIORef =<< runNotes args
+  results <- runNotes args
   expected @=? results
   where
     args =
@@ -93,7 +93,7 @@ notifyActionCommand = testCase "Runs --notify-action command" $ do
 
 notifyActionAll :: TestTree
 notifyActionAll = testCase "Runs --notify-action all" $ do
-  results <- readIORef =<< runNotes args
+  results <- runNotes args
   expected @=? results
   where
     args =
@@ -128,7 +128,7 @@ notifyActionAll = testCase "Runs --notify-action all" $ do
 
 notifyTimeout5 :: TestTree
 notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
-  results <- readIORef =<< runNotes args
+  results <- runNotes args
   expected @=? results
   where
     args =

@@ -38,7 +38,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
             "for i in 1 2 3; do echo hi; sleep 1; done"
           ]
 
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+  resultsConsole <- fmap MkResultText <$> runExitFailure args
   V.verifyExpected resultsConsole expectedConsole
 
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
@@ -68,7 +68,7 @@ fileLogCommandNameTruncN testArgs = testCase desc $ do
             "for i in 1 2 3; do echo hi; sleep 1; done"
           ]
 
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< run args)
+  resultsConsole <- fmap MkResultText <$> run args
   V.verifyExpected resultsConsole expectedConsole
 
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
@@ -96,7 +96,7 @@ fileLogDeleteOnSuccess testArgs = testCase desc $ do
             "sleep 2"
           ]
 
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< run args)
+  resultsConsole <- fmap MkResultText <$> run args
   V.verifyExpected resultsConsole expectedConsole
 
   exists <- doesFileExist outFile
@@ -122,7 +122,7 @@ fileLogDeleteOnSuccessFail testArgs = testCase desc $ do
             "sleep 2"
           ]
 
-  resultsConsole <- fmap MkResultText <$> (readIORef =<< runOuterExitFailure args)
+  resultsConsole <- fmap MkResultText <$> runExitFailure args
   V.verifyExpected resultsConsole expectedConsole
 
   exists <- doesFileExist outFile
@@ -153,7 +153,7 @@ fileLogLineTruncN testArgs = testCase "Runs --file-log-line-trunc 80 example" $ 
             "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"
           ]
 
-  _ <- fmap MkResultText <$> (readIORef =<< run args)
+  _ <- fmap MkResultText <$> run args
 
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
   V.verifyExpected resultsFile expectedFile
@@ -175,7 +175,7 @@ fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all exam
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
           ]
 
-  _ <- fmap MkResultText <$> (readIORef =<< run args)
+  _ <- fmap MkResultText <$> run args
 
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
   V.verifyExpected resultsFile expectedFile
@@ -197,7 +197,7 @@ fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none ex
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
           ]
 
-  _ <- fmap MkResultText <$> (readIORef =<< run args)
+  _ <- fmap MkResultText <$> run args
 
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
   V.verifyExpected resultsFile expectedFile
@@ -221,7 +221,7 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
             "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
           ]
 
-  _ <- fmap MkResultText <$> (readIORef =<< run args)
+  _ <- fmap MkResultText <$> run args
 
   resultsFile <- fmap MkResultText . T.lines <$> readFileUtf8ThrowM outFile
   V.verifyExpected resultsFile expectedFile

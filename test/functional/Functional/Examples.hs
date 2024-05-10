@@ -33,7 +33,7 @@ specs args =
 gif :: TestTree
 gif =
   testCase "Runs gif example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> runExitFailure args
     V.verifyExpected results expected
   where
     args =
@@ -61,7 +61,7 @@ gif =
 core :: TestTree
 core =
   testCase "Runs core example" $ do
-    results <- fmap MkResultText <$> (readIORef =<< runExitFailure args)
+    results <- fmap MkResultText <$> runExitFailure args
     V.verifyExpected results expected
   where
     args =
