@@ -2,6 +2,21 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- TODO:
+--
+--   1. Once our cabal / cabal-fmt recognizes TypeAbstractions, add it to the
+--      cabal file instead i.e.
+--
+--          if impl(ghc >=9.8.1)
+--            default-extensions: TypeAbstractions
+--
+--   2. Once we only support GHC 9.8+, add it unconditionally to
+--      default-extensions.
+
+#if __GLASGOW_HASKELL__ >= 908
+{-# LANGUAGE TypeAbstractions #-}
+#endif
+
 module Functional.Prelude
   ( module X,
 
