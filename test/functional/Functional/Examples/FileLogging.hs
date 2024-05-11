@@ -141,7 +141,7 @@ fileLogDeleteOnSuccessFail testArgs = testCase desc $ do
     expectedFile = expectedConsole
 
 fileLogLineTruncN :: IO TestArgs -> TestTree
-fileLogLineTruncN testArgs = testCase "Runs --file-log-line-trunc 80 example" $ do
+fileLogLineTruncN testArgs = testCase "Runs --file-log-line-trunc 120 example" $ do
   outFile <- (</> [osp|line-trunc.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
@@ -149,9 +149,12 @@ fileLogLineTruncN testArgs = testCase "Runs --file-log-line-trunc 80 example" $ 
           [ "--file-log",
             outFileStr,
             "--file-log-line-trunc",
-            "80",
+            "120",
             "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"
           ]
+
+  -- NOTE: We choose 120 so that we get _some_ chars rather than minimal ...,
+  -- so the test is more precise.
 
   _ <- fmap MkResultText <$> run args
 
@@ -159,7 +162,8 @@ fileLogLineTruncN testArgs = testCase "Runs --file-log-line-trunc 80 example" $ 
   V.verifyExpected resultsFile expectedFile
   where
     expectedFile =
-      [ withCommandPrefix "echo 'some ridiculously long command i mean is this really necessary' && sleep 2" "..."
+      [ withCommandPrefix "echo 'some ridiculously long command i mean is this really necessary' && sleep 2" "Star...",
+        withCommandPrefix "echo 'some ridiculously long command i mean is this really necessary' && sleep 2" "some..."
       ]
 
 fileLogStripControlAll :: IO TestArgs -> TestTree

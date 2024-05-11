@@ -80,7 +80,7 @@ formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
 
     line =
       coreFormatting
-        (consoleLogging ^. #lineTrunc)
+        ((,Nothing) <$> consoleLogging ^. #lineTrunc)
         (consoleLogging ^. #commandNameTrunc)
         (consoleLogging ^. #stripControl)
         keyHide
@@ -99,21 +99,24 @@ formatFileLog ::
   m FileLog
 formatFileLog keyHide fileLogging log = do
   currTime <- getSystemTimeString
-  let withTimestamp =
+  let timestamp = brackets False (pack currTime)
+      timestampLen = unsafeConvertIntegral $ T.length timestamp
+
+      line =
+        coreFormatting
+          ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
+          (fileLogging ^. #commandNameTrunc)
+          (fileLogging ^. #stripControl)
+          keyHide
+          log
+
+      withTimestamp =
         mconcat
-          [ brackets False (pack currTime),
+          [ timestamp,
             line,
             "\n"
           ]
   pure $ UnsafeFileLog withTimestamp
-  where
-    line =
-      coreFormatting
-        (fileLogging ^. #lineTrunc)
-        (fileLogging ^. #commandNameTrunc)
-        (fileLogging ^. #stripControl)
-        keyHide
-        log
 
 -- | Core formatting, shared by console and file logs. Basic idea:
 --
@@ -129,8 +132,12 @@ formatFileLog keyHide fileLogging log = do
 --    line truncation is 15, then we only have 5 chars for the message before
 --    truncation kicks in.
 coreFormatting ::
-  -- | Optional line truncation
-  Maybe (Truncation TruncLine) ->
+  -- | Optional line truncation. If we have some line truncation then there
+  -- is a further optional "prefix length". This is so that file logging
+  -- can pass in the timestamp length so it is taken into account
+  -- (command logging has no special prefix besides ANSI codes, which is
+  -- ignored).
+  Maybe (Truncation TruncLine, Maybe Natural) ->
   -- | Optional cmd name truncation
   Maybe (Truncation TruncCommandName) ->
   -- | Strip control
@@ -201,12 +208,19 @@ formatCommand keyHide commandNameTrunc com = brackets True (truncateNameFn cmdNa
 --
 -- where @t'@ is @t@ truncated to @k@ chars. Notice the prefix is always
 -- included untarnished.
-concatWithLineTrunc :: Maybe (Truncation TruncLine) -> Text -> Text -> Text
+concatWithLineTrunc ::
+  Maybe (Truncation TruncLine, Maybe Natural) ->
+  Text ->
+  Text ->
+  Text
 concatWithLineTrunc Nothing prefix msg = prefix <> msg
-concatWithLineTrunc (Just (MkTruncation lineTrunc)) prefix msg =
+concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
   prefix <> Utils.truncateIfNeeded lineTrunc' msg
   where
-    lineTrunc' = lineTrunc ∸ unsafeConvertIntegral (T.length prefix)
+    lineTrunc' =
+      lineTrunc ∸ (prefixLen + unsafeConvertIntegral (T.length prefix))
+
+    prefixLen = fromMaybe 0 mPrefixLen
 
 -- | Pretty show for 'Command'. If the command has a key, and 'KeyHideSwitch' is
 -- 'KeyHideOff' then we return the key. Otherwise we return the command itself.

@@ -30,7 +30,9 @@ import Shrun.Configuration.Data.ConsoleLogging
         timerFormat
       ),
   )
-import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat (ProseCompact))
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
+  ( TimerFormat (ProseCompact),
+  )
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (DeleteOnSuccessOff),
     FileLogOpened
@@ -456,12 +458,12 @@ testFormatsFLCommandNameTrunc = testCase desc $ do
 
 testFormatsFLLineTrunc :: TestTree
 testFormatsFLLineTrunc = testCase desc $ do
-  -- 20 is just at the limit. Note that ASCII codes do not count
-  sysTimeNE <> "[Success] msg len 10\n" @=? fmt 20 baseLog
+  -- 20 is just at the limit. Note that the timestamp (21 chars) counts
+  sysTimeNE <> "[Success] msg len 10\n" @=? fmt 41 baseLog
   -- 19 is too low, we start to truncate
-  sysTimeNE <> "[Success] msg le...\n" @=? fmt 19 baseLog
+  sysTimeNE <> "[Success] msg le...\n" @=? fmt 40 baseLog
   -- we always print the prefix
-  sysTimeNE <> "[Success] ...\n" @=? fmt 0 baseLog
+  sysTimeNE <> "[Success] ...\n" @=? fmt 21 baseLog
 
   let logCmd =
         set'
@@ -469,10 +471,10 @@ testFormatsFLLineTrunc = testCase desc $ do
           (Just $ MkCommandP (Just "key") "some cmd")
           (set' #lvl LevelFinished baseLog)
 
-  sysTimeNE <> "[Finished][key] msg len 10\n" @=? fmt 26 logCmd
-  sysTimeNE <> "[Finished][key] msg le...\n" @=? fmt 25 logCmd
-  sysTimeNE <> "[Finished][some cmd] msg len 10\n" @=? fmtKh 31 logCmd
-  sysTimeNE <> "[Finished][some cmd] msg le...\n" @=? fmtKh 30 logCmd
+  sysTimeNE <> "[Finished][key] msg len 10\n" @=? fmt 47 logCmd
+  sysTimeNE <> "[Finished][key] msg le...\n" @=? fmt 46 logCmd
+  sysTimeNE <> "[Finished][some cmd] msg len 10\n" @=? fmtKh 52 logCmd
+  sysTimeNE <> "[Finished][some cmd] msg le...\n" @=? fmtKh 51 logCmd
   sysTimeNE <> "[Finished][some cmd] ...\n" @=? fmtKh 0 logCmd
   where
     baseLog =
