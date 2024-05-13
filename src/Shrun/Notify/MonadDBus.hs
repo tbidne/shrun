@@ -23,10 +23,10 @@ import Shrun.Prelude
 -- | Effect for DBus.
 class (Monad m) => MonadDBus m where
   -- | Connects to DBus.
-  connectSession :: m Client
+  connectSession :: (HasCallStack) => m Client
 
   -- | Sends a notification to DBus.
-  notify :: Client -> Note -> m (Maybe SomeException)
+  notify :: (HasCallStack) => Client -> Note -> m (Maybe SomeException)
 
 instance MonadDBus IO where
   connectSession = DBusC.connectSession
@@ -39,7 +39,13 @@ instance (MonadDBus m) => MonadDBus (ReaderT env m) where
   connectSession = lift connectSession
   notify c = lift . notify c
 
-notifyDBus :: (MonadDBus m) => Client -> ShrunNote -> m (Maybe NotifyException)
+notifyDBus ::
+  ( HasCallStack,
+    MonadDBus m
+  ) =>
+  Client ->
+  ShrunNote ->
+  m (Maybe NotifyException)
 notifyDBus client note =
   notify client (shrunToDBus note) <<&>> \stderr ->
     MkNotifyException note (DBus ()) (T.pack $ displayException stderr)

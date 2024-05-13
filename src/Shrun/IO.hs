@@ -51,7 +51,8 @@ import Shrun.Utils qualified as U
 
 -- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::
-  ( HasInit env,
+  ( HasCallStack,
+    HasInit env,
     MonadReader env m,
     MonadTypedProcess m
   ) =>
@@ -67,7 +68,8 @@ shExitCode cmd = do
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
 tryShExitCode ::
-  ( HasInit env,
+  ( HasCallStack,
+    HasInit env,
     MonadReader env m,
     MonadTypedProcess m
   ) =>
@@ -83,6 +85,7 @@ tryShExitCode cmd =
 tryCommandLogging ::
   forall m env.
   ( HasAnyError env,
+    HasCallStack,
     HasCommands env,
     HasInit env,
     HasCommandLogging env,
@@ -193,6 +196,7 @@ tryCommandLogging command = do
 -- instead of the usual swallowing.
 tryCommandStream ::
   ( HasInit env,
+    HasCallStack,
     HasCommandLogging env,
     MonadHandleReader m,
     MonadIORef m,
@@ -237,7 +241,8 @@ tryCommandStream logFn cmd = do
 
 streamOutput ::
   forall m env.
-  ( HasCommandLogging env,
+  ( HasCallStack,
+    HasCommandLogging env,
     MonadCatch m,
     MonadHandleReader m,
     MonadIORef m,
@@ -271,7 +276,7 @@ streamOutput logFn cmd p = do
           $ commandLogging
           ^. (#readSize % #unReadSize % _MkBytes)
 
-      readBlock :: Handle -> m ReadHandleResult
+      readBlock :: (HasCallStack) => Handle -> m ReadHandleResult
       readBlock = readHandle blockSize
 
   exitCode <- U.untilJust $ do
@@ -311,7 +316,9 @@ streamOutput logFn cmd p = do
 --
 -- See Note [EOF / blocking error]
 writeLog ::
-  (MonadIORef m) =>
+  ( HasCallStack,
+    MonadIORef m
+  ) =>
   (Log -> m ()) ->
   CommandP1 ->
   IORef (Maybe ReadHandleResult) ->

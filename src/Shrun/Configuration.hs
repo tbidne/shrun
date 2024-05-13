@@ -30,7 +30,8 @@ import Shrun.Prelude
 -- really can't test anyway, such as opening file handles and creating
 -- queues.
 mergeConfig ::
-  ( MonadTerminal m,
+  ( HasCallStack,
+    MonadTerminal m,
     MonadThrow m
   ) =>
   Args ->

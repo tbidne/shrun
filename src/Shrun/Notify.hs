@@ -31,6 +31,7 @@ import Shrun.Prelude
 -- sends.
 sendNotif ::
   ( HasAnyError env,
+    HasCallStack,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,

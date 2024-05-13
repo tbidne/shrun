@@ -168,7 +168,8 @@ instance DecodeTOML NotifyToml where
 #if OSX
 
 toEnv ::
-  ( MonadThrow m
+  ( HasCallStack,
+    MonadThrow m
   ) =>
   NotifyMerged ->
   m NotifyEnv
@@ -182,7 +183,8 @@ toEnv notifyMerged = case systemMerged of
 #else
 
 toEnv ::
-  ( MonadDBus m,
+  ( HasCallStack,
+    MonadDBus m,
     MonadThrow m
   ) =>
   NotifyMerged ->

@@ -18,7 +18,7 @@ import Shrun.Prelude
 -- | Effect for apple script.
 class (Monad m) => MonadAppleScript m where
   -- | Sends a notification via apple script.
-  notify :: Text -> m (Maybe ByteString)
+  notify :: (HasCallStack) => Text -> m (Maybe ByteString)
 
 instance MonadAppleScript IO where
   notify =
@@ -30,7 +30,12 @@ instance MonadAppleScript IO where
 instance (MonadAppleScript m) => MonadAppleScript (ReaderT env m) where
   notify = lift . notify
 
-notifyAppleScript :: (MonadAppleScript m) => ShrunNote -> m (Maybe NotifyException)
+notifyAppleScript ::
+  ( HasCallStack,
+    MonadAppleScript m
+  ) =>
+  ShrunNote ->
+  m (Maybe NotifyException)
 notifyAppleScript note =
   notify (shrunToAppleScript note) <<&>> \stderr ->
     MkNotifyException note AppleScript (decodeUtf8Lenient stderr)

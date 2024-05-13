@@ -41,7 +41,8 @@ import Shrun.Prelude
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
 putRegionLog ::
-  ( HasCommonLogging env,
+  ( HasCallStack,
+    HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,
     MonadReader env m,
@@ -64,7 +65,8 @@ putRegionLog region lg = do
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
-  ( HasCommonLogging env,
+  ( HasCallStack,
+    HasCommonLogging env,
     HasConsoleLogging env (Region m),
     MonadReader env m,
     MonadSTM m
@@ -84,7 +86,8 @@ regionLogToConsoleQueue region log = do
 
 -- | Writes the log to the file queue.
 logToFileQueue ::
-  ( MonadSTM m,
+  ( HasCallStack,
+    MonadSTM m,
     MonadTime m
   ) =>
   -- | How to display the command.

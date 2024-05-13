@@ -23,17 +23,17 @@ class (Monad m) => MonadRegionLogger m where
   type Region m
 
   -- | Pushes a log to the "global" region.
-  logGlobal :: Text -> m ()
+  logGlobal :: (HasCallStack) => Text -> m ()
 
   -- | Pushes a log to the region.
-  logRegion :: LogMode -> Region m -> Text -> m ()
+  logRegion :: (HasCallStack) => LogMode -> Region m -> Text -> m ()
 
   -- | Runs an @m a@ with a region.
-  withRegion :: RegionLayout -> (Region m -> m a) -> m a
+  withRegion :: (HasCallStack) => RegionLayout -> (Region m -> m a) -> m a
 
   -- | Displays the regions. This should wrap whatever top-level logic
   -- needs regions.
-  displayRegions :: m a -> m a
+  displayRegions :: (HasCallStack) => m a -> m a
 
 instance MonadRegionLogger IO where
   type Region IO = ConsoleRegion

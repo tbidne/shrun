@@ -26,7 +26,7 @@ import Shrun.Utils qualified as Utils
 -- | Effect for notify-send.
 class (Monad m) => MonadNotifySend m where
   -- | Sends a notification via notify-send.
-  notify :: Text -> m (Maybe ByteString)
+  notify :: (HasCallStack) => Text -> m (Maybe ByteString)
 
 instance MonadNotifySend IO where
   notify =
@@ -38,7 +38,12 @@ instance MonadNotifySend IO where
 instance (MonadNotifySend m) => MonadNotifySend (ReaderT env m) where
   notify = lift . notify
 
-notifyNotifySend :: (MonadNotifySend m) => ShrunNote -> m (Maybe NotifyException)
+notifyNotifySend ::
+  ( HasCallStack,
+    MonadNotifySend m
+  ) =>
+  ShrunNote ->
+  m (Maybe NotifyException)
 notifyNotifySend note =
   notify (shrunToNotifySend note) <<&>> \stderr ->
     MkNotifyException note NotifySend (decodeUtf8Lenient stderr)

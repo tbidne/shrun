@@ -61,7 +61,8 @@ readHandleResultToStderr (ReadSuccess errLines) =
 
 -- | Attempts to read from the handle.
 readHandle ::
-  ( MonadCatch m,
+  ( HasCallStack,
+    MonadCatch m,
     MonadHandleReader m
   ) =>
   Int ->

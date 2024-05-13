@@ -91,7 +91,8 @@ maybeApply = maybe id
 
 -- | Formats a 'Log' into a 'FileLog'. Applies prefix and timestamp.
 formatFileLog ::
-  ( MonadTime m
+  ( HasCallStack,
+    MonadTime m
   ) =>
   KeyHideSwitch ->
   FileLoggingEnv ->

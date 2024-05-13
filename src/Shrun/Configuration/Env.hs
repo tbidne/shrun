@@ -47,7 +47,8 @@ import Shrun.ShellT (ShellT)
 -- | 'withEnv' with 'shrun'.
 makeEnvAndShrun ::
   forall m r.
-  ( HasConsoleLogging (Env r) (Region (ShellT (Env r) m)),
+  ( HasCallStack,
+    HasConsoleLogging (Env r) (Region (ShellT (Env r) m)),
     MonadAppleScript m,
     MonadAsync m,
     MonadDBus m,
@@ -75,7 +76,8 @@ makeEnvAndShrun = withEnv @m @r (runShellT shrun)
 -- action.
 withEnv ::
   forall m r a.
-  ( MonadDBus m,
+  ( HasCallStack,
+    MonadDBus m,
     MonadFileReader m,
     MonadFileWriter m,
     MonadHandleWriter m,
@@ -92,7 +94,8 @@ withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
 
 -- | Creates a 'MergedConfig' from CLI args and TOML config.
 getMergedConfig ::
-  ( MonadDBus m,
+  ( HasCallStack,
+    MonadDBus m,
     MonadFileReader m,
     MonadOptparse m,
     MonadPathReader m,
@@ -136,7 +139,8 @@ getMergedConfig = do
         Left tomlErr -> throwM tomlErr
 
 fromMergedConfig ::
-  ( MonadDBus m,
+  ( HasCallStack,
+    MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadPathReader m,

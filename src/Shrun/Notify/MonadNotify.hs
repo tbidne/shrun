@@ -109,7 +109,7 @@ instance Exception NotifyException where
 
 -- | General effect for sending notifications.
 class (Monad m) => MonadNotify m where
-  notify :: ShrunNote -> m (Maybe NotifyException)
+  notify :: (HasCallStack) => ShrunNote -> m (Maybe NotifyException)
 
 -- | Maps (ExitCode, stderr) to Just stderr, if the exit code is
 -- ExitFailure.

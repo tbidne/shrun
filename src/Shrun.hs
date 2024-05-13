@@ -76,6 +76,7 @@ import Shrun.Utils qualified as Utils
 shrun ::
   forall m env.
   ( HasAnyError env,
+    HasCallStack,
     HasCommands env,
     HasInit env,
     HasCommandLogging env,
@@ -119,7 +120,7 @@ shrun = displayRegions $ do
     anyError <- readTVarA =<< asks getAnyError
     when anyError exitFailure
   where
-    runWithFileLogging :: FileLoggingEnv -> m ()
+    runWithFileLogging :: (HasCallStack) => FileLoggingEnv -> m ()
     runWithFileLogging fileLogging =
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
         runCommands
@@ -132,6 +133,7 @@ shrun = displayRegions $ do
       where
         MkFileLogOpened h fileQueue = fileLogging ^. #file
 
+    runCommands :: (HasCallStack) => m ()
     runCommands = do
       cmds <- asks getCommands
       let actions = Async.mapConcurrently_ runCommand cmds
@@ -143,6 +145,7 @@ shrun = displayRegions $ do
 runCommand ::
   forall m env.
   ( HasAnyError env,
+    HasCallStack,
     HasCommands env,
     HasInit env,
     HasCommandLogging env,
@@ -198,6 +201,7 @@ printFinalResult ::
   forall m env e b.
   ( Exception e,
     HasAnyError env,
+    HasCallStack,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,
@@ -259,6 +263,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
 counter ::
   ( HasAnyError env,
+    HasCallStack,
     HasCommands env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
@@ -287,7 +292,8 @@ counter = do
 
 logCounter ::
   forall m env.
-  ( HasCommonLogging env,
+  ( HasCallStack,
+    HasCommonLogging env,
     HasConsoleLogging env (Region m),
     MonadReader env m,
     MonadSTM m
@@ -311,6 +317,7 @@ logCounter region elapsed = do
 keepRunning ::
   forall m env.
   ( HasAnyError env,
+    HasCallStack,
     HasCommands env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
@@ -357,7 +364,8 @@ timedOut _ Nothing = False
 timedOut timer (Just (MkTimeout t)) = timer > t
 
 pollQueueToConsole ::
-  ( MonadMask m,
+  ( HasCallStack,
+    MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m
@@ -368,12 +376,18 @@ pollQueueToConsole queue = do
   -- NOTE: Same masking behavior as pollQueueToFile.
   forever $ atomicReadWrite queue printConsoleLog
 
-printConsoleLog :: (MonadRegionLogger m) => LogRegion (Region m) -> m ()
+printConsoleLog ::
+  ( HasCallStack,
+    MonadRegionLogger m
+  ) =>
+  LogRegion (Region m) ->
+  m ()
 printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
 printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
 
 pollQueueToFile ::
-  ( MonadHandleWriter m,
+  ( HasCallStack,
+    MonadHandleWriter m,
     MonadMask m,
     MonadSTM m
   ) =>
@@ -389,14 +403,15 @@ pollQueueToFile fileLogging = do
   where
     MkFileLogOpened h queue = fileLogging ^. #file
 
-logFile :: (MonadHandleWriter m) => Handle -> FileLog -> m ()
+logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 
 -- | Reads from a queue and applies the function, if we receive a value.
 -- Atomic in the sense that if a read is successful, then we will apply the
 -- given function, even if an async exception is raised.
 atomicReadWrite ::
-  ( MonadMask m,
+  ( HasCallStack,
+    MonadMask m,
     MonadSTM m
   ) =>
   -- | Queue from which to read.

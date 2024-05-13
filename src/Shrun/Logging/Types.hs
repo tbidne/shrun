@@ -13,9 +13,6 @@ module Shrun.Logging.Types
 
     -- * File Logs
     FileLog,
-
-    -- * Misc
-    defaultCmdLogReadSize,
   )
 where
 
@@ -126,6 +123,3 @@ instance
             (MkLog _cmd _msg _lvl)
             (f _mode)
   {-# INLINE labelOptic #-}
-
-defaultCmdLogReadSize :: Bytes B Natural
-defaultCmdLogReadSize = MkBytes 1024
