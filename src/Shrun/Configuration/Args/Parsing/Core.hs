@@ -34,11 +34,11 @@ coreParser :: Parser CoreConfigArgs
 coreParser = do
   init <- initParser
   timeout <- timeoutParser
-  commonLogging <- CommonLogging.commonLoggingParser
-  commandLogging <- CommandLogging.commandLoggingParser
-  consoleLogging <- ConsoleLogging.consoleLoggingParser
-  fileLogging <- FileLogging.fileLoggingParser
-  notify <- Notify.notifyParser
+  commonLogging <- OA.parserOptionGroup "Common Logging" CommonLogging.commonLoggingParser
+  commandLogging <- OA.parserOptionGroup "Command Logging" CommandLogging.commandLoggingParser
+  consoleLogging <- OA.parserOptionGroup "Console Logging" ConsoleLogging.consoleLoggingParser
+  fileLogging <- OA.parserOptionGroup "File Logging" FileLogging.fileLoggingParser
+  notify <- OA.parserOptionGroup "Notifications" Notify.notifyParser
 
   pure
     $ MkCoreConfigP

@@ -53,6 +53,11 @@ source-repository-package
 
 source-repository-package
     type: git
+    location: https://github.com/tbidne/optparse-applicative.git
+    tag: 90e4b1c46e6040e277298826742256559285d0d6
+
+source-repository-package
+    type: git
     location: https://github.com/tbidne/relative-time.git
     tag: 5f89851baf90c671fffa8d5118e0b37186220fef
 

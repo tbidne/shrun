@@ -29,6 +29,10 @@
       inputs.bounds.follows = "bounds";
       inputs.smart-math.follows = "smart-math";
     };
+    optparse-applicative = {
+      url = "github:tbidne/optparse-applicative/parser-groups";
+      flake = false;
+    };
     relative-time = {
       url = "github:tbidne/relative-time";
       inputs.flake-parts.follows = "flake-parts";
@@ -77,6 +81,7 @@
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
                 "bounds"
+                "optparse-applicative"
                 "relative-time"
                 "si-bytes"
                 "smart-math"

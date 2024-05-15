@@ -154,6 +154,23 @@
         "type": "github"
       }
     },
+    "optparse-applicative": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1715812314,
+        "narHash": "sha256-HXVQJBgWHLj5yv0ZbiyFBO/kcmgPZixzYA176mLYgz0=",
+        "owner": "tbidne",
+        "repo": "optparse-applicative",
+        "rev": "90e4b1c46e6040e277298826742256559285d0d6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "ref": "parser-groups",
+        "repo": "optparse-applicative",
+        "type": "github"
+      }
+    },
     "relative-time": {
       "inputs": {
         "algebra-simple": [
@@ -194,6 +211,7 @@
         "monad-effects": "monad-effects",
         "nix-hs-utils": "nix-hs-utils",
         "nixpkgs": "nixpkgs",
+        "optparse-applicative": "optparse-applicative",
         "relative-time": "relative-time",
         "si-bytes": "si-bytes",
         "smart-math": "smart-math"
