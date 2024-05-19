@@ -123,7 +123,13 @@ argsParser = do
     <*> commandsParser
 
 version :: Parser (a -> a)
-version = OA.infoOption versNum (OA.long "version" <> OA.short 'v')
+version =
+  OA.infoOption versNum
+    $ mconcat
+      [ OA.long "version",
+        OA.short 'v',
+        OA.hidden
+      ]
 
 versNum :: String
 versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
