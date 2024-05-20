@@ -38,7 +38,7 @@ data CommandResult
 -- element. For identical constructors, the left argument is taken.
 data ReadHandleResult
   = -- | Error encountered while trying to read a handle.
-    ReadErr Text
+    ReadErr StrippedText
   | -- | Successfully read data from the handle.
     ReadSuccess [StrippedText]
   | -- | Successfully read no data from the handle.
@@ -46,16 +46,19 @@ data ReadHandleResult
   deriving stock (Eq, Show)
 
 instance Semigroup ReadHandleResult where
-  ReadErr l <> _ = ReadErr l
-  _ <> ReadErr r = ReadErr r
   ReadSuccess l <> _ = ReadSuccess l
   _ <> ReadSuccess r = ReadSuccess r
+  ReadErr l <> _ = ReadErr l
+  _ <> ReadErr r = ReadErr r
   _ <> _ = ReadNoData
+
+instance Monoid ReadHandleResult where
+  mempty = ReadNoData
 
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
 readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr "<No data>"
-readHandleResultToStderr (ReadErr err) = MkStderr err
+readHandleResultToStderr (ReadErr err) = MkStderr $ Shrun.Text.unStrippedText err
 readHandleResultToStderr (ReadSuccess errLines) =
   MkStderr (Shrun.Text.sepLines errLines)
 
@@ -72,7 +75,11 @@ readHandle blockSize handle = do
   -- The "nothingIfReady" check and reading step both need to go in the try as
   -- the former can also throw.
   tryAny readHandle' <&> \case
-    Left ex -> ReadErr $ "HandleException: " <> displayExceptiont ex
+    Left ex ->
+      ReadErr
+        $ Shrun.Text.stripText
+        $ "HandleException: "
+        <> displayExceptiont ex
     Right x -> x
   where
     readHandle' =
@@ -107,14 +114,14 @@ readHandle blockSize handle = do
       -- hIsClosed does not explicitly throw exceptions so it can be first.
       isClosed <- hIsClosed handle
       if isClosed
-        then pure $ Just "Handle closed"
+        then pure $ Just $ Shrun.Text.stripText "Handle closed"
         else do
           -- hIsReadable _does_ throw an exception if the the handle is closed or
           -- "semi-closed". Thus it should go after the hIsClosed check
           -- (GHC explicitly does not export an hSemiClosed).
           isReadable <- hIsReadable handle
           if not isReadable
-            then pure $ Just "Handle is not readable"
+            then pure $ Just $ Shrun.Text.stripText "Handle is not readable"
             else pure Nothing
 
 -- NOTE: [EOF / blocking error] We would like to check hIsEOF (definitely

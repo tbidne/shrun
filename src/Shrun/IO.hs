@@ -259,9 +259,14 @@ streamOutput ::
   -- | Exit code along w/ any leftover data.
   m (ExitCode, ReadHandleResult)
 streamOutput logFn cmd p = do
-  -- lastReadRef stores the last message in case it is the final error
-  -- message.
-  lastReadErrRef <- newIORef Nothing
+  -- NOTE: [Saving final error message]
+  --
+  -- We want to save the final error message if it exists, so that we can
+  -- report it to the user. Programs can be inconsistent where they report
+  -- errors, so we read both stdout and stderr, prioritizing the latter when
+  -- both exist.
+  lastReadOutRef <- newIORef ReadNoData
+  lastReadErrRef <- newIORef ReadNoData
   commandLogging <- asks getCommandLogging
 
   let pollInterval :: Natural
@@ -285,7 +290,8 @@ streamOutput logFn cmd p = do
     -- messages
     outResult <- readBlock (P.getStdout p)
     errResult <- readBlock (P.getStderr p)
-    writeLog logFn cmd lastReadErrRef outResult
+
+    writeLog logFn cmd lastReadOutRef outResult
     writeLog logFn cmd lastReadErrRef errResult
 
     -- NOTE: IF we do not have a sleep here then the CPU blows up. Adding
@@ -294,17 +300,50 @@ streamOutput logFn cmd p = do
 
     P.getExitCode p
 
-  -- Try to get final data. The semigroup prioritizes errors and then the LHS
-  -- for equal data constructors.
+  -- Try to get final data.
+  lastReadOut <- readIORef lastReadOutRef
   lastReadErr <- readIORef lastReadErrRef
-  remainingData <-
-    (<>)
-      <$> readBlock (P.getStderr p)
-      <*> readBlock (P.getStdout p)
 
-  pure $ (exitCode,) $ case lastReadErr of
-    Nothing -> remainingData
-    Just r -> remainingData <> r
+  -- Leftover data. We need this as the process can exit before everything
+  -- is read.
+  remainingOut <- readBlock (P.getStdout p)
+  remainingErr <- readBlock (P.getStderr p)
+
+  -- In the event of a process failure (exitCode == ExitFailure), we want to
+  -- return the last (successful) read, as it is the most likely to have
+  -- relevant information. We have two possible reads here:
+  --
+  -- 1. The last read while the process was running (lastReadErr)
+  -- 2. A final read after the process exited (remainingData)
+  --
+  -- We prioritize (Semigroup), in order:
+  --
+  -- 1. Successful remainingData
+  -- 2. Successful lastReadErr
+  -- 3. ReadErr remainingData
+  -- 4. ReadErr lastReadErr
+  --
+  -- We make the assumption that the most recent Stderr is the most likely to
+  -- have the relevant error message, though we fall back to stdout as this
+  -- is not always true.
+  --
+  -- Annoyingly, apparently the functional tests only require 'remainingOut'
+  -- to pass. That is, none of the other reads are exercised, as far as the
+  -- tests are concerned. In fact, setting 'finalData = ReadNoData' only
+  -- causes 1 test to fail. This is due to most tests not testing the final
+  -- error message.
+  --
+  -- I am quite confident that the current finalData is reasonable, but it
+  -- would be nice to have tests for this.
+  let finalData =
+        mconcat
+          [ remainingErr,
+            lastReadErr,
+            remainingOut,
+            lastReadOut
+          ]
+
+  pure (exitCode, finalData)
 
 -- We occasionally get invalid reads here -- usually when the command
 -- exits -- likely due to a race condition. It would be nice to
@@ -321,13 +360,13 @@ writeLog ::
   ) =>
   (Log -> m ()) ->
   CommandP1 ->
-  IORef (Maybe ReadHandleResult) ->
+  IORef ReadHandleResult ->
   ReadHandleResult ->
   m ()
 writeLog _ _ _ (ReadErr _) = pure ()
 writeLog _ _ _ ReadNoData = pure ()
 writeLog logFn cmd lastReadRef (ReadSuccess messages) = do
-  writeIORef lastReadRef (Just (ReadSuccess messages))
+  writeIORef lastReadRef (ReadSuccess messages)
   for_ messages $ \msg ->
     logFn
       $ MkLog
