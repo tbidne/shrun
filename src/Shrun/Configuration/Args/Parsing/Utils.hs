@@ -1,6 +1,6 @@
 module Shrun.Configuration.Args.Parsing.Utils
   ( withDisabledParser,
-    withDisabledParserHelp,
+    withDisabledParserOpts,
     mkHelp,
     autoStripUnderscores,
   )
@@ -8,7 +8,7 @@ where
 
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
-import Options.Applicative.Builder (ReadM)
+import Options.Applicative.Builder (FlagFields, Mod, ReadM)
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Shrun.Configuration.Data.WithDisabled
@@ -22,16 +22,30 @@ import Shrun.Prelude
 import Shrun.Utils qualified as ShrunUtils
 import Text.Read (Read)
 
-withDisabledParser :: Parser (Maybe a) -> String -> Parser (WithDisabled a)
-withDisabledParser mainParser name =
-  withDisabledParserHelp mainParser name ("Disables --" ++ name ++ ".")
-
-withDisabledParserHelp ::
+-- | Adds a '--no-x' switch to the parser.
+withDisabledParser ::
+  -- | Main parser.
   Parser (Maybe a) ->
-  String ->
+  -- | Name for this option, to be used in disabled switch name.
   String ->
   Parser (WithDisabled a)
-withDisabledParserHelp mainParser name helpTxt = do
+withDisabledParser mainParser name =
+  withDisabledParserOpts opts mainParser name
+  where
+    helpTxt = "Disables --" ++ name ++ "."
+    opts = mkHelp helpTxt
+
+-- | Like 'withDisabledParser', except it also takes an arg for the disabled
+-- switch options.
+withDisabledParserOpts ::
+  -- | Disabled switch options.
+  Mod FlagFields Bool ->
+  -- | Main parser
+  Parser (Maybe a) ->
+  -- | Name for this option, to be used in disabled switch name.
+  String ->
+  Parser (WithDisabled a)
+withDisabledParserOpts disabledOpts mainParser name = do
   mx <- mainParser
   y <- noParser
   pure
@@ -46,7 +60,7 @@ withDisabledParserHelp mainParser name helpTxt = do
         ( mconcat
             [ OA.long $ "no-" ++ name,
               OA.hidden,
-              mkHelp helpTxt
+              disabledOpts
             ]
         )
 

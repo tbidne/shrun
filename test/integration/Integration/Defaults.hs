@@ -20,7 +20,13 @@ import Integration.Utils
     (^?=@),
   )
 import Shrun.Configuration.Data.CommandLogging
-  ( CommandLoggingP (MkCommandLoggingP, pollInterval, readSize),
+  ( CommandLoggingP
+      ( MkCommandLoggingP,
+        pollInterval,
+        readSize,
+        reportReadErrors
+      ),
+    ReportReadErrorsSwitch (ReportReadErrorsOff, ReportReadErrorsOn),
   )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
@@ -182,7 +188,8 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                 commandLogging =
                   MkCommandLoggingP
                     { pollInterval = 127,
-                      readSize = MkReadSize $ MkBytes 20
+                      readSize = MkReadSize $ MkBytes 20,
+                      reportReadErrors = ReportReadErrorsOn
                     },
                 fileLogging =
                   Just
@@ -246,6 +253,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "127",
         "--command-log-read-size",
         "512 b",
+        "--command-log-report-read-errors",
         "--console-log-timer-format",
         "digital_compact",
         "--console-log-command-name-trunc",
@@ -282,7 +290,8 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                 commandLogging =
                   MkCommandLoggingP
                     { pollInterval = 127,
-                      readSize = MkReadSize $ MkBytes 512
+                      readSize = MkReadSize $ MkBytes 512,
+                      reportReadErrors = ReportReadErrorsOn
                     },
                 fileLogging =
                   Just
@@ -445,6 +454,7 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
         "--no-common-log-key-hide",
         "--no-command-log-poll-interval",
         "--no-command-log-read-size",
+        "--no-command-log-report-read-errors",
         "--no-console-log-timer-format",
         "--no-console-log-command-name-trunc",
         "--no-console-log-command",
@@ -485,6 +495,8 @@ noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
         "--command-log-read-size",
         "512 b",
         "--no-command-log-read-size",
+        "--command-log-report-read-errors",
+        "--no-command-log-report-read-errors",
         "--console-log-timer-format",
         "prose_full",
         "--no-console-log-timer-format",

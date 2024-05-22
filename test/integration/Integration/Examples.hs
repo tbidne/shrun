@@ -14,7 +14,13 @@ import Integration.Utils
     runConfigIO,
   )
 import Shrun.Configuration.Data.CommandLogging
-  ( CommandLoggingP (MkCommandLoggingP, pollInterval, readSize),
+  ( CommandLoggingP
+      ( MkCommandLoggingP,
+        pollInterval,
+        readSize,
+        reportReadErrors
+      ),
+    ReportReadErrorsSwitch (ReportReadErrorsOff),
   )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommonLogging
@@ -108,7 +114,8 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 commandLogging =
                   MkCommandLoggingP
                     { pollInterval = 100,
-                      readSize = MkReadSize $ MkBytes 2_000
+                      readSize = MkReadSize $ MkBytes 2_000,
+                      reportReadErrors = ReportReadErrorsOff
                     },
                 fileLogging = Nothing,
                 notify =

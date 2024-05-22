@@ -13,6 +13,12 @@ import Data.Text qualified as T
 import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
 import Effects.Time (withTiming)
+import Shrun.Configuration.Data.CommandLogging
+  ( ReportReadErrorsSwitch
+      ( ReportReadErrorsOff,
+        ReportReadErrorsOn
+      ),
+  )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch
       ( ConsoleLogCmdOff,
@@ -31,6 +37,7 @@ import Shrun.Configuration.Env.Types
     setAnyErrorTrue,
   )
 import Shrun.Data.Command (CommandP1, commandToProcess)
+import Shrun.Data.Text (StrippedText)
 import Shrun.IO.Types
   ( CommandResult (CommandFailure, CommandSuccess),
     ReadHandleResult (ReadErr, ReadNoData, ReadSuccess),
@@ -269,7 +276,9 @@ streamOutput logFn cmd p = do
   lastReadErrRef <- newIORef ReadNoData
   commandLogging <- asks getCommandLogging
 
-  let pollInterval :: Natural
+  let reportReadErrors = commandLogging ^. #reportReadErrors
+
+      pollInterval :: Natural
       pollInterval = commandLogging ^. (#pollInterval % #unPollInterval)
 
       sleepFn :: m ()
@@ -291,8 +300,8 @@ streamOutput logFn cmd p = do
     outResult <- readBlock (P.getStdout p)
     errResult <- readBlock (P.getStderr p)
 
-    writeLog logFn cmd lastReadOutRef outResult
-    writeLog logFn cmd lastReadErrRef errResult
+    writeLog logFn reportReadErrors cmd lastReadOutRef outResult
+    writeLog logFn reportReadErrors cmd lastReadErrRef errResult
 
     -- NOTE: IF we do not have a sleep here then the CPU blows up. Adding
     -- a delay helps keep the CPU reasonable.
@@ -359,13 +368,28 @@ writeLog ::
     MonadIORef m
   ) =>
   (Log -> m ()) ->
+  ReportReadErrorsSwitch ->
   CommandP1 ->
   IORef ReadHandleResult ->
   ReadHandleResult ->
   m ()
-writeLog _ _ _ (ReadErr _) = pure ()
-writeLog _ _ _ ReadNoData = pure ()
-writeLog logFn cmd lastReadRef (ReadSuccess messages) = do
+writeLog _ _ _ _ ReadNoData = pure ()
+writeLog _ ReportReadErrorsOff _ _ (ReadErr _) = pure ()
+writeLog logFn ReportReadErrorsOn cmd lastReadRef (ReadErr message) =
+  writeLogHelper logFn cmd lastReadRef [message]
+writeLog logFn _ cmd lastReadRef (ReadSuccess messages) =
+  writeLogHelper logFn cmd lastReadRef messages
+
+writeLogHelper ::
+  ( HasCallStack,
+    MonadIORef m
+  ) =>
+  (Log -> m b) ->
+  CommandP1 ->
+  IORef ReadHandleResult ->
+  [StrippedText] ->
+  m ()
+writeLogHelper logFn cmd lastReadRef messages = do
   writeIORef lastReadRef (ReadSuccess messages)
   for_ messages $ \msg ->
     logFn

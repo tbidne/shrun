@@ -13,7 +13,8 @@ import Shrun.Configuration.Data.CommandLogging
     CommandLoggingP
       ( MkCommandLoggingP,
         pollInterval,
-        readSize
+        readSize,
+        reportReadErrors
       ),
   )
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
@@ -28,11 +29,13 @@ commandLoggingParser :: Parser CommandLoggingArgs
 commandLoggingParser = do
   pollInterval <- pollIntervalParser
   readSize <- readSizeParser
+  reportReadErrors <- reportReadErrorsParser
 
   pure
     $ MkCommandLoggingP
       { pollInterval,
-        readSize
+        readSize,
+        reportReadErrors
       }
 
 pollIntervalParser :: Parser (WithDisabled PollInterval)
@@ -90,3 +93,26 @@ readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"
           "--command-log-read-size will be read in a subsequent read, hence ",
           "broken across lines. The default is '1 kb'."
         ]
+
+reportReadErrorsParser :: Parser (WithDisabled ())
+reportReadErrorsParser =
+  Utils.withDisabledParserOpts
+    OA.internal
+    mainParser
+    "command-log-report-read-errors"
+  where
+    switchParser =
+      OA.switch
+        ( mconcat
+            [ OA.long "command-log-report-read-errors",
+              OA.internal,
+              Utils.mkHelp helpTxt
+            ]
+        )
+    mainParser = do
+      b <- switchParser
+      pure
+        $ if b
+          then Just ()
+          else Nothing
+    helpTxt = "If active, logs read errors when streaming commands."

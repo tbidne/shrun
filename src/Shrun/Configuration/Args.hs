@@ -13,7 +13,12 @@ import Shrun.Configuration.Args.Parsing
       ),
   )
 import Shrun.Configuration.Data.CommandLogging
-  ( CommandLoggingP (MkCommandLoggingP, pollInterval, readSize),
+  ( CommandLoggingP
+      ( MkCommandLoggingP,
+        pollInterval,
+        readSize,
+        reportReadErrors
+      ),
   )
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP (MkCommonLoggingP, keyHide),
@@ -84,7 +89,8 @@ defaultArgs commands =
             commandLogging =
               MkCommandLoggingP
                 { pollInterval = mempty,
-                  readSize = mempty
+                  readSize = mempty,
+                  reportReadErrors = mempty
                 },
             fileLogging =
               MkFileLoggingP

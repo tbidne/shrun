@@ -10,15 +10,8 @@ tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.CommandLogging"
     [ pollIntervalTests,
-      readSizeTests
-    ]
-
-readSizeTests :: TestTree
-readSizeTests =
-  testGroup
-    "--command-log-read-size"
-    [ testReadSize,
-      testNoReadSize
+      readSizeTests,
+      reportReadErrorsTests
     ]
 
 pollIntervalTests :: TestTree
@@ -56,6 +49,14 @@ testNoPollInterval =
     argList = ["--no-command-log-poll-interval", "command"]
     expected = U.disableDefCoreArgs (#commandLogging % #pollInterval)
 
+readSizeTests :: TestTree
+readSizeTests =
+  testGroup
+    "--command-log-read-size"
+    [ testReadSize,
+      testNoReadSize
+    ]
+
 testReadSize :: TestTree
 testReadSize =
   testPropertyNamed
@@ -73,3 +74,31 @@ testNoReadSize =
   where
     argList = ["--no-command-log-read-size", "command"]
     expected = U.disableDefCoreArgs (#commandLogging % #readSize)
+
+reportReadErrorsTests :: TestTree
+reportReadErrorsTests =
+  testGroup
+    "--command-log-report-read-errors"
+    [ testReportReadErrors,
+      testNoReportReadErrors
+    ]
+
+testReportReadErrors :: TestTree
+testReportReadErrors =
+  testPropertyNamed
+    "Parses --command-log-report-read-errors"
+    "testReportReadErrors"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--command-log-report-read-errors", "command"]
+    expected = U.updateDefCoreArgs (#commandLogging % #reportReadErrors) ()
+
+testNoReportReadErrors :: TestTree
+testNoReportReadErrors =
+  testPropertyNamed
+    "Parses --no-command-log-report-read-errors"
+    "testNoReportReadErrors"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--no-command-log-report-read-errors", "command"]
+    expected = U.disableDefCoreArgs (#commandLogging % #reportReadErrors)
