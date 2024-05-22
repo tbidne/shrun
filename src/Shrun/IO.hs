@@ -318,10 +318,10 @@ streamOutput logFn cmd p = do
   --
   -- We prioritize (Semigroup), in order:
   --
-  -- 1. Successful remainingData
-  -- 2. Successful lastReadErr
-  -- 3. ReadErr remainingData
-  -- 4. ReadErr lastReadErr
+  -- 1. remainingErr
+  -- 2. lastReadErr
+  -- 3. remainingOut
+  -- 4. lastReadOut
   --
   -- We make the assumption that the most recent Stderr is the most likely to
   -- have the relevant error message, though we fall back to stdout as this
