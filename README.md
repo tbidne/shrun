@@ -91,13 +91,13 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 * [`cabal 3.8+`](https://www.haskell.org/cabal/download.html)
 * One of:
-  * [`ghc 9.4`](https://www.haskell.org/ghc/download.html)
   * [`ghc 9.6`](https://www.haskell.org/ghc/download.html)
   * [`ghc 9.8`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.10`](https://www.haskell.org/ghc/download.html)
 
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
-The current "blessed" version is `ghc-9.6.4`.
+The current "blessed" version is `ghc-9.8.2`.
 
 ### Build Shrun
 
@@ -106,7 +106,7 @@ Once you have `cabal` and `ghc`, `shrun` can be built locally with `cabal build`
 For further reproducibility, optional freeze files can be used e.g.
 
 ```sh
-cabal build --project-file cabal.ghc964.project
+cabal build --project-file cabal.ghc982.project
 ```
 
 > [!NOTE]

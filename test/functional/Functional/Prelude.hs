@@ -51,6 +51,9 @@ where
 
 import Data.String as X (IsString)
 import Data.Typeable (typeRep)
+#if !MIN_VERSION_base(4, 20, 0)
+import Effects.Exception (ExceptionCS)
+#endif
 import Effects.FileSystem.Utils (combineFilePaths)
 import Effects.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
 import Shrun qualified as SR
@@ -200,10 +203,18 @@ run = fmap fst . runMaybeException ExNothing
 runNotes :: List String -> IO (List ShrunNote)
 runNotes = fmap snd . runMaybeException ExNothing
 
+{- ORMOLU_DISABLE -}
+
 -- | 'runException' specialized to ExitFailure.
 runExitFailure :: List String -> IO (List Text)
 runExitFailure =
+#if MIN_VERSION_base(4, 20, 0)
+  fmap fst . runMaybeException (ExJust $ Proxy @ExitCode)
+#else
   fmap fst . runMaybeException (ExJust $ Proxy @(ExceptionCS ExitCode))
+#endif
+
+{- ORMOLU_ENABLE -}
 
 -- | Like 'runException', except it expects an exception.
 runException ::

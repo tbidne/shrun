@@ -1,5 +1,8 @@
 module Unit.Shrun.IO.Types (tests) where
 
+{- HLINT ignore "Monoid law, left identity" -}
+{- HLINT ignore "Monoid law, right identity" -}
+
 import Hedgehog.Gen qualified as G
 import Hedgehog.Range qualified as R
 import Shrun.Data.Text (StrippedText)

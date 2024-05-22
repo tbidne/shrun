@@ -3,7 +3,7 @@ name:               shrun
 version:            0.9
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==9.4.8 || ==9.6.3 || ==9.8.1
+tested-with:        GHC ==9.6.5 || ==9.8.2 || ==9.10.1
 copyright:          2021-2024 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -111,7 +111,7 @@ library
     Shrun.Utils
 
   build-depends:
-    , base                   >=4.17     && <4.20
+    , base                   >=4.17     && <4.21
     , bytestring             >=0.10.12  && <0.13
     , concurrent-output      ^>=1.10.7
     , containers             >=0.6.2.1  && <0.8
@@ -136,10 +136,14 @@ library
     , pretty-terminal        ^>=0.1
     , relative-time          ^>=0.1
     , si-bytes               ^>=0.1
-    , template-haskell       >=2.17.0.0 && <2.22
+    , template-haskell       >=2.17.0.0 && <2.23
     , text                   >=1.2.3.2  && <2.2
     , toml-reader            >=0.2.0.0  && <0.3.0.0
     , unordered-containers   ^>=0.2.9.0
+
+  -- For tuple syntax
+  if impl(ghc >=9.10.1)
+    build-depends: ghc-experimental ^>=0.1.0.0
 
   hs-source-dirs:  src
 
@@ -198,7 +202,7 @@ test-suite unit
     , tasty-hedgehog        >=1.2.0.0 && <1.5
     , tasty-hunit           >=0.9     && <0.11
     , text
-    , time                  >=1.9.3   && <1.14
+    , time                  >=1.9.3   && <1.15
     , unordered-containers
 
   hs-source-dirs: test/unit
@@ -260,6 +264,10 @@ test-suite functional
     , tasty
     , tasty-hunit
     , text
+
+  -- For tuple syntax
+  if impl(ghc <9.10)
+    build-depends: effects-exceptions
 
   hs-source-dirs: test/functional
 

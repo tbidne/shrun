@@ -14,6 +14,10 @@ the major/minor/patch definitions apply to the application's interface / usage
 ### Changed
 * Simplify reading final error message.
 * Hide `--version` from primary usage section.
+* Updated blessed GHC to 9.8.2.
+
+### Added
+* Added GHC 9.10 support.
 
 ### Fixed
 * More `HasCallStack` annotations for better callstacks in case something goes

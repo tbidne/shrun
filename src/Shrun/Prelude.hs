@@ -1,5 +1,8 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE MagicHash #-}
+
+{- ORMOLU_DISABLE -}
 
 -- | Custom prelude. The idea is to:
 --
@@ -22,20 +25,27 @@ module Shrun.Prelude
     (.>),
     unsafeConvertIntegral,
     todo,
+    setUncaughtExceptionHandlerDisplay,
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
     displayExceptiont,
+
+#if !MIN_VERSION_base(4, 20, 0)
 
     -- * Anti-punning aliases
     List,
     Tuple2,
     Tuple3,
 
+#endif
+
     -- * Prelude exports
     module X,
   )
 where
+
+{- ORMOLU_ENABLE -}
 
 import Control.Applicative as X
   ( Alternative (empty, (<|>)),
@@ -91,7 +101,11 @@ import Data.Functor as X
   )
 import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
+#if MIN_VERSION_base(4, 20, 0)
+import Data.List as X (List, filter, replicate, zip, (++))
+#else
 import Data.List as X (filter, replicate, zip, (++))
+#endif
 import Data.List.NonEmpty as X (NonEmpty ((:|)))
 import Data.Maybe as X (Maybe (Just, Nothing), fromMaybe, maybe)
 import Data.Monoid as X (Monoid (mconcat, mempty))
@@ -105,6 +119,9 @@ import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
 import Data.Traversable as X (Traversable (traverse), for)
 import Data.Tuple as X (fst, snd)
+#if MIN_VERSION_base(4, 20, 0)
+import Data.Tuple.Experimental as X (Tuple2, Tuple3)
+#endif
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Effects.Concurrent.Async as X (MonadAsync)
@@ -124,7 +141,6 @@ import Effects.Concurrent.STM as X
 import Effects.Concurrent.Thread as X (MonadThread)
 import Effects.Exception as X
   ( Exception (displayException, fromException),
-    ExceptionCS (MkExceptionCS),
     MonadCatch,
     MonadMask,
     MonadThrow,
@@ -141,6 +157,7 @@ import Effects.Exception as X
     try,
     tryAny,
   )
+import Effects.Exception qualified as Ex
 import Effects.FileSystem.FileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,
@@ -317,6 +334,8 @@ f .> g = g . f
 
 infixr 9 .>
 
+#if !MIN_VERSION_base(4, 20, 0)
+
 -- | Alias for [].
 type List = []
 
@@ -325,6 +344,8 @@ type Tuple2 = (,)
 
 -- | Alias for (,,).
 type Tuple3 = (,,)
+
+#endif
 
 -- | Like 'fromIntegral', except:
 --
@@ -359,3 +380,32 @@ unsafeConvertIntegral x = case toIntegralSized x of
 todo :: forall {r :: RuntimeRep} (a :: TYPE r). (HasCallStack) => a
 todo = raise# (errorCallWithCallStackException "Prelude.todo: not yet implemented" ?callStack)
 {-# WARNING todo "todo remains in code" #-}
+
+{- ORMOLU_DISABLE -}
+
+-- | TODO: We have a weird error on OSX that is caused by the CPP in
+-- app/Main.hs:
+--
+--      error: non-portable path to file '".stack-work/dist/aarch64-osx/ghc-9.8.2/build/Shrun/autogen/cabal_macros.h"'; specified path differs in case from file name on disk [-Werror,-Wnonportable-include-path]
+--     #include ".stack-work/dist/aarch64-osx/ghc-9.8.2/build/shrun/autogen/cabal_macros.h"
+--     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--     ".stack-work/dist/aarch64-osx/ghc-9.8.2/build/Shrun/autogen/cabal_macros.h"
+--
+-- There are multiple solutions:
+--
+-- 1. Attempt to disable -Wnonportable-include-path
+--    (see also https://github.com/IHaskell/IHaskell/issues/942).
+--
+-- 2. Move the CPP here (seems fine here (maybe because it's not an exe?)).
+--
+-- In any case, once we move completely to GHC 9.10+, we can remove this
+-- branch.
+setUncaughtExceptionHandlerDisplay :: IO ()
+setUncaughtExceptionHandlerDisplay =
+#if MIN_VERSION_base(4, 20, 0)
+  Ex.setUncaughtExceptionHandler (putStrLn . Ex.displayInner)
+#else
+  Ex.setUncaughtExceptionHandler (putStrLn . Ex.displayNoCS)
+#endif
+
+{- ORMOLU_ENABLE -}

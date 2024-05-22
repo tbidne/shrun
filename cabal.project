@@ -1,4 +1,4 @@
-index-state: 2024-04-15T22:54:15Z
+index-state: 2024-05-22T20:55:13Z
 
 packages: .
 
@@ -18,7 +18,10 @@ package shrun
     -Wunused-binds
     -Wunused-packages
     -Wunused-type-patterns
+    -Wno-deprecations
     -Wno-unticked-promoted-constructors
+
+-- TODO: Remove Wno-deprecations once we are on GHC 9.10.
 
 optimization: 2
 test-show-details: direct
@@ -26,17 +29,17 @@ test-show-details: direct
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: f4f799cea958fb2b2309d70f47a658dff2481441
+    tag: f8590486ec0fc66acf7db20308e1ed6993a52151
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/bounds.git
-    tag: 50b07ca118ae140d065ec0285f38e72151da4cad
+    tag: f93b202c9d154b25b42b048570cf6648451aa577
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 6c3f405c6cecf6f2d6ed16f5a844470d3e3088b4
+    tag: f3496c0d2606540498d6fd503e6855441ca03ee1
     subdir:
       lib/effects-async
       lib/effects-exceptions
@@ -54,14 +57,19 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/relative-time.git
-    tag: 5f89851baf90c671fffa8d5118e0b37186220fef
+    tag: b3be9b3b904059671ef07dbcbb11b8c04d50ddde
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/si-bytes.git
-    tag: bc73bff27b607be0e5b13c1d65e1da8b2ea29319
+    tag: 308faf0ab25b39e0dda8de23d5d315e82260080f
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: a722e1fee10aeba79aaf88ed774f1cafb19930f4
+    tag: 9bd570201445904d12d0e0b792f171d02e6f361e
+
+allow-newer: aeson:th-abstraction
+allow-newer: dbus:template-haskell
+allow-newer: hedgehog:template-haskell
+allow-newer: tasty-hedgehog:base
