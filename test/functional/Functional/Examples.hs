@@ -10,7 +10,6 @@ import Functional.Examples.FileLogging qualified as Examples.FileLogging
 import Functional.Examples.Notify qualified as Examples.Notify
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
-import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!
@@ -33,7 +32,7 @@ specs args =
 gif :: TestTree
 gif =
   testCase "Runs gif example" $ do
-    results <- fmap MkResultText <$> runExitFailure args
+    results <- runExitFailure args
     V.verifyExpected results expected
   where
     args =
@@ -61,7 +60,7 @@ gif =
 core :: TestTree
 core =
   testCase "Runs core example" $ do
-    results <- fmap MkResultText <$> runExitFailure args
+    results <- runExitFailure args
     V.verifyExpected results expected
   where
     args =

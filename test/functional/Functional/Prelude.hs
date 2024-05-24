@@ -12,6 +12,14 @@
 --
 --   2. Once we only support GHC 9.8+, add it unconditionally to
 --      default-extensions.
+--
+--   3. It would be nice if we could test that we do not receive any "extra"
+--      output e.g. "ExitFailure 1". To do this, though, we'd have to test
+--      with the exception logic, since the exception stuff happens _outside_
+--      of these tests i.e. exceptions are caught and the unwanted output will
+--      occur from the handler (set in Main.hs).
+--
+--  4. Consider testing --help (would require some refactoring like 3 above).
 
 #if __GLASGOW_HASKELL__ >= 908
 {-# LANGUAGE TypeAbstractions #-}
@@ -82,6 +90,7 @@ import Shrun.Logging.MonadRegionLogger
 import Shrun.Notify.MonadNotify (MonadNotify (notify), ShrunNote)
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
+import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
 import Test.Tasty.HUnit as X
   ( Assertion,
@@ -196,7 +205,7 @@ instance MonadNotify (ShellT FuncEnv IO) where
     pure Nothing
 
 -- | Runs the args and retrieves the logs.
-run :: List String -> IO (List Text)
+run :: List String -> IO (List ResultText)
 run = fmap fst . runMaybeException ExNothing
 
 -- | Runs the args and retrieves the sent notifications.
@@ -206,7 +215,7 @@ runNotes = fmap snd . runMaybeException ExNothing
 {- ORMOLU_DISABLE -}
 
 -- | 'runException' specialized to ExitFailure.
-runExitFailure :: List String -> IO (List Text)
+runExitFailure :: List String -> IO (List ResultText)
 runExitFailure =
 #if MIN_VERSION_base(4, 20, 0)
   fmap fst . runMaybeException (ExJust $ Proxy @ExitCode)
@@ -221,7 +230,7 @@ runException ::
   forall e.
   (Exception e) =>
   List String ->
-  IO (List Text)
+  IO (List ResultText)
 runException = fmap fst . runMaybeException (ExJust (Proxy @e))
 
 -- | So we can hide the exception type and make it so run does not
@@ -234,7 +243,7 @@ data MaybeException where
 runMaybeException ::
   MaybeException ->
   List String ->
-  IO (List Text, List ShrunNote)
+  IO (List ResultText, List ShrunNote)
 runMaybeException mException argList = do
   ls <- newIORef []
   shrunNotes <- newIORef []
@@ -288,8 +297,8 @@ runMaybeException mException argList = do
     readRefs ::
       IORef (List Text) ->
       IORef (List ShrunNote) ->
-      IO (List Text, List ShrunNote)
-    readRefs ls ns = (,) <$> readIORef ls <*> readIORef ns
+      IO (List ResultText, List ShrunNote)
+    readRefs ls ns = ((,) . fmap MkResultText <$> readIORef ls) <*> readIORef ns
 
     printLogsReThrow :: (Exception e) => e -> IORef (List Text) -> IO void
     printLogsReThrow ex ls = do

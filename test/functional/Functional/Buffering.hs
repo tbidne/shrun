@@ -4,7 +4,7 @@ module Functional.Buffering (specs) where
 import Data.List qualified as L
 import Data.Text qualified as T
 import Functional.Prelude
-import Test.Shrun.Verifier (ExpectedText (MkExpectedText), ResultText (MkResultText))
+import Test.Shrun.Verifier (ExpectedText (MkExpectedText), ResultText)
 import Test.Shrun.Verifier qualified as V
 
 specs :: TestTree
@@ -23,7 +23,7 @@ logsNoBuffer =
 
     assertLogsEq expectedOrdered results
 
-    V.verifyExpected (MkResultText <$> results) (MkExpectedText <$> allExpected)
+    V.verifyExpected results (MkExpectedText <$> allExpected)
   where
     -- NOTE: [Bash brace loop interpolation]
     --
@@ -74,11 +74,13 @@ logsNoBuffer =
              withFinishedPrefix ""
            ]
 
-assertLogsEq :: List Text -> List Text -> IO ()
-assertLogsEq expectedOrdered results = case go expectedOrdered results of
+assertLogsEq :: List Text -> List ResultText -> IO ()
+assertLogsEq expectedOrdered results = case go expectedOrdered results' of
   Nothing -> pure ()
   Just errMsg -> assertFailure $ unpack errMsg
   where
+    results' = view #unResultText <$> results
+
     go :: List Text -> List Text -> Maybe Text
     go [] [] = Nothing
     go (_ : _) [] =
@@ -87,7 +89,7 @@ assertLogsEq expectedOrdered results = case go expectedOrdered results of
           [ "Num expected > results.\n\nExpected:\n",
             prettyList expectedOrdered,
             "\n\nResults:\n",
-            prettyList results
+            prettyList results'
           ]
     -- Having leftover results is fine, since the last few messages are quite
     -- non-deterministic, so we don't bother.
@@ -102,7 +104,7 @@ assertLogsEq expectedOrdered results = case go expectedOrdered results of
                 "\n\nAll expected:\n",
                 prettyList expectedOrdered,
                 "\n\nAll results:\n",
-                prettyList results
+                prettyList results'
               ]
 
     prettyList :: List Text -> Text

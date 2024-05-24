@@ -1,7 +1,6 @@
 module Functional.Examples.CommonLogging (tests) where
 
 import Functional.Prelude
-import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!
@@ -17,7 +16,7 @@ tests =
 keyHideOn :: TestTree
 keyHideOn =
   testCase "Runs key hide example with --common-log-key-hide" $ do
-    results <- fmap MkResultText <$> run args
+    results <- run args
     V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -37,7 +36,7 @@ keyHideOn =
 keyHideOff :: TestTree
 keyHideOff =
   testCase "Runs key hide example without --common-log-key-hide" $ do
-    results <- fmap MkResultText <$> run args
+    results <- run args
     V.verifyExpectedUnexpected results expected unexpected
   where
     args =

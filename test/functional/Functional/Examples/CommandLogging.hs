@@ -2,7 +2,6 @@ module Functional.Examples.CommandLogging (tests) where
 
 import Data.Text qualified as T
 import Functional.Prelude
-import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!
@@ -18,7 +17,7 @@ tests =
 readSizeDefault :: TestTree
 readSizeDefault =
   testCase "Default --read-size splits 1000" $ do
-    results <- fmap MkResultText <$> run args
+    results <- run args
     V.verifyExpected results expected
   where
     args =
@@ -39,7 +38,7 @@ readSizeDefault =
 readSize :: TestTree
 readSize =
   testCase "Runs --command-log-read-size example" $ do
-    results <- fmap MkResultText <$> run args
+    results <- run args
     V.verifyExpected results expected
   where
     args =

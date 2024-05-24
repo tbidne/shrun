@@ -402,10 +402,20 @@ todo = raise# (errorCallWithCallStackException "Prelude.todo: not yet implemente
 -- branch.
 setUncaughtExceptionHandlerDisplay :: IO ()
 setUncaughtExceptionHandlerDisplay =
+  Ex.setUncaughtExceptionHandler printExceptExitCode
+  where
 #if MIN_VERSION_base(4, 20, 0)
-  Ex.setUncaughtExceptionHandler (putStrLn . Ex.displayInner)
+    printExceptExitCode ex = case fromException ex of
+      Just ExitSuccess -> pure ()
+      -- for command failures
+      Just (ExitFailure _) -> pure ()
+      Nothing -> putStrLn $ displayException ex
 #else
-  Ex.setUncaughtExceptionHandler (putStrLn . Ex.displayNoCS)
+    printExceptExitCode ex = case fromException ex of
+      Just (Ex.MkExceptionCS ExitSuccess _) -> pure ()
+      -- for command failures
+      Just (Ex.MkExceptionCS (ExitFailure _) _) -> pure ()
+      Nothing -> putStrLn $ displayException ex
 #endif
 
 {- ORMOLU_ENABLE -}

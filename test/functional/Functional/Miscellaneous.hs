@@ -2,7 +2,6 @@
 module Functional.Miscellaneous (specs) where
 
 import Functional.Prelude
-import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
 specs :: TestTree
@@ -16,7 +15,7 @@ specs =
 
 splitNewlineLogs :: TestTree
 splitNewlineLogs = testCase "Logs with newlines are split" $ do
-  results <- fmap MkResultText <$> run args
+  results <- run args
   V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -40,7 +39,7 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
 
 spaceStderrLogs :: TestTree
 spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
-  results <- fmap MkResultText <$> runExitFailure args
+  results <- runExitFailure args
   V.verifyExpectedUnexpected results expected unexpected
   where
     args =
@@ -64,7 +63,7 @@ spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
 -- markdown file as easy as possible. Thus we move it here.
 stripControlAlwaysCmdNames :: TestTree
 stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
-  results <- fmap MkResultText <$> run args
+  results <- run args
   V.verifyExpected results expected
   where
     args =

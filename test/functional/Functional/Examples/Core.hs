@@ -2,7 +2,6 @@
 module Functional.Examples.Core (tests) where
 
 import Functional.Prelude
-import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!
@@ -19,7 +18,7 @@ tests =
 initOn :: TestTree
 initOn =
   testCase "Runs init successful example" $ do
-    results <- fmap MkResultText <$> run args
+    results <- run args
     V.verifyExpected results expected
   where
     args =
@@ -36,7 +35,7 @@ initOn =
 initOff :: TestTree
 initOff =
   testCase "Runs init failure example" $ do
-    results <- fmap MkResultText <$> runExitFailure args
+    results <- runExitFailure args
     V.verifyExpected results expected
   where
     args =
@@ -51,7 +50,7 @@ initOff =
 timeout :: TestTree
 timeout =
   testCase "Runs timeout example" $ do
-    results <- fmap MkResultText <$> runExitFailure args
+    results <- runExitFailure args
     V.verifyExpected results expected
   where
     args =
