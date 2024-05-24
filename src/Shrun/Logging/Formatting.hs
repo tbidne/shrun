@@ -149,30 +149,23 @@ coreFormatting ::
   Log ->
   Text
 coreFormatting mLineTrunc mCommandNameTrunc stripControl keyHide log =
-  let line = case log ^. #cmd of
-        Nothing ->
-          let totalPrefix = brackets True logPrefix
-           in concatWithLineTrunc
-                mLineTrunc
-                totalPrefix
-                msgStripped
-        Just cmd ->
-          let cmd' =
-                formatCommand
-                  keyHide
-                  mCommandNameTrunc
-                  cmd
-              totalPrefix =
-                mconcat
-                  [ brackets False logPrefix,
-                    cmd'
-                  ]
-           in concatWithLineTrunc
-                mLineTrunc
-                totalPrefix
-                msgStripped
-   in line
+  concatWithLineTrunc mLineTrunc prefix msgStripped
   where
+    -- prefix is something like "[Success] " or "[Command][some cmd] ".
+    -- Notice this does not include ANSI codes or a timestamp.
+    prefix = case log ^. #cmd of
+      Nothing -> brackets True logPrefix
+      Just cmd ->
+        let cmd' =
+              formatCommand
+                keyHide
+                mCommandNameTrunc
+                cmd
+         in mconcat
+              [ brackets False logPrefix,
+                cmd'
+              ]
+
     msgStripped = stripChars (log ^. #msg) stripControl
     logPrefix = logToPrefix log
 
