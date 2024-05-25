@@ -18,11 +18,16 @@ import Integration.Utils
   )
 import Shrun.Configuration qualified as Configuration
 import Shrun.Configuration.Args qualified as Args
-import Shrun.Configuration.Data.FileLogging (DeleteOnSuccessSwitch (DeleteOnSuccessOn))
-import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode (FileSizeModeNothing))
+import Shrun.Configuration.Data.FileLogging
+  ( DeleteOnSuccessSwitch (DeleteOnSuccessOn),
+  )
+import Shrun.Configuration.Data.FileLogging.FileSizeMode
+  ( FileSizeMode (FileSizeModeNothing),
+  )
 import Shrun.Configuration.Data.MergedConfig qualified as Merged
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Toml qualified as Toml
+import Shrun.Configuration.Toml (Toml)
 import Shrun.Data.Command (CommandP (MkCommandP))
 
 specs :: IO TestArgs -> TestTree
@@ -282,7 +287,7 @@ testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs"
   $ do
     let expected = Merged.defaultMergedConfig cmds
         args = Args.defaultArgs cmds
-        toml = Toml.defaultToml
+        toml = def @Toml
 
     resultNoToml <- runTermIO $ Configuration.mergeConfig args Nothing
     resultMerge <- runTermIO $ Configuration.mergeConfig args $ Just toml

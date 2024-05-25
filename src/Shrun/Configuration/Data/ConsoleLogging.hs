@@ -249,6 +249,24 @@ deriving stock instance Eq (ConsoleLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (ConsoleLoggingP ConfigPhaseMerged)
 
+instance
+  ( Default (SwitchF p ConsoleLogCmdSwitch),
+    Default (ConfigPhaseMaybeF p (Truncation TruncCommandName)),
+    Default (LineTruncF p),
+    Default (ConfigPhaseF p ConsoleLogStripControl),
+    Default (ConfigPhaseF p TimerFormat)
+  ) =>
+  Default (ConsoleLoggingP p)
+  where
+  def =
+    MkConsoleLoggingP
+      { commandLogging = def,
+        commandNameTrunc = def,
+        lineTrunc = def,
+        stripControl = def,
+        timerFormat = def
+      }
+
 -- | Merges args and toml configs.
 mergeConsoleLogging ::
   ( HasCallStack,

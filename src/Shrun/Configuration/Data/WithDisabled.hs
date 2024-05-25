@@ -108,6 +108,9 @@ instance Semigroup (WithDisabled a) where
 instance Monoid (WithDisabled a) where
   mempty = Without
 
+instance Default (WithDisabled a) where
+  def = Without
+
 -- | 'With' -> 'Just', o/w -> 'Nothing'.
 toMaybe :: WithDisabled a -> Maybe a
 toMaybe (With x) = Just x

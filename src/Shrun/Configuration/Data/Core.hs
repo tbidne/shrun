@@ -37,6 +37,7 @@ import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.WithDisabled ((<>??))
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Prelude
 
@@ -398,6 +399,28 @@ withCoreEnv merged onCoreConfigEnv = do
               notify
             }
      in onCoreConfigEnv coreConfigEnv
+
+instance
+  ( Default (ConfigPhaseMaybeF p Text),
+    Default (ConfigPhaseMaybeF p Timeout),
+    Default (TomlOptF p (CommonLoggingP p)),
+    Default (TomlOptF p (CommandLoggingP p)),
+    Default (TomlOptF p (ConsoleLoggingP p)),
+    Default (ArgsOnlyDetF p (FileLoggingP p)),
+    Default (ArgsOnlyDetF p (NotifyP p))
+  ) =>
+  Default (CoreConfigP p)
+  where
+  def =
+    MkCoreConfigP
+      { init = def,
+        timeout = def,
+        commonLogging = def,
+        commandLogging = def,
+        consoleLogging = def,
+        fileLogging = def,
+        notify = def
+      }
 
 defaultToml :: CoreConfigToml
 defaultToml =

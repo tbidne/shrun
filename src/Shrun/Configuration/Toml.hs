@@ -2,7 +2,6 @@
 
 module Shrun.Configuration.Toml
   ( Toml (..),
-    defaultToml,
   )
 where
 
@@ -20,6 +19,7 @@ import Shrun.Configuration.Data.Core
     CoreConfigToml,
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Toml.Legend (KeyVal)
 import Shrun.Prelude
 
@@ -48,6 +48,13 @@ instance
     fmap (MkToml _coreConfig) (f _legend)
   {-# INLINE labelOptic #-}
 
+instance Default Toml where
+  def =
+    MkToml
+      { coreConfig = def,
+        legend = def
+      }
+
 instance DecodeTOML Toml where
   tomlDecoder = do
     timeout <- decodeTimeout
@@ -73,22 +80,6 @@ instance DecodeTOML Toml where
               },
           legend
         }
-
-defaultToml :: Toml
-defaultToml =
-  MkToml
-    { coreConfig =
-        MkCoreConfigP
-          { timeout = Nothing,
-            init = Nothing,
-            commonLogging = Nothing,
-            consoleLogging = Nothing,
-            commandLogging = Nothing,
-            fileLogging = Nothing,
-            notify = Nothing
-          },
-      legend = Nothing
-    }
 
 decodeTimeout :: Decoder (Maybe Timeout)
 decodeTimeout = getFieldOptWith tomlDecoder "timeout"

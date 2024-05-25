@@ -65,6 +65,12 @@ deriving stock instance Eq (CommonLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (CommonLoggingP ConfigPhaseMerged)
 
+instance
+  (Default (ConfigPhaseF p KeyHideSwitch)) =>
+  Default (CommonLoggingP p)
+  where
+  def = MkCommonLoggingP def
+
 -- | Merges args and toml configs.
 mergeCommonLogging ::
   CommonLoggingArgs ->

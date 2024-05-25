@@ -72,7 +72,7 @@ import Shrun.Configuration.Data.WithDisabled
     (<>??),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Configuration.Default (Default (..))
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
 
@@ -204,6 +204,15 @@ deriving stock instance Show FileLogInitToml
 deriving stock instance Eq FileLogInitMerged
 
 deriving stock instance Show FileLogInitMerged
+
+-- Only Default instance is for Args, since others require the Path.
+instance Default FileLogInitArgs where
+  def =
+    MkFileLogInitP
+      { path = def,
+        mode = def,
+        sizeMode = def
+      }
 
 instance DecodeTOML FileLogInitToml where
   tomlDecoder =
@@ -446,6 +455,24 @@ deriving stock instance Show (FileLoggingP ConfigPhaseToml)
 deriving stock instance Eq (FileLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (FileLoggingP ConfigPhaseMerged)
+
+instance
+  ( Default (FileLogFileF p),
+    Default (ConfigPhaseMaybeF p (Truncation TruncCommandName)),
+    Default (SwitchF p DeleteOnSuccessSwitch),
+    Default (LineTruncF p),
+    Default (ConfigPhaseF p FileLogStripControl)
+  ) =>
+  Default (FileLoggingP p)
+  where
+  def =
+    MkFileLoggingP
+      { file = def,
+        commandNameTrunc = def,
+        deleteOnSuccess = def,
+        lineTrunc = def,
+        stripControl = def
+      }
 
 -- | Merges args and toml configs.
 mergeFileLogging ::

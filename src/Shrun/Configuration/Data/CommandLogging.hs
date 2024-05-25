@@ -159,6 +159,20 @@ deriving stock instance Eq (CommandLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (CommandLoggingP ConfigPhaseMerged)
 
+instance
+  ( Default (ConfigPhaseF p PollInterval),
+    Default (ConfigPhaseF p ReadSize),
+    Default (SwitchF p ReportReadErrorsSwitch)
+  ) =>
+  Default (CommandLoggingP p)
+  where
+  def =
+    MkCommandLoggingP
+      { pollInterval = def,
+        readSize = def,
+        reportReadErrors = def
+      }
+
 -- | Merges args and toml configs.
 mergeCommandLogging ::
   CommandLoggingArgs ->

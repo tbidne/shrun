@@ -28,6 +28,7 @@ import Shrun.Configuration.Data.WithDisabled
     (<>?.),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
+import Shrun.Configuration.Default (Default, def)
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
 import Shrun.Notify.Types
   ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
@@ -133,6 +134,15 @@ deriving stock instance Eq (NotifyP ConfigPhaseMerged)
 
 deriving stock instance Show (NotifyP ConfigPhaseMerged)
 
+-- Only Default instance is for Args, since others require the action.
+instance Default NotifyArgs where
+  def =
+    MkNotifyP
+      { system = def,
+        action = def,
+        timeout = def
+      }
+
 -- | Merges args and toml configs.
 mergeNotifyLogging ::
   NotifyArgs ->
@@ -141,7 +151,7 @@ mergeNotifyLogging ::
 mergeNotifyLogging args mToml =
   mAction <&> \action ->
     let toml :: NotifyToml
-        toml = fromMaybe (mkDefaultToml action) mToml
+        toml = fromMaybe (defaultNotifyToml action) mToml
      in MkNotifyP
           { action,
             system =
@@ -206,8 +216,8 @@ mkNotify notifyToml systemP2 =
       timeout = notifyToml ^. #timeout
     }
 
-mkDefaultToml :: NotifyAction -> NotifyToml
-mkDefaultToml action =
+defaultNotifyToml :: NotifyAction -> NotifyToml
+defaultNotifyToml action =
   MkNotifyP
     { system = Nothing,
       action = action,
