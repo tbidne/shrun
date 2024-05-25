@@ -1,5 +1,3 @@
-{-# LANGUAGE UndecidableInstances #-}
-
 module Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (..),
 
@@ -135,19 +133,20 @@ fromWithDisabled :: a -> WithDisabled a -> a
 fromWithDisabled _ (With y) = y
 fromWithDisabled x _ = x
 
+-- | Eliminates 'WithDisabled' via its 'Default' instance.
 fromDefault :: (Default a) => WithDisabled a -> a
 fromDefault = fromWithDisabled def
 
--- | @l <>? r@ lifts 'Maybe' @r@ into a 'WithDisabled' per
--- 'Shrun.Configuration.Data.WithDisabled.fromMaybe' then runs the 'Semigroup'.
+-- | @l <>? r@ lifts 'Maybe' @r@ into a 'WithDisabled' per 'fromMaybe' then
+-- runs the 'Semigroup'.
 (<>?) :: WithDisabled a -> Maybe a -> WithDisabled a
 wd <>? m = wd <> fromMaybe m
 
 infixr 6 <>?
 
--- | Like '(<>?)' except we extract a result via 'fromWithDisabled'.
+-- | Like '(<>?)' except we extract a result via 'fromDefault'.
 (<>?.) :: (Default a) => WithDisabled a -> Maybe a -> a
-x <>?. y = fromWithDisabled def (x <>? y)
+x <>?. y = fromDefault (x <>? y)
 
 infixr 6 <>?.
 
