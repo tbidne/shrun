@@ -22,6 +22,8 @@ the major/minor/patch definitions apply to the application's interface / usage
 ### Fixed
 * More `HasCallStack` annotations for better callstacks in case something goes
   wrong.
+* Increase default `--command-log-read-size` to `16 kb` to better prevent
+  command log splitting.
 
 ## [0.9] -- 2024-05-10
 ### Changed

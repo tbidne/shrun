@@ -91,7 +91,7 @@ readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"
         [ "The max number of bytes in a single read when streaming command ",
           "logs (--console-log-command and --file-log). Logs larger than ",
           "--command-log-read-size will be read in a subsequent read, hence ",
-          "broken across lines. The default is '1 kb'."
+          "broken across lines. The default is '16 kb'."
         ]
 
 reportReadErrorsParser :: Parser (WithDisabled ())

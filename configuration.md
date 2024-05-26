@@ -183,7 +183,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 **Arg:** `--command-log-read-size BYTES`
 
-**Description:** The max number of bytes in a single read when streaming command logs. Logs larger than `--command-log-read-size` will be read in a subsequent read, hence broken across lines. The default is `1 kb`.
+**Description:** The max number of bytes in a single read when streaming command logs. Logs larger than `--command-log-read-size` will be read in a subsequent read, hence broken across lines. The default is `16 kb`.
 
 **Example:**
 

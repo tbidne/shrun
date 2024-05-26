@@ -16,7 +16,7 @@ tests =
 
 readSizeDefault :: TestTree
 readSizeDefault =
-  testCase "Default --read-size splits 1000" $ do
+  testCase "Default --read-size splits 16,000" $ do
     results <- run args
     V.verifyExpected results expected
   where
@@ -27,7 +27,7 @@ readSizeDefault =
           "5",
           cmd
         ]
-    commandLog = replicate 1000 'a'
+    commandLog = replicate 16_000 'a'
     cmd = "sleep 1 ; echo " ++ commandLog ++ "b; sleep 1"
     cmdExpected = V.MkExpectedText . T.pack $ commandLog
     expected =

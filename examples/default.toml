@@ -85,8 +85,8 @@
 
 # # The max number of bytes in a single read when streaming command logs.
 # # Logs larger than read-size will be read in a subsequent read, hence broken
-# # across lines. The default is "1 kb".
-# read-size = "2 kb"
+# # across lines. The default is "16 kb".
+# read-size = "1 mb"
 
 # # Configuration for console logging.
 # [console-log]
