@@ -1,4 +1,4 @@
-echo -n "first: "
+printf "first: "
 sleep 1
-echo "second"
+printf "second"
 sleep 0.5
