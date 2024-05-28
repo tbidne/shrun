@@ -64,7 +64,6 @@ import Shrun.Logging.Types
     LogLevel (LevelCommand, LevelFinished, LevelSuccess),
     LogMode (LogModeSet),
   )
-import Shrun.Utils qualified as Utils
 import Unit.Generators qualified as PGens
 import Unit.Prelude
 import Unit.Shrun.Logging.Generators qualified as LGens
