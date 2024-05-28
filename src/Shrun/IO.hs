@@ -229,12 +229,12 @@ tryCommandStream logFn cmd = do
       . P.setStdout errSpec
       . commandToProcess cmd
 
-  (exitCode, lastReadErr) <-
+  (exitCode, finalData) <-
     P.withProcessWait procConfig (streamOutput logFn cmd)
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
-    ExitFailure _ -> Just $ readHandleResultToStderr lastReadErr
+    ExitFailure _ -> Just $ readHandleResultToStderr finalData
 
 -- NOTE: This was an attempt to set the buffering so that we could use
 -- hGetLine. Unfortunately that failed, see Note
@@ -318,6 +318,8 @@ streamOutput logFn cmd p = do
   remainingOut <- readBlock (P.getStdout p)
   remainingErr <- readBlock (P.getStderr p)
 
+  -- NOTE: [Stderr reporting]
+  --
   -- In the event of a process failure (exitCode == ExitFailure), we want to
   -- return the last (successful) read, as it is the most likely to have
   -- relevant information. We have two possible reads here:
@@ -335,15 +337,6 @@ streamOutput logFn cmd p = do
   -- We make the assumption that the most recent Stderr is the most likely to
   -- have the relevant error message, though we fall back to stdout as this
   -- is not always true.
-  --
-  -- Annoyingly, apparently the functional tests only require 'remainingOut'
-  -- to pass. That is, none of the other reads are exercised, as far as the
-  -- tests are concerned. In fact, setting 'finalData = ReadNoData' only
-  -- causes 1 test to fail. This is due to most tests not testing the final
-  -- error message.
-  --
-  -- I am quite confident that the current finalData is reasonable, but it
-  -- would be nice to have tests for this.
   let finalData =
         mconcat
           [ remainingErr,

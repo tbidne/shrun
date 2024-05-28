@@ -10,7 +10,8 @@ specs =
     "Miscellaneous"
     [ splitNewlineLogs,
       spaceErrorLogs,
-      stripControlAlwaysCmdNames
+      stripControlAlwaysCmdNames,
+      reportsStderr
     ]
 
 splitNewlineLogs :: TestTree
@@ -89,4 +90,35 @@ stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
     expected =
       [ withCommandPrefix "printf ' foo  hello  bye '; sleep 2" "foo \ESC[35m hello \ESC[3D bye",
         withSuccessPrefix "printf ' foo  hello  bye '; sleep 2"
+      ]
+
+-- Tests that we default to stderr when it exists.
+-- See NOTE: [Stderr reporting].
+reportsStderr :: TestTree
+reportsStderr = testCase "Reports stderr" $ do
+  results <- runExitFailure args
+  V.verifyExpectedUnexpected results expected unexpected
+  where
+    scriptPath :: (IsString a) => a
+    scriptPath = "./test/functional/Functional/stderr.sh"
+
+    args =
+      withNoConfig
+        [ "--console-log-command",
+          scriptPath
+        ]
+
+    expected =
+      [ withErrorPrefix scriptPath <> "1 second: some stderr",
+        withCommandPrefix scriptPath "some output",
+        withCommandPrefix scriptPath "some stderr",
+        withCommandPrefix scriptPath "more output"
+      ]
+
+    -- Really the first one is what we should get if we are ignoring stderr,
+    -- but we include all for paranoia (we only want the above 'some stderr').
+    unexpected =
+      [ withErrorPrefix scriptPath <> "1 second: some output more output",
+        withErrorPrefix scriptPath <> "1 second: some output",
+        withErrorPrefix scriptPath <> "1 second: more output"
       ]
