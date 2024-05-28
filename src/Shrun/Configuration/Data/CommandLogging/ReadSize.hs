@@ -92,6 +92,22 @@ instance Default ReadSize where
   --
   -- For now we choose option 2, increase the read-size as it is simple and
   -- appears to work well. We may choose to increase this in the future.
+  --
+  -- UPDATE: There is another way logs can be split. In some cases, a command
+  -- may output a "partial" line, with the expectation to be completed later.
+  -- For instance, our test framework outputs lines like:
+  --
+  --    Some test desc:               OK (0.05s)
+  --
+  -- But the line is outputted in two steps. First, the text description is
+  -- printed. Second, the OK (0.05s) happens _after_ the test completes.
+  -- If the time elapsed is long enough to outstrip the poll-interval, then
+  -- this log will be broken. Increasing the poll-interval is an option, but
+  -- that has other problems. And increasing the read-size will not help here.
+  --
+  -- The only real solution to this is to implement the more complicated
+  -- "read line" scheme described above. Of course this comes with its own
+  -- complications and trade-offs.
   def = MkReadSize $ MkBytes 16_000
 
 instance DecodeTOML ReadSize where

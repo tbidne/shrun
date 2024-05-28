@@ -11,7 +11,8 @@ specs =
     [ splitNewlineLogs,
       spaceErrorLogs,
       stripControlAlwaysCmdNames,
-      reportsStderr
+      reportsStderr,
+      slowOutputBroken
     ]
 
 splitNewlineLogs :: TestTree
@@ -121,4 +122,41 @@ reportsStderr = testCase "Reports stderr" $ do
       [ withErrorPrefix scriptPath <> "1 second: some output more output",
         withErrorPrefix scriptPath <> "1 second: some output",
         withErrorPrefix scriptPath <> "1 second: more output"
+      ]
+
+-- This is an "anti" test. We actually do not want this behavior. Ideally,
+-- the lines:
+--
+--   echo -n "first: "
+--   sleep 1
+--   echo "second"
+--
+-- Should produce "first: second", since that is the original intention
+-- (-n means do not append a newline). But because the time between logs is
+-- longer than the poll-interval, it is split.
+--
+-- We include this test for documenting the current behavior, and if we ever
+-- "fix" this -- see NOTE: [Command log splitting] --, then we can simply
+-- flip the expected/unexpected below.
+slowOutputBroken :: TestTree
+slowOutputBroken = testCase "Slow output is broken" $ do
+  results <- run args
+  V.verifyExpectedUnexpected results expected unexpected
+  where
+    scriptPath :: (IsString a) => a
+    scriptPath = "./test/functional/Functional/slow_output_broken.sh"
+
+    args =
+      withNoConfig
+        [ "--console-log-command",
+          scriptPath
+        ]
+
+    expected =
+      [ withCommandPrefix scriptPath "first: ",
+        withCommandPrefix scriptPath "second"
+      ]
+
+    unexpected =
+      [ withCommandPrefix scriptPath "first: second"
       ]
