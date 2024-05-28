@@ -185,7 +185,6 @@ test-suite unit
     Unit.Shrun.Configuration.Args.Parsing.TestUtils
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
-    Unit.Shrun.Data.Text
     Unit.Shrun.IO.Types
     Unit.Shrun.Logging.Formatting
     Unit.Shrun.Logging.Generators

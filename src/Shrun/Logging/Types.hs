@@ -46,6 +46,12 @@ data LogRegion r
   | -- | Log without region.
     LogNoRegion ConsoleLog
 
+-- NOTE: [Log UnlinedText]
+--
+-- It would be nice if msg was UnlinedText, so then formatting
+-- could share the proof that lines have been stripped. Unfortunately this is
+-- non-trivial. See NOTE: [StripControl Newlines].
+
 -- | Captures the relevant information concerning a specific log
 -- (i.e. command, text, level, and mode).
 data Log = MkLog

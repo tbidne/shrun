@@ -5,8 +5,8 @@ module Unit.Shrun.IO.Types (tests) where
 
 import Hedgehog.Gen qualified as G
 import Hedgehog.Range qualified as R
-import Shrun.Data.Text (StrippedText)
-import Shrun.Data.Text qualified as Shrun.Text
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.IO.Types
 import Unit.Prelude
 
@@ -81,19 +81,16 @@ genReadHandleResult =
     ]
 
 genReadSuccess :: Gen ReadHandleResult
-genReadSuccess = ReadSuccess <$> genStrippedTextLines
+genReadSuccess = ReadSuccess <$> genUnlinedTexts
 
 genReadErr :: Gen ReadHandleResult
-genReadErr = ReadErr <$> genStrippedText
+genReadErr = ReadErr <$> genUnlinedTexts
 
 genNoSuccess :: Gen ReadHandleResult
 genNoSuccess = G.choice [genReadErr, pure ReadNoData]
 
-genStrippedTextLines :: Gen [StrippedText]
-genStrippedTextLines = Shrun.Text.stripLines <$> genText
-
-genStrippedText :: Gen StrippedText
-genStrippedText = Shrun.Text.stripText <$> genText
+genUnlinedTexts :: Gen (List UnlinedText)
+genUnlinedTexts = ShrunText.fromText <$> genText
 
 genText :: Gen Text
 genText = G.text (R.linearFrom 1 1 20) G.unicode

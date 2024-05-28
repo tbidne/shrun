@@ -32,6 +32,7 @@ import Shrun.Configuration.Env.Types
     setAnyErrorTrue,
   )
 import Shrun.Data.Command (CommandP1)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.IO (Stderr (MkStderr), tryCommandLogging)
 import Shrun.IO.Types (CommandResult (CommandFailure, CommandSuccess))
 import Shrun.Logging qualified as Logging
@@ -173,7 +174,10 @@ runCommand cmd = do
 
   let timerFormat = consoleLogging ^. #timerFormat
       (urgency, msg', lvl, timeElapsed) = case cmdResult of
-        CommandFailure t (MkStderr err) -> (Critical, ": " <> err, LevelError, t)
+        -- see NOTE: [Text Line Concatentation] for how we combine the
+        -- multiple texts back into a single err.
+        CommandFailure t (MkStderr errs) ->
+          (Critical, ": " <> ShrunText.toText errs, LevelError, t)
         CommandSuccess t -> (Normal, "", LevelSuccess, t)
       timeMsg = TimerFormat.formatRelativeTime timerFormat timeElapsed <> msg'
 

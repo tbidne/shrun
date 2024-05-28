@@ -14,12 +14,12 @@ import Effects.FileSystem.HandleReader
     hGetNonBlocking,
     hIsReadable,
   )
-import Shrun.Data.Text (StrippedText)
-import Shrun.Data.Text qualified as Shrun.Text
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude
 
 -- | Newtype wrapper for stderr.
-newtype Stderr = MkStderr {unStderr :: Text}
+newtype Stderr = MkStderr {unStderr :: List UnlinedText}
   deriving stock (Eq, Show)
 
 -- | Result of running a command.
@@ -38,9 +38,9 @@ data CommandResult
 -- element. For identical constructors, the left argument is taken.
 data ReadHandleResult
   = -- | Error encountered while trying to read a handle.
-    ReadErr StrippedText
+    ReadErr (List UnlinedText)
   | -- | Successfully read data from the handle.
-    ReadSuccess [StrippedText]
+    ReadSuccess (List UnlinedText)
   | -- | Successfully read no data from the handle.
     ReadNoData
   deriving stock (Eq, Show)
@@ -57,10 +57,9 @@ instance Monoid ReadHandleResult where
 
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
 readHandleResultToStderr :: ReadHandleResult -> Stderr
-readHandleResultToStderr ReadNoData = MkStderr "<No data>"
-readHandleResultToStderr (ReadErr err) = MkStderr $ Shrun.Text.unStrippedText err
-readHandleResultToStderr (ReadSuccess errLines) =
-  MkStderr (Shrun.Text.sepLines errLines)
+readHandleResultToStderr ReadNoData = MkStderr $ ShrunText.fromText "<No data>"
+readHandleResultToStderr (ReadErr errs) = MkStderr errs
+readHandleResultToStderr (ReadSuccess errs) = MkStderr errs
 
 -- | Attempts to read from the handle.
 readHandle ::
@@ -75,16 +74,12 @@ readHandle blockSize handle = do
   -- The "nothingIfReady" check and reading step both need to go in the try as
   -- the former can also throw.
   tryAny readHandle' <&> \case
-    Left ex ->
-      ReadErr
-        $ Shrun.Text.stripText
-        $ "HandleException: "
-        <> displayExceptiont ex
+    Left ex -> ReadErr $ ShrunText.fromText $ "HandleException: " <> displayExceptiont ex
     Right x -> x
   where
     readHandle' =
       nothingIfReady >>= \case
-        Just err -> pure $ ReadErr err
+        Just err -> pure $ ReadErr $ ShrunText.fromText err
         Nothing ->
           -- NOTE: [Blocking / Streaming output]
           --
@@ -99,7 +94,7 @@ readHandle blockSize handle = do
           -- prematurely, but obviously this is best-effort.
           hGetNonBlocking handle blockSize <&> \case
             "" -> ReadNoData
-            bs -> ReadSuccess (Shrun.Text.stripLines $ decodeUtf8Lenient bs)
+            bs -> ReadSuccess (ShrunText.fromText $ decodeUtf8Lenient bs)
 
     nothingIfReady = do
       -- NOTE: This somewhat torturous logic exists for a reason. We want to
@@ -114,14 +109,14 @@ readHandle blockSize handle = do
       -- hIsClosed does not explicitly throw exceptions so it can be first.
       isClosed <- hIsClosed handle
       if isClosed
-        then pure $ Just $ Shrun.Text.stripText "Handle closed"
+        then pure $ Just "Handle closed"
         else do
           -- hIsReadable _does_ throw an exception if the the handle is closed or
           -- "semi-closed". Thus it should go after the hIsClosed check
           -- (GHC explicitly does not export an hSemiClosed).
           isReadable <- hIsReadable handle
           if not isReadable
-            then pure $ Just $ Shrun.Text.stripText "Handle is not readable"
+            then pure $ Just "Handle is not readable"
             else pure Nothing
 
 -- NOTE: [EOF / blocking error] We would like to check hIsEOF (definitely

@@ -36,7 +36,6 @@ import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.Time (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
-import Shrun.Data.Text qualified as Shrun.Text
 import Shrun.Prelude
 import Text.Read (Read)
 import Text.Read qualified as TR
@@ -140,6 +139,31 @@ truncateIfNeeded n txt
 n2i :: Natural -> Int
 n2i = unsafeConvertIntegral
 
+-- NOTE: [StripControl Newlines]
+--
+-- Applying stripControl to text that has newlines in it can produce poorly
+-- formatted text. This is due to newlines being stripped, so e.g. t1\nt2
+-- becomes t1t2. We could instead perform a first pass that at least replaces
+-- newlines with whitespace. So why don't we?
+--
+-- Because we should already be handling newlines elsewhere. When streaming
+-- command logs, we split logs on newlines and then log each newline-free
+-- log separately. Morally these are UnlinedText from Shrun.Data.Text.
+-- It would be really nice if we could make the input here UnlinedText, so we
+-- get actual proof that we are maintaining this invariant. Alas, this would
+-- require changing the Log type from Text to UnlinedText, which is quite
+-- invasive. This is probably worth doing, but for now we just make a note of
+-- it. See NOTE: [Log UnlinedText].
+--
+-- Note that there is one instance where the text-to-strip is not morally
+-- UnlinedText: the final error message in:
+--
+--   [Error][cmd] 2 seconds: some error message
+--
+-- 'some error message' is (List UnlinedText) that is recombined with
+-- whitespace so it _should_ be newline free. But again, it would be nice
+-- to carry the UnlinedText proof around.
+
 -- | Strips all control chars, including ansi escape sequences. Leading
 -- and trailing whitespace is also stripped.
 --
@@ -156,7 +180,7 @@ stripControlAll =
   --
   -- By performing stripAnsiAll first, we remove entire ansi sequences,
   -- then remove other control chars (e.g. newlines, tabs).
-  T.filter (not . isControl) . Shrun.Text.stripLinesSep . stripAnsiAll
+  T.filter (not . isControl) . stripAnsiAll
 
 -- | Strips control chars, including most ansi escape sequences. Leading and
 -- trailing whitespace is also stripped. We leave behind SGR ansi escape
@@ -175,7 +199,7 @@ stripControlSmart =
   -- Like 'stripControlAll', we need to handle the ansi sequences first.
   -- Because we actually leave some sequences behind, we need to be more
   -- surgical removing the rest of the control chars (e.g. newline, tabs).
-  T.filter ctrlToFilter . Shrun.Text.stripLinesSep . stripAnsiControl
+  T.filter ctrlToFilter . stripAnsiControl
   where
     -- stripAnsiControl should be handling all \ESC sequences, so we should
     -- be safe to ignore these, accomplishing our goal of preserving the SGR

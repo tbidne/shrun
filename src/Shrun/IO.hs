@@ -9,7 +9,6 @@ module Shrun.IO
 where
 
 import Data.ByteString.Lazy qualified as BSL
-import Data.Text qualified as T
 import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
 import Effects.Time (withTiming)
@@ -37,7 +36,8 @@ import Shrun.Configuration.Env.Types
     setAnyErrorTrue,
   )
 import Shrun.Data.Command (CommandP1, commandToProcess)
-import Shrun.Data.Text (StrippedText)
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.IO.Types
   ( CommandResult (CommandFailure, CommandSuccess),
     ReadHandleResult (ReadErr, ReadNoData, ReadSuccess),
@@ -68,9 +68,9 @@ shExitCode ::
 shExitCode cmd = do
   process <- commandToProcess cmd <$> asks getInit
   (exitCode, _stdout, stderr) <- P.readProcess process
-  pure (exitCode, wrap MkStderr stderr)
+  pure (exitCode, wrap (MkStderr . ShrunText.fromText) stderr)
   where
-    wrap f = f . T.strip . decodeUtf8Lenient . BSL.toStrict
+    wrap f = f . decodeUtf8Lenient . BSL.toStrict
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
@@ -375,10 +375,10 @@ writeLog ::
   m ()
 writeLog _ _ _ _ ReadNoData = pure ()
 writeLog _ ReportReadErrorsOff _ _ (ReadErr _) = pure ()
-writeLog logFn ReportReadErrorsOn cmd lastReadRef (ReadErr message) =
-  writeLogHelper logFn cmd lastReadRef [message]
-writeLog logFn _ cmd lastReadRef (ReadSuccess messages) =
-  writeLogHelper logFn cmd lastReadRef messages
+writeLog logFn ReportReadErrorsOn cmd lastReadRef r@(ReadErr messages) =
+  writeLogHelper logFn cmd lastReadRef r messages
+writeLog logFn _ cmd lastReadRef r@(ReadSuccess messages) =
+  writeLogHelper logFn cmd lastReadRef r messages
 
 writeLogHelper ::
   ( HasCallStack,
@@ -387,15 +387,16 @@ writeLogHelper ::
   (Log -> m b) ->
   CommandP1 ->
   IORef ReadHandleResult ->
-  [StrippedText] ->
+  ReadHandleResult ->
+  [UnlinedText] ->
   m ()
-writeLogHelper logFn cmd lastReadRef messages = do
-  writeIORef lastReadRef (ReadSuccess messages)
+writeLogHelper logFn cmd lastReadRef handleResult messages = do
+  writeIORef lastReadRef handleResult
   for_ messages $ \msg ->
     logFn
       $ MkLog
         { cmd = Just cmd,
-          msg = msg ^. #unStrippedText,
+          msg = msg ^. #unUnlinedText,
           lvl = LevelCommand,
           mode = LogModeSet
         }

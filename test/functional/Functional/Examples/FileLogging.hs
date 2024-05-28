@@ -185,7 +185,7 @@ fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all exam
   V.verifyExpected resultsFile expectedFile
   where
     expectedFile =
-      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 2" "foo  hello  bye"
+      [ withCommandPrefix "printf ' foo  hello  bye '; sleep 2" " foo  hello  bye "
       ]
 
 fileLogStripControlNone :: IO TestArgs -> TestTree
@@ -233,5 +233,5 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
     expectedFile =
       [ withCommandPrefix
           "printf ' foo  hello  bye '; sleep 2"
-          "foo \ESC[35m hello  bye"
+          " foo \ESC[35m hello  bye "
       ]

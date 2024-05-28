@@ -61,7 +61,7 @@ import Shrun.Data.Command (CommandP (MkCommandP, command, key))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel (LevelFinished, LevelSuccess),
+    LogLevel (LevelCommand, LevelFinished, LevelSuccess),
     LogMode (LogModeSet),
   )
 import Shrun.Utils qualified as Utils
@@ -87,7 +87,8 @@ consoleLogTests =
       testFormatsCLCmdKey,
       testFormatsCLCmdNoKey,
       testFormatsCLCommandNameTrunc,
-      testFormatsCLLineTrunc
+      testFormatsCLLineTrunc,
+      testFormatsCLSpecs
     ]
 
 testFormatsCLNoCmd :: TestTree
@@ -143,7 +144,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
         expectedKeyHideOff =
           mconcat
             [ prefix,
-              Utils.stripControlAll cmdKey,
+              Formatting.formatCommandText cmdKey,
               "] ",
               T.strip (log ^. #msg),
               suffix
@@ -153,7 +154,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
         expectedKeyHideOn =
           mconcat
             [ prefix,
-              Utils.stripControlAll command,
+              Formatting.formatCommandText command,
               "] ",
               T.strip (log ^. #msg),
               suffix
@@ -199,7 +200,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
         expected =
           mconcat
             [ prefix,
-              Utils.stripControlAll command,
+              Formatting.formatCommandText command,
               "] ",
               T.strip (log ^. #msg),
               suffix
@@ -278,6 +279,17 @@ testFormatsCLLineTrunc = testCase desc $ do
     fmt n = Formatting.formatConsoleLog KeyHideOff (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
     fmtKh n = Formatting.formatConsoleLog KeyHideOn (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
 
+testFormatsCLSpecs :: TestTree
+testFormatsCLSpecs = testCase "Specific specs" $ do
+  let l1 = MkLog (Just cmd1) "" LevelCommand LogModeSet
+      cmd1 = MkCommandP (Just "") "!\n!"
+
+      expectedKeyHideOn1 = "\ESC[97m[Command][! !] \ESC[0m"
+      resultKeyHideOn1 = fmtKeyHideOn l1 ^. #unConsoleLog
+  expectedKeyHideOn1 @=? resultKeyHideOn1
+  where
+    fmtKeyHideOn = Formatting.formatConsoleLog KeyHideOn baseConsoleLoggingEnv
+
 baseConsoleLoggingEnv :: ConsoleLoggingEnv
 baseConsoleLoggingEnv =
   MkConsoleLoggingP
@@ -349,11 +361,12 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
     let log = set' #lvl lvl baseLog'
 
         -- keys and commands __always__ have all control chars stripped
+        -- Additionally, commands have whitespace stripped.
 
         expectedKeyHideOff =
           mconcat
             [ prefix,
-              Utils.stripControlAll cmdKey,
+              Formatting.formatCommandText cmdKey,
               "] ",
               T.strip (log ^. #msg),
               suffix
@@ -363,7 +376,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
         expectedKeyHideOn =
           mconcat
             [ prefix,
-              Utils.stripControlAll command,
+              Formatting.formatCommandText command,
               "] ",
               T.strip (log ^. #msg),
               suffix
@@ -410,7 +423,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
         expected =
           mconcat
             [ prefix,
-              Utils.stripControlAll command,
+              Formatting.formatCommandText command,
               "] ",
               T.strip (log ^. #msg),
               suffix
@@ -562,7 +575,7 @@ stripAll :: TestTree
 stripAll =
   testCase "StripControlAll should strip whitespace + all control" $ do
     "" @=? stripAll' ""
-    "oo    bar baz" @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
+    "  oo    bar  baz   " @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
     stripAll' = flip Formatting.stripChars StripControlAll
 
@@ -570,6 +583,6 @@ stripSmart :: TestTree
 stripSmart =
   testCase "StripControlSmart should strip whitespace + some control" $ do
     "" @=? stripSmart' ""
-    "foo \ESC[m   bar baz" @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
+    "   foo \ESC[m   bar  baz   " @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
     stripSmart' = flip Formatting.stripChars StripControlSmart

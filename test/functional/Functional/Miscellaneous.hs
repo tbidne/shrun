@@ -9,7 +9,7 @@ specs =
   testGroup
     "Miscellaneous"
     [ splitNewlineLogs,
-      spaceStderrLogs,
+      spaceErrorLogs,
       stripControlAlwaysCmdNames
     ]
 
@@ -37,24 +37,35 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
       [ withCommandPrefix printedCmd "line one line two"
       ]
 
-spaceStderrLogs :: TestTree
-spaceStderrLogs = testCase "Stderr Log with newlines is spaced" $ do
+spaceErrorLogs :: TestTree
+spaceErrorLogs = testCase "Error Log with newlines is spaced" $ do
   results <- runExitFailure args
   V.verifyExpectedUnexpected results expected unexpected
   where
     args =
       withNoConfig
         [ "--console-log-command",
-          "sleep 1 && echo 'abc\n  def' && exit 1"
+          "sleep 1 && echo 'abc\n  def' && sleep 1 && exit 1"
         ]
 
-    -- verifying final 'abc\ndef' log is translated to 'abc def' in the final
-    -- stderr msg
+    -- Verifying final 'abc\n  def' log is translated to 'abc  def' in the final
+    -- error msg. Breakdown:
+    --
+    -- - In command names, newlines are converted to spaces, so 'abc\n  def'
+    --   'abc   def'.
+    --
+    -- - In command logs, newlines are split across separate logs. Hence
+    --   'abc' and '  def'.
+    --
+    -- - In the final error message, it appears newlines are just stripped?
+    --   Should probably be the same as command names.
     expected =
-      [ withErrorPrefix "sleep 1 && echo 'abc def' && exit 1" <> "1 second: abc def"
+      [ withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "2 seconds: abc   def",
+        withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "abc",
+        withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "  def"
       ]
     unexpected =
-      [ withErrorPrefix "sleep 1 && echo 'abc def' && exit 1" <> "1 second: abcdef"
+      [ withErrorPrefix "sleep 1 && echo 'abc def' && sleep 1 && exit 1" <> "2 seconds: abcdef"
       ]
 
 -- NOTE: This used to be in Examples (subsequently Examples.ConsoleLogging),

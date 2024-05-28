@@ -16,6 +16,7 @@ module Shrun.Logging.Formatting
     displayCmd,
     stripChars,
     brackets,
+    formatCommandText,
   )
 where
 
@@ -176,15 +177,24 @@ formatCommand ::
   Text
 formatCommand keyHide commandNameTrunc com = brackets True (truncateNameFn cmdName)
   where
-    -- Get cmd name to display. Always strip control sequences.
+    -- Get cmd name to display. Always strip control sequences. Futhermore,
+    -- strip leading/trailing whitespace.
     cmdName =
-      Utils.stripControlAll $ displayCmd com keyHide
+      formatCommandText $ displayCmd com keyHide
 
     -- truncate cmd/name if necessary
     truncateNameFn =
       maybeApply
         Utils.truncateIfNeeded
         (commandNameTrunc ^? (_Just % #unTruncation))
+
+-- | Replace newlines with whitespace before stripping, so any strings
+-- separated by newlines do not get smashed together.
+formatCommandText :: Text -> Text
+formatCommandText =
+  T.strip
+    . Utils.stripControlAll
+    . T.replace "\n" " "
 
 -- | Combines a prefix @p@ and msg @m@ with possible line truncation. If no
 -- truncation is given then concatWithLineTrunc is equivalent to @p <> m@.
