@@ -104,6 +104,6 @@ someControlStripped =
 
 testEscapeDoubleQuotes :: TestTree
 testEscapeDoubleQuotes =
-  testCase "" $ do
+  testCase "Escapes double quotes" $ do
     "some \\\"text \\\"\\\"" @=? U.escapeDoubleQuotes "some \"text \"\""
     "some text " @=? U.escapeDoubleQuotes "some text "
