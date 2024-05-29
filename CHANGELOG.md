@@ -24,6 +24,8 @@ the major/minor/patch definitions apply to the application's interface / usage
   wrong.
 * Increase default `--command-log-read-size` to `16 kb` to better prevent
   command log splitting.
+* Improved formatting. Leading/trailing whitespace is no longer stripped, so
+  original formatting is preserved.
 
 ## [0.9] -- 2024-05-10
 ### Changed
