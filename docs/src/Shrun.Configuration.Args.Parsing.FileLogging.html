@@ -1,0 +1,505 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | CLI parsing for FileLoggingArgs</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Args.Parsing.FileLogging</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLoggingParser"><span class="hs-identifier">fileLoggingParser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.html"><span class="hs-identifier">Options.Applicative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">OA</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.Utils.html"><span class="hs-identifier">Shrun.Configuration.Args.Parsing.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><a href="file:///nix/store/3782hxbhawvn3049pqvscrwhxw3aj1vw-scientific-0.3.7.0-doc/share/doc/scientific-0.3.7.0/html/src/Utils.html"><span class="hs-identifier">Utils</span></a></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging</span></a></span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLogInitP"><span class="hs-identifier">FileLogInitP</span></a></span><span>
+</span><span id="line-12"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLogInitP"><span class="hs-identifier">MkFileLogInitP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#mode"><span class="hs-identifier">mode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#path"><span class="hs-identifier">path</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#sizeMode"><span class="hs-identifier">sizeMode</span></a></span><span>
+</span><span id="line-16"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingArgs"><span class="hs-identifier">FileLoggingArgs</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingP"><span class="hs-identifier">FileLoggingP</span></a></span><span>
+</span><span id="line-19"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier">MkFileLoggingP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#commandNameTrunc"><span class="hs-identifier">commandNameTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#deleteOnSuccess"><span class="hs-identifier">deleteOnSuccess</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#file"><span class="hs-identifier">file</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#lineTrunc"><span class="hs-identifier">lineTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#stripControl"><span class="hs-identifier">stripControl</span></a></span><span>
+</span><span id="line-25"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileMode.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FileMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileMode.html#FileMode"><span class="hs-identifier">FileMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileMode.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FileMode</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FileMode</span></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FilePathDefault</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FilePathDefault"><span class="hs-identifier">FilePathDefault</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FilePathDefault</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FilePathDefault</span></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FileSizeMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeMode"><span class="hs-identifier">FileSizeMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FileSizeMode</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FileSizeMode</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.StripControl.html"><span class="hs-identifier">Shrun.Configuration.Data.StripControl</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.StripControl.html#FileLogStripControl"><span class="hs-identifier">FileLogStripControl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.StripControl.html"><span class="hs-identifier">Shrun.Configuration.Data.StripControl</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">StripControl</span></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html"><span class="hs-identifier">Shrun.Configuration.Data.Truncation</span></a></span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier">LineTruncation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncRegion"><span class="hs-identifier">TruncRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncCommandName"><span class="hs-identifier">TruncCommandName</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier">Truncation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html"><span class="hs-identifier">Shrun.Configuration.Data.Truncation</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Trunc</span></span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLoggingParser"><span class="hs-identifier hs-type">fileLoggingParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingArgs"><span class="hs-identifier hs-type">FileLoggingArgs</span></a></span><span>
+</span><span id="line-45"></span><span id="fileLoggingParser"><span class="annot"><span class="annottext">fileLoggingParser :: Parser FileLoggingArgs
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLoggingParser"><span class="hs-identifier hs-var hs-var">fileLoggingParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-46"></span><span>  </span><span id="local-6989586621679534740"><span class="annot"><span class="annottext">WithDisabled FilePathDefault
+</span><a href="#local-6989586621679534740"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled FilePathDefault)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogParser"><span class="hs-identifier hs-var">fileLogParser</span></a></span><span>
+</span><span id="line-47"></span><span>  </span><span id="local-6989586621679534742"><span class="annot"><span class="annottext">WithDisabled (Truncation 'TruncCommandName)
+</span><a href="#local-6989586621679534742"><span class="hs-identifier hs-var">commandNameTrunc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled (Truncation 'TruncCommandName))
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogCommandNameTruncParser"><span class="hs-identifier hs-var">fileLogCommandNameTruncParser</span></a></span><span>
+</span><span id="line-48"></span><span>  </span><span id="local-6989586621679534744"><span class="annot"><span class="annottext">WithDisabled ()
+</span><a href="#local-6989586621679534744"><span class="hs-identifier hs-var">deleteOnSuccess</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled ())
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#deleteOnSuccessParser"><span class="hs-identifier hs-var">deleteOnSuccessParser</span></a></span><span>
+</span><span id="line-49"></span><span>  </span><span id="local-6989586621679534746"><span class="annot"><span class="annottext">WithDisabled LineTruncation
+</span><a href="#local-6989586621679534746"><span class="hs-identifier hs-var">lineTrunc</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled LineTruncation)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#lineTruncParser"><span class="hs-identifier hs-var">lineTruncParser</span></a></span><span>
+</span><span id="line-50"></span><span>  </span><span id="local-6989586621679534748"><span class="annot"><span class="annottext">WithDisabled FileMode
+</span><a href="#local-6989586621679534748"><span class="hs-identifier hs-var">mode</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled FileMode)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogModeParser"><span class="hs-identifier hs-var">fileLogModeParser</span></a></span><span>
+</span><span id="line-51"></span><span>  </span><span id="local-6989586621679534750"><span class="annot"><span class="annottext">WithDisabled FileSizeMode
+</span><a href="#local-6989586621679534750"><span class="hs-identifier hs-var">sizeMode</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled FileSizeMode)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogSizeModeParser"><span class="hs-identifier hs-var">fileLogSizeModeParser</span></a></span><span>
+</span><span id="line-52"></span><span>  </span><span id="local-6989586621679534752"><span class="annot"><span class="annottext">WithDisabled (StripControl 'StripControlFileLog)
+</span><a href="#local-6989586621679534752"><span class="hs-identifier hs-var">stripControl</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser (WithDisabled (StripControl 'StripControlFileLog))
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogStripControlParser"><span class="hs-identifier hs-var">fileLogStripControlParser</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-operator">$</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLoggingP"><span class="hs-identifier hs-type">MkFileLoggingP</span></a></span><span>
+</span><span id="line-56"></span><span>      </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">file :: FileLogFileF 'ConfigPhaseArgs
+</span><a href="Shrun.Configuration.Data.FileLogging.html#file"><span class="hs-identifier hs-var">file</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-57"></span><span>          </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#MkFileLogInitP"><span class="hs-identifier hs-type">MkFileLogInitP</span></a></span><span>
+</span><span id="line-58"></span><span>            </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">WithDisabled FileMode
+ConfigPhaseF 'ConfigPhaseArgs FileMode
+mode :: ConfigPhaseF 'ConfigPhaseArgs FileMode
+mode :: WithDisabled FileMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#mode"><span class="hs-identifier hs-var hs-var">mode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>              </span><span class="annot"><span class="annottext">WithDisabled FilePathDefault
+FileLogPathF 'ConfigPhaseArgs
+path :: FileLogPathF 'ConfigPhaseArgs
+path :: WithDisabled FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.html#path"><span class="hs-identifier hs-var hs-var">path</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>              </span><span class="annot"><span class="annottext">WithDisabled FileSizeMode
+ConfigPhaseF 'ConfigPhaseArgs FileSizeMode
+sizeMode :: ConfigPhaseF 'ConfigPhaseArgs FileSizeMode
+sizeMode :: WithDisabled FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.html#sizeMode"><span class="hs-identifier hs-var hs-var">sizeMode</span></a></span><span>
+</span><span id="line-61"></span><span>            </span><span class="hs-special">}</span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>        </span><span class="annot"><span class="annottext">WithDisabled (Truncation 'TruncCommandName)
+ConfigPhaseMaybeF 'ConfigPhaseArgs (Truncation 'TruncCommandName)
+commandNameTrunc :: ConfigPhaseMaybeF 'ConfigPhaseArgs (Truncation 'TruncCommandName)
+commandNameTrunc :: WithDisabled (Truncation 'TruncCommandName)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#commandNameTrunc"><span class="hs-identifier hs-var hs-var">commandNameTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>        </span><span class="annot"><span class="annottext">WithDisabled ()
+SwitchF 'ConfigPhaseArgs DeleteOnSuccessSwitch
+deleteOnSuccess :: SwitchF 'ConfigPhaseArgs DeleteOnSuccessSwitch
+deleteOnSuccess :: WithDisabled ()
+</span><a href="Shrun.Configuration.Data.FileLogging.html#deleteOnSuccess"><span class="hs-identifier hs-var hs-var">deleteOnSuccess</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>        </span><span class="annot"><span class="annottext">WithDisabled LineTruncation
+LineTruncF 'ConfigPhaseArgs
+lineTrunc :: LineTruncF 'ConfigPhaseArgs
+lineTrunc :: WithDisabled LineTruncation
+</span><a href="Shrun.Configuration.Data.FileLogging.html#lineTrunc"><span class="hs-identifier hs-var hs-var">lineTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>        </span><span class="annot"><span class="annottext">WithDisabled (StripControl 'StripControlFileLog)
+ConfigPhaseF 'ConfigPhaseArgs (StripControl 'StripControlFileLog)
+stripControl :: ConfigPhaseF 'ConfigPhaseArgs (StripControl 'StripControlFileLog)
+stripControl :: WithDisabled (StripControl 'StripControlFileLog)
+</span><a href="Shrun.Configuration.Data.FileLogging.html#stripControl"><span class="hs-identifier hs-var hs-var">stripControl</span></a></span><span>
+</span><span id="line-66"></span><span>      </span><span class="hs-special">}</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogParser"><span class="hs-identifier hs-type">fileLogParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-type">FilePathDefault</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span id="fileLogParser"><span class="annot"><span class="annottext">fileLogParser :: Parser (WithDisabled FilePathDefault)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogParser"><span class="hs-identifier hs-var hs-var">fileLogParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FilePathDefault)
+-&gt; String -&gt; Parser (WithDisabled FilePathDefault)
+forall a. Parser (Maybe a) -&gt; String -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParser"><span class="hs-identifier hs-var">Utils.withDisabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FilePathDefault)
+</span><a href="#local-6989586621679534755"><span class="hs-identifier hs-var">mainParser</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log&quot;</span></span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-71"></span><span>    </span><span id="local-6989586621679534755"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe FilePathDefault)
+</span><a href="#local-6989586621679534755"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-72"></span><span>      </span><span class="annot"><span class="annottext">Parser FilePathDefault -&gt; Parser (Maybe FilePathDefault)
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-73"></span><span>        </span><span class="annot"><span class="annottext">(Parser FilePathDefault -&gt; Parser (Maybe FilePathDefault))
+-&gt; Parser FilePathDefault -&gt; Parser (Maybe FilePathDefault)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM FilePathDefault
+-&gt; Mod OptionFields FilePathDefault -&gt; Parser FilePathDefault
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span>
+</span><span id="line-74"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text -&gt; ReadM FilePathDefault
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#parseFilePathDefault"><span class="hs-identifier hs-var">FilePathDefault.parseFilePathDefault</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>          </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields FilePathDefault]
+-&gt; Mod OptionFields FilePathDefault
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-76"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FilePathDefault
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>                </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields FilePathDefault
+forall (f :: Type -&gt; Type) a. HasName f =&gt; Char -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#short"><span class="hs-identifier hs-var">OA.short</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'f'</span></span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FilePathDefault
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679534763"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-79"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FilePathDefault
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(default | PATH)&quot;</span></span><span>
+</span><span id="line-80"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-81"></span><span>          </span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span>    </span><span id="local-6989586621679534763"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679534763"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-83"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-84"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;If a path is supplied, all logs will additionally be written to &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-85"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;the supplied file. Furthermore, command logs will be written to &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-86"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;the file irrespective of --console-log-command. Console logging is &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-87"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unaffected. This can be useful for investigating command failures. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-88"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;If the string 'default' is given, then we write to the XDG state &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-89"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;directory e.g. ~/.local/state/shrun/shrun.log.&quot;</span></span><span>
+</span><span id="line-90"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogCommandNameTruncParser"><span class="hs-identifier hs-type">fileLogCommandNameTruncParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncCommandName"><span class="hs-identifier hs-type">TruncCommandName</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span id="fileLogCommandNameTruncParser"><span class="annot"><span class="annottext">fileLogCommandNameTruncParser :: Parser (WithDisabled (Truncation 'TruncCommandName))
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogCommandNameTruncParser"><span class="hs-identifier hs-var hs-var">fileLogCommandNameTruncParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-94"></span><span>  </span><span class="annot"><span class="annottext">Parser (Maybe (Truncation 'TruncCommandName))
+-&gt; String -&gt; Parser (WithDisabled (Truncation 'TruncCommandName))
+forall a. Parser (Maybe a) -&gt; String -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParser"><span class="hs-identifier hs-var">Utils.withDisabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe (Truncation 'TruncCommandName))
+</span><a href="#local-6989586621679534777"><span class="hs-identifier hs-var">mainParser</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-command-name-trunc&quot;</span></span><span>
+</span><span id="line-95"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-96"></span><span>    </span><span id="local-6989586621679534777"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe (Truncation 'TruncCommandName))
+</span><a href="#local-6989586621679534777"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-97"></span><span>      </span><span class="annot"><span class="annottext">Parser (Truncation 'TruncCommandName)
+-&gt; Parser (Maybe (Truncation 'TruncCommandName))
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-98"></span><span>        </span><span class="annot"><span class="annottext">(Parser (Truncation 'TruncCommandName)
+ -&gt; Parser (Maybe (Truncation 'TruncCommandName)))
+-&gt; Parser (Truncation 'TruncCommandName)
+-&gt; Parser (Maybe (Truncation 'TruncCommandName))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM (Truncation 'TruncCommandName)
+-&gt; Mod OptionFields (Truncation 'TruncCommandName)
+-&gt; Parser (Truncation 'TruncCommandName)
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span>
+</span><span id="line-99"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Natural -&gt; ReadM (Truncation 'TruncCommandName)
+forall (m :: Type -&gt; Type) (r :: TruncRegion).
+MonadFail m =&gt;
+m Natural -&gt; m (Truncation r)
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseTruncation"><span class="hs-identifier hs-var">Trunc.parseTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Natural
+forall a. Read a =&gt; ReadM a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#autoStripUnderscores"><span class="hs-identifier hs-var">Utils.autoStripUnderscores</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-100"></span><span>          </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields (Truncation 'TruncCommandName)]
+-&gt; Mod OptionFields (Truncation 'TruncCommandName)
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-101"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (Truncation 'TruncCommandName)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-command-name-trunc&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-102"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (Truncation 'TruncCommandName)
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679534780"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-103"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (Truncation 'TruncCommandName)
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;NATURAL&quot;</span></span><span>
+</span><span id="line-104"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-105"></span><span>          </span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>    </span><span id="local-6989586621679534780"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679534780"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Like --console-log-command-name-trunc, but for --file-logs.&quot;</span></span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#deleteOnSuccessParser"><span class="hs-identifier hs-type">deleteOnSuccessParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-109"></span><span id="deleteOnSuccessParser"><span class="annot"><span class="annottext">deleteOnSuccessParser :: Parser (WithDisabled ())
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#deleteOnSuccessParser"><span class="hs-identifier hs-var hs-var">deleteOnSuccessParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe ()) -&gt; String -&gt; Parser (WithDisabled ())
+forall a. Parser (Maybe a) -&gt; String -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParser"><span class="hs-identifier hs-var">Utils.withDisabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe ())
+</span><a href="#local-6989586621679534783"><span class="hs-identifier hs-var">mainParser</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-delete-on-success&quot;</span></span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-111"></span><span>    </span><span id="local-6989586621679534784"><span class="annot"><span class="annottext">switchParser :: Parser Bool
+</span><a href="#local-6989586621679534784"><span class="hs-identifier hs-var hs-var">switchParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-112"></span><span>      </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#switch"><span class="hs-identifier hs-var">OA.switch</span></a></span><span>
+</span><span id="line-113"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">[Mod FlagFields Bool] -&gt; Mod FlagFields Bool
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-114"></span><span>            </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod FlagFields Bool
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-delete-on-success&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-115"></span><span>              </span><span class="annot"><span class="annottext">String -&gt; Mod FlagFields Bool
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679534786"><span class="hs-identifier hs-var">helpTxt</span></a></span><span>
+</span><span id="line-116"></span><span>            </span><span class="hs-special">]</span><span>
+</span><span id="line-117"></span><span>        </span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>    </span><span id="local-6989586621679534783"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe ())
+</span><a href="#local-6989586621679534783"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-119"></span><span>      </span><span id="local-6989586621679534787"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679534787"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="#local-6989586621679534784"><span class="hs-identifier hs-var">switchParser</span></a></span><span>
+</span><span id="line-120"></span><span>      </span><span class="hs-identifier">pure</span><span>
+</span><span id="line-121"></span><span>        </span><span class="hs-operator">$</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679534787"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-122"></span><span>          </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">() -&gt; Maybe ()
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span>          </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe ()
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-124"></span><span>    </span><span id="local-6989586621679534786"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679534786"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-125"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-126"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;If --file-log is active, deletes the file on a successful exit. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-127"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Does not delete the file if shrun exited via failure.&quot;</span></span><span>
+</span><span id="line-128"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-129"></span><span>
+</span><span id="line-130"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#lineTruncParser"><span class="hs-identifier hs-type">lineTruncParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span id="lineTruncParser"><span class="annot"><span class="annottext">lineTruncParser :: Parser (WithDisabled LineTruncation)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#lineTruncParser"><span class="hs-identifier hs-var hs-var">lineTruncParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe LineTruncation)
+-&gt; String -&gt; Parser (WithDisabled LineTruncation)
+forall a. Parser (Maybe a) -&gt; String -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParser"><span class="hs-identifier hs-var">Utils.withDisabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe LineTruncation)
+</span><a href="#local-6989586621679534793"><span class="hs-identifier hs-var">mainParser</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-line-trunc&quot;</span></span><span>
+</span><span id="line-132"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-133"></span><span>    </span><span id="local-6989586621679534793"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe LineTruncation)
+</span><a href="#local-6989586621679534793"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-134"></span><span>      </span><span class="annot"><span class="annottext">Parser LineTruncation -&gt; Parser (Maybe LineTruncation)
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-135"></span><span>        </span><span class="annot"><span class="annottext">(Parser LineTruncation -&gt; Parser (Maybe LineTruncation))
+-&gt; Parser LineTruncation -&gt; Parser (Maybe LineTruncation)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM LineTruncation
+-&gt; Mod OptionFields LineTruncation -&gt; Parser LineTruncation
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span>
+</span><span id="line-136"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Natural -&gt; ReadM Text -&gt; ReadM LineTruncation
+forall (m :: Type -&gt; Type).
+(Alternative m, MonadFail m) =&gt;
+m Natural -&gt; m Text -&gt; m LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseLineTruncation"><span class="hs-identifier hs-var">Trunc.parseLineTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Natural
+forall a. Read a =&gt; ReadM a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#autoStripUnderscores"><span class="hs-identifier hs-var">Utils.autoStripUnderscores</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-137"></span><span>          </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields LineTruncation]
+-&gt; Mod OptionFields LineTruncation
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-138"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields LineTruncation
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-line-trunc&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-139"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields LineTruncation
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679534795"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-140"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields LineTruncation
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(NATURAL | detect)&quot;</span></span><span>
+</span><span id="line-141"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-142"></span><span>          </span><span class="hs-special">)</span><span>
+</span><span id="line-143"></span><span>    </span><span id="local-6989586621679534795"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679534795"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Like --console-log-line-trunc, but for --file-log.&quot;</span></span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogStripControlParser"><span class="hs-identifier hs-type">fileLogStripControlParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.StripControl.html#FileLogStripControl"><span class="hs-identifier hs-type">FileLogStripControl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-146"></span><span id="fileLogStripControlParser"><span class="annot"><span class="annottext">fileLogStripControlParser :: Parser (WithDisabled (StripControl 'StripControlFileLog))
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogStripControlParser"><span class="hs-identifier hs-var hs-var">fileLogStripControlParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-147"></span><span>  </span><span class="annot"><span class="annottext">Parser (Maybe (StripControl 'StripControlFileLog))
+-&gt; String
+-&gt; Parser (WithDisabled (StripControl 'StripControlFileLog))
+forall a. Parser (Maybe a) -&gt; String -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParser"><span class="hs-identifier hs-var">Utils.withDisabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe (StripControl 'StripControlFileLog))
+</span><a href="#local-6989586621679534798"><span class="hs-identifier hs-var">mainParser</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-strip-control&quot;</span></span><span>
+</span><span id="line-148"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-149"></span><span>    </span><span id="local-6989586621679534798"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe (StripControl 'StripControlFileLog))
+</span><a href="#local-6989586621679534798"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-150"></span><span>      </span><span class="annot"><span class="annottext">Parser (StripControl 'StripControlFileLog)
+-&gt; Parser (Maybe (StripControl 'StripControlFileLog))
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-151"></span><span>        </span><span class="annot"><span class="annottext">(Parser (StripControl 'StripControlFileLog)
+ -&gt; Parser (Maybe (StripControl 'StripControlFileLog)))
+-&gt; Parser (StripControl 'StripControlFileLog)
+-&gt; Parser (Maybe (StripControl 'StripControlFileLog))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM (StripControl 'StripControlFileLog)
+-&gt; Mod OptionFields (StripControl 'StripControlFileLog)
+-&gt; Parser (StripControl 'StripControlFileLog)
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span>
+</span><span id="line-152"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text -&gt; ReadM (StripControl 'StripControlFileLog)
+forall (m :: Type -&gt; Type) (t :: StripControlType).
+MonadFail m =&gt;
+m Text -&gt; m (StripControl t)
+</span><a href="Shrun.Configuration.Data.StripControl.html#parseStripControl"><span class="hs-identifier hs-var">StripControl.parseStripControl</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-153"></span><span>          </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields (StripControl 'StripControlFileLog)]
+-&gt; Mod OptionFields (StripControl 'StripControlFileLog)
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-154"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (StripControl 'StripControlFileLog)
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-strip-control&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-155"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (StripControl 'StripControlFileLog)
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679534800"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-156"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields (StripControl 'StripControlFileLog)
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(all | smart | none)&quot;</span></span><span>
+</span><span id="line-157"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-158"></span><span>          </span><span class="hs-special">)</span><span>
+</span><span id="line-159"></span><span>    </span><span id="local-6989586621679534800"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679534800"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-160"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-161"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;--console-log-strip-control for file logs created with --file-log. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-162"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Defaults to all.&quot;</span></span><span>
+</span><span id="line-163"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogModeParser"><span class="hs-identifier hs-type">fileLogModeParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileMode.html#FileMode"><span class="hs-identifier hs-type">FileMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span id="fileLogModeParser"><span class="annot"><span class="annottext">fileLogModeParser :: Parser (WithDisabled FileMode)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogModeParser"><span class="hs-identifier hs-var hs-var">fileLogModeParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FileMode) -&gt; String -&gt; Parser (WithDisabled FileMode)
+forall a. Parser (Maybe a) -&gt; String -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParser"><span class="hs-identifier hs-var">Utils.withDisabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FileMode)
+</span><a href="#local-6989586621679534806"><span class="hs-identifier hs-var">mainParser</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-mode&quot;</span></span><span>
+</span><span id="line-167"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-168"></span><span>    </span><span id="local-6989586621679534806"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe FileMode)
+</span><a href="#local-6989586621679534806"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-169"></span><span>      </span><span class="annot"><span class="annottext">Parser FileMode -&gt; Parser (Maybe FileMode)
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-170"></span><span>        </span><span class="annot"><span class="annottext">(Parser FileMode -&gt; Parser (Maybe FileMode))
+-&gt; Parser FileMode -&gt; Parser (Maybe FileMode)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM FileMode -&gt; Mod OptionFields FileMode -&gt; Parser FileMode
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span>
+</span><span id="line-171"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text -&gt; ReadM FileMode
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m FileMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileMode.html#parseFileMode"><span class="hs-identifier hs-var">FileMode.parseFileMode</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-172"></span><span>          </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields FileMode] -&gt; Mod OptionFields FileMode
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-173"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FileMode
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-mode&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-174"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FileMode
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679534808"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-175"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FileMode
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(append | write)&quot;</span></span><span>
+</span><span id="line-176"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-177"></span><span>          </span><span class="hs-special">)</span><span>
+</span><span id="line-178"></span><span>    </span><span id="local-6989586621679534808"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679534808"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Mode in which to open the log file. Defaults to write.&quot;</span></span><span>
+</span><span id="line-179"></span><span>
+</span><span id="line-180"></span><span class="annot"><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogSizeModeParser"><span class="hs-identifier hs-type">fileLogSizeModeParser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Types.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeMode"><span class="hs-identifier hs-type">FileSizeMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-181"></span><span id="fileLogSizeModeParser"><span class="annot"><span class="annottext">fileLogSizeModeParser :: Parser (WithDisabled FileSizeMode)
+</span><a href="Shrun.Configuration.Args.Parsing.FileLogging.html#fileLogSizeModeParser"><span class="hs-identifier hs-var hs-var">fileLogSizeModeParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FileSizeMode)
+-&gt; String -&gt; Parser (WithDisabled FileSizeMode)
+forall a. Parser (Maybe a) -&gt; String -&gt; Parser (WithDisabled a)
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#withDisabledParser"><span class="hs-identifier hs-var">Utils.withDisabledParser</span></a></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FileSizeMode)
+</span><a href="#local-6989586621679534811"><span class="hs-identifier hs-var">mainParser</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-size-mode&quot;</span></span><span>
+</span><span id="line-182"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-183"></span><span>    </span><span id="local-6989586621679534811"><span class="annot"><span class="annottext">mainParser :: Parser (Maybe FileSizeMode)
+</span><a href="#local-6989586621679534811"><span class="hs-identifier hs-var hs-var">mainParser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-184"></span><span>      </span><span class="annot"><span class="annottext">Parser FileSizeMode -&gt; Parser (Maybe FileSizeMode)
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">OA.optional</span></span><span>
+</span><span id="line-185"></span><span>        </span><span class="annot"><span class="annottext">(Parser FileSizeMode -&gt; Parser (Maybe FileSizeMode))
+-&gt; Parser FileSizeMode -&gt; Parser (Maybe FileSizeMode)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM FileSizeMode
+-&gt; Mod OptionFields FileSizeMode -&gt; Parser FileSizeMode
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#option"><span class="hs-identifier hs-var">OA.option</span></a></span><span>
+</span><span id="line-186"></span><span>          </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ReadM Text -&gt; ReadM FileSizeMode
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#parseFileSizeMode"><span class="hs-identifier hs-var">FileSizeMode.parseFileSizeMode</span></a></span><span> </span><span class="annot"><span class="annottext">ReadM Text
+forall s. IsString s =&gt; ReadM s
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#str"><span class="hs-identifier hs-var">OA.str</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-187"></span><span>          </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">[Mod OptionFields FileSizeMode] -&gt; Mod OptionFields FileSizeMode
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-188"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FileSizeMode
+forall (f :: Type -&gt; Type) a. HasName f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#long"><span class="hs-identifier hs-var">OA.long</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;file-log-size-mode&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-189"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FileSizeMode
+forall (f :: Type -&gt; Type) a. String -&gt; Mod f a
+</span><a href="Shrun.Configuration.Args.Parsing.Utils.html#mkHelp"><span class="hs-identifier hs-var">Utils.mkHelp</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679534813"><span class="hs-identifier hs-var">helpTxt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-190"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; Mod OptionFields FileSizeMode
+forall (f :: Type -&gt; Type) a. HasMetavar f =&gt; String -&gt; Mod f a
+</span><a href="file:///nix/store/b1x5yvl8c9a4a99prgy23p6869nk38yl-optparse-applicative-0.18.1.0-doc/share/doc/optparse-applicative-0.18.1.0/html/src/Options.Applicative.Builder.html#metavar"><span class="hs-identifier hs-var">OA.metavar</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#expectedStr"><span class="hs-identifier hs-var">FileSizeMode.expectedStr</span></a></span><span>
+</span><span id="line-191"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-192"></span><span>          </span><span class="hs-special">)</span><span>
+</span><span id="line-193"></span><span>    </span><span id="local-6989586621679534813"><span class="annot"><span class="annottext">helpTxt :: String
+</span><a href="#local-6989586621679534813"><span class="hs-identifier hs-var hs-var">helpTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-194"></span><span>      </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-195"></span><span>        </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Sets a threshold for the file log size, upon which we either &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-196"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;print a warning or delete the file, if it is exceeded. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-197"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;The BYTES should include the value and units e.g. &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-198"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-199"></span><span>          </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;at 50 mb.&quot;</span></span><span>
+</span><span id="line-200"></span><span>        </span><span class="hs-special">]</span><span>
+</span><span id="line-201"></span></pre></body></html>

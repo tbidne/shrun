@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679519337"><span id="local-6989586621679519338"></span></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Internal module for logging types.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Logging.Types.Internal</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier">FileLog</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier">ConsoleLog</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier">LogMode</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- | 'FileLog' is a textual representation of a given log after it has</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- been formatted. No coloring is included, but we include the prefix</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- (e.g. Warn) along with a timestamp.</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">newtype</span><span> </span><span id="FileLog"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier hs-var">FileLog</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UnsafeFileLog"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#UnsafeFileLog"><span class="hs-identifier hs-var">UnsafeFileLog</span></a></span></span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="unFileLog"><span class="annot"><span class="annottext">FileLog -&gt; Text
+</span><a href="Shrun.Logging.Types.Internal.html#unFileLog"><span class="hs-identifier hs-var hs-var">unFileLog</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679519342"><span id="local-6989586621679519346"><span class="annot"><span class="annottext">FileLog -&gt; FileLog -&gt; Bool
+(FileLog -&gt; FileLog -&gt; Bool)
+-&gt; (FileLog -&gt; FileLog -&gt; Bool) -&gt; Eq FileLog
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: FileLog -&gt; FileLog -&gt; Bool
+== :: FileLog -&gt; FileLog -&gt; Bool
+$c/= :: FileLog -&gt; FileLog -&gt; Bool
+/= :: FileLog -&gt; FileLog -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519351"><span id="local-6989586621679519357"><span id="local-6989586621679519361"><span class="annot"><span class="annottext">Int -&gt; FileLog -&gt; ShowS
+[FileLog] -&gt; ShowS
+FileLog -&gt; String
+(Int -&gt; FileLog -&gt; ShowS)
+-&gt; (FileLog -&gt; String) -&gt; ([FileLog] -&gt; ShowS) -&gt; Show FileLog
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; FileLog -&gt; ShowS
+showsPrec :: Int -&gt; FileLog -&gt; ShowS
+$cshow :: FileLog -&gt; String
+show :: FileLog -&gt; String
+$cshowList :: [FileLog] -&gt; ShowS
+showList :: [FileLog] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-22"></span><span>  </span><span id="local-6989586621679519317"><span id="local-6989586621679519318"><span id="local-6989586621679519319"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679519317"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Getter"><span class="hs-identifier hs-type">A_Getter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="#local-6989586621679519318"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="#local-6989586621679519319"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-26"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;unFileLog&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679519317"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier hs-type">FileLog</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier hs-type">FileLog</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519318"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519319"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-28"></span><span>  </span><span id="local-6989586621679519373"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx FileLog FileLog a b
+</span><a href="#local-6989586621679519373"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(FileLog -&gt; a) -&gt; Getter FileLog a
+forall s a. (s -&gt; a) -&gt; Getter s a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#to"><span class="hs-identifier hs-var">to</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#UnsafeFileLog"><span class="hs-identifier hs-type">UnsafeFileLog</span></a></span><span> </span><span id="local-6989586621679519376"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679519376"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Text
+</span><a href="#local-6989586621679519376"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- | 'ConsoleLog' is a textual representation of a given log after it has</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- been formatted.</span><span>
+</span><span id="line-33"></span><span class="hs-keyword">newtype</span><span> </span><span id="ConsoleLog"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier hs-var">ConsoleLog</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UnsafeConsoleLog"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#UnsafeConsoleLog"><span class="hs-identifier hs-var">UnsafeConsoleLog</span></a></span></span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="unConsoleLog"><span class="annot"><span class="annottext">ConsoleLog -&gt; Text
+</span><a href="Shrun.Logging.Types.Internal.html#unConsoleLog"><span class="hs-identifier hs-var hs-var">unConsoleLog</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679519380"><span id="local-6989586621679519383"><span class="annot"><span class="annottext">ConsoleLog -&gt; ConsoleLog -&gt; Bool
+(ConsoleLog -&gt; ConsoleLog -&gt; Bool)
+-&gt; (ConsoleLog -&gt; ConsoleLog -&gt; Bool) -&gt; Eq ConsoleLog
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ConsoleLog -&gt; ConsoleLog -&gt; Bool
+== :: ConsoleLog -&gt; ConsoleLog -&gt; Bool
+$c/= :: ConsoleLog -&gt; ConsoleLog -&gt; Bool
+/= :: ConsoleLog -&gt; ConsoleLog -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519387"><span id="local-6989586621679519391"><span id="local-6989586621679519395"><span class="annot"><span class="annottext">Int -&gt; ConsoleLog -&gt; ShowS
+[ConsoleLog] -&gt; ShowS
+ConsoleLog -&gt; String
+(Int -&gt; ConsoleLog -&gt; ShowS)
+-&gt; (ConsoleLog -&gt; String)
+-&gt; ([ConsoleLog] -&gt; ShowS)
+-&gt; Show ConsoleLog
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ConsoleLog -&gt; ShowS
+showsPrec :: Int -&gt; ConsoleLog -&gt; ShowS
+$cshow :: ConsoleLog -&gt; String
+show :: ConsoleLog -&gt; String
+$cshowList :: [ConsoleLog] -&gt; ShowS
+showList :: [ConsoleLog] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-39"></span><span>  </span><span id="local-6989586621679519330"><span id="local-6989586621679519331"><span id="local-6989586621679519332"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679519330"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Getter"><span class="hs-identifier hs-type">A_Getter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><a href="#local-6989586621679519331"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>    </span><span class="annot"><a href="#local-6989586621679519332"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-43"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;unConsoleLog&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679519330"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier hs-type">ConsoleLog</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier hs-type">ConsoleLog</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519331"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519332"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-45"></span><span>  </span><span id="local-6989586621679519405"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx ConsoleLog ConsoleLog a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(ConsoleLog -&gt; a) -&gt; Getter ConsoleLog a
+forall s a. (s -&gt; a) -&gt; Getter s a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#to"><span class="hs-identifier hs-var">to</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#UnsafeConsoleLog"><span class="hs-identifier hs-type">UnsafeConsoleLog</span></a></span><span> </span><span id="local-6989586621679519406"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679519406"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Text
+</span><a href="#local-6989586621679519406"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- NOTE: LogMode exists here so we do not have cyclic dependencies w/</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- RegionLogger</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- | Determines the logging behavior. This option only affects console logs;</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- File logs are unaffected.</span><span>
+</span><span id="line-53"></span><span class="hs-keyword">data</span><span> </span><span id="LogMode"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier hs-var">LogMode</span></a></span></span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Sets the logging region to this log.</span></span><span>
+</span><span id="line-55"></span><span>    </span><span id="LogModeSet"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeSet"><span class="hs-identifier hs-var">LogModeSet</span></a></span></span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Appends the log to the logging region.</span></span><span>
+</span><span id="line-57"></span><span>    </span><span id="LogModeAppend"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeAppend"><span class="hs-identifier hs-var">LogModeAppend</span></a></span></span><span>
+</span><span id="line-58"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Closes the logging region, finishing with the log.</span></span><span>
+</span><span id="line-59"></span><span>    </span><span id="LogModeFinish"><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier hs-var">LogModeFinish</span></a></span></span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679519411"><span id="local-6989586621679519413"><span class="annot"><span class="annottext">LogMode
+LogMode -&gt; LogMode -&gt; Bounded LogMode
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: LogMode
+minBound :: LogMode
+$cmaxBound :: LogMode
+maxBound :: LogMode
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519417"><span id="local-6989586621679519425"><span id="local-6989586621679519431"><span id="local-6989586621679519444"><span id="local-6989586621679519446"><span id="local-6989586621679519450"><span id="local-6989586621679519454"><span id="local-6989586621679519458"><span class="annot"><span class="annottext">Int -&gt; LogMode
+LogMode -&gt; Int
+LogMode -&gt; [LogMode]
+LogMode -&gt; LogMode
+LogMode -&gt; LogMode -&gt; [LogMode]
+LogMode -&gt; LogMode -&gt; LogMode -&gt; [LogMode]
+(LogMode -&gt; LogMode)
+-&gt; (LogMode -&gt; LogMode)
+-&gt; (Int -&gt; LogMode)
+-&gt; (LogMode -&gt; Int)
+-&gt; (LogMode -&gt; [LogMode])
+-&gt; (LogMode -&gt; LogMode -&gt; [LogMode])
+-&gt; (LogMode -&gt; LogMode -&gt; [LogMode])
+-&gt; (LogMode -&gt; LogMode -&gt; LogMode -&gt; [LogMode])
+-&gt; Enum LogMode
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: LogMode -&gt; LogMode
+succ :: LogMode -&gt; LogMode
+$cpred :: LogMode -&gt; LogMode
+pred :: LogMode -&gt; LogMode
+$ctoEnum :: Int -&gt; LogMode
+toEnum :: Int -&gt; LogMode
+$cfromEnum :: LogMode -&gt; Int
+fromEnum :: LogMode -&gt; Int
+$cenumFrom :: LogMode -&gt; [LogMode]
+enumFrom :: LogMode -&gt; [LogMode]
+$cenumFromThen :: LogMode -&gt; LogMode -&gt; [LogMode]
+enumFromThen :: LogMode -&gt; LogMode -&gt; [LogMode]
+$cenumFromTo :: LogMode -&gt; LogMode -&gt; [LogMode]
+enumFromTo :: LogMode -&gt; LogMode -&gt; [LogMode]
+$cenumFromThenTo :: LogMode -&gt; LogMode -&gt; LogMode -&gt; [LogMode]
+enumFromThenTo :: LogMode -&gt; LogMode -&gt; LogMode -&gt; [LogMode]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519462"><span id="local-6989586621679519464"><span class="annot"><span class="annottext">LogMode -&gt; LogMode -&gt; Bool
+(LogMode -&gt; LogMode -&gt; Bool)
+-&gt; (LogMode -&gt; LogMode -&gt; Bool) -&gt; Eq LogMode
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: LogMode -&gt; LogMode -&gt; Bool
+== :: LogMode -&gt; LogMode -&gt; Bool
+$c/= :: LogMode -&gt; LogMode -&gt; Bool
+/= :: LogMode -&gt; LogMode -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519468"><span id="local-6989586621679519470"><span id="local-6989586621679519474"><span class="annot"><span class="annottext">Int -&gt; LogMode -&gt; ShowS
+[LogMode] -&gt; ShowS
+LogMode -&gt; String
+(Int -&gt; LogMode -&gt; ShowS)
+-&gt; (LogMode -&gt; String) -&gt; ([LogMode] -&gt; ShowS) -&gt; Show LogMode
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; LogMode -&gt; ShowS
+showsPrec :: Int -&gt; LogMode -&gt; ShowS
+$cshow :: LogMode -&gt; String
+show :: LogMode -&gt; String
+$cshowList :: [LogMode] -&gt; ShowS
+showList :: [LogMode] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span></pre></body></html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Provides the 'FilePathDefault' type.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FilePathDefault</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FilePathDefault"><span class="hs-identifier">FilePathDefault</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#parseFilePathDefault"><span class="hs-identifier">parseFilePathDefault</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.Utils.html"><span class="hs-identifier">Effects.FileSystem.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">FsUtils</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="annot"><span class="hs-comment">-- | OsPath option that includes a default possibility.</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">data</span><span> </span><span id="FilePathDefault"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-var">FilePathDefault</span></a></span></span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="FPDefault"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FPDefault"><span class="hs-identifier hs-var">FPDefault</span></a></span></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="FPManual"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FPManual"><span class="hs-identifier hs-var">FPManual</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679522021"><span id="local-6989586621679522025"><span class="annot"><span class="annottext">FilePathDefault -&gt; FilePathDefault -&gt; Bool
+(FilePathDefault -&gt; FilePathDefault -&gt; Bool)
+-&gt; (FilePathDefault -&gt; FilePathDefault -&gt; Bool)
+-&gt; Eq FilePathDefault
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: FilePathDefault -&gt; FilePathDefault -&gt; Bool
+== :: FilePathDefault -&gt; FilePathDefault -&gt; Bool
+$c/= :: FilePathDefault -&gt; FilePathDefault -&gt; Bool
+/= :: FilePathDefault -&gt; FilePathDefault -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679522030"><span id="local-6989586621679522036"><span id="local-6989586621679522040"><span class="annot"><span class="annottext">Int -&gt; FilePathDefault -&gt; ShowS
+[FilePathDefault] -&gt; ShowS
+FilePathDefault -&gt; String
+(Int -&gt; FilePathDefault -&gt; ShowS)
+-&gt; (FilePathDefault -&gt; String)
+-&gt; ([FilePathDefault] -&gt; ShowS)
+-&gt; Show FilePathDefault
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; FilePathDefault -&gt; ShowS
+showsPrec :: Int -&gt; FilePathDefault -&gt; ShowS
+$cshow :: FilePathDefault -&gt; String
+show :: FilePathDefault -&gt; String
+$cshowList :: [FilePathDefault] -&gt; ShowS
+showList :: [FilePathDefault] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-type">FilePathDefault</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>  </span><span id="local-6989586621679522050"><span class="annot"><span class="annottext">tomlDecoder :: Decoder FilePathDefault
+</span><a href="#local-6989586621679522050"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder FilePathDefault
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#parseFilePathDefault"><span class="hs-identifier hs-var">parseFilePathDefault</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span id="local-6989586621679522004"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#parseFilePathDefault"><span class="hs-identifier hs-type">parseFilePathDefault</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679522004"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679522004"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679522004"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FilePathDefault"><span class="hs-identifier hs-type">FilePathDefault</span></a></span></span><span>
+</span><span id="line-22"></span><span id="parseFilePathDefault"><span class="annot"><span class="annottext">parseFilePathDefault :: forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#parseFilePathDefault"><span class="hs-identifier hs-var hs-var">parseFilePathDefault</span></a></span></span><span> </span><span id="local-6989586621679522070"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679522070"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-23"></span><span>  </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679522070"><span class="hs-identifier hs-var">getTxt</span></a></span><span> </span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m FilePathDefault) -&gt; m FilePathDefault
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;default&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePathDefault -&gt; m FilePathDefault
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FPDefault"><span class="hs-identifier hs-var">FPDefault</span></a></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; m FilePathDefault
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Empty path given for --file-log&quot;</span></span><span>
+</span><span id="line-26"></span><span>    </span><span id="local-6989586621679522071"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679522071"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; FilePathDefault
+</span><a href="Shrun.Configuration.Data.FileLogging.FilePathDefault.html#FPManual"><span class="hs-identifier hs-var">FPManual</span></a></span><span> </span><span class="annot"><span class="annottext">(OsPath -&gt; FilePathDefault) -&gt; m OsPath -&gt; m FilePathDefault
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; m OsPath
+forall (m :: Type -&gt; Type). MonadFail m =&gt; String -&gt; m OsPath
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.Utils.html#encodeFpToOsFail"><span class="hs-identifier hs-var">FsUtils.encodeFpToOsFail</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679522071"><span class="hs-identifier hs-var">other</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span></pre></body></html>

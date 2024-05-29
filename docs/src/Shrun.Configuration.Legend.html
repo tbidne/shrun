@@ -1,0 +1,468 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Provides types for the legend functionality.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Legend</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Parsing</span></span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Legend.html#linesToMap"><span class="hs-identifier">linesToMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#LegendMap"><span class="hs-identifier">LegendMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Legend.html#DuplicateKeyError"><span class="hs-identifier">DuplicateKeyError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Translation</span></span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Legend.html#translateCommands"><span class="hs-identifier">translateCommands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Legend.html#CyclicKeyError"><span class="hs-identifier">CyclicKeyError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Strict.html"><span class="hs-identifier">Data.HashMap.Strict</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.html"><span class="hs-identifier">Data.HashSet</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier">HashSet</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.html"><span class="hs-identifier">Data.HashSet</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Set</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.html"><span class="hs-identifier">Data.Sequence.NonEmpty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">NESeq</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">LazyT</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy.Builder</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Builder</span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy.Builder</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">LTBuilder</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html"><span class="hs-identifier">Shrun.Configuration.Toml.Legend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier">KeyVal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#MkKeyVal"><span class="hs-identifier">MkKeyVal</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#LegendMap"><span class="hs-identifier">LegendMap</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html"><span class="hs-identifier">Shrun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier">CommandP</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-identifier">MkCommandP</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- $setup</span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- &gt;&gt;&gt; import Shrun.Prelude</span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.HashMap.Strict qualified as Map</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="annot"><span class="hs-comment">-- | Errors when parsing the legend.</span></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">newtype</span><span> </span><span id="DuplicateKeyError"><span class="annot"><a href="Shrun.Configuration.Legend.html#DuplicateKeyError"><span class="hs-identifier hs-var">DuplicateKeyError</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkDuplicateKeyError"><span class="annot"><a href="Shrun.Configuration.Legend.html#MkDuplicateKeyError"><span class="hs-identifier hs-var">MkDuplicateKeyError</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679521031"><span id="local-6989586621679521034"><span class="annot"><span class="annottext">DuplicateKeyError -&gt; DuplicateKeyError -&gt; Bool
+(DuplicateKeyError -&gt; DuplicateKeyError -&gt; Bool)
+-&gt; (DuplicateKeyError -&gt; DuplicateKeyError -&gt; Bool)
+-&gt; Eq DuplicateKeyError
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: DuplicateKeyError -&gt; DuplicateKeyError -&gt; Bool
+== :: DuplicateKeyError -&gt; DuplicateKeyError -&gt; Bool
+$c/= :: DuplicateKeyError -&gt; DuplicateKeyError -&gt; Bool
+/= :: DuplicateKeyError -&gt; DuplicateKeyError -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679521039"><span id="local-6989586621679521045"><span id="local-6989586621679521049"><span class="annot"><span class="annottext">Int -&gt; DuplicateKeyError -&gt; ShowS
+[DuplicateKeyError] -&gt; ShowS
+DuplicateKeyError -&gt; String
+(Int -&gt; DuplicateKeyError -&gt; ShowS)
+-&gt; (DuplicateKeyError -&gt; String)
+-&gt; ([DuplicateKeyError] -&gt; ShowS)
+-&gt; Show DuplicateKeyError
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; DuplicateKeyError -&gt; ShowS
+showsPrec :: Int -&gt; DuplicateKeyError -&gt; ShowS
+$cshow :: DuplicateKeyError -&gt; String
+show :: DuplicateKeyError -&gt; String
+$cshowList :: [DuplicateKeyError] -&gt; ShowS
+showList :: [DuplicateKeyError] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679521057"><span id="local-6989586621679521061"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Legend.html#DuplicateKeyError"><span class="hs-identifier hs-type">DuplicateKeyError</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-34"></span><span>  </span><span id="local-6989586621679521070"><span class="annot"><span class="annottext">displayException :: DuplicateKeyError -&gt; String
+</span><a href="#local-6989586621679521070"><span class="hs-identifier hs-var hs-var hs-var hs-var">displayException</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Legend.html#MkDuplicateKeyError"><span class="hs-identifier hs-type">MkDuplicateKeyError</span></a></span><span> </span><span id="local-6989586621679521072"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521072"><span class="hs-identifier hs-var">k</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Legend error: found duplicate key: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521072"><span class="hs-identifier hs-var">k</span></a></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- | Attempts to parse the given ['KeyVal'] into 'LegendMap'.</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- Duplicate keys are not allowed.</span><span>
+</span><span id="line-38"></span><span class="annot"><a href="Shrun.Configuration.Legend.html#linesToMap"><span class="hs-identifier hs-type">linesToMap</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Legend.html#DuplicateKeyError"><span class="hs-identifier hs-type">DuplicateKeyError</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#LegendMap"><span class="hs-identifier hs-type">LegendMap</span></a></span><span>
+</span><span id="line-39"></span><span id="linesToMap"><span class="annot"><span class="annottext">linesToMap :: List KeyVal -&gt; Either DuplicateKeyError LegendMap
+</span><a href="Shrun.Configuration.Legend.html#linesToMap"><span class="hs-identifier hs-var hs-var">linesToMap</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(KeyVal
+ -&gt; Either DuplicateKeyError LegendMap
+ -&gt; Either DuplicateKeyError LegendMap)
+-&gt; Either DuplicateKeyError LegendMap
+-&gt; List KeyVal
+-&gt; Either DuplicateKeyError LegendMap
+forall a b. (a -&gt; b -&gt; b) -&gt; b -&gt; [a] -&gt; b
+forall (t :: Type -&gt; Type) a b.
+Foldable t =&gt;
+(a -&gt; b -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldr</span></span><span> </span><span class="annot"><span class="annottext">KeyVal
+-&gt; Either DuplicateKeyError LegendMap
+-&gt; Either DuplicateKeyError LegendMap
+</span><a href="#local-6989586621679521075"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LegendMap -&gt; Either DuplicateKeyError LegendMap
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">LegendMap
+forall k v. HashMap k v
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Internal.html#empty"><span class="hs-identifier hs-var">Map.empty</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-41"></span><span>    </span><span id="local-6989586621679521075"><span class="annot"><span class="annottext">f :: KeyVal
+-&gt; Either DuplicateKeyError LegendMap
+-&gt; Either DuplicateKeyError LegendMap
+</span><a href="#local-6989586621679521075"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#MkKeyVal"><span class="hs-identifier hs-type">MkKeyVal</span></a></span><span> </span><span id="local-6989586621679521080"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521080"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span id="local-6989586621679521081"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521081"><span class="hs-identifier hs-var">v</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679521082"><span class="annot"><span class="annottext">Either DuplicateKeyError LegendMap
+</span><a href="#local-6989586621679521082"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Either DuplicateKeyError (Either DuplicateKeyError LegendMap)
+-&gt; Either DuplicateKeyError LegendMap
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m (m a) -&gt; m a
+</span><span class="hs-identifier hs-var">join</span></span><span> </span><span class="annot"><span class="annottext">(Either DuplicateKeyError (Either DuplicateKeyError LegendMap)
+ -&gt; Either DuplicateKeyError LegendMap)
+-&gt; Either DuplicateKeyError (Either DuplicateKeyError LegendMap)
+-&gt; Either DuplicateKeyError LegendMap
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">((Text, NESeq Text)
+ -&gt; LegendMap -&gt; Either DuplicateKeyError LegendMap)
+-&gt; Either DuplicateKeyError (Text, NESeq Text)
+-&gt; Either DuplicateKeyError LegendMap
+-&gt; Either DuplicateKeyError (Either DuplicateKeyError LegendMap)
+forall a b c.
+(a -&gt; b -&gt; c)
+-&gt; Either DuplicateKeyError a
+-&gt; Either DuplicateKeyError b
+-&gt; Either DuplicateKeyError c
+forall (f :: Type -&gt; Type) a b c.
+Applicative f =&gt;
+(a -&gt; b -&gt; c) -&gt; f a -&gt; f b -&gt; f c
+</span><span class="hs-identifier hs-var">liftA2</span></span><span> </span><span class="annot"><span class="annottext">(Text, NESeq Text)
+-&gt; LegendMap -&gt; Either DuplicateKeyError LegendMap
+forall {v}.
+(Text, v)
+-&gt; HashMap Text v -&gt; Either DuplicateKeyError (HashMap Text v)
+</span><a href="#local-6989586621679521084"><span class="hs-identifier hs-var">insertPair</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Text, NESeq Text) -&gt; Either DuplicateKeyError (Text, NESeq Text)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521080"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521081"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Either DuplicateKeyError LegendMap
+</span><a href="#local-6989586621679521082"><span class="hs-identifier hs-var">mp</span></a></span><span>
+</span><span id="line-42"></span><span>    </span><span id="local-6989586621679521084"><span class="annot"><span class="annottext">insertPair :: (Text, v)
+-&gt; HashMap Text v -&gt; Either DuplicateKeyError (HashMap Text v)
+</span><a href="#local-6989586621679521084"><span class="hs-identifier hs-var hs-var">insertPair</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679521089"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521089"><span class="hs-identifier hs-var">key</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679521090"><span class="annot"><span class="annottext">v
+</span><a href="#local-6989586621679521090"><span class="hs-identifier hs-var">cmd</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679521091"><span class="annot"><span class="annottext">HashMap Text v
+</span><a href="#local-6989586621679521091"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-43"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; HashMap Text v -&gt; Maybe v
+forall k v. (Eq k, Hashable k) =&gt; k -&gt; HashMap k v -&gt; Maybe v
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Internal.html#lookup"><span class="hs-identifier hs-var">Map.lookup</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521089"><span class="hs-identifier hs-var">key</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text v
+</span><a href="#local-6989586621679521091"><span class="hs-identifier hs-var">mp</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-44"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">v
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">DuplicateKeyError -&gt; Either DuplicateKeyError (HashMap Text v)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(DuplicateKeyError -&gt; Either DuplicateKeyError (HashMap Text v))
+-&gt; DuplicateKeyError -&gt; Either DuplicateKeyError (HashMap Text v)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; DuplicateKeyError
+</span><a href="Shrun.Configuration.Legend.html#MkDuplicateKeyError"><span class="hs-identifier hs-var">MkDuplicateKeyError</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521089"><span class="hs-identifier hs-var">key</span></a></span><span>
+</span><span id="line-45"></span><span>        </span><span class="annot"><span class="annottext">Maybe v
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">HashMap Text v -&gt; Either DuplicateKeyError (HashMap Text v)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(HashMap Text v -&gt; Either DuplicateKeyError (HashMap Text v))
+-&gt; HashMap Text v -&gt; Either DuplicateKeyError (HashMap Text v)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; v -&gt; HashMap Text v -&gt; HashMap Text v
+forall k v.
+(Eq k, Hashable k) =&gt;
+k -&gt; v -&gt; HashMap k v -&gt; HashMap k v
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Internal.Strict.html#insert"><span class="hs-identifier hs-var">Map.insert</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521089"><span class="hs-identifier hs-var">key</span></a></span><span> </span><span class="annot"><span class="annottext">v
+</span><a href="#local-6989586621679521090"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">HashMap Text v
+</span><a href="#local-6989586621679521091"><span class="hs-identifier hs-var">mp</span></a></span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">newtype</span><span> </span><span id="CyclicKeyError"><span class="annot"><a href="Shrun.Configuration.Legend.html#CyclicKeyError"><span class="hs-identifier hs-var">CyclicKeyError</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkCyclicKeyError"><span class="annot"><a href="Shrun.Configuration.Legend.html#MkCyclicKeyError"><span class="hs-identifier hs-var">MkCyclicKeyError</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679521096"><span id="local-6989586621679521099"><span class="annot"><span class="annottext">CyclicKeyError -&gt; CyclicKeyError -&gt; Bool
+(CyclicKeyError -&gt; CyclicKeyError -&gt; Bool)
+-&gt; (CyclicKeyError -&gt; CyclicKeyError -&gt; Bool) -&gt; Eq CyclicKeyError
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: CyclicKeyError -&gt; CyclicKeyError -&gt; Bool
+== :: CyclicKeyError -&gt; CyclicKeyError -&gt; Bool
+$c/= :: CyclicKeyError -&gt; CyclicKeyError -&gt; Bool
+/= :: CyclicKeyError -&gt; CyclicKeyError -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679521103"><span id="local-6989586621679521107"><span id="local-6989586621679521111"><span class="annot"><span class="annottext">Int -&gt; CyclicKeyError -&gt; ShowS
+[CyclicKeyError] -&gt; ShowS
+CyclicKeyError -&gt; String
+(Int -&gt; CyclicKeyError -&gt; ShowS)
+-&gt; (CyclicKeyError -&gt; String)
+-&gt; ([CyclicKeyError] -&gt; ShowS)
+-&gt; Show CyclicKeyError
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; CyclicKeyError -&gt; ShowS
+showsPrec :: Int -&gt; CyclicKeyError -&gt; ShowS
+$cshow :: CyclicKeyError -&gt; String
+show :: CyclicKeyError -&gt; String
+$cshowList :: [CyclicKeyError] -&gt; ShowS
+showList :: [CyclicKeyError] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679521118"><span id="local-6989586621679521122"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Legend.html#CyclicKeyError"><span class="hs-identifier hs-type">CyclicKeyError</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-51"></span><span>  </span><span id="local-6989586621679521128"><span class="annot"><span class="annottext">displayException :: CyclicKeyError -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Legend.html#MkCyclicKeyError"><span class="hs-identifier hs-type">MkCyclicKeyError</span></a></span><span> </span><span id="local-6989586621679521129"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521129"><span class="hs-identifier hs-var">path</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Encountered cyclic definitions when translating commands: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521129"><span class="hs-identifier hs-var">path</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | Returns a list of 'Text' commands, potentially transforming a</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- given string via the `LegendMap` @legend@.</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- Given a command string /s/, we first check if /s/ exists as a key in</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- @legend@. If it does not, we return /s/. If there is a key matching</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- /s/, i.e.,</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- legend = fromList [...,(s, v),...]</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--</span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- where \(v = v_1,,\ldots,,v_n\), then we recursively search on each</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- \(v_i\). We stop and return \(v_i\) when it does not exist as a key in the</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- map.</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XOverloadedLists</span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--   let m = Map.fromList</span><span>
+</span><span id="line-73"></span><span class="hs-comment">--         [ (&quot;cmd1&quot;, &quot;one&quot; :&lt;|| []),</span><span>
+</span><span id="line-74"></span><span class="hs-comment">--           (&quot;cmd2&quot;, &quot;two&quot; :&lt;|| []),</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--           (&quot;all&quot;, &quot;cmd1&quot; :&lt;|| [&quot;cmd2&quot;,&quot;other&quot;])</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--         ]</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--       cmds = translateCommands m (&quot;all&quot; :&lt;|| [&quot;blah&quot;])</span><span>
+</span><span id="line-78"></span><span class="hs-comment">--   in (fmap . fmap) (view #command) cmds</span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- Right (fromList (&quot;one&quot; :| [&quot;two&quot;,&quot;other&quot;,&quot;blah&quot;]))</span><span>
+</span><span id="line-81"></span><span class="hs-comment">--</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyError'</span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- will be returned.</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--   let m = Map.fromList</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--         [ (&quot;a&quot;, &quot;b&quot; :&lt;|| []),</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--           (&quot;b&quot;, &quot;c&quot; :&lt;|| []),</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--           (&quot;c&quot;, &quot;a&quot; :&lt;|| [])</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--         ]</span><span>
+</span><span id="line-91"></span><span class="hs-comment">--   in translateCommands m (&quot;a&quot; :&lt;|| [])</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- Left (MkCyclicKeyError &quot;a -&gt; b -&gt; c -&gt; a&quot;)</span><span>
+</span><span id="line-94"></span><span class="annot"><a href="Shrun.Configuration.Legend.html#translateCommands"><span class="hs-identifier hs-type">translateCommands</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#LegendMap"><span class="hs-identifier hs-type">LegendMap</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Legend.html#CyclicKeyError"><span class="hs-identifier hs-type">CyclicKeyError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span id="translateCommands"><span class="annot"><span class="annottext">translateCommands :: LegendMap -&gt; NESeq Text -&gt; Either CyclicKeyError (NESeq CommandP1)
+</span><a href="Shrun.Configuration.Legend.html#translateCommands"><span class="hs-identifier hs-var hs-var">translateCommands</span></a></span></span><span> </span><span id="local-6989586621679521130"><span class="annot"><span class="annottext">LegendMap
+</span><a href="#local-6989586621679521130"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span id="local-6989586621679521131"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521131"><span class="hs-identifier hs-var">ts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NESeq (NESeq CommandP1) -&gt; NESeq CommandP1
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m (m a) -&gt; m a
+</span><span class="hs-identifier hs-var">join</span></span><span> </span><span class="annot"><span class="annottext">(NESeq (NESeq CommandP1) -&gt; NESeq CommandP1)
+-&gt; Either CyclicKeyError (NESeq (NESeq CommandP1))
+-&gt; Either CyclicKeyError (NESeq CommandP1)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Either CyclicKeyError (NESeq CommandP1))
+-&gt; NESeq Text -&gt; Either CyclicKeyError (NESeq (NESeq CommandP1))
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(Traversable t, Applicative f) =&gt;
+(a -&gt; f b) -&gt; t a -&gt; f (t b)
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+(a -&gt; f b) -&gt; NESeq a -&gt; f (NESeq b)
+</span><span class="hs-identifier hs-var">traverse</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LegendMap -&gt; Text -&gt; Either CyclicKeyError (NESeq CommandP1)
+</span><a href="Shrun.Configuration.Legend.html#lineToCommands"><span class="hs-identifier hs-var">lineToCommands</span></a></span><span> </span><span class="annot"><span class="annottext">LegendMap
+</span><a href="#local-6989586621679521130"><span class="hs-identifier hs-var">mp</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521131"><span class="hs-identifier hs-var">ts</span></a></span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Shrun.Configuration.Legend.html#lineToCommands"><span class="hs-identifier hs-type">lineToCommands</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#LegendMap"><span class="hs-identifier hs-type">LegendMap</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Legend.html#CyclicKeyError"><span class="hs-identifier hs-type">CyclicKeyError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span id="lineToCommands"><span class="annot"><span class="annottext">lineToCommands :: LegendMap -&gt; Text -&gt; Either CyclicKeyError (NESeq CommandP1)
+</span><a href="Shrun.Configuration.Legend.html#lineToCommands"><span class="hs-identifier hs-var hs-var">lineToCommands</span></a></span></span><span> </span><span id="local-6989586621679521135"><span class="annot"><span class="annottext">LegendMap
+</span><a href="#local-6989586621679521135"><span class="hs-identifier hs-var">mp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Text
+-&gt; HashSet Text
+-&gt; Builder
+-&gt; Text
+-&gt; Either CyclicKeyError (NESeq CommandP1)
+</span><a href="#local-6989586621679521136"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+forall a. HashSet a
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#empty"><span class="hs-identifier hs-var">Set.empty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Builder
+</span><span class="hs-identifier hs-var">LTBuilder.fromText</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-100"></span><span>    </span><span class="hs-comment">-- The stringbuilder path is a textual representation of the key path</span><span>
+</span><span id="line-101"></span><span>    </span><span class="hs-comment">-- we have traversed so far, e.g., a -&gt; b -&gt; c</span><span>
+</span><span id="line-102"></span><span>    </span><span class="annot"><a href="#local-6989586621679521136"><span class="hs-identifier hs-type">go</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier hs-type">HashSet</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Builder</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Legend.html#CyclicKeyError"><span class="hs-identifier hs-type">CyclicKeyError</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>    </span><span id="local-6989586621679521136"><span class="annot"><span class="annottext">go :: Maybe Text
+-&gt; HashSet Text
+-&gt; Builder
+-&gt; Text
+-&gt; Either CyclicKeyError (NESeq CommandP1)
+</span><a href="#local-6989586621679521136"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span id="local-6989586621679521139"><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679521139"><span class="hs-identifier hs-var">prevKey</span></a></span></span><span> </span><span id="local-6989586621679521140"><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679521140"><span class="hs-identifier hs-var">foundKeys</span></a></span></span><span> </span><span id="local-6989586621679521141"><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679521141"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span id="local-6989586621679521142"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521142"><span class="hs-identifier hs-var">line</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; LegendMap -&gt; Maybe (NESeq Text)
+forall k v. (Eq k, Hashable k) =&gt; k -&gt; HashMap k v -&gt; Maybe v
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Internal.html#lookup"><span class="hs-identifier hs-var">Map.lookup</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521142"><span class="hs-identifier hs-var">line</span></a></span><span> </span><span class="annot"><span class="annottext">LegendMap
+</span><a href="#local-6989586621679521135"><span class="hs-identifier hs-var">mp</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-104"></span><span>      </span><span class="hs-comment">-- The line isn't a key, return it.</span><span>
+</span><span id="line-105"></span><span>      </span><span class="annot"><span class="annottext">Maybe (NESeq Text)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NESeq CommandP1 -&gt; Either CyclicKeyError (NESeq CommandP1)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(NESeq CommandP1 -&gt; Either CyclicKeyError (NESeq CommandP1))
+-&gt; NESeq CommandP1 -&gt; Either CyclicKeyError (NESeq CommandP1)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; NESeq CommandP1
+forall a. a -&gt; NESeq a
+</span><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">NESeq.singleton</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe Text -&gt; Text -&gt; CommandP1
+forall (p :: CommandPhase). Maybe Text -&gt; Text -&gt; CommandP p
+</span><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-identifier hs-var">MkCommandP</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679521139"><span class="hs-identifier hs-var">prevKey</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521142"><span class="hs-identifier hs-var">line</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>      </span><span class="hs-comment">-- The line is a key, check for cycles and recursively</span><span>
+</span><span id="line-107"></span><span>      </span><span class="hs-comment">-- call.</span><span>
+</span><span id="line-108"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679521144"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521144"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679521145"><span class="hs-identifier hs-var">maybeCyclicVal</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-109"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679521146"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521146"><span class="hs-identifier hs-var">cyclicVal</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-110"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679521147"><span class="annot"><span class="annottext">pathTxt :: Text
+</span><a href="#local-6989586621679521147"><span class="hs-identifier hs-var hs-var">pathTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Text -&gt; Text -&gt; Text
+</span><a href="Shrun.Configuration.Legend.html#builderToPath"><span class="hs-identifier hs-var">builderToPath</span></a></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679521141"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521142"><span class="hs-identifier hs-var">line</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521146"><span class="hs-identifier hs-var">cyclicVal</span></a></span><span>
+</span><span id="line-111"></span><span>           </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">CyclicKeyError -&gt; Either CyclicKeyError (NESeq CommandP1)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(CyclicKeyError -&gt; Either CyclicKeyError (NESeq CommandP1))
+-&gt; CyclicKeyError -&gt; Either CyclicKeyError (NESeq CommandP1)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; CyclicKeyError
+</span><a href="Shrun.Configuration.Legend.html#MkCyclicKeyError"><span class="hs-identifier hs-var">MkCyclicKeyError</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521147"><span class="hs-identifier hs-var">pathTxt</span></a></span><span>
+</span><span id="line-112"></span><span>        </span><span class="annot"><span class="annottext">Maybe Text
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521144"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-113"></span><span>          </span><span class="hs-comment">-- NOTE: We have to split these cases up due to handling the prevKey</span><span>
+</span><span id="line-114"></span><span>          </span><span class="hs-comment">-- differently. We want to pass along the key name (i.e. line)</span><span>
+</span><span id="line-115"></span><span>          </span><span class="hs-comment">-- iff we have exactly one value i.e. key = val. We do _not_ want to</span><span>
+</span><span id="line-116"></span><span>          </span><span class="hs-comment">-- pass this in if we have a list i.e. key = [val1, val2, ...].</span><span>
+</span><span id="line-117"></span><span>          </span><span class="hs-comment">--</span><span>
+</span><span id="line-118"></span><span>          </span><span class="hs-comment">-- If we did, the command output would have:</span><span>
+</span><span id="line-119"></span><span>          </span><span class="hs-comment">--   [Success][all] N seconds</span><span>
+</span><span id="line-120"></span><span>          </span><span class="hs-comment">--   [Success][all] N seconds</span><span>
+</span><span id="line-121"></span><span>          </span><span class="hs-comment">--   ...</span><span>
+</span><span id="line-122"></span><span>          </span><span class="hs-comment">--</span><span>
+</span><span id="line-123"></span><span>          </span><span class="hs-comment">-- That is, we would have multiple commands sharing the same key</span><span>
+</span><span id="line-124"></span><span>          </span><span class="hs-comment">-- name, hence the output would be ambiguous. To prevent this, only</span><span>
+</span><span id="line-125"></span><span>          </span><span class="hs-comment">-- pass the name in when it is guaranteed we have a unique</span><span>
+</span><span id="line-126"></span><span>          </span><span class="hs-comment">-- key = val mapping.</span><span>
+</span><span id="line-127"></span><span>          </span><span class="hs-special">(</span><span id="local-6989586621679521149"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521149"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-type">:&lt;||</span></a></span><span> </span><span class="annot"><span class="annottext">Seq Text
+</span><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.html#IsEmpty"><span class="hs-identifier hs-var">IsEmpty</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Text
+-&gt; HashSet Text
+-&gt; Builder
+-&gt; Text
+-&gt; Either CyclicKeyError (NESeq CommandP1)
+</span><a href="#local-6989586621679521136"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Maybe Text
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521142"><span class="hs-identifier hs-var">line</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679521152"><span class="hs-identifier hs-var">foundKeys'</span></a></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679521153"><span class="hs-identifier hs-var">path'</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521149"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-128"></span><span>          </span><span id="local-6989586621679521154"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521154"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NESeq (NESeq CommandP1) -&gt; NESeq CommandP1
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m (m a) -&gt; m a
+</span><span class="hs-identifier hs-var">join</span></span><span> </span><span class="annot"><span class="annottext">(NESeq (NESeq CommandP1) -&gt; NESeq CommandP1)
+-&gt; Either CyclicKeyError (NESeq (NESeq CommandP1))
+-&gt; Either CyclicKeyError (NESeq CommandP1)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Either CyclicKeyError (NESeq CommandP1))
+-&gt; NESeq Text -&gt; Either CyclicKeyError (NESeq (NESeq CommandP1))
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(Traversable t, Applicative f) =&gt;
+(a -&gt; f b) -&gt; t a -&gt; f (t b)
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+(a -&gt; f b) -&gt; NESeq a -&gt; f (NESeq b)
+</span><span class="hs-identifier hs-var">traverse</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe Text
+-&gt; HashSet Text
+-&gt; Builder
+-&gt; Text
+-&gt; Either CyclicKeyError (NESeq CommandP1)
+</span><a href="#local-6989586621679521136"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679521152"><span class="hs-identifier hs-var">foundKeys'</span></a></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679521153"><span class="hs-identifier hs-var">path'</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521154"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-129"></span><span>        </span><span class="hs-keyword">where</span><span>
+</span><span id="line-130"></span><span>          </span><span id="local-6989586621679521152"><span class="annot"><span class="annottext">foundKeys' :: HashSet Text
+</span><a href="#local-6989586621679521152"><span class="hs-identifier hs-var hs-var">foundKeys'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; HashSet Text -&gt; HashSet Text
+forall a. (Eq a, Hashable a) =&gt; a -&gt; HashSet a -&gt; HashSet a
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#insert"><span class="hs-identifier hs-var">Set.insert</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521142"><span class="hs-identifier hs-var">line</span></a></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679521140"><span class="hs-identifier hs-var">foundKeys</span></a></span><span>
+</span><span id="line-131"></span><span>          </span><span class="hs-comment">-- Detect if we have an intersection between previously found</span><span>
+</span><span id="line-132"></span><span>          </span><span class="hs-comment">-- keys and the values we just found. If so we have found a</span><span>
+</span><span id="line-133"></span><span>          </span><span class="hs-comment">-- cyclic error.</span><span>
+</span><span id="line-134"></span><span>          </span><span id="local-6989586621679521156"><span class="annot"><span class="annottext">intersect :: HashSet Text
+</span><a href="#local-6989586621679521156"><span class="hs-identifier hs-var hs-var">intersect</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HashSet Text -&gt; HashSet Text -&gt; HashSet Text
+forall a. Eq a =&gt; HashSet a -&gt; HashSet a -&gt; HashSet a
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#intersection"><span class="hs-identifier hs-var">Set.intersection</span></a></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679521140"><span class="hs-identifier hs-var">foundKeys</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NESeq Text -&gt; HashSet Text
+</span><a href="#local-6989586621679521158"><span class="hs-identifier hs-var">neToSet</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679521144"><span class="hs-identifier hs-var">val</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-135"></span><span>          </span><span class="hs-comment">-- If there are cycles then this should be `Just cyclicVal`</span><span>
+</span><span id="line-136"></span><span>          </span><span class="hs-comment">-- (this list should have at most one since we are detecting</span><span>
+</span><span id="line-137"></span><span>          </span><span class="hs-comment">-- the first cycle)</span><span>
+</span><span id="line-138"></span><span>          </span><span id="local-6989586621679521145"><span class="annot"><span class="annottext">maybeCyclicVal :: Maybe Text
+</span><a href="#local-6989586621679521145"><span class="hs-identifier hs-var hs-var">maybeCyclicVal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Maybe Text
+forall (f :: Type -&gt; Type) a. Foldable f =&gt; f a -&gt; Maybe a
+</span><a href="Shrun.Prelude.html#headMaybe"><span class="hs-identifier hs-var">headMaybe</span></a></span><span> </span><span class="annot"><span class="annottext">([Text] -&gt; Maybe Text) -&gt; [Text] -&gt; Maybe Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">HashSet Text -&gt; [Text]
+forall a. HashSet a -&gt; [a]
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#toList"><span class="hs-identifier hs-var">Set.toList</span></a></span><span> </span><span class="annot"><span class="annottext">HashSet Text
+</span><a href="#local-6989586621679521156"><span class="hs-identifier hs-var">intersect</span></a></span><span>
+</span><span id="line-139"></span><span>          </span><span id="local-6989586621679521153"><span class="annot"><span class="annottext">path' :: Builder
+</span><a href="#local-6989586621679521153"><span class="hs-identifier hs-var hs-var">path'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679521141"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Builder
+</span><span class="hs-identifier hs-var">LTBuilder.fromText</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521142"><span class="hs-identifier hs-var">line</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><span class="hs-string">&quot; -&gt; &quot;</span></span><span>
+</span><span id="line-140"></span><span>          </span><span id="local-6989586621679521158"><span class="annot"><span class="annottext">neToSet :: NESeq Text -&gt; HashSet Text
+</span><a href="#local-6989586621679521158"><span class="hs-identifier hs-var hs-var">neToSet</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; HashSet Text
+forall a. (Eq a, Hashable a) =&gt; [a] -&gt; HashSet a
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#fromList"><span class="hs-identifier hs-var">Set.fromList</span></a></span><span> </span><span class="annot"><span class="annottext">([Text] -&gt; HashSet Text)
+-&gt; (NESeq Text -&gt; [Text]) -&gt; NESeq Text -&gt; HashSet Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">NESeq Text -&gt; [Text]
+forall a. NESeq a -&gt; [a]
+forall (t :: Type -&gt; Type) a. Foldable t =&gt; t a -&gt; [a]
+</span><span class="hs-identifier hs-var">toList</span></span><span>
+</span><span id="line-141"></span><span>
+</span><span id="line-142"></span><span class="annot"><a href="Shrun.Configuration.Legend.html#builderToPath"><span class="hs-identifier hs-type">builderToPath</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Builder</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-143"></span><span id="builderToPath"><span class="annot"><span class="annottext">builderToPath :: Builder -&gt; Text -&gt; Text -&gt; Text
+</span><a href="Shrun.Configuration.Legend.html#builderToPath"><span class="hs-identifier hs-var hs-var">builderToPath</span></a></span></span><span> </span><span id="local-6989586621679521169"><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679521169"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span id="local-6989586621679521170"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521170"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679521171"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521171"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-144"></span><span>  </span><span class="annot"><span class="annottext">LazyText -&gt; Text
+</span><span class="hs-identifier hs-var">LazyT.toStrict</span></span><span>
+</span><span id="line-145"></span><span>    </span><span class="annot"><span class="annottext">(LazyText -&gt; Text) -&gt; LazyText -&gt; Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; LazyText
+</span><span class="hs-identifier hs-var">LTBuilder.toLazyText</span></span><span>
+</span><span id="line-146"></span><span>    </span><span class="annot"><span class="annottext">(Builder -&gt; LazyText) -&gt; Builder -&gt; LazyText
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679521169"><span class="hs-identifier hs-var">path</span></a></span><span>
+</span><span id="line-147"></span><span>    </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Builder
+</span><span class="hs-identifier hs-var">LTBuilder.fromText</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521170"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-148"></span><span>    </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><span class="hs-string">&quot; -&gt; &quot;</span></span><span>
+</span><span id="line-149"></span><span>    </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Builder
+</span><span class="hs-identifier hs-var">LTBuilder.fromText</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521171"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-150"></span></pre></body></html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.MergedConfig</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier">MergedConfig</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#defaultMergedConfig"><span class="hs-identifier">defaultMergedConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html"><span class="hs-identifier">Shrun.Configuration.Data.Core</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigMerged"><span class="hs-identifier">CoreConfigMerged</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html"><span class="hs-identifier">Shrun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="annot"><span class="hs-comment">-- | Merged Args + Toml</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">data</span><span> </span><span id="MergedConfig"><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-var">MergedConfig</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkMergedConfig"><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-var">MkMergedConfig</span></a></span></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | Core config.</span></span><span>
+</span><span id="line-17"></span><span>    </span><span id="coreConfig"><span class="annot"><span class="annottext">MergedConfig -&gt; CoreConfigMerged
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#coreConfig"><span class="hs-identifier hs-var hs-var">coreConfig</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigMerged"><span class="hs-identifier hs-type">CoreConfigMerged</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Commands.</span></span><span>
+</span><span id="line-19"></span><span>    </span><span id="commands"><span class="annot"><span class="annottext">MergedConfig -&gt; NESeq CommandP1
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#commands"><span class="hs-identifier hs-var hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679534296"><span id="local-6989586621679534303"><span class="annot"><span class="annottext">MergedConfig -&gt; MergedConfig -&gt; Bool
+(MergedConfig -&gt; MergedConfig -&gt; Bool)
+-&gt; (MergedConfig -&gt; MergedConfig -&gt; Bool) -&gt; Eq MergedConfig
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: MergedConfig -&gt; MergedConfig -&gt; Bool
+== :: MergedConfig -&gt; MergedConfig -&gt; Bool
+$c/= :: MergedConfig -&gt; MergedConfig -&gt; Bool
+/= :: MergedConfig -&gt; MergedConfig -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679534309"><span id="local-6989586621679534318"><span id="local-6989586621679534322"><span class="annot"><span class="annottext">Int -&gt; MergedConfig -&gt; ShowS
+[MergedConfig] -&gt; ShowS
+MergedConfig -&gt; String
+(Int -&gt; MergedConfig -&gt; ShowS)
+-&gt; (MergedConfig -&gt; String)
+-&gt; ([MergedConfig] -&gt; ShowS)
+-&gt; Show MergedConfig
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; MergedConfig -&gt; ShowS
+showsPrec :: Int -&gt; MergedConfig -&gt; ShowS
+$cshow :: MergedConfig -&gt; String
+show :: MergedConfig -&gt; String
+$cshowList :: [MergedConfig] -&gt; ShowS
+showList :: [MergedConfig] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-24"></span><span>  </span><span id="local-6989586621679534217"><span id="local-6989586621679534218"><span id="local-6989586621679534219"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679534217"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="#local-6989586621679534218"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigMerged"><span class="hs-identifier hs-type">CoreConfigMerged</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="#local-6989586621679534219"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Core.html#CoreConfigMerged"><span class="hs-identifier hs-type">CoreConfigMerged</span></a></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-28"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;coreConfig&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679534217"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-type">MergedConfig</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-type">MergedConfig</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679534218"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679534219"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>  </span><span id="local-6989586621679534335"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx MergedConfig MergedConfig a b
+</span><a href="#local-6989586621679534335"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="annottext">LensVL MergedConfig MergedConfig a b
+-&gt; Lens MergedConfig MergedConfig a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-32"></span><span>      </span><span class="annot"><span class="annottext">(LensVL MergedConfig MergedConfig a b
+ -&gt; Lens MergedConfig MergedConfig a b)
+-&gt; LensVL MergedConfig MergedConfig a b
+-&gt; Lens MergedConfig MergedConfig a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679534340"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679534340"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-33"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-type">MkMergedConfig</span></a></span><span> </span><span id="local-6989586621679534341"><span class="annot"><span class="annottext">CoreConfigMerged
+</span><a href="#local-6989586621679534341"><span class="hs-identifier hs-var">_coreConfig</span></a></span></span><span> </span><span id="local-6989586621679534342"><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679534342"><span class="hs-identifier hs-var">_commands</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-34"></span><span>          </span><span class="annot"><span class="annottext">(CoreConfigMerged -&gt; MergedConfig)
+-&gt; f CoreConfigMerged -&gt; f MergedConfig
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-35"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CoreConfigMerged -&gt; NESeq CommandP1 -&gt; MergedConfig
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-operator hs-var">`MkMergedConfig`</span></a></span><span> </span><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679534342"><span class="hs-identifier hs-var">_commands</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679534340"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+CoreConfigMerged
+</span><a href="#local-6989586621679534341"><span class="hs-identifier hs-var">_coreConfig</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-40"></span><span>  </span><span id="local-6989586621679534240"><span id="local-6989586621679534241"><span id="local-6989586621679534242"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679534240"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>    </span><span class="annot"><a href="#local-6989586621679534241"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><a href="#local-6989586621679534242"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-44"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;commands&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679534240"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-type">MergedConfig</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-type">MergedConfig</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679534241"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679534242"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-46"></span><span>  </span><span id="local-6989586621679534351"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx MergedConfig MergedConfig a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><span class="annottext">LensVL MergedConfig MergedConfig a b
+-&gt; Lens MergedConfig MergedConfig a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-48"></span><span>      </span><span class="annot"><span class="annottext">(LensVL MergedConfig MergedConfig a b
+ -&gt; Lens MergedConfig MergedConfig a b)
+-&gt; LensVL MergedConfig MergedConfig a b
+-&gt; Lens MergedConfig MergedConfig a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679534354"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679534354"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-49"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-type">MkMergedConfig</span></a></span><span> </span><span id="local-6989586621679534355"><span class="annot"><span class="annottext">CoreConfigMerged
+</span><a href="#local-6989586621679534355"><span class="hs-identifier hs-var">_coreConfig</span></a></span></span><span> </span><span id="local-6989586621679534356"><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679534356"><span class="hs-identifier hs-var">_commands</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-50"></span><span>          </span><span class="annot"><span class="annottext">(NESeq CommandP1 -&gt; MergedConfig)
+-&gt; f (NESeq CommandP1) -&gt; f MergedConfig
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-51"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CoreConfigMerged -&gt; NESeq CommandP1 -&gt; MergedConfig
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-var">MkMergedConfig</span></a></span><span> </span><span class="annot"><span class="annottext">CoreConfigMerged
+</span><a href="#local-6989586621679534355"><span class="hs-identifier hs-var">_coreConfig</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679534354"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+NESeq CommandP1
+</span><a href="#local-6989586621679534356"><span class="hs-identifier hs-var">_commands</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#defaultMergedConfig"><span class="hs-identifier hs-type">defaultMergedConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MergedConfig"><span class="hs-identifier hs-type">MergedConfig</span></a></span><span>
+</span><span id="line-56"></span><span id="defaultMergedConfig"><span class="annot"><span class="annottext">defaultMergedConfig :: NESeq CommandP1 -&gt; MergedConfig
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#defaultMergedConfig"><span class="hs-identifier hs-var hs-var">defaultMergedConfig</span></a></span></span><span> </span><span id="local-6989586621679534357"><span class="annot"><span class="annottext">NESeq CommandP1
+</span><a href="#local-6989586621679534357"><span class="hs-identifier hs-var">commands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-57"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.MergedConfig.html#MkMergedConfig"><span class="hs-identifier hs-type">MkMergedConfig</span></a></span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">coreConfig :: CoreConfigMerged
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#coreConfig"><span class="hs-identifier hs-var">coreConfig</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CoreConfigMerged
+forall a. Default a =&gt; a
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var">def</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>      </span><span class="annot"><span class="annottext">NESeq CommandP1
+commands :: NESeq CommandP1
+commands :: NESeq CommandP1
+</span><a href="Shrun.Configuration.Data.MergedConfig.html#commands"><span class="hs-identifier hs-var hs-var">commands</span></a></span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-61"></span></pre></body></html>

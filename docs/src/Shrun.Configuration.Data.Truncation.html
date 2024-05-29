@@ -1,0 +1,397 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.Truncation</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncRegion"><span class="hs-identifier">TruncRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier">Truncation</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#parseTruncation"><span class="hs-identifier">parseTruncation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier">LineTruncation</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#parseLineTruncation"><span class="hs-identifier">parseLineTruncation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Misc</span></span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#decodeCommandNameTrunc"><span class="hs-identifier">decodeCommandNameTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#decodeLineTrunc"><span class="hs-identifier">decodeLineTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#configToLineTrunc"><span class="hs-identifier">configToLineTrunc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-terminal-0.1-79544aab75b25eb7e1d478beef2547ed7103c3686224eb8fd6cfb2d96a5998f8/share/doc/html/src/Effects.System.Terminal.html"><span class="hs-identifier">Effects.System.Terminal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-terminal-0.1-79544aab75b25eb7e1d478beef2547ed7103c3686224eb8fd6cfb2d96a5998f8/share/doc/html/src/Effects.System.Terminal.html#getTerminalWidth"><span class="hs-identifier">getTerminalWidth</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html"><span class="hs-identifier">Shrun.Configuration.Data.WithDisabled</span></a></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier">WithDisabled</span></a></span><span>
+</span><span id="line-20"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier">Disabled</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier">With</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#Without"><span class="hs-identifier">Without</span></a></span><span>
+</span><span id="line-23"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="annot"><span class="hs-comment">-- | The different regions to apply truncation rules.</span></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">data</span><span> </span><span id="TruncRegion"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncRegion"><span class="hs-identifier hs-var">TruncRegion</span></a></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Apply truncation rules to commands/key names.</span></span><span>
+</span><span id="line-30"></span><span>    </span><span id="TruncCommandName"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncCommandName"><span class="hs-identifier hs-var">TruncCommandName</span></a></span></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Apply truncation rules to command log entire lines.</span></span><span>
+</span><span id="line-32"></span><span>    </span><span id="TruncLine"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncLine"><span class="hs-identifier hs-var">TruncLine</span></a></span></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679521601"><span id="local-6989586621679521603"><span class="annot"><span class="annottext">TruncRegion -&gt; TruncRegion -&gt; Bool
+(TruncRegion -&gt; TruncRegion -&gt; Bool)
+-&gt; (TruncRegion -&gt; TruncRegion -&gt; Bool) -&gt; Eq TruncRegion
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: TruncRegion -&gt; TruncRegion -&gt; Bool
+== :: TruncRegion -&gt; TruncRegion -&gt; Bool
+$c/= :: TruncRegion -&gt; TruncRegion -&gt; Bool
+/= :: TruncRegion -&gt; TruncRegion -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679521608"><span id="local-6989586621679521610"><span id="local-6989586621679521614"><span class="annot"><span class="annottext">Int -&gt; TruncRegion -&gt; ShowS
+[TruncRegion] -&gt; ShowS
+TruncRegion -&gt; String
+(Int -&gt; TruncRegion -&gt; ShowS)
+-&gt; (TruncRegion -&gt; String)
+-&gt; ([TruncRegion] -&gt; ShowS)
+-&gt; Show TruncRegion
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; TruncRegion -&gt; ShowS
+showsPrec :: Int -&gt; TruncRegion -&gt; ShowS
+$cshow :: TruncRegion -&gt; String
+show :: TruncRegion -&gt; String
+$cshowList :: [TruncRegion] -&gt; ShowS
+showList :: [TruncRegion] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="annot"><span class="hs-comment">-- | The maximum number of command characters to display in the logs.</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncRegion"><span class="hs-identifier hs-type">TruncRegion</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">newtype</span><span> </span><span id="Truncation"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-var">Truncation</span></a></span></span><span> </span><span id="local-6989586621679521503"><span class="annot"><a href="#local-6989586621679521503"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkTruncation"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#MkTruncation"><span class="hs-identifier hs-var">MkTruncation</span></a></span></span><span>
+</span><span id="line-38"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="unTruncation"><span class="annot"><span class="annottext">forall (a :: TruncRegion). Truncation a -&gt; Natural
+</span><a href="Shrun.Configuration.Data.Truncation.html#unTruncation"><span class="hs-identifier hs-var hs-var">unTruncation</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679521620"><span id="local-6989586621679521624"><span class="annot"><span class="annottext">Truncation a -&gt; Truncation a -&gt; Bool
+(Truncation a -&gt; Truncation a -&gt; Bool)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Bool) -&gt; Eq (Truncation a)
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+$c== :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+== :: Truncation a -&gt; Truncation a -&gt; Bool
+$c/= :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+/= :: Truncation a -&gt; Truncation a -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679521630"><span id="local-6989586621679521634"><span id="local-6989586621679521637"><span id="local-6989586621679521641"><span id="local-6989586621679521644"><span id="local-6989586621679521647"><span id="local-6989586621679521650"><span class="annot"><span class="annottext">Eq (Truncation a)
+Eq (Truncation a) =&gt;
+(Truncation a -&gt; Truncation a -&gt; Ordering)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Bool)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Bool)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Bool)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Bool)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Truncation a)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Truncation a)
+-&gt; Ord (Truncation a)
+Truncation a -&gt; Truncation a -&gt; Bool
+Truncation a -&gt; Truncation a -&gt; Ordering
+Truncation a -&gt; Truncation a -&gt; Truncation a
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+forall (a :: TruncRegion). Eq (Truncation a)
+forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Ordering
+forall (a :: TruncRegion).
+Truncation a -&gt; Truncation a -&gt; Truncation a
+$ccompare :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Ordering
+compare :: Truncation a -&gt; Truncation a -&gt; Ordering
+$c&lt; :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+&lt; :: Truncation a -&gt; Truncation a -&gt; Bool
+$c&lt;= :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+&lt;= :: Truncation a -&gt; Truncation a -&gt; Bool
+$c&gt; :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+&gt; :: Truncation a -&gt; Truncation a -&gt; Bool
+$c&gt;= :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a -&gt; Bool
+&gt;= :: Truncation a -&gt; Truncation a -&gt; Bool
+$cmax :: forall (a :: TruncRegion).
+Truncation a -&gt; Truncation a -&gt; Truncation a
+max :: Truncation a -&gt; Truncation a -&gt; Truncation a
+$cmin :: forall (a :: TruncRegion).
+Truncation a -&gt; Truncation a -&gt; Truncation a
+min :: Truncation a -&gt; Truncation a -&gt; Truncation a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679521654"><span id="local-6989586621679521660"><span id="local-6989586621679521664"><span class="annot"><span class="annottext">Int -&gt; Truncation a -&gt; ShowS
+[Truncation a] -&gt; ShowS
+Truncation a -&gt; String
+(Int -&gt; Truncation a -&gt; ShowS)
+-&gt; (Truncation a -&gt; String)
+-&gt; ([Truncation a] -&gt; ShowS)
+-&gt; Show (Truncation a)
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+forall (a :: TruncRegion). Int -&gt; Truncation a -&gt; ShowS
+forall (a :: TruncRegion). [Truncation a] -&gt; ShowS
+forall (a :: TruncRegion). Truncation a -&gt; String
+$cshowsPrec :: forall (a :: TruncRegion). Int -&gt; Truncation a -&gt; ShowS
+showsPrec :: Int -&gt; Truncation a -&gt; ShowS
+$cshow :: forall (a :: TruncRegion). Truncation a -&gt; String
+show :: Truncation a -&gt; String
+$cshowList :: forall (a :: TruncRegion). [Truncation a] -&gt; ShowS
+showList :: [Truncation a] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679521667"><span id="local-6989586621679521672"><span id="local-6989586621679521676"><span id="local-6989586621679521680"><span id="local-6989586621679521684"><span id="local-6989586621679521688"><span id="local-6989586621679521692"><span class="annot"><span class="annottext">Integer -&gt; Truncation a
+Truncation a -&gt; Truncation a
+Truncation a -&gt; Truncation a -&gt; Truncation a
+(Truncation a -&gt; Truncation a -&gt; Truncation a)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Truncation a)
+-&gt; (Truncation a -&gt; Truncation a -&gt; Truncation a)
+-&gt; (Truncation a -&gt; Truncation a)
+-&gt; (Truncation a -&gt; Truncation a)
+-&gt; (Truncation a -&gt; Truncation a)
+-&gt; (Integer -&gt; Truncation a)
+-&gt; Num (Truncation a)
+forall a.
+(a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Integer -&gt; a)
+-&gt; Num a
+forall (a :: TruncRegion). Integer -&gt; Truncation a
+forall (a :: TruncRegion). Truncation a -&gt; Truncation a
+forall (a :: TruncRegion).
+Truncation a -&gt; Truncation a -&gt; Truncation a
+$c+ :: forall (a :: TruncRegion).
+Truncation a -&gt; Truncation a -&gt; Truncation a
++ :: Truncation a -&gt; Truncation a -&gt; Truncation a
+$c- :: forall (a :: TruncRegion).
+Truncation a -&gt; Truncation a -&gt; Truncation a
+- :: Truncation a -&gt; Truncation a -&gt; Truncation a
+$c* :: forall (a :: TruncRegion).
+Truncation a -&gt; Truncation a -&gt; Truncation a
+* :: Truncation a -&gt; Truncation a -&gt; Truncation a
+$cnegate :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a
+negate :: Truncation a -&gt; Truncation a
+$cabs :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a
+abs :: Truncation a -&gt; Truncation a
+$csignum :: forall (a :: TruncRegion). Truncation a -&gt; Truncation a
+signum :: Truncation a -&gt; Truncation a
+$cfromInteger :: forall (a :: TruncRegion). Integer -&gt; Truncation a
+fromInteger :: Integer -&gt; Truncation a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Num</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-44"></span><span>  </span><span id="local-6989586621679521532"><span id="local-6989586621679521533"><span id="local-6989586621679521534"><span id="local-6989586621679521535"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679521532"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#An_Iso"><span class="hs-identifier hs-type">An_Iso</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679521533"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679521534"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-45"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;unTruncation&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679521532"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679521535"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679521535"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679521533"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679521534"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-47"></span><span>  </span><span id="local-6989586621679521706"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (Truncation r) (Truncation r) a b
+</span><a href="#local-6989586621679521706"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Truncation r -&gt; a)
+-&gt; (b -&gt; Truncation r) -&gt; Iso (Truncation r) (Truncation r) a b
+forall s a b t. (s -&gt; a) -&gt; (b -&gt; t) -&gt; Iso s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Iso.html#iso"><span class="hs-identifier hs-var">iso</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#MkTruncation"><span class="hs-identifier hs-type">MkTruncation</span></a></span><span> </span><span id="local-6989586621679521709"><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679521709"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Natural
+</span><a href="#local-6989586621679521709"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">b -&gt; Truncation r
+Natural -&gt; Truncation r
+forall (a :: TruncRegion). Natural -&gt; Truncation a
+</span><a href="Shrun.Configuration.Data.Truncation.html#MkTruncation"><span class="hs-identifier hs-var">MkTruncation</span></a></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679521499"><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679521499"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-51"></span><span>  </span><span id="local-6989586621679521716"><span class="annot"><span class="annottext">tomlDecoder :: Decoder (Truncation a)
+</span><a href="#local-6989586621679521716"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Natural -&gt; Decoder (Truncation a)
+forall (m :: Type -&gt; Type) (r :: TruncRegion).
+MonadFail m =&gt;
+m Natural -&gt; m (Truncation r)
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseTruncation"><span class="hs-identifier hs-var">parseTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Natural
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span id="local-6989586621679521544"><span id="local-6989586621679521545"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#parseTruncation"><span class="hs-identifier hs-type">parseTruncation</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679521544"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679521544"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679521544"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679521545"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-54"></span><span id="parseTruncation"><span class="annot"><span class="annottext">parseTruncation :: forall (m :: Type -&gt; Type) (r :: TruncRegion).
+MonadFail m =&gt;
+m Natural -&gt; m (Truncation r)
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseTruncation"><span class="hs-identifier hs-var hs-var">parseTruncation</span></a></span></span><span> </span><span id="local-6989586621679521726"><span class="annot"><span class="annottext">m Natural
+</span><a href="#local-6989586621679521726"><span class="hs-identifier hs-var">getNat</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Truncation r
+forall (a :: TruncRegion). Natural -&gt; Truncation a
+</span><a href="Shrun.Configuration.Data.Truncation.html#MkTruncation"><span class="hs-identifier hs-var">MkTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; Truncation r) -&gt; m Natural -&gt; m (Truncation r)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">m Natural
+</span><a href="#local-6989586621679521726"><span class="hs-identifier hs-var">getNat</span></a></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- | Determines command log line truncation behavior. We need a separate</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- type from 'Truncation' to add a third option, to detect the terminal size</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- automatically.</span><span>
+</span><span id="line-59"></span><span class="hs-keyword">data</span><span> </span><span id="LineTruncation"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-var">LineTruncation</span></a></span></span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="Undetected"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Undetected"><span class="hs-identifier hs-var">Undetected</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncLine"><span class="hs-identifier hs-type">TruncLine</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="Detected"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Detected"><span class="hs-identifier hs-var">Detected</span></a></span></span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679521731"><span id="local-6989586621679521734"><span class="annot"><span class="annottext">LineTruncation -&gt; LineTruncation -&gt; Bool
+(LineTruncation -&gt; LineTruncation -&gt; Bool)
+-&gt; (LineTruncation -&gt; LineTruncation -&gt; Bool) -&gt; Eq LineTruncation
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: LineTruncation -&gt; LineTruncation -&gt; Bool
+== :: LineTruncation -&gt; LineTruncation -&gt; Bool
+$c/= :: LineTruncation -&gt; LineTruncation -&gt; Bool
+/= :: LineTruncation -&gt; LineTruncation -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679521738"><span id="local-6989586621679521742"><span id="local-6989586621679521746"><span class="annot"><span class="annottext">Int -&gt; LineTruncation -&gt; ShowS
+[LineTruncation] -&gt; ShowS
+LineTruncation -&gt; String
+(Int -&gt; LineTruncation -&gt; ShowS)
+-&gt; (LineTruncation -&gt; String)
+-&gt; ([LineTruncation] -&gt; ShowS)
+-&gt; Show LineTruncation
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; LineTruncation -&gt; ShowS
+showsPrec :: Int -&gt; LineTruncation -&gt; ShowS
+$cshow :: LineTruncation -&gt; String
+show :: LineTruncation -&gt; String
+$cshowList :: [LineTruncation] -&gt; ShowS
+showList :: [LineTruncation] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-65"></span><span>  </span><span id="local-6989586621679521755"><span class="annot"><span class="annottext">tomlDecoder :: Decoder LineTruncation
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Natural -&gt; Decoder Text -&gt; Decoder LineTruncation
+forall (m :: Type -&gt; Type).
+(Alternative m, MonadFail m) =&gt;
+m Natural -&gt; m Text -&gt; m LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseLineTruncation"><span class="hs-identifier hs-var">parseLineTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Natural
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span id="local-6989586621679521556"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#parseLineTruncation"><span class="hs-identifier hs-type">parseLineTruncation</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Alternative</span></span><span> </span><span class="annot"><a href="#local-6989586621679521556"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679521556"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-69"></span><span>  </span><span class="annot"><a href="#local-6989586621679521556"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-70"></span><span>  </span><span class="annot"><a href="#local-6989586621679521556"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-71"></span><span>  </span><span class="annot"><a href="#local-6989586621679521556"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span></span><span>
+</span><span id="line-72"></span><span id="parseLineTruncation"><span class="annot"><span class="annottext">parseLineTruncation :: forall (m :: Type -&gt; Type).
+(Alternative m, MonadFail m) =&gt;
+m Natural -&gt; m Text -&gt; m LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseLineTruncation"><span class="hs-identifier hs-var hs-var">parseLineTruncation</span></a></span></span><span> </span><span id="local-6989586621679521765"><span class="annot"><span class="annottext">m Natural
+</span><a href="#local-6989586621679521765"><span class="hs-identifier hs-var">getNat</span></a></span></span><span> </span><span id="local-6989586621679521766"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679521766"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-73"></span><span>  </span><span class="annot"><span class="annottext">Truncation 'TruncLine -&gt; LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#Undetected"><span class="hs-identifier hs-var">Undetected</span></a></span><span>
+</span><span id="line-74"></span><span>    </span><span class="annot"><span class="annottext">(Truncation 'TruncLine -&gt; LineTruncation)
+-&gt; m (Truncation 'TruncLine) -&gt; m LineTruncation
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">m Natural -&gt; m (Truncation 'TruncLine)
+forall (m :: Type -&gt; Type) (r :: TruncRegion).
+MonadFail m =&gt;
+m Natural -&gt; m (Truncation r)
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseTruncation"><span class="hs-identifier hs-var">parseTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">m Natural
+</span><a href="#local-6989586621679521765"><span class="hs-identifier hs-var">getNat</span></a></span><span>
+</span><span id="line-75"></span><span>    </span><span class="annot"><span class="annottext">m LineTruncation -&gt; m LineTruncation -&gt; m LineTruncation
+forall a. m a -&gt; m a -&gt; m a
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">m Text -&gt; m LineTruncation
+forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseDetected"><span class="hs-identifier hs-var">parseDetected</span></a></span><span> </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679521766"><span class="hs-identifier hs-var">getTxt</span></a></span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span id="local-6989586621679521560"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#parseDetected"><span class="hs-identifier hs-type">parseDetected</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679521560"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679521560"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679521560"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span></span><span>
+</span><span id="line-78"></span><span id="parseDetected"><span class="annot"><span class="annottext">parseDetected :: forall (m :: Type -&gt; Type).
+MonadFail m =&gt;
+m Text -&gt; m LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#parseDetected"><span class="hs-identifier hs-var hs-var">parseDetected</span></a></span></span><span> </span><span id="local-6989586621679521783"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679521783"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-79"></span><span>  </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679521783"><span class="hs-identifier hs-var">getTxt</span></a></span><span> </span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m LineTruncation) -&gt; m LineTruncation
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-80"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;detect&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LineTruncation -&gt; m LineTruncation
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#Detected"><span class="hs-identifier hs-var">Detected</span></a></span><span>
+</span><span id="line-81"></span><span>    </span><span id="local-6989586621679521784"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521784"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; m LineTruncation
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; m LineTruncation) -&gt; String -&gt; m LineTruncation
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Wanted other, received: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679521784"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#decodeCommandNameTrunc"><span class="hs-identifier hs-type">decodeCommandNameTrunc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncCommandName"><span class="hs-identifier hs-type">TruncCommandName</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span id="decodeCommandNameTrunc"><span class="annot"><span class="annottext">decodeCommandNameTrunc :: Decoder (Maybe (Truncation 'TruncCommandName))
+</span><a href="Shrun.Configuration.Data.Truncation.html#decodeCommandNameTrunc"><span class="hs-identifier hs-var hs-var">decodeCommandNameTrunc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder (Truncation 'TruncCommandName)
+-&gt; Text -&gt; Decoder (Maybe (Truncation 'TruncCommandName))
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (Truncation 'TruncCommandName)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;command-name-trunc&quot;</span></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#decodeLineTrunc"><span class="hs-identifier hs-type">decodeLineTrunc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span id="decodeLineTrunc"><span class="annot"><span class="annottext">decodeLineTrunc :: Decoder (Maybe LineTruncation)
+</span><a href="Shrun.Configuration.Data.Truncation.html#decodeLineTrunc"><span class="hs-identifier hs-var hs-var">decodeLineTrunc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder LineTruncation -&gt; Text -&gt; Decoder (Maybe LineTruncation)
+forall a. Decoder a -&gt; Text -&gt; Decoder (Maybe a)
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldOptWith"><span class="hs-identifier hs-var">getFieldOptWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder LineTruncation
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;line-trunc&quot;</span></span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="annot"><span class="hs-comment">-- | Maps line trunc config to actual value.</span></span><span>
+</span><span id="line-90"></span><span id="local-6989586621679521575"><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#configToLineTrunc"><span class="hs-identifier hs-type">configToLineTrunc</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-91"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-92"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-terminal-0.1-79544aab75b25eb7e1d478beef2547ed7103c3686224eb8fd6cfb2d96a5998f8/share/doc/html/src/Effects.System.Terminal.html#MonadTerminal"><span class="hs-identifier hs-type">MonadTerminal</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679521575"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-94"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#WithDisabled"><span class="hs-identifier hs-type">WithDisabled</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#LineTruncation"><span class="hs-identifier hs-type">LineTruncation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-95"></span><span>  </span><span class="annot"><a href="#local-6989586621679521575"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Truncation"><span class="hs-identifier hs-type">Truncation</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#TruncLine"><span class="hs-identifier hs-type">TruncLine</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span></span><span>
+</span><span id="line-96"></span><span id="configToLineTrunc"><span class="annot"><span class="annottext">configToLineTrunc :: forall (m :: Type -&gt; Type).
+(HasCallStack, MonadTerminal m) =&gt;
+WithDisabled LineTruncation -&gt; m (Maybe (Truncation 'TruncLine))
+</span><a href="Shrun.Configuration.Data.Truncation.html#configToLineTrunc"><span class="hs-identifier hs-var hs-var">configToLineTrunc</span></a></span></span><span> </span><span class="annot"><span class="annottext">WithDisabled LineTruncation
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Disabled"><span class="hs-identifier hs-var">Disabled</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TruncLine) -&gt; m (Maybe (Truncation 'TruncLine))
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TruncLine)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#configToLineTrunc"><span class="hs-identifier hs-var">configToLineTrunc</span></a></span><span> </span><span class="annot"><span class="annottext">WithDisabled LineTruncation
+</span><a href="Shrun.Configuration.Data.WithDisabled.html#Without"><span class="hs-identifier hs-var">Without</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TruncLine) -&gt; m (Maybe (Truncation 'TruncLine))
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TruncLine)
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-98"></span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#configToLineTrunc"><span class="hs-identifier hs-var">configToLineTrunc</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span class="annot"><span class="annottext">LineTruncation
+</span><a href="Shrun.Configuration.Data.Truncation.html#Detected"><span class="hs-identifier hs-var">Detected</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Truncation 'TruncLine -&gt; Maybe (Truncation 'TruncLine)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Truncation 'TruncLine -&gt; Maybe (Truncation 'TruncLine))
+-&gt; (Natural -&gt; Truncation 'TruncLine)
+-&gt; Natural
+-&gt; Maybe (Truncation 'TruncLine)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Truncation 'TruncLine
+forall (a :: TruncRegion). Natural -&gt; Truncation a
+</span><a href="Shrun.Configuration.Data.Truncation.html#MkTruncation"><span class="hs-identifier hs-var">MkTruncation</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; Maybe (Truncation 'TruncLine))
+-&gt; m Natural -&gt; m (Maybe (Truncation 'TruncLine))
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">m Natural
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadTerminal m) =&gt;
+m Natural
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-terminal-0.1-79544aab75b25eb7e1d478beef2547ed7103c3686224eb8fd6cfb2d96a5998f8/share/doc/html/src/Effects.System.Terminal.html#getTerminalWidth"><span class="hs-identifier hs-var">getTerminalWidth</span></a></span><span>
+</span><span id="line-99"></span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#configToLineTrunc"><span class="hs-identifier hs-var">configToLineTrunc</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.WithDisabled.html#With"><span class="hs-identifier hs-type">With</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.Truncation.html#Undetected"><span class="hs-identifier hs-type">Undetected</span></a></span><span> </span><span id="local-6989586621679521801"><span class="annot"><span class="annottext">Truncation 'TruncLine
+</span><a href="#local-6989586621679521801"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe (Truncation 'TruncLine) -&gt; m (Maybe (Truncation 'TruncLine))
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Maybe (Truncation 'TruncLine)
+ -&gt; m (Maybe (Truncation 'TruncLine)))
+-&gt; Maybe (Truncation 'TruncLine)
+-&gt; m (Maybe (Truncation 'TruncLine))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Truncation 'TruncLine -&gt; Maybe (Truncation 'TruncLine)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Truncation 'TruncLine
+</span><a href="#local-6989586621679521801"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-100"></span></pre></body></html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679523205"><span id="local-6989586621679523206"></span></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.CommonLogging.KeyHideSwitch</span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier">KeyHideSwitch</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- | Type for determining if we use the command's key</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- for display, rather than the key itself.</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">data</span><span> </span><span id="KeyHideSwitch"><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier hs-var">KeyHideSwitch</span></a></span></span><span>
+</span><span id="line-12"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | Display the command's key, if it exists, rather</span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-comment">-- than the key itself.</span><span>
+</span><span id="line-14"></span><span>    </span><span id="KeyHideOff"><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Display the command itself, not the key.</span></span><span>
+</span><span id="line-16"></span><span>    </span><span id="KeyHideOn"><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideOn"><span class="hs-identifier hs-var">KeyHideOn</span></a></span></span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679523211"><span id="local-6989586621679523213"><span class="annot"><span class="annottext">KeyHideSwitch
+KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bounded KeyHideSwitch
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: KeyHideSwitch
+minBound :: KeyHideSwitch
+$cmaxBound :: KeyHideSwitch
+maxBound :: KeyHideSwitch
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679523217"><span id="local-6989586621679523225"><span id="local-6989586621679523231"><span id="local-6989586621679523245"><span id="local-6989586621679523247"><span id="local-6989586621679523251"><span id="local-6989586621679523255"><span id="local-6989586621679523259"><span class="annot"><span class="annottext">Int -&gt; KeyHideSwitch
+KeyHideSwitch -&gt; Int
+KeyHideSwitch -&gt; [KeyHideSwitch]
+KeyHideSwitch -&gt; KeyHideSwitch
+KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+(KeyHideSwitch -&gt; KeyHideSwitch)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch)
+-&gt; (Int -&gt; KeyHideSwitch)
+-&gt; (KeyHideSwitch -&gt; Int)
+-&gt; (KeyHideSwitch -&gt; [KeyHideSwitch])
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch])
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch])
+-&gt; (KeyHideSwitch
+    -&gt; KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch])
+-&gt; Enum KeyHideSwitch
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: KeyHideSwitch -&gt; KeyHideSwitch
+succ :: KeyHideSwitch -&gt; KeyHideSwitch
+$cpred :: KeyHideSwitch -&gt; KeyHideSwitch
+pred :: KeyHideSwitch -&gt; KeyHideSwitch
+$ctoEnum :: Int -&gt; KeyHideSwitch
+toEnum :: Int -&gt; KeyHideSwitch
+$cfromEnum :: KeyHideSwitch -&gt; Int
+fromEnum :: KeyHideSwitch -&gt; Int
+$cenumFrom :: KeyHideSwitch -&gt; [KeyHideSwitch]
+enumFrom :: KeyHideSwitch -&gt; [KeyHideSwitch]
+$cenumFromThen :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+enumFromThen :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+$cenumFromTo :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+enumFromTo :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+$cenumFromThenTo :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+enumFromThenTo :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch -&gt; [KeyHideSwitch]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679523263"><span id="local-6989586621679523265"><span class="annot"><span class="annottext">KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+(KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool) -&gt; Eq KeyHideSwitch
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+== :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+$c/= :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+/= :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679523272"><span id="local-6989586621679523274"><span id="local-6989586621679523276"><span id="local-6989586621679523280"><span id="local-6989586621679523283"><span id="local-6989586621679523286"><span id="local-6989586621679523289"><span class="annot"><span class="annottext">Eq KeyHideSwitch
+Eq KeyHideSwitch =&gt;
+(KeyHideSwitch -&gt; KeyHideSwitch -&gt; Ordering)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch)
+-&gt; (KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch)
+-&gt; Ord KeyHideSwitch
+KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+KeyHideSwitch -&gt; KeyHideSwitch -&gt; Ordering
+KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Ordering
+compare :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Ordering
+$c&lt; :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+&lt; :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+$c&lt;= :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+&lt;= :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+$c&gt; :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+&gt; :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+$c&gt;= :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+&gt;= :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; Bool
+$cmax :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch
+max :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch
+$cmin :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch
+min :: KeyHideSwitch -&gt; KeyHideSwitch -&gt; KeyHideSwitch
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679523293"><span id="local-6989586621679523295"><span id="local-6989586621679523299"><span class="annot"><span class="annottext">Int -&gt; KeyHideSwitch -&gt; ShowS
+[KeyHideSwitch] -&gt; ShowS
+KeyHideSwitch -&gt; [Char]
+(Int -&gt; KeyHideSwitch -&gt; ShowS)
+-&gt; (KeyHideSwitch -&gt; [Char])
+-&gt; ([KeyHideSwitch] -&gt; ShowS)
+-&gt; Show KeyHideSwitch
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; [Char]) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; KeyHideSwitch -&gt; ShowS
+showsPrec :: Int -&gt; KeyHideSwitch -&gt; ShowS
+$cshow :: KeyHideSwitch -&gt; [Char]
+show :: KeyHideSwitch -&gt; [Char]
+$cshowList :: [KeyHideSwitch] -&gt; ShowS
+showList :: [KeyHideSwitch] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier hs-type">KeyHideSwitch</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-20"></span><span>  </span><span id="local-6989586621679523309"><span class="annot"><span class="annottext">tomlDecoder :: Decoder KeyHideSwitch
+</span><a href="#local-6989586621679523309"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><span class="annottext">Decoder Bool
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Bool -&gt; (Bool -&gt; KeyHideSwitch) -&gt; Decoder KeyHideSwitch
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-22"></span><span>      </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideOn"><span class="hs-identifier hs-var">KeyHideOn</span></a></span><span>
+</span><span id="line-23"></span><span>      </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier hs-type">Default</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier hs-type">KeyHideSwitch</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-26"></span><span>  </span><span id="local-6989586621679523315"><span class="annot"><span class="annottext">def :: KeyHideSwitch
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var hs-var hs-var hs-var">def</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideOff"><span class="hs-identifier hs-var">KeyHideOff</span></a></span><span>
+</span><span id="line-27"></span></pre></body></html>

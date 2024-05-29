@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Provides types for the legend.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Toml.Legend</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#LegendMap"><span class="hs-identifier">LegendMap</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier">KeyVal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#MkKeyVal"><span class="hs-identifier">MkKeyVal</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#mkKeyVal"><span class="hs-identifier">mkKeyVal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#unsafeKeyVal"><span class="hs-identifier">unsafeKeyVal</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Strict.html"><span class="hs-identifier">Data.HashMap.Strict</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Internal.html#HashMap"><span class="hs-identifier">HashMap</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Sequence</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Seq</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.html"><span class="hs-identifier">Data.Sequence.NonEmpty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">NESeq</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="annot"><span class="hs-comment">-- | Alias for our legend map.</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">type</span><span> </span><span id="LegendMap"><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#LegendMap"><span class="hs-identifier hs-var">LegendMap</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashMap.Internal.html#HashMap"><span class="hs-identifier hs-type">HashMap</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- | Holds a map key/val pair. The maintained invariants are:</span><span>
+</span><span id="line-21"></span><span class="hs-comment">--</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- * @key@ is non-empty.</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- * @val@ is non-empty.</span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- * all @v_i@ in @val@ are non-empty.</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">data</span><span> </span><span id="KeyVal"><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-var">KeyVal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UnsafeKeyVal"><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#UnsafeKeyVal"><span class="hs-identifier hs-var">UnsafeKeyVal</span></a></span></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="key"><span class="annot"><span class="annottext">KeyVal -&gt; Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#key"><span class="hs-identifier hs-var hs-var">key</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span id="val"><span class="annot"><span class="annottext">KeyVal -&gt; NESeq Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#val"><span class="hs-identifier hs-var hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679520831"><span id="local-6989586621679520836"><span class="annot"><span class="annottext">KeyVal -&gt; KeyVal -&gt; Bool
+(KeyVal -&gt; KeyVal -&gt; Bool)
+-&gt; (KeyVal -&gt; KeyVal -&gt; Bool) -&gt; Eq KeyVal
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: KeyVal -&gt; KeyVal -&gt; Bool
+== :: KeyVal -&gt; KeyVal -&gt; Bool
+$c/= :: KeyVal -&gt; KeyVal -&gt; Bool
+/= :: KeyVal -&gt; KeyVal -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679520841"><span id="local-6989586621679520849"><span id="local-6989586621679520853"><span class="annot"><span class="annottext">Int -&gt; KeyVal -&gt; ShowS
+[KeyVal] -&gt; ShowS
+KeyVal -&gt; String
+(Int -&gt; KeyVal -&gt; ShowS)
+-&gt; (KeyVal -&gt; String) -&gt; ([KeyVal] -&gt; ShowS) -&gt; Show KeyVal
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; KeyVal -&gt; ShowS
+showsPrec :: Int -&gt; KeyVal -&gt; ShowS
+$cshow :: KeyVal -&gt; String
+show :: KeyVal -&gt; String
+$cshowList :: [KeyVal] -&gt; ShowS
+showList :: [KeyVal] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="annot"><span class="hs-comment">-- | Unidirectional pattern synonym for 'KeyVal'.</span></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">pattern</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#MkKeyVal"><span class="hs-identifier hs-type">MkKeyVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">pattern</span><span> </span><span id="MkKeyVal"><span id="%24mMkKeyVal"><span class="annot"><span class="annottext">$mMkKeyVal :: forall {r}.
+KeyVal -&gt; (Text -&gt; NESeq Text -&gt; r) -&gt; ((# #) -&gt; r) -&gt; r
+</span><a href="Shrun.Configuration.Toml.Legend.html#MkKeyVal"><span class="hs-identifier hs-var hs-var">MkKeyVal</span></a></span></span></span><span> </span><span class="annot"><a href="#local-6989586621679520857"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520858"><span class="hs-identifier hs-type">v</span></a></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#UnsafeKeyVal"><span class="hs-identifier hs-type">UnsafeKeyVal</span></a></span><span> </span><span id="local-6989586621679520857"><span class="annot"><a href="#local-6989586621679520857"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span id="local-6989586621679520858"><span class="annot"><a href="#local-6989586621679520858"><span class="hs-identifier hs-var">v</span></a></span></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-pragma">{-# COMPLETE</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#MkKeyVal"><span class="hs-pragma hs-type">MkKeyVal</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-38"></span><span>  </span><span id="local-6989586621679520735"><span id="local-6989586621679520736"><span id="local-6989586621679520737"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520735"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Getter"><span class="hs-identifier hs-type">A_Getter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><a href="#local-6989586621679520736"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><a href="#local-6989586621679520737"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-42"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;key&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520735"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520736"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520737"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-44"></span><span>  </span><span id="local-6989586621679520868"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx KeyVal KeyVal a b
+</span><a href="#local-6989586621679520868"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(KeyVal -&gt; a) -&gt; Getter KeyVal a
+forall s a. (s -&gt; a) -&gt; Getter s a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#to"><span class="hs-identifier hs-var">to</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#UnsafeKeyVal"><span class="hs-identifier hs-type">UnsafeKeyVal</span></a></span><span> </span><span id="local-6989586621679520871"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520871"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span class="annot"><span class="annottext">NESeq Text
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Text
+</span><a href="#local-6989586621679520871"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-48"></span><span>  </span><span id="local-6989586621679520747"><span id="local-6989586621679520748"><span id="local-6989586621679520749"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520747"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Getter"><span class="hs-identifier hs-type">A_Getter</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><a href="#local-6989586621679520748"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><a href="#local-6989586621679520749"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;val&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520747"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520748"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520749"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-54"></span><span>  </span><span id="local-6989586621679520880"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx KeyVal KeyVal a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(KeyVal -&gt; a) -&gt; Getter KeyVal a
+forall s a. (s -&gt; a) -&gt; Getter s a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#to"><span class="hs-identifier hs-var">to</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#UnsafeKeyVal"><span class="hs-identifier hs-type">UnsafeKeyVal</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679520881"><span class="annot"><span class="annottext">NESeq Text
+</span><a href="#local-6989586621679520881"><span class="hs-identifier hs-var">v</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+NESeq Text
+</span><a href="#local-6989586621679520881"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-58"></span><span>  </span><span id="local-6989586621679520887"><span class="annot"><span class="annottext">tomlDecoder :: Decoder KeyVal
+</span><a href="#local-6989586621679520887"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><span class="annottext">Text -&gt; NESeq Text -&gt; KeyVal
+</span><a href="Shrun.Configuration.Toml.Legend.html#UnsafeKeyVal"><span class="hs-identifier hs-var">UnsafeKeyVal</span></a></span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">(Text -&gt; NESeq Text -&gt; KeyVal)
+-&gt; Decoder Text -&gt; Decoder (NESeq Text -&gt; KeyVal)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeKey"><span class="hs-identifier hs-var">decodeKey</span></a></span><span>
+</span><span id="line-61"></span><span>      </span><span class="annot"><span class="annottext">Decoder (NESeq Text -&gt; KeyVal)
+-&gt; Decoder (NESeq Text) -&gt; Decoder KeyVal
+forall a b. Decoder (a -&gt; b) -&gt; Decoder a -&gt; Decoder b
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder (NESeq Text)
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeVal"><span class="hs-identifier hs-var">decodeVal</span></a></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- | Smart constructor for 'KeyVal'. Given @UnsafeKeyVal key vals@, all</span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- conditions must be satisfied for success:</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- * @key@ is non-empty.</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- * @vals@ is non-empty.</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- * all @v_i@ in @vals@ are non-empty.</span><span>
+</span><span id="line-69"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#mkKeyVal"><span class="hs-identifier hs-type">mkKeyVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span>
+</span><span id="line-70"></span><span id="mkKeyVal"><span class="annot"><span class="annottext">mkKeyVal :: Text -&gt; List Text -&gt; Maybe KeyVal
+</span><a href="Shrun.Configuration.Toml.Legend.html#mkKeyVal"><span class="hs-identifier hs-var hs-var">mkKeyVal</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">List Text
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe KeyVal
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-71"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#mkKeyVal"><span class="hs-identifier hs-var">mkKeyVal</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe KeyVal
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-72"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#mkKeyVal"><span class="hs-identifier hs-var">mkKeyVal</span></a></span><span> </span><span id="local-6989586621679520892"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520892"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span id="local-6989586621679520893"><span class="annot"><span class="annottext">List Text
+</span><a href="#local-6989586621679520893"><span class="hs-identifier hs-var">vals</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; NESeq Text -&gt; KeyVal
+</span><a href="Shrun.Configuration.Toml.Legend.html#UnsafeKeyVal"><span class="hs-identifier hs-var">UnsafeKeyVal</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520892"><span class="hs-identifier hs-var">k</span></a></span><span> </span><span class="annot"><span class="annottext">(NESeq Text -&gt; KeyVal) -&gt; Maybe (NESeq Text) -&gt; Maybe KeyVal
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Seq Text -&gt; Maybe (NESeq Text)
+forall a. Seq a -&gt; Maybe (NESeq a)
+</span><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.html#nonEmptySeq"><span class="hs-identifier hs-var">NESeq.nonEmptySeq</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">List Text -&gt; Seq Text
+forall a. [a] -&gt; Seq a
+</span><span class="hs-identifier hs-var">Seq.fromList</span></span><span> </span><span class="annot"><span class="annottext">List Text
+</span><a href="#local-6989586621679520893"><span class="hs-identifier hs-var">vals</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="hs-comment">{- HLINT ignore unsafeKeyVal &quot;Redundant bracket&quot; -}</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><span class="hs-comment">-- | Variant of 'UnsafeKeyVal' that throws an error on failures.</span></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#unsafeKeyVal"><span class="hs-identifier hs-type">unsafeKeyVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#KeyVal"><span class="hs-identifier hs-type">KeyVal</span></a></span><span>
+</span><span id="line-78"></span><span id="unsafeKeyVal"><span class="annot"><span class="annottext">unsafeKeyVal :: HasCallStack =&gt; Text -&gt; List Text -&gt; KeyVal
+</span><a href="Shrun.Configuration.Toml.Legend.html#unsafeKeyVal"><span class="hs-identifier hs-var hs-var">unsafeKeyVal</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">List Text
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; KeyVal
+forall a. HasCallStack =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty key&quot;</span></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#unsafeKeyVal"><span class="hs-identifier hs-var">unsafeKeyVal</span></a></span><span> </span><span id="local-6989586621679520904"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520904"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span id="local-6989586621679520905"><span class="annot"><span class="annottext">List Text
+</span><a href="#local-6989586621679520905"><span class="hs-identifier hs-var">vals</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; List Text -&gt; Maybe KeyVal
+</span><a href="Shrun.Configuration.Toml.Legend.html#mkKeyVal"><span class="hs-identifier hs-var">mkKeyVal</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520904"><span class="hs-identifier hs-var">k</span></a></span><span> </span><span class="annot"><span class="annottext">List Text
+</span><a href="#local-6989586621679520905"><span class="hs-identifier hs-var">vals</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-80"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679520906"><span class="annot"><span class="annottext">KeyVal
+</span><a href="#local-6989586621679520906"><span class="hs-identifier hs-var">kv</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">KeyVal
+</span><a href="#local-6989586621679520906"><span class="hs-identifier hs-var">kv</span></a></span><span>
+</span><span id="line-81"></span><span>  </span><span class="annot"><span class="annottext">Maybe KeyVal
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; KeyVal
+forall a. HasCallStack =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty val&quot;</span></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#decodeKey"><span class="hs-identifier hs-type">decodeKey</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-84"></span><span id="decodeKey"><span class="annot"><span class="annottext">decodeKey :: Decoder Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeKey"><span class="hs-identifier hs-var hs-var">decodeKey</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Text -&gt; Decoder Text
+forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeNonEmptyText"><span class="hs-identifier hs-var">decodeNonEmptyText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;key&quot;</span></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#decodeVal"><span class="hs-identifier hs-type">decodeVal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span id="decodeVal"><span class="annot"><span class="annottext">decodeVal :: Decoder (NESeq Text)
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeVal"><span class="hs-identifier hs-var hs-var">decodeVal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder (NESeq Text) -&gt; Text -&gt; Decoder (NESeq Text)
+forall a. Decoder a -&gt; Text -&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#getFieldWith"><span class="hs-identifier hs-var">getFieldWith</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Decoder (NESeq Text)
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeArray"><span class="hs-identifier hs-var">decodeArray</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (NESeq Text)
+-&gt; Decoder (NESeq Text) -&gt; Decoder (NESeq Text)
+forall a. Decoder a -&gt; Decoder a -&gt; Decoder a
+forall (f :: Type -&gt; Type) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; NESeq Text) -&gt; Decoder Text -&gt; Decoder (NESeq Text)
+forall a b. (a -&gt; b) -&gt; Decoder a -&gt; Decoder b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; NESeq Text
+forall a. a -&gt; NESeq a
+</span><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#singleton"><span class="hs-identifier hs-var">NESeq.singleton</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeNonEmptyText"><span class="hs-identifier hs-var">decodeNonEmptyText</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;val&quot;</span></span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#decodeArray"><span class="hs-identifier hs-type">decodeArray</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-90"></span><span id="decodeArray"><span class="annot"><span class="annottext">decodeArray :: Decoder (NESeq Text)
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeArray"><span class="hs-identifier hs-var hs-var">decodeArray</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-91"></span><span>  </span><span class="annot"><span class="annottext">Decoder (NonEmpty Text)
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder (NonEmpty Text)
+-&gt; (NonEmpty Text -&gt; Decoder (NESeq Text)) -&gt; Decoder (NESeq Text)
+forall a b. Decoder a -&gt; (a -&gt; Decoder b) -&gt; Decoder b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Maybe Text) -&gt; NonEmpty Text -&gt; Maybe (NonEmpty Text)
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(Traversable t, Applicative f) =&gt;
+(a -&gt; f b) -&gt; t a -&gt; f (t b)
+forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+(a -&gt; f b) -&gt; NonEmpty a -&gt; f (NonEmpty b)
+</span><span class="hs-identifier hs-var">traverse</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#testNE"><span class="hs-identifier hs-var">testNE</span></a></span><span> </span><span class="annot"><span class="annottext">(NonEmpty Text -&gt; Maybe (NonEmpty Text))
+-&gt; (Maybe (NonEmpty Text) -&gt; Decoder (NESeq Text))
+-&gt; NonEmpty Text
+-&gt; Decoder (NESeq Text)
+forall a b c. (a -&gt; b) -&gt; (b -&gt; c) -&gt; a -&gt; c
+</span><a href="Shrun.Prelude.html#.%3E"><span class="hs-operator hs-var">.&gt;</span></a></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-92"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679520915"><span class="annot"><span class="annottext">NonEmpty Text
+</span><a href="#local-6989586621679520915"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NESeq Text -&gt; Decoder (NESeq Text)
+forall a. a -&gt; Decoder a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(NESeq Text -&gt; Decoder (NESeq Text))
+-&gt; NESeq Text -&gt; Decoder (NESeq Text)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty Text -&gt; NESeq Text
+forall a. NonEmpty a -&gt; NESeq a
+</span><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#fromList"><span class="hs-identifier hs-var">NESeq.fromList</span></a></span><span> </span><span class="annot"><span class="annottext">NonEmpty Text
+</span><a href="#local-6989586621679520915"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><span class="annottext">Maybe (NonEmpty Text)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Decoder (NESeq Text)
+forall a. String -&gt; Decoder a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Unexpected empty val&quot;</span></span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#decodeNonEmptyText"><span class="hs-identifier hs-type">decodeNonEmptyText</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#Decoder"><span class="hs-identifier hs-type">Decoder</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-96"></span><span id="decodeNonEmptyText"><span class="annot"><span class="annottext">decodeNonEmptyText :: Decoder Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#decodeNonEmptyText"><span class="hs-identifier hs-var hs-var">decodeNonEmptyText</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-97"></span><span>  </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; (Text -&gt; Decoder Text) -&gt; Decoder Text
+forall a b. Decoder a -&gt; (a -&gt; Decoder b) -&gt; Decoder b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-98"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Decoder Text
+forall a. String -&gt; Decoder a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Unexpected empty text&quot;</span></span><span>
+</span><span id="line-99"></span><span>    </span><span id="local-6989586621679520917"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520917"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Decoder Text
+forall a. a -&gt; Decoder a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520917"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#testNE"><span class="hs-identifier hs-type">testNE</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-102"></span><span id="testNE"><span class="annot"><span class="annottext">testNE :: Text -&gt; Maybe Text
+</span><a href="Shrun.Configuration.Toml.Legend.html#testNE"><span class="hs-identifier hs-var hs-var">testNE</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-103"></span><span class="annot"><a href="Shrun.Configuration.Toml.Legend.html#testNE"><span class="hs-identifier hs-var">testNE</span></a></span><span> </span><span id="local-6989586621679520918"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520918"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe Text
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520918"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-104"></span></pre></body></html>

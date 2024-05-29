@@ -1,0 +1,232 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Effect for DBus.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Notify.MonadDBus</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier">MonadDBus</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#notifyDBus"><span class="hs-identifier">notifyDBus</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/mma6y2y7ixx5z5jzlmal76vwiz0p5z1k-dbus-1.3.3-doc/share/doc/dbus-1.3.3/html/src/DBus.Client.html"><span class="hs-identifier">DBus.Client</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/mma6y2y7ixx5z5jzlmal76vwiz0p5z1k-dbus-1.3.3-doc/share/doc/dbus-1.3.3/html/src/DBus.Client.html#Client"><span class="hs-identifier">Client</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/mma6y2y7ixx5z5jzlmal76vwiz0p5z1k-dbus-1.3.3-doc/share/doc/dbus-1.3.3/html/src/DBus.Client.html"><span class="hs-identifier">DBus.Client</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">DBusC</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html"><span class="hs-identifier">DBus.Notify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Hint"><span class="hs-identifier">Hint</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Urgency"><span class="hs-identifier">Urgency</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Note"><span class="hs-identifier">Note</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html"><span class="hs-identifier">DBus.Notify</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">DBusN</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html"><span class="hs-identifier">Shrun.Notify.MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#NotifyException"><span class="hs-identifier">NotifyException</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#MkNotifyException"><span class="hs-identifier">MkNotifyException</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier">ShrunNote</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html"><span class="hs-identifier">Shrun.Notify.Types</span></a></span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystemP"><span class="hs-identifier">NotifySystemP</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier">DBus</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeout"><span class="hs-identifier">NotifyTimeout</span></a></span><span>
+</span><span id="line-17"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeoutNever"><span class="hs-identifier">NotifyTimeoutNever</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>        </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeoutSeconds"><span class="hs-identifier">NotifyTimeoutSeconds</span></a></span><span>
+</span><span id="line-19"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="annot"><span class="hs-comment">-- | Effect for DBus.</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679524905"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MonadDBus"><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier hs-var">MonadDBus</span></a></span></span><span> </span><span id="local-6989586621679524905"><span class="annot"><a href="#local-6989586621679524905"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-comment">-- | Connects to DBus.</span><span>
+</span><span id="line-26"></span><span>  </span><span id="connectSession"><span class="annot"><a href="Shrun.Notify.MonadDBus.html#connectSession"><span class="hs-identifier hs-type">connectSession</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679524905"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/mma6y2y7ixx5z5jzlmal76vwiz0p5z1k-dbus-1.3.3-doc/share/doc/dbus-1.3.3/html/src/DBus.Client.html#Client"><span class="hs-identifier hs-type">Client</span></a></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-comment">-- | Sends a notification to DBus.</span><span>
+</span><span id="line-29"></span><span>  </span><span id="notify"><span class="annot"><a href="Shrun.Notify.MonadDBus.html#notify"><span class="hs-identifier hs-type">notify</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/mma6y2y7ixx5z5jzlmal76vwiz0p5z1k-dbus-1.3.3-doc/share/doc/dbus-1.3.3/html/src/DBus.Client.html#Client"><span class="hs-identifier hs-type">Client</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Note"><span class="hs-identifier hs-type">Note</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679524905"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">SomeException</span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier hs-type">MonadDBus</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-32"></span><span>  </span><span id="local-6989586621679525069"><span class="annot"><span class="annottext">connectSession :: HasCallStack =&gt; IO Client
+</span><a href="Shrun.Notify.MonadDBus.html#connectSession"><span class="hs-identifier hs-var hs-var hs-var hs-var">connectSession</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Client
+</span><a href="file:///nix/store/mma6y2y7ixx5z5jzlmal76vwiz0p5z1k-dbus-1.3.3-doc/share/doc/dbus-1.3.3/html/src/DBus.Client.html#connectSession"><span class="hs-identifier hs-var">DBusC.connectSession</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span id="local-6989586621679525078"><span class="annot"><span class="annottext">notify :: HasCallStack =&gt; Client -&gt; Note -&gt; IO (Maybe SomeException)
+</span><a href="Shrun.Notify.MonadDBus.html#notify"><span class="hs-identifier hs-var hs-var hs-var hs-var">notify</span></a></span></span><span> </span><span id="local-6989586621679525079"><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679525079"><span class="hs-identifier hs-var">client</span></a></span></span><span> </span><span id="local-6989586621679525080"><span class="annot"><span class="annottext">Note
+</span><a href="#local-6989586621679525080"><span class="hs-identifier hs-var">note</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><span class="annottext">IO Notification -&gt; IO (Either SomeException Notification)
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; m (Either SomeException a)
+</span><a href="file:///nix/store/l0072641y03v7wfrca9v1lv596fpxxa7-safe-exceptions-0.1.7.4-doc/share/doc/safe-exceptions-0.1.7.4/html/src/Control.Exception.Safe.html#tryAny"><span class="hs-identifier hs-var">tryAny</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Client -&gt; Note -&gt; IO Notification
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#notify"><span class="hs-identifier hs-var">DBusN.notify</span></a></span><span> </span><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679525079"><span class="hs-identifier hs-var">client</span></a></span><span> </span><span class="annot"><span class="annottext">Note
+</span><a href="#local-6989586621679525080"><span class="hs-identifier hs-var">note</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">IO (Either SomeException Notification)
+-&gt; (Either SomeException Notification -&gt; Maybe SomeException)
+-&gt; IO (Maybe SomeException)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-35"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679525084"><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679525084"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; Maybe SomeException
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679525084"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-36"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span class="annot"><span class="annottext">Notification
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe SomeException
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679524922"><span id="local-6989586621679524923"><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier hs-type">MonadDBus</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679524922"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier hs-type">MonadDBus</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679524923"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679524922"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-39"></span><span>  </span><span id="local-6989586621679525100"><span class="annot"><span class="annottext">connectSession :: HasCallStack =&gt; ReaderT env m Client
+</span><a href="Shrun.Notify.MonadDBus.html#connectSession"><span class="hs-identifier hs-var hs-var hs-var hs-var">connectSession</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m Client -&gt; ReaderT env m Client
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; ReaderT env m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type) (m :: Type -&gt; Type) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">m Client
+forall (m :: Type -&gt; Type). (MonadDBus m, HasCallStack) =&gt; m Client
+</span><a href="Shrun.Notify.MonadDBus.html#connectSession"><span class="hs-identifier hs-var">connectSession</span></a></span><span>
+</span><span id="line-40"></span><span>  </span><span id="local-6989586621679525108"><span class="annot"><span class="annottext">notify :: HasCallStack =&gt;
+Client -&gt; Note -&gt; ReaderT env m (Maybe SomeException)
+</span><a href="Shrun.Notify.MonadDBus.html#notify"><span class="hs-identifier hs-var hs-var hs-var hs-var">notify</span></a></span></span><span> </span><span id="local-6989586621679525109"><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679525109"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m (Maybe SomeException) -&gt; ReaderT env m (Maybe SomeException)
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; ReaderT env m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type) (m :: Type -&gt; Type) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(m (Maybe SomeException) -&gt; ReaderT env m (Maybe SomeException))
+-&gt; (Note -&gt; m (Maybe SomeException))
+-&gt; Note
+-&gt; ReaderT env m (Maybe SomeException)
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Client -&gt; Note -&gt; m (Maybe SomeException)
+forall (m :: Type -&gt; Type).
+(MonadDBus m, HasCallStack) =&gt;
+Client -&gt; Note -&gt; m (Maybe SomeException)
+</span><a href="Shrun.Notify.MonadDBus.html#notify"><span class="hs-identifier hs-var">notify</span></a></span><span> </span><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679525109"><span class="hs-identifier hs-var">c</span></a></span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span id="local-6989586621679524932"><span class="annot"><a href="Shrun.Notify.MonadDBus.html#notifyDBus"><span class="hs-identifier hs-type">notifyDBus</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier hs-type">MonadDBus</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679524932"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-46"></span><span>  </span><span class="annot"><a href="file:///nix/store/mma6y2y7ixx5z5jzlmal76vwiz0p5z1k-dbus-1.3.3-doc/share/doc/dbus-1.3.3/html/src/DBus.Client.html#Client"><span class="hs-identifier hs-type">Client</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-47"></span><span>  </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier hs-type">ShrunNote</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-48"></span><span>  </span><span class="annot"><a href="#local-6989586621679524932"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#NotifyException"><span class="hs-identifier hs-type">NotifyException</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-49"></span><span id="notifyDBus"><span class="annot"><span class="annottext">notifyDBus :: forall (m :: Type -&gt; Type).
+(HasCallStack, MonadDBus m) =&gt;
+Client -&gt; ShrunNote -&gt; m (Maybe NotifyException)
+</span><a href="Shrun.Notify.MonadDBus.html#notifyDBus"><span class="hs-identifier hs-var hs-var">notifyDBus</span></a></span></span><span> </span><span id="local-6989586621679525126"><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679525126"><span class="hs-identifier hs-var">client</span></a></span></span><span> </span><span id="local-6989586621679525127"><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525127"><span class="hs-identifier hs-var">note</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-50"></span><span>  </span><span class="annot"><span class="annottext">Client -&gt; Note -&gt; m (Maybe SomeException)
+forall (m :: Type -&gt; Type).
+(MonadDBus m, HasCallStack) =&gt;
+Client -&gt; Note -&gt; m (Maybe SomeException)
+</span><a href="Shrun.Notify.MonadDBus.html#notify"><span class="hs-identifier hs-var">notify</span></a></span><span> </span><span class="annot"><span class="annottext">Client
+</span><a href="#local-6989586621679525126"><span class="hs-identifier hs-var">client</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ShrunNote -&gt; Note
+</span><a href="Shrun.Notify.MonadDBus.html#shrunToDBus"><span class="hs-identifier hs-var">shrunToDBus</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525127"><span class="hs-identifier hs-var">note</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m (Maybe SomeException)
+-&gt; (SomeException -&gt; NotifyException) -&gt; m (Maybe NotifyException)
+forall (f :: Type -&gt; Type) (g :: Type -&gt; Type) a b.
+(Functor f, Functor g) =&gt;
+f (g a) -&gt; (a -&gt; b) -&gt; f (g b)
+</span><a href="Shrun.Prelude.html#%3C%3C%26%3E%3E"><span class="hs-operator hs-var">&lt;&lt;&amp;&gt;&gt;</span></a></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679525130"><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679525130"><span class="hs-identifier hs-var">stderr</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">ShrunNote -&gt; NotifySystemMerged -&gt; Text -&gt; NotifyException
+</span><a href="Shrun.Notify.MonadNotify.html#MkNotifyException"><span class="hs-identifier hs-var">MkNotifyException</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525127"><span class="hs-identifier hs-var">note</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">DBusF 'ConfigPhaseMerged -&gt; NotifySystemMerged
+forall (p :: ConfigPhase). DBusF p -&gt; NotifySystemP p
+</span><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier hs-var">DBus</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Text) -&gt; String -&gt; Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; String
+forall e. Exception e =&gt; e -&gt; String
+</span><span class="hs-identifier hs-var">displayException</span></span><span> </span><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679525130"><span class="hs-identifier hs-var">stderr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#shrunToDBus"><span class="hs-identifier hs-type">shrunToDBus</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#ShrunNote"><span class="hs-identifier hs-type">ShrunNote</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Note"><span class="hs-identifier hs-type">Note</span></a></span><span>
+</span><span id="line-54"></span><span id="shrunToDBus"><span class="annot"><span class="annottext">shrunToDBus :: ShrunNote -&gt; Note
+</span><a href="Shrun.Notify.MonadDBus.html#shrunToDBus"><span class="hs-identifier hs-var hs-var">shrunToDBus</span></a></span></span><span> </span><span id="local-6989586621679525133"><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525133"><span class="hs-identifier hs-var">shrunNote</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-55"></span><span>  </span><span class="annot"><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Note"><span class="hs-identifier hs-type">DBusN.Note</span></a></span><span>
+</span><span id="line-56"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">appName :: String
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#appName"><span class="hs-identifier hs-var">appName</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Shrun&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>      </span><span class="annot"><span class="annottext">summary :: String
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#summary"><span class="hs-identifier hs-var">summary</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; String) -&gt; Text -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525133"><span class="hs-identifier hs-var">shrunNote</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote -&gt; Optic' A_Getter NoIx ShrunNote Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx ShrunNote ShrunNote UnlinedText UnlinedText
+</span><span class="">#summary</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx ShrunNote ShrunNote UnlinedText UnlinedText
+-&gt; Optic A_Getter NoIx UnlinedText UnlinedText Text Text
+-&gt; Optic' A_Getter NoIx ShrunNote Text
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic A_Getter NoIx UnlinedText UnlinedText Text Text
+</span><span class="">#unUnlinedText</span></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>      </span><span class="annot"><span class="annottext">body :: Maybe Body
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#body"><span class="hs-identifier hs-var">body</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Body -&gt; Maybe Body
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Body -&gt; Maybe Body) -&gt; (Text -&gt; Body) -&gt; Text -&gt; Maybe Body
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Body
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Text"><span class="hs-identifier hs-var">DBusN.Text</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Body) -&gt; (Text -&gt; String) -&gt; Text -&gt; Body
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Maybe Body) -&gt; Text -&gt; Maybe Body
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525133"><span class="hs-identifier hs-var">shrunNote</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote -&gt; Optic' A_Getter NoIx ShrunNote Text -&gt; Text
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx ShrunNote ShrunNote UnlinedText UnlinedText
+</span><span class="">#body</span></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx ShrunNote ShrunNote UnlinedText UnlinedText
+-&gt; Optic A_Getter NoIx UnlinedText UnlinedText Text Text
+-&gt; Optic' A_Getter NoIx ShrunNote Text
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic A_Getter NoIx UnlinedText UnlinedText Text Text
+</span><span class="">#unUnlinedText</span></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>      </span><span class="annot"><span class="annottext">appImage :: Maybe Icon
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#appImage"><span class="hs-identifier hs-var">appImage</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Icon
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">hints :: [Hint]
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#hints"><span class="hs-identifier hs-var">hints</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">UrgencyLevel -&gt; Hint
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Urgency"><span class="hs-identifier hs-var">Urgency</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525133"><span class="hs-identifier hs-var">shrunNote</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+-&gt; Optic' A_Lens NoIx ShrunNote UrgencyLevel -&gt; UrgencyLevel
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx ShrunNote UrgencyLevel
+</span><span class="">#urgency</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>      </span><span class="annot"><span class="annottext">Timeout
+expiry :: Timeout
+expiry :: Timeout
+</span><a href="#local-6989586621679525144"><span class="hs-identifier hs-var hs-var">expiry</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>      </span><span class="annot"><span class="annottext">actions :: [(Action, String)]
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#actions"><span class="hs-identifier hs-var">actions</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-65"></span><span>    </span><span id="local-6989586621679525144"><span class="annot"><span class="annottext">expiry :: Timeout
+</span><a href="#local-6989586621679525144"><span class="hs-identifier hs-var hs-var">expiry</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679525133"><span class="hs-identifier hs-var">shrunNote</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+-&gt; Optic' A_Lens NoIx ShrunNote NotifyTimeout -&gt; NotifyTimeout
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx ShrunNote NotifyTimeout
+</span><span class="">#timeout</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-66"></span><span>      </span><span class="annot"><span class="annottext">NotifyTimeout
+</span><a href="Shrun.Notify.Types.html#NotifyTimeoutNever"><span class="hs-identifier hs-var">NotifyTimeoutNever</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Timeout
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Never"><span class="hs-identifier hs-var">DBusN.Never</span></a></span><span>
+</span><span id="line-67"></span><span>      </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifyTimeoutSeconds"><span class="hs-identifier hs-type">NotifyTimeoutSeconds</span></a></span><span> </span><span id="local-6989586621679525148"><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679525148"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-68"></span><span>        </span><span class="annot"><span class="annottext">Int32 -&gt; Timeout
+</span><a href="file:///nix/store/kvb2yyq1yshfipcsvdmzc1iifbp4v38j-fdo-notify-0.3.1-doc/share/doc/fdo-notify-0.3.1/html/src/DBus.Notify.html#Milliseconds"><span class="hs-identifier hs-var">DBusN.Milliseconds</span></a></span><span> </span><span class="annot"><span class="annottext">(Int32 -&gt; Timeout) -&gt; Int32 -&gt; Timeout
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><span class="hs-number">1_000</span></span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Int32 -&gt; Int32
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; Int32
+forall a b.
+(Bits a, Bits b, HasCallStack, Integral a, Integral b, Show a,
+ Typeable a, Typeable b) =&gt;
+a -&gt; b
+</span><a href="Shrun.Prelude.html#unsafeConvertIntegral"><span class="hs-identifier hs-var">unsafeConvertIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679525148"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-69"></span></pre></body></html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Provides types for typical &quot;IO&quot; processes.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.IO.Types</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier">Stderr</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#CommandResult"><span class="hs-identifier">CommandResult</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier">ReadHandleResult</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#readHandleResultToStderr"><span class="hs-identifier">readHandleResultToStderr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#readHandle"><span class="hs-identifier">readHandle</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html"><span class="hs-identifier">Data.Time.Relative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#RelativeTime"><span class="hs-identifier">RelativeTime</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html"><span class="hs-identifier">Effects.FileSystem.HandleReader</span></a></span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#MonadHandleReader"><span class="hs-identifier">MonadHandleReader</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#hIsClosed"><span class="hs-identifier">hIsClosed</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#hGetNonBlocking"><span class="hs-identifier">hGetNonBlocking</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#hIsReadable"><span class="hs-identifier">hIsReadable</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier">UnlinedText</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ShrunText</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="annot"><span class="hs-comment">-- | Newtype wrapper for stderr.</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">newtype</span><span> </span><span id="Stderr"><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier hs-var">Stderr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkStderr"><span class="annot"><a href="Shrun.IO.Types.html#MkStderr"><span class="hs-identifier hs-var">MkStderr</span></a></span></span><span> </span><span class="hs-special">{</span><span id="unStderr"><span class="annot"><span class="annottext">Stderr -&gt; List UnlinedText
+</span><a href="Shrun.IO.Types.html#unStderr"><span class="hs-identifier hs-var hs-var">unStderr</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">}</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679519893"><span id="local-6989586621679519898"><span class="annot"><span class="annottext">Stderr -&gt; Stderr -&gt; Bool
+(Stderr -&gt; Stderr -&gt; Bool)
+-&gt; (Stderr -&gt; Stderr -&gt; Bool) -&gt; Eq Stderr
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Stderr -&gt; Stderr -&gt; Bool
+== :: Stderr -&gt; Stderr -&gt; Bool
+$c/= :: Stderr -&gt; Stderr -&gt; Bool
+/= :: Stderr -&gt; Stderr -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519904"><span id="local-6989586621679519911"><span id="local-6989586621679519915"><span class="annot"><span class="annottext">Int -&gt; Stderr -&gt; ShowS
+[Stderr] -&gt; ShowS
+Stderr -&gt; String
+(Int -&gt; Stderr -&gt; ShowS)
+-&gt; (Stderr -&gt; String) -&gt; ([Stderr] -&gt; ShowS) -&gt; Show Stderr
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Stderr -&gt; ShowS
+showsPrec :: Int -&gt; Stderr -&gt; ShowS
+$cshow :: Stderr -&gt; String
+show :: Stderr -&gt; String
+$cshowList :: [Stderr] -&gt; ShowS
+showList :: [Stderr] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="annot"><span class="hs-comment">-- | Result of running a command.</span></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">data</span><span> </span><span id="CommandResult"><span class="annot"><a href="Shrun.IO.Types.html#CommandResult"><span class="hs-identifier hs-var">CommandResult</span></a></span></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="CommandSuccess"><span class="annot"><a href="Shrun.IO.Types.html#CommandSuccess"><span class="hs-identifier hs-var">CommandSuccess</span></a></span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#RelativeTime"><span class="hs-identifier hs-type">RelativeTime</span></a></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="CommandFailure"><span class="annot"><a href="Shrun.IO.Types.html#CommandFailure"><span class="hs-identifier hs-var">CommandFailure</span></a></span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#RelativeTime"><span class="hs-identifier hs-type">RelativeTime</span></a></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier hs-type">Stderr</span></a></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679519922"><span id="local-6989586621679519928"><span class="annot"><span class="annottext">CommandResult -&gt; CommandResult -&gt; Bool
+(CommandResult -&gt; CommandResult -&gt; Bool)
+-&gt; (CommandResult -&gt; CommandResult -&gt; Bool) -&gt; Eq CommandResult
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: CommandResult -&gt; CommandResult -&gt; Bool
+== :: CommandResult -&gt; CommandResult -&gt; Bool
+$c/= :: CommandResult -&gt; CommandResult -&gt; Bool
+/= :: CommandResult -&gt; CommandResult -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519932"><span id="local-6989586621679519940"><span id="local-6989586621679519944"><span class="annot"><span class="annottext">Int -&gt; CommandResult -&gt; ShowS
+[CommandResult] -&gt; ShowS
+CommandResult -&gt; String
+(Int -&gt; CommandResult -&gt; ShowS)
+-&gt; (CommandResult -&gt; String)
+-&gt; ([CommandResult] -&gt; ShowS)
+-&gt; Show CommandResult
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; CommandResult -&gt; ShowS
+showsPrec :: Int -&gt; CommandResult -&gt; ShowS
+$cshow :: CommandResult -&gt; String
+show :: CommandResult -&gt; String
+$cshowList :: [CommandResult] -&gt; ShowS
+showList :: [CommandResult] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- | Result from reading a handle. The ordering is based on:</span><span>
+</span><span id="line-32"></span><span class="hs-comment">--</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- 'ReadErr' _ &lt; 'ReadNoData' &lt; 'ReadSuccess'</span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- The 'Semigroup' instance is based on this ordering, taking the greatest</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- element. For identical constructors, the left argument is taken.</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">data</span><span> </span><span id="ReadHandleResult"><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-var">ReadHandleResult</span></a></span></span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Error encountered while trying to read a handle.</span></span><span>
+</span><span id="line-41"></span><span>    </span><span id="ReadErr"><span class="annot"><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-var">ReadErr</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Successfully read data from the handle.</span></span><span>
+</span><span id="line-43"></span><span>    </span><span id="ReadSuccess"><span class="annot"><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-var">ReadSuccess</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Successfully read no data from the handle.</span></span><span>
+</span><span id="line-45"></span><span>    </span><span id="ReadNoData"><span class="annot"><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span></span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679519950"><span id="local-6989586621679519955"><span class="annot"><span class="annottext">ReadHandleResult -&gt; ReadHandleResult -&gt; Bool
+(ReadHandleResult -&gt; ReadHandleResult -&gt; Bool)
+-&gt; (ReadHandleResult -&gt; ReadHandleResult -&gt; Bool)
+-&gt; Eq ReadHandleResult
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ReadHandleResult -&gt; ReadHandleResult -&gt; Bool
+== :: ReadHandleResult -&gt; ReadHandleResult -&gt; Bool
+$c/= :: ReadHandleResult -&gt; ReadHandleResult -&gt; Bool
+/= :: ReadHandleResult -&gt; ReadHandleResult -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679519959"><span id="local-6989586621679519966"><span id="local-6989586621679519970"><span class="annot"><span class="annottext">Int -&gt; ReadHandleResult -&gt; ShowS
+[ReadHandleResult] -&gt; ShowS
+ReadHandleResult -&gt; String
+(Int -&gt; ReadHandleResult -&gt; ShowS)
+-&gt; (ReadHandleResult -&gt; String)
+-&gt; ([ReadHandleResult] -&gt; ShowS)
+-&gt; Show ReadHandleResult
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ReadHandleResult -&gt; ShowS
+showsPrec :: Int -&gt; ReadHandleResult -&gt; ShowS
+$cshow :: ReadHandleResult -&gt; String
+show :: ReadHandleResult -&gt; String
+$cshowList :: [ReadHandleResult] -&gt; ShowS
+showList :: [ReadHandleResult] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679519974"><span id="local-6989586621679519978"><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-49"></span><span>  </span><span class="annot"><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-type">ReadSuccess</span></a></span><span> </span><span id="local-6989586621679519983"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519983"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679519984"><span class="annot"><span class="annottext">&lt;&gt; :: ReadHandleResult -&gt; ReadHandleResult -&gt; ReadHandleResult
+</span><span class="hs-operator hs-var hs-var hs-var hs-var">&lt;&gt;</span></span></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-var">ReadSuccess</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519983"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-50"></span><span>  </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-type">ReadSuccess</span></a></span><span> </span><span id="local-6989586621679519985"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519985"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-var">ReadSuccess</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519985"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-51"></span><span>  </span><span class="annot"><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-type">ReadErr</span></a></span><span> </span><span id="local-6989586621679519986"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519986"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-var">ReadErr</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519986"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-type">ReadErr</span></a></span><span> </span><span id="local-6989586621679519987"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519987"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-var">ReadErr</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679519987"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-53"></span><span>  </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679519992"><span id="local-6989586621679519996"><span class="annot"><span class="hs-identifier hs-type">Monoid</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-56"></span><span>  </span><span id="local-6989586621679519999"><span class="annot"><span class="annottext">mempty :: ReadHandleResult
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">mempty</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="annot"><span class="hs-comment">-- | Turns a 'ReadHandleResult' into a 'Stderr'.</span></span><span>
+</span><span id="line-59"></span><span class="annot"><a href="Shrun.IO.Types.html#readHandleResultToStderr"><span class="hs-identifier hs-type">readHandleResultToStderr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier hs-type">Stderr</span></a></span><span>
+</span><span id="line-60"></span><span id="readHandleResultToStderr"><span class="annot"><span class="annottext">readHandleResultToStderr :: ReadHandleResult -&gt; Stderr
+</span><a href="Shrun.IO.Types.html#readHandleResultToStderr"><span class="hs-identifier hs-var hs-var">readHandleResultToStderr</span></a></span></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; Stderr
+</span><a href="Shrun.IO.Types.html#MkStderr"><span class="hs-identifier hs-var">MkStderr</span></a></span><span> </span><span class="annot"><span class="annottext">(List UnlinedText -&gt; Stderr) -&gt; List UnlinedText -&gt; Stderr
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; List UnlinedText
+</span><a href="Shrun.Data.Text.html#fromText"><span class="hs-identifier hs-var">ShrunText.fromText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&lt;No data&gt;&quot;</span></span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Shrun.IO.Types.html#readHandleResultToStderr"><span class="hs-identifier hs-var">readHandleResultToStderr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-type">ReadErr</span></a></span><span> </span><span id="local-6989586621679520001"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679520001"><span class="hs-identifier hs-var">errs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; Stderr
+</span><a href="Shrun.IO.Types.html#MkStderr"><span class="hs-identifier hs-var">MkStderr</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679520001"><span class="hs-identifier hs-var">errs</span></a></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Shrun.IO.Types.html#readHandleResultToStderr"><span class="hs-identifier hs-var">readHandleResultToStderr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-type">ReadSuccess</span></a></span><span> </span><span id="local-6989586621679520002"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679520002"><span class="hs-identifier hs-var">errs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; Stderr
+</span><a href="Shrun.IO.Types.html#MkStderr"><span class="hs-identifier hs-var">MkStderr</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679520002"><span class="hs-identifier hs-var">errs</span></a></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="annot"><span class="hs-comment">-- | Attempts to read from the handle.</span></span><span>
+</span><span id="line-65"></span><span id="local-6989586621679519862"><span class="annot"><a href="Shrun.IO.Types.html#readHandle"><span class="hs-identifier hs-type">readHandle</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679519862"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#MonadHandleReader"><span class="hs-identifier hs-type">MonadHandleReader</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519862"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-70"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-71"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-72"></span><span>  </span><span class="annot"><a href="#local-6989586621679519862"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span></span><span>
+</span><span id="line-73"></span><span id="readHandle"><span class="annot"><span class="annottext">readHandle :: forall (m :: Type -&gt; Type).
+(HasCallStack, MonadCatch m, MonadHandleReader m) =&gt;
+Int -&gt; Handle -&gt; m ReadHandleResult
+</span><a href="Shrun.IO.Types.html#readHandle"><span class="hs-identifier hs-var hs-var">readHandle</span></a></span></span><span> </span><span id="local-6989586621679520044"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679520044"><span class="hs-identifier hs-var">blockSize</span></a></span></span><span> </span><span id="local-6989586621679520045"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679520045"><span class="hs-identifier hs-var">handle</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-comment">-- The &quot;nothingIfReady&quot; check and reading step both need to go in the try as</span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-comment">-- the former can also throw.</span><span>
+</span><span id="line-76"></span><span>  </span><span class="annot"><span class="annottext">m ReadHandleResult -&gt; m (Either SomeException ReadHandleResult)
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadCatch m) =&gt;
+m a -&gt; m (Either SomeException a)
+</span><a href="file:///nix/store/l0072641y03v7wfrca9v1lv596fpxxa7-safe-exceptions-0.1.7.4-doc/share/doc/safe-exceptions-0.1.7.4/html/src/Control.Exception.Safe.html#tryAny"><span class="hs-identifier hs-var">tryAny</span></a></span><span> </span><span class="annot"><span class="annottext">m ReadHandleResult
+</span><a href="#local-6989586621679520047"><span class="hs-identifier hs-var">readHandle'</span></a></span><span> </span><span class="annot"><span class="annottext">m (Either SomeException ReadHandleResult)
+-&gt; (Either SomeException ReadHandleResult -&gt; ReadHandleResult)
+-&gt; m ReadHandleResult
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679520049"><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679520049"><span class="hs-identifier hs-var">ex</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-var">ReadErr</span></a></span><span> </span><span class="annot"><span class="annottext">(List UnlinedText -&gt; ReadHandleResult)
+-&gt; List UnlinedText -&gt; ReadHandleResult
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; List UnlinedText
+</span><a href="Shrun.Data.Text.html#fromText"><span class="hs-identifier hs-var">ShrunText.fromText</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; List UnlinedText) -&gt; Text -&gt; List UnlinedText
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;HandleException: &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">SomeException -&gt; Text
+forall e. Exception e =&gt; e -&gt; Text
+</span><a href="Shrun.Prelude.html#displayExceptiont"><span class="hs-identifier hs-var">displayExceptiont</span></a></span><span> </span><span class="annot"><span class="annottext">SomeException
+</span><a href="#local-6989586621679520049"><span class="hs-identifier hs-var">ex</span></a></span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679520051"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679520051"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679520051"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-79"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-80"></span><span>    </span><span id="local-6989586621679520047"><span class="annot"><span class="annottext">readHandle' :: m ReadHandleResult
+</span><a href="#local-6989586621679520047"><span class="hs-identifier hs-var hs-var">readHandle'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-81"></span><span>      </span><span class="annot"><span class="annottext">m (Maybe Text)
+</span><a href="#local-6989586621679520052"><span class="hs-identifier hs-var">nothingIfReady</span></a></span><span> </span><span class="annot"><span class="annottext">m (Maybe Text)
+-&gt; (Maybe Text -&gt; m ReadHandleResult) -&gt; m ReadHandleResult
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-82"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679520053"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520053"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult -&gt; m ReadHandleResult
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ReadHandleResult -&gt; m ReadHandleResult)
+-&gt; ReadHandleResult -&gt; m ReadHandleResult
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-var">ReadErr</span></a></span><span> </span><span class="annot"><span class="annottext">(List UnlinedText -&gt; ReadHandleResult)
+-&gt; List UnlinedText -&gt; ReadHandleResult
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; List UnlinedText
+</span><a href="Shrun.Data.Text.html#fromText"><span class="hs-identifier hs-var">ShrunText.fromText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520053"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-83"></span><span>        </span><span class="annot"><span class="annottext">Maybe Text
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-84"></span><span>          </span><span class="hs-comment">-- NOTE: [Blocking / Streaming output]</span><span>
+</span><span id="line-85"></span><span>          </span><span class="hs-comment">--</span><span>
+</span><span id="line-86"></span><span>          </span><span class="hs-comment">-- hGetNonBlocking is suboptimal because we might take</span><span>
+</span><span id="line-87"></span><span>          </span><span class="hs-comment">-- multiple lines of output, hence log them on a single line, which</span><span>
+</span><span id="line-88"></span><span>          </span><span class="hs-comment">-- is quite ugly. Something like hGetLine would be ideal, but try</span><span>
+</span><span id="line-89"></span><span>          </span><span class="hs-comment">-- as we might we cannot get this to stream properly (logs are</span><span>
+</span><span id="line-90"></span><span>          </span><span class="hs-comment">-- buffered until the process finishes). Thus we have settled on</span><span>
+</span><span id="line-91"></span><span>          </span><span class="hs-comment">-- a workaround: Use the following non blocking call which streams</span><span>
+</span><span id="line-92"></span><span>          </span><span class="hs-comment">-- properly, and manually split the lines ourselves. The block size</span><span>
+</span><span id="line-93"></span><span>          </span><span class="hs-comment">-- should be large enough that we are not likely to cut off a line</span><span>
+</span><span id="line-94"></span><span>          </span><span class="hs-comment">-- prematurely, but obviously this is best-effort.</span><span>
+</span><span id="line-95"></span><span>          </span><span class="annot"><span class="annottext">Handle -&gt; Int -&gt; m ByteString
+forall (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; Int -&gt; m ByteString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#hGetNonBlocking"><span class="hs-identifier hs-var">hGetNonBlocking</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679520045"><span class="hs-identifier hs-var">handle</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679520044"><span class="hs-identifier hs-var">blockSize</span></a></span><span> </span><span class="annot"><span class="annottext">m ByteString
+-&gt; (ByteString -&gt; ReadHandleResult) -&gt; m ReadHandleResult
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-96"></span><span>            </span><span class="annot"><span class="annottext">ByteString
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span><span>
+</span><span id="line-97"></span><span>            </span><span id="local-6989586621679520054"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679520054"><span class="hs-identifier hs-var">bs</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">List UnlinedText -&gt; ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-var">ReadSuccess</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; List UnlinedText
+</span><a href="Shrun.Data.Text.html#fromText"><span class="hs-identifier hs-var">ShrunText.fromText</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; List UnlinedText) -&gt; Text -&gt; List UnlinedText
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Text
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.Utils.html#decodeUtf8Lenient"><span class="hs-identifier hs-var">decodeUtf8Lenient</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679520054"><span class="hs-identifier hs-var">bs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span>    </span><span id="local-6989586621679520052"><span class="annot"><span class="annottext">nothingIfReady :: m (Maybe Text)
+</span><a href="#local-6989586621679520052"><span class="hs-identifier hs-var hs-var">nothingIfReady</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-100"></span><span>      </span><span class="hs-comment">-- NOTE: This somewhat torturous logic exists for a reason. We want to</span><span>
+</span><span id="line-101"></span><span>      </span><span class="hs-comment">-- check several conditions before attempting to read from our handle,</span><span>
+</span><span id="line-102"></span><span>      </span><span class="hs-comment">-- but we have to do this in a specific order as some of these boolean</span><span>
+</span><span id="line-103"></span><span>      </span><span class="hs-comment">-- functions will throw exceptions under some circumstances, which we</span><span>
+</span><span id="line-104"></span><span>      </span><span class="hs-comment">-- would like to avoid.</span><span>
+</span><span id="line-105"></span><span>      </span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span>      </span><span class="hs-comment">-- Note that this description comes from experience and reading the</span><span>
+</span><span id="line-107"></span><span>      </span><span class="hs-comment">-- GHC source, so it may not be completely accurate.</span><span>
+</span><span id="line-108"></span><span>
+</span><span id="line-109"></span><span>      </span><span class="hs-comment">-- hIsClosed does not explicitly throw exceptions so it can be first.</span><span>
+</span><span id="line-110"></span><span>      </span><span id="local-6989586621679520056"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679520056"><span class="hs-identifier hs-var">isClosed</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Handle -&gt; m Bool
+forall (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; m Bool
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#hIsClosed"><span class="hs-identifier hs-var">hIsClosed</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679520045"><span class="hs-identifier hs-var">handle</span></a></span><span>
+</span><span id="line-111"></span><span>      </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679520056"><span class="hs-identifier hs-var">isClosed</span></a></span><span>
+</span><span id="line-112"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; m (Maybe Text)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Maybe Text -&gt; m (Maybe Text)) -&gt; Maybe Text -&gt; m (Maybe Text)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe Text
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Handle closed&quot;</span></span><span>
+</span><span id="line-113"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-114"></span><span>          </span><span class="hs-comment">-- hIsReadable _does_ throw an exception if the the handle is closed or</span><span>
+</span><span id="line-115"></span><span>          </span><span class="hs-comment">-- &quot;semi-closed&quot;. Thus it should go after the hIsClosed check</span><span>
+</span><span id="line-116"></span><span>          </span><span class="hs-comment">-- (GHC explicitly does not export an hSemiClosed).</span><span>
+</span><span id="line-117"></span><span>          </span><span id="local-6989586621679520057"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679520057"><span class="hs-identifier hs-var">isReadable</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Handle -&gt; m Bool
+forall (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; m Bool
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#hIsReadable"><span class="hs-identifier hs-var">hIsReadable</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679520045"><span class="hs-identifier hs-var">handle</span></a></span><span>
+</span><span id="line-118"></span><span>          </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679520057"><span class="hs-identifier hs-var">isReadable</span></a></span><span>
+</span><span id="line-119"></span><span>            </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; m (Maybe Text)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Maybe Text -&gt; m (Maybe Text)) -&gt; Maybe Text -&gt; m (Maybe Text)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe Text
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;Handle is not readable&quot;</span></span><span>
+</span><span id="line-120"></span><span>            </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; m (Maybe Text)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-121"></span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- NOTE: [EOF / blocking error] We would like to check hIsEOF (definitely</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- causes errors at the end) and probably hReady as well, but these both</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- block and I have not found a way to invoke them while also streaming</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- the process output (blocks until everything gets dumped at the end).</span><span>
+</span><span id="line-126"></span></pre></body></html>

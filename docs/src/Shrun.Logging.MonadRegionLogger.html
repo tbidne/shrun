@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Provides functionality for logging to a specific region</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- (i.e. for concurrent console logging).</span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Logging.MonadRegionLogger</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier">MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html"><span class="hs-identifier">Shrun.Logging.Types.Internal</span></a></span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier">LogMode</span></a></span><span>
+</span><span id="line-10"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeAppend"><span class="hs-identifier">LogModeAppend</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier">LogModeFinish</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeSet"><span class="hs-identifier">LogModeSet</span></a></span><span>
+</span><span id="line-13"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html"><span class="hs-identifier">System.Console.Regions</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Regions</span></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="annot"><span class="hs-comment">-- | `MonadRegionLogger` is a simple typeclass for abstracting logging functions.</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Constraint</span></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MonadRegionLogger"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-var">MonadRegionLogger</span></a></span></span><span> </span><span id="local-6989586621679519476"><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-comment">-- | The type of the region. This will be ConsoleRegion for production</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-comment">-- code and () for tests.</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-keyword">type</span><span> </span><span id="Region"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-var">Region</span></a></span></span><span> </span><span id="local-6989586621679519476"><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-comment">-- | Pushes a log to the &quot;global&quot; region.</span><span>
+</span><span id="line-26"></span><span>  </span><span id="logGlobal"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logGlobal"><span class="hs-identifier hs-type">logGlobal</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-comment">-- | Pushes a log to the region.</span><span>
+</span><span id="line-29"></span><span>  </span><span id="logRegion"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-identifier hs-type">logRegion</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier hs-type">LogMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-comment">-- | Runs an @m a@ with a region.</span><span>
+</span><span id="line-32"></span><span>  </span><span id="withRegion"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-type">withRegion</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span id="local-6989586621679519483"><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#RegionLayout"><span class="hs-identifier hs-type">RegionLayout</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519483"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519483"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-comment">-- | Displays the regions. This should wrap whatever top-level logic</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-comment">-- needs regions.</span><span>
+</span><span id="line-36"></span><span>  </span><span id="displayRegions"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#displayRegions"><span class="hs-identifier hs-type">displayRegions</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span id="local-6989586621679519484"><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519484"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679519476"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519484"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-keyword">type</span><span> </span><span id="Region"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-var">Region</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#ConsoleRegion"><span class="hs-identifier hs-type">ConsoleRegion</span></a></span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span>  </span><span id="local-6989586621679519557"><span class="annot"><span class="annottext">logGlobal :: HasCallStack =&gt; Text -&gt; IO ()
+</span><a href="Shrun.Logging.MonadRegionLogger.html#logGlobal"><span class="hs-identifier hs-var hs-var hs-var hs-var">logGlobal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; IO ()
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadTerminal m) =&gt;
+Text -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-terminal-0.1-79544aab75b25eb7e1d478beef2547ed7103c3686224eb8fd6cfb2d96a5998f8/share/doc/html/src/Effects.System.Terminal.html#putTextLn"><span class="hs-identifier hs-var">putTextLn</span></a></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logGlobal"><span class="hs-pragma hs-type">logGlobal</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span>  </span><span id="local-6989586621679519569"><span class="annot"><span class="annottext">logRegion :: HasCallStack =&gt; LogMode -&gt; Region IO -&gt; Text -&gt; IO ()
+</span><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-identifier hs-var hs-var hs-var hs-var">logRegion</span></a></span></span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="Shrun.Logging.Types.Internal.html#LogModeSet"><span class="hs-identifier hs-var">LogModeSet</span></a></span><span> </span><span id="local-6989586621679519570"><span class="annot"><span class="annottext">Region IO
+</span><a href="#local-6989586621679519570"><span class="hs-identifier hs-var">cr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConsoleRegion -&gt; Text -&gt; IO ()
+forall v (m :: Type -&gt; Type).
+(ToRegionContent v, LiftRegion m) =&gt;
+ConsoleRegion -&gt; v -&gt; m ()
+</span><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#setConsoleRegion"><span class="hs-identifier hs-var">Regions.setConsoleRegion</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleRegion
+Region IO
+</span><a href="#local-6989586621679519570"><span class="hs-identifier hs-var">cr</span></a></span><span>
+</span><span id="line-45"></span><span>  </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-identifier hs-var">logRegion</span></a></span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="Shrun.Logging.Types.Internal.html#LogModeAppend"><span class="hs-identifier hs-var">LogModeAppend</span></a></span><span> </span><span id="local-6989586621679519572"><span class="annot"><span class="annottext">Region IO
+</span><a href="#local-6989586621679519572"><span class="hs-identifier hs-var">cr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConsoleRegion -&gt; Text -&gt; IO ()
+forall v (m :: Type -&gt; Type).
+(Outputable v, LiftRegion m) =&gt;
+ConsoleRegion -&gt; v -&gt; m ()
+</span><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#appendConsoleRegion"><span class="hs-identifier hs-var">Regions.appendConsoleRegion</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleRegion
+Region IO
+</span><a href="#local-6989586621679519572"><span class="hs-identifier hs-var">cr</span></a></span><span>
+</span><span id="line-46"></span><span>  </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-identifier hs-var">logRegion</span></a></span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier hs-var">LogModeFinish</span></a></span><span> </span><span id="local-6989586621679519574"><span class="annot"><span class="annottext">Region IO
+</span><a href="#local-6989586621679519574"><span class="hs-identifier hs-var">cr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ConsoleRegion -&gt; Text -&gt; IO ()
+forall v (m :: Type -&gt; Type).
+(Outputable v, LiftRegion m) =&gt;
+ConsoleRegion -&gt; v -&gt; m ()
+</span><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#finishConsoleRegion"><span class="hs-identifier hs-var">Regions.finishConsoleRegion</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleRegion
+Region IO
+</span><a href="#local-6989586621679519574"><span class="hs-identifier hs-var">cr</span></a></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-pragma hs-type">logRegion</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span>  </span><span id="local-6989586621679519581"><span class="annot"><span class="annottext">withRegion :: forall a.
+HasCallStack =&gt;
+RegionLayout -&gt; (Region IO -&gt; IO a) -&gt; IO a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-var hs-var hs-var hs-var">withRegion</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">RegionLayout -&gt; (ConsoleRegion -&gt; IO a) -&gt; IO a
+RegionLayout -&gt; (Region IO -&gt; IO a) -&gt; IO a
+forall (m :: Type -&gt; Type) a.
+(MonadIO m, MonadMask m) =&gt;
+RegionLayout -&gt; (ConsoleRegion -&gt; m a) -&gt; m a
+</span><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#withConsoleRegion"><span class="hs-identifier hs-var">Regions.withConsoleRegion</span></a></span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-pragma hs-type">withRegion</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span>  </span><span id="local-6989586621679519586"><span class="annot"><span class="annottext">displayRegions :: forall a. HasCallStack =&gt; IO a -&gt; IO a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#displayRegions"><span class="hs-identifier hs-var hs-var hs-var hs-var">displayRegions</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO a -&gt; IO a
+forall (m :: Type -&gt; Type) a.
+(MonadIO m, MonadMask m) =&gt;
+m a -&gt; m a
+</span><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#displayConsoleRegions"><span class="hs-identifier hs-var">Regions.displayConsoleRegions</span></a></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#displayRegions"><span class="hs-pragma hs-type">displayRegions</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679519508"><span id="local-6989586621679519509"><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519508"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679519509"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519508"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-keyword">type</span><span> </span><span id="Region"><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-var">Region</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679519509"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519508"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679519508"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span>  </span><span id="local-6989586621679519605"><span class="annot"><span class="annottext">logGlobal :: HasCallStack =&gt; Text -&gt; ReaderT env m ()
+</span><a href="Shrun.Logging.MonadRegionLogger.html#logGlobal"><span class="hs-identifier hs-var hs-var hs-var hs-var">logGlobal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m () -&gt; ReaderT env m ()
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; ReaderT env m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type) (m :: Type -&gt; Type) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(m () -&gt; ReaderT env m ())
+-&gt; (Text -&gt; m ()) -&gt; Text -&gt; ReaderT env m ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; m ()
+forall (m :: Type -&gt; Type).
+(MonadRegionLogger m, HasCallStack) =&gt;
+Text -&gt; m ()
+</span><a href="Shrun.Logging.MonadRegionLogger.html#logGlobal"><span class="hs-identifier hs-var">logGlobal</span></a></span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logGlobal"><span class="hs-pragma hs-type">logGlobal</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span>  </span><span id="local-6989586621679519614"><span class="annot"><span class="annottext">logRegion :: HasCallStack =&gt;
+LogMode -&gt; Region (ReaderT env m) -&gt; Text -&gt; ReaderT env m ()
+</span><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-identifier hs-var hs-var hs-var hs-var">logRegion</span></a></span></span><span> </span><span id="local-6989586621679519615"><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679519615"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679519616"><span class="annot"><span class="annottext">Region (ReaderT env m)
+</span><a href="#local-6989586621679519616"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m () -&gt; ReaderT env m ()
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; ReaderT env m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type) (m :: Type -&gt; Type) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(m () -&gt; ReaderT env m ())
+-&gt; (Text -&gt; m ()) -&gt; Text -&gt; ReaderT env m ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">LogMode -&gt; Region m -&gt; Text -&gt; m ()
+forall (m :: Type -&gt; Type).
+(MonadRegionLogger m, HasCallStack) =&gt;
+LogMode -&gt; Region m -&gt; Text -&gt; m ()
+</span><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-identifier hs-var">logRegion</span></a></span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679519615"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">Region m
+Region (ReaderT env m)
+</span><a href="#local-6989586621679519616"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#logRegion"><span class="hs-pragma hs-type">logRegion</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span>  </span><span id="local-6989586621679519626"><span class="annot"><span class="annottext">withRegion :: forall a.
+HasCallStack =&gt;
+RegionLayout
+-&gt; (Region (ReaderT env m) -&gt; ReaderT env m a) -&gt; ReaderT env m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-var hs-var hs-var hs-var">withRegion</span></a></span></span><span> </span><span id="local-6989586621679519627"><span class="annot"><span class="annottext">RegionLayout
+</span><a href="#local-6989586621679519627"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679519628"><span class="annot"><span class="annottext">Region (ReaderT env m) -&gt; ReaderT env m a
+</span><a href="#local-6989586621679519628"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-65"></span><span>    </span><span class="annot"><span class="annottext">ReaderT env m env
+forall r (m :: Type -&gt; Type). MonadReader r m =&gt; m r
+</span><span class="hs-identifier hs-var">ask</span></span><span> </span><span class="annot"><span class="annottext">ReaderT env m env -&gt; (env -&gt; ReaderT env m a) -&gt; ReaderT env m a
+forall a b.
+ReaderT env m a -&gt; (a -&gt; ReaderT env m b) -&gt; ReaderT env m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679519630"><span class="annot"><span class="annottext">env
+</span><a href="#local-6989586621679519630"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m a -&gt; ReaderT env m a
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; ReaderT env m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type) (m :: Type -&gt; Type) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+forall a. HasCallStack =&gt; RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadRegionLogger m, HasCallStack) =&gt;
+RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-var">withRegion</span></a></span><span> </span><span class="annot"><span class="annottext">RegionLayout
+</span><a href="#local-6989586621679519627"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679519631"><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679519631"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ReaderT env m a -&gt; env -&gt; m a
+forall r (m :: Type -&gt; Type) a. ReaderT r m a -&gt; r -&gt; m a
+</span><span class="hs-identifier hs-var">runReaderT</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Region (ReaderT env m) -&gt; ReaderT env m a
+</span><a href="#local-6989586621679519628"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Region m
+Region (ReaderT env m)
+</span><a href="#local-6989586621679519631"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">env
+</span><a href="#local-6989586621679519630"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-pragma hs-type">withRegion</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span>  </span><span id="local-6989586621679519641"><span class="annot"><span class="annottext">displayRegions :: forall a. HasCallStack =&gt; ReaderT env m a -&gt; ReaderT env m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#displayRegions"><span class="hs-identifier hs-var hs-var hs-var hs-var">displayRegions</span></a></span></span><span> </span><span id="local-6989586621679519642"><span class="annot"><span class="annottext">ReaderT env m a
+</span><a href="#local-6989586621679519642"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ReaderT env m env
+forall r (m :: Type -&gt; Type). MonadReader r m =&gt; m r
+</span><span class="hs-identifier hs-var">ask</span></span><span> </span><span class="annot"><span class="annottext">ReaderT env m env -&gt; (env -&gt; ReaderT env m a) -&gt; ReaderT env m a
+forall a b.
+ReaderT env m a -&gt; (a -&gt; ReaderT env m b) -&gt; ReaderT env m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679519643"><span class="annot"><span class="annottext">env
+</span><a href="#local-6989586621679519643"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m a -&gt; ReaderT env m a
+forall (m :: Type -&gt; Type) a. Monad m =&gt; m a -&gt; ReaderT env m a
+forall (t :: (Type -&gt; Type) -&gt; Type -&gt; Type) (m :: Type -&gt; Type) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">m a -&gt; m a
+forall a. HasCallStack =&gt; m a -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadRegionLogger m, HasCallStack) =&gt;
+m a -&gt; m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#displayRegions"><span class="hs-identifier hs-var">displayRegions</span></a></span><span> </span><span class="annot"><span class="annottext">(m a -&gt; m a) -&gt; m a -&gt; m a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReaderT env m a -&gt; env -&gt; m a
+forall r (m :: Type -&gt; Type) a. ReaderT r m a -&gt; r -&gt; m a
+</span><span class="hs-identifier hs-var">runReaderT</span></span><span> </span><span class="annot"><span class="annottext">ReaderT env m a
+</span><a href="#local-6989586621679519642"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">env
+</span><a href="#local-6989586621679519643"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#displayRegions"><span class="hs-pragma hs-type">displayRegions</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-70"></span></pre></body></html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE ViewPatterns #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Provides utilities.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Utils</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Text Utils</span></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#breakStripPoint"><span class="hs-identifier">breakStripPoint</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#truncateIfNeeded"><span class="hs-identifier">truncateIfNeeded</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#stripControlAll"><span class="hs-identifier">stripControlAll</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#stripControlSmart"><span class="hs-identifier">stripControlSmart</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#escapeDoubleQuotes"><span class="hs-identifier">escapeDoubleQuotes</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><span class="hs-comment">-- * MonadTime Utils</span></span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#diffTime"><span class="hs-identifier">diffTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#timeSpecToRelTime"><span class="hs-identifier">timeSpecToRelTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#foldMap1"><span class="hs-identifier">foldMap1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Misc Utils</span></span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#parseByteText"><span class="hs-identifier">parseByteText</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#whileM_"><span class="hs-identifier">whileM_</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#whenLeft"><span class="hs-identifier">whenLeft</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#untilJust"><span class="hs-identifier">untilJust</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#unsafeListToNESeq"><span class="hs-identifier">unsafeListToNESeq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#%2238"><span class="hs-operator">(&#8760;)</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="Shrun.Utils.html#readStripUnderscores"><span class="hs-identifier">readStripUnderscores</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.html"><span class="hs-identifier">Data.Bytes</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Conversion.html#Conversion"><span class="hs-identifier">Conversion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Conversion.html#convert"><span class="hs-identifier">convert</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#SomeSize"><span class="hs-identifier">SomeSize</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Parser.html#parse"><span class="hs-identifier">parse</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">isControl</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">isLetter</span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Either</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">either</span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.html"><span class="hs-identifier">Data.Sequence.NonEmpty</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">NESeq</span></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TL</span></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy.Builder</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Builder</span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.Lazy.Builder</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TLB</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html"><span class="hs-identifier">Data.Time.Relative</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#RelativeTime"><span class="hs-identifier">RelativeTime</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#fromSeconds"><span class="hs-identifier">fromSeconds</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html"><span class="hs-identifier">Effects.Time</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#TimeSpec"><span class="hs-identifier">TimeSpec</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#diffTimeSpec"><span class="hs-identifier">diffTimeSpec</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Exts</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsList</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromList</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier">UnlinedText</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ShrunText</span></span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Read</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Read</span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Read</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TR</span></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- $setup</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XOverloadedLists</span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XTemplateHaskell</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.List.NonEmpty (NonEmpty (..))</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.Semigroup (Sum (..))</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- &gt;&gt;&gt; import Data.Text qualified as T</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- &gt;&gt;&gt; import Effects.Time (TimeSpec (..))</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- &gt;&gt;&gt; import Shrun.Prelude</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | For given \(x, y\), returns the absolute difference \(|x - y|\)</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- in seconds.</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--   let t1 = MkTimeSpec 5 0</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--       -- 20 s + 1 billion ns = 21 s</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--       t2 = MkTimeSpec 20 1_000_000_000</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--   in diffTime t1 t2</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- :}</span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- 16</span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Shrun.Utils.html#diffTime"><span class="hs-identifier hs-type">diffTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#TimeSpec"><span class="hs-identifier hs-type">TimeSpec</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#TimeSpec"><span class="hs-identifier hs-type">TimeSpec</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span>
+</span><span id="line-66"></span><span id="diffTime"><span class="annot"><span class="annottext">diffTime :: TimeSpec -&gt; TimeSpec -&gt; Natural
+</span><a href="Shrun.Utils.html#diffTime"><span class="hs-identifier hs-var hs-var">diffTime</span></a></span></span><span> </span><span id="local-6989586621679524028"><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679524028"><span class="hs-identifier hs-var">t1</span></a></span></span><span> </span><span id="local-6989586621679524029"><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679524029"><span class="hs-identifier hs-var">t2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeSpec Natural -&gt; TimeSpec -&gt; Natural
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeSpec Natural
+</span><span class="">#sec</span></span><span> </span><span class="annot"><span class="annottext">(TimeSpec -&gt; Natural) -&gt; TimeSpec -&gt; Natural
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TimeSpec -&gt; TimeSpec -&gt; TimeSpec
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#diffTimeSpec"><span class="hs-identifier hs-var">diffTimeSpec</span></a></span><span> </span><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679524028"><span class="hs-identifier hs-var">t1</span></a></span><span> </span><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679524029"><span class="hs-identifier hs-var">t2</span></a></span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="annot"><span class="hs-comment">-- | Transforms a 'TimeSpec' into a 'RelativeTime'.</span></span><span>
+</span><span id="line-69"></span><span class="annot"><a href="Shrun.Utils.html#timeSpecToRelTime"><span class="hs-identifier hs-type">timeSpecToRelTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#TimeSpec"><span class="hs-identifier hs-type">TimeSpec</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#RelativeTime"><span class="hs-identifier hs-type">RelativeTime</span></a></span><span>
+</span><span id="line-70"></span><span id="timeSpecToRelTime"><span class="annot"><span class="annottext">timeSpecToRelTime :: TimeSpec -&gt; RelativeTime
+</span><a href="Shrun.Utils.html#timeSpecToRelTime"><span class="hs-identifier hs-var hs-var">timeSpecToRelTime</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; RelativeTime
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#fromSeconds"><span class="hs-identifier hs-var">fromSeconds</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; RelativeTime)
+-&gt; (TimeSpec -&gt; Natural) -&gt; TimeSpec -&gt; RelativeTime
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeSpec Natural -&gt; TimeSpec -&gt; Natural
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx TimeSpec Natural
+</span><span class="">#sec</span></span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- | Relaxes 'foldMap'\'s 'Monoid' constraint to 'Semigroup'. Requires a</span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- starting value. This will have to do until semigroupoids' Foldable1 is</span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- in base.</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--</span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- &gt;&gt;&gt; foldMap1 @List Sum 0 [1..4]</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- Sum {getSum = 10}</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- &gt;&gt;&gt; -- Silly, but demonstrates usage i.e. with non-monoid NonEmpty.</span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- &gt;&gt;&gt; foldMap1 @List (:| []) 1 [2,3,4]</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- 1 :| [2,3,4]</span><span>
+</span><span id="line-83"></span><span id="local-6989586621679523825"><span id="local-6989586621679523826"><span id="local-6989586621679523827"><span class="annot"><a href="Shrun.Utils.html#foldMap1"><span class="hs-identifier hs-type">foldMap1</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Foldable</span></span><span> </span><span class="annot"><a href="#local-6989586621679523825"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Semigroup</span></span><span> </span><span class="annot"><a href="#local-6989586621679523826"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679523827"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523826"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523827"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523825"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523827"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523826"><span class="hs-identifier hs-type">s</span></a></span></span></span></span><span>
+</span><span id="line-84"></span><span id="foldMap1"><span class="annot"><span class="annottext">foldMap1 :: forall (f :: Type -&gt; Type) s a.
+(Foldable f, Semigroup s) =&gt;
+(a -&gt; s) -&gt; a -&gt; f a -&gt; s
+</span><a href="Shrun.Utils.html#foldMap1"><span class="hs-identifier hs-var hs-var">foldMap1</span></a></span></span><span> </span><span id="local-6989586621679524036"><span class="annot"><span class="annottext">a -&gt; s
+</span><a href="#local-6989586621679524036"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679524037"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524037"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679524038"><span class="annot"><span class="annottext">f a
+</span><a href="#local-6989586621679524038"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a -&gt; (a -&gt; s) -&gt; a -&gt; s) -&gt; (a -&gt; s) -&gt; f a -&gt; a -&gt; s
+forall a b. (a -&gt; b -&gt; b) -&gt; b -&gt; f a -&gt; b
+forall (t :: Type -&gt; Type) a b.
+Foldable t =&gt;
+(a -&gt; b -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldr</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679524040"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524040"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679524041"><span class="annot"><span class="annottext">a -&gt; s
+</span><a href="#local-6989586621679524041"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span id="local-6989586621679524042"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524042"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; s
+</span><a href="#local-6989586621679524036"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524042"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">s -&gt; s -&gt; s
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; s
+</span><a href="#local-6989586621679524041"><span class="hs-identifier hs-var">g</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524040"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">a -&gt; s
+</span><a href="#local-6989586621679524036"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">f a
+</span><a href="#local-6989586621679524038"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524037"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- | Wrapper for 'Text'\'s 'T.breakOn' that differs in that:</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- 1. If the @needle@ is found within the @haystack@, we do not include it</span><span>
+</span><span id="line-89"></span><span class="hs-comment">-- in the second part of the pair.</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--</span><span>
+</span><span id="line-91"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- &gt;&gt;&gt; -- Data.Text</span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- &gt;&gt;&gt; T.breakOn &quot;=&quot; &quot;HEY=LISTEN&quot;</span><span>
+</span><span id="line-94"></span><span class="hs-comment">-- (&quot;HEY&quot;,&quot;=LISTEN&quot;)</span><span>
+</span><span id="line-95"></span><span class="hs-comment">--</span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- &gt;&gt;&gt; -- Shrun.Utils.Text</span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint &quot;=&quot; &quot;HEY=LISTEN&quot;</span><span>
+</span><span id="line-98"></span><span class="hs-comment">-- (&quot;HEY&quot;,&quot;LISTEN&quot;)</span><span>
+</span><span id="line-99"></span><span class="hs-comment">--</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- Other examples:</span><span>
+</span><span id="line-101"></span><span class="hs-comment">--</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint &quot;=&quot; &quot;HEYLISTEN&quot;</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- (&quot;HEYLISTEN&quot;,&quot;&quot;)</span><span>
+</span><span id="line-104"></span><span class="hs-comment">--</span><span>
+</span><span id="line-105"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint &quot;=&quot; &quot;=HEYLISTEN&quot;</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- (&quot;&quot;,&quot;HEYLISTEN&quot;)</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--</span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint &quot;=&quot; &quot;HEYLISTEN=&quot;</span><span>
+</span><span id="line-109"></span><span class="hs-comment">-- (&quot;HEYLISTEN&quot;,&quot;&quot;)</span><span>
+</span><span id="line-110"></span><span class="hs-comment">--</span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- &gt;&gt;&gt; breakStripPoint &quot;=&quot; &quot;HEY==LISTEN&quot;</span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- (&quot;HEY&quot;,&quot;=LISTEN&quot;)</span><span>
+</span><span id="line-113"></span><span class="annot"><a href="Shrun.Utils.html#breakStripPoint"><span class="hs-identifier hs-type">breakStripPoint</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Prelude.html#Tuple2"><span class="hs-identifier hs-type">Tuple2</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-114"></span><span id="breakStripPoint"><span class="annot"><span class="annottext">breakStripPoint :: Text -&gt; Text -&gt; Tuple2 Text Text
+</span><a href="Shrun.Utils.html#breakStripPoint"><span class="hs-identifier hs-var hs-var">breakStripPoint</span></a></span></span><span> </span><span id="local-6989586621679524044"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524044"><span class="hs-identifier hs-var">point</span></a></span></span><span> </span><span id="local-6989586621679524045"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524045"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Text -&gt; Text -&gt; Tuple2 Text Text
+Text -&gt; Text -&gt; Tuple2 Text Text
+</span><span class="hs-identifier hs-var">T.breakOn</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524044"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524045"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-115"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679524046"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524046"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Maybe Text
+</span><span class="hs-identifier hs-var">T.stripPrefix</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524044"><span class="hs-identifier hs-var">point</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679524048"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524048"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524046"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524048"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span>  </span><span id="local-6989586621679524049"><span class="annot"><span class="annottext">Tuple2 Text Text
+</span><a href="#local-6989586621679524049"><span class="hs-identifier hs-var">pair</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Tuple2 Text Text
+</span><a href="#local-6989586621679524049"><span class="hs-identifier hs-var">pair</span></a></span><span>
+</span><span id="line-117"></span><span>
+</span><span id="line-118"></span><span class="hs-comment">-- | For 'Natural' \(n\) and 'Text' \(t = t_0 t_1 \ldots t_m\), truncates</span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- \(t\) if \(m &gt; n\). In this case, \(t\) is truncated to \(n - 3\), and an</span><span>
+</span><span id="line-120"></span><span class="hs-comment">-- ellipsis ( \(\ldots\) ) is appended. We are left with a string with</span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- length exactly \(n\):</span><span>
+</span><span id="line-122"></span><span class="hs-comment">--</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- \[</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- t_0 t_1 \ldots t_{n-3} \text{...} \quad \text{-- 3 literal } `\text{.' chars appended}</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- \]</span><span>
+</span><span id="line-126"></span><span class="hs-comment">--</span><span>
+</span><span id="line-127"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- &gt;&gt;&gt; truncateIfNeeded 7 &quot;hi&quot;</span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- &quot;hi&quot;</span><span>
+</span><span id="line-130"></span><span class="hs-comment">--</span><span>
+</span><span id="line-131"></span><span class="hs-comment">-- &gt;&gt;&gt; truncateIfNeeded 10 &quot;This is 21 chars long&quot;</span><span>
+</span><span id="line-132"></span><span class="hs-comment">-- &quot;This is...&quot;</span><span>
+</span><span id="line-133"></span><span class="annot"><a href="Shrun.Utils.html#truncateIfNeeded"><span class="hs-identifier hs-type">truncateIfNeeded</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-134"></span><span id="truncateIfNeeded"><span class="annot"><span class="annottext">truncateIfNeeded :: Natural -&gt; Text -&gt; Text
+</span><a href="Shrun.Utils.html#truncateIfNeeded"><span class="hs-identifier hs-var hs-var">truncateIfNeeded</span></a></span></span><span> </span><span id="local-6989586621679524050"><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679524050"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679524051"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524051"><span class="hs-identifier hs-var">txt</span></a></span></span><span>
+</span><span id="line-135"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Int
+</span><span class="hs-identifier hs-var">T.length</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524051"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679524054"><span class="hs-identifier hs-var">n'</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524051"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524055"><span class="hs-identifier hs-var">txt'</span></a></span><span>
+</span><span id="line-137"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-138"></span><span>    </span><span id="local-6989586621679524055"><span class="annot"><span class="annottext">txt' :: Text
+</span><a href="#local-6989586621679524055"><span class="hs-identifier hs-var hs-var">txt'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.take</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679524054"><span class="hs-identifier hs-var">n'</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524051"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;...&quot;</span></span><span>
+</span><span id="line-139"></span><span>    </span><span id="local-6989586621679524054"><span class="annot"><span class="annottext">n' :: Int
+</span><a href="#local-6989586621679524054"><span class="hs-identifier hs-var hs-var">n'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Int
+</span><a href="Shrun.Utils.html#n2i"><span class="hs-identifier hs-var">n2i</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679524050"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span class="annot"><a href="Shrun.Utils.html#n2i"><span class="hs-identifier hs-type">n2i</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-142"></span><span id="n2i"><span class="annot"><span class="annottext">n2i :: Natural -&gt; Int
+</span><a href="Shrun.Utils.html#n2i"><span class="hs-identifier hs-var hs-var">n2i</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Int
+forall a b.
+(Bits a, Bits b, HasCallStack, Integral a, Integral b, Show a,
+ Typeable a, Typeable b) =&gt;
+a -&gt; b
+</span><a href="Shrun.Prelude.html#unsafeConvertIntegral"><span class="hs-identifier hs-var">unsafeConvertIntegral</span></a></span><span>
+</span><span id="line-143"></span><span>
+</span><span id="line-144"></span><span class="hs-comment">-- NOTE: [StripControl Newlines]</span><span>
+</span><span id="line-145"></span><span class="hs-comment">--</span><span>
+</span><span id="line-146"></span><span class="hs-comment">-- Applying stripControl to text that has newlines in it can produce poorly</span><span>
+</span><span id="line-147"></span><span class="hs-comment">-- formatted text. This is due to newlines being stripped, so e.g. t1\nt2</span><span>
+</span><span id="line-148"></span><span class="hs-comment">-- becomes t1t2. Hence we require 'UnlinedText'.</span><span>
+</span><span id="line-149"></span><span>
+</span><span id="line-150"></span><span class="hs-comment">-- | Strips all control chars, including ansi escape sequences.</span><span>
+</span><span id="line-151"></span><span class="hs-comment">--</span><span>
+</span><span id="line-152"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-153"></span><span class="hs-comment">--</span><span>
+</span><span id="line-154"></span><span class="hs-comment">-- &gt;&gt;&gt; stripControlAll &quot;foo\ESC[0;3Abar \n baz&quot;</span><span>
+</span><span id="line-155"></span><span class="hs-comment">-- &quot;foobar  baz&quot;</span><span>
+</span><span id="line-156"></span><span class="annot"><a href="Shrun.Utils.html#stripControlAll"><span class="hs-identifier hs-type">stripControlAll</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span>
+</span><span id="line-157"></span><span id="stripControlAll"><span class="annot"><span class="annottext">stripControlAll :: UnlinedText -&gt; UnlinedText
+</span><a href="Shrun.Utils.html#stripControlAll"><span class="hs-identifier hs-var hs-var">stripControlAll</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-158"></span><span>  </span><span class="hs-comment">-- The ansi stripping must come first. For example, if we strip control</span><span>
+</span><span id="line-159"></span><span>  </span><span class="hs-comment">-- chars from &quot;\ESC[0;3mfoo&quot; we get &quot;0;3mfoo&quot;, and then stripAnsiAll will</span><span>
+</span><span id="line-160"></span><span>  </span><span class="hs-comment">-- no longer recognize this as an ansi sequences - i.e. this will leave</span><span>
+</span><span id="line-161"></span><span>  </span><span class="hs-comment">-- remnants from the ansi sequences.</span><span>
+</span><span id="line-162"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-163"></span><span>  </span><span class="hs-comment">-- By performing stripAnsiAll first, we remove entire ansi sequences,</span><span>
+</span><span id="line-164"></span><span>  </span><span class="hs-comment">-- then remove other control chars (e.g. newlines, tabs).</span><span>
+</span><span id="line-165"></span><span>  </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; UnlinedText -&gt; UnlinedText
+</span><a href="Shrun.Data.Text.html#reallyUnsafeLiftUnlined"><span class="hs-identifier hs-var">ShrunText.reallyUnsafeLiftUnlined</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Char -&gt; Bool) -&gt; Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.filter</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Bool) -&gt; (Char -&gt; Bool) -&gt; Char -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><span class="hs-identifier hs-var">isControl</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; (Text -&gt; Text) -&gt; Text -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripAnsiAll"><span class="hs-identifier hs-var">stripAnsiAll</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span class="hs-comment">-- | Strips control chars, including most ansi escape sequences. We leave</span><span>
+</span><span id="line-168"></span><span class="hs-comment">-- behind SGR ansi escape sequences e.g. text coloring. See</span><span>
+</span><span id="line-169"></span><span class="hs-comment">-- https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters.</span><span>
+</span><span id="line-170"></span><span class="hs-comment">--</span><span>
+</span><span id="line-171"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-172"></span><span class="hs-comment">--</span><span>
+</span><span id="line-173"></span><span class="hs-comment">-- &gt;&gt;&gt; stripControlSmart &quot;foo\ESC[0;3Abar \n baz&quot;</span><span>
+</span><span id="line-174"></span><span class="hs-comment">-- &quot;foobar  baz&quot;</span><span>
+</span><span id="line-175"></span><span class="hs-comment">--</span><span>
+</span><span id="line-176"></span><span class="hs-comment">-- &gt;&gt;&gt; stripControlSmart &quot;foo\ESC[0;3mbar \n baz&quot;</span><span>
+</span><span id="line-177"></span><span class="hs-comment">-- &quot;foo\ESC[0;3mbar  baz&quot;</span><span>
+</span><span id="line-178"></span><span class="annot"><a href="Shrun.Utils.html#stripControlSmart"><span class="hs-identifier hs-type">stripControlSmart</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span>
+</span><span id="line-179"></span><span id="stripControlSmart"><span class="annot"><span class="annottext">stripControlSmart :: UnlinedText -&gt; UnlinedText
+</span><a href="Shrun.Utils.html#stripControlSmart"><span class="hs-identifier hs-var hs-var">stripControlSmart</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-180"></span><span>  </span><span class="hs-comment">-- Like 'stripControlAll', we need to handle the ansi sequences first.</span><span>
+</span><span id="line-181"></span><span>  </span><span class="hs-comment">-- Because we actually leave some sequences behind, we need to be more</span><span>
+</span><span id="line-182"></span><span>  </span><span class="hs-comment">-- surgical removing the rest of the control chars (e.g. newline, tabs).</span><span>
+</span><span id="line-183"></span><span>  </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; UnlinedText -&gt; UnlinedText
+</span><a href="Shrun.Data.Text.html#reallyUnsafeLiftUnlined"><span class="hs-identifier hs-var">ShrunText.reallyUnsafeLiftUnlined</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Char -&gt; Bool) -&gt; Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.filter</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><a href="#local-6989586621679524063"><span class="hs-identifier hs-var">ctrlToFilter</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Text) -&gt; (Text -&gt; Text) -&gt; Text -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripAnsiControl"><span class="hs-identifier hs-var">stripAnsiControl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-184"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-185"></span><span>    </span><span class="hs-comment">-- stripAnsiControl should be handling all \ESC sequences, so we should</span><span>
+</span><span id="line-186"></span><span>    </span><span class="hs-comment">-- be safe to ignore these, accomplishing our goal of preserving the SGR</span><span>
+</span><span id="line-187"></span><span>    </span><span class="hs-comment">-- sequences. If this is too aggressive, we can instead attempt to strip</span><span>
+</span><span id="line-188"></span><span>    </span><span class="hs-comment">-- out the known 'bad' control chars e.g.</span><span>
+</span><span id="line-189"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-190"></span><span>    </span><span class="hs-comment">--   ctrlToFilter = not . (`elem` ['\n', '\t', '\v'])</span><span>
+</span><span id="line-191"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-192"></span><span>    </span><span id="local-6989586621679524063"><span class="annot"><span class="annottext">ctrlToFilter :: Char -&gt; Bool
+</span><a href="#local-6989586621679524063"><span class="hs-identifier hs-var hs-var">ctrlToFilter</span></a></span></span><span> </span><span id="local-6989586621679524067"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679524067"><span class="hs-identifier hs-var">c</span></a></span></span><span>
+</span><span id="line-193"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><span class="hs-identifier hs-var">isControl</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679524067"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679524067"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'\ESC'</span></span><span>
+</span><span id="line-194"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-195"></span><span>
+</span><span id="line-196"></span><span class="hs-comment">-- | Strips all ansi sequences from the given text.</span><span>
+</span><span id="line-197"></span><span class="hs-comment">--</span><span>
+</span><span id="line-198"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-199"></span><span class="hs-comment">--</span><span>
+</span><span id="line-200"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-201"></span><span class="hs-comment">-- stripAnsiAll &quot;foo\ESC[0;3Abar&quot;</span><span>
+</span><span id="line-202"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-203"></span><span class="annot"><a href="Shrun.Utils.html#stripAnsiAll"><span class="hs-identifier hs-type">stripAnsiAll</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-204"></span><span id="stripAnsiAll"><span class="annot"><span class="annottext">stripAnsiAll :: Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripAnsiAll"><span class="hs-identifier hs-var hs-var">stripAnsiAll</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Text
+</span><span class="hs-identifier hs-var">T.concat</span></span><span> </span><span class="annot"><span class="annottext">([Text] -&gt; Text) -&gt; (Text -&gt; [Text]) -&gt; Text -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">((Text, Text, Text) -&gt; Text) -&gt; [(Text, Text, Text)] -&gt; [Text]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Text, Text, Text) Text
+-&gt; (Text, Text, Text) -&gt; Text
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx (Text, Text, Text) Text
+forall s t a b. Field1 s t a b =&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Data.Tuple.Optics.html#_1"><span class="hs-identifier hs-var">_1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([(Text, Text, Text)] -&gt; [Text])
+-&gt; (Text -&gt; [(Text, Text, Text)]) -&gt; Text -&gt; [Text]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; [(Text, Text, Text)]
+</span><a href="Shrun.Utils.html#splitAnsi"><span class="hs-identifier hs-var">splitAnsi</span></a></span><span>
+</span><span id="line-205"></span><span>
+</span><span id="line-206"></span><span class="hs-comment">-- | Strips ansi control sequences only.</span><span>
+</span><span id="line-207"></span><span class="hs-comment">--</span><span>
+</span><span id="line-208"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-209"></span><span class="hs-comment">--</span><span>
+</span><span id="line-210"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-211"></span><span class="hs-comment">-- stripAnsiControl &quot;foo\ESC[0;3Abar&quot;</span><span>
+</span><span id="line-212"></span><span class="hs-comment">-- &quot;foobar&quot;</span><span>
+</span><span id="line-213"></span><span class="hs-comment">--</span><span>
+</span><span id="line-214"></span><span class="hs-comment">-- stripAnsiControl &quot;foo\ESC[0;3mbar&quot;</span><span>
+</span><span id="line-215"></span><span class="hs-comment">-- &quot;foo\ESC[0;3mbar&quot;</span><span>
+</span><span id="line-216"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-217"></span><span class="annot"><a href="Shrun.Utils.html#stripAnsiControl"><span class="hs-identifier hs-type">stripAnsiControl</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-218"></span><span id="stripAnsiControl"><span class="annot"><span class="annottext">stripAnsiControl :: Text -&gt; Text
+</span><a href="Shrun.Utils.html#stripAnsiControl"><span class="hs-identifier hs-var hs-var">stripAnsiControl</span></a></span></span><span> </span><span id="local-6989586621679524071"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524071"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-219"></span><span>  </span><span class="annot"><span class="annottext">(Text -&gt; (Text, Text, Text) -&gt; Text)
+-&gt; Text -&gt; [(Text, Text, Text)] -&gt; Text
+forall b a. (b -&gt; a -&gt; b) -&gt; b -&gt; [a] -&gt; b
+forall (t :: Type -&gt; Type) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldl'</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; (Text, Text, Text) -&gt; Text
+forall {a}. Semigroup a =&gt; a -&gt; (a, Text, a) -&gt; a
+</span><a href="#local-6989586621679524073"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">[(Text, Text, Text)]
+</span><a href="#local-6989586621679524074"><span class="hs-identifier hs-var">splitTxt</span></a></span><span>
+</span><span id="line-220"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-221"></span><span>    </span><span id="local-6989586621679524074"><span class="annot"><span class="annottext">splitTxt :: [(Text, Text, Text)]
+</span><a href="#local-6989586621679524074"><span class="hs-identifier hs-var hs-var">splitTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [(Text, Text, Text)]
+</span><a href="Shrun.Utils.html#splitAnsi"><span class="hs-identifier hs-var">splitAnsi</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524071"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-222"></span><span>    </span><span id="local-6989586621679524073"><span class="annot"><span class="annottext">f :: a -&gt; (a, Text, a) -&gt; a
+</span><a href="#local-6989586621679524073"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679524078"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524078"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679524079"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524079"><span class="hs-identifier hs-var">preAnsi</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679524080"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524080"><span class="hs-identifier hs-var">code</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679524081"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524081"><span class="hs-identifier hs-var">withAnsi</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-223"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Bool
+</span><a href="Shrun.Utils.html#nonControlAnsi"><span class="hs-identifier hs-var">nonControlAnsi</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524080"><span class="hs-identifier hs-var">code</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524078"><span class="hs-identifier hs-var">acc</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524081"><span class="hs-identifier hs-var">withAnsi</span></a></span><span>
+</span><span id="line-224"></span><span>      </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524078"><span class="hs-identifier hs-var">acc</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524079"><span class="hs-identifier hs-var">preAnsi</span></a></span><span>
+</span><span id="line-225"></span><span>
+</span><span id="line-226"></span><span class="annot"><a href="Shrun.Utils.html#nonControlAnsi"><span class="hs-identifier hs-type">nonControlAnsi</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-227"></span><span id="nonControlAnsi"><span class="annot"><span class="annottext">nonControlAnsi :: Text -&gt; Bool
+</span><a href="Shrun.Utils.html#nonControlAnsi"><span class="hs-identifier hs-var hs-var">nonControlAnsi</span></a></span></span><span> </span><span id="local-6989586621679524083"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524083"><span class="hs-identifier hs-var">ansi</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe (Text, Char)
+</span><span class="hs-identifier hs-var">T.unsnoc</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524083"><span class="hs-identifier hs-var">ansi</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-228"></span><span>  </span><span class="hs-comment">-- 'm' equals color: only code we consider 'good' for now</span><span>
+</span><span id="line-229"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'m'</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-230"></span><span>  </span><span class="annot"><span class="annottext">Maybe (Text, Char)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-231"></span><span>
+</span><span id="line-232"></span><span class="hs-comment">-- tuple is: (text, ansi_code, ansi_code &lt;&gt; text)</span><span>
+</span><span id="line-233"></span><span class="hs-comment">-- example: splitAnsi &quot;foo\ESC[0;3mbar&quot;</span><span>
+</span><span id="line-234"></span><span class="annot"><a href="Shrun.Utils.html#splitAnsi"><span class="hs-identifier hs-type">splitAnsi</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-235"></span><span id="splitAnsi"><span class="annot"><span class="annottext">splitAnsi :: Text -&gt; [(Text, Text, Text)]
+</span><a href="Shrun.Utils.html#splitAnsi"><span class="hs-identifier hs-var hs-var">splitAnsi</span></a></span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-236"></span><span class="annot"><a href="Shrun.Utils.html#splitAnsi"><span class="hs-identifier hs-var">splitAnsi</span></a></span><span> </span><span id="local-6989586621679524085"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524085"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-237"></span><span>  </span><span class="hs-comment">-- (foo, \ESC[0;3m, bar) : ...</span><span>
+</span><span id="line-238"></span><span>  </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524086"><span class="hs-identifier hs-var">preAnsi</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524087"><span class="hs-identifier hs-var">ansiCode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524086"><span class="hs-identifier hs-var">preAnsi</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524087"><span class="hs-identifier hs-var">ansiCode</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Text, Text, Text) -&gt; [(Text, Text, Text)] -&gt; [(Text, Text, Text)]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[(Text, Text, Text)]
+</span><a href="#local-6989586621679524088"><span class="hs-identifier hs-var">rest</span></a></span><span>
+</span><span id="line-239"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-240"></span><span>    </span><span class="hs-comment">-- (foo, \ESC[0;3mbar)</span><span>
+</span><span id="line-241"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">!</span><span id="local-6989586621679524086"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524086"><span class="hs-identifier hs-var">preAnsi</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679524089"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524089"><span class="hs-identifier hs-var">withAnsiFull</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Text -&gt; Text -&gt; Tuple2 Text Text
+Text -&gt; Text -&gt; Tuple2 Text Text
+</span><span class="hs-identifier hs-var">T.breakOn</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;\ESC[&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524085"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-242"></span><span>    </span><span class="hs-comment">-- (\ESC[0;3, mbar)</span><span>
+</span><span id="line-243"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">!</span><span id="local-6989586621679524090"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524090"><span class="hs-identifier hs-var">ansiCodeNoChar</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679524091"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524091"><span class="hs-identifier hs-var">withAnsiChar</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Char -&gt; Bool) -&gt; Text -&gt; Tuple2 Text Text
+</span><span class="hs-identifier hs-var">T.break</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><span class="hs-identifier hs-var">isLetter</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524089"><span class="hs-identifier hs-var">withAnsiFull</span></a></span><span>
+</span><span id="line-244"></span><span>    </span><span class="hs-comment">-- (\ESC[0;3m, bar)</span><span>
+</span><span id="line-245"></span><span>    </span><span class="hs-special">(</span><span class="hs-glyph">!</span><span id="local-6989586621679524087"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524087"><span class="hs-identifier hs-var">ansiCode</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679524088"><span class="annot"><span class="annottext">[(Text, Text, Text)]
+</span><a href="#local-6989586621679524088"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Maybe (Char, Text)
+</span><span class="hs-identifier hs-var">T.uncons</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524091"><span class="hs-identifier hs-var">withAnsiChar</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-246"></span><span>      </span><span class="hs-comment">-- (m, bar)</span><span>
+</span><span id="line-247"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">!</span><span id="local-6989586621679524094"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679524094"><span class="hs-identifier hs-var">ansiChar</span></a></span></span><span class="hs-special">,</span><span> </span><span class="hs-glyph">!</span><span id="local-6989586621679524095"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524095"><span class="hs-identifier hs-var">rest'</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Char -&gt; Text
+</span><span class="hs-identifier hs-var">T.snoc</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524090"><span class="hs-identifier hs-var">ansiCodeNoChar</span></a></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679524094"><span class="hs-identifier hs-var">ansiChar</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [(Text, Text, Text)]
+</span><a href="Shrun.Utils.html#splitAnsi"><span class="hs-identifier hs-var">splitAnsi</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524095"><span class="hs-identifier hs-var">rest'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-248"></span><span>      </span><span class="annot"><span class="annottext">Maybe (Char, Text)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524090"><span class="hs-identifier hs-var">ansiCodeNoChar</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-249"></span><span>
+</span><span id="line-250"></span><span class="hs-comment">-- | Parses bytes with arbitrary units and converts to bytes. First attempts</span><span>
+</span><span id="line-251"></span><span class="hs-comment">-- to parse as a 'Natural' so we do not lose precision. If that fails, falls</span><span>
+</span><span id="line-252"></span><span class="hs-comment">-- back to 'Double'.</span><span>
+</span><span id="line-253"></span><span class="hs-comment">--</span><span>
+</span><span id="line-254"></span><span class="hs-comment">-- ==== __Examples__</span><span>
+</span><span id="line-255"></span><span class="hs-comment">--</span><span>
+</span><span id="line-256"></span><span class="hs-comment">-- &gt;&gt;&gt; parseByteText &quot;120 mb&quot;</span><span>
+</span><span id="line-257"></span><span class="hs-comment">-- Right (MkBytes 120000000)</span><span>
+</span><span id="line-258"></span><span class="hs-comment">--</span><span>
+</span><span id="line-259"></span><span class="hs-comment">-- &gt;&gt;&gt; parseByteText &quot;4.5 terabytes&quot;</span><span>
+</span><span id="line-260"></span><span class="hs-comment">-- Right (MkBytes 4500000000000)</span><span>
+</span><span id="line-261"></span><span class="annot"><a href="Shrun.Utils.html#parseByteText"><span class="hs-identifier hs-type">parseByteText</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#Bytes"><span class="hs-identifier hs-type">Bytes</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">)</span><span>
+</span><span id="line-262"></span><span id="parseByteText"><span class="annot"><span class="annottext">parseByteText :: Text -&gt; Either Text (Bytes 'B Natural)
+</span><a href="Shrun.Utils.html#parseByteText"><span class="hs-identifier hs-var hs-var">parseByteText</span></a></span></span><span> </span><span id="local-6989586621679524097"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524097"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-263"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">forall a. Parser a =&gt; Text -&gt; Either Text a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Parser.html#parse"><span class="hs-identifier hs-var">parse</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#SomeSize"><span class="hs-identifier hs-type">SomeSize</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524097"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-264"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679524098"><span class="annot"><span class="annottext">SomeSize Natural
+</span><a href="#local-6989586621679524098"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; Either Text (Bytes 'B Natural)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">(Bytes 'B Natural -&gt; Either Text (Bytes 'B Natural))
+-&gt; Bytes 'B Natural -&gt; Either Text (Bytes 'B Natural)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Proxy 'B -&gt; SomeSize Natural -&gt; Converted 'B (SomeSize Natural)
+forall a (t :: Size).
+(Conversion a, SingSize t) =&gt;
+Proxy t -&gt; a -&gt; Converted t a
+forall (t :: Size).
+SingSize t =&gt;
+Proxy t -&gt; SomeSize Natural -&gt; Converted t (SomeSize Natural)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Conversion.html#convert"><span class="hs-identifier hs-var">convert</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall {k} (t :: k). Proxy t
+forall (t :: Size). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">SomeSize Natural
+</span><a href="#local-6989586621679524098"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-265"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">forall a. Parser a =&gt; Text -&gt; Either Text a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Parser.html#parse"><span class="hs-identifier hs-var">parse</span></a></span><span> </span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#SomeSize"><span class="hs-identifier hs-type">SomeSize</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524097"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-266"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679524100"><span class="annot"><span class="annottext">SomeSize Double
+</span><a href="#local-6989586621679524100"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; Either Text (Bytes 'B Natural)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double -&gt; Natural
+forall b. Integral b =&gt; Double -&gt; b
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">truncate</span></span><span> </span><span class="annot"><span class="annottext">(Double -&gt; Natural) -&gt; Bytes 'B Double -&gt; Bytes 'B Natural
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Proxy 'B -&gt; SomeSize Double -&gt; Converted 'B (SomeSize Double)
+forall a (t :: Size).
+(Conversion a, SingSize t) =&gt;
+Proxy t -&gt; a -&gt; Converted t a
+forall (t :: Size).
+SingSize t =&gt;
+Proxy t -&gt; SomeSize Double -&gt; Converted t (SomeSize Double)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Conversion.html#convert"><span class="hs-identifier hs-var">convert</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall {k} (t :: k). Proxy t
+forall (t :: Size). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">SomeSize Double
+</span><a href="#local-6989586621679524100"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-267"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679524103"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524103"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text (Bytes 'B Natural)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524103"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-268"></span><span>
+</span><span id="line-269"></span><span class="annot"><span class="hs-comment">-- | Runs the action when it is 'Left'.</span></span><span>
+</span><span id="line-270"></span><span id="local-6989586621679523867"><span id="local-6989586621679523868"><span id="local-6989586621679523869"><span class="annot"><a href="Shrun.Utils.html#whenLeft"><span class="hs-identifier hs-type">whenLeft</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Applicative</span></span><span> </span><span class="annot"><a href="#local-6989586621679523867"><span class="hs-identifier hs-type">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="#local-6989586621679523868"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523869"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679523868"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523867"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523867"><span class="hs-identifier hs-type">f</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-271"></span><span id="whenLeft"><span class="annot"><span class="annottext">whenLeft :: forall (f :: Type -&gt; Type) a b.
+Applicative f =&gt;
+Either a b -&gt; (a -&gt; f ()) -&gt; f ()
+</span><a href="Shrun.Utils.html#whenLeft"><span class="hs-identifier hs-var hs-var">whenLeft</span></a></span></span><span> </span><span id="local-6989586621679524106"><span class="annot"><span class="annottext">Either a b
+</span><a href="#local-6989586621679524106"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span id="local-6989586621679524107"><span class="annot"><span class="annottext">a -&gt; f ()
+</span><a href="#local-6989586621679524107"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a -&gt; f ()) -&gt; (b -&gt; f ()) -&gt; Either a b -&gt; f ()
+forall a c b. (a -&gt; c) -&gt; (b -&gt; c) -&gt; Either a b -&gt; c
+</span><span class="hs-identifier hs-var">either</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; f ()
+</span><a href="#local-6989586621679524107"><span class="hs-identifier hs-var">action</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">f () -&gt; b -&gt; f ()
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">() -&gt; f ()
+forall a. a -&gt; f a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Either a b
+</span><a href="#local-6989586621679524106"><span class="hs-identifier hs-var">e</span></a></span><span>
+</span><span id="line-272"></span><span>
+</span><span id="line-273"></span><span class="annot"><span class="hs-comment">-- | @whileM_ mb ma@ executes @ma@ as long as @mb@ returns 'True'.</span></span><span>
+</span><span id="line-274"></span><span id="local-6989586621679523880"><span id="local-6989586621679523881"><span class="annot"><a href="Shrun.Utils.html#whileM_"><span class="hs-identifier hs-type">whileM_</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679523880"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523880"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523880"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523881"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523880"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-275"></span><span id="whileM_"><span class="annot"><span class="annottext">whileM_ :: forall (m :: Type -&gt; Type) a. Monad m =&gt; m Bool -&gt; m a -&gt; m ()
+</span><a href="Shrun.Utils.html#whileM_"><span class="hs-identifier hs-var hs-var">whileM_</span></a></span></span><span> </span><span id="local-6989586621679524115"><span class="annot"><span class="annottext">m Bool
+</span><a href="#local-6989586621679524115"><span class="hs-identifier hs-var">mb</span></a></span></span><span> </span><span id="local-6989586621679524116"><span class="annot"><span class="annottext">m a
+</span><a href="#local-6989586621679524116"><span class="hs-identifier hs-var">ma</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+</span><a href="#local-6989586621679524117"><span class="hs-identifier hs-var">go</span></a></span><span>
+</span><span id="line-276"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-277"></span><span>    </span><span id="local-6989586621679524117"><span class="annot"><span class="annottext">go :: m ()
+</span><a href="#local-6989586621679524117"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-278"></span><span>      </span><span class="annot"><span class="annottext">m Bool
+</span><a href="#local-6989586621679524115"><span class="hs-identifier hs-var">mb</span></a></span><span> </span><span class="annot"><span class="annottext">m Bool -&gt; (Bool -&gt; m ()) -&gt; m ()
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-279"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m a
+</span><a href="#local-6989586621679524116"><span class="hs-identifier hs-var">ma</span></a></span><span> </span><span class="annot"><span class="annottext">m a -&gt; m () -&gt; m ()
+forall a b. m a -&gt; m b -&gt; m b
+forall (f :: Type -&gt; Type) a b. Applicative f =&gt; f a -&gt; f b -&gt; f b
+</span><span class="hs-operator hs-var">*&gt;</span></span><span> </span><span class="annot"><span class="annottext">m ()
+</span><a href="#local-6989586621679524117"><span class="hs-identifier hs-var">go</span></a></span><span>
+</span><span id="line-280"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; m ()
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-281"></span><span>
+</span><span id="line-282"></span><span class="hs-comment">-- | Executes the monadic action until we receive a 'Just', returning the</span><span>
+</span><span id="line-283"></span><span class="hs-comment">-- value.</span><span>
+</span><span id="line-284"></span><span id="local-6989586621679523889"><span id="local-6989586621679523890"><span class="annot"><a href="Shrun.Utils.html#untilJust"><span class="hs-identifier hs-type">untilJust</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679523889"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523889"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="#local-6989586621679523890"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523889"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523890"><span class="hs-identifier hs-type">b</span></a></span></span></span><span>
+</span><span id="line-285"></span><span id="untilJust"><span class="annot"><span class="annottext">untilJust :: forall (m :: Type -&gt; Type) b. Monad m =&gt; m (Maybe b) -&gt; m b
+</span><a href="Shrun.Utils.html#untilJust"><span class="hs-identifier hs-var hs-var">untilJust</span></a></span></span><span> </span><span id="local-6989586621679524122"><span class="annot"><span class="annottext">m (Maybe b)
+</span><a href="#local-6989586621679524122"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m b
+</span><a href="#local-6989586621679524123"><span class="hs-identifier hs-var">go</span></a></span><span>
+</span><span id="line-286"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-287"></span><span>    </span><span id="local-6989586621679524123"><span class="annot"><span class="annottext">go :: m b
+</span><a href="#local-6989586621679524123"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-288"></span><span>      </span><span class="annot"><span class="annottext">m (Maybe b)
+</span><a href="#local-6989586621679524122"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">m (Maybe b) -&gt; (Maybe b -&gt; m b) -&gt; m b
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-289"></span><span>        </span><span class="annot"><span class="annottext">Maybe b
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m b
+</span><a href="#local-6989586621679524123"><span class="hs-identifier hs-var">go</span></a></span><span>
+</span><span id="line-290"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679524124"><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679524124"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">b -&gt; m b
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">b
+</span><a href="#local-6989586621679524124"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-291"></span><span>
+</span><span id="line-292"></span><span class="hs-comment">{- HLINT ignore unsafeListToNESeq &quot;Redundant bracket&quot; -}</span><span>
+</span><span id="line-293"></span><span>
+</span><span id="line-294"></span><span id="local-6989586621679523893"><span class="annot"><a href="Shrun.Utils.html#unsafeListToNESeq"><span class="hs-identifier hs-type">unsafeListToNESeq</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523893"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier hs-type">NESeq</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523893"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-295"></span><span id="unsafeListToNESeq"><span class="annot"><span class="annottext">unsafeListToNESeq :: forall a. HasCallStack =&gt; List a -&gt; NESeq a
+</span><a href="Shrun.Utils.html#unsafeListToNESeq"><span class="hs-identifier hs-var hs-var">unsafeListToNESeq</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; NESeq a
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;[Shrun.Utils]: empty list&quot;</span></span><span>
+</span><span id="line-296"></span><span class="annot"><a href="Shrun.Utils.html#unsafeListToNESeq"><span class="hs-identifier hs-var">unsafeListToNESeq</span></a></span><span> </span><span id="local-6989586621679524131"><span class="annot"><span class="annottext">[a]
+</span><a href="#local-6989586621679524131"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonEmpty a -&gt; NESeq a
+forall a. NonEmpty a -&gt; NESeq a
+</span><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#fromList"><span class="hs-identifier hs-var">NESeq.fromList</span></a></span><span> </span><span class="annot"><span class="annottext">(NonEmpty a -&gt; NESeq a) -&gt; NonEmpty a -&gt; NESeq a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Item (NonEmpty a)] -&gt; NonEmpty a
+forall l. IsList l =&gt; [Item l] -&gt; l
+</span><span class="hs-identifier hs-var">fromList</span></span><span> </span><span class="annot"><span class="annottext">[a]
+[Item (NonEmpty a)]
+</span><a href="#local-6989586621679524131"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-297"></span><span>
+</span><span id="line-298"></span><span class="annot"><span class="hs-comment">-- | Escape double quotes in strings.</span></span><span>
+</span><span id="line-299"></span><span class="annot"><a href="Shrun.Utils.html#escapeDoubleQuotes"><span class="hs-identifier hs-type">escapeDoubleQuotes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-300"></span><span id="escapeDoubleQuotes"><span class="annot"><span class="annottext">escapeDoubleQuotes :: Text -&gt; Text
+</span><a href="Shrun.Utils.html#escapeDoubleQuotes"><span class="hs-identifier hs-var hs-var">escapeDoubleQuotes</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LazyText -&gt; Text
+</span><span class="hs-identifier hs-var">TL.toStrict</span></span><span> </span><span class="annot"><span class="annottext">(LazyText -&gt; Text) -&gt; (Text -&gt; LazyText) -&gt; Text -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; LazyText
+</span><span class="hs-identifier hs-var">TLB.toLazyText</span></span><span> </span><span class="annot"><span class="annottext">(Builder -&gt; LazyText) -&gt; (Text -&gt; Builder) -&gt; Text -&gt; LazyText
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(Builder -&gt; Char -&gt; Builder) -&gt; Builder -&gt; Text -&gt; Builder
+forall a. (a -&gt; Char -&gt; a) -&gt; a -&gt; Text -&gt; a
+</span><span class="hs-identifier hs-var">T.foldl'</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Char -&gt; Builder
+</span><a href="#local-6989586621679524136"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-301"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-302"></span><span>    </span><span class="annot"><a href="#local-6989586621679524136"><span class="hs-identifier hs-type">go</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Builder</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Builder</span></span><span>
+</span><span id="line-303"></span><span>    </span><span id="local-6989586621679524136"><span class="annot"><span class="annottext">go :: Builder -&gt; Char -&gt; Builder
+</span><a href="#local-6989586621679524136"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span id="local-6989586621679524137"><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679524137"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'&quot;'</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679524137"><span class="hs-identifier hs-var">acc</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><span class="hs-string">&quot;\\\&quot;&quot;</span></span><span>
+</span><span id="line-304"></span><span>    </span><span class="annot"><a href="#local-6989586621679524136"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span id="local-6989586621679524138"><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679524138"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span id="local-6989586621679524139"><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679524139"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679524138"><span class="hs-identifier hs-var">acc</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Builder
+</span><span class="hs-identifier hs-var">TLB.singleton</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679524139"><span class="hs-identifier hs-var">c</span></a></span><span>
+</span><span id="line-305"></span><span>
+</span><span id="line-306"></span><span class="annot"><span class="hs-comment">-- | &quot;monus&quot; i.e. subtraction clamped to zero</span></span><span>
+</span><span id="line-307"></span><span id="local-6989586621679523905"><span class="annot"><a href="Shrun.Utils.html#%2238"><span class="hs-operator hs-type">(&#8760;)</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679523905"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679523905"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523905"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523905"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523905"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-308"></span><span id="local-6989586621679524146"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524146"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="%2238"><span class="annot"><span class="annottext">&#8760; :: forall a. (Ord a, Num a) =&gt; a -&gt; a -&gt; a
+</span><a href="Shrun.Utils.html#%2238"><span class="hs-operator hs-var hs-var">&#8760;</span></a></span></span><span> </span><span id="local-6989586621679524147"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524147"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-309"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524147"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524146"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-310"></span><span>    </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-311"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524146"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524147"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><span id="line-312"></span><span>
+</span><span id="line-313"></span><span class="hs-keyword">infixl</span><span> </span><span class="hs-number">6</span><span> </span><span class="annot"><a href="Shrun.Utils.html#%2238"><span class="hs-operator hs-type">&#8760;</span></a></span><span>
+</span><span id="line-314"></span><span>
+</span><span id="line-315"></span><span id="local-6989586621679523907"><span id="local-6989586621679523908"><span class="annot"><a href="Shrun.Utils.html#readStripUnderscores"><span class="hs-identifier hs-type">readStripUnderscores</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679523907"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Read</span></span><span> </span><span class="annot"><a href="#local-6989586621679523908"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523907"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523908"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-316"></span><span id="readStripUnderscores"><span class="annot"><span class="annottext">readStripUnderscores :: forall (m :: Type -&gt; Type) a. (MonadFail m, Read a) =&gt; Text -&gt; m a
+</span><a href="Shrun.Utils.html#readStripUnderscores"><span class="hs-identifier hs-var hs-var">readStripUnderscores</span></a></span></span><span> </span><span id="local-6989586621679524165"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524165"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; Either [Char] a
+forall a. Read a =&gt; [Char] -&gt; Either [Char] a
+</span><span class="hs-identifier hs-var">TR.readEither</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679524167"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-317"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679524168"><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679524168"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; m a
+forall a. [Char] -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; [Char] -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">([Char] -&gt; m a) -&gt; [Char] -&gt; m a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;Could not read '&quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679524167"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;': &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679524168"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-318"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679524169"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524169"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a -&gt; m a
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679524169"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-319"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-320"></span><span>    </span><span id="local-6989586621679524170"><span class="annot"><span class="annottext">noUnderscores :: Text
+</span><a href="#local-6989586621679524170"><span class="hs-identifier hs-var hs-var">noUnderscores</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Text -&gt; Text -&gt; Text -&gt; Text
+Text -&gt; Text -&gt; Text -&gt; Text
+</span><span class="hs-identifier hs-var">T.replace</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;_&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524165"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-321"></span><span>    </span><span id="local-6989586621679524167"><span class="annot"><span class="annottext">s :: [Char]
+</span><a href="#local-6989586621679524167"><span class="hs-identifier hs-var hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Char]
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679524170"><span class="hs-identifier hs-var">noUnderscores</span></a></span><span>
+</span><span id="line-322"></span></pre></body></html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.FileLogging.FileSizeMode</span><span>
+</span><span id="line-2"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeMode"><span class="hs-identifier">FileSizeMode</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-3"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#parseFileSizeMode"><span class="hs-identifier">parseFileSizeMode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#expectedStr"><span class="hs-identifier">expectedStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.html"><span class="hs-identifier">Data.Bytes</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Conversion.html#Conversion"><span class="hs-identifier">Conversion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Conversion.html#convert"><span class="hs-identifier">convert</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html"><span class="hs-identifier">Data.Bytes.Size</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#Size"><span class="hs-identifier">Size</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#M"><span class="hs-identifier">M</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Ch</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">U</span></span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- | Determines what to do if the log file surpasses the given size</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- threshold.</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">data</span><span> </span><span id="FileSizeMode"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeMode"><span class="hs-identifier hs-var">FileSizeMode</span></a></span></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Print a warning.</span></span><span>
+</span><span id="line-20"></span><span>    </span><span id="FileSizeModeWarn"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeModeWarn"><span class="hs-identifier hs-var">FileSizeModeWarn</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#Bytes"><span class="hs-identifier hs-type">Bytes</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Delete the file.</span></span><span>
+</span><span id="line-22"></span><span>    </span><span id="FileSizeModeDelete"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeModeDelete"><span class="hs-identifier hs-var">FileSizeModeDelete</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#Bytes"><span class="hs-identifier hs-type">Bytes</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Does nothing.</span></span><span>
+</span><span id="line-24"></span><span>    </span><span id="FileSizeModeNothing"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeModeNothing"><span class="hs-identifier hs-var">FileSizeModeNothing</span></a></span></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679526181"><span id="local-6989586621679526187"><span class="annot"><span class="annottext">FileSizeMode -&gt; FileSizeMode -&gt; Bool
+(FileSizeMode -&gt; FileSizeMode -&gt; Bool)
+-&gt; (FileSizeMode -&gt; FileSizeMode -&gt; Bool) -&gt; Eq FileSizeMode
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: FileSizeMode -&gt; FileSizeMode -&gt; Bool
+== :: FileSizeMode -&gt; FileSizeMode -&gt; Bool
+$c/= :: FileSizeMode -&gt; FileSizeMode -&gt; Bool
+/= :: FileSizeMode -&gt; FileSizeMode -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679526193"><span id="local-6989586621679526202"><span id="local-6989586621679526206"><span class="annot"><span class="annottext">Int -&gt; FileSizeMode -&gt; ShowS
+[FileSizeMode] -&gt; ShowS
+FileSizeMode -&gt; String
+(Int -&gt; FileSizeMode -&gt; ShowS)
+-&gt; (FileSizeMode -&gt; String)
+-&gt; ([FileSizeMode] -&gt; ShowS)
+-&gt; Show FileSizeMode
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; FileSizeMode -&gt; ShowS
+showsPrec :: Int -&gt; FileSizeMode -&gt; ShowS
+$cshow :: FileSizeMode -&gt; String
+show :: FileSizeMode -&gt; String
+$cshowList :: [FileSizeMode] -&gt; ShowS
+showList :: [FileSizeMode] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeMode"><span class="hs-identifier hs-type">FileSizeMode</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-28"></span><span>  </span><span id="local-6989586621679526217"><span class="annot"><span class="annottext">tomlDecoder :: Decoder FileSizeMode
+</span><a href="#local-6989586621679526217"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder FileSizeMode
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#parseFileSizeMode"><span class="hs-identifier hs-var">parseFileSizeMode</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span id="local-6989586621679526137"><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#parseFileSizeMode"><span class="hs-identifier hs-type">parseFileSizeMode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679526137"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679526137"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679526137"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeMode"><span class="hs-identifier hs-type">FileSizeMode</span></a></span></span><span>
+</span><span id="line-31"></span><span id="parseFileSizeMode"><span class="annot"><span class="annottext">parseFileSizeMode :: forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#parseFileSizeMode"><span class="hs-identifier hs-var hs-var">parseFileSizeMode</span></a></span></span><span> </span><span id="local-6989586621679526250"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679526250"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-32"></span><span>  </span><span id="local-6989586621679526251"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526251"><span class="hs-identifier hs-var">txt</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679526250"><span class="hs-identifier hs-var">getTxt</span></a></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526251"><span class="hs-identifier hs-var">txt</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;nothing&quot;</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">FileSizeMode -&gt; m FileSizeMode
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeModeNothing"><span class="hs-identifier hs-var">FileSizeModeNothing</span></a></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-36"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679526252"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526252"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679526253"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526253"><span class="hs-identifier hs-var">byteTxt</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Char -&gt; Bool) -&gt; Text -&gt; (Text, Text)
+</span><span class="hs-identifier hs-var">T.break</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><span class="hs-identifier hs-var">Ch.isSpace</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526251"><span class="hs-identifier hs-var">txt</span></a></span><span>
+</span><span id="line-37"></span><span>      </span><span id="local-6989586621679526256"><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; FileSizeMode
+</span><a href="#local-6989586621679526256"><span class="hs-identifier hs-var">cons</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526252"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-38"></span><span>        </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;warn&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Bytes 'B Natural -&gt; FileSizeMode)
+-&gt; m (Bytes 'B Natural -&gt; FileSizeMode)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeModeWarn"><span class="hs-identifier hs-var">FileSizeModeWarn</span></a></span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;delete&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Bytes 'B Natural -&gt; FileSizeMode)
+-&gt; m (Bytes 'B Natural -&gt; FileSizeMode)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeModeDelete"><span class="hs-identifier hs-var">FileSizeModeDelete</span></a></span><span>
+</span><span id="line-40"></span><span>        </span><span id="local-6989586621679526257"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526257"><span class="hs-identifier hs-var">bad</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-41"></span><span>          </span><span class="annot"><span class="annottext">String -&gt; m (Bytes 'B Natural -&gt; FileSizeMode)
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span>
+</span><span id="line-42"></span><span>            </span><span class="annot"><span class="annottext">(String -&gt; m (Bytes 'B Natural -&gt; FileSizeMode))
+-&gt; String -&gt; m (Bytes 'B Natural -&gt; FileSizeMode)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-43"></span><span>              </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Expected file-log-size-mode as one of &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#expectedStr"><span class="hs-identifier hs-var">expectedStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; received: '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>                </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526257"><span class="hs-identifier hs-var">bad</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>                </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;'&quot;</span></span><span>
+</span><span id="line-48"></span><span>              </span><span class="hs-special">]</span><span>
+</span><span id="line-49"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text (Bytes 'B Natural)
+</span><a href="Shrun.Utils.html#parseByteText"><span class="hs-identifier hs-var">U.parseByteText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526253"><span class="hs-identifier hs-var">byteTxt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-50"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679526260"><span class="annot"><span class="annottext">Bytes 'B Natural
+</span><a href="#local-6989586621679526260"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FileSizeMode -&gt; m FileSizeMode
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(FileSizeMode -&gt; m FileSizeMode) -&gt; FileSizeMode -&gt; m FileSizeMode
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; FileSizeMode
+</span><a href="#local-6989586621679526256"><span class="hs-identifier hs-var">cons</span></a></span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural
+</span><a href="#local-6989586621679526260"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-51"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679526261"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526261"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; m FileSizeMode
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; m FileSizeMode) -&gt; String -&gt; m FileSizeMode
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Could not parse --file-log-size-mode size: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679526261"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier hs-type">Default</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeMode"><span class="hs-identifier hs-type">FileSizeMode</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-54"></span><span>  </span><span id="local-6989586621679526277"><span class="annot"><span class="annottext">def :: FileSizeMode
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var hs-var hs-var hs-var">def</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; FileSizeMode
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#FileSizeModeWarn"><span class="hs-identifier hs-var">FileSizeModeWarn</span></a></span><span> </span><span class="annot"><span class="annottext">(Bytes 'B Natural -&gt; FileSizeMode)
+-&gt; Bytes 'B Natural -&gt; FileSizeMode
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Proxy 'B -&gt; Bytes 'M Natural -&gt; Converted 'B (Bytes 'M Natural)
+forall a (t :: Size).
+(Conversion a, SingSize t) =&gt;
+Proxy t -&gt; a -&gt; Converted t a
+forall (t :: Size).
+SingSize t =&gt;
+Proxy t -&gt; Bytes 'M Natural -&gt; Converted t (Bytes 'M Natural)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Class.Conversion.html#convert"><span class="hs-identifier hs-var">convert</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall {k} (t :: k). Proxy t
+forall (t :: Size). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">@</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bytes 'M Natural
+</span><a href="#local-6989586621679526279"><span class="hs-identifier hs-var">defBytes</span></a></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-56"></span><span>      </span><span class="annot"><a href="#local-6989586621679526279"><span class="hs-identifier hs-type">defBytes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#Bytes"><span class="hs-identifier hs-type">Bytes</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#M"><span class="hs-identifier hs-type">M</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span>
+</span><span id="line-57"></span><span>      </span><span id="local-6989586621679526279"><span class="annot"><span class="annottext">defBytes :: Bytes 'M Natural
+</span><a href="#local-6989586621679526279"><span class="hs-identifier hs-var hs-var">defBytes</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Bytes 'M Natural
+forall (s :: Size) n. n -&gt; Bytes s n
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#MkBytes"><span class="hs-identifier hs-var">MkBytes</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">50</span></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#expectedStr"><span class="hs-identifier hs-type">expectedStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-60"></span><span id="expectedStr"><span class="annot"><span class="annottext">expectedStr :: String
+</span><a href="Shrun.Configuration.Data.FileLogging.FileSizeMode.html#expectedStr"><span class="hs-identifier hs-var hs-var">expectedStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(warn BYTES | delete BYTES | nothing)&quot;</span></span><span>
+</span><span id="line-61"></span></pre></body></html>

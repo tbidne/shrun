@@ -1,0 +1,1210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Provides the low-level `IO` functions for running shell commands.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.IO</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Stdout/stderr newtypes</span></span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier">Stderr</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Running commands</span></span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.IO.html#tryCommandLogging"><span class="hs-identifier">tryCommandLogging</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Lazy</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">BSL</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-thread-0.1-11ce15cb9eb5648ab1cfa155131e7e96f8382aa643017eb72fc799e6059083e1/share/doc/html/src/Effects.Concurrent.Thread.html"><span class="hs-identifier">Effects.Concurrent.Thread</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-thread-0.1-11ce15cb9eb5648ab1cfa155131e7e96f8382aa643017eb72fc799e6059083e1/share/doc/html/src/Effects.Concurrent.Thread.html#microsleep"><span class="hs-identifier">microsleep</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html"><span class="hs-identifier">Effects.Process.Typed</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html"><span class="hs-identifier">Effects.Time</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#withTiming"><span class="hs-identifier">withTiming</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.CommandLogging</span></a></span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.html#ReportReadErrorsSwitch"><span class="hs-identifier">ReportReadErrorsSwitch</span></a></span><span>
+</span><span id="line-17"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.html#ReportReadErrorsOff"><span class="hs-identifier">ReportReadErrorsOff</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.html#ReportReadErrorsOn"><span class="hs-identifier">ReportReadErrorsOn</span></a></span><span>
+</span><span id="line-19"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.ConsoleLogging</span></a></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.html#ConsoleLogCmdSwitch"><span class="hs-identifier">ConsoleLogCmdSwitch</span></a></span><span>
+</span><span id="line-23"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.html#ConsoleLogCmdOff"><span class="hs-identifier">ConsoleLogCmdOff</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>        </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.html#ConsoleLogCmdOn"><span class="hs-identifier">ConsoleLogCmdOn</span></a></span><span>
+</span><span id="line-25"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html"><span class="hs-identifier">Shrun.Configuration.Env.Types</span></a></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasAnyError"><span class="hs-identifier">HasAnyError</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommandLogging"><span class="hs-identifier">HasCommandLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getCommandLogging"><span class="hs-identifier">getCommandLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier">HasCommands</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommonLogging"><span class="hs-identifier">HasCommonLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getCommonLogging"><span class="hs-identifier">getCommonLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasConsoleLogging"><span class="hs-identifier">HasConsoleLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getConsoleLogging"><span class="hs-identifier">getConsoleLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasFileLogging"><span class="hs-identifier">HasFileLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getFileLogging"><span class="hs-identifier">getFileLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasInit"><span class="hs-identifier">HasInit</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getInit"><span class="hs-identifier">getInit</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#prependCompletedCommand"><span class="hs-identifier">prependCompletedCommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#setAnyErrorTrue"><span class="hs-identifier">setAnyErrorTrue</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html"><span class="hs-identifier">Shrun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#commandToProcess"><span class="hs-identifier">commandToProcess</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier">UnlinedText</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">ShrunText</span></span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html"><span class="hs-identifier">Shrun.IO.Types</span></a></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#CommandResult"><span class="hs-identifier">CommandResult</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#CommandFailure"><span class="hs-identifier">CommandFailure</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#CommandSuccess"><span class="hs-identifier">CommandSuccess</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier">ReadHandleResult</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier">ReadErr</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier">ReadNoData</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier">ReadSuccess</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier">Stderr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#MkStderr"><span class="hs-identifier">MkStderr</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#readHandle"><span class="hs-identifier">readHandle</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><a href="Shrun.IO.Types.html#readHandleResultToStderr"><span class="hs-identifier">readHandleResultToStderr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Formatting.html"><span class="hs-identifier">Shrun.Logging.Formatting</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatConsoleLog"><span class="hs-identifier">formatConsoleLog</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatFileLog"><span class="hs-identifier">formatFileLog</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html"><span class="hs-identifier">Shrun.Logging.MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier">MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier">Region</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier">withRegion</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html"><span class="hs-identifier">Shrun.Logging.Types</span></a></span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier">Log</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier">MkLog</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier">cmd</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier">lvl</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier">mode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier">msg</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier">LogLevel</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier">LevelCommand</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier">LogMode</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeSet"><span class="hs-identifier">LogModeSet</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier">LogRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier">LogRegion</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-57"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">U</span></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="annot"><span class="hs-comment">-- | Runs the command, returns ('ExitCode', 'Stderr')</span></span><span>
+</span><span id="line-60"></span><span id="local-6989586621679533302"><span id="local-6989586621679533304"><span class="annot"><a href="Shrun.IO.html#shExitCode"><span class="hs-identifier hs-type">shExitCode</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasInit"><span class="hs-identifier hs-type">HasInit</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533302"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679533302"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533304"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#MonadTypedProcess"><span class="hs-identifier hs-type">MonadTypedProcess</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533304"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-66"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-67"></span><span>  </span><span class="annot"><a href="#local-6989586621679533304"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExitCode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier hs-type">Stderr</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-68"></span><span id="shExitCode"><span class="annot"><span class="annottext">shExitCode :: forall env (m :: Type -&gt; Type).
+(HasCallStack, HasInit env, MonadReader env m,
+ MonadTypedProcess m) =&gt;
+CommandP1 -&gt; m (ExitCode, Stderr)
+</span><a href="Shrun.IO.html#shExitCode"><span class="hs-identifier hs-var hs-var">shExitCode</span></a></span></span><span> </span><span id="local-6989586621679533628"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533628"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-69"></span><span>  </span><span id="local-6989586621679533629"><span class="annot"><span class="annottext">ProcessConfig () () ()
+</span><a href="#local-6989586621679533629"><span class="hs-identifier hs-var">process</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; Maybe Text -&gt; ProcessConfig () () ()
+</span><a href="Shrun.Data.Command.html#commandToProcess"><span class="hs-identifier hs-var">commandToProcess</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533628"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">(Maybe Text -&gt; ProcessConfig () () ())
+-&gt; m (Maybe Text) -&gt; m (ProcessConfig () () ())
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">(env -&gt; Maybe Text) -&gt; m (Maybe Text)
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; Maybe Text
+forall env. HasInit env =&gt; env -&gt; Maybe Text
+</span><a href="Shrun.Configuration.Env.Types.html#getInit"><span class="hs-identifier hs-var">getInit</span></a></span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679533632"><span class="annot"><span class="annottext">ExitCode
+</span><a href="#local-6989586621679533632"><span class="hs-identifier hs-var">exitCode</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679533633"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679533633"><span class="hs-identifier hs-var">_stdout</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679533634"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679533634"><span class="hs-identifier hs-var">stderr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ProcessConfig () () () -&gt; m (ExitCode, ByteString, ByteString)
+forall stdin stdoutIgnored stderrIgnored.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; m (ExitCode, ByteString, ByteString)
+forall (m :: Type -&gt; Type) stdin stdoutIgnored stderrIgnored.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; m (ExitCode, ByteString, ByteString)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#readProcess"><span class="hs-identifier hs-var">P.readProcess</span></a></span><span> </span><span class="annot"><span class="annottext">ProcessConfig () () ()
+</span><a href="#local-6989586621679533629"><span class="hs-identifier hs-var">process</span></a></span><span>
+</span><span id="line-71"></span><span>  </span><span class="annot"><span class="annottext">(ExitCode, Stderr) -&gt; m (ExitCode, Stderr)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ExitCode
+</span><a href="#local-6989586621679533632"><span class="hs-identifier hs-var">exitCode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Stderr) -&gt; ByteString -&gt; Stderr
+forall {c}. (Text -&gt; c) -&gt; ByteString -&gt; c
+</span><a href="#local-6989586621679533636"><span class="hs-identifier hs-var">wrap</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">List UnlinedText -&gt; Stderr
+</span><a href="Shrun.IO.Types.html#MkStderr"><span class="hs-identifier hs-var">MkStderr</span></a></span><span> </span><span class="annot"><span class="annottext">(List UnlinedText -&gt; Stderr)
+-&gt; (Text -&gt; List UnlinedText) -&gt; Text -&gt; Stderr
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; List UnlinedText
+</span><a href="Shrun.Data.Text.html#fromText"><span class="hs-identifier hs-var">ShrunText.fromText</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679533634"><span class="hs-identifier hs-var">stderr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-73"></span><span>    </span><span id="local-6989586621679533636"><span class="annot"><span class="annottext">wrap :: (Text -&gt; c) -&gt; ByteString -&gt; c
+</span><a href="#local-6989586621679533636"><span class="hs-identifier hs-var hs-var">wrap</span></a></span></span><span> </span><span id="local-6989586621679533639"><span class="annot"><span class="annottext">Text -&gt; c
+</span><a href="#local-6989586621679533639"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; c
+</span><a href="#local-6989586621679533639"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; c) -&gt; (ByteString -&gt; Text) -&gt; ByteString -&gt; c
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Text
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.Utils.html#decodeUtf8Lenient"><span class="hs-identifier hs-var">decodeUtf8Lenient</span></a></span><span> </span><span class="annot"><span class="annottext">(ByteString -&gt; Text)
+-&gt; (ByteString -&gt; ByteString) -&gt; ByteString -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; ByteString
+</span><span class="hs-identifier hs-var">BSL.toStrict</span></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,</span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- 'Right' 'Stdout' otherwise.</span><span>
+</span><span id="line-77"></span><span id="local-6989586621679533338"><span id="local-6989586621679533339"><span class="annot"><a href="Shrun.IO.html#tryShExitCode"><span class="hs-identifier hs-type">tryShExitCode</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-79"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasInit"><span class="hs-identifier hs-type">HasInit</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533338"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-80"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679533338"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533339"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-81"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#MonadTypedProcess"><span class="hs-identifier hs-type">MonadTypedProcess</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533339"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-83"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-84"></span><span>  </span><span class="annot"><a href="#local-6989586621679533339"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier hs-type">Stderr</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-85"></span><span id="tryShExitCode"><span class="annot"><span class="annottext">tryShExitCode :: forall env (m :: Type -&gt; Type).
+(HasCallStack, HasInit env, MonadReader env m,
+ MonadTypedProcess m) =&gt;
+CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="Shrun.IO.html#tryShExitCode"><span class="hs-identifier hs-var hs-var">tryShExitCode</span></a></span></span><span> </span><span id="local-6989586621679533656"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533656"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-86"></span><span>  </span><span class="annot"><span class="annottext">CommandP1 -&gt; m (ExitCode, Stderr)
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasInit env, MonadReader env m,
+ MonadTypedProcess m) =&gt;
+CommandP1 -&gt; m (ExitCode, Stderr)
+</span><a href="Shrun.IO.html#shExitCode"><span class="hs-identifier hs-var">shExitCode</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533656"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">m (ExitCode, Stderr)
+-&gt; ((ExitCode, Stderr) -&gt; Maybe Stderr) -&gt; m (Maybe Stderr)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-87"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ExitCode
+</span><span class="hs-identifier hs-var">ExitSuccess</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Stderr
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Stderr
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-88"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExitFailure</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679533660"><span class="annot"><span class="annottext">Stderr
+</span><a href="#local-6989586621679533660"><span class="hs-identifier hs-var">stderr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Stderr -&gt; Maybe Stderr
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Stderr
+</span><a href="#local-6989586621679533660"><span class="hs-identifier hs-var">stderr</span></a></span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- | Runs the command, returning the time elapsed along with a possible</span><span>
+</span><span id="line-91"></span><span class="hs-comment">-- error.</span><span>
+</span><span id="line-92"></span><span class="annot"><a href="Shrun.IO.html#tryCommandLogging"><span class="hs-identifier hs-type">tryCommandLogging</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679533351"><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679533346"><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasAnyError"><span class="hs-identifier hs-type">HasAnyError</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-95"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-96"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommands"><span class="hs-identifier hs-type">HasCommands</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-97"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasInit"><span class="hs-identifier hs-type">HasInit</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-98"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommandLogging"><span class="hs-identifier hs-type">HasCommandLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommonLogging"><span class="hs-identifier hs-type">HasCommonLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-100"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasConsoleLogging"><span class="hs-identifier hs-type">HasConsoleLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-101"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasFileLogging"><span class="hs-identifier hs-type">HasFileLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-102"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#MonadHandleReader"><span class="hs-identifier hs-type">MonadHandleReader</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-103"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#MonadIORef"><span class="hs-identifier hs-type">MonadIORef</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadMask</span></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-105"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679533346"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-106"></span><span>    </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-107"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#MonadSTM"><span class="hs-identifier hs-type">MonadSTM</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-108"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-thread-0.1-11ce15cb9eb5648ab1cfa155131e7e96f8382aa643017eb72fc799e6059083e1/share/doc/html/src/Effects.Concurrent.Thread.html#MonadThread"><span class="hs-identifier hs-type">MonadThread</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-109"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-110"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#MonadTypedProcess"><span class="hs-identifier hs-type">MonadTypedProcess</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-111"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-112"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Command to run.</span></span><span>
+</span><span id="line-113"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-114"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Result.</span></span><span>
+</span><span id="line-115"></span><span>  </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#CommandResult"><span class="hs-identifier hs-type">CommandResult</span></a></span><span>
+</span><span id="line-116"></span><span id="tryCommandLogging"><span class="annot"><span class="annottext">tryCommandLogging :: forall (m :: Type -&gt; Type) env.
+(HasAnyError env, HasCallStack, HasCommands env, HasInit env,
+ HasCommandLogging env, HasCommonLogging env,
+ HasConsoleLogging env (Region m), HasFileLogging env,
+ MonadHandleReader m, MonadIORef m, MonadMask m, MonadReader env m,
+ MonadRegionLogger m, MonadSTM m, MonadThread m, MonadTime m,
+ MonadTypedProcess m) =&gt;
+CommandP1 -&gt; m CommandResult
+</span><a href="Shrun.IO.html#tryCommandLogging"><span class="hs-identifier hs-var hs-var">tryCommandLogging</span></a></span></span><span> </span><span id="local-6989586621679533789"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533789"><span class="hs-identifier hs-var">command</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-117"></span><span>  </span><span class="hs-comment">-- NOTE: We do not want tryCommandLogging to throw sync exceptions, as that</span><span>
+</span><span id="line-118"></span><span>  </span><span class="hs-comment">-- will take down the whole app. tryCommandStream and tryShExitCode should be</span><span>
+</span><span id="line-119"></span><span>  </span><span class="hs-comment">-- total, but there are still a few functions here that can throw. To wit:</span><span>
+</span><span id="line-120"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-121"></span><span>  </span><span class="hs-comment">-- - atomically: Used in prependCompletedCommand, setAnyErrorTrue,</span><span>
+</span><span id="line-122"></span><span>  </span><span class="hs-comment">--               writeTBQueueA.</span><span>
+</span><span id="line-123"></span><span>  </span><span class="hs-comment">-- - getSystemTimeString: Used in formatFileLog.</span><span>
+</span><span id="line-124"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-125"></span><span>  </span><span class="hs-comment">-- We could catch these exceptions and simply print an error. However, both</span><span>
+</span><span id="line-126"></span><span>  </span><span class="hs-comment">-- of these errors have nothing to do with the actual command that is being</span><span>
+</span><span id="line-127"></span><span>  </span><span class="hs-comment">-- run and point to something wrong with shrun itself. Morever, &quot;recovery&quot;</span><span>
+</span><span id="line-128"></span><span>  </span><span class="hs-comment">-- in these instances is unclear, as we are either dropping logs (how do we</span><span>
+</span><span id="line-129"></span><span>  </span><span class="hs-comment">-- report these errors?) or failing to get the time (how should we log?).</span><span>
+</span><span id="line-130"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-131"></span><span>  </span><span class="hs-comment">-- Thus the most reasonable course of action is to let shrun die and print</span><span>
+</span><span id="line-132"></span><span>  </span><span class="hs-comment">-- the actual error so it can be fixed.</span><span>
+</span><span id="line-133"></span><span>
+</span><span id="line-134"></span><span>  </span><span id="local-6989586621679533790"><span class="annot"><span class="annottext">CommonLoggingEnv
+</span><a href="#local-6989586621679533790"><span class="hs-identifier hs-var">commonLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; CommonLoggingEnv) -&gt; m CommonLoggingEnv
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; CommonLoggingEnv
+forall env. HasCommonLogging env =&gt; env -&gt; CommonLoggingEnv
+</span><a href="Shrun.Configuration.Env.Types.html#getCommonLogging"><span class="hs-identifier hs-var">getCommonLogging</span></a></span><span>
+</span><span id="line-135"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679533791"><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533791"><span class="hs-identifier hs-var">consoleLogging</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679533792"><span class="annot"><span class="annottext">TBQueue (LogRegion (Region m))
+</span><a href="#local-6989586621679533792"><span class="hs-identifier hs-var">consoleLogQueue</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; (ConsoleLoggingEnv, TBQueue (LogRegion (Region m))))
+-&gt; m (ConsoleLoggingEnv, TBQueue (LogRegion (Region m)))
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; (ConsoleLoggingEnv, TBQueue (LogRegion (Region m)))
+forall env r.
+HasConsoleLogging env r =&gt;
+env -&gt; Tuple2 ConsoleLoggingEnv (TBQueue (LogRegion r))
+</span><a href="Shrun.Configuration.Env.Types.html#getConsoleLogging"><span class="hs-identifier hs-var">getConsoleLogging</span></a></span><span>
+</span><span id="line-136"></span><span>  </span><span id="local-6989586621679533793"><span class="annot"><span class="annottext">Maybe FileLoggingEnv
+</span><a href="#local-6989586621679533793"><span class="hs-identifier hs-var">mFileLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; Maybe FileLoggingEnv) -&gt; m (Maybe FileLoggingEnv)
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; Maybe FileLoggingEnv
+forall env. HasFileLogging env =&gt; env -&gt; Maybe FileLoggingEnv
+</span><a href="Shrun.Configuration.Env.Types.html#getFileLogging"><span class="hs-identifier hs-var">getFileLogging</span></a></span><span>
+</span><span id="line-137"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679533794"><span class="annot"><span class="annottext">keyHide :: KeyHideSwitch
+</span><a href="#local-6989586621679533794"><span class="hs-identifier hs-var hs-var">keyHide</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommonLoggingEnv
+</span><a href="#local-6989586621679533790"><span class="hs-identifier hs-var">commonLogging</span></a></span><span> </span><span class="annot"><span class="annottext">CommonLoggingEnv
+-&gt; Optic' An_Iso NoIx CommonLoggingEnv KeyHideSwitch
+-&gt; KeyHideSwitch
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' An_Iso NoIx CommonLoggingEnv KeyHideSwitch
+</span><span class="">#keyHide</span></span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679533796"><span class="annot"><span class="annottext">cmdFn :: CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="#local-6989586621679533796"><span class="hs-identifier hs-var hs-var">cmdFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533791"><span class="hs-identifier hs-var">consoleLogging</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleLoggingEnv
+-&gt; Optic' A_Lens NoIx ConsoleLoggingEnv ConsoleLogCmdSwitch
+-&gt; ConsoleLogCmdSwitch
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx ConsoleLoggingEnv ConsoleLogCmdSwitch
+</span><span class="">#commandLogging</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe FileLoggingEnv
+</span><a href="#local-6989586621679533793"><span class="hs-identifier hs-var">mFileLogging</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-140"></span><span>        </span><span class="hs-comment">-- 1. No CommandLogging and no FileLogging: No streaming at all.</span><span>
+</span><span id="line-141"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ConsoleLogCmdSwitch
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.html#ConsoleLogCmdOff"><span class="hs-identifier hs-var">ConsoleLogCmdOff</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe FileLoggingEnv
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; m (Maybe Stderr)
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasInit env, MonadReader env m,
+ MonadTypedProcess m) =&gt;
+CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="Shrun.IO.html#tryShExitCode"><span class="hs-identifier hs-var">tryShExitCode</span></a></span><span>
+</span><span id="line-142"></span><span>        </span><span class="hs-comment">-- 3. CommandLogging but no FileLogging. Stream.</span><span>
+</span><span id="line-143"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ConsoleLogCmdSwitch
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.html#ConsoleLogCmdOn"><span class="hs-identifier hs-var">ConsoleLogCmdOn</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe FileLoggingEnv
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679533797"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533797"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-144"></span><span>          </span><span class="annot"><span class="annottext">RegionLayout -&gt; (Region m -&gt; m (Maybe Stderr)) -&gt; m (Maybe Stderr)
+forall a. HasCallStack =&gt; RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadRegionLogger m, HasCallStack) =&gt;
+RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-var">withRegion</span></a></span><span> </span><span class="annot"><span class="annottext">RegionLayout
+</span><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#Linear"><span class="hs-identifier hs-var">Linear</span></a></span><span> </span><span class="annot"><span class="annottext">((Region m -&gt; m (Maybe Stderr)) -&gt; m (Maybe Stderr))
+-&gt; (Region m -&gt; m (Maybe Stderr)) -&gt; m (Maybe Stderr)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679533799"><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679533799"><span class="hs-identifier hs-var">region</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-145"></span><span>            </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679533800"><span class="annot"><span class="annottext">logFn :: Log -&gt; m ()
+</span><a href="#local-6989586621679533800"><span class="hs-identifier hs-var hs-var">logFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+-&gt; TBQueue (LogRegion (Region m))
+-&gt; Region m
+-&gt; ConsoleLoggingEnv
+-&gt; Log
+-&gt; m ()
+forall {m :: Type -&gt; Type} {r}.
+MonadSTM m =&gt;
+KeyHideSwitch
+-&gt; TBQueue (LogRegion r) -&gt; r -&gt; ConsoleLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="#local-6989586621679533801"><span class="hs-identifier hs-var">logConsole</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533794"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">TBQueue (LogRegion (Region m))
+</span><a href="#local-6989586621679533792"><span class="hs-identifier hs-var">consoleLogQueue</span></a></span><span> </span><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679533799"><span class="hs-identifier hs-var">region</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533791"><span class="hs-identifier hs-var">consoleLogging</span></a></span><span>
+</span><span id="line-146"></span><span>
+</span><span id="line-147"></span><span>            </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533800"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533802"><span class="hs-identifier hs-var">hello</span></a></span><span>
+</span><span id="line-148"></span><span>
+</span><span id="line-149"></span><span>            </span><span class="annot"><span class="annottext">(Log -&gt; m ()) -&gt; CommandP1 -&gt; m (Maybe Stderr)
+forall env (m :: Type -&gt; Type).
+(HasInit env, HasCallStack, HasCommandLogging env,
+ MonadHandleReader m, MonadIORef m, MonadMask m, MonadReader env m,
+ MonadThread m, MonadTypedProcess m) =&gt;
+(Log -&gt; m ()) -&gt; CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="Shrun.IO.html#tryCommandStream"><span class="hs-identifier hs-var">tryCommandStream</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533800"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533797"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-150"></span><span>        </span><span class="hs-comment">-- 3. No CommandLogging but FileLogging: Stream (to file) but no console</span><span>
+</span><span id="line-151"></span><span>        </span><span class="hs-comment">--    region.</span><span>
+</span><span id="line-152"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ConsoleLogCmdSwitch
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.html#ConsoleLogCmdOff"><span class="hs-identifier hs-var">ConsoleLogCmdOff</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679533804"><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533804"><span class="hs-identifier hs-var">fileLogging</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679533805"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533805"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-153"></span><span>          </span><span class="hs-keyword">let</span><span> </span><span class="annot"><a href="#local-6989586621679533806"><span class="hs-identifier hs-type">logFn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679533351"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-154"></span><span>              </span><span id="local-6989586621679533806"><span class="annot"><span class="annottext">logFn :: Log -&gt; m ()
+</span><a href="#local-6989586621679533806"><span class="hs-identifier hs-var hs-var">logFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+forall {m :: Type -&gt; Type}.
+(MonadTime m, MonadSTM m) =&gt;
+KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="#local-6989586621679533807"><span class="hs-identifier hs-var">logFile</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533794"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533804"><span class="hs-identifier hs-var">fileLogging</span></a></span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span>          </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533806"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533802"><span class="hs-identifier hs-var">hello</span></a></span><span>
+</span><span id="line-157"></span><span>
+</span><span id="line-158"></span><span>          </span><span class="annot"><span class="annottext">(Log -&gt; m ()) -&gt; CommandP1 -&gt; m (Maybe Stderr)
+forall env (m :: Type -&gt; Type).
+(HasInit env, HasCallStack, HasCommandLogging env,
+ MonadHandleReader m, MonadIORef m, MonadMask m, MonadReader env m,
+ MonadThread m, MonadTypedProcess m) =&gt;
+(Log -&gt; m ()) -&gt; CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="Shrun.IO.html#tryCommandStream"><span class="hs-identifier hs-var">tryCommandStream</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533806"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533805"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-159"></span><span>        </span><span class="hs-comment">-- 4. CommandLogging and FileLogging: Stream (to both) and create console</span><span>
+</span><span id="line-160"></span><span>        </span><span class="hs-comment">--    region.</span><span>
+</span><span id="line-161"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ConsoleLogCmdSwitch
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.html#ConsoleLogCmdOn"><span class="hs-identifier hs-var">ConsoleLogCmdOn</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679533808"><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533808"><span class="hs-identifier hs-var">fileLogging</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679533809"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533809"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-162"></span><span>          </span><span class="annot"><span class="annottext">RegionLayout -&gt; (Region m -&gt; m (Maybe Stderr)) -&gt; m (Maybe Stderr)
+forall a. HasCallStack =&gt; RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadRegionLogger m, HasCallStack) =&gt;
+RegionLayout -&gt; (Region m -&gt; m a) -&gt; m a
+</span><a href="Shrun.Logging.MonadRegionLogger.html#withRegion"><span class="hs-identifier hs-var">withRegion</span></a></span><span> </span><span class="annot"><span class="annottext">RegionLayout
+</span><a href="file:///nix/store/yxyj3l7g9hapmnbhjchbjsff5fqn4v74-concurrent-output-1.10.21-doc/share/doc/concurrent-output-1.10.21/html/src/System.Console.Regions.html#Linear"><span class="hs-identifier hs-var">Linear</span></a></span><span> </span><span class="annot"><span class="annottext">((Region m -&gt; m (Maybe Stderr)) -&gt; m (Maybe Stderr))
+-&gt; (Region m -&gt; m (Maybe Stderr)) -&gt; m (Maybe Stderr)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679533810"><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679533810"><span class="hs-identifier hs-var">region</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-163"></span><span>            </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679533811"><span class="annot"><span class="annottext">logFn :: Log -&gt; m ()
+</span><a href="#local-6989586621679533811"><span class="hs-identifier hs-var hs-var">logFn</span></a></span></span><span> </span><span id="local-6989586621679533812"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533812"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-164"></span><span>                  </span><span class="annot"><span class="annottext">KeyHideSwitch
+-&gt; TBQueue (LogRegion (Region m))
+-&gt; Region m
+-&gt; ConsoleLoggingEnv
+-&gt; Log
+-&gt; m ()
+forall {m :: Type -&gt; Type} {r}.
+MonadSTM m =&gt;
+KeyHideSwitch
+-&gt; TBQueue (LogRegion r) -&gt; r -&gt; ConsoleLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="#local-6989586621679533801"><span class="hs-identifier hs-var">logConsole</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533794"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">TBQueue (LogRegion (Region m))
+</span><a href="#local-6989586621679533792"><span class="hs-identifier hs-var">consoleLogQueue</span></a></span><span> </span><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679533810"><span class="hs-identifier hs-var">region</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533791"><span class="hs-identifier hs-var">consoleLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533812"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-165"></span><span>                  </span><span class="annot"><span class="annottext">KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+forall {m :: Type -&gt; Type}.
+(MonadTime m, MonadSTM m) =&gt;
+KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="#local-6989586621679533807"><span class="hs-identifier hs-var">logFile</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533794"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533808"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533812"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span>            </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533811"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533802"><span class="hs-identifier hs-var">hello</span></a></span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span>            </span><span class="annot"><span class="annottext">(Log -&gt; m ()) -&gt; CommandP1 -&gt; m (Maybe Stderr)
+forall env (m :: Type -&gt; Type).
+(HasInit env, HasCallStack, HasCommandLogging env,
+ MonadHandleReader m, MonadIORef m, MonadMask m, MonadReader env m,
+ MonadThread m, MonadTypedProcess m) =&gt;
+(Log -&gt; m ()) -&gt; CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="Shrun.IO.html#tryCommandStream"><span class="hs-identifier hs-var">tryCommandStream</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533811"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533809"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span>  </span><span class="annot"><span class="annottext">m (Maybe Stderr) -&gt; m (TimeSpec, Maybe Stderr)
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadTime m) =&gt;
+m a -&gt; m (TimeSpec, a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#withTiming"><span class="hs-identifier hs-var">withTiming</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="#local-6989586621679533796"><span class="hs-identifier hs-var">cmdFn</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533789"><span class="hs-identifier hs-var">command</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">m (TimeSpec, Maybe Stderr)
+-&gt; ((TimeSpec, Maybe Stderr) -&gt; m CommandResult) -&gt; m CommandResult
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-172"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679533813"><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679533813"><span class="hs-identifier hs-var">rt</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe Stderr
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-173"></span><span>      </span><span class="hs-comment">-- update completed commands</span><span>
+</span><span id="line-174"></span><span>      </span><span class="annot"><span class="annottext">CommandP1 -&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, MonadReader env m, MonadSTM m) =&gt;
+CommandP1 -&gt; m ()
+</span><a href="Shrun.Configuration.Env.Types.html#prependCompletedCommand"><span class="hs-identifier hs-var">prependCompletedCommand</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533789"><span class="hs-identifier hs-var">command</span></a></span><span>
+</span><span id="line-175"></span><span>
+</span><span id="line-176"></span><span>      </span><span class="hs-identifier">pure</span><span> </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">RelativeTime -&gt; CommandResult
+</span><a href="Shrun.IO.Types.html#CommandSuccess"><span class="hs-identifier hs-var">CommandSuccess</span></a></span><span> </span><span class="annot"><span class="annottext">(RelativeTime -&gt; CommandResult) -&gt; RelativeTime -&gt; CommandResult
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">TimeSpec -&gt; RelativeTime
+</span><a href="Shrun.Utils.html#timeSpecToRelTime"><span class="hs-identifier hs-var">U.timeSpecToRelTime</span></a></span><span> </span><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679533813"><span class="hs-identifier hs-var">rt</span></a></span><span>
+</span><span id="line-177"></span><span>    </span><span class="hs-special">(</span><span id="local-6989586621679533815"><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679533815"><span class="hs-identifier hs-var">rt</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679533816"><span class="annot"><span class="annottext">Stderr
+</span><a href="#local-6989586621679533816"><span class="hs-identifier hs-var">err</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-178"></span><span>      </span><span class="hs-comment">-- update completed commands</span><span>
+</span><span id="line-179"></span><span>      </span><span class="annot"><span class="annottext">CommandP1 -&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommands env, MonadReader env m, MonadSTM m) =&gt;
+CommandP1 -&gt; m ()
+</span><a href="Shrun.Configuration.Env.Types.html#prependCompletedCommand"><span class="hs-identifier hs-var">prependCompletedCommand</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533789"><span class="hs-identifier hs-var">command</span></a></span><span>
+</span><span id="line-180"></span><span>
+</span><span id="line-181"></span><span>      </span><span class="hs-comment">-- update anyError</span><span>
+</span><span id="line-182"></span><span>      </span><span class="annot"><span class="annottext">m ()
+forall env (m :: Type -&gt; Type).
+(HasAnyError env, HasCallStack, MonadReader env m, MonadSTM m) =&gt;
+m ()
+</span><a href="Shrun.Configuration.Env.Types.html#setAnyErrorTrue"><span class="hs-identifier hs-var">setAnyErrorTrue</span></a></span><span>
+</span><span id="line-183"></span><span>
+</span><span id="line-184"></span><span>      </span><span class="hs-identifier">pure</span><span> </span><span class="hs-operator">$</span><span> </span><span class="annot"><span class="annottext">RelativeTime -&gt; Stderr -&gt; CommandResult
+</span><a href="Shrun.IO.Types.html#CommandFailure"><span class="hs-identifier hs-var">CommandFailure</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TimeSpec -&gt; RelativeTime
+</span><a href="Shrun.Utils.html#timeSpecToRelTime"><span class="hs-identifier hs-var">U.timeSpecToRelTime</span></a></span><span> </span><span class="annot"><span class="annottext">TimeSpec
+</span><a href="#local-6989586621679533815"><span class="hs-identifier hs-var">rt</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Stderr
+</span><a href="#local-6989586621679533816"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-185"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-186"></span><span>    </span><span id="local-6989586621679533801"><span class="annot"><span class="annottext">logConsole :: KeyHideSwitch
+-&gt; TBQueue (LogRegion r) -&gt; r -&gt; ConsoleLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="#local-6989586621679533801"><span class="hs-identifier hs-var hs-var">logConsole</span></a></span></span><span> </span><span id="local-6989586621679533836"><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533836"><span class="hs-identifier hs-var">keyHide</span></a></span></span><span> </span><span id="local-6989586621679533837"><span class="annot"><span class="annottext">TBQueue (LogRegion r)
+</span><a href="#local-6989586621679533837"><span class="hs-identifier hs-var">consoleQueue</span></a></span></span><span> </span><span id="local-6989586621679533838"><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679533838"><span class="hs-identifier hs-var">region</span></a></span></span><span> </span><span id="local-6989586621679533839"><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533839"><span class="hs-identifier hs-var">consoleLogging</span></a></span></span><span> </span><span id="local-6989586621679533840"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533840"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-187"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679533841"><span class="annot"><span class="annottext">formatted :: ConsoleLog
+</span><a href="#local-6989586621679533841"><span class="hs-identifier hs-var hs-var">formatted</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch -&gt; ConsoleLoggingEnv -&gt; Log -&gt; ConsoleLog
+</span><a href="Shrun.Logging.Formatting.html#formatConsoleLog"><span class="hs-identifier hs-var">formatConsoleLog</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533836"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533839"><span class="hs-identifier hs-var">consoleLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533840"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-188"></span><span>      </span><span class="annot"><span class="annottext">TBQueue (LogRegion r) -&gt; LogRegion r -&gt; m ()
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadSTM m) =&gt;
+TBQueue a -&gt; a -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#writeTBQueueA"><span class="hs-identifier hs-var">writeTBQueueA</span></a></span><span> </span><span class="annot"><span class="annottext">TBQueue (LogRegion r)
+</span><a href="#local-6989586621679533837"><span class="hs-identifier hs-var">consoleQueue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LogMode -&gt; r -&gt; ConsoleLog -&gt; LogRegion r
+forall r. LogMode -&gt; r -&gt; ConsoleLog -&gt; LogRegion r
+</span><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier hs-var">LogRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533840"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Optic' A_Lens NoIx Log LogMode -&gt; LogMode
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log LogMode
+</span><span class="">#mode</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">r
+</span><a href="#local-6989586621679533838"><span class="hs-identifier hs-var">region</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleLog
+</span><a href="#local-6989586621679533841"><span class="hs-identifier hs-var">formatted</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-189"></span><span>
+</span><span id="line-190"></span><span>    </span><span id="local-6989586621679533807"><span class="annot"><span class="annottext">logFile :: KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="#local-6989586621679533807"><span class="hs-identifier hs-var hs-var">logFile</span></a></span></span><span> </span><span id="local-6989586621679533887"><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533887"><span class="hs-identifier hs-var">keyHide</span></a></span></span><span> </span><span id="local-6989586621679533888"><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533888"><span class="hs-identifier hs-var">fileLogging</span></a></span></span><span> </span><span id="local-6989586621679533889"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533889"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-191"></span><span>      </span><span id="local-6989586621679533890"><span class="annot"><span class="annottext">FileLog
+</span><a href="#local-6989586621679533890"><span class="hs-identifier hs-var">formatted</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m FileLog
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadTime m) =&gt;
+KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m FileLog
+</span><a href="Shrun.Logging.Formatting.html#formatFileLog"><span class="hs-identifier hs-var">formatFileLog</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533887"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533888"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533889"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-192"></span><span>      </span><span class="annot"><span class="annottext">TBQueue FileLog -&gt; FileLog -&gt; m ()
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadSTM m) =&gt;
+TBQueue a -&gt; a -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#writeTBQueueA"><span class="hs-identifier hs-var">writeTBQueueA</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533888"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingEnv
+-&gt; Optic' A_Lens NoIx FileLoggingEnv (TBQueue FileLog)
+-&gt; TBQueue FileLog
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  FileLoggingEnv
+  FileLoggingEnv
+  FileLogOpened
+  FileLogOpened
+</span><span class="">#file</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  FileLoggingEnv
+  FileLoggingEnv
+  FileLogOpened
+  FileLogOpened
+-&gt; Optic
+     A_Lens
+     NoIx
+     FileLogOpened
+     FileLogOpened
+     (TBQueue FileLog)
+     (TBQueue FileLog)
+-&gt; Optic' A_Lens NoIx FileLoggingEnv (TBQueue FileLog)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  FileLogOpened
+  FileLogOpened
+  (TBQueue FileLog)
+  (TBQueue FileLog)
+</span><span class="">#queue</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FileLog
+</span><a href="#local-6989586621679533890"><span class="hs-identifier hs-var">formatted</span></a></span><span>
+</span><span id="line-193"></span><span>
+</span><span id="line-194"></span><span>    </span><span id="local-6989586621679533802"><span class="annot"><span class="annottext">hello :: Log
+</span><a href="#local-6989586621679533802"><span class="hs-identifier hs-var hs-var">hello</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-195"></span><span>      </span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span>
+</span><span id="line-196"></span><span>        </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">cmd :: Maybe CommandP1
+</span><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; Maybe CommandP1
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533789"><span class="hs-identifier hs-var">command</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-197"></span><span>          </span><span class="annot"><span class="annottext">msg :: UnlinedText
+</span><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier hs-var">msg</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><span class="hs-string">&quot;Starting...&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-198"></span><span>          </span><span class="annot"><span class="annottext">lvl :: LogLevel
+</span><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier hs-var">lvl</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier hs-var">LevelCommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-199"></span><span>          </span><span class="annot"><span class="annottext">mode :: LogMode
+</span><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="Shrun.Logging.Types.Internal.html#LogModeSet"><span class="hs-identifier hs-var">LogModeSet</span></a></span><span>
+</span><span id="line-200"></span><span>        </span><span class="hs-special">}</span><span>
+</span><span id="line-201"></span><span>
+</span><span id="line-202"></span><span class="hs-comment">-- | Similar to 'tryCommand' except we attempt to stream the commands' output</span><span>
+</span><span id="line-203"></span><span class="hs-comment">-- instead of the usual swallowing.</span><span>
+</span><span id="line-204"></span><span id="local-6989586621679533425"><span id="local-6989586621679533426"><span class="annot"><a href="Shrun.IO.html#tryCommandStream"><span class="hs-identifier hs-type">tryCommandStream</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-205"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasInit"><span class="hs-identifier hs-type">HasInit</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533425"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-206"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-207"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommandLogging"><span class="hs-identifier hs-type">HasCommandLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533425"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-208"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#MonadHandleReader"><span class="hs-identifier hs-type">MonadHandleReader</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-209"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#MonadIORef"><span class="hs-identifier hs-type">MonadIORef</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-210"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadMask</span></span><span> </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-211"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679533425"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-212"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-thread-0.1-11ce15cb9eb5648ab1cfa155131e7e96f8382aa643017eb72fc799e6059083e1/share/doc/html/src/Effects.Concurrent.Thread.html#MonadThread"><span class="hs-identifier hs-type">MonadThread</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-213"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#MonadTypedProcess"><span class="hs-identifier hs-type">MonadTypedProcess</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-214"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-215"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Function to apply to streamed logs.</span></span><span>
+</span><span id="line-216"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-217"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Command to run.</span></span><span>
+</span><span id="line-218"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-219"></span><span>  </span><span class="hs-comment">-- | Error, if any. Note that this will be 'Just' iff the command exited</span><span>
+</span><span id="line-220"></span><span>  </span><span class="hs-comment">-- with an error, even if the error message itself is blank.</span><span>
+</span><span id="line-221"></span><span>  </span><span class="annot"><a href="#local-6989586621679533426"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#Stderr"><span class="hs-identifier hs-type">Stderr</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-222"></span><span id="tryCommandStream"><span class="annot"><span class="annottext">tryCommandStream :: forall env (m :: Type -&gt; Type).
+(HasInit env, HasCallStack, HasCommandLogging env,
+ MonadHandleReader m, MonadIORef m, MonadMask m, MonadReader env m,
+ MonadThread m, MonadTypedProcess m) =&gt;
+(Log -&gt; m ()) -&gt; CommandP1 -&gt; m (Maybe Stderr)
+</span><a href="Shrun.IO.html#tryCommandStream"><span class="hs-identifier hs-var hs-var">tryCommandStream</span></a></span></span><span> </span><span id="local-6989586621679533924"><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533924"><span class="hs-identifier hs-var">logFn</span></a></span></span><span> </span><span id="local-6989586621679533925"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533925"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-223"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679533926"><span class="annot"><span class="annottext">outSpec :: StreamSpec anyStreamType Handle
+</span><a href="#local-6989586621679533926"><span class="hs-identifier hs-var hs-var">outSpec</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">StreamSpec anyStreamType Handle
+forall (anyStreamType :: StreamType).
+StreamSpec anyStreamType Handle
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#createPipe"><span class="hs-identifier hs-var">P.createPipe</span></a></span><span>
+</span><span id="line-224"></span><span>      </span><span id="local-6989586621679533928"><span class="annot"><span class="annottext">errSpec :: StreamSpec anyStreamType Handle
+</span><a href="#local-6989586621679533928"><span class="hs-identifier hs-var hs-var">errSpec</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">StreamSpec anyStreamType Handle
+forall (anyStreamType :: StreamType).
+StreamSpec anyStreamType Handle
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#createPipe"><span class="hs-identifier hs-var">P.createPipe</span></a></span><span>
+</span><span id="line-225"></span><span>
+</span><span id="line-226"></span><span>  </span><span id="local-6989586621679533929"><span class="annot"><span class="annottext">ProcessConfig () Handle Handle
+</span><a href="#local-6989586621679533929"><span class="hs-identifier hs-var">procConfig</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-227"></span><span>    </span><span class="annot"><span class="annottext">(env -&gt; Maybe Text) -&gt; m (Maybe Text)
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; Maybe Text
+forall env. HasInit env =&gt; env -&gt; Maybe Text
+</span><a href="Shrun.Configuration.Env.Types.html#getInit"><span class="hs-identifier hs-var">getInit</span></a></span><span>
+</span><span id="line-228"></span><span>      </span><span class="annot"><span class="annottext">m (Maybe Text)
+-&gt; (Maybe Text -&gt; ProcessConfig () Handle Handle)
+-&gt; m (ProcessConfig () Handle Handle)
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; f a -&gt; (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;&amp;&gt;</span></span><span> </span><span class="annot"><span class="annottext">StreamSpec 'STOutput Handle
+-&gt; ProcessConfig () Handle () -&gt; ProcessConfig () Handle Handle
+forall stderr stdin stdout stderr0.
+StreamSpec 'STOutput stderr
+-&gt; ProcessConfig stdin stdout stderr0
+-&gt; ProcessConfig stdin stdout stderr
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#setStderr"><span class="hs-identifier hs-var">P.setStderr</span></a></span><span> </span><span class="annot"><span class="annottext">StreamSpec 'STOutput Handle
+forall (anyStreamType :: StreamType).
+StreamSpec anyStreamType Handle
+</span><a href="#local-6989586621679533926"><span class="hs-identifier hs-var">outSpec</span></a></span><span>
+</span><span id="line-229"></span><span>      </span><span class="annot"><span class="annottext">(ProcessConfig () Handle () -&gt; ProcessConfig () Handle Handle)
+-&gt; (Maybe Text -&gt; ProcessConfig () Handle ())
+-&gt; Maybe Text
+-&gt; ProcessConfig () Handle Handle
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">StreamSpec 'STOutput Handle
+-&gt; ProcessConfig () () () -&gt; ProcessConfig () Handle ()
+forall stdout stdin stdout0 stderr.
+StreamSpec 'STOutput stdout
+-&gt; ProcessConfig stdin stdout0 stderr
+-&gt; ProcessConfig stdin stdout stderr
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#setStdout"><span class="hs-identifier hs-var">P.setStdout</span></a></span><span> </span><span class="annot"><span class="annottext">StreamSpec 'STOutput Handle
+forall (anyStreamType :: StreamType).
+StreamSpec anyStreamType Handle
+</span><a href="#local-6989586621679533928"><span class="hs-identifier hs-var">errSpec</span></a></span><span>
+</span><span id="line-230"></span><span>      </span><span class="annot"><span class="annottext">(ProcessConfig () () () -&gt; ProcessConfig () Handle ())
+-&gt; (Maybe Text -&gt; ProcessConfig () () ())
+-&gt; Maybe Text
+-&gt; ProcessConfig () Handle ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; Maybe Text -&gt; ProcessConfig () () ()
+</span><a href="Shrun.Data.Command.html#commandToProcess"><span class="hs-identifier hs-var">commandToProcess</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533925"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-231"></span><span>
+</span><span id="line-232"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679533932"><span class="annot"><span class="annottext">ExitCode
+</span><a href="#local-6989586621679533932"><span class="hs-identifier hs-var">exitCode</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679533933"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679533933"><span class="hs-identifier hs-var">finalData</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-233"></span><span>    </span><span class="annot"><span class="annottext">ProcessConfig () Handle Handle
+-&gt; (Process () Handle Handle -&gt; m (ExitCode, ReadHandleResult))
+-&gt; m (ExitCode, ReadHandleResult)
+forall stdin stdout stderr a.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; m a) -&gt; m a
+forall (m :: Type -&gt; Type) stdin stdout stderr a.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; m a) -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#withProcessWait"><span class="hs-identifier hs-var">P.withProcessWait</span></a></span><span> </span><span class="annot"><span class="annottext">ProcessConfig () Handle Handle
+</span><a href="#local-6989586621679533929"><span class="hs-identifier hs-var">procConfig</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Log -&gt; m ())
+-&gt; CommandP1
+-&gt; Process () Handle Handle
+-&gt; m (ExitCode, ReadHandleResult)
+forall (m :: Type -&gt; Type) env.
+(HasCallStack, HasCommandLogging env, MonadCatch m,
+ MonadHandleReader m, MonadIORef m, MonadReader env m,
+ MonadThread m, MonadTypedProcess m) =&gt;
+(Log -&gt; m ())
+-&gt; CommandP1
+-&gt; Process () Handle Handle
+-&gt; m (ExitCode, ReadHandleResult)
+</span><a href="Shrun.IO.html#streamOutput"><span class="hs-identifier hs-var">streamOutput</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679533924"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679533925"><span class="hs-identifier hs-var">cmd</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-234"></span><span>
+</span><span id="line-235"></span><span>  </span><span class="annot"><span class="annottext">Maybe Stderr -&gt; m (Maybe Stderr)
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Maybe Stderr -&gt; m (Maybe Stderr))
+-&gt; Maybe Stderr -&gt; m (Maybe Stderr)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ExitCode
+</span><a href="#local-6989586621679533932"><span class="hs-identifier hs-var">exitCode</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-236"></span><span>    </span><span class="annot"><span class="annottext">ExitCode
+</span><span class="hs-identifier hs-var">ExitSuccess</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Stderr
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-237"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">ExitFailure</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Stderr -&gt; Maybe Stderr
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Stderr -&gt; Maybe Stderr) -&gt; Stderr -&gt; Maybe Stderr
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult -&gt; Stderr
+</span><a href="Shrun.IO.Types.html#readHandleResultToStderr"><span class="hs-identifier hs-var">readHandleResultToStderr</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679533933"><span class="hs-identifier hs-var">finalData</span></a></span><span>
+</span><span id="line-238"></span><span>
+</span><span id="line-239"></span><span class="hs-comment">-- NOTE: This was an attempt to set the buffering so that we could use</span><span>
+</span><span id="line-240"></span><span class="hs-comment">-- hGetLine. Unfortunately that failed, see Note</span><span>
+</span><span id="line-241"></span><span class="hs-comment">-- [Blocking / Streaming output]. Leaving this here as documentation.</span><span>
+</span><span id="line-242"></span><span class="hs-comment">--</span><span>
+</span><span id="line-243"></span><span class="hs-comment">--  where</span><span>
+</span><span id="line-244"></span><span class="hs-comment">--    -- copy of P.createPipe except we set the buffering</span><span>
+</span><span id="line-245"></span><span class="hs-comment">--    createPipe' = P.mkPipeStreamSpec $ \_ h -&gt; do</span><span>
+</span><span id="line-246"></span><span class="hs-comment">--      hSetBuffering h NoBuffering</span><span>
+</span><span id="line-247"></span><span class="hs-comment">--      pure (h, hClose h)</span><span>
+</span><span id="line-248"></span><span>
+</span><span id="line-249"></span><span class="annot"><a href="Shrun.IO.html#streamOutput"><span class="hs-identifier hs-type">streamOutput</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-250"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679533504"><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679533503"><span class="annot"><a href="#local-6989586621679533503"><span class="hs-identifier hs-type">env</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-251"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-252"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommandLogging"><span class="hs-identifier hs-type">HasCommandLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533503"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-253"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadCatch</span></span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-254"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#MonadHandleReader"><span class="hs-identifier hs-type">MonadHandleReader</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-255"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#MonadIORef"><span class="hs-identifier hs-type">MonadIORef</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-256"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679533503"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-257"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-thread-0.1-11ce15cb9eb5648ab1cfa155131e7e96f8382aa643017eb72fc799e6059083e1/share/doc/html/src/Effects.Concurrent.Thread.html#MonadThread"><span class="hs-identifier hs-type">MonadThread</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-258"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#MonadTypedProcess"><span class="hs-identifier hs-type">MonadTypedProcess</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-259"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-260"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Function to apply to streamed logs.</span></span><span>
+</span><span id="line-261"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-262"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Command that was run.</span></span><span>
+</span><span id="line-263"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-264"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Process handle.</span></span><span>
+</span><span id="line-265"></span><span>  </span><span class="annot"><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.html#Process"><span class="hs-identifier hs-type">Process</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-266"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Exit code along w/ any leftover data.</span></span><span>
+</span><span id="line-267"></span><span>  </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ExitCode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-268"></span><span id="streamOutput"><span class="annot"><span class="annottext">streamOutput :: forall (m :: Type -&gt; Type) env.
+(HasCallStack, HasCommandLogging env, MonadCatch m,
+ MonadHandleReader m, MonadIORef m, MonadReader env m,
+ MonadThread m, MonadTypedProcess m) =&gt;
+(Log -&gt; m ())
+-&gt; CommandP1
+-&gt; Process () Handle Handle
+-&gt; m (ExitCode, ReadHandleResult)
+</span><a href="Shrun.IO.html#streamOutput"><span class="hs-identifier hs-var hs-var">streamOutput</span></a></span></span><span> </span><span id="local-6989586621679534081"><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679534081"><span class="hs-identifier hs-var">logFn</span></a></span></span><span> </span><span id="local-6989586621679534082"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534082"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span id="local-6989586621679534083"><span class="annot"><span class="annottext">Process () Handle Handle
+</span><a href="#local-6989586621679534083"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-269"></span><span>  </span><span class="hs-comment">-- NOTE: [Saving final error message]</span><span>
+</span><span id="line-270"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-271"></span><span>  </span><span class="hs-comment">-- We want to save the final error message if it exists, so that we can</span><span>
+</span><span id="line-272"></span><span>  </span><span class="hs-comment">-- report it to the user. Programs can be inconsistent where they report</span><span>
+</span><span id="line-273"></span><span>  </span><span class="hs-comment">-- errors, so we read both stdout and stderr, prioritizing the latter when</span><span>
+</span><span id="line-274"></span><span>  </span><span class="hs-comment">-- both exist.</span><span>
+</span><span id="line-275"></span><span>  </span><span id="local-6989586621679534084"><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534084"><span class="hs-identifier hs-var">lastReadOutRef</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult -&gt; m (IORef ReadHandleResult)
+forall a. HasCallStack =&gt; a -&gt; m (IORef a)
+forall (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; m (IORef a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#newIORef"><span class="hs-identifier hs-var">newIORef</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span><span>
+</span><span id="line-276"></span><span>  </span><span id="local-6989586621679534086"><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534086"><span class="hs-identifier hs-var">lastReadErrRef</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult -&gt; m (IORef ReadHandleResult)
+forall a. HasCallStack =&gt; a -&gt; m (IORef a)
+forall (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; m (IORef a)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#newIORef"><span class="hs-identifier hs-var">newIORef</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span><span>
+</span><span id="line-277"></span><span>  </span><span id="local-6989586621679534087"><span class="annot"><span class="annottext">CommandLoggingEnv
+</span><a href="#local-6989586621679534087"><span class="hs-identifier hs-var">commandLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; CommandLoggingEnv) -&gt; m CommandLoggingEnv
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; CommandLoggingEnv
+forall env. HasCommandLogging env =&gt; env -&gt; CommandLoggingEnv
+</span><a href="Shrun.Configuration.Env.Types.html#getCommandLogging"><span class="hs-identifier hs-var">getCommandLogging</span></a></span><span>
+</span><span id="line-278"></span><span>
+</span><span id="line-279"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679534088"><span class="annot"><span class="annottext">reportReadErrors :: ReportReadErrorsSwitch
+</span><a href="#local-6989586621679534088"><span class="hs-identifier hs-var hs-var">reportReadErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommandLoggingEnv
+</span><a href="#local-6989586621679534087"><span class="hs-identifier hs-var">commandLogging</span></a></span><span> </span><span class="annot"><span class="annottext">CommandLoggingEnv
+-&gt; Optic' A_Lens NoIx CommandLoggingEnv ReportReadErrorsSwitch
+-&gt; ReportReadErrorsSwitch
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx CommandLoggingEnv ReportReadErrorsSwitch
+</span><span class="">#reportReadErrors</span></span><span>
+</span><span id="line-280"></span><span>
+</span><span id="line-281"></span><span>      </span><span class="annot"><a href="#local-6989586621679534089"><span class="hs-identifier hs-type">pollInterval</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span>
+</span><span id="line-282"></span><span>      </span><span id="local-6989586621679534089"><span class="annot"><span class="annottext">pollInterval :: Natural
+</span><a href="#local-6989586621679534089"><span class="hs-identifier hs-var hs-var">pollInterval</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommandLoggingEnv
+</span><a href="#local-6989586621679534087"><span class="hs-identifier hs-var">commandLogging</span></a></span><span> </span><span class="annot"><span class="annottext">CommandLoggingEnv
+-&gt; Optic' A_Lens NoIx CommandLoggingEnv Natural -&gt; Natural
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CommandLoggingEnv
+  CommandLoggingEnv
+  PollInterval
+  PollInterval
+</span><span class="">#pollInterval</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CommandLoggingEnv
+  CommandLoggingEnv
+  PollInterval
+  PollInterval
+-&gt; Optic An_Iso NoIx PollInterval PollInterval Natural Natural
+-&gt; Optic' A_Lens NoIx CommandLoggingEnv Natural
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic An_Iso NoIx PollInterval PollInterval Natural Natural
+</span><span class="">#unPollInterval</span></span><span class="hs-special">)</span><span>
+</span><span id="line-283"></span><span>
+</span><span id="line-284"></span><span>      </span><span class="annot"><a href="#local-6989586621679534090"><span class="hs-identifier hs-type">sleepFn</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-285"></span><span>      </span><span id="local-6989586621679534090"><span class="annot"><span class="annottext">sleepFn :: m ()
+</span><a href="#local-6989586621679534090"><span class="hs-identifier hs-var hs-var">sleepFn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; m () -&gt; m ()
+forall (f :: Type -&gt; Type). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679534089"><span class="hs-identifier hs-var">pollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Natural -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Natural -&gt; m ()
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadThread m) =&gt;
+Natural -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-thread-0.1-11ce15cb9eb5648ab1cfa155131e7e96f8382aa643017eb72fc799e6059083e1/share/doc/html/src/Effects.Concurrent.Thread.html#microsleep"><span class="hs-identifier hs-var">microsleep</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679534089"><span class="hs-identifier hs-var">pollInterval</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-286"></span><span>
+</span><span id="line-287"></span><span>      </span><span class="annot"><a href="#local-6989586621679534093"><span class="hs-identifier hs-type">blockSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-288"></span><span>      </span><span id="local-6989586621679534093"><span class="annot"><span class="annottext">blockSize :: Int
+</span><a href="#local-6989586621679534093"><span class="hs-identifier hs-var hs-var">blockSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-289"></span><span>        </span><span class="annot"><span class="annottext">Natural -&gt; Int
+forall a b.
+(Bits a, Bits b, HasCallStack, Integral a, Integral b, Show a,
+ Typeable a, Typeable b) =&gt;
+a -&gt; b
+</span><a href="Shrun.Prelude.html#unsafeConvertIntegral"><span class="hs-identifier hs-var">unsafeConvertIntegral</span></a></span><span>
+</span><span id="line-290"></span><span>          </span><span class="annot"><span class="annottext">(Natural -&gt; Int) -&gt; Natural -&gt; Int
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">CommandLoggingEnv
+</span><a href="#local-6989586621679534087"><span class="hs-identifier hs-var">commandLogging</span></a></span><span>
+</span><span id="line-291"></span><span>          </span><span class="annot"><span class="annottext">CommandLoggingEnv
+-&gt; Optic' A_Lens NoIx CommandLoggingEnv Natural -&gt; Natural
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic
+  A_Lens NoIx CommandLoggingEnv CommandLoggingEnv ReadSize ReadSize
+</span><span class="">#readSize</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens NoIx CommandLoggingEnv CommandLoggingEnv ReadSize ReadSize
+-&gt; Optic
+     An_Iso NoIx ReadSize ReadSize (Bytes 'B Natural) (Bytes 'B Natural)
+-&gt; Optic
+     A_Lens
+     NoIx
+     CommandLoggingEnv
+     CommandLoggingEnv
+     (Bytes 'B Natural)
+     (Bytes 'B Natural)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  An_Iso NoIx ReadSize ReadSize (Bytes 'B Natural) (Bytes 'B Natural)
+</span><span class="">#unReadSize</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  CommandLoggingEnv
+  CommandLoggingEnv
+  (Bytes 'B Natural)
+  (Bytes 'B Natural)
+-&gt; Optic
+     An_Iso NoIx (Bytes 'B Natural) (Bytes 'B Natural) Natural Natural
+-&gt; Optic' A_Lens NoIx CommandLoggingEnv Natural
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  An_Iso NoIx (Bytes 'B Natural) (Bytes 'B Natural) Natural Natural
+forall (s :: Size) n. Iso' (Bytes s n) n
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#_MkBytes"><span class="hs-identifier hs-var">_MkBytes</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-292"></span><span>
+</span><span id="line-293"></span><span>      </span><span class="annot"><a href="#local-6989586621679534096"><span class="hs-identifier hs-type">readBlock</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679533504"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span><span>
+</span><span id="line-294"></span><span>      </span><span id="local-6989586621679534096"><span class="annot"><span class="annottext">readBlock :: HasCallStack =&gt; Handle -&gt; m ReadHandleResult
+</span><a href="#local-6989586621679534096"><span class="hs-identifier hs-var hs-var">readBlock</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Handle -&gt; m ReadHandleResult
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadCatch m, MonadHandleReader m) =&gt;
+Int -&gt; Handle -&gt; m ReadHandleResult
+</span><a href="Shrun.IO.Types.html#readHandle"><span class="hs-identifier hs-var">readHandle</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679534093"><span class="hs-identifier hs-var">blockSize</span></a></span><span>
+</span><span id="line-295"></span><span>
+</span><span id="line-296"></span><span>  </span><span id="local-6989586621679534102"><span class="annot"><span class="annottext">ExitCode
+</span><a href="#local-6989586621679534102"><span class="hs-identifier hs-var">exitCode</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m (Maybe ExitCode) -&gt; m ExitCode
+forall (m :: Type -&gt; Type) b. Monad m =&gt; m (Maybe b) -&gt; m b
+</span><a href="Shrun.Utils.html#untilJust"><span class="hs-identifier hs-var">U.untilJust</span></a></span><span> </span><span class="annot"><span class="annottext">(m (Maybe ExitCode) -&gt; m ExitCode)
+-&gt; m (Maybe ExitCode) -&gt; m ExitCode
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-297"></span><span>    </span><span class="hs-comment">-- We need to read from both stdout and stderr -- regardless of if we</span><span>
+</span><span id="line-298"></span><span>    </span><span class="hs-comment">-- created a single pipe in tryCommandStream -- or else we will miss</span><span>
+</span><span id="line-299"></span><span>    </span><span class="hs-comment">-- messages</span><span>
+</span><span id="line-300"></span><span>    </span><span id="local-6989586621679534104"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534104"><span class="hs-identifier hs-var">outResult</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Handle -&gt; m ReadHandleResult
+Handle -&gt; m ReadHandleResult
+</span><a href="#local-6989586621679534096"><span class="hs-identifier hs-var">readBlock</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Process () Handle Handle -&gt; Handle
+forall stdin stdout stderr. Process stdin stdout stderr -&gt; stdout
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.html#getStdout"><span class="hs-identifier hs-var">P.getStdout</span></a></span><span> </span><span class="annot"><span class="annottext">Process () Handle Handle
+</span><a href="#local-6989586621679534083"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-301"></span><span>    </span><span id="local-6989586621679534106"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534106"><span class="hs-identifier hs-var">errResult</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Handle -&gt; m ReadHandleResult
+Handle -&gt; m ReadHandleResult
+</span><a href="#local-6989586621679534096"><span class="hs-identifier hs-var">readBlock</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Process () Handle Handle -&gt; Handle
+forall stdin stdout stderr. Process stdin stdout stderr -&gt; stderr
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.html#getStderr"><span class="hs-identifier hs-var">P.getStderr</span></a></span><span> </span><span class="annot"><span class="annottext">Process () Handle Handle
+</span><a href="#local-6989586621679534083"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-302"></span><span>
+</span><span id="line-303"></span><span>    </span><span class="annot"><span class="annottext">(Log -&gt; m ())
+-&gt; ReportReadErrorsSwitch
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; m ()
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadIORef m) =&gt;
+(Log -&gt; m ())
+-&gt; ReportReadErrorsSwitch
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; m ()
+</span><a href="Shrun.IO.html#writeLog"><span class="hs-identifier hs-var">writeLog</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679534081"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">ReportReadErrorsSwitch
+</span><a href="#local-6989586621679534088"><span class="hs-identifier hs-var">reportReadErrors</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534082"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534084"><span class="hs-identifier hs-var">lastReadOutRef</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534104"><span class="hs-identifier hs-var">outResult</span></a></span><span>
+</span><span id="line-304"></span><span>    </span><span class="annot"><span class="annottext">(Log -&gt; m ())
+-&gt; ReportReadErrorsSwitch
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; m ()
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadIORef m) =&gt;
+(Log -&gt; m ())
+-&gt; ReportReadErrorsSwitch
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; m ()
+</span><a href="Shrun.IO.html#writeLog"><span class="hs-identifier hs-var">writeLog</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679534081"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">ReportReadErrorsSwitch
+</span><a href="#local-6989586621679534088"><span class="hs-identifier hs-var">reportReadErrors</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534082"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534086"><span class="hs-identifier hs-var">lastReadErrRef</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534106"><span class="hs-identifier hs-var">errResult</span></a></span><span>
+</span><span id="line-305"></span><span>
+</span><span id="line-306"></span><span>    </span><span class="hs-comment">-- NOTE: IF we do not have a sleep here then the CPU blows up. Adding</span><span>
+</span><span id="line-307"></span><span>    </span><span class="hs-comment">-- a delay helps keep the CPU reasonable.</span><span>
+</span><span id="line-308"></span><span>    </span><span class="annot"><span class="annottext">m ()
+</span><a href="#local-6989586621679534090"><span class="hs-identifier hs-var">sleepFn</span></a></span><span>
+</span><span id="line-309"></span><span>
+</span><span id="line-310"></span><span>    </span><span class="annot"><span class="annottext">Process () Handle Handle -&gt; m (Maybe ExitCode)
+forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; m (Maybe ExitCode)
+forall (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; m (Maybe ExitCode)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#getExitCode"><span class="hs-identifier hs-var">P.getExitCode</span></a></span><span> </span><span class="annot"><span class="annottext">Process () Handle Handle
+</span><a href="#local-6989586621679534083"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><span id="line-311"></span><span>
+</span><span id="line-312"></span><span>  </span><span class="hs-comment">-- Try to get final data.</span><span>
+</span><span id="line-313"></span><span>  </span><span id="local-6989586621679534110"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534110"><span class="hs-identifier hs-var">lastReadOut</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult -&gt; m ReadHandleResult
+forall a. HasCallStack =&gt; IORef a -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#readIORef"><span class="hs-identifier hs-var">readIORef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534084"><span class="hs-identifier hs-var">lastReadOutRef</span></a></span><span>
+</span><span id="line-314"></span><span>  </span><span id="local-6989586621679534112"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534112"><span class="hs-identifier hs-var">lastReadErr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult -&gt; m ReadHandleResult
+forall a. HasCallStack =&gt; IORef a -&gt; m a
+forall (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#readIORef"><span class="hs-identifier hs-var">readIORef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534086"><span class="hs-identifier hs-var">lastReadErrRef</span></a></span><span>
+</span><span id="line-315"></span><span>
+</span><span id="line-316"></span><span>  </span><span class="hs-comment">-- Leftover data. We need this as the process can exit before everything</span><span>
+</span><span id="line-317"></span><span>  </span><span class="hs-comment">-- is read.</span><span>
+</span><span id="line-318"></span><span>  </span><span id="local-6989586621679534113"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534113"><span class="hs-identifier hs-var">remainingOut</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Handle -&gt; m ReadHandleResult
+Handle -&gt; m ReadHandleResult
+</span><a href="#local-6989586621679534096"><span class="hs-identifier hs-var">readBlock</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Process () Handle Handle -&gt; Handle
+forall stdin stdout stderr. Process stdin stdout stderr -&gt; stdout
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.html#getStdout"><span class="hs-identifier hs-var">P.getStdout</span></a></span><span> </span><span class="annot"><span class="annottext">Process () Handle Handle
+</span><a href="#local-6989586621679534083"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-319"></span><span>  </span><span id="local-6989586621679534114"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534114"><span class="hs-identifier hs-var">remainingErr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Handle -&gt; m ReadHandleResult
+Handle -&gt; m ReadHandleResult
+</span><a href="#local-6989586621679534096"><span class="hs-identifier hs-var">readBlock</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Process () Handle Handle -&gt; Handle
+forall stdin stdout stderr. Process stdin stdout stderr -&gt; stderr
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.html#getStderr"><span class="hs-identifier hs-var">P.getStderr</span></a></span><span> </span><span class="annot"><span class="annottext">Process () Handle Handle
+</span><a href="#local-6989586621679534083"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-320"></span><span>
+</span><span id="line-321"></span><span>  </span><span class="hs-comment">-- NOTE: [Stderr reporting]</span><span>
+</span><span id="line-322"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-323"></span><span>  </span><span class="hs-comment">-- In the event of a process failure (exitCode == ExitFailure), we want to</span><span>
+</span><span id="line-324"></span><span>  </span><span class="hs-comment">-- return the last (successful) read, as it is the most likely to have</span><span>
+</span><span id="line-325"></span><span>  </span><span class="hs-comment">-- relevant information. We have two possible reads here:</span><span>
+</span><span id="line-326"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-327"></span><span>  </span><span class="hs-comment">-- 1. The last read while the process was running (lastReadErr)</span><span>
+</span><span id="line-328"></span><span>  </span><span class="hs-comment">-- 2. A final read after the process exited (remainingData)</span><span>
+</span><span id="line-329"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-330"></span><span>  </span><span class="hs-comment">-- We prioritize (Semigroup), in order:</span><span>
+</span><span id="line-331"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-332"></span><span>  </span><span class="hs-comment">-- 1. remainingErr</span><span>
+</span><span id="line-333"></span><span>  </span><span class="hs-comment">-- 2. lastReadErr</span><span>
+</span><span id="line-334"></span><span>  </span><span class="hs-comment">-- 3. remainingOut</span><span>
+</span><span id="line-335"></span><span>  </span><span class="hs-comment">-- 4. lastReadOut</span><span>
+</span><span id="line-336"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-337"></span><span>  </span><span class="hs-comment">-- We make the assumption that the most recent Stderr is the most likely to</span><span>
+</span><span id="line-338"></span><span>  </span><span class="hs-comment">-- have the relevant error message, though we fall back to stdout as this</span><span>
+</span><span id="line-339"></span><span>  </span><span class="hs-comment">-- is not always true.</span><span>
+</span><span id="line-340"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679534115"><span class="annot"><span class="annottext">finalData :: ReadHandleResult
+</span><a href="#local-6989586621679534115"><span class="hs-identifier hs-var hs-var">finalData</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-341"></span><span>        </span><span class="annot"><span class="annottext">[ReadHandleResult] -&gt; ReadHandleResult
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-342"></span><span>          </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534114"><span class="hs-identifier hs-var">remainingErr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-343"></span><span>            </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534112"><span class="hs-identifier hs-var">lastReadErr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-344"></span><span>            </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534113"><span class="hs-identifier hs-var">remainingOut</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-345"></span><span>            </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534110"><span class="hs-identifier hs-var">lastReadOut</span></a></span><span>
+</span><span id="line-346"></span><span>          </span><span class="hs-special">]</span><span>
+</span><span id="line-347"></span><span>
+</span><span id="line-348"></span><span>  </span><span class="hs-identifier">pure</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ExitCode
+</span><a href="#local-6989586621679534102"><span class="hs-identifier hs-var">exitCode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534115"><span class="hs-identifier hs-var">finalData</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-349"></span><span>
+</span><span id="line-350"></span><span class="hs-comment">-- We occasionally get invalid reads here -- usually when the command</span><span>
+</span><span id="line-351"></span><span class="hs-comment">-- exits -- likely due to a race condition. It would be nice to</span><span>
+</span><span id="line-352"></span><span class="hs-comment">-- prevent these entirely, but for now ignore them, as it does not</span><span>
+</span><span id="line-353"></span><span class="hs-comment">-- appear that we ever lose important messages.</span><span>
+</span><span id="line-354"></span><span class="hs-comment">--</span><span>
+</span><span id="line-355"></span><span class="hs-comment">-- EDIT: Possibly fixed by switch to typed-process and</span><span>
+</span><span id="line-356"></span><span class="hs-comment">-- https://github.com/fpco/typed-process/issues/25?</span><span>
+</span><span id="line-357"></span><span class="hs-comment">--</span><span>
+</span><span id="line-358"></span><span class="hs-comment">-- See Note [EOF / blocking error]</span><span>
+</span><span id="line-359"></span><span id="local-6989586621679533558"><span class="annot"><a href="Shrun.IO.html#writeLog"><span class="hs-identifier hs-type">writeLog</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-360"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-361"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#MonadIORef"><span class="hs-identifier hs-type">MonadIORef</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533558"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-362"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-363"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679533558"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-364"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.html#ReportReadErrorsSwitch"><span class="hs-identifier hs-type">ReportReadErrorsSwitch</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-365"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-366"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-367"></span><span>  </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-368"></span><span>  </span><span class="annot"><a href="#local-6989586621679533558"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-369"></span><span id="writeLog"><span class="annot"><span class="annottext">writeLog :: forall (m :: Type -&gt; Type).
+(HasCallStack, MonadIORef m) =&gt;
+(Log -&gt; m ())
+-&gt; ReportReadErrorsSwitch
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; m ()
+</span><a href="Shrun.IO.html#writeLog"><span class="hs-identifier hs-var hs-var">writeLog</span></a></span></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">ReportReadErrorsSwitch
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="Shrun.IO.Types.html#ReadNoData"><span class="hs-identifier hs-var">ReadNoData</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">() -&gt; m ()
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-370"></span><span class="annot"><a href="Shrun.IO.html#writeLog"><span class="hs-identifier hs-var">writeLog</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">ReportReadErrorsSwitch
+</span><a href="Shrun.Configuration.Data.CommandLogging.html#ReportReadErrorsOff"><span class="hs-identifier hs-var">ReportReadErrorsOff</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-type">ReadErr</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">() -&gt; m ()
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-371"></span><span class="annot"><a href="Shrun.IO.html#writeLog"><span class="hs-identifier hs-var">writeLog</span></a></span><span> </span><span id="local-6989586621679534129"><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679534129"><span class="hs-identifier hs-var">logFn</span></a></span></span><span> </span><span class="annot"><span class="annottext">ReportReadErrorsSwitch
+</span><a href="Shrun.Configuration.Data.CommandLogging.html#ReportReadErrorsOn"><span class="hs-identifier hs-var">ReportReadErrorsOn</span></a></span><span> </span><span id="local-6989586621679534130"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534130"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span id="local-6989586621679534131"><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534131"><span class="hs-identifier hs-var">lastReadRef</span></a></span></span><span> </span><span id="local-6989586621679534132"><span class="annot"><span class="annottext">r :: ReadHandleResult
+</span><a href="#local-6989586621679534132"><span class="hs-identifier hs-var">r</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#ReadErr"><span class="hs-identifier hs-type">ReadErr</span></a></span><span> </span><span id="local-6989586621679534133"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679534133"><span class="hs-identifier hs-var">messages</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-372"></span><span>  </span><span class="annot"><span class="annottext">(Log -&gt; m ())
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; List UnlinedText
+-&gt; m ()
+forall (m :: Type -&gt; Type) b.
+(HasCallStack, MonadIORef m) =&gt;
+(Log -&gt; m b)
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; List UnlinedText
+-&gt; m ()
+</span><a href="Shrun.IO.html#writeLogHelper"><span class="hs-identifier hs-var">writeLogHelper</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679534129"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534130"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534131"><span class="hs-identifier hs-var">lastReadRef</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534132"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679534133"><span class="hs-identifier hs-var">messages</span></a></span><span>
+</span><span id="line-373"></span><span class="annot"><a href="Shrun.IO.html#writeLog"><span class="hs-identifier hs-var">writeLog</span></a></span><span> </span><span id="local-6989586621679534135"><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679534135"><span class="hs-identifier hs-var">logFn</span></a></span></span><span> </span><span class="annot"><span class="annottext">ReportReadErrorsSwitch
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679534136"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534136"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span id="local-6989586621679534137"><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534137"><span class="hs-identifier hs-var">lastReadRef</span></a></span></span><span> </span><span id="local-6989586621679534138"><span class="annot"><span class="annottext">r :: ReadHandleResult
+</span><a href="#local-6989586621679534138"><span class="hs-identifier hs-var">r</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.IO.Types.html#ReadSuccess"><span class="hs-identifier hs-type">ReadSuccess</span></a></span><span> </span><span id="local-6989586621679534139"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679534139"><span class="hs-identifier hs-var">messages</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-374"></span><span>  </span><span class="annot"><span class="annottext">(Log -&gt; m ())
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; List UnlinedText
+-&gt; m ()
+forall (m :: Type -&gt; Type) b.
+(HasCallStack, MonadIORef m) =&gt;
+(Log -&gt; m b)
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; List UnlinedText
+-&gt; m ()
+</span><a href="Shrun.IO.html#writeLogHelper"><span class="hs-identifier hs-var">writeLogHelper</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; m ()
+</span><a href="#local-6989586621679534135"><span class="hs-identifier hs-var">logFn</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534136"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534137"><span class="hs-identifier hs-var">lastReadRef</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534138"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679534139"><span class="hs-identifier hs-var">messages</span></a></span><span>
+</span><span id="line-375"></span><span>
+</span><span id="line-376"></span><span id="local-6989586621679533565"><span id="local-6989586621679533566"><span class="annot"><a href="Shrun.IO.html#writeLogHelper"><span class="hs-identifier hs-type">writeLogHelper</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-377"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-378"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#MonadIORef"><span class="hs-identifier hs-type">MonadIORef</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533565"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-379"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-380"></span><span>  </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679533565"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679533566"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-381"></span><span>  </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-382"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-383"></span><span>  </span><span class="annot"><a href="Shrun.IO.Types.html#ReadHandleResult"><span class="hs-identifier hs-type">ReadHandleResult</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-384"></span><span>  </span><span class="hs-special">[</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-385"></span><span>  </span><span class="annot"><a href="#local-6989586621679533565"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-386"></span><span id="writeLogHelper"><span class="annot"><span class="annottext">writeLogHelper :: forall (m :: Type -&gt; Type) b.
+(HasCallStack, MonadIORef m) =&gt;
+(Log -&gt; m b)
+-&gt; CommandP1
+-&gt; IORef ReadHandleResult
+-&gt; ReadHandleResult
+-&gt; List UnlinedText
+-&gt; m ()
+</span><a href="Shrun.IO.html#writeLogHelper"><span class="hs-identifier hs-var hs-var">writeLogHelper</span></a></span></span><span> </span><span id="local-6989586621679534151"><span class="annot"><span class="annottext">Log -&gt; m b
+</span><a href="#local-6989586621679534151"><span class="hs-identifier hs-var">logFn</span></a></span></span><span> </span><span id="local-6989586621679534152"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534152"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span id="local-6989586621679534153"><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534153"><span class="hs-identifier hs-var">lastReadRef</span></a></span></span><span> </span><span id="local-6989586621679534154"><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534154"><span class="hs-identifier hs-var">handleResult</span></a></span></span><span> </span><span id="local-6989586621679534155"><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679534155"><span class="hs-identifier hs-var">messages</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-387"></span><span>  </span><span class="annot"><span class="annottext">IORef ReadHandleResult -&gt; ReadHandleResult -&gt; m ()
+forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; m ()
+forall (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; a -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#writeIORef"><span class="hs-identifier hs-var">writeIORef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ReadHandleResult
+</span><a href="#local-6989586621679534153"><span class="hs-identifier hs-var">lastReadRef</span></a></span><span> </span><span class="annot"><span class="annottext">ReadHandleResult
+</span><a href="#local-6989586621679534154"><span class="hs-identifier hs-var">handleResult</span></a></span><span>
+</span><span id="line-388"></span><span>  </span><span class="annot"><span class="annottext">List UnlinedText -&gt; (UnlinedText -&gt; m b) -&gt; m ()
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(Foldable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f ()
+</span><span class="hs-identifier hs-var">for_</span></span><span> </span><span class="annot"><span class="annottext">List UnlinedText
+</span><a href="#local-6989586621679534155"><span class="hs-identifier hs-var">messages</span></a></span><span> </span><span class="annot"><span class="annottext">((UnlinedText -&gt; m b) -&gt; m ()) -&gt; (UnlinedText -&gt; m b) -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679534158"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679534158"><span class="hs-identifier hs-var">msg</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-389"></span><span>    </span><span class="annot"><span class="annottext">Log -&gt; m b
+</span><a href="#local-6989586621679534151"><span class="hs-identifier hs-var">logFn</span></a></span><span>
+</span><span id="line-390"></span><span>      </span><span class="annot"><span class="annottext">(Log -&gt; m b) -&gt; Log -&gt; m b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span>
+</span><span id="line-391"></span><span>        </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">cmd :: Maybe CommandP1
+</span><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier hs-var">cmd</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; Maybe CommandP1
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679534152"><span class="hs-identifier hs-var">cmd</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-392"></span><span>          </span><span class="annot"><span class="annottext">UnlinedText
+msg :: UnlinedText
+msg :: UnlinedText
+</span><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier hs-var hs-var">msg</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-393"></span><span>          </span><span class="annot"><span class="annottext">lvl :: LogLevel
+</span><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier hs-var">lvl</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier hs-var">LevelCommand</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-394"></span><span>          </span><span class="annot"><span class="annottext">mode :: LogMode
+</span><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier hs-var">mode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="Shrun.Logging.Types.Internal.html#LogModeSet"><span class="hs-identifier hs-var">LogModeSet</span></a></span><span>
+</span><span id="line-395"></span><span>        </span><span class="hs-special">}</span><span>
+</span><span id="line-396"></span></pre></body></html>

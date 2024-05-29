@@ -1,0 +1,257 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Provides logging functionality. This is a high-level picture of how</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- logging works:</span><span>
+</span><span id="line-3"></span><span class="hs-comment">--</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- 1. &quot;Shrun.IO&quot; sends logs per command based on the environment (i.e. is file</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--    logging on and/or do we log commands). If any logs are produced, they</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--    are formatted and sent directly to a queue.</span><span>
+</span><span id="line-7"></span><span class="hs-comment">--</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- 2. &quot;Shrun&quot; also produces logs. These are &quot;higher-level&quot; e.g. success/failure</span><span>
+</span><span id="line-9"></span><span class="hs-comment">--    status of a given command, fatal errors, etc. &quot;Shrun&quot; uses the functions</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--    here (e.g. putRegionLog) that handles deciding if a given log</span><span>
+</span><span id="line-11"></span><span class="hs-comment">--    should be written to either/both of the console/file log queues.</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- 3. &quot;Shrun&quot; has two threads -- one for each queue -- that poll their</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--    respective queues and writes logs as they are found. These do no</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--    environment checking; any logs that make it to the queue are eventually</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--    written.</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Logging</span><span>
+</span><span id="line-18"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Writing logs</span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="Shrun.Logging.html#putRegionLog"><span class="hs-identifier">putRegionLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Shrun.Logging.html#regionLogToConsoleQueue"><span class="hs-identifier">regionLogToConsoleQueue</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Shrun.Logging.html#logToFileQueue"><span class="hs-identifier">logToFileQueue</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html"><span class="hs-identifier">Shrun.Configuration.Data.CommonLogging.KeyHideSwitch</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier">KeyHideSwitch</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html"><span class="hs-identifier">Shrun.Configuration.Data.FileLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingEnv"><span class="hs-identifier">FileLoggingEnv</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html"><span class="hs-identifier">Shrun.Configuration.Env.Types</span></a></span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommonLogging"><span class="hs-identifier">HasCommonLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getCommonLogging"><span class="hs-identifier">getCommonLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasConsoleLogging"><span class="hs-identifier">HasConsoleLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getConsoleLogging"><span class="hs-identifier">getConsoleLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasFileLogging"><span class="hs-identifier">HasFileLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#getFileLogging"><span class="hs-identifier">getFileLogging</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Formatting.html"><span class="hs-identifier">Shrun.Logging.Formatting</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatConsoleLog"><span class="hs-identifier">formatConsoleLog</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Logging.Formatting.html#formatFileLog"><span class="hs-identifier">formatFileLog</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html"><span class="hs-identifier">Shrun.Logging.MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier">MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier">Region</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html"><span class="hs-identifier">Shrun.Logging.Types</span></a></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier">Log</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier">LogRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier">LogRegion</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- | Unconditionally writes a log to the console queue. Conditionally</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- present.</span><span>
+</span><span id="line-43"></span><span id="local-6989586621679532778"><span id="local-6989586621679532780"><span class="annot"><a href="Shrun.Logging.html#putRegionLog"><span class="hs-identifier hs-type">putRegionLog</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommonLogging"><span class="hs-identifier hs-type">HasCommonLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532778"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasConsoleLogging"><span class="hs-identifier hs-type">HasConsoleLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532778"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532780"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasFileLogging"><span class="hs-identifier hs-type">HasFileLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532778"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679532778"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532780"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#MonadSTM"><span class="hs-identifier hs-type">MonadSTM</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532780"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532780"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-52"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Region.</span></span><span>
+</span><span id="line-53"></span><span>  </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532780"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-54"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Log to send.</span></span><span>
+</span><span id="line-55"></span><span>  </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-56"></span><span>  </span><span class="annot"><a href="#local-6989586621679532780"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-57"></span><span id="putRegionLog"><span class="annot"><span class="annottext">putRegionLog :: forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommonLogging env,
+ HasConsoleLogging env (Region m), HasFileLogging env,
+ MonadReader env m, MonadSTM m, MonadTime m) =&gt;
+Region m -&gt; Log -&gt; m ()
+</span><a href="Shrun.Logging.html#putRegionLog"><span class="hs-identifier hs-var hs-var">putRegionLog</span></a></span></span><span> </span><span id="local-6989586621679532954"><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679532954"><span class="hs-identifier hs-var">region</span></a></span></span><span> </span><span id="local-6989586621679532955"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679532955"><span class="hs-identifier hs-var">lg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-58"></span><span>  </span><span id="local-6989586621679532956"><span class="annot"><span class="annottext">CommonLoggingEnv
+</span><a href="#local-6989586621679532956"><span class="hs-identifier hs-var">commonLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; CommonLoggingEnv) -&gt; m CommonLoggingEnv
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; CommonLoggingEnv
+forall env. HasCommonLogging env =&gt; env -&gt; CommonLoggingEnv
+</span><a href="Shrun.Configuration.Env.Types.html#getCommonLogging"><span class="hs-identifier hs-var">getCommonLogging</span></a></span><span>
+</span><span id="line-59"></span><span>  </span><span id="local-6989586621679532958"><span class="annot"><span class="annottext">Maybe FileLoggingEnv
+</span><a href="#local-6989586621679532958"><span class="hs-identifier hs-var">mFileLogging</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; Maybe FileLoggingEnv) -&gt; m (Maybe FileLoggingEnv)
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; Maybe FileLoggingEnv
+forall env. HasFileLogging env =&gt; env -&gt; Maybe FileLoggingEnv
+</span><a href="Shrun.Configuration.Env.Types.html#getFileLogging"><span class="hs-identifier hs-var">getFileLogging</span></a></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679532959"><span class="annot"><span class="annottext">keyHide :: KeyHideSwitch
+</span><a href="#local-6989586621679532959"><span class="hs-identifier hs-var hs-var">keyHide</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CommonLoggingEnv
+</span><a href="#local-6989586621679532956"><span class="hs-identifier hs-var">commonLogging</span></a></span><span> </span><span class="annot"><span class="annottext">CommonLoggingEnv
+-&gt; Optic' An_Iso NoIx CommonLoggingEnv KeyHideSwitch
+-&gt; KeyHideSwitch
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' An_Iso NoIx CommonLoggingEnv KeyHideSwitch
+</span><span class="">#keyHide</span></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span>  </span><span class="annot"><span class="annottext">Region m -&gt; Log -&gt; m ()
+forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommonLogging env,
+ HasConsoleLogging env (Region m), MonadReader env m, MonadSTM m) =&gt;
+Region m -&gt; Log -&gt; m ()
+</span><a href="Shrun.Logging.html#regionLogToConsoleQueue"><span class="hs-identifier hs-var">regionLogToConsoleQueue</span></a></span><span> </span><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679532954"><span class="hs-identifier hs-var">region</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679532955"><span class="hs-identifier hs-var">lg</span></a></span><span>
+</span><span id="line-64"></span><span>  </span><span class="annot"><span class="annottext">Maybe FileLoggingEnv -&gt; (FileLoggingEnv -&gt; m ()) -&gt; m ()
+forall (t :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(Foldable t, Applicative f) =&gt;
+t a -&gt; (a -&gt; f b) -&gt; f ()
+</span><span class="hs-identifier hs-var">for_</span></span><span> </span><span class="annot"><span class="annottext">Maybe FileLoggingEnv
+</span><a href="#local-6989586621679532958"><span class="hs-identifier hs-var">mFileLogging</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679532962"><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679532962"><span class="hs-identifier hs-var">fl</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadSTM m, MonadTime m) =&gt;
+KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="Shrun.Logging.html#logToFileQueue"><span class="hs-identifier hs-var">logToFileQueue</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679532959"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679532962"><span class="hs-identifier hs-var">fl</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679532955"><span class="hs-identifier hs-var">lg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="annot"><span class="hs-comment">-- | Writes the log to the console queue.</span></span><span>
+</span><span id="line-67"></span><span id="local-6989586621679532833"><span id="local-6989586621679532834"><span class="annot"><a href="Shrun.Logging.html#regionLogToConsoleQueue"><span class="hs-identifier hs-type">regionLogToConsoleQueue</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-69"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasCommonLogging"><span class="hs-identifier hs-type">HasCommonLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532833"><span class="hs-identifier hs-type">env</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#HasConsoleLogging"><span class="hs-identifier hs-type">HasConsoleLogging</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532833"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532834"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679532833"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532834"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#MonadSTM"><span class="hs-identifier hs-type">MonadSTM</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532834"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-73"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-74"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Region.</span></span><span>
+</span><span id="line-75"></span><span>  </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#Region"><span class="hs-identifier hs-type">Region</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532834"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-76"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Log to send.</span></span><span>
+</span><span id="line-77"></span><span>  </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-78"></span><span>  </span><span class="annot"><a href="#local-6989586621679532834"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-79"></span><span id="regionLogToConsoleQueue"><span class="annot"><span class="annottext">regionLogToConsoleQueue :: forall env (m :: Type -&gt; Type).
+(HasCallStack, HasCommonLogging env,
+ HasConsoleLogging env (Region m), MonadReader env m, MonadSTM m) =&gt;
+Region m -&gt; Log -&gt; m ()
+</span><a href="Shrun.Logging.html#regionLogToConsoleQueue"><span class="hs-identifier hs-var hs-var">regionLogToConsoleQueue</span></a></span></span><span> </span><span id="local-6989586621679532996"><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679532996"><span class="hs-identifier hs-var">region</span></a></span></span><span> </span><span id="local-6989586621679532997"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679532997"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-80"></span><span>  </span><span id="local-6989586621679532998"><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679532998"><span class="hs-identifier hs-var">keyHide</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; KeyHideSwitch) -&gt; m KeyHideSwitch
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic' An_Iso NoIx CommonLoggingEnv KeyHideSwitch
+-&gt; CommonLoggingEnv -&gt; KeyHideSwitch
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' An_Iso NoIx CommonLoggingEnv KeyHideSwitch
+</span><span class="">#keyHide</span></span><span> </span><span class="annot"><span class="annottext">(CommonLoggingEnv -&gt; KeyHideSwitch)
+-&gt; (env -&gt; CommonLoggingEnv) -&gt; env -&gt; KeyHideSwitch
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; CommonLoggingEnv
+forall env. HasCommonLogging env =&gt; env -&gt; CommonLoggingEnv
+</span><a href="Shrun.Configuration.Env.Types.html#getCommonLogging"><span class="hs-identifier hs-var">getCommonLogging</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679533001"><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533001"><span class="hs-identifier hs-var">consoleLogging</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679533002"><span class="annot"><span class="annottext">TBQueue (LogRegion (Region m))
+</span><a href="#local-6989586621679533002"><span class="hs-identifier hs-var">queue</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(env -&gt; (ConsoleLoggingEnv, TBQueue (LogRegion (Region m))))
+-&gt; m (ConsoleLoggingEnv, TBQueue (LogRegion (Region m)))
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">env -&gt; (ConsoleLoggingEnv, TBQueue (LogRegion (Region m)))
+forall env r.
+HasConsoleLogging env r =&gt;
+env -&gt; Tuple2 ConsoleLoggingEnv (TBQueue (LogRegion r))
+</span><a href="Shrun.Configuration.Env.Types.html#getConsoleLogging"><span class="hs-identifier hs-var">getConsoleLogging</span></a></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679533003"><span class="annot"><span class="annottext">formatted :: ConsoleLog
+</span><a href="#local-6989586621679533003"><span class="hs-identifier hs-var hs-var">formatted</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch -&gt; ConsoleLoggingEnv -&gt; Log -&gt; ConsoleLog
+</span><a href="Shrun.Logging.Formatting.html#formatConsoleLog"><span class="hs-identifier hs-var">formatConsoleLog</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679532998"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleLoggingEnv
+</span><a href="#local-6989586621679533001"><span class="hs-identifier hs-var">consoleLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679532997"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span>  </span><span class="annot"><span class="annottext">TBQueue (LogRegion (Region m)) -&gt; LogRegion (Region m) -&gt; m ()
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadSTM m) =&gt;
+TBQueue a -&gt; a -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#writeTBQueueA"><span class="hs-identifier hs-var">writeTBQueueA</span></a></span><span> </span><span class="annot"><span class="annottext">TBQueue (LogRegion (Region m))
+</span><a href="#local-6989586621679533002"><span class="hs-identifier hs-var">queue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">LogMode -&gt; Region m -&gt; ConsoleLog -&gt; LogRegion (Region m)
+forall r. LogMode -&gt; r -&gt; ConsoleLog -&gt; LogRegion r
+</span><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier hs-var">LogRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679532997"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="annottext">Log -&gt; Optic' A_Lens NoIx Log LogMode -&gt; LogMode
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx Log LogMode
+</span><span class="">#mode</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Region m
+</span><a href="#local-6989586621679532996"><span class="hs-identifier hs-var">region</span></a></span><span> </span><span class="annot"><span class="annottext">ConsoleLog
+</span><a href="#local-6989586621679533003"><span class="hs-identifier hs-var">formatted</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="annot"><span class="hs-comment">-- | Writes the log to the file queue.</span></span><span>
+</span><span id="line-88"></span><span id="local-6989586621679532839"><span class="annot"><a href="Shrun.Logging.html#logToFileQueue"><span class="hs-identifier hs-type">logToFileQueue</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-90"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#MonadSTM"><span class="hs-identifier hs-type">MonadSTM</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532839"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-91"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-type">MonadTime</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679532839"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-92"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-93"></span><span>  </span><span class="annot"><span class="hs-comment">-- | How to display the command.</span></span><span>
+</span><span id="line-94"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.CommonLogging.KeyHideSwitch.html#KeyHideSwitch"><span class="hs-identifier hs-type">KeyHideSwitch</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-95"></span><span>  </span><span class="annot"><span class="hs-comment">-- | FileLogging config.</span></span><span>
+</span><span id="line-96"></span><span>  </span><span class="annot"><a href="Shrun.Configuration.Data.FileLogging.html#FileLoggingEnv"><span class="hs-identifier hs-type">FileLoggingEnv</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-97"></span><span>  </span><span class="annot"><span class="hs-comment">-- | Log to send.</span></span><span>
+</span><span id="line-98"></span><span>  </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-99"></span><span>  </span><span class="annot"><a href="#local-6989586621679532839"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-100"></span><span id="logToFileQueue"><span class="annot"><span class="annottext">logToFileQueue :: forall (m :: Type -&gt; Type).
+(HasCallStack, MonadSTM m, MonadTime m) =&gt;
+KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m ()
+</span><a href="Shrun.Logging.html#logToFileQueue"><span class="hs-identifier hs-var hs-var">logToFileQueue</span></a></span></span><span> </span><span id="local-6989586621679533040"><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533040"><span class="hs-identifier hs-var">keyHide</span></a></span></span><span> </span><span id="local-6989586621679533041"><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533041"><span class="hs-identifier hs-var">fileLogging</span></a></span></span><span> </span><span id="local-6989586621679533042"><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533042"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-101"></span><span>  </span><span id="local-6989586621679533043"><span class="annot"><span class="annottext">FileLog
+</span><a href="#local-6989586621679533043"><span class="hs-identifier hs-var">formatted</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m FileLog
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadTime m) =&gt;
+KeyHideSwitch -&gt; FileLoggingEnv -&gt; Log -&gt; m FileLog
+</span><a href="Shrun.Logging.Formatting.html#formatFileLog"><span class="hs-identifier hs-var">formatFileLog</span></a></span><span> </span><span class="annot"><span class="annottext">KeyHideSwitch
+</span><a href="#local-6989586621679533040"><span class="hs-identifier hs-var">keyHide</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533041"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="annot"><span class="annottext">Log
+</span><a href="#local-6989586621679533042"><span class="hs-identifier hs-var">log</span></a></span><span>
+</span><span id="line-102"></span><span>  </span><span class="annot"><span class="annottext">TBQueue FileLog -&gt; FileLog -&gt; m ()
+forall (m :: Type -&gt; Type) a.
+(HasCallStack, MonadSTM m) =&gt;
+TBQueue a -&gt; a -&gt; m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#writeTBQueueA"><span class="hs-identifier hs-var">writeTBQueueA</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FileLoggingEnv
+</span><a href="#local-6989586621679533041"><span class="hs-identifier hs-var">fileLogging</span></a></span><span> </span><span class="annot"><span class="annottext">FileLoggingEnv
+-&gt; Optic' A_Lens NoIx FileLoggingEnv (TBQueue FileLog)
+-&gt; TBQueue FileLog
+forall k s (is :: IxList) a.
+Is k A_Getter =&gt;
+s -&gt; Optic' k is s a -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Operators.html#%5E."><span class="hs-operator hs-var">^.</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  FileLoggingEnv
+  FileLoggingEnv
+  FileLogOpened
+  FileLogOpened
+</span><span class="">#file</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  FileLoggingEnv
+  FileLoggingEnv
+  FileLogOpened
+  FileLogOpened
+-&gt; Optic
+     A_Lens
+     NoIx
+     FileLogOpened
+     FileLogOpened
+     (TBQueue FileLog)
+     (TBQueue FileLog)
+-&gt; Optic' A_Lens NoIx FileLoggingEnv (TBQueue FileLog)
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  FileLogOpened
+  FileLogOpened
+  (TBQueue FileLog)
+  (TBQueue FileLog)
+</span><span class="">#queue</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">FileLog
+</span><a href="#local-6989586621679533043"><span class="hs-identifier hs-var">formatted</span></a></span><span>
+</span><span id="line-103"></span></pre></body></html>

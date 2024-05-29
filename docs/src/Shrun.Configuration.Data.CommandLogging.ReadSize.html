@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.CommandLogging.ReadSize</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#ReadSize"><span class="hs-identifier">ReadSize</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#parseReadSize"><span class="hs-identifier">parseReadSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Utils.html"><span class="hs-identifier">Shrun.Utils</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">U</span></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="annot"><span class="hs-comment">-- | Read size for command logs.</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">newtype</span><span> </span><span id="ReadSize"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#ReadSize"><span class="hs-identifier hs-var">ReadSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkReadSize"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#MkReadSize"><span class="hs-identifier hs-var">MkReadSize</span></a></span></span><span> </span><span class="hs-special">{</span><span id="unReadSize"><span class="annot"><span class="annottext">ReadSize -&gt; Bytes 'B Natural
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#unReadSize"><span class="hs-identifier hs-var hs-var">unReadSize</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#Bytes"><span class="hs-identifier hs-type">Bytes</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">}</span><span>
+</span><span id="line-15"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679528286"><span id="local-6989586621679528291"><span class="annot"><span class="annottext">ReadSize -&gt; ReadSize -&gt; Bool
+(ReadSize -&gt; ReadSize -&gt; Bool)
+-&gt; (ReadSize -&gt; ReadSize -&gt; Bool) -&gt; Eq ReadSize
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ReadSize -&gt; ReadSize -&gt; Bool
+== :: ReadSize -&gt; ReadSize -&gt; Bool
+$c/= :: ReadSize -&gt; ReadSize -&gt; Bool
+/= :: ReadSize -&gt; ReadSize -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679528297"><span id="local-6989586621679528304"><span id="local-6989586621679528308"><span class="annot"><span class="annottext">Int -&gt; ReadSize -&gt; ShowS
+[ReadSize] -&gt; ShowS
+ReadSize -&gt; String
+(Int -&gt; ReadSize -&gt; ShowS)
+-&gt; (ReadSize -&gt; String) -&gt; ([ReadSize] -&gt; ShowS) -&gt; Show ReadSize
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ReadSize -&gt; ShowS
+showsPrec :: Int -&gt; ReadSize -&gt; ShowS
+$cshow :: ReadSize -&gt; String
+show :: ReadSize -&gt; String
+$cshowList :: [ReadSize] -&gt; ShowS
+showList :: [ReadSize] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-18"></span><span>  </span><span id="local-6989586621679528248"><span id="local-6989586621679528249"><span id="local-6989586621679528250"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679528248"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#An_Iso"><span class="hs-identifier hs-type">An_Iso</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="#local-6989586621679528249"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#Bytes"><span class="hs-identifier hs-type">Bytes</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="#local-6989586621679528250"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#Bytes"><span class="hs-identifier hs-type">Bytes</span></a></span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Size.html#B"><span class="hs-identifier hs-type">B</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span>
+</span><span id="line-21"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-22"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><span class="hs-string">&quot;unReadSize&quot;</span></span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="#local-6989586621679528248"><span class="hs-identifier hs-type">k</span></a></span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#ReadSize"><span class="hs-identifier hs-type">ReadSize</span></a></span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#ReadSize"><span class="hs-identifier hs-type">ReadSize</span></a></span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="#local-6989586621679528249"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="#local-6989586621679528250"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>  </span><span id="local-6989586621679528321"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx ReadSize ReadSize a b
+</span><a href="#local-6989586621679528321"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(ReadSize -&gt; a) -&gt; (b -&gt; ReadSize) -&gt; Iso ReadSize ReadSize a b
+forall s a b t. (s -&gt; a) -&gt; (b -&gt; t) -&gt; Iso s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Iso.html#iso"><span class="hs-identifier hs-var">iso</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#MkReadSize"><span class="hs-identifier hs-type">MkReadSize</span></a></span><span> </span><span id="local-6989586621679528324"><span class="annot"><span class="annottext">Bytes 'B Natural
+</span><a href="#local-6989586621679528324"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Bytes 'B Natural
+</span><a href="#local-6989586621679528324"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">b -&gt; ReadSize
+Bytes 'B Natural -&gt; ReadSize
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#MkReadSize"><span class="hs-identifier hs-var">MkReadSize</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier hs-type">Default</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#ReadSize"><span class="hs-identifier hs-type">ReadSize</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-comment">-- NOTE: [Command log splitting]</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-comment">-- (Streamed) command logs can be split based on the values of poll-interval</span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-comment">-- and read-size. For instance, suppose we are running a command that</span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-comment">-- prints a total of 3 logs, at a rate of 1 log per second:</span><span>
+</span><span id="line-38"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-comment">-- &quot;foo&quot;</span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-comment">-- &quot;bar&quot;</span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-comment">-- &quot;baz&quot;</span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-comment">-- Further, suppose that poll-interval is the usual 10,000 (1/100 of a</span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-comment">-- second), and that read-size is 5 b. The timeline for what happens looks</span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-comment">-- like (HH-MM-SS):</span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-comment">-- [00:00:00.00] cmd prints &quot;foo&quot; -- process buffer has &quot;foo&quot;</span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-comment">-- [00:00:00.01] shrun reads and prints &quot;foo&quot;</span><span>
+</span><span id="line-49"></span><span>  </span><span class="hs-comment">-- [00:00:01.00] cmd prints &quot;bar&quot; -- process buffer has &quot;bar&quot;</span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-comment">-- [00:00:01.01] shrun reads and prints &quot;bar&quot;</span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-comment">-- [00:00:02.00] cmd prints &quot;baz&quot; -- process buffer has &quot;baz&quot;</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-comment">-- [00:00:02.01] shrun reads and prints &quot;baz&quot;</span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-54"></span><span>  </span><span class="hs-comment">-- Now, suppose that poll-interval is 5 seconds. The breakdown is:</span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-comment">-- [00:00:00.00] cmd prints &quot;foo&quot; -- process buffer has &quot;foo&quot;</span><span>
+</span><span id="line-57"></span><span>  </span><span class="hs-comment">-- [00:00:01.00] cmd prints &quot;bar&quot; -- process buffer has &quot;foobar&quot;</span><span>
+</span><span id="line-58"></span><span>  </span><span class="hs-comment">-- [00:00:02.00] cmd prints &quot;baz&quot; -- process buffer has &quot;foobarbaz&quot;</span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-comment">-- [00:00:05.00] shrun reads and prints &quot;fooba&quot;</span><span>
+</span><span id="line-60"></span><span>  </span><span class="hs-comment">-- [00:00:10.00] shrun reads and prints &quot;rbaz&quot;</span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-comment">-- That is, because cmd was printing logs faster than shrun was reading them,</span><span>
+</span><span id="line-63"></span><span>  </span><span class="hs-comment">-- the buffer was able to grow larger than the read-size, so logs were cut</span><span>
+</span><span id="line-64"></span><span>  </span><span class="hs-comment">-- off. How can we avoid this? Several options:</span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span>  </span><span class="hs-comment">-- 1. Make poll-interval faster so that we are less likely to accumulate</span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-comment">--    multiple logs and thus break the read-size. The downside here is that</span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-comment">--    the faster we make poll-interval, the higher the CPU usage. The current</span><span>
+</span><span id="line-69"></span><span>  </span><span class="hs-comment">--    1/100 a second (poll-interval := 10,000) was chosen since the CPU usage</span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-comment">---   is low, and any faster starts to get high.</span><span>
+</span><span id="line-71"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-72"></span><span>  </span><span class="hs-comment">-- 2. Increase the read-size. Experimentally, building GHC with a '1 kb'</span><span>
+</span><span id="line-73"></span><span>  </span><span class="hs-comment">--    limit still sees logs get split. '16 kb', on the other hand, didn't</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-comment">--    show any log splitting (AFAICT; the log file is massive and not</span><span>
+</span><span id="line-75"></span><span>  </span><span class="hs-comment">--    exhaustively checked). I tried with a limit of '1 mb' and that also</span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-comment">--    seemed fine, though probably unnecessary. I really don't have any</span><span>
+</span><span id="line-77"></span><span>  </span><span class="hs-comment">--    intuition for what a &quot;good value&quot; should be, other than</span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-comment">--    trial-and-error.</span><span>
+</span><span id="line-79"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-80"></span><span>  </span><span class="hs-comment">-- 3. Implement a more complicated &quot;read line&quot; scheme. There are two ways</span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-comment">--    we could try this:</span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-83"></span><span>  </span><span class="hs-comment">--      i. Use the usual hGetNonBlocking, but only take up to the first new</span><span>
+</span><span id="line-84"></span><span>  </span><span class="hs-comment">--         line. Save any remaining data and combine with the next read.</span><span>
+</span><span id="line-85"></span><span>  </span><span class="hs-comment">--         I attempted this once but abandoned it after the logic became</span><span>
+</span><span id="line-86"></span><span>  </span><span class="hs-comment">--         tricky. But maybe this is worth revisiting.</span><span>
+</span><span id="line-87"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span>  </span><span class="hs-comment">--      ii. Implement our own primitive hGetLineNonBlocking e.g. read all</span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-comment">--          bytes up to the first newline, but do not block if we don't have</span><span>
+</span><span id="line-90"></span><span>  </span><span class="hs-comment">--          any data. I have not tried this as these low-level details do not</span><span>
+</span><span id="line-91"></span><span>  </span><span class="hs-comment">--          excite me, but perhaps this is worth investigating.</span><span>
+</span><span id="line-92"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-93"></span><span>  </span><span class="hs-comment">-- For now we choose option 2, increase the read-size as it is simple and</span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-comment">-- appears to work well. We may choose to increase this in the future.</span><span>
+</span><span id="line-95"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-96"></span><span>  </span><span class="hs-comment">-- UPDATE: There is another way logs can be split. In some cases, a command</span><span>
+</span><span id="line-97"></span><span>  </span><span class="hs-comment">-- may output a &quot;partial&quot; line, with the expectation to be completed later.</span><span>
+</span><span id="line-98"></span><span>  </span><span class="hs-comment">-- For instance, our test framework outputs lines like:</span><span>
+</span><span id="line-99"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-100"></span><span>  </span><span class="hs-comment">--    Some test desc:               OK (0.05s)</span><span>
+</span><span id="line-101"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-comment">-- But the line is outputted in two steps. First, the text description is</span><span>
+</span><span id="line-103"></span><span>  </span><span class="hs-comment">-- printed. Second, the OK (0.05s) happens _after_ the test completes.</span><span>
+</span><span id="line-104"></span><span>  </span><span class="hs-comment">-- If the time elapsed is long enough to outstrip the poll-interval, then</span><span>
+</span><span id="line-105"></span><span>  </span><span class="hs-comment">-- this log will be broken. Increasing the poll-interval is an option, but</span><span>
+</span><span id="line-106"></span><span>  </span><span class="hs-comment">-- that has other problems. And increasing the read-size will not help here.</span><span>
+</span><span id="line-107"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-comment">-- The only real solution to this is to implement the more complicated</span><span>
+</span><span id="line-109"></span><span>  </span><span class="hs-comment">-- &quot;read line&quot; scheme described above. Of course this comes with its own</span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-comment">-- complications and trade-offs.</span><span>
+</span><span id="line-111"></span><span>  </span><span id="local-6989586621679528330"><span class="annot"><span class="annottext">def :: ReadSize
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var hs-var hs-var hs-var">def</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; ReadSize
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#MkReadSize"><span class="hs-identifier hs-var">MkReadSize</span></a></span><span> </span><span class="annot"><span class="annottext">(Bytes 'B Natural -&gt; ReadSize) -&gt; Bytes 'B Natural -&gt; ReadSize
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Natural -&gt; Bytes 'B Natural
+forall (s :: Size) n. n -&gt; Bytes s n
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/si-bytes-0.1-d13f5301c58f6493bc77bbec789b3c261bf5d8e740a3eb2c2beea532db7cf08a/share/doc/html/src/Data.Bytes.Internal.html#MkBytes"><span class="hs-identifier hs-var">MkBytes</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">16_000</span></span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#ReadSize"><span class="hs-identifier hs-type">ReadSize</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-114"></span><span>  </span><span id="local-6989586621679528339"><span class="annot"><span class="annottext">tomlDecoder :: Decoder ReadSize
+</span><a href="#local-6989586621679528339"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder ReadSize
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m ReadSize
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#parseReadSize"><span class="hs-identifier hs-var">parseReadSize</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span id="local-6989586621679528271"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#parseReadSize"><span class="hs-identifier hs-type">parseReadSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679528271"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679528271"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679528271"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#ReadSize"><span class="hs-identifier hs-type">ReadSize</span></a></span></span><span>
+</span><span id="line-117"></span><span id="parseReadSize"><span class="annot"><span class="annottext">parseReadSize :: forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m ReadSize
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#parseReadSize"><span class="hs-identifier hs-var hs-var">parseReadSize</span></a></span></span><span> </span><span id="local-6989586621679528354"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679528354"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-118"></span><span>  </span><span id="local-6989586621679528355"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679528355"><span class="hs-identifier hs-var">byteTxt</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679528354"><span class="hs-identifier hs-var">getTxt</span></a></span><span>
+</span><span id="line-119"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text (Bytes 'B Natural)
+</span><a href="Shrun.Utils.html#parseByteText"><span class="hs-identifier hs-var">U.parseByteText</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679528355"><span class="hs-identifier hs-var">byteTxt</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-120"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679528357"><span class="annot"><span class="annottext">Bytes 'B Natural
+</span><a href="#local-6989586621679528357"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ReadSize -&gt; m ReadSize
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ReadSize -&gt; m ReadSize) -&gt; ReadSize -&gt; m ReadSize
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural -&gt; ReadSize
+</span><a href="Shrun.Configuration.Data.CommandLogging.ReadSize.html#MkReadSize"><span class="hs-identifier hs-var">MkReadSize</span></a></span><span> </span><span class="annot"><span class="annottext">Bytes 'B Natural
+</span><a href="#local-6989586621679528357"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-121"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679528358"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679528358"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; m ReadSize
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; m ReadSize) -&gt; String -&gt; m ReadSize
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Could not parse --command-log-read-size size: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679528358"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-122"></span></pre></body></html>

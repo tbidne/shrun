@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE QuasiQuotes #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Provides TH for CLI args.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Args.TH</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Args.TH.html#getDefaultConfigTH"><span class="hs-identifier">getDefaultConfigTH</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Code</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Q</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Language.Haskell.TH.Syntax</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Lift</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftTyped</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">bindCode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">runIO</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- TODO: Once we have multiline strings, it may be feasible to remove the TH</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- here.</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="annot"><span class="hs-comment">-- | Reads examples/default.toml at compile time.</span></span><span>
+</span><span id="line-18"></span><span class="annot"><a href="Shrun.Configuration.Args.TH.html#getDefaultConfigTH"><span class="hs-identifier hs-type">getDefaultConfigTH</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Code</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Prelude.html#List"><span class="hs-identifier hs-type">List</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span id="getDefaultConfigTH"><span class="annot"><span class="annottext">getDefaultConfigTH :: Code Q [Text]
+</span><a href="Shrun.Configuration.Args.TH.html#getDefaultConfigTH"><span class="hs-identifier hs-var hs-var">getDefaultConfigTH</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Q [Text] -&gt; ([Text] -&gt; Code Q [Text]) -&gt; Code Q [Text]
+forall (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+m a -&gt; (a -&gt; Code m b) -&gt; Code m b
+</span><span class="hs-identifier hs-var">bindCode</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IO [Text] -&gt; Q [Text]
+forall a. IO a -&gt; Q a
+</span><span class="hs-identifier hs-var">runIO</span></span><span> </span><span class="annot"><span class="annottext">IO [Text]
+</span><a href="#local-6989586621679523728"><span class="hs-identifier hs-var">getDefault</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Code Q [Text]
+forall t (m :: Type -&gt; Type). (Lift t, Quote m) =&gt; t -&gt; Code m t
+forall (m :: Type -&gt; Type). Quote m =&gt; [Text] -&gt; Code m [Text]
+</span><span class="hs-identifier hs-var">liftTyped</span></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-21"></span><span>    </span><span id="local-6989586621679523728"><span class="annot"><span class="annottext">getDefault :: IO [Text]
+</span><a href="#local-6989586621679523728"><span class="hs-identifier hs-var hs-var">getDefault</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [Text]
+</span><span class="hs-identifier hs-var">T.lines</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; [Text]) -&gt; IO Text -&gt; IO [Text]
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; IO Text
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadFileReader m) =&gt;
+OsPath -&gt; m Text
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.FileReader.html#readFileUtf8Lenient"><span class="hs-identifier hs-var">readFileUtf8Lenient</span></a></span><span> </span><span class="annot"><span class="">[osp|examples/default.toml|]</span></span><span>
+</span><span id="line-22"></span></pre></body></html>

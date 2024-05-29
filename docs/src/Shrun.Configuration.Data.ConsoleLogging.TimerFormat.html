@@ -1,0 +1,193 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="annot"><span class="hs-comment">-- | Provides the 'TimerFormat' type.</span></span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.ConsoleLogging.TimerFormat</span><span>
+</span><span id="line-3"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Type</span></span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier">TimerFormat</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Parsing</span></span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#parseTimerFormat"><span class="hs-identifier">parseTimerFormat</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#timerFormatStr"><span class="hs-identifier">timerFormatStr</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Formatting</span></span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#formatRelativeTime"><span class="hs-identifier">formatRelativeTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#formatSeconds"><span class="hs-identifier">formatSeconds</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.String</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html"><span class="hs-identifier">Data.Time.Relative</span></a></span><span>
+</span><span id="line-19"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#Format"><span class="hs-identifier">Format</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#MkFormat"><span class="hs-identifier">MkFormat</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatStyle"><span class="hs-identifier">FormatStyle</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatStyleDigital"><span class="hs-identifier">FormatStyleDigital</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatStyleProse"><span class="hs-identifier">FormatStyleProse</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatVerbosity"><span class="hs-identifier">FormatVerbosity</span></a></span><span>
+</span><span id="line-22"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatVerbosityCompact"><span class="hs-identifier">FormatVerbosityCompact</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatVerbosityFull"><span class="hs-identifier">FormatVerbosityFull</span></a></span><span>
+</span><span id="line-24"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#RelativeTime"><span class="hs-identifier">RelativeTime</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html"><span class="hs-identifier">Data.Time.Relative</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">RT</span></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier">UnlinedText</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnsafeUnlinedText"><span class="hs-identifier">UnsafeUnlinedText</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><span class="hs-comment">-- | Determines how to format the timer.</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">data</span><span> </span><span id="TimerFormat"><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier hs-var">TimerFormat</span></a></span></span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="DigitalCompact"><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#DigitalCompact"><span class="hs-identifier hs-var">DigitalCompact</span></a></span></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="DigitalFull"><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#DigitalFull"><span class="hs-identifier hs-var">DigitalFull</span></a></span></span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="ProseCompact"><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#ProseCompact"><span class="hs-identifier hs-var">ProseCompact</span></a></span></span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="ProseFull"><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#ProseFull"><span class="hs-identifier hs-var">ProseFull</span></a></span></span><span>
+</span><span id="line-38"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679522419"><span id="local-6989586621679522421"><span class="annot"><span class="annottext">TimerFormat -&gt; TimerFormat -&gt; Bool
+(TimerFormat -&gt; TimerFormat -&gt; Bool)
+-&gt; (TimerFormat -&gt; TimerFormat -&gt; Bool) -&gt; Eq TimerFormat
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: TimerFormat -&gt; TimerFormat -&gt; Bool
+== :: TimerFormat -&gt; TimerFormat -&gt; Bool
+$c/= :: TimerFormat -&gt; TimerFormat -&gt; Bool
+/= :: TimerFormat -&gt; TimerFormat -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679522426"><span id="local-6989586621679522428"><span id="local-6989586621679522432"><span class="annot"><span class="annottext">Int -&gt; TimerFormat -&gt; ShowS
+[TimerFormat] -&gt; ShowS
+TimerFormat -&gt; String
+(Int -&gt; TimerFormat -&gt; ShowS)
+-&gt; (TimerFormat -&gt; String)
+-&gt; ([TimerFormat] -&gt; ShowS)
+-&gt; Show TimerFormat
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; TimerFormat -&gt; ShowS
+showsPrec :: Int -&gt; TimerFormat -&gt; ShowS
+$cshow :: TimerFormat -&gt; String
+show :: TimerFormat -&gt; String
+$cshowList :: [TimerFormat] -&gt; ShowS
+showList :: [TimerFormat] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier hs-type">TimerFormat</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-41"></span><span>  </span><span id="local-6989586621679522442"><span class="annot"><span class="annottext">tomlDecoder :: Decoder TimerFormat
+</span><a href="#local-6989586621679522442"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Decoder Text -&gt; Decoder TimerFormat
+forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#parseTimerFormat"><span class="hs-identifier hs-var">parseTimerFormat</span></a></span><span> </span><span class="annot"><span class="annottext">Decoder Text
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier hs-type">Default</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier hs-type">TimerFormat</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-44"></span><span>  </span><span id="local-6989586621679522447"><span class="annot"><span class="annottext">def :: TimerFormat
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var hs-var hs-var hs-var">def</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#ProseCompact"><span class="hs-identifier hs-var">ProseCompact</span></a></span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="annot"><span class="hs-comment">-- | Parse timer format.</span></span><span>
+</span><span id="line-47"></span><span id="local-6989586621679522372"><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#parseTimerFormat"><span class="hs-identifier hs-type">parseTimerFormat</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679522372"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679522372"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679522372"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier hs-type">TimerFormat</span></a></span></span><span>
+</span><span id="line-48"></span><span id="parseTimerFormat"><span class="annot"><span class="annottext">parseTimerFormat :: forall (m :: Type -&gt; Type). MonadFail m =&gt; m Text -&gt; m TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#parseTimerFormat"><span class="hs-identifier hs-var hs-var">parseTimerFormat</span></a></span></span><span> </span><span id="local-6989586621679522474"><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679522474"><span class="hs-identifier hs-var">getTxt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-49"></span><span>  </span><span class="annot"><span class="annottext">m Text
+</span><a href="#local-6989586621679522474"><span class="hs-identifier hs-var">getTxt</span></a></span><span> </span><span class="annot"><span class="annottext">m Text -&gt; (Text -&gt; m TimerFormat) -&gt; m TimerFormat
+forall a b. m a -&gt; (a -&gt; m b) -&gt; m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;digital_compact&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">TimerFormat -&gt; m TimerFormat
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#DigitalCompact"><span class="hs-identifier hs-var">DigitalCompact</span></a></span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;digital_full&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">TimerFormat -&gt; m TimerFormat
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#DigitalFull"><span class="hs-identifier hs-var">DigitalFull</span></a></span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;prose_compact&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">TimerFormat -&gt; m TimerFormat
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#ProseCompact"><span class="hs-identifier hs-var">ProseCompact</span></a></span><span>
+</span><span id="line-53"></span><span>    </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot;prose_full&quot;</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">TimerFormat -&gt; m TimerFormat
+forall a. a -&gt; m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#ProseFull"><span class="hs-identifier hs-var">ProseFull</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span id="local-6989586621679522475"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679522475"><span class="hs-identifier hs-var">bad</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; m TimerFormat
+forall a. String -&gt; m a
+forall (m :: Type -&gt; Type) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; m TimerFormat) -&gt; String -&gt; m TimerFormat
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Unrecognized timer-format: &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679522475"><span class="hs-identifier hs-var">bad</span></a></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="annot"><span class="hs-comment">-- | Available 'TimerFormat' strings.</span></span><span>
+</span><span id="line-57"></span><span id="local-6989586621679522393"><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#timerFormatStr"><span class="hs-identifier hs-type">timerFormatStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="annot"><a href="#local-6989586621679522393"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679522393"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-58"></span><span id="timerFormatStr"><span class="annot"><span class="annottext">timerFormatStr :: forall a. IsString a =&gt; a
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#timerFormatStr"><span class="hs-identifier hs-var hs-var">timerFormatStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;(digital_compact | digital_full | prose_compact | prose_full)&quot;</span></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- NOTE: Time formatting does not include newlines, so using UnsafeUnlinedText</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- is safe. We use the constructor rather than unsafeUnlinedText.</span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="annot"><span class="hs-comment">-- | Formats a relative time.</span></span><span>
+</span><span id="line-64"></span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#formatRelativeTime"><span class="hs-identifier hs-type">formatRelativeTime</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier hs-type">TimerFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#RelativeTime"><span class="hs-identifier hs-type">RelativeTime</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span>
+</span><span id="line-65"></span><span id="formatRelativeTime"><span class="annot"><span class="annottext">formatRelativeTime :: TimerFormat -&gt; RelativeTime -&gt; UnlinedText
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#formatRelativeTime"><span class="hs-identifier hs-var hs-var">formatRelativeTime</span></a></span></span><span> </span><span id="local-6989586621679522479"><span class="annot"><span class="annottext">TimerFormat
+</span><a href="#local-6989586621679522479"><span class="hs-identifier hs-var">fmt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-66"></span><span>  </span><span class="annot"><span class="annottext">Text -&gt; UnlinedText
+</span><a href="Shrun.Data.Text.html#UnsafeUnlinedText"><span class="hs-identifier hs-var">UnsafeUnlinedText</span></a></span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><span class="annottext">(Text -&gt; UnlinedText)
+-&gt; (RelativeTime -&gt; Text) -&gt; RelativeTime -&gt; UnlinedText
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><span class="annottext">(String -&gt; Text)
+-&gt; (RelativeTime -&gt; String) -&gt; RelativeTime -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Format -&gt; RelativeTime -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#formatRelativeTime"><span class="hs-identifier hs-var">RT.formatRelativeTime</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TimerFormat -&gt; Format
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#toRelativeTimeFormat"><span class="hs-identifier hs-var">toRelativeTimeFormat</span></a></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="#local-6989586621679522479"><span class="hs-identifier hs-var">fmt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="annot"><span class="hs-comment">-- | Formats a relative time seconds.</span></span><span>
+</span><span id="line-71"></span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#formatSeconds"><span class="hs-identifier hs-type">formatSeconds</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier hs-type">TimerFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span>
+</span><span id="line-72"></span><span id="formatSeconds"><span class="annot"><span class="annottext">formatSeconds :: TimerFormat -&gt; Natural -&gt; UnlinedText
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#formatSeconds"><span class="hs-identifier hs-var hs-var">formatSeconds</span></a></span></span><span> </span><span id="local-6989586621679522484"><span class="annot"><span class="annottext">TimerFormat
+</span><a href="#local-6989586621679522484"><span class="hs-identifier hs-var">fmt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-73"></span><span>  </span><span class="annot"><span class="annottext">Text -&gt; UnlinedText
+</span><a href="Shrun.Data.Text.html#UnsafeUnlinedText"><span class="hs-identifier hs-var">UnsafeUnlinedText</span></a></span><span>
+</span><span id="line-74"></span><span>    </span><span class="annot"><span class="annottext">(Text -&gt; UnlinedText)
+-&gt; (Natural -&gt; Text) -&gt; Natural -&gt; UnlinedText
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span>
+</span><span id="line-75"></span><span>    </span><span class="annot"><span class="annottext">(String -&gt; Text) -&gt; (Natural -&gt; String) -&gt; Natural -&gt; Text
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Format -&gt; Natural -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#formatSeconds"><span class="hs-identifier hs-var">RT.formatSeconds</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TimerFormat -&gt; Format
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#toRelativeTimeFormat"><span class="hs-identifier hs-var">toRelativeTimeFormat</span></a></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="#local-6989586621679522484"><span class="hs-identifier hs-var">fmt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#toRelativeTimeFormat"><span class="hs-identifier hs-type">toRelativeTimeFormat</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#TimerFormat"><span class="hs-identifier hs-type">TimerFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#Format"><span class="hs-identifier hs-type">Format</span></a></span><span>
+</span><span id="line-78"></span><span id="toRelativeTimeFormat"><span class="annot"><span class="annottext">toRelativeTimeFormat :: TimerFormat -&gt; Format
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#toRelativeTimeFormat"><span class="hs-identifier hs-var hs-var">toRelativeTimeFormat</span></a></span></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#DigitalCompact"><span class="hs-identifier hs-var">DigitalCompact</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FormatStyle -&gt; FormatVerbosity -&gt; Format
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#MkFormat"><span class="hs-identifier hs-var">MkFormat</span></a></span><span> </span><span class="annot"><span class="annottext">FormatStyle
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatStyleDigital"><span class="hs-identifier hs-var">FormatStyleDigital</span></a></span><span> </span><span class="annot"><span class="annottext">FormatVerbosity
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatVerbosityCompact"><span class="hs-identifier hs-var">FormatVerbosityCompact</span></a></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#toRelativeTimeFormat"><span class="hs-identifier hs-var">toRelativeTimeFormat</span></a></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#DigitalFull"><span class="hs-identifier hs-var">DigitalFull</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FormatStyle -&gt; FormatVerbosity -&gt; Format
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#MkFormat"><span class="hs-identifier hs-var">MkFormat</span></a></span><span> </span><span class="annot"><span class="annottext">FormatStyle
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatStyleDigital"><span class="hs-identifier hs-var">FormatStyleDigital</span></a></span><span> </span><span class="annot"><span class="annottext">FormatVerbosity
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatVerbosityFull"><span class="hs-identifier hs-var">FormatVerbosityFull</span></a></span><span>
+</span><span id="line-80"></span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#toRelativeTimeFormat"><span class="hs-identifier hs-var">toRelativeTimeFormat</span></a></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#ProseCompact"><span class="hs-identifier hs-var">ProseCompact</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FormatStyle -&gt; FormatVerbosity -&gt; Format
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#MkFormat"><span class="hs-identifier hs-var">MkFormat</span></a></span><span> </span><span class="annot"><span class="annottext">FormatStyle
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatStyleProse"><span class="hs-identifier hs-var">FormatStyleProse</span></a></span><span> </span><span class="annot"><span class="annottext">FormatVerbosity
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatVerbosityCompact"><span class="hs-identifier hs-var">FormatVerbosityCompact</span></a></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#toRelativeTimeFormat"><span class="hs-identifier hs-var">toRelativeTimeFormat</span></a></span><span> </span><span class="annot"><span class="annottext">TimerFormat
+</span><a href="Shrun.Configuration.Data.ConsoleLogging.TimerFormat.html#ProseFull"><span class="hs-identifier hs-var">ProseFull</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FormatStyle -&gt; FormatVerbosity -&gt; Format
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#MkFormat"><span class="hs-identifier hs-var">MkFormat</span></a></span><span> </span><span class="annot"><span class="annottext">FormatStyle
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatStyleProse"><span class="hs-identifier hs-var">FormatStyleProse</span></a></span><span> </span><span class="annot"><span class="annottext">FormatVerbosity
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/relative-time-0.1-0f52194c6aa66a76513171bcb1eaa6003a706c9b6439bc4808f5aaea31e071c6/share/doc/html/src/Data.Time.Relative.html#FormatVerbosityFull"><span class="hs-identifier hs-var">FormatVerbosityFull</span></a></span><span>
+</span><span id="line-82"></span></pre></body></html>

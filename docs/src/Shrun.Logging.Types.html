@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679520526"><span id="local-6989586621679520527"></span></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | This module provides the `Log` type and associated functions.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Logging.Types</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Basic Types</span></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier">Log</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier">LogMode</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier">LogLevel</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Console Logs</span></span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier">ConsoleLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier">LogRegion</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><span class="hs-comment">-- * File Logs</span></span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier">FileLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html"><span class="hs-identifier">Shrun.Data.Command</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html"><span class="hs-identifier">Shrun.Data.Text</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier">UnlinedText</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html"><span class="hs-identifier">Shrun.Logging.Types.Internal</span></a></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier">ConsoleLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#FileLog"><span class="hs-identifier">FileLog</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier">LogMode</span></a></span><span>
+</span><span id="line-25"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeAppend"><span class="hs-identifier">LogModeAppend</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeFinish"><span class="hs-identifier">LogModeFinish</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogModeSet"><span class="hs-identifier">LogModeSet</span></a></span><span>
+</span><span id="line-28"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><span class="hs-comment">-- | Determines the logging level.</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">data</span><span> </span><span id="LogLevel"><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier hs-var">LogLevel</span></a></span></span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="LevelCommand"><span class="annot"><a href="Shrun.Logging.Types.html#LevelCommand"><span class="hs-identifier hs-var">LevelCommand</span></a></span></span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="LevelFinished"><span class="annot"><a href="Shrun.Logging.Types.html#LevelFinished"><span class="hs-identifier hs-var">LevelFinished</span></a></span></span><span>
+</span><span id="line-36"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="LevelTimer"><span class="annot"><a href="Shrun.Logging.Types.html#LevelTimer"><span class="hs-identifier hs-var">LevelTimer</span></a></span></span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="LevelSuccess"><span class="annot"><a href="Shrun.Logging.Types.html#LevelSuccess"><span class="hs-identifier hs-var">LevelSuccess</span></a></span></span><span>
+</span><span id="line-38"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="LevelWarn"><span class="annot"><a href="Shrun.Logging.Types.html#LevelWarn"><span class="hs-identifier hs-var">LevelWarn</span></a></span></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="LevelError"><span class="annot"><a href="Shrun.Logging.Types.html#LevelError"><span class="hs-identifier hs-var">LevelError</span></a></span></span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="LevelFatal"><span class="annot"><a href="Shrun.Logging.Types.html#LevelFatal"><span class="hs-identifier hs-var">LevelFatal</span></a></span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679520542"><span id="local-6989586621679520544"><span class="annot"><span class="annottext">LogLevel
+LogLevel -&gt; LogLevel -&gt; Bounded LogLevel
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: LogLevel
+minBound :: LogLevel
+$cmaxBound :: LogLevel
+maxBound :: LogLevel
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679520548"><span id="local-6989586621679520556"><span id="local-6989586621679520562"><span id="local-6989586621679520576"><span id="local-6989586621679520578"><span id="local-6989586621679520582"><span id="local-6989586621679520586"><span id="local-6989586621679520590"><span class="annot"><span class="annottext">Int -&gt; LogLevel
+LogLevel -&gt; Int
+LogLevel -&gt; [LogLevel]
+LogLevel -&gt; LogLevel
+LogLevel -&gt; LogLevel -&gt; [LogLevel]
+LogLevel -&gt; LogLevel -&gt; LogLevel -&gt; [LogLevel]
+(LogLevel -&gt; LogLevel)
+-&gt; (LogLevel -&gt; LogLevel)
+-&gt; (Int -&gt; LogLevel)
+-&gt; (LogLevel -&gt; Int)
+-&gt; (LogLevel -&gt; [LogLevel])
+-&gt; (LogLevel -&gt; LogLevel -&gt; [LogLevel])
+-&gt; (LogLevel -&gt; LogLevel -&gt; [LogLevel])
+-&gt; (LogLevel -&gt; LogLevel -&gt; LogLevel -&gt; [LogLevel])
+-&gt; Enum LogLevel
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: LogLevel -&gt; LogLevel
+succ :: LogLevel -&gt; LogLevel
+$cpred :: LogLevel -&gt; LogLevel
+pred :: LogLevel -&gt; LogLevel
+$ctoEnum :: Int -&gt; LogLevel
+toEnum :: Int -&gt; LogLevel
+$cfromEnum :: LogLevel -&gt; Int
+fromEnum :: LogLevel -&gt; Int
+$cenumFrom :: LogLevel -&gt; [LogLevel]
+enumFrom :: LogLevel -&gt; [LogLevel]
+$cenumFromThen :: LogLevel -&gt; LogLevel -&gt; [LogLevel]
+enumFromThen :: LogLevel -&gt; LogLevel -&gt; [LogLevel]
+$cenumFromTo :: LogLevel -&gt; LogLevel -&gt; [LogLevel]
+enumFromTo :: LogLevel -&gt; LogLevel -&gt; [LogLevel]
+$cenumFromThenTo :: LogLevel -&gt; LogLevel -&gt; LogLevel -&gt; [LogLevel]
+enumFromThenTo :: LogLevel -&gt; LogLevel -&gt; LogLevel -&gt; [LogLevel]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679520594"><span id="local-6989586621679520596"><span class="annot"><span class="annottext">LogLevel -&gt; LogLevel -&gt; Bool
+(LogLevel -&gt; LogLevel -&gt; Bool)
+-&gt; (LogLevel -&gt; LogLevel -&gt; Bool) -&gt; Eq LogLevel
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: LogLevel -&gt; LogLevel -&gt; Bool
+== :: LogLevel -&gt; LogLevel -&gt; Bool
+$c/= :: LogLevel -&gt; LogLevel -&gt; Bool
+/= :: LogLevel -&gt; LogLevel -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679520601"><span id="local-6989586621679520603"><span id="local-6989586621679520607"><span class="annot"><span class="annottext">Int -&gt; LogLevel -&gt; ShowS
+[LogLevel] -&gt; ShowS
+LogLevel -&gt; [Char]
+(Int -&gt; LogLevel -&gt; ShowS)
+-&gt; (LogLevel -&gt; [Char]) -&gt; ([LogLevel] -&gt; ShowS) -&gt; Show LogLevel
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; [Char]) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; LogLevel -&gt; ShowS
+showsPrec :: Int -&gt; LogLevel -&gt; ShowS
+$cshow :: LogLevel -&gt; [Char]
+show :: LogLevel -&gt; [Char]
+$cshowList :: [LogLevel] -&gt; ShowS
+showList :: [LogLevel] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="annot"><span class="hs-comment">-- | 'ConsoleLog' with possible region.</span></span><span>
+</span><span id="line-44"></span><span class="hs-keyword">data</span><span> </span><span id="LogRegion"><span class="annot"><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier hs-var">LogRegion</span></a></span></span><span> </span><span id="local-6989586621679520610"><span class="annot"><a href="#local-6989586621679520610"><span class="hs-identifier hs-type">r</span></a></span></span><span>
+</span><span id="line-45"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Log with region.</span></span><span>
+</span><span id="line-46"></span><span>    </span><span id="LogRegion"><span class="annot"><a href="Shrun.Logging.Types.html#LogRegion"><span class="hs-identifier hs-var">LogRegion</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier hs-type">LogMode</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520610"><span class="hs-identifier hs-type">r</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier hs-type">ConsoleLog</span></a></span><span>
+</span><span id="line-47"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Log without region.</span></span><span>
+</span><span id="line-48"></span><span>    </span><span id="LogNoRegion"><span class="annot"><a href="Shrun.Logging.Types.html#LogNoRegion"><span class="hs-identifier hs-var">LogNoRegion</span></a></span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#ConsoleLog"><span class="hs-identifier hs-type">ConsoleLog</span></a></span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- | Captures the relevant information concerning a specific log</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- (i.e. command, text, level, and mode).</span><span>
+</span><span id="line-52"></span><span class="hs-keyword">data</span><span> </span><span id="Log"><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-var">Log</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkLog"><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-var">MkLog</span></a></span></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | Optional command that produced this log.</span></span><span>
+</span><span id="line-54"></span><span>    </span><span id="cmd"><span class="annot"><span class="annottext">Log -&gt; Maybe CommandP1
+</span><a href="Shrun.Logging.Types.html#cmd"><span class="hs-identifier hs-var hs-var">cmd</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><span class="hs-comment">-- | The 'Text' for a given log.</span></span><span>
+</span><span id="line-56"></span><span>    </span><span id="msg"><span class="annot"><span class="annottext">Log -&gt; UnlinedText
+</span><a href="Shrun.Logging.Types.html#msg"><span class="hs-identifier hs-var hs-var">msg</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>    </span><span class="annot"><span class="hs-comment">-- | The 'LogLevel' for a given log.</span></span><span>
+</span><span id="line-58"></span><span>    </span><span id="lvl"><span class="annot"><span class="annottext">Log -&gt; LogLevel
+</span><a href="Shrun.Logging.Types.html#lvl"><span class="hs-identifier hs-var hs-var">lvl</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier hs-type">LogLevel</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><span class="hs-comment">-- | The 'LogMode' for a given log.</span></span><span>
+</span><span id="line-60"></span><span>    </span><span id="mode"><span class="annot"><span class="annottext">Log -&gt; LogMode
+</span><a href="Shrun.Logging.Types.html#mode"><span class="hs-identifier hs-var hs-var">mode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier hs-type">LogMode</span></a></span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-62"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679520620"><span id="local-6989586621679520631"><span id="local-6989586621679520635"><span class="annot"><span class="annottext">Int -&gt; Log -&gt; ShowS
+[Log] -&gt; ShowS
+Log -&gt; [Char]
+(Int -&gt; Log -&gt; ShowS)
+-&gt; (Log -&gt; [Char]) -&gt; ([Log] -&gt; ShowS) -&gt; Show Log
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; [Char]) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Log -&gt; ShowS
+showsPrec :: Int -&gt; Log -&gt; ShowS
+$cshow :: Log -&gt; [Char]
+show :: Log -&gt; [Char]
+$cshowList :: [Log] -&gt; ShowS
+showList :: [Log] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-65"></span><span>  </span><span id="local-6989586621679520488"><span id="local-6989586621679520489"><span id="local-6989586621679520490"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520488"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><a href="#local-6989586621679520489"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><a href="#local-6989586621679520490"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-69"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;cmd&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520488"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520489"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520490"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-71"></span><span>  </span><span id="local-6989586621679520647"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Log Log a b
+</span><a href="#local-6989586621679520647"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">LensVL Log Log a b -&gt; Lens Log Log a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><span class="annottext">(LensVL Log Log a b -&gt; Lens Log Log a b)
+-&gt; LensVL Log Log a b -&gt; Lens Log Log a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679520652"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520652"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-74"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span> </span><span id="local-6989586621679520653"><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520653"><span class="hs-identifier hs-var">_cmd</span></a></span></span><span> </span><span id="local-6989586621679520654"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520654"><span class="hs-identifier hs-var">_msg</span></a></span></span><span> </span><span id="local-6989586621679520655"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520655"><span class="hs-identifier hs-var">_lvl</span></a></span></span><span> </span><span id="local-6989586621679520656"><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679520656"><span class="hs-identifier hs-var">_mode</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-75"></span><span>          </span><span class="annot"><span class="annottext">(Maybe CommandP1 -&gt; Log) -&gt; f (Maybe CommandP1) -&gt; f Log
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-76"></span><span>            </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679520657"><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520657"><span class="hs-identifier hs-var">cmd'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1 -&gt; UnlinedText -&gt; LogLevel -&gt; LogMode -&gt; Log
+</span><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-var">MkLog</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520657"><span class="hs-identifier hs-var">cmd'</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520654"><span class="hs-identifier hs-var">_msg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520655"><span class="hs-identifier hs-var">_lvl</span></a></span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679520656"><span class="hs-identifier hs-var">_mode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520652"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Maybe CommandP1
+</span><a href="#local-6989586621679520653"><span class="hs-identifier hs-var">_cmd</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-81"></span><span>  </span><span id="local-6989586621679520508"><span id="local-6989586621679520509"><span id="local-6989586621679520510"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520508"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><a href="#local-6989586621679520509"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-83"></span><span>    </span><span class="annot"><a href="#local-6989586621679520510"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Data.Text.html#UnlinedText"><span class="hs-identifier hs-type">UnlinedText</span></a></span><span>
+</span><span id="line-84"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-85"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;msg&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520508"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520509"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520510"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-86"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-87"></span><span>  </span><span id="local-6989586621679520666"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Log Log a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-88"></span><span>    </span><span class="annot"><span class="annottext">LensVL Log Log a b -&gt; Lens Log Log a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-89"></span><span>      </span><span class="annot"><span class="annottext">(LensVL Log Log a b -&gt; Lens Log Log a b)
+-&gt; LensVL Log Log a b -&gt; Lens Log Log a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679520669"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520669"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-90"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span> </span><span id="local-6989586621679520670"><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520670"><span class="hs-identifier hs-var">_cmd</span></a></span></span><span> </span><span id="local-6989586621679520671"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520671"><span class="hs-identifier hs-var">_msg</span></a></span></span><span> </span><span id="local-6989586621679520672"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520672"><span class="hs-identifier hs-var">_lvl</span></a></span></span><span> </span><span id="local-6989586621679520673"><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679520673"><span class="hs-identifier hs-var">_mode</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-91"></span><span>          </span><span class="annot"><span class="annottext">(UnlinedText -&gt; Log) -&gt; f UnlinedText -&gt; f Log
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-92"></span><span>            </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679520674"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520674"><span class="hs-identifier hs-var">msg'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1 -&gt; UnlinedText -&gt; LogLevel -&gt; LogMode -&gt; Log
+</span><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-var">MkLog</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520670"><span class="hs-identifier hs-var">_cmd</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520674"><span class="hs-identifier hs-var">msg'</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520672"><span class="hs-identifier hs-var">_lvl</span></a></span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679520673"><span class="hs-identifier hs-var">_mode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520669"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+UnlinedText
+</span><a href="#local-6989586621679520671"><span class="hs-identifier hs-var">_msg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-97"></span><span>  </span><span id="local-6989586621679520515"><span id="local-6989586621679520516"><span id="local-6989586621679520517"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520515"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-98"></span><span>    </span><span class="annot"><a href="#local-6989586621679520516"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier hs-type">LogLevel</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>    </span><span class="annot"><a href="#local-6989586621679520517"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#LogLevel"><span class="hs-identifier hs-type">LogLevel</span></a></span><span>
+</span><span id="line-100"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-101"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;lvl&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520515"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520516"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520517"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-103"></span><span>  </span><span id="local-6989586621679520683"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Log Log a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="annottext">LensVL Log Log a b -&gt; Lens Log Log a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-105"></span><span>      </span><span class="annot"><span class="annottext">(LensVL Log Log a b -&gt; Lens Log Log a b)
+-&gt; LensVL Log Log a b -&gt; Lens Log Log a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679520686"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520686"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-106"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span> </span><span id="local-6989586621679520687"><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520687"><span class="hs-identifier hs-var">_cmd</span></a></span></span><span> </span><span id="local-6989586621679520688"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520688"><span class="hs-identifier hs-var">_msg</span></a></span></span><span> </span><span id="local-6989586621679520689"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520689"><span class="hs-identifier hs-var">_lvl</span></a></span></span><span> </span><span id="local-6989586621679520690"><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679520690"><span class="hs-identifier hs-var">_mode</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-107"></span><span>          </span><span class="annot"><span class="annottext">(LogLevel -&gt; Log) -&gt; f LogLevel -&gt; f Log
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-108"></span><span>            </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679520691"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520691"><span class="hs-identifier hs-var">lvl'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1 -&gt; UnlinedText -&gt; LogLevel -&gt; LogMode -&gt; Log
+</span><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-var">MkLog</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520687"><span class="hs-identifier hs-var">_cmd</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520688"><span class="hs-identifier hs-var">_msg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520691"><span class="hs-identifier hs-var">lvl'</span></a></span><span> </span><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679520690"><span class="hs-identifier hs-var">_mode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-109"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520686"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+LogLevel
+</span><a href="#local-6989586621679520689"><span class="hs-identifier hs-var">_lvl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-113"></span><span>  </span><span id="local-6989586621679520522"><span id="local-6989586621679520523"><span id="local-6989586621679520524"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520522"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-114"></span><span>    </span><span class="annot"><a href="#local-6989586621679520523"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier hs-type">LogMode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><a href="#local-6989586621679520524"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.Internal.html#LogMode"><span class="hs-identifier hs-type">LogMode</span></a></span><span>
+</span><span id="line-116"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-117"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;mode&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520522"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="Shrun.Logging.Types.html#Log"><span class="hs-identifier hs-type">Log</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520523"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520524"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-118"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-119"></span><span>  </span><span id="local-6989586621679520700"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Log Log a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-120"></span><span>    </span><span class="annot"><span class="annottext">LensVL Log Log a b -&gt; Lens Log Log a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-121"></span><span>      </span><span class="annot"><span class="annottext">(LensVL Log Log a b -&gt; Lens Log Log a b)
+-&gt; LensVL Log Log a b -&gt; Lens Log Log a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679520703"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520703"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-122"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-type">MkLog</span></a></span><span> </span><span id="local-6989586621679520704"><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520704"><span class="hs-identifier hs-var">_cmd</span></a></span></span><span> </span><span id="local-6989586621679520705"><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520705"><span class="hs-identifier hs-var">_msg</span></a></span></span><span> </span><span id="local-6989586621679520706"><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520706"><span class="hs-identifier hs-var">_lvl</span></a></span></span><span> </span><span id="local-6989586621679520707"><span class="annot"><span class="annottext">LogMode
+</span><a href="#local-6989586621679520707"><span class="hs-identifier hs-var">_mode</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-123"></span><span>          </span><span class="annot"><span class="annottext">(LogMode -&gt; Log) -&gt; f LogMode -&gt; f Log
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-124"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe CommandP1 -&gt; UnlinedText -&gt; LogLevel -&gt; LogMode -&gt; Log
+</span><a href="Shrun.Logging.Types.html#MkLog"><span class="hs-identifier hs-var">MkLog</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe CommandP1
+</span><a href="#local-6989586621679520704"><span class="hs-identifier hs-var">_cmd</span></a></span><span> </span><span class="annot"><span class="annottext">UnlinedText
+</span><a href="#local-6989586621679520705"><span class="hs-identifier hs-var">_msg</span></a></span><span> </span><span class="annot"><span class="annottext">LogLevel
+</span><a href="#local-6989586621679520706"><span class="hs-identifier hs-var">_lvl</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520703"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+LogMode
+</span><a href="#local-6989586621679520707"><span class="hs-identifier hs-var">_mode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-126"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-127"></span></pre></body></html>

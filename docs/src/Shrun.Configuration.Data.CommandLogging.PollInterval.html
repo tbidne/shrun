@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Provides the 'PollInterval' type.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Configuration.Data.CommandLogging.PollInterval</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#PollInterval"><span class="hs-identifier">PollInterval</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#parsePollInterval"><span class="hs-identifier">parsePollInterval</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html"><span class="hs-identifier">Shrun.Configuration.Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier">Default</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier">def</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- | Represents how often to poll for command logs, in microseconds.</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- Zero is interpreted as infinite i.e. limited only by the CPU.</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">newtype</span><span> </span><span id="PollInterval"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#PollInterval"><span class="hs-identifier hs-var">PollInterval</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkPollInterval"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span></span><span> </span><span class="hs-special">{</span><span id="unPollInterval"><span class="annot"><span class="annottext">PollInterval -&gt; Natural
+</span><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#unPollInterval"><span class="hs-identifier hs-var hs-var">unPollInterval</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">}</span><span>
+</span><span id="line-16"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679523587"><span id="local-6989586621679523591"><span class="annot"><span class="annottext">PollInterval -&gt; PollInterval -&gt; Bool
+(PollInterval -&gt; PollInterval -&gt; Bool)
+-&gt; (PollInterval -&gt; PollInterval -&gt; Bool) -&gt; Eq PollInterval
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PollInterval -&gt; PollInterval -&gt; Bool
+== :: PollInterval -&gt; PollInterval -&gt; Bool
+$c/= :: PollInterval -&gt; PollInterval -&gt; Bool
+/= :: PollInterval -&gt; PollInterval -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679523598"><span id="local-6989586621679523602"><span id="local-6989586621679523605"><span id="local-6989586621679523609"><span id="local-6989586621679523612"><span id="local-6989586621679523615"><span id="local-6989586621679523618"><span class="annot"><span class="annottext">Eq PollInterval
+Eq PollInterval =&gt;
+(PollInterval -&gt; PollInterval -&gt; Ordering)
+-&gt; (PollInterval -&gt; PollInterval -&gt; Bool)
+-&gt; (PollInterval -&gt; PollInterval -&gt; Bool)
+-&gt; (PollInterval -&gt; PollInterval -&gt; Bool)
+-&gt; (PollInterval -&gt; PollInterval -&gt; Bool)
+-&gt; (PollInterval -&gt; PollInterval -&gt; PollInterval)
+-&gt; (PollInterval -&gt; PollInterval -&gt; PollInterval)
+-&gt; Ord PollInterval
+PollInterval -&gt; PollInterval -&gt; Bool
+PollInterval -&gt; PollInterval -&gt; Ordering
+PollInterval -&gt; PollInterval -&gt; PollInterval
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: PollInterval -&gt; PollInterval -&gt; Ordering
+compare :: PollInterval -&gt; PollInterval -&gt; Ordering
+$c&lt; :: PollInterval -&gt; PollInterval -&gt; Bool
+&lt; :: PollInterval -&gt; PollInterval -&gt; Bool
+$c&lt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+&lt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+$c&gt; :: PollInterval -&gt; PollInterval -&gt; Bool
+&gt; :: PollInterval -&gt; PollInterval -&gt; Bool
+$c&gt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+&gt;= :: PollInterval -&gt; PollInterval -&gt; Bool
+$cmax :: PollInterval -&gt; PollInterval -&gt; PollInterval
+max :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$cmin :: PollInterval -&gt; PollInterval -&gt; PollInterval
+min :: PollInterval -&gt; PollInterval -&gt; PollInterval
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679523622"><span id="local-6989586621679523628"><span id="local-6989586621679523632"><span class="annot"><span class="annottext">Int -&gt; PollInterval -&gt; ShowS
+[PollInterval] -&gt; ShowS
+PollInterval -&gt; String
+(Int -&gt; PollInterval -&gt; ShowS)
+-&gt; (PollInterval -&gt; String)
+-&gt; ([PollInterval] -&gt; ShowS)
+-&gt; Show PollInterval
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PollInterval -&gt; ShowS
+showsPrec :: Int -&gt; PollInterval -&gt; ShowS
+$cshow :: PollInterval -&gt; String
+show :: PollInterval -&gt; String
+$cshowList :: [PollInterval] -&gt; ShowS
+showList :: [PollInterval] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679523636"><span id="local-6989586621679523641"><span id="local-6989586621679523645"><span id="local-6989586621679523649"><span id="local-6989586621679523653"><span id="local-6989586621679523657"><span id="local-6989586621679523661"><span class="annot"><span class="annottext">Integer -&gt; PollInterval
+PollInterval -&gt; PollInterval
+PollInterval -&gt; PollInterval -&gt; PollInterval
+(PollInterval -&gt; PollInterval -&gt; PollInterval)
+-&gt; (PollInterval -&gt; PollInterval -&gt; PollInterval)
+-&gt; (PollInterval -&gt; PollInterval -&gt; PollInterval)
+-&gt; (PollInterval -&gt; PollInterval)
+-&gt; (PollInterval -&gt; PollInterval)
+-&gt; (PollInterval -&gt; PollInterval)
+-&gt; (Integer -&gt; PollInterval)
+-&gt; Num PollInterval
+forall a.
+(a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Integer -&gt; a)
+-&gt; Num a
+$c+ :: PollInterval -&gt; PollInterval -&gt; PollInterval
++ :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$c- :: PollInterval -&gt; PollInterval -&gt; PollInterval
+- :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$c* :: PollInterval -&gt; PollInterval -&gt; PollInterval
+* :: PollInterval -&gt; PollInterval -&gt; PollInterval
+$cnegate :: PollInterval -&gt; PollInterval
+negate :: PollInterval -&gt; PollInterval
+$cabs :: PollInterval -&gt; PollInterval
+abs :: PollInterval -&gt; PollInterval
+$csignum :: PollInterval -&gt; PollInterval
+signum :: PollInterval -&gt; PollInterval
+$cfromInteger :: Integer -&gt; PollInterval
+fromInteger :: Integer -&gt; PollInterval
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Num</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">via</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-20"></span><span>  </span><span id="local-6989586621679523564"><span id="local-6989586621679523565"><span id="local-6989586621679523566"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679523564"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#An_Iso"><span class="hs-identifier hs-type">An_Iso</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679523565"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679523566"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-21"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;unPollInterval&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679523564"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523565"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679523566"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-22"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>  </span><span id="local-6989586621679523675"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx PollInterval PollInterval a b
+</span><a href="#local-6989586621679523675"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(PollInterval -&gt; a)
+-&gt; (b -&gt; PollInterval) -&gt; Iso PollInterval PollInterval a b
+forall s a b t. (s -&gt; a) -&gt; (b -&gt; t) -&gt; Iso s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Iso.html#iso"><span class="hs-identifier hs-var">iso</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-type">MkPollInterval</span></a></span><span> </span><span id="local-6989586621679523678"><span class="annot"><span class="annottext">Natural
+</span><a href="#local-6989586621679523678"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">a
+Natural
+</span><a href="#local-6989586621679523678"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">b -&gt; PollInterval
+Natural -&gt; PollInterval
+</span><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#DecodeTOML"><span class="hs-identifier hs-type">DecodeTOML</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-27"></span><span>  </span><span id="local-6989586621679523686"><span class="annot"><span class="annottext">tomlDecoder :: Decoder PollInterval
+</span><a href="#local-6989586621679523686"><span class="hs-identifier hs-var hs-var hs-var hs-var">tomlDecoder</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; PollInterval)
+-&gt; Decoder Natural -&gt; Decoder PollInterval
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Decoder Natural
+forall a. DecodeTOML a =&gt; Decoder a
+</span><a href="file:///nix/store/k71nnijl13rj1wlph83afyvi08491vq8-toml-reader-0.2.1.0-doc/share/doc/toml-reader-0.2.1.0/html/src/TOML.Decode.html#tomlDecoder"><span class="hs-identifier hs-var">tomlDecoder</span></a></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span id="local-6989586621679523578"><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#parsePollInterval"><span class="hs-identifier hs-type">parsePollInterval</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="annot"><a href="#local-6989586621679523578"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523578"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Natural</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679523578"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span></span><span>
+</span><span id="line-30"></span><span id="parsePollInterval"><span class="annot"><span class="annottext">parsePollInterval :: forall (m :: Type -&gt; Type).
+Functor m =&gt;
+m Natural -&gt; m PollInterval
+</span><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#parsePollInterval"><span class="hs-identifier hs-var hs-var">parsePollInterval</span></a></span></span><span> </span><span id="local-6989586621679523691"><span class="annot"><span class="annottext">m Natural
+</span><a href="#local-6989586621679523691"><span class="hs-identifier hs-var">getNat</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">(Natural -&gt; PollInterval) -&gt; m Natural -&gt; m PollInterval
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">m Natural
+</span><a href="#local-6989586621679523691"><span class="hs-identifier hs-var">getNat</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Shrun.Configuration.Default.html#Default"><span class="hs-identifier hs-type">Default</span></a></span><span> </span><span class="annot"><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#PollInterval"><span class="hs-identifier hs-type">PollInterval</span></a></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-33"></span><span>  </span><span id="local-6989586621679523696"><span class="annot"><span class="annottext">def :: PollInterval
+</span><a href="Shrun.Configuration.Default.html#def"><span class="hs-identifier hs-var hs-var hs-var hs-var">def</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Natural -&gt; PollInterval
+</span><a href="Shrun.Configuration.Data.CommandLogging.PollInterval.html#MkPollInterval"><span class="hs-identifier hs-var">MkPollInterval</span></a></span><span> </span><span class="annot"><span class="annottext">Natural
+</span><span class="hs-number">10_000</span></span><span>
+</span><span id="line-34"></span></pre></body></html>

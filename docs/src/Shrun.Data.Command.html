@@ -1,0 +1,248 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Provides the 'Command' wrapper for commands.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.Data.Command</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier">CommandP</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier">CommandP1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP2"><span class="hs-identifier">CommandP2</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Shrun.Data.Command.html#commandToProcess"><span class="hs-identifier">commandToProcess</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/6a5dnw5wabyq2ikn1dap6z22mijnw8g4-hashable-1.4.4.0-doc/share/doc/hashable-1.4.4.0/html/src/Data.Hashable.html"><span class="hs-identifier">Data.Hashable</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/6a5dnw5wabyq2ikn1dap6z22mijnw8g4-hashable-1.4.4.0-doc/share/doc/hashable-1.4.4.0/html/src/Data.Hashable.Class.html#Hashable"><span class="hs-identifier">Hashable</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.String</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">IsString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromString</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html"><span class="hs-identifier">Effects.Process.Typed</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#ProcessConfig"><span class="hs-identifier">ProcessConfig</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html"><span class="hs-identifier">Effects.Process.Typed</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">P</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- $setup</span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- &gt;&gt;&gt; :set -XOverloadedLists</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">data</span><span> </span><span id="CommandPhase"><span class="annot"><a href="Shrun.Data.Command.html#CommandPhase"><span class="hs-identifier hs-var">CommandPhase</span></a></span></span><span>
+</span><span id="line-23"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span id="CommandPhase1"><span class="annot"><a href="Shrun.Data.Command.html#CommandPhase1"><span class="hs-identifier hs-var">CommandPhase1</span></a></span></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span id="CommandPhase2"><span class="annot"><a href="Shrun.Data.Command.html#CommandPhase2"><span class="hs-identifier hs-var">CommandPhase2</span></a></span></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="annot"><span class="hs-comment">-- | Wrapper for shell commands.</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandPhase"><span class="hs-identifier hs-type">CommandPhase</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">data</span><span> </span><span id="CommandP"><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-var">CommandP</span></a></span></span><span> </span><span id="local-6989586621679520195"><span class="annot"><a href="#local-6989586621679520195"><span class="hs-identifier hs-type">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkCommandP"><span class="annot"><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-identifier hs-var">MkCommandP</span></a></span></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="hs-comment">-- | The key name for the command, for display purposes.</span></span><span>
+</span><span id="line-30"></span><span>    </span><span id="key"><span class="annot"><span class="annottext">forall (p :: CommandPhase). CommandP p -&gt; Maybe Text
+</span><a href="Shrun.Data.Command.html#key"><span class="hs-identifier hs-var hs-var">key</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="hs-comment">-- | The shell command to run.</span></span><span>
+</span><span id="line-32"></span><span>    </span><span id="command"><span class="annot"><span class="annottext">forall (p :: CommandPhase). CommandP p -&gt; Text
+</span><a href="Shrun.Data.Command.html#command"><span class="hs-identifier hs-var hs-var">command</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-33"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679520348"><span id="local-6989586621679520354"><span class="annot"><span class="annottext">CommandP p -&gt; CommandP p -&gt; Bool
+(CommandP p -&gt; CommandP p -&gt; Bool)
+-&gt; (CommandP p -&gt; CommandP p -&gt; Bool) -&gt; Eq (CommandP p)
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+forall (p :: CommandPhase). CommandP p -&gt; CommandP p -&gt; Bool
+$c== :: forall (p :: CommandPhase). CommandP p -&gt; CommandP p -&gt; Bool
+== :: CommandP p -&gt; CommandP p -&gt; Bool
+$c/= :: forall (p :: CommandPhase). CommandP p -&gt; CommandP p -&gt; Bool
+/= :: CommandP p -&gt; CommandP p -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679520360"><span id="local-6989586621679520362"><span class="annot"><span class="annottext">(forall x. CommandP p -&gt; Rep (CommandP p) x)
+-&gt; (forall x. Rep (CommandP p) x -&gt; CommandP p)
+-&gt; Generic (CommandP p)
+forall x. Rep (CommandP p) x -&gt; CommandP p
+forall x. CommandP p -&gt; Rep (CommandP p) x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+forall (p :: CommandPhase) x. Rep (CommandP p) x -&gt; CommandP p
+forall (p :: CommandPhase) x. CommandP p -&gt; Rep (CommandP p) x
+$cfrom :: forall (p :: CommandPhase) x. CommandP p -&gt; Rep (CommandP p) x
+from :: forall x. CommandP p -&gt; Rep (CommandP p) x
+$cto :: forall (p :: CommandPhase) x. Rep (CommandP p) x -&gt; CommandP p
+to :: forall x. Rep (CommandP p) x -&gt; CommandP p
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Generic</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679520365"><span id="local-6989586621679520373"><span id="local-6989586621679520377"><span class="annot"><span class="annottext">Int -&gt; CommandP p -&gt; ShowS
+[CommandP p] -&gt; ShowS
+CommandP p -&gt; String
+(Int -&gt; CommandP p -&gt; ShowS)
+-&gt; (CommandP p -&gt; String)
+-&gt; ([CommandP p] -&gt; ShowS)
+-&gt; Show (CommandP p)
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+forall (p :: CommandPhase). Int -&gt; CommandP p -&gt; ShowS
+forall (p :: CommandPhase). [CommandP p] -&gt; ShowS
+forall (p :: CommandPhase). CommandP p -&gt; String
+$cshowsPrec :: forall (p :: CommandPhase). Int -&gt; CommandP p -&gt; ShowS
+showsPrec :: Int -&gt; CommandP p -&gt; ShowS
+$cshow :: forall (p :: CommandPhase). CommandP p -&gt; String
+show :: CommandP p -&gt; String
+$cshowList :: forall (p :: CommandPhase). [CommandP p] -&gt; ShowS
+showList :: [CommandP p] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679520384"><span id="local-6989586621679520391"><span class="annot"><span class="annottext">Eq (CommandP p)
+Eq (CommandP p) =&gt;
+(Int -&gt; CommandP p -&gt; Int)
+-&gt; (CommandP p -&gt; Int) -&gt; Hashable (CommandP p)
+Int -&gt; CommandP p -&gt; Int
+CommandP p -&gt; Int
+forall a. Eq a =&gt; (Int -&gt; a -&gt; Int) -&gt; (a -&gt; Int) -&gt; Hashable a
+forall (p :: CommandPhase). Eq (CommandP p)
+forall (p :: CommandPhase). Int -&gt; CommandP p -&gt; Int
+forall (p :: CommandPhase). CommandP p -&gt; Int
+$chashWithSalt :: forall (p :: CommandPhase). Int -&gt; CommandP p -&gt; Int
+hashWithSalt :: Int -&gt; CommandP p -&gt; Int
+$chash :: forall (p :: CommandPhase). CommandP p -&gt; Int
+hash :: CommandP p -&gt; Int
+</span><a href="file:///nix/store/6a5dnw5wabyq2ikn1dap6z22mijnw8g4-hashable-1.4.4.0-doc/share/doc/hashable-1.4.4.0/html/src/Data.Hashable.Class.html#Hashable"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Hashable</span></a></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-38"></span><span>  </span><span id="local-6989586621679520238"><span id="local-6989586621679520239"><span id="local-6989586621679520240"><span id="local-6989586621679520241"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520238"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><a href="#local-6989586621679520239"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><a href="#local-6989586621679520240"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-42"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;key&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520238"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520241"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520241"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679520239"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520240"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-44"></span><span>  </span><span id="local-6989586621679520416"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (CommandP p) (CommandP p) a b
+</span><a href="#local-6989586621679520416"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-45"></span><span>    </span><span class="annot"><span class="annottext">LensVL (CommandP p) (CommandP p) a b
+-&gt; Lens (CommandP p) (CommandP p) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-46"></span><span>      </span><span class="annot"><span class="annottext">(LensVL (CommandP p) (CommandP p) a b
+ -&gt; Lens (CommandP p) (CommandP p) a b)
+-&gt; LensVL (CommandP p) (CommandP p) a b
+-&gt; Lens (CommandP p) (CommandP p) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679520421"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520421"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-47"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-identifier hs-type">MkCommandP</span></a></span><span> </span><span id="local-6989586621679520422"><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679520422"><span class="hs-identifier hs-var">_key</span></a></span></span><span> </span><span id="local-6989586621679520423"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520423"><span class="hs-identifier hs-var">_command</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-48"></span><span>          </span><span class="annot"><span class="annottext">(Maybe Text -&gt; CommandP p) -&gt; f (Maybe Text) -&gt; f (CommandP p)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-49"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe Text -&gt; Text -&gt; CommandP p
+forall (p :: CommandPhase). Maybe Text -&gt; Text -&gt; CommandP p
+</span><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-operator hs-var">`MkCommandP`</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520423"><span class="hs-identifier hs-var">_command</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520421"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Maybe Text
+</span><a href="#local-6989586621679520422"><span class="hs-identifier hs-var">_key</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-54"></span><span>  </span><span id="local-6989586621679520190"><span id="local-6989586621679520191"><span id="local-6989586621679520192"><span id="local-6989586621679520193"><span class="hs-special">(</span><span> </span><span class="annot"><a href="#local-6989586621679520190"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><a href="#local-6989586621679520191"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><a href="#local-6989586621679520192"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-57"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-58"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;command&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679520190"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520193"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520193"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679520191"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679520192"><span class="hs-identifier hs-type">b</span></a></span></span></span></span></span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-60"></span><span>  </span><span id="local-6989586621679520431"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx (CommandP p) (CommandP p) a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><span class="annottext">LensVL (CommandP p) (CommandP p) a b
+-&gt; Lens (CommandP p) (CommandP p) a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span>
+</span><span id="line-62"></span><span>      </span><span class="annot"><span class="annottext">(LensVL (CommandP p) (CommandP p) a b
+ -&gt; Lens (CommandP p) (CommandP p) a b)
+-&gt; LensVL (CommandP p) (CommandP p) a b
+-&gt; Lens (CommandP p) (CommandP p) a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679520434"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520434"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-63"></span><span>         </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-identifier hs-type">MkCommandP</span></a></span><span> </span><span id="local-6989586621679520435"><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679520435"><span class="hs-identifier hs-var">_key</span></a></span></span><span> </span><span id="local-6989586621679520436"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520436"><span class="hs-identifier hs-var">_command</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-64"></span><span>          </span><span class="annot"><span class="annottext">(Text -&gt; CommandP p) -&gt; f Text -&gt; f (CommandP p)
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: Type -&gt; Type) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-65"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe Text -&gt; Text -&gt; CommandP p
+forall (p :: CommandPhase). Maybe Text -&gt; Text -&gt; CommandP p
+</span><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-identifier hs-var">MkCommandP</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679520435"><span class="hs-identifier hs-var">_key</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679520434"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Text
+</span><a href="#local-6989586621679520436"><span class="hs-identifier hs-var">_command</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IsString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandPhase1"><span class="hs-identifier hs-type">CommandPhase1</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-70"></span><span>  </span><span id="local-6989586621679520440"><span class="annot"><span class="annottext">fromString :: String -&gt; CommandP1
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">fromString</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Text -&gt; Text -&gt; CommandP1
+forall (p :: CommandPhase). Maybe Text -&gt; Text -&gt; CommandP p
+</span><a href="Shrun.Data.Command.html#MkCommandP"><span class="hs-identifier hs-var">MkCommandP</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe Text
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; CommandP1) -&gt; (String -&gt; Text) -&gt; String -&gt; CommandP1
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="annot"><span class="hs-comment">-- | Phase1 commands.</span></span><span>
+</span><span id="line-73"></span><span class="hs-keyword">type</span><span> </span><span id="CommandP1"><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-var">CommandP1</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandPhase1"><span class="hs-identifier hs-type">CommandPhase1</span></a></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="annot"><span class="hs-comment">-- | Phase2 commands.</span></span><span>
+</span><span id="line-76"></span><span class="hs-keyword">type</span><span> </span><span id="CommandP2"><span class="annot"><a href="Shrun.Data.Command.html#CommandP2"><span class="hs-identifier hs-var">CommandP2</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP"><span class="hs-identifier hs-type">CommandP</span></a></span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandPhase2"><span class="hs-identifier hs-type">CommandPhase2</span></a></span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Shrun.Data.Command.html#advancePhase"><span class="hs-identifier hs-type">advancePhase</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP2"><span class="hs-identifier hs-type">CommandP2</span></a></span><span>
+</span><span id="line-79"></span><span id="advancePhase"><span class="annot"><span class="annottext">advancePhase :: CommandP1 -&gt; Maybe Text -&gt; CommandP2
+</span><a href="Shrun.Data.Command.html#advancePhase"><span class="hs-identifier hs-var hs-var">advancePhase</span></a></span></span><span> </span><span id="local-6989586621679520444"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679520444"><span class="hs-identifier hs-var">cmd</span></a></span></span><span> </span><span id="local-6989586621679520445"><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679520445"><span class="hs-identifier hs-var">minit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx CommandP1 CommandP2 Text Text
+-&gt; (Text -&gt; Text) -&gt; CommandP1 -&gt; CommandP2
+forall k (is :: IxList) s t a b.
+Is k A_Setter =&gt;
+Optic k is s t a b -&gt; (a -&gt; b) -&gt; s -&gt; t
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Setter.html#over%27"><span class="hs-identifier hs-var">over'</span></a></span><span> </span><span class="annot"><span class="annottext">Optic A_Lens NoIx CommandP1 CommandP2 Text Text
+</span><span class="">#command</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+</span><a href="#local-6989586621679520447"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679520444"><span class="hs-identifier hs-var">cmd</span></a></span><span>
+</span><span id="line-80"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-81"></span><span>    </span><span id="local-6989586621679520447"><span class="annot"><span class="annottext">f :: Text -&gt; Text
+</span><a href="#local-6989586621679520447"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe Text
+</span><a href="#local-6989586621679520445"><span class="hs-identifier hs-var">minit</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-82"></span><span>      </span><span class="annot"><span class="annottext">Maybe Text
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-83"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679520449"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520449"><span class="hs-identifier hs-var">init</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679520450"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520450"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520449"><span class="hs-identifier hs-var">init</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-string">&quot; &amp;&amp; &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679520450"><span class="hs-identifier hs-var">c</span></a></span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="annot"><span class="hs-comment">-- | Transforms a command into its text to be executed by the shell.</span></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="Shrun.Data.Command.html#commandToShell"><span class="hs-identifier hs-type">commandToShell</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP2"><span class="hs-identifier hs-type">CommandP2</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-87"></span><span id="commandToShell"><span class="annot"><span class="annottext">commandToShell :: CommandP2 -&gt; String
+</span><a href="Shrun.Data.Command.html#commandToShell"><span class="hs-identifier hs-var hs-var">commandToShell</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; String) -&gt; (CommandP2 -&gt; Text) -&gt; CommandP2 -&gt; String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx CommandP2 Text -&gt; CommandP2 -&gt; Text
+forall k (is :: IxList) s a.
+Is k A_Getter =&gt;
+Optic' k is s a -&gt; s -&gt; a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Getter.html#view"><span class="hs-identifier hs-var">view</span></a></span><span> </span><span class="annot"><span class="annottext">Optic' A_Lens NoIx CommandP2 Text
+</span><span class="">#command</span></span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="hs-comment">-- Transforms a command into a 'ProcessConfig'.</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Shrun.Data.Command.html#commandToProcess"><span class="hs-identifier hs-type">commandToProcess</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Shrun.Data.Command.html#CommandP1"><span class="hs-identifier hs-type">CommandP1</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#ProcessConfig"><span class="hs-identifier hs-type">ProcessConfig</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span id="commandToProcess"><span class="annot"><span class="annottext">commandToProcess :: CommandP1 -&gt; Maybe Text -&gt; ProcessConfig () () ()
+</span><a href="Shrun.Data.Command.html#commandToProcess"><span class="hs-identifier hs-var hs-var">commandToProcess</span></a></span></span><span> </span><span id="local-6989586621679520454"><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679520454"><span class="hs-identifier hs-var">command</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-93"></span><span>  </span><span class="annot"><span class="annottext">String -&gt; ProcessConfig () () ()
+</span><a href="file:///nix/store/bi18a6hqbns0jgm96cd9bl9gd4g3hsg9-typed-process-0.2.11.1-doc/share/doc/typed-process-0.2.11.1/html/src/System.Process.Typed.Internal.html#shell"><span class="hs-identifier hs-var">P.shell</span></a></span><span>
+</span><span id="line-94"></span><span>    </span><span class="annot"><span class="annottext">(String -&gt; ProcessConfig () () ())
+-&gt; (Maybe Text -&gt; String) -&gt; Maybe Text -&gt; ProcessConfig () () ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">CommandP2 -&gt; String
+</span><a href="Shrun.Data.Command.html#commandToShell"><span class="hs-identifier hs-var">commandToShell</span></a></span><span>
+</span><span id="line-95"></span><span>    </span><span class="annot"><span class="annottext">(CommandP2 -&gt; String)
+-&gt; (Maybe Text -&gt; CommandP2) -&gt; Maybe Text -&gt; String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">CommandP1 -&gt; Maybe Text -&gt; CommandP2
+</span><a href="Shrun.Data.Command.html#advancePhase"><span class="hs-identifier hs-var">advancePhase</span></a></span><span> </span><span class="annot"><span class="annottext">CommandP1
+</span><a href="#local-6989586621679520454"><span class="hs-identifier hs-var">command</span></a></span><span>
+</span><span id="line-96"></span></pre></body></html>

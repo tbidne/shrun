@@ -1,0 +1,2191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="annot"><span class="hs-comment">-- | Provides the 'ShellT' monad transformer.</span></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Shrun.ShellT</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.ShellT.html#ShellT"><span class="hs-identifier">ShellT</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Shrun.ShellT.html#runShellT"><span class="hs-identifier">runShellT</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Configuration.Env.Types.html"><span class="hs-identifier">Shrun.Configuration.Env.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#Env"><span class="hs-identifier">Env</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html"><span class="hs-identifier">Shrun.Logging.MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier">MonadRegionLogger</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html"><span class="hs-identifier">Shrun.Notify.MonadAppleScript</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier">MonadAppleScript</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html"><span class="hs-identifier">Shrun.Notify.MonadAppleScript</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">MonadAppleScript</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html"><span class="hs-identifier">Shrun.Notify.MonadDBus</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier">MonadDBus</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html"><span class="hs-identifier">Shrun.Notify.MonadDBus</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">MonadDBus</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html"><span class="hs-identifier">Shrun.Notify.MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#MonadNotify"><span class="hs-identifier">MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#notify"><span class="hs-identifier">notify</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotifySend.html"><span class="hs-identifier">Shrun.Notify.MonadNotifySend</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.MonadNotifySend.html#MonadNotifySend"><span class="hs-identifier">MonadNotifySend</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadNotifySend.html"><span class="hs-identifier">Shrun.Notify.MonadNotifySend</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">MonadNotifySend</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html"><span class="hs-identifier">Shrun.Notify.Types</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySystemP"><span class="hs-identifier">NotifySystemP</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#AppleScript"><span class="hs-identifier">AppleScript</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier">DBus</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Shrun.Notify.Types.html#NotifySend"><span class="hs-identifier">NotifySend</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Shrun.Prelude.html"><span class="hs-identifier">Shrun.Prelude</span></a></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="annot"><span class="hs-comment">-- | `ShellT` is the main application type that runs shell commands.</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Shrun.ShellT.html#ShellT"><span class="hs-identifier hs-type">ShellT</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">newtype</span><span> </span><span id="ShellT"><span class="annot"><a href="Shrun.ShellT.html#ShellT"><span class="hs-identifier hs-var">ShellT</span></a></span></span><span> </span><span id="local-6989586621679531056"><span class="annot"><a href="#local-6989586621679531056"><span class="hs-identifier hs-type">env</span></a></span></span><span> </span><span id="local-6989586621679531057"><span class="annot"><a href="#local-6989586621679531057"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679531058"><span class="annot"><a href="#local-6989586621679531058"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkShellT"><span class="annot"><a href="Shrun.ShellT.html#MkShellT"><span class="hs-identifier hs-var">MkShellT</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679531056"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679531057"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679531058"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-keyword">deriving</span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679531062"><span id="local-6989586621679531067"><span class="annot"><span class="annottext">(forall a b. (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b)
+-&gt; (forall a b. a -&gt; ShellT env m b -&gt; ShellT env m a)
+-&gt; Functor (ShellT env m)
+forall a b. a -&gt; ShellT env m b -&gt; ShellT env m a
+forall a b. (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+a -&gt; ShellT env m b -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+(a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+forall (f :: Type -&gt; Type).
+(forall a b. (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b. a -&gt; f b -&gt; f a) -&gt; Functor f
+$cfmap :: forall env (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+(a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+fmap :: forall a b. (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+$c&lt;$ :: forall env (m :: Type -&gt; Type) a b.
+Functor m =&gt;
+a -&gt; ShellT env m b -&gt; ShellT env m a
+&lt;$ :: forall a b. a -&gt; ShellT env m b -&gt; ShellT env m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>      </span><span id="local-6989586621679531077"><span id="local-6989586621679531082"><span id="local-6989586621679531086"><span id="local-6989586621679531090"><span id="local-6989586621679531094"><span class="annot"><span class="annottext">Functor (ShellT env m)
+Functor (ShellT env m) =&gt;
+(forall a. a -&gt; ShellT env m a)
+-&gt; (forall a b.
+    ShellT env m (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b)
+-&gt; (forall a b c.
+    (a -&gt; b -&gt; c)
+    -&gt; ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m c)
+-&gt; (forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b)
+-&gt; (forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m a)
+-&gt; Applicative (ShellT env m)
+forall a. a -&gt; ShellT env m a
+forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m a
+forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+forall a b.
+ShellT env m (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+forall a b c.
+(a -&gt; b -&gt; c) -&gt; ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m c
+forall env (m :: Type -&gt; Type).
+Applicative m =&gt;
+Functor (ShellT env m)
+forall env (m :: Type -&gt; Type) a.
+Applicative m =&gt;
+a -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+ShellT env m (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b c.
+Applicative m =&gt;
+(a -&gt; b -&gt; c) -&gt; ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m c
+forall (f :: Type -&gt; Type).
+Functor f =&gt;
+(forall a. a -&gt; f a)
+-&gt; (forall a b. f (a -&gt; b) -&gt; f a -&gt; f b)
+-&gt; (forall a b c. (a -&gt; b -&gt; c) -&gt; f a -&gt; f b -&gt; f c)
+-&gt; (forall a b. f a -&gt; f b -&gt; f b)
+-&gt; (forall a b. f a -&gt; f b -&gt; f a)
+-&gt; Applicative f
+$cpure :: forall env (m :: Type -&gt; Type) a.
+Applicative m =&gt;
+a -&gt; ShellT env m a
+pure :: forall a. a -&gt; ShellT env m a
+$c&lt;*&gt; :: forall env (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+ShellT env m (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+&lt;*&gt; :: forall a b.
+ShellT env m (a -&gt; b) -&gt; ShellT env m a -&gt; ShellT env m b
+$cliftA2 :: forall env (m :: Type -&gt; Type) a b c.
+Applicative m =&gt;
+(a -&gt; b -&gt; c) -&gt; ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m c
+liftA2 :: forall a b c.
+(a -&gt; b -&gt; c) -&gt; ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m c
+$c*&gt; :: forall env (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+*&gt; :: forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+$c&lt;* :: forall env (m :: Type -&gt; Type) a b.
+Applicative m =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m a
+&lt;* :: forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Applicative</span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>      </span><span id="local-6989586621679531105"><span id="local-6989586621679531110"><span id="local-6989586621679531114"><span class="annot"><span class="annottext">Applicative (ShellT env m)
+Applicative (ShellT env m) =&gt;
+(forall a b.
+ ShellT env m a -&gt; (a -&gt; ShellT env m b) -&gt; ShellT env m b)
+-&gt; (forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b)
+-&gt; (forall a. a -&gt; ShellT env m a)
+-&gt; Monad (ShellT env m)
+forall a. a -&gt; ShellT env m a
+forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+forall a b.
+ShellT env m a -&gt; (a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type).
+Monad m =&gt;
+Applicative (ShellT env m)
+forall env (m :: Type -&gt; Type) a. Monad m =&gt; a -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+ShellT env m a -&gt; (a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall (m :: Type -&gt; Type).
+Applicative m =&gt;
+(forall a b. m a -&gt; (a -&gt; m b) -&gt; m b)
+-&gt; (forall a b. m a -&gt; m b -&gt; m b)
+-&gt; (forall a. a -&gt; m a)
+-&gt; Monad m
+$c&gt;&gt;= :: forall env (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+ShellT env m a -&gt; (a -&gt; ShellT env m b) -&gt; ShellT env m b
+&gt;&gt;= :: forall a b.
+ShellT env m a -&gt; (a -&gt; ShellT env m b) -&gt; ShellT env m b
+$c&gt;&gt; :: forall env (m :: Type -&gt; Type) a b.
+Monad m =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+&gt;&gt; :: forall a b. ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m b
+$creturn :: forall env (m :: Type -&gt; Type) a. Monad m =&gt; a -&gt; ShellT env m a
+return :: forall a. a -&gt; ShellT env m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monad</span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>      </span><span id="local-6989586621679531128"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; Text -&gt; ShellT env m (Maybe ByteString))
+-&gt; MonadAppleScript (ShellT env m)
+HasCallStack =&gt; Text -&gt; ShellT env m (Maybe ByteString)
+forall env (m :: Type -&gt; Type).
+MonadAppleScript m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadAppleScript m, HasCallStack) =&gt;
+Text -&gt; ShellT env m (Maybe ByteString)
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; Text -&gt; m (Maybe ByteString))
+-&gt; MonadAppleScript m
+$cnotify :: forall env (m :: Type -&gt; Type).
+(MonadAppleScript m, HasCallStack) =&gt;
+Text -&gt; ShellT env m (Maybe ByteString)
+notify :: HasCallStack =&gt; Text -&gt; ShellT env m (Maybe ByteString)
+</span><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadAppleScript</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>      </span><span id="local-6989586621679531146"><span id="local-6989586621679531157"><span id="local-6989586621679531167"><span id="local-6989586621679531177"><span id="local-6989586621679531187"><span id="local-6989586621679531197"><span id="local-6989586621679531207"><span id="local-6989586621679531217"><span id="local-6989586621679531227"><span id="local-6989586621679531237"><span id="local-6989586621679531249"><span id="local-6989586621679531261"><span id="local-6989586621679531271"><span id="local-6989586621679531281"><span id="local-6989586621679531291"><span id="local-6989586621679531301"><span id="local-6989586621679531311"><span id="local-6989586621679531321"><span id="local-6989586621679531331"><span id="local-6989586621679531341"><span id="local-6989586621679531351"><span id="local-6989586621679531361"><span id="local-6989586621679531371"><span id="local-6989586621679531381"><span id="local-6989586621679531391"><span id="local-6989586621679531401"><span id="local-6989586621679531411"><span id="local-6989586621679531421"><span id="local-6989586621679531431"><span id="local-6989586621679531441"><span id="local-6989586621679531451"><span id="local-6989586621679531461"><span id="local-6989586621679531471"><span id="local-6989586621679531483"><span id="local-6989586621679531497"><span id="local-6989586621679531511"><span id="local-6989586621679531525"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(forall a b.
+ HasCallStack =&gt;
+ ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Int
+    -&gt; ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+    -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Int
+    -&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+    -&gt; (Async a -&gt; ShellT env m b)
+    -&gt; ShellT env m b)
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; ShellT env m a)
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Async a -&gt; ShellT env m (Maybe (Either SomeException a)))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Async a -&gt; ShellT env m (Either SomeException a))
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; ShellT env m ())
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; ShellT env m ())
+-&gt; (forall e a.
+    (Exception e, HasCallStack) =&gt;
+    Async a -&gt; e -&gt; ShellT env m ())
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (Either a b))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (a, b))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m ())
+-&gt; (forall a.
+    HasCallStack =&gt;
+    [Async a] -&gt; ShellT env m (Async a, a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    [Async a] -&gt; ShellT env m (Async a, Either SomeException a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    [Async a] -&gt; ShellT env m (Async a, a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    [Async a] -&gt; ShellT env m (Async a, Either SomeException a))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a -&gt; Async b -&gt; ShellT env m (Either a b))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a
+    -&gt; Async b
+    -&gt; ShellT
+         env m (Either (Either SomeException a) (Either SomeException b)))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a -&gt; Async b -&gt; ShellT env m (Either a b))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a
+    -&gt; Async b
+    -&gt; ShellT
+         env m (Either (Either SomeException a) (Either SomeException b)))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a -&gt; Async b -&gt; ShellT env m ())
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a -&gt; Async b -&gt; ShellT env m (a, b))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    ShellT env m a -&gt; ShellT env m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    ShellT env m a -&gt; ShellT env m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Int -&gt; ShellT env m a -&gt; ShellT env m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+    -&gt; ShellT env m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Int
+    -&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+    -&gt; ShellT env m (Async a))
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; ShellT env m ())
+-&gt; (forall a.
+    HasCallStack =&gt;
+    (SomeException -&gt; Bool) -&gt; Async a -&gt; ShellT env m ())
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a -&gt; Async b -&gt; ShellT env m ())
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    (SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; ShellT env m ())
+-&gt; (forall (t :: Type -&gt; Type) a b.
+    (HasCallStack, Traversable t) =&gt;
+    Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b))
+-&gt; (forall (t :: Type -&gt; Type) a b.
+    (HasCallStack, Traversable t) =&gt;
+    (a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b))
+-&gt; (forall (f :: Type -&gt; Type) a b.
+    (Foldable f, HasCallStack) =&gt;
+    Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ())
+-&gt; (forall (f :: Type -&gt; Type) a b.
+    (Foldable f, HasCallStack) =&gt;
+    (a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ())
+-&gt; MonadAsync (ShellT env m)
+forall a.
+HasCallStack =&gt;
+Int -&gt; ShellT env m a -&gt; ShellT env m (Async a)
+forall a.
+HasCallStack =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+forall a. HasCallStack =&gt; [Async a] -&gt; ShellT env m (Async a, a)
+forall a.
+HasCallStack =&gt;
+[Async a] -&gt; ShellT env m (Async a, Either SomeException a)
+forall a. HasCallStack =&gt; Async a -&gt; ShellT env m a
+forall a.
+HasCallStack =&gt;
+Async a -&gt; ShellT env m (Maybe (Either SomeException a))
+forall a.
+HasCallStack =&gt;
+Async a -&gt; ShellT env m (Either SomeException a)
+forall a. HasCallStack =&gt; Async a -&gt; ShellT env m ()
+forall a. HasCallStack =&gt; ShellT env m a -&gt; ShellT env m (Async a)
+forall a.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; ShellT env m ()
+forall a.
+HasCallStack =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+forall a b.
+HasCallStack =&gt;
+Int
+-&gt; ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall a b.
+HasCallStack =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b)
+-&gt; ShellT env m b
+forall a b.
+HasCallStack =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (Either a b)
+forall a b.
+HasCallStack =&gt;
+Async a
+-&gt; Async b
+-&gt; ShellT
+     env m (Either (Either SomeException a) (Either SomeException b))
+forall a b. HasCallStack =&gt; Async a -&gt; Async b -&gt; ShellT env m ()
+forall a b.
+HasCallStack =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (a, b)
+forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (Either a b)
+forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m ()
+forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (a, b)
+forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall a b.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; ShellT env m ()
+forall a b.
+HasCallStack =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall e a.
+(Exception e, HasCallStack) =&gt;
+Async a -&gt; e -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+MonadAsync m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int -&gt; ShellT env m a -&gt; ShellT env m (Async a)
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+[Async a] -&gt; ShellT env m (Async a, a)
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+[Async a] -&gt; ShellT env m (Async a, Either SomeException a)
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m (Maybe (Either SomeException a))
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m (Either SomeException a)
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m (Async a)
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b)
+-&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (Either a b)
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a
+-&gt; Async b
+-&gt; ShellT
+     env m (Either (Either SomeException a) (Either SomeException b))
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (a, b)
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (Either a b)
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (a, b)
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) e a.
+(MonadAsync m, Exception e, HasCallStack) =&gt;
+Async a -&gt; e -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(MonadAsync m, Foldable f, HasCallStack) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(MonadAsync m, Foldable f, HasCallStack) =&gt;
+(a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) (t :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack, Traversable t) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+forall env (m :: Type -&gt; Type) (t :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack, Traversable t) =&gt;
+(a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(forall a b. HasCallStack =&gt; m a -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Int -&gt; m a -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    ((forall c. m c -&gt; m c) -&gt; m a) -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Int -&gt; ((forall c. m c -&gt; m c) -&gt; m a) -&gt; (Async a -&gt; m b) -&gt; m b)
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; m a)
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Async a -&gt; m (Maybe (Either SomeException a)))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Async a -&gt; m (Either SomeException a))
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; m ())
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; m ())
+-&gt; (forall e a.
+    (Exception e, HasCallStack) =&gt;
+    Async a -&gt; e -&gt; m ())
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; m b -&gt; m (Either a b))
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; m b -&gt; m (a, b))
+-&gt; (forall a b. HasCallStack =&gt; m a -&gt; m b -&gt; m ())
+-&gt; (forall a. HasCallStack =&gt; [Async a] -&gt; m (Async a, a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    [Async a] -&gt; m (Async a, Either SomeException a))
+-&gt; (forall a. HasCallStack =&gt; [Async a] -&gt; m (Async a, a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    [Async a] -&gt; m (Async a, Either SomeException a))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a -&gt; Async b -&gt; m (Either a b))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a
+    -&gt; Async b
+    -&gt; m (Either (Either SomeException a) (Either SomeException b)))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a -&gt; Async b -&gt; m (Either a b))
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    Async a
+    -&gt; Async b
+    -&gt; m (Either (Either SomeException a) (Either SomeException b)))
+-&gt; (forall a b. HasCallStack =&gt; Async a -&gt; Async b -&gt; m ())
+-&gt; (forall a b. HasCallStack =&gt; Async a -&gt; Async b -&gt; m (a, b))
+-&gt; (forall a. HasCallStack =&gt; m a -&gt; m (Async a))
+-&gt; (forall a. HasCallStack =&gt; m a -&gt; m (Async a))
+-&gt; (forall a. HasCallStack =&gt; Int -&gt; m a -&gt; m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    ((forall c. m c -&gt; m c) -&gt; m a) -&gt; m (Async a))
+-&gt; (forall a.
+    HasCallStack =&gt;
+    Int -&gt; ((forall c. m c -&gt; m c) -&gt; m a) -&gt; m (Async a))
+-&gt; (forall a. HasCallStack =&gt; Async a -&gt; m ())
+-&gt; (forall a.
+    HasCallStack =&gt;
+    (SomeException -&gt; Bool) -&gt; Async a -&gt; m ())
+-&gt; (forall a b. HasCallStack =&gt; Async a -&gt; Async b -&gt; m ())
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    (SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; m ())
+-&gt; (forall (t :: Type -&gt; Type) a b.
+    (HasCallStack, Traversable t) =&gt;
+    Positive Int -&gt; (a -&gt; m b) -&gt; t a -&gt; m (t b))
+-&gt; (forall (t :: Type -&gt; Type) a b.
+    (HasCallStack, Traversable t) =&gt;
+    (a -&gt; m b) -&gt; t a -&gt; m (t b))
+-&gt; (forall (f :: Type -&gt; Type) a b.
+    (Foldable f, HasCallStack) =&gt;
+    Positive Int -&gt; (a -&gt; m b) -&gt; f a -&gt; m ())
+-&gt; (forall (f :: Type -&gt; Type) a b.
+    (Foldable f, HasCallStack) =&gt;
+    (a -&gt; m b) -&gt; f a -&gt; m ())
+-&gt; MonadAsync m
+forall (f :: Type -&gt; Type) a b.
+(Foldable f, HasCallStack) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+forall (f :: Type -&gt; Type) a b.
+(Foldable f, HasCallStack) =&gt;
+(a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+forall (t :: Type -&gt; Type) a b.
+(HasCallStack, Traversable t) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+forall (t :: Type -&gt; Type) a b.
+(HasCallStack, Traversable t) =&gt;
+(a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+$cwithAsync :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+withAsync :: forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+$cwithAsyncBound :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+withAsyncBound :: forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+$cwithAsyncOn :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+withAsyncOn :: forall a b.
+HasCallStack =&gt;
+Int
+-&gt; ShellT env m a -&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+$cwithAsyncWithUnmask :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+withAsyncWithUnmask :: forall a b.
+HasCallStack =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b) -&gt; ShellT env m b
+$cwithAsyncOnWithUnmask :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b)
+-&gt; ShellT env m b
+withAsyncOnWithUnmask :: forall a b.
+HasCallStack =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; (Async a -&gt; ShellT env m b)
+-&gt; ShellT env m b
+$cwait :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m a
+wait :: forall a. HasCallStack =&gt; Async a -&gt; ShellT env m a
+$cpoll :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m (Maybe (Either SomeException a))
+poll :: forall a.
+HasCallStack =&gt;
+Async a -&gt; ShellT env m (Maybe (Either SomeException a))
+$cwaitCatch :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m (Either SomeException a)
+waitCatch :: forall a.
+HasCallStack =&gt;
+Async a -&gt; ShellT env m (Either SomeException a)
+$ccancel :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m ()
+cancel :: forall a. HasCallStack =&gt; Async a -&gt; ShellT env m ()
+$cuninterruptibleCancel :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m ()
+uninterruptibleCancel :: forall a. HasCallStack =&gt; Async a -&gt; ShellT env m ()
+$ccancelWith :: forall env (m :: Type -&gt; Type) e a.
+(MonadAsync m, Exception e, HasCallStack) =&gt;
+Async a -&gt; e -&gt; ShellT env m ()
+cancelWith :: forall e a.
+(Exception e, HasCallStack) =&gt;
+Async a -&gt; e -&gt; ShellT env m ()
+$crace :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (Either a b)
+race :: forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (Either a b)
+$cconcurrently :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (a, b)
+concurrently :: forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m (a, b)
+$cconcurrently_ :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m ()
+concurrently_ :: forall a b.
+HasCallStack =&gt;
+ShellT env m a -&gt; ShellT env m b -&gt; ShellT env m ()
+$cwaitAny :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+[Async a] -&gt; ShellT env m (Async a, a)
+waitAny :: forall a. HasCallStack =&gt; [Async a] -&gt; ShellT env m (Async a, a)
+$cwaitAnyCatch :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+[Async a] -&gt; ShellT env m (Async a, Either SomeException a)
+waitAnyCatch :: forall a.
+HasCallStack =&gt;
+[Async a] -&gt; ShellT env m (Async a, Either SomeException a)
+$cwaitAnyCancel :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+[Async a] -&gt; ShellT env m (Async a, a)
+waitAnyCancel :: forall a. HasCallStack =&gt; [Async a] -&gt; ShellT env m (Async a, a)
+$cwaitAnyCatchCancel :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+[Async a] -&gt; ShellT env m (Async a, Either SomeException a)
+waitAnyCatchCancel :: forall a.
+HasCallStack =&gt;
+[Async a] -&gt; ShellT env m (Async a, Either SomeException a)
+$cwaitEither :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (Either a b)
+waitEither :: forall a b.
+HasCallStack =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (Either a b)
+$cwaitEitherCatch :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a
+-&gt; Async b
+-&gt; ShellT
+     env m (Either (Either SomeException a) (Either SomeException b))
+waitEitherCatch :: forall a b.
+HasCallStack =&gt;
+Async a
+-&gt; Async b
+-&gt; ShellT
+     env m (Either (Either SomeException a) (Either SomeException b))
+$cwaitEitherCancel :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (Either a b)
+waitEitherCancel :: forall a b.
+HasCallStack =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (Either a b)
+$cwaitEitherCatchCancel :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a
+-&gt; Async b
+-&gt; ShellT
+     env m (Either (Either SomeException a) (Either SomeException b))
+waitEitherCatchCancel :: forall a b.
+HasCallStack =&gt;
+Async a
+-&gt; Async b
+-&gt; ShellT
+     env m (Either (Either SomeException a) (Either SomeException b))
+$cwaitEither_ :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m ()
+waitEither_ :: forall a b. HasCallStack =&gt; Async a -&gt; Async b -&gt; ShellT env m ()
+$cwaitBoth :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (a, b)
+waitBoth :: forall a b.
+HasCallStack =&gt;
+Async a -&gt; Async b -&gt; ShellT env m (a, b)
+$casync :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m (Async a)
+async :: forall a. HasCallStack =&gt; ShellT env m a -&gt; ShellT env m (Async a)
+$casyncBound :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+ShellT env m a -&gt; ShellT env m (Async a)
+asyncBound :: forall a. HasCallStack =&gt; ShellT env m a -&gt; ShellT env m (Async a)
+$casyncOn :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int -&gt; ShellT env m a -&gt; ShellT env m (Async a)
+asyncOn :: forall a.
+HasCallStack =&gt;
+Int -&gt; ShellT env m a -&gt; ShellT env m (Async a)
+$casyncWithUnmask :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+asyncWithUnmask :: forall a.
+HasCallStack =&gt;
+((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+$casyncOnWithUnmask :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+asyncOnWithUnmask :: forall a.
+HasCallStack =&gt;
+Int
+-&gt; ((forall c. ShellT env m c -&gt; ShellT env m c) -&gt; ShellT env m a)
+-&gt; ShellT env m (Async a)
+$clink :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; ShellT env m ()
+link :: forall a. HasCallStack =&gt; Async a -&gt; ShellT env m ()
+$clinkOnly :: forall env (m :: Type -&gt; Type) a.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; ShellT env m ()
+linkOnly :: forall a.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; ShellT env m ()
+$clink2 :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+Async a -&gt; Async b -&gt; ShellT env m ()
+link2 :: forall a b. HasCallStack =&gt; Async a -&gt; Async b -&gt; ShellT env m ()
+$clink2Only :: forall env (m :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack) =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; ShellT env m ()
+link2Only :: forall a b.
+HasCallStack =&gt;
+(SomeException -&gt; Bool) -&gt; Async a -&gt; Async b -&gt; ShellT env m ()
+$cpooledMapConcurrentlyN :: forall env (m :: Type -&gt; Type) (t :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack, Traversable t) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+pooledMapConcurrentlyN :: forall (t :: Type -&gt; Type) a b.
+(HasCallStack, Traversable t) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+$cpooledMapConcurrently :: forall env (m :: Type -&gt; Type) (t :: Type -&gt; Type) a b.
+(MonadAsync m, HasCallStack, Traversable t) =&gt;
+(a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+pooledMapConcurrently :: forall (t :: Type -&gt; Type) a b.
+(HasCallStack, Traversable t) =&gt;
+(a -&gt; ShellT env m b) -&gt; t a -&gt; ShellT env m (t b)
+$cpooledMapConcurrentlyN_ :: forall env (m :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(MonadAsync m, Foldable f, HasCallStack) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+pooledMapConcurrentlyN_ :: forall (f :: Type -&gt; Type) a b.
+(Foldable f, HasCallStack) =&gt;
+Positive Int -&gt; (a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+$cpooledMapConcurrently_ :: forall env (m :: Type -&gt; Type) (f :: Type -&gt; Type) a b.
+(MonadAsync m, Foldable f, HasCallStack) =&gt;
+(a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+pooledMapConcurrently_ :: forall (f :: Type -&gt; Type) a b.
+(Foldable f, HasCallStack) =&gt;
+(a -&gt; ShellT env m b) -&gt; f a -&gt; ShellT env m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-async-0.1-39e959da60364930df1cb8c5cdf8238254801f4be9be7564365a2ec2c38d5ab0/share/doc/html/src/Effects.Concurrent.Async.html#MonadAsync"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadAsync</span></a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>      </span><span id="local-6989586621679531544"><span id="local-6989586621679531555"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; ShellT env m Client)
+-&gt; (HasCallStack =&gt;
+    Client -&gt; Note -&gt; ShellT env m (Maybe SomeException))
+-&gt; MonadDBus (ShellT env m)
+HasCallStack =&gt; ShellT env m Client
+HasCallStack =&gt;
+Client -&gt; Note -&gt; ShellT env m (Maybe SomeException)
+forall env (m :: Type -&gt; Type). MonadDBus m =&gt; Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadDBus m, HasCallStack) =&gt;
+ShellT env m Client
+forall env (m :: Type -&gt; Type).
+(MonadDBus m, HasCallStack) =&gt;
+Client -&gt; Note -&gt; ShellT env m (Maybe SomeException)
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; m Client)
+-&gt; (HasCallStack =&gt; Client -&gt; Note -&gt; m (Maybe SomeException))
+-&gt; MonadDBus m
+$cconnectSession :: forall env (m :: Type -&gt; Type).
+(MonadDBus m, HasCallStack) =&gt;
+ShellT env m Client
+connectSession :: HasCallStack =&gt; ShellT env m Client
+$cnotify :: forall env (m :: Type -&gt; Type).
+(MonadDBus m, HasCallStack) =&gt;
+Client -&gt; Note -&gt; ShellT env m (Maybe SomeException)
+notify :: HasCallStack =&gt;
+Client -&gt; Note -&gt; ShellT env m (Maybe SomeException)
+</span><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadDBus</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>      </span><span id="local-6989586621679531575"><span class="annot"><span class="annottext">MonadThrow (ShellT env m)
+MonadThrow (ShellT env m) =&gt;
+(forall e a.
+ (HasCallStack, Exception e) =&gt;
+ ShellT env m a -&gt; (e -&gt; ShellT env m a) -&gt; ShellT env m a)
+-&gt; MonadCatch (ShellT env m)
+forall e a.
+(HasCallStack, Exception e) =&gt;
+ShellT env m a -&gt; (e -&gt; ShellT env m a) -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type).
+MonadCatch m =&gt;
+MonadThrow (ShellT env m)
+forall env (m :: Type -&gt; Type) e a.
+(MonadCatch m, HasCallStack, Exception e) =&gt;
+ShellT env m a -&gt; (e -&gt; ShellT env m a) -&gt; ShellT env m a
+forall (m :: Type -&gt; Type).
+MonadThrow m =&gt;
+(forall e a.
+ (HasCallStack, Exception e) =&gt;
+ m a -&gt; (e -&gt; m a) -&gt; m a)
+-&gt; MonadCatch m
+$ccatch :: forall env (m :: Type -&gt; Type) e a.
+(MonadCatch m, HasCallStack, Exception e) =&gt;
+ShellT env m a -&gt; (e -&gt; ShellT env m a) -&gt; ShellT env m a
+catch :: forall e a.
+(HasCallStack, Exception e) =&gt;
+ShellT env m a -&gt; (e -&gt; ShellT env m a) -&gt; ShellT env m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadCatch</span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>      </span><span id="local-6989586621679531595"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; OsPath -&gt; ShellT env m ByteString)
+-&gt; MonadFileReader (ShellT env m)
+HasCallStack =&gt; OsPath -&gt; ShellT env m ByteString
+forall env (m :: Type -&gt; Type).
+MonadFileReader m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadFileReader m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ByteString
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; OsPath -&gt; m ByteString) -&gt; MonadFileReader m
+$creadBinaryFile :: forall env (m :: Type -&gt; Type).
+(MonadFileReader m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ByteString
+readBinaryFile :: HasCallStack =&gt; OsPath -&gt; ShellT env m ByteString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.FileReader.html#MonadFileReader"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadFileReader</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>      </span><span id="local-6989586621679531613"><span id="local-6989586621679531624"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; OsPath -&gt; ByteString -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; ByteString -&gt; ShellT env m ())
+-&gt; MonadFileWriter (ShellT env m)
+HasCallStack =&gt; OsPath -&gt; ByteString -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+MonadFileWriter m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadFileWriter m, HasCallStack) =&gt;
+OsPath -&gt; ByteString -&gt; ShellT env m ()
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; OsPath -&gt; ByteString -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; ByteString -&gt; m ())
+-&gt; MonadFileWriter m
+$cwriteBinaryFile :: forall env (m :: Type -&gt; Type).
+(MonadFileWriter m, HasCallStack) =&gt;
+OsPath -&gt; ByteString -&gt; ShellT env m ()
+writeBinaryFile :: HasCallStack =&gt; OsPath -&gt; ByteString -&gt; ShellT env m ()
+$cappendBinaryFile :: forall env (m :: Type -&gt; Type).
+(MonadFileWriter m, HasCallStack) =&gt;
+OsPath -&gt; ByteString -&gt; ShellT env m ()
+appendBinaryFile :: HasCallStack =&gt; OsPath -&gt; ByteString -&gt; ShellT env m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.FileWriter.html#MonadFileWriter"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadFileWriter</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>      </span><span id="local-6989586621679531641"><span id="local-6989586621679531652"><span id="local-6989586621679531662"><span id="local-6989586621679531672"><span id="local-6989586621679531682"><span id="local-6989586621679531692"><span id="local-6989586621679531702"><span id="local-6989586621679531712"><span id="local-6989586621679531722"><span id="local-6989586621679531732"><span id="local-6989586621679531742"><span id="local-6989586621679531752"><span id="local-6989586621679531762"><span id="local-6989586621679531772"><span id="local-6989586621679531782"><span id="local-6989586621679531792"><span id="local-6989586621679531802"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m BufferMode)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Char)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m ByteString)
+-&gt; MonadHandleReader (ShellT env m)
+HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+HasCallStack =&gt; Handle -&gt; ShellT env m Char
+HasCallStack =&gt; Handle -&gt; ShellT env m ByteString
+HasCallStack =&gt; Handle -&gt; ShellT env m BufferMode
+HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m Bool
+HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m ByteString
+forall env (m :: Type -&gt; Type).
+MonadHandleReader m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Char
+forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m ByteString
+forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m BufferMode
+forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; Int -&gt; ShellT env m Bool
+forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; Int -&gt; ShellT env m ByteString
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m BufferMode)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Bool)
+-&gt; (HasCallStack =&gt; Handle -&gt; m Char)
+-&gt; (HasCallStack =&gt; Handle -&gt; m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; m ByteString)
+-&gt; (HasCallStack =&gt; Handle -&gt; Int -&gt; m ByteString)
+-&gt; MonadHandleReader m
+$chIsEOF :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hIsEOF :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chGetBuffering :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m BufferMode
+hGetBuffering :: HasCallStack =&gt; Handle -&gt; ShellT env m BufferMode
+$chIsOpen :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hIsOpen :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chIsClosed :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hIsClosed :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chIsReadable :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hIsReadable :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chIsWritable :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hIsWritable :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chIsSeekable :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hIsSeekable :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chIsTerminalDevice :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hIsTerminalDevice :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chGetEcho :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hGetEcho :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chWaitForInput :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; Int -&gt; ShellT env m Bool
+hWaitForInput :: HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m Bool
+$chReady :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Bool
+hReady :: HasCallStack =&gt; Handle -&gt; ShellT env m Bool
+$chGetChar :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Char
+hGetChar :: HasCallStack =&gt; Handle -&gt; ShellT env m Char
+$chGetLine :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m ByteString
+hGetLine :: HasCallStack =&gt; Handle -&gt; ShellT env m ByteString
+$chGetContents :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m ByteString
+hGetContents :: HasCallStack =&gt; Handle -&gt; ShellT env m ByteString
+$chGet :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; Int -&gt; ShellT env m ByteString
+hGet :: HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m ByteString
+$chGetSome :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; Int -&gt; ShellT env m ByteString
+hGetSome :: HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m ByteString
+$chGetNonBlocking :: forall env (m :: Type -&gt; Type).
+(MonadHandleReader m, HasCallStack) =&gt;
+Handle -&gt; Int -&gt; ShellT env m ByteString
+hGetNonBlocking :: HasCallStack =&gt; Handle -&gt; Int -&gt; ShellT env m ByteString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleReader.html#MonadHandleReader"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadHandleReader</span></a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>      </span><span id="local-6989586621679531819"><span id="local-6989586621679531830"><span id="local-6989586621679531840"><span id="local-6989586621679531850"><span id="local-6989586621679531860"><span id="local-6989586621679531870"><span id="local-6989586621679531880"><span id="local-6989586621679531890"><span id="local-6989586621679531900"><span id="local-6989586621679531910"><span id="local-6989586621679531920"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; OsPath -&gt; IOMode -&gt; ShellT env m Handle)
+-&gt; (forall a.
+    HasCallStack =&gt;
+    OsPath -&gt; IOMode -&gt; (Handle -&gt; ShellT env m a) -&gt; ShellT env m a)
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; Integer -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; BufferMode -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt;
+    Handle -&gt; SeekMode -&gt; Integer -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; ShellT env m Integer)
+-&gt; (HasCallStack =&gt; Handle -&gt; Bool -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; ByteString -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt;
+    Handle -&gt; ByteString -&gt; ShellT env m ByteString)
+-&gt; MonadHandleWriter (ShellT env m)
+HasCallStack =&gt; Handle -&gt; ShellT env m Integer
+HasCallStack =&gt; Handle -&gt; ShellT env m ()
+HasCallStack =&gt; Handle -&gt; Bool -&gt; ShellT env m ()
+HasCallStack =&gt; Handle -&gt; Integer -&gt; ShellT env m ()
+HasCallStack =&gt; Handle -&gt; ByteString -&gt; ShellT env m ()
+HasCallStack =&gt; Handle -&gt; ByteString -&gt; ShellT env m ByteString
+HasCallStack =&gt; Handle -&gt; SeekMode -&gt; Integer -&gt; ShellT env m ()
+HasCallStack =&gt; Handle -&gt; BufferMode -&gt; ShellT env m ()
+HasCallStack =&gt; OsPath -&gt; IOMode -&gt; ShellT env m Handle
+forall a.
+HasCallStack =&gt;
+OsPath -&gt; IOMode -&gt; (Handle -&gt; ShellT env m a) -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type).
+MonadHandleWriter m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Integer
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Bool -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Integer -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; ShellT env m ByteString
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; SeekMode -&gt; Integer -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; BufferMode -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+OsPath -&gt; IOMode -&gt; ShellT env m Handle
+forall env (m :: Type -&gt; Type) a.
+(MonadHandleWriter m, HasCallStack) =&gt;
+OsPath -&gt; IOMode -&gt; (Handle -&gt; ShellT env m a) -&gt; ShellT env m a
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; OsPath -&gt; IOMode -&gt; m Handle)
+-&gt; (forall a.
+    HasCallStack =&gt;
+    OsPath -&gt; IOMode -&gt; (Handle -&gt; m a) -&gt; m a)
+-&gt; (HasCallStack =&gt; Handle -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; Integer -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; BufferMode -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; SeekMode -&gt; Integer -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; m Integer)
+-&gt; (HasCallStack =&gt; Handle -&gt; Bool -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; ByteString -&gt; m ())
+-&gt; (HasCallStack =&gt; Handle -&gt; ByteString -&gt; m ByteString)
+-&gt; MonadHandleWriter m
+$copenBinaryFile :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+OsPath -&gt; IOMode -&gt; ShellT env m Handle
+openBinaryFile :: HasCallStack =&gt; OsPath -&gt; IOMode -&gt; ShellT env m Handle
+$cwithBinaryFile :: forall env (m :: Type -&gt; Type) a.
+(MonadHandleWriter m, HasCallStack) =&gt;
+OsPath -&gt; IOMode -&gt; (Handle -&gt; ShellT env m a) -&gt; ShellT env m a
+withBinaryFile :: forall a.
+HasCallStack =&gt;
+OsPath -&gt; IOMode -&gt; (Handle -&gt; ShellT env m a) -&gt; ShellT env m a
+$chClose :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m ()
+hClose :: HasCallStack =&gt; Handle -&gt; ShellT env m ()
+$chFlush :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m ()
+hFlush :: HasCallStack =&gt; Handle -&gt; ShellT env m ()
+$chSetFileSize :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Integer -&gt; ShellT env m ()
+hSetFileSize :: HasCallStack =&gt; Handle -&gt; Integer -&gt; ShellT env m ()
+$chSetBuffering :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; BufferMode -&gt; ShellT env m ()
+hSetBuffering :: HasCallStack =&gt; Handle -&gt; BufferMode -&gt; ShellT env m ()
+$chSeek :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; SeekMode -&gt; Integer -&gt; ShellT env m ()
+hSeek :: HasCallStack =&gt; Handle -&gt; SeekMode -&gt; Integer -&gt; ShellT env m ()
+$chTell :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ShellT env m Integer
+hTell :: HasCallStack =&gt; Handle -&gt; ShellT env m Integer
+$chSetEcho :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; Bool -&gt; ShellT env m ()
+hSetEcho :: HasCallStack =&gt; Handle -&gt; Bool -&gt; ShellT env m ()
+$chPut :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; ShellT env m ()
+hPut :: HasCallStack =&gt; Handle -&gt; ByteString -&gt; ShellT env m ()
+$chPutNonBlocking :: forall env (m :: Type -&gt; Type).
+(MonadHandleWriter m, HasCallStack) =&gt;
+Handle -&gt; ByteString -&gt; ShellT env m ByteString
+hPutNonBlocking :: HasCallStack =&gt; Handle -&gt; ByteString -&gt; ShellT env m ByteString
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.HandleWriter.html#MonadHandleWriter"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadHandleWriter</span></a></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-37"></span><span>      </span><span id="local-6989586621679531934"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(forall a. IO a -&gt; ShellT env m a) -&gt; MonadIO (ShellT env m)
+forall a. IO a -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type). MonadIO m =&gt; Monad (ShellT env m)
+forall env (m :: Type -&gt; Type) a.
+MonadIO m =&gt;
+IO a -&gt; ShellT env m a
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(forall a. IO a -&gt; m a) -&gt; MonadIO m
+$cliftIO :: forall env (m :: Type -&gt; Type) a.
+MonadIO m =&gt;
+IO a -&gt; ShellT env m a
+liftIO :: forall a. IO a -&gt; ShellT env m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadIO</span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>      </span><span id="local-6989586621679531949"><span id="local-6989586621679531960"><span id="local-6989586621679531970"><span id="local-6989586621679531980"><span id="local-6989586621679531990"><span id="local-6989586621679532000"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(forall a. HasCallStack =&gt; a -&gt; ShellT env m (IORef a))
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; ShellT env m a)
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; ShellT env m ())
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; ShellT env m ())
+-&gt; (forall a.
+    HasCallStack =&gt;
+    IORef a -&gt; (a -&gt; a) -&gt; ShellT env m ())
+-&gt; (forall a b.
+    HasCallStack =&gt;
+    IORef a -&gt; (a -&gt; (a, b)) -&gt; ShellT env m b)
+-&gt; MonadIORef (ShellT env m)
+forall a. HasCallStack =&gt; a -&gt; ShellT env m (IORef a)
+forall a. HasCallStack =&gt; IORef a -&gt; ShellT env m a
+forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; ShellT env m ()
+forall a. HasCallStack =&gt; IORef a -&gt; (a -&gt; a) -&gt; ShellT env m ()
+forall a b.
+HasCallStack =&gt;
+IORef a -&gt; (a -&gt; (a, b)) -&gt; ShellT env m b
+forall env (m :: Type -&gt; Type).
+MonadIORef m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; ShellT env m (IORef a)
+forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; a -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; a) -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a b.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; (a, b)) -&gt; ShellT env m b
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(forall a. HasCallStack =&gt; a -&gt; m (IORef a))
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; m a)
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; m ())
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; m ())
+-&gt; (forall a. HasCallStack =&gt; IORef a -&gt; (a -&gt; a) -&gt; m ())
+-&gt; (forall a b. HasCallStack =&gt; IORef a -&gt; (a -&gt; (a, b)) -&gt; m b)
+-&gt; MonadIORef m
+$cnewIORef :: forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+a -&gt; ShellT env m (IORef a)
+newIORef :: forall a. HasCallStack =&gt; a -&gt; ShellT env m (IORef a)
+$creadIORef :: forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; ShellT env m a
+readIORef :: forall a. HasCallStack =&gt; IORef a -&gt; ShellT env m a
+$cwriteIORef :: forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; a -&gt; ShellT env m ()
+writeIORef :: forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; ShellT env m ()
+$catomicWriteIORef :: forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; a -&gt; ShellT env m ()
+atomicWriteIORef :: forall a. HasCallStack =&gt; IORef a -&gt; a -&gt; ShellT env m ()
+$cmodifyIORef' :: forall env (m :: Type -&gt; Type) a.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; a) -&gt; ShellT env m ()
+modifyIORef' :: forall a. HasCallStack =&gt; IORef a -&gt; (a -&gt; a) -&gt; ShellT env m ()
+$catomicModifyIORef' :: forall env (m :: Type -&gt; Type) a b.
+(MonadIORef m, HasCallStack) =&gt;
+IORef a -&gt; (a -&gt; (a, b)) -&gt; ShellT env m b
+atomicModifyIORef' :: forall a b.
+HasCallStack =&gt;
+IORef a -&gt; (a -&gt; (a, b)) -&gt; ShellT env m b
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-ioref-0.1-860d8f404f53dca6781ee08a504921b2a5ad366cec6f6ee0bf36a6df9af5a101/share/doc/html/src/Effects.IORef.html#MonadIORef"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadIORef</span></a></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>      </span><span id="local-6989586621679532017"><span id="local-6989586621679532028"><span id="local-6989586621679532038"><span class="annot"><span class="annottext">MonadCatch (ShellT env m)
+MonadCatch (ShellT env m) =&gt;
+(forall b.
+ HasCallStack =&gt;
+ ((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+ -&gt; ShellT env m b)
+-&gt; (forall b.
+    HasCallStack =&gt;
+    ((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+    -&gt; ShellT env m b)
+-&gt; (forall a b c.
+    HasCallStack =&gt;
+    ShellT env m a
+    -&gt; (a -&gt; ExitCase b -&gt; ShellT env m c)
+    -&gt; (a -&gt; ShellT env m b)
+    -&gt; ShellT env m (b, c))
+-&gt; MonadMask (ShellT env m)
+forall b.
+HasCallStack =&gt;
+((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+-&gt; ShellT env m b
+forall a b c.
+HasCallStack =&gt;
+ShellT env m a
+-&gt; (a -&gt; ExitCase b -&gt; ShellT env m c)
+-&gt; (a -&gt; ShellT env m b)
+-&gt; ShellT env m (b, c)
+forall env (m :: Type -&gt; Type).
+MonadMask m =&gt;
+MonadCatch (ShellT env m)
+forall env (m :: Type -&gt; Type) b.
+(MonadMask m, HasCallStack) =&gt;
+((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+-&gt; ShellT env m b
+forall env (m :: Type -&gt; Type) a b c.
+(MonadMask m, HasCallStack) =&gt;
+ShellT env m a
+-&gt; (a -&gt; ExitCase b -&gt; ShellT env m c)
+-&gt; (a -&gt; ShellT env m b)
+-&gt; ShellT env m (b, c)
+forall (m :: Type -&gt; Type).
+MonadCatch m =&gt;
+(forall b. HasCallStack =&gt; ((forall a. m a -&gt; m a) -&gt; m b) -&gt; m b)
+-&gt; (forall b.
+    HasCallStack =&gt;
+    ((forall a. m a -&gt; m a) -&gt; m b) -&gt; m b)
+-&gt; (forall a b c.
+    HasCallStack =&gt;
+    m a -&gt; (a -&gt; ExitCase b -&gt; m c) -&gt; (a -&gt; m b) -&gt; m (b, c))
+-&gt; MonadMask m
+$cmask :: forall env (m :: Type -&gt; Type) b.
+(MonadMask m, HasCallStack) =&gt;
+((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+-&gt; ShellT env m b
+mask :: forall b.
+HasCallStack =&gt;
+((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+-&gt; ShellT env m b
+$cuninterruptibleMask :: forall env (m :: Type -&gt; Type) b.
+(MonadMask m, HasCallStack) =&gt;
+((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+-&gt; ShellT env m b
+uninterruptibleMask :: forall b.
+HasCallStack =&gt;
+((forall a. ShellT env m a -&gt; ShellT env m a) -&gt; ShellT env m b)
+-&gt; ShellT env m b
+$cgeneralBracket :: forall env (m :: Type -&gt; Type) a b c.
+(MonadMask m, HasCallStack) =&gt;
+ShellT env m a
+-&gt; (a -&gt; ExitCase b -&gt; ShellT env m c)
+-&gt; (a -&gt; ShellT env m b)
+-&gt; ShellT env m (b, c)
+generalBracket :: forall a b c.
+HasCallStack =&gt;
+ShellT env m a
+-&gt; (a -&gt; ExitCase b -&gt; ShellT env m c)
+-&gt; (a -&gt; ShellT env m b)
+-&gt; ShellT env m (b, c)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadMask</span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>      </span><span id="local-6989586621679532055"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; Text -&gt; ShellT env m (Maybe ByteString))
+-&gt; MonadNotifySend (ShellT env m)
+HasCallStack =&gt; Text -&gt; ShellT env m (Maybe ByteString)
+forall env (m :: Type -&gt; Type).
+MonadNotifySend m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadNotifySend m, HasCallStack) =&gt;
+Text -&gt; ShellT env m (Maybe ByteString)
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; Text -&gt; m (Maybe ByteString)) -&gt; MonadNotifySend m
+$cnotify :: forall env (m :: Type -&gt; Type).
+(MonadNotifySend m, HasCallStack) =&gt;
+Text -&gt; ShellT env m (Maybe ByteString)
+notify :: HasCallStack =&gt; Text -&gt; ShellT env m (Maybe ByteString)
+</span><a href="Shrun.Notify.MonadNotifySend.html#MonadNotifySend"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadNotifySend</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>      </span><span id="local-6989586621679532073"><span id="local-6989586621679532084"><span id="local-6989586621679532094"><span id="local-6989586621679532104"><span id="local-6989586621679532114"><span id="local-6989586621679532124"><span id="local-6989586621679532134"><span id="local-6989586621679532144"><span id="local-6989586621679532154"><span id="local-6989586621679532164"><span id="local-6989586621679532174"><span id="local-6989586621679532184"><span id="local-6989586621679532194"><span id="local-6989586621679532204"><span id="local-6989586621679532214"><span id="local-6989586621679532224"><span id="local-6989586621679532234"><span id="local-6989586621679532244"><span id="local-6989586621679532254"><span id="local-6989586621679532264"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; Bool -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; ShellT env m ())
+-&gt; (forall a.
+    HasCallStack =&gt;
+    OsPath -&gt; ShellT env m a -&gt; ShellT env m a)
+-&gt; (HasCallStack =&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; Permissions -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; UTCTime -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; UTCTime -&gt; ShellT env m ())
+-&gt; MonadPathWriter (ShellT env m)
+HasCallStack =&gt; Bool -&gt; OsPath -&gt; ShellT env m ()
+HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+HasCallStack =&gt; OsPath -&gt; UTCTime -&gt; ShellT env m ()
+HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+HasCallStack =&gt; OsPath -&gt; Permissions -&gt; ShellT env m ()
+forall a.
+HasCallStack =&gt;
+OsPath -&gt; ShellT env m a -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type).
+MonadPathWriter m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+Bool -&gt; OsPath -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; UTCTime -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; Permissions -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) a.
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m a -&gt; ShellT env m a
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; Bool -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; m ())
+-&gt; (forall a. HasCallStack =&gt; OsPath -&gt; m a -&gt; m a)
+-&gt; (HasCallStack =&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; Permissions -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; OsPath -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; UTCTime -&gt; m ())
+-&gt; (HasCallStack =&gt; OsPath -&gt; UTCTime -&gt; m ())
+-&gt; MonadPathWriter m
+$ccreateDirectory :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+createDirectory :: HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+$ccreateDirectoryIfMissing :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+Bool -&gt; OsPath -&gt; ShellT env m ()
+createDirectoryIfMissing :: HasCallStack =&gt; Bool -&gt; OsPath -&gt; ShellT env m ()
+$cremoveDirectory :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+removeDirectory :: HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+$cremoveDirectoryRecursive :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+removeDirectoryRecursive :: HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+$cremovePathForcibly :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+removePathForcibly :: HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+$crenameDirectory :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+renameDirectory :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$csetCurrentDirectory :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+setCurrentDirectory :: HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+$cwithCurrentDirectory :: forall env (m :: Type -&gt; Type) a.
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m a -&gt; ShellT env m a
+withCurrentDirectory :: forall a.
+HasCallStack =&gt;
+OsPath -&gt; ShellT env m a -&gt; ShellT env m a
+$cremoveFile :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+removeFile :: HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+$crenameFile :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+renameFile :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$crenamePath :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+renamePath :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$ccopyFile :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+copyFile :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$ccopyFileWithMetadata :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+copyFileWithMetadata :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$ccreateFileLink :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+createFileLink :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$ccreateDirectoryLink :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+createDirectoryLink :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$cremoveDirectoryLink :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; ShellT env m ()
+removeDirectoryLink :: HasCallStack =&gt; OsPath -&gt; ShellT env m ()
+$csetPermissions :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; Permissions -&gt; ShellT env m ()
+setPermissions :: HasCallStack =&gt; OsPath -&gt; Permissions -&gt; ShellT env m ()
+$ccopyPermissions :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; OsPath -&gt; ShellT env m ()
+copyPermissions :: HasCallStack =&gt; OsPath -&gt; OsPath -&gt; ShellT env m ()
+$csetAccessTime :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; UTCTime -&gt; ShellT env m ()
+setAccessTime :: HasCallStack =&gt; OsPath -&gt; UTCTime -&gt; ShellT env m ()
+$csetModificationTime :: forall env (m :: Type -&gt; Type).
+(MonadPathWriter m, HasCallStack) =&gt;
+OsPath -&gt; UTCTime -&gt; ShellT env m ()
+setModificationTime :: HasCallStack =&gt; OsPath -&gt; UTCTime -&gt; ShellT env m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-0.1-41974851db458d24d7ece8322c69e073da21672623bf03800b727feccee8eadf/share/doc/html/src/Effects.FileSystem.PathWriter.html#MonadPathWriter"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadPathWriter</span></a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>      </span><span id="local-6989586621679532281"><span id="local-6989586621679532292"><span id="local-6989586621679532302"><span id="local-6989586621679532312"><span id="local-6989586621679532322"><span id="local-6989586621679532332"><span id="local-6989586621679532342"><span id="local-6989586621679532352"><span id="local-6989586621679532362"><span id="local-6989586621679532372"><span id="local-6989586621679532382"><span id="local-6989586621679532392"><span id="local-6989586621679532402"><span id="local-6989586621679532412"><span id="local-6989586621679532422"><span id="local-6989586621679532432"><span id="local-6989586621679532442"><span id="local-6989586621679532452"><span id="local-6989586621679532462"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(forall stdin stdout stderr.
+ HasCallStack =&gt;
+ ProcessConfig stdin stdout stderr -&gt; ShellT env m ExitCode)
+-&gt; (forall stdin stdoutIgnored stderrIgnored.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderrIgnored
+    -&gt; ShellT env m (ExitCode, ByteString, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; ShellT env m (ExitCode, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; ShellT env m (ExitCode, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; ShellT env m (ExitCode, ByteString))
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+    -&gt; ShellT env m a)
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+    -&gt; ShellT env m a)
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; ShellT env m (Process stdin stdout stderr))
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; ShellT env m ())
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr -&gt; ShellT env m ())
+-&gt; (forall stdin stdoutIgnored stderrIgnored.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderrIgnored
+    -&gt; ShellT env m (ByteString, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; ShellT env m ByteString)
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; ShellT env m ByteString)
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; ShellT env m ByteString)
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+    -&gt; ShellT env m a)
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+    -&gt; ShellT env m a)
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; ShellT env m ExitCode)
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; ShellT env m (Maybe ExitCode))
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; ShellT env m ())
+-&gt; MonadTypedProcess (ShellT env m)
+forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; ShellT env m (Maybe ExitCode)
+forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ()
+forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ExitCode
+forall stdin stdout stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ()
+forall stdin stdoutIgnored stderrIgnored.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ByteString, ByteString)
+forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+forall stdin stdoutIgnored stderrIgnored.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ExitCode, ByteString, ByteString)
+forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+forall stdin stdout stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ExitCode
+forall stdin stdout stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; ShellT env m (Process stdin stdout stderr)
+forall stdin stdout stderr a.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+forall env (m :: Type -&gt; Type).
+MonadTypedProcess m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; ShellT env m (Maybe ExitCode)
+forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ExitCode
+forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderrIgnored.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ByteString, ByteString)
+forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderrIgnored.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ExitCode, ByteString, ByteString)
+forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ExitCode
+forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; ShellT env m (Process stdin stdout stderr)
+forall env (m :: Type -&gt; Type) stdin stdout stderr a.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(forall stdin stdout stderr.
+ HasCallStack =&gt;
+ ProcessConfig stdin stdout stderr -&gt; m ExitCode)
+-&gt; (forall stdin stdoutIgnored stderrIgnored.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderrIgnored
+    -&gt; m (ExitCode, ByteString, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; m (ExitCode, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; m (ExitCode, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr
+    -&gt; m (ExitCode, ByteString))
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; m a) -&gt; m a)
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; m a) -&gt; m a)
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; m (Process stdin stdout stderr))
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; m ())
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr -&gt; m ())
+-&gt; (forall stdin stdoutIgnored stderrIgnored.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderrIgnored
+    -&gt; m (ByteString, ByteString))
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr -&gt; m ByteString)
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr -&gt; m ByteString)
+-&gt; (forall stdin stdoutIgnored stderr.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdoutIgnored stderr -&gt; m ByteString)
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; m a) -&gt; m a)
+-&gt; (forall stdin stdout stderr a.
+    HasCallStack =&gt;
+    ProcessConfig stdin stdout stderr
+    -&gt; (Process stdin stdout stderr -&gt; m a) -&gt; m a)
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; m ExitCode)
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; m (Maybe ExitCode))
+-&gt; (forall stdin stdout stderr.
+    HasCallStack =&gt;
+    Process stdin stdout stderr -&gt; m ())
+-&gt; MonadTypedProcess m
+$crunProcess :: forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ExitCode
+runProcess :: forall stdin stdout stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ExitCode
+$creadProcess :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderrIgnored.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ExitCode, ByteString, ByteString)
+readProcess :: forall stdin stdoutIgnored stderrIgnored.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ExitCode, ByteString, ByteString)
+$creadProcessStdout :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+readProcessStdout :: forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+$creadProcessStderr :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+readProcessStderr :: forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+$creadProcessInterleaved :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+readProcessInterleaved :: forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr
+-&gt; ShellT env m (ExitCode, ByteString)
+$cwithProcessWait :: forall env (m :: Type -&gt; Type) stdin stdout stderr a.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+withProcessWait :: forall stdin stdout stderr a.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+$cwithProcessTerm :: forall env (m :: Type -&gt; Type) stdin stdout stderr a.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+withProcessTerm :: forall stdin stdout stderr a.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+$cstartProcess :: forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; ShellT env m (Process stdin stdout stderr)
+startProcess :: forall stdin stdout stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; ShellT env m (Process stdin stdout stderr)
+$cstopProcess :: forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ()
+stopProcess :: forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ()
+$crunProcess_ :: forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ()
+runProcess_ :: forall stdin stdout stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr -&gt; ShellT env m ()
+$creadProcess_ :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderrIgnored.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ByteString, ByteString)
+readProcess_ :: forall stdin stdoutIgnored stderrIgnored.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderrIgnored
+-&gt; ShellT env m (ByteString, ByteString)
+$creadProcessStdout_ :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+readProcessStdout_ :: forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+$creadProcessStderr_ :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+readProcessStderr_ :: forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+$creadProcessInterleaved_ :: forall env (m :: Type -&gt; Type) stdin stdoutIgnored stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+readProcessInterleaved_ :: forall stdin stdoutIgnored stderr.
+HasCallStack =&gt;
+ProcessConfig stdin stdoutIgnored stderr -&gt; ShellT env m ByteString
+$cwithProcessWait_ :: forall env (m :: Type -&gt; Type) stdin stdout stderr a.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+withProcessWait_ :: forall stdin stdout stderr a.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+$cwithProcessTerm_ :: forall env (m :: Type -&gt; Type) stdin stdout stderr a.
+(MonadTypedProcess m, HasCallStack) =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+withProcessTerm_ :: forall stdin stdout stderr a.
+HasCallStack =&gt;
+ProcessConfig stdin stdout stderr
+-&gt; (Process stdin stdout stderr -&gt; ShellT env m a)
+-&gt; ShellT env m a
+$cwaitExitCode :: forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ExitCode
+waitExitCode :: forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ExitCode
+$cgetExitCode :: forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; ShellT env m (Maybe ExitCode)
+getExitCode :: forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; ShellT env m (Maybe ExitCode)
+$ccheckExitCode :: forall env (m :: Type -&gt; Type) stdin stdout stderr.
+(MonadTypedProcess m, HasCallStack) =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ()
+checkExitCode :: forall stdin stdout stderr.
+HasCallStack =&gt;
+Process stdin stdout stderr -&gt; ShellT env m ()
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-typed-process-0.1-31e678bb34cc115b0fb9f823b4d3adb6e0d62694ea4adcda5e17b43bcf3a790e/share/doc/html/src/Effects.Process.Typed.html#MonadTypedProcess"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadTypedProcess</span></a></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>      </span><span id="local-6989586621679532475"><span id="local-6989586621679532480"><span id="local-6989586621679532484"><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="#local-6989586621679531056"><span class="hs-identifier hs-type">env</span></a></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>      </span><span id="local-6989586621679532497"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(forall a. HasCallStack =&gt; STM a -&gt; ShellT env m a)
+-&gt; MonadSTM (ShellT env m)
+forall a. HasCallStack =&gt; STM a -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type). MonadSTM m =&gt; Monad (ShellT env m)
+forall env (m :: Type -&gt; Type) a.
+(MonadSTM m, HasCallStack) =&gt;
+STM a -&gt; ShellT env m a
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(forall a. HasCallStack =&gt; STM a -&gt; m a) -&gt; MonadSTM m
+$catomically :: forall env (m :: Type -&gt; Type) a.
+(MonadSTM m, HasCallStack) =&gt;
+STM a -&gt; ShellT env m a
+atomically :: forall a. HasCallStack =&gt; STM a -&gt; ShellT env m a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-stm-0.1-7ff2212c4013d17bdc0ec4628b5f9a2b075bd6564a712d7c604a27b5eb873089/share/doc/html/src/Effects.Concurrent.STM.html#MonadSTM"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadSTM</span></a></span></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>      </span><span id="local-6989586621679532515"><span id="local-6989586621679532528"><span id="local-6989586621679532540"><span id="local-6989586621679532550"><span id="local-6989586621679532560"><span id="local-6989586621679532570"><span id="local-6989586621679532580"><span id="local-6989586621679532590"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; Int -&gt; ShellT env m ())
+-&gt; (forall e.
+    (Exception e, HasCallStack) =&gt;
+    ThreadId -&gt; e -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; ShellT env m Int)
+-&gt; (HasCallStack =&gt; Int -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; ThreadId -&gt; ShellT env m (Int, Bool))
+-&gt; (HasCallStack =&gt; ShellT env m ThreadId)
+-&gt; (HasCallStack =&gt; ThreadId -&gt; String -&gt; ShellT env m ())
+-&gt; (HasCallStack =&gt; ThreadId -&gt; ShellT env m (Maybe String))
+-&gt; MonadThread (ShellT env m)
+HasCallStack =&gt; ShellT env m Int
+HasCallStack =&gt; ShellT env m ThreadId
+HasCallStack =&gt; Int -&gt; ShellT env m ()
+HasCallStack =&gt; ThreadId -&gt; ShellT env m (Maybe String)
+HasCallStack =&gt; ThreadId -&gt; ShellT env m (Int, Bool)
+HasCallStack =&gt; ThreadId -&gt; String -&gt; ShellT env m ()
+forall e.
+(Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+MonadThread m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ShellT env m Int
+forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ShellT env m ThreadId
+forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+Int -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; ShellT env m (Maybe String)
+forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; ShellT env m (Int, Bool)
+forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; String -&gt; ShellT env m ()
+forall env (m :: Type -&gt; Type) e.
+(MonadThread m, Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; ShellT env m ()
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; Int -&gt; m ())
+-&gt; (forall e. (Exception e, HasCallStack) =&gt; ThreadId -&gt; e -&gt; m ())
+-&gt; (HasCallStack =&gt; m Int)
+-&gt; (HasCallStack =&gt; Int -&gt; m ())
+-&gt; (HasCallStack =&gt; ThreadId -&gt; m (Int, Bool))
+-&gt; (HasCallStack =&gt; m ThreadId)
+-&gt; (HasCallStack =&gt; ThreadId -&gt; String -&gt; m ())
+-&gt; (HasCallStack =&gt; ThreadId -&gt; m (Maybe String))
+-&gt; MonadThread m
+$cthreadDelay :: forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+Int -&gt; ShellT env m ()
+threadDelay :: HasCallStack =&gt; Int -&gt; ShellT env m ()
+$cthrowTo :: forall env (m :: Type -&gt; Type) e.
+(MonadThread m, Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; ShellT env m ()
+throwTo :: forall e.
+(Exception e, HasCallStack) =&gt;
+ThreadId -&gt; e -&gt; ShellT env m ()
+$cgetNumCapabilities :: forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ShellT env m Int
+getNumCapabilities :: HasCallStack =&gt; ShellT env m Int
+$csetNumCapabilities :: forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+Int -&gt; ShellT env m ()
+setNumCapabilities :: HasCallStack =&gt; Int -&gt; ShellT env m ()
+$cthreadCapability :: forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; ShellT env m (Int, Bool)
+threadCapability :: HasCallStack =&gt; ThreadId -&gt; ShellT env m (Int, Bool)
+$cmyThreadId :: forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ShellT env m ThreadId
+myThreadId :: HasCallStack =&gt; ShellT env m ThreadId
+$clabelThread :: forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; String -&gt; ShellT env m ()
+labelThread :: HasCallStack =&gt; ThreadId -&gt; String -&gt; ShellT env m ()
+$cthreadLabel :: forall env (m :: Type -&gt; Type).
+(MonadThread m, HasCallStack) =&gt;
+ThreadId -&gt; ShellT env m (Maybe String)
+threadLabel :: HasCallStack =&gt; ThreadId -&gt; ShellT env m (Maybe String)
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-thread-0.1-11ce15cb9eb5648ab1cfa155131e7e96f8382aa643017eb72fc799e6059083e1/share/doc/html/src/Effects.Concurrent.Thread.html#MonadThread"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadThread</span></a></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>      </span><span id="local-6989586621679532607"><span id="local-6989586621679532618"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(HasCallStack =&gt; ShellT env m ZonedTime)
+-&gt; (HasCallStack =&gt; ShellT env m Double)
+-&gt; MonadTime (ShellT env m)
+HasCallStack =&gt; ShellT env m Double
+HasCallStack =&gt; ShellT env m ZonedTime
+forall env (m :: Type -&gt; Type). MonadTime m =&gt; Monad (ShellT env m)
+forall env (m :: Type -&gt; Type).
+(MonadTime m, HasCallStack) =&gt;
+ShellT env m Double
+forall env (m :: Type -&gt; Type).
+(MonadTime m, HasCallStack) =&gt;
+ShellT env m ZonedTime
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(HasCallStack =&gt; m ZonedTime)
+-&gt; (HasCallStack =&gt; m Double) -&gt; MonadTime m
+$cgetSystemZonedTime :: forall env (m :: Type -&gt; Type).
+(MonadTime m, HasCallStack) =&gt;
+ShellT env m ZonedTime
+getSystemZonedTime :: HasCallStack =&gt; ShellT env m ZonedTime
+$cgetMonotonicTime :: forall env (m :: Type -&gt; Type).
+(MonadTime m, HasCallStack) =&gt;
+ShellT env m Double
+getMonotonicTime :: HasCallStack =&gt; ShellT env m Double
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-time-0.1-2d36b70ff2ff08d46ea800f2a01319f93564f934493130e6fdcee8591d088979/share/doc/html/src/Effects.Time.html#MonadTime"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var">MonadTime</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-47"></span><span>      </span><span id="local-6989586621679532637"><span class="annot"><span class="annottext">Monad (ShellT env m)
+Monad (ShellT env m) =&gt;
+(forall e a. (HasCallStack, Exception e) =&gt; e -&gt; ShellT env m a)
+-&gt; MonadThrow (ShellT env m)
+forall e a. (HasCallStack, Exception e) =&gt; e -&gt; ShellT env m a
+forall env (m :: Type -&gt; Type).
+MonadThrow m =&gt;
+Monad (ShellT env m)
+forall env (m :: Type -&gt; Type) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; ShellT env m a
+forall (m :: Type -&gt; Type).
+Monad m =&gt;
+(forall e a. (HasCallStack, Exception e) =&gt; e -&gt; m a)
+-&gt; MonadThrow m
+$cthrowM :: forall env (m :: Type -&gt; Type) e a.
+(MonadThrow m, HasCallStack, Exception e) =&gt;
+e -&gt; ShellT env m a
+throwM :: forall e a. (HasCallStack, Exception e) =&gt; e -&gt; ShellT env m a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadThrow</span></span></span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-keyword">via</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="#local-6989586621679531056"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679531057"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="annot"><span class="hs-comment">-- | Runs a 'ShellT' with the given @env@.</span></span><span>
+</span><span id="line-52"></span><span class="annot"><a href="Shrun.ShellT.html#runShellT"><span class="hs-identifier hs-type">runShellT</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679530939"><span class="annot"><a href="#local-6989586621679530939"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679530938"><span class="annot"><a href="#local-6989586621679530938"><span class="hs-identifier hs-type">env</span></a></span></span><span> </span><span id="local-6989586621679530940"><span class="annot"><a href="#local-6989586621679530940"><span class="hs-identifier hs-type">a</span></a></span></span><span class="hs-operator">.</span><span> </span><span class="annot"><a href="Shrun.ShellT.html#ShellT"><span class="hs-identifier hs-type">ShellT</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530938"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530939"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530940"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679530938"><span class="hs-identifier hs-type">env</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679530939"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530940"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-53"></span><span id="runShellT"><span class="annot"><span class="annottext">runShellT :: forall (m :: Type -&gt; Type) env a. ShellT env m a -&gt; env -&gt; m a
+</span><a href="Shrun.ShellT.html#runShellT"><span class="hs-identifier hs-var hs-var">runShellT</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.ShellT.html#MkShellT"><span class="hs-identifier hs-type">MkShellT</span></a></span><span> </span><span id="local-6989586621679532648"><span class="annot"><span class="annottext">ReaderT env m a
+</span><a href="#local-6989586621679532648"><span class="hs-identifier hs-var">rdr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ReaderT env m a -&gt; env -&gt; m a
+forall r (m :: Type -&gt; Type) a. ReaderT r m a -&gt; r -&gt; m a
+</span><span class="hs-identifier hs-var">runReaderT</span></span><span> </span><span class="annot"><span class="annottext">ReaderT env m a
+</span><a href="#local-6989586621679532648"><span class="hs-identifier hs-var">rdr</span></a></span><span>
+</span><span id="line-54"></span><span class="hs-pragma">{-# INLINEABLE</span><span> </span><span class="annot"><a href="Shrun.ShellT.html#runShellT"><span class="hs-pragma hs-type">runShellT</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- Concrete Env here so we can vary our logging logic with other envs</span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- (i.e. in tests).</span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- Can't use @deriving via m@ due to a bug: GHC version 9.2.5: No skolem info:@.</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- https://gitlab.haskell.org/ghc/ghc/-/issues/15376</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span id="local-6989586621679532658"><span id="local-6989586621679532669"><span id="local-6989586621679532680"><span id="local-6989586621679532691"><span class="hs-keyword">deriving</span><span> </span><span id="local-6989586621679530961"><span id="local-6989586621679530962"><span class="annot"><a href="#local-6989586621679530961"><span class="hs-keyword hs-type hs-type">newtype</span></a></span></span></span><span> </span><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530961"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Shrun.Logging.MonadRegionLogger.html#MonadRegionLogger"><span class="hs-identifier hs-type">MonadRegionLogger</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.ShellT.html#ShellT"><span class="hs-identifier hs-type">ShellT</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#Env"><span class="hs-identifier hs-type">Env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530962"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679530961"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span></span></span></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-65"></span><span>  </span><span id="local-6989586621679530969"><span id="local-6989586621679530970"><span class="hs-special">(</span><span> </span><span class="annot"><a href="Shrun.Notify.MonadAppleScript.html#MonadAppleScript"><span class="hs-identifier hs-type">MonadAppleScript</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530969"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><a href="Shrun.Notify.MonadDBus.html#MonadDBus"><span class="hs-identifier hs-type">MonadDBus</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530969"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><a href="Shrun.Notify.MonadNotifySend.html#MonadNotifySend"><span class="hs-identifier hs-type">MonadNotifySend</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530969"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-69"></span><span>  </span><span class="annot"><a href="Shrun.Notify.MonadNotify.html#MonadNotify"><span class="hs-identifier hs-type">MonadNotify</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.ShellT.html#ShellT"><span class="hs-identifier hs-type">ShellT</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Configuration.Env.Types.html#Env"><span class="hs-identifier hs-type">Env</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679530970"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679530969"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-70"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-71"></span><span>  </span><span id="local-6989586621679532765"><span class="annot"><span class="annottext">notify :: HasCallStack =&gt;
+ShrunNote -&gt; ShellT (Env r) m (Maybe NotifyException)
+</span><a href="Shrun.Notify.MonadNotify.html#notify"><span class="hs-identifier hs-var hs-var hs-var hs-var">notify</span></a></span></span><span> </span><span id="local-6989586621679532766"><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679532766"><span class="hs-identifier hs-var">note</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">(Env r -&gt; Maybe (NotifySystemP 'ConfigPhaseEnv))
+-&gt; ShellT (Env r) m (Maybe (NotifySystemP 'ConfigPhaseEnv))
+forall r (m :: Type -&gt; Type) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
+</span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic'
+  An_AffineTraversal NoIx (Env r) (NotifySystemP 'ConfigPhaseEnv)
+-&gt; Env r -&gt; Maybe (NotifySystemP 'ConfigPhaseEnv)
+forall k (is :: IxList) s a.
+Is k An_AffineFold =&gt;
+Optic' k is s a -&gt; s -&gt; Maybe a
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.AffineFold.html#preview"><span class="hs-identifier hs-var">preview</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  (Env r)
+  (Env r)
+  (CoreConfigP 'ConfigPhaseEnv)
+  (CoreConfigP 'ConfigPhaseEnv)
+</span><span class="">#config</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  (Env r)
+  (Env r)
+  (CoreConfigP 'ConfigPhaseEnv)
+  (CoreConfigP 'ConfigPhaseEnv)
+-&gt; Optic
+     A_Lens
+     NoIx
+     (CoreConfigP 'ConfigPhaseEnv)
+     (CoreConfigP 'ConfigPhaseEnv)
+     (Maybe (NotifyP 'ConfigPhaseEnv))
+     (Maybe (NotifyP 'ConfigPhaseEnv))
+-&gt; Optic
+     A_Lens
+     NoIx
+     (Env r)
+     (Env r)
+     (Maybe (NotifyP 'ConfigPhaseEnv))
+     (Maybe (NotifyP 'ConfigPhaseEnv))
+forall k l m (is :: IxList) (js :: IxList) (ks :: IxList) s t u v a
+       b.
+(JoinKinds k l m, AppendIndices is js ks) =&gt;
+Optic k is s t u v -&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.html#%25"><span class="hs-operator hs-var">%</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  (CoreConfigP 'ConfigPhaseEnv)
+  (CoreConfigP 'ConfigPhaseEnv)
+  (Maybe (NotifyP 'ConfigPhaseEnv))
+  (Maybe (NotifyP 'ConfigPhaseEnv))
+</span><span class="">#notify</span></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  (Env r)
+  (Env r)
+  (Maybe (NotifyP 'ConfigPhaseEnv))
+  (Maybe (NotifyP 'ConfigPhaseEnv))
+-&gt; Optic
+     A_Lens
+     NoIx
+     (NotifyP 'ConfigPhaseEnv)
+     (NotifyP 'ConfigPhaseEnv)
+     (NotifySystemP 'ConfigPhaseEnv)
+     (NotifySystemP 'ConfigPhaseEnv)
+-&gt; Optic'
+     An_AffineTraversal NoIx (Env r) (NotifySystemP 'ConfigPhaseEnv)
+forall (is :: IxList) (js :: IxList) (ks :: IxList) k k' l m s t u
+       v a b.
+(AppendIndices is js ks, JoinKinds k A_Prism k',
+ JoinKinds k' l m) =&gt;
+Optic k is s t (Maybe u) (Maybe v)
+-&gt; Optic l js u v a b -&gt; Optic m ks s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Data.Maybe.Optics.html#%25%3F"><span class="hs-operator hs-var">%?</span></a></span><span> </span><span class="annot"><span class="annottext">Optic
+  A_Lens
+  NoIx
+  (NotifyP 'ConfigPhaseEnv)
+  (NotifyP 'ConfigPhaseEnv)
+  (NotifySystemP 'ConfigPhaseEnv)
+  (NotifySystemP 'ConfigPhaseEnv)
+</span><span class="">#system</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">ShellT (Env r) m (Maybe (NotifySystemP 'ConfigPhaseEnv))
+-&gt; (Maybe (NotifySystemP 'ConfigPhaseEnv)
+    -&gt; ShellT (Env r) m (Maybe NotifyException))
+-&gt; ShellT (Env r) m (Maybe NotifyException)
+forall a b.
+ShellT (Env r) m a
+-&gt; (a -&gt; ShellT (Env r) m b) -&gt; ShellT (Env r) m b
+forall (m :: Type -&gt; Type) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><span class="annottext">Maybe (NotifySystemP 'ConfigPhaseEnv)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe NotifyException -&gt; ShellT (Env r) m (Maybe NotifyException)
+forall a. a -&gt; ShellT (Env r) m a
+forall (f :: Type -&gt; Type) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe NotifyException
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-74"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679532771"><span class="annot"><span class="annottext">NotifySystemP 'ConfigPhaseEnv
+</span><a href="#local-6989586621679532771"><span class="hs-identifier hs-var">nenv</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">NotifySystemP 'ConfigPhaseEnv
+-&gt; ShellT (Env r) m (Maybe NotifyException)
+</span><a href="#local-6989586621679532772"><span class="hs-identifier hs-var">sendNote</span></a></span><span> </span><span class="annot"><span class="annottext">NotifySystemP 'ConfigPhaseEnv
+</span><a href="#local-6989586621679532771"><span class="hs-identifier hs-var">nenv</span></a></span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-76"></span><span>      </span><span id="local-6989586621679532772"><span class="annot"><span class="annottext">sendNote :: NotifySystemP 'ConfigPhaseEnv
+-&gt; ShellT (Env r) m (Maybe NotifyException)
+</span><a href="#local-6989586621679532772"><span class="hs-identifier hs-var hs-var">sendNote</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Shrun.Notify.Types.html#DBus"><span class="hs-identifier hs-type">DBus</span></a></span><span> </span><span id="local-6989586621679532773"><span class="annot"><span class="annottext">DBusF 'ConfigPhaseEnv
+</span><a href="#local-6989586621679532773"><span class="hs-identifier hs-var">client</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Client -&gt; ShrunNote -&gt; ShellT (Env r) m (Maybe NotifyException)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadDBus m) =&gt;
+Client -&gt; ShrunNote -&gt; m (Maybe NotifyException)
+</span><a href="Shrun.Notify.MonadDBus.html#notifyDBus"><span class="hs-identifier hs-var">MonadDBus.notifyDBus</span></a></span><span> </span><span class="annot"><span class="annottext">Client
+DBusF 'ConfigPhaseEnv
+</span><a href="#local-6989586621679532773"><span class="hs-identifier hs-var">client</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679532766"><span class="hs-identifier hs-var">note</span></a></span><span>
+</span><span id="line-77"></span><span>      </span><span class="annot"><a href="#local-6989586621679532772"><span class="hs-identifier hs-var">sendNote</span></a></span><span> </span><span class="annot"><span class="annottext">NotifySystemP 'ConfigPhaseEnv
+</span><a href="Shrun.Notify.Types.html#NotifySend"><span class="hs-identifier hs-var">NotifySend</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ShrunNote -&gt; ShellT (Env r) m (Maybe NotifyException)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadNotifySend m) =&gt;
+ShrunNote -&gt; m (Maybe NotifyException)
+</span><a href="Shrun.Notify.MonadNotifySend.html#notifyNotifySend"><span class="hs-identifier hs-var">MonadNotifySend.notifyNotifySend</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679532766"><span class="hs-identifier hs-var">note</span></a></span><span>
+</span><span id="line-78"></span><span>      </span><span class="annot"><a href="#local-6989586621679532772"><span class="hs-identifier hs-var">sendNote</span></a></span><span> </span><span class="annot"><span class="annottext">NotifySystemP 'ConfigPhaseEnv
+</span><a href="Shrun.Notify.Types.html#AppleScript"><span class="hs-identifier hs-var">AppleScript</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ShrunNote -&gt; ShellT (Env r) m (Maybe NotifyException)
+forall (m :: Type -&gt; Type).
+(HasCallStack, MonadAppleScript m) =&gt;
+ShrunNote -&gt; m (Maybe NotifyException)
+</span><a href="Shrun.Notify.MonadAppleScript.html#notifyAppleScript"><span class="hs-identifier hs-var">MonadAppleScript.notifyAppleScript</span></a></span><span> </span><span class="annot"><span class="annottext">ShrunNote
+</span><a href="#local-6989586621679532766"><span class="hs-identifier hs-var">note</span></a></span><span>
+</span><span id="line-79"></span></pre></body></html>
