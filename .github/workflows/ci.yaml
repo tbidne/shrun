@@ -65,10 +65,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - "macos-latest"
-          - "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
+        platform:
+          - os: "macos-latest"
+            flaky: false
+          - os: "ubuntu-latest"
+            flaky: true
+    runs-on: ${{ matrix.platform.os }}
+    # The ubuntu runner has inexplicably started refusing to run on CI...
+    continue-on-error: ${{ matrix.platform.flaky }}
     steps:
       - uses: actions/checkout@v4
       - uses: haskell-actions/setup@v2
