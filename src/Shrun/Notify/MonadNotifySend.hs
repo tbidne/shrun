@@ -75,8 +75,8 @@ shrunToNotifySend shrunNote = txt
     --
     -- only required escaping the summary, but we do the same to the body out
     -- of paranoia.
-    summary = Utils.escapeDoubleQuotes $ shrunNote ^. #summary
-    body = Utils.escapeDoubleQuotes $ shrunNote ^. #body
+    summary = Utils.escapeDoubleQuotes $ shrunNote ^. #summary % #unUnlinedText
+    body = Utils.escapeDoubleQuotes $ shrunNote ^. #body % #unUnlinedText
 
     ulToNS Low = " --urgency low "
     ulToNS Normal = " --urgency normal "

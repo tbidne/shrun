@@ -54,8 +54,8 @@ shrunToDBus :: ShrunNote -> Note
 shrunToDBus shrunNote =
   DBusN.Note
     { appName = "Shrun",
-      summary = unpack $ shrunNote ^. #summary,
-      body = Just . DBusN.Text . T.unpack $ shrunNote ^. #body,
+      summary = unpack $ shrunNote ^. #summary % #unUnlinedText,
+      body = Just . DBusN.Text . T.unpack $ shrunNote ^. #body % #unUnlinedText,
       appImage = Nothing,
       hints = [Urgency (shrunNote ^. #urgency)],
       expiry,

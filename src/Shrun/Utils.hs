@@ -36,6 +36,8 @@ import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.Time (TimeSpec, diffTimeSpec)
 import GHC.Exts (IsList (fromList))
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude
 import Text.Read (Read)
 import Text.Read qualified as TR
@@ -143,35 +145,15 @@ n2i = unsafeConvertIntegral
 --
 -- Applying stripControl to text that has newlines in it can produce poorly
 -- formatted text. This is due to newlines being stripped, so e.g. t1\nt2
--- becomes t1t2. We could instead perform a first pass that at least replaces
--- newlines with whitespace. So why don't we?
---
--- Because we should already be handling newlines elsewhere. When streaming
--- command logs, we split logs on newlines and then log each newline-free
--- log separately. Morally these are UnlinedText from Shrun.Data.Text.
--- It would be really nice if we could make the input here UnlinedText, so we
--- get actual proof that we are maintaining this invariant. Alas, this would
--- require changing the Log type from Text to UnlinedText, which is quite
--- invasive. This is probably worth doing, but for now we just make a note of
--- it. See NOTE: [Log UnlinedText].
---
--- Note that there is one instance where the text-to-strip is not morally
--- UnlinedText: the final error message in:
---
---   [Error][cmd] 2 seconds: some error message
---
--- 'some error message' is (List UnlinedText) that is recombined with
--- whitespace so it _should_ be newline free. But again, it would be nice
--- to carry the UnlinedText proof around.
+-- becomes t1t2. Hence we require 'UnlinedText'.
 
--- | Strips all control chars, including ansi escape sequences. Leading
--- and trailing whitespace is also stripped.
+-- | Strips all control chars, including ansi escape sequences.
 --
 -- ==== __Examples__
 --
 -- >>> stripControlAll "foo\ESC[0;3Abar \n baz"
 -- "foobar  baz"
-stripControlAll :: Text -> Text
+stripControlAll :: UnlinedText -> UnlinedText
 stripControlAll =
   -- The ansi stripping must come first. For example, if we strip control
   -- chars from "\ESC[0;3mfoo" we get "0;3mfoo", and then stripAnsiAll will
@@ -180,11 +162,10 @@ stripControlAll =
   --
   -- By performing stripAnsiAll first, we remove entire ansi sequences,
   -- then remove other control chars (e.g. newlines, tabs).
-  T.filter (not . isControl) . stripAnsiAll
+  ShrunText.reallyUnsafeLiftUnlined (T.filter (not . isControl) . stripAnsiAll)
 
--- | Strips control chars, including most ansi escape sequences. Leading and
--- trailing whitespace is also stripped. We leave behind SGR ansi escape
--- sequences e.g. text coloring. See
+-- | Strips control chars, including most ansi escape sequences. We leave
+-- behind SGR ansi escape sequences e.g. text coloring. See
 -- https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters.
 --
 -- ==== __Examples__
@@ -194,12 +175,12 @@ stripControlAll =
 --
 -- >>> stripControlSmart "foo\ESC[0;3mbar \n baz"
 -- "foo\ESC[0;3mbar  baz"
-stripControlSmart :: Text -> Text
+stripControlSmart :: UnlinedText -> UnlinedText
 stripControlSmart =
   -- Like 'stripControlAll', we need to handle the ansi sequences first.
   -- Because we actually leave some sequences behind, we need to be more
   -- surgical removing the rest of the control chars (e.g. newline, tabs).
-  T.filter ctrlToFilter . stripAnsiControl
+  ShrunText.reallyUnsafeLiftUnlined (T.filter ctrlToFilter . stripAnsiControl)
   where
     -- stripAnsiControl should be handling all \ESC sequences, so we should
     -- be safe to ignore these, accomplishing our goal of preserving the SGR

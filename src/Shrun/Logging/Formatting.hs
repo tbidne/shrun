@@ -38,6 +38,8 @@ import Shrun.Configuration.Data.Truncation
     Truncation (MkTruncation),
   )
 import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Types
   ( Log,
     LogLevel
@@ -150,7 +152,7 @@ coreFormatting ::
   Log ->
   Text
 coreFormatting mLineTrunc mCommandNameTrunc stripControl keyHide log =
-  concatWithLineTrunc mLineTrunc prefix msgStripped
+  concatWithLineTrunc mLineTrunc prefix (msgStripped ^. #unUnlinedText)
   where
     -- prefix is something like "[Success] " or "[Command][some cmd] ".
     -- Notice this does not include ANSI codes or a timestamp.
@@ -164,7 +166,7 @@ coreFormatting mLineTrunc mCommandNameTrunc stripControl keyHide log =
                 cmd
          in mconcat
               [ brackets False logPrefix,
-                cmd'
+                cmd' ^. #unUnlinedText
               ]
 
     msgStripped = stripChars (log ^. #msg) stripControl
@@ -174,13 +176,13 @@ formatCommand ::
   KeyHideSwitch ->
   Maybe (Truncation TruncCommandName) ->
   CommandP1 ->
-  Text
-formatCommand keyHide commandNameTrunc com = brackets True (truncateNameFn cmdName)
+  UnlinedText
+formatCommand keyHide commandNameTrunc com =
+  ShrunText.reallyUnsafeLiftUnlined (brackets True . truncateNameFn) cmdName
   where
     -- Get cmd name to display. Always strip control sequences. Futhermore,
     -- strip leading/trailing whitespace.
-    cmdName =
-      formatCommandText $ displayCmd com keyHide
+    cmdName = displayCmd com keyHide
 
     -- truncate cmd/name if necessary
     truncateNameFn =
@@ -190,11 +192,11 @@ formatCommand keyHide commandNameTrunc com = brackets True (truncateNameFn cmdNa
 
 -- | Replace newlines with whitespace before stripping, so any strings
 -- separated by newlines do not get smashed together.
-formatCommandText :: Text -> Text
+formatCommandText :: Text -> UnlinedText
 formatCommandText =
-  T.strip
+  ShrunText.reallyUnsafeLiftUnlined T.strip
     . Utils.stripControlAll
-    . T.replace "\n" " "
+    . ShrunText.fromTextReplace
 
 -- | Combines a prefix @p@ and msg @m@ with possible line truncation. If no
 -- truncation is given then concatWithLineTrunc is equivalent to @p <> m@.
@@ -240,20 +242,20 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
 --
 -- >>> displayCmd (MkCommandP (Just "long") "some long command") KeyHideOff
 -- "long"
-displayCmd :: CommandP1 -> KeyHideSwitch -> Text
-displayCmd (MkCommandP (Just key) _) KeyHideOff = key
-displayCmd (MkCommandP _ cmd) _ = cmd
+displayCmd :: CommandP1 -> KeyHideSwitch -> UnlinedText
+displayCmd (MkCommandP (Just key) _) KeyHideOff = formatCommandText key
+displayCmd (MkCommandP _ cmd) _ = formatCommandText cmd
 
 -- | Applies the given 'StripControl' to the 'Text'.
 --
 -- * 'StripControlAll': Strips whitespace + all control chars.
 -- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.
 -- * 'StripControlNone': Strips whitespace.
-stripChars :: Text -> StripControl t -> Text
+stripChars :: UnlinedText -> StripControl t -> UnlinedText
 stripChars txt = \case
   StripControlAll -> Utils.stripControlAll txt
   -- whitespace
-  StripControlNone -> T.strip txt
+  StripControlNone -> ShrunText.reallyUnsafeLiftUnlined T.strip txt
   StripControlSmart -> Utils.stripControlSmart txt
 {-# INLINE stripChars #-}
 

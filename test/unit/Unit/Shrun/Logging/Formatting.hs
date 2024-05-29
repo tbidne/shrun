@@ -58,6 +58,8 @@ import Shrun.Configuration.Data.StripControl
       ),
   )
 import Shrun.Data.Command (CommandP (MkCommandP, command, key))
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
@@ -101,8 +103,11 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
-        -- StripControlNone -> T.strip (whitespace)
-        expected = prefix <> T.strip (log ^. #msg) <> suffix
+        -- NOTE: Convoluted, so here's an explanation. The msg <> suffix is
+        -- an UnlinedText. In order for it to match the expectation, it needs
+        -- to go through the usual process i.e. strip. Then we need to
+        -- eliminate to Text, to compare against the result.
+        expected = (prefix <> (stripUnlined (log ^. #msg) <> suffix)) ^. #unUnlinedText
         result = fmt log ^. #unConsoleLog
     expected === result
   where
@@ -118,6 +123,9 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
         "\ESC[91m[Fatal] "
       ]
     suffixes = L.repeat "\ESC[0m"
+
+    stripUnlined :: UnlinedText -> UnlinedText
+    stripUnlined = ShrunText.reallyUnsafeLiftUnlined T.strip
 
 testFormatsCLCmdKey :: TestTree
 testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ do
@@ -143,9 +151,9 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
         expectedKeyHideOff =
           mconcat
             [ prefix,
-              Formatting.formatCommandText cmdKey,
+              Formatting.formatCommandText cmdKey ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg),
+              T.strip (log ^. #msg % #unUnlinedText),
               suffix
             ]
         resultKeyHideOff = fmtKeyHideOff log ^. #unConsoleLog
@@ -153,9 +161,9 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
         expectedKeyHideOn =
           mconcat
             [ prefix,
-              Formatting.formatCommandText command,
+              Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg),
+              T.strip (log ^. #msg % #unUnlinedText),
               suffix
             ]
         resultKeyHideOn = fmtKeyHideOn log ^. #unConsoleLog
@@ -199,9 +207,9 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
         expected =
           mconcat
             [ prefix,
-              Formatting.formatCommandText command,
+              Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg),
+              T.strip (log ^. #msg % #unUnlinedText),
               suffix
             ]
         result = fmt log ^. #unConsoleLog
@@ -322,7 +330,7 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
         -- StripControlNone -> T.strip (whitespace)
-        expected = prefix <> T.strip (log ^. #msg) <> suffix
+        expected = prefix <> T.strip (log ^. #msg % #unUnlinedText) <> suffix
         result = fmt log
     expected === result
   where
@@ -365,9 +373,9 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
         expectedKeyHideOff =
           mconcat
             [ prefix,
-              Formatting.formatCommandText cmdKey,
+              Formatting.formatCommandText cmdKey ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg),
+              T.strip (log ^. #msg % #unUnlinedText),
               suffix
             ]
         resultKeyHideOff = fmtKeyHideOff log
@@ -375,9 +383,9 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
         expectedKeyHideOn =
           mconcat
             [ prefix,
-              Formatting.formatCommandText command,
+              Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg),
+              T.strip (log ^. #msg % #unUnlinedText),
               suffix
             ]
         resultKeyHideOn = fmtKeyHideOn log
@@ -422,9 +430,9 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
         expected =
           mconcat
             [ prefix,
-              Formatting.formatCommandText command,
+              Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg),
+              T.strip (log ^. #msg % #unUnlinedText),
               suffix
             ]
         result = fmt log
@@ -570,11 +578,15 @@ stripNone =
   where
     stripNone' = flip Formatting.stripChars StripControlNone
 
+-- NOTE: For the below instances, the RHS is UnlinedText, so it uses its
+-- IsString instance. That instance replaces newlines with whitespace, hence,
+-- for instance, " \n " transforming to 3 spaces "   ".
+
 stripAll :: TestTree
 stripAll =
   testCase "StripControlAll should strip whitespace + all control" $ do
     "" @=? stripAll' ""
-    "  oo    bar  baz   " @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
+    "   oo    bar   baz   " @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
     stripAll' = flip Formatting.stripChars StripControlAll
 
@@ -582,6 +594,6 @@ stripSmart :: TestTree
 stripSmart =
   testCase "StripControlSmart should strip whitespace + some control" $ do
     "" @=? stripSmart' ""
-    "   foo \ESC[m   bar  baz   " @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
+    "    foo \ESC[m   bar   baz   " @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
     stripSmart' = flip Formatting.stripChars StripControlSmart

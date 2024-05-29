@@ -26,6 +26,7 @@ import Data.Time.Relative
   )
 import Data.Time.Relative qualified as RT
 import Shrun.Configuration.Default (Default (def))
+import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Prelude
 
 -- | Determines how to format the timer.
@@ -56,15 +57,22 @@ parseTimerFormat getTxt =
 timerFormatStr :: (IsString a) => a
 timerFormatStr = "(digital_compact | digital_full | prose_compact | prose_full)"
 
+-- NOTE: Time formatting does not include newlines, so using UnsafeUnlinedText
+-- is safe. We use the constructor rather than unsafeUnlinedText.
+
 -- | Formats a relative time.
-formatRelativeTime :: TimerFormat -> RelativeTime -> Text
+formatRelativeTime :: TimerFormat -> RelativeTime -> UnlinedText
 formatRelativeTime fmt =
-  T.pack . RT.formatRelativeTime (toRelativeTimeFormat fmt)
+  UnsafeUnlinedText
+    . T.pack
+    . RT.formatRelativeTime (toRelativeTimeFormat fmt)
 
 -- | Formats a relative time seconds.
-formatSeconds :: TimerFormat -> Natural -> Text
+formatSeconds :: TimerFormat -> Natural -> UnlinedText
 formatSeconds fmt =
-  T.pack . RT.formatSeconds (toRelativeTimeFormat fmt)
+  UnsafeUnlinedText
+    . T.pack
+    . RT.formatSeconds (toRelativeTimeFormat fmt)
 
 toRelativeTimeFormat :: TimerFormat -> Format
 toRelativeTimeFormat DigitalCompact = MkFormat FormatStyleDigital FormatVerbosityCompact

@@ -46,10 +46,10 @@ shrunToAppleScript shrunNote = txt
     txt =
       mconcat
         [ "osascript -e 'display notification ",
-          withDoubleQuotes (shrunNote ^. #body),
+          withDoubleQuotes (shrunNote ^. #body % #unUnlinedText),
           " with title \"Shrun\" ",
           " subtitle ",
-          withDoubleQuotes (shrunNote ^. #summary),
+          withDoubleQuotes (shrunNote ^. #summary % #unUnlinedText),
           "'"
         ]
 

@@ -17,6 +17,7 @@ module Shrun.Logging.Types
 where
 
 import Shrun.Data.Command (CommandP1)
+import Shrun.Data.Text (UnlinedText)
 import Shrun.Logging.Types.Internal
   ( ConsoleLog,
     FileLog,
@@ -46,19 +47,13 @@ data LogRegion r
   | -- | Log without region.
     LogNoRegion ConsoleLog
 
--- NOTE: [Log UnlinedText]
---
--- It would be nice if msg was UnlinedText, so then formatting
--- could share the proof that lines have been stripped. Unfortunately this is
--- non-trivial. See NOTE: [StripControl Newlines].
-
 -- | Captures the relevant information concerning a specific log
 -- (i.e. command, text, level, and mode).
 data Log = MkLog
   { -- | Optional command that produced this log.
     cmd :: Maybe CommandP1,
     -- | The 'Text' for a given log.
-    msg :: Text,
+    msg :: UnlinedText,
     -- | The 'LogLevel' for a given log.
     lvl :: LogLevel,
     -- | The 'LogMode' for a given log.
@@ -84,8 +79,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ Text,
-    b ~ Text
+    a ~ UnlinedText,
+    b ~ UnlinedText
   ) =>
   LabelOptic "msg" k Log Log a b
   where

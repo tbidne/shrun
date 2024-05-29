@@ -389,7 +389,7 @@ writeLogHelper logFn cmd lastReadRef handleResult messages = do
     logFn
       $ MkLog
         { cmd = Just cmd,
-          msg = msg ^. #unUnlinedText,
+          msg,
           lvl = LevelCommand,
           mode = LogModeSet
         }

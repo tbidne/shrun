@@ -5,7 +5,6 @@ module Shrun.Notify
 where
 
 import DBus.Notify (UrgencyLevel)
-import Data.Text qualified as T
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommonLogging,
@@ -14,6 +13,8 @@ import Shrun.Configuration.Env.Types
     HasNotifyConfig (getNotifyConfig),
     setAnyErrorTrue,
   )
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
 import Shrun.Logging.Types
@@ -43,9 +44,9 @@ sendNotif ::
     MonadTime m
   ) =>
   -- | Notif summary
-  Text ->
+  UnlinedText ->
   -- | Notif body
-  Text ->
+  UnlinedText ->
   -- | Notif urgency
   UrgencyLevel ->
   m ()
@@ -64,7 +65,9 @@ sendNotif summary body urgency = do
       Logging.putRegionLog r
         $ MkLog
           { cmd = Nothing,
-            msg = "Could not send notification: " <> T.pack (displayException ex),
+            msg =
+              "Could not send notification: "
+                <> ShrunText.fromTextReplace (pack (displayException ex)),
             lvl = LevelError,
             mode = LogModeFinish
           }

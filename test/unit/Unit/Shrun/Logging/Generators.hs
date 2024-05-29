@@ -29,7 +29,7 @@ import Unit.Prelude
 genLog :: Gen Log
 genLog = do
   cmd <- HGen.choice [pure Nothing, fmap Just genCommand]
-  msg <- PGens.genText
+  msg <- PGens.genUnlinedText
   lvl <- genLogLevel
   mode <- genLogMode
   pure
@@ -43,7 +43,7 @@ genLog = do
 genLogWithCmd :: Gen Log
 genLogWithCmd = do
   cmd <- Just <$> genCommand
-  msg <- PGens.genText
+  msg <- PGens.genUnlinedText
   lvl <- genLogLevel
   mode <- genLogMode
   pure
@@ -57,7 +57,7 @@ genLogWithCmd = do
 genLogWithCmdKey :: Gen Log
 genLogWithCmdKey = do
   cmd <- Just <$> genCommandWithKey
-  msg <- PGens.genText
+  msg <- PGens.genUnlinedText
   lvl <- genLogLevel
   mode <- genLogMode
   pure
@@ -70,7 +70,7 @@ genLogWithCmdKey = do
 
 genLogNoCmd :: Gen Log
 genLogNoCmd = do
-  msg <- PGens.genText
+  msg <- PGens.genUnlinedText
   lvl <- genLogLevel
   mode <- genLogMode
   pure

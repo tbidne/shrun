@@ -12,6 +12,7 @@ where
 import DBus.Notify (UrgencyLevel)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
+import Shrun.Data.Text (UnlinedText)
 import Shrun.Notify.Types
   ( NotifySystemMerged,
     NotifyTimeout,
@@ -21,8 +22,8 @@ import Shrun.Prelude
 
 -- | Holds notification data.
 data ShrunNote = MkShrunNote
-  { summary :: Text,
-    body :: Text,
+  { summary :: UnlinedText,
+    body :: UnlinedText,
     urgency :: UrgencyLevel,
     timeout :: NotifyTimeout
   }
@@ -30,8 +31,8 @@ data ShrunNote = MkShrunNote
 
 instance
   ( k ~ A_Lens,
-    a ~ Text,
-    b ~ Text
+    a ~ UnlinedText,
+    b ~ UnlinedText
   ) =>
   LabelOptic "summary" k ShrunNote ShrunNote a b
   where
@@ -78,8 +79,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ Text,
-    b ~ Text
+    a ~ UnlinedText,
+    b ~ UnlinedText
   ) =>
   LabelOptic "body" k ShrunNote ShrunNote a b
   where

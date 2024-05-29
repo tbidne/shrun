@@ -5,6 +5,7 @@ module Unit.Generators
     genTimeSpec,
     genInt,
     genText,
+    genUnlinedText,
     getNonEmptyText,
   )
 where
@@ -12,6 +13,8 @@ where
 import Effects.Time (TimeSpec (MkTimeSpec))
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Unit.Prelude
 
 -- | Generates 'NonNegative' in [0, 1_000_000].
@@ -40,6 +43,9 @@ genText :: Gen Text
 genText = Gen.text range Gen.latin1
   where
     range = Range.linearFrom 0 0 30
+
+genUnlinedText :: Gen UnlinedText
+genUnlinedText = ShrunText.fromTextReplace <$> genText
 
 -- | Generates latin1 text with 1-30 characters.
 getNonEmptyText :: Gen Text

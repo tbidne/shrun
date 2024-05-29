@@ -9,7 +9,6 @@ where
 
 import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Data.HashSet qualified as Set
-import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
@@ -177,7 +176,8 @@ runCommand cmd = do
         -- see NOTE: [Text Line Concatentation] for how we combine the
         -- multiple texts back into a single err.
         CommandFailure t (MkStderr errs) ->
-          (Critical, ": " <> ShrunText.toText errs, LevelError, t)
+          let errMsg = ShrunText.concat errs
+           in (Critical, ": " <> errMsg, LevelError, t)
         CommandSuccess t -> (Normal, "", LevelSuccess, t)
       timeMsg = TimerFormat.formatRelativeTime timerFormat timeElapsed <> msg'
 
@@ -225,7 +225,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
           mconcat
             [ "Encountered an exception. This is likely not an error in any ",
               "of the commands run but rather an error in Shrun itself: ",
-              displayExceptiont ex
+              ShrunText.fromTextReplace $ displayExceptiont ex
             ]
         fatalLog =
           MkLog
@@ -351,7 +351,10 @@ keepRunning region timer mto = do
           allCmdsSet = Set.fromList $ toList allCmds
           incompleteCmds = Set.difference allCmdsSet completedCommandsSet
           toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
-          unfinishedCmds = T.intercalate ", " $ foldl' toTxtList [] incompleteCmds
+
+          unfinishedCmds =
+            ShrunText.intercalate ", "
+              $ foldl' toTxtList [] incompleteCmds
 
       Logging.putRegionLog region
         $ MkLog
