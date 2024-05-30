@@ -162,7 +162,7 @@ stripControlAll =
   --
   -- By performing stripAnsiAll first, we remove entire ansi sequences,
   -- then remove other control chars (e.g. newlines, tabs).
-  ShrunText.reallyUnsafeLiftUnlined (T.filter (not . isControl) . stripAnsiAll)
+  ShrunText.reallyUnsafeMap (T.filter (not . isControl) . stripAnsiAll)
 
 -- | Strips control chars, including most ansi escape sequences. We leave
 -- behind SGR ansi escape sequences e.g. text coloring. See
@@ -180,7 +180,7 @@ stripControlSmart =
   -- Like 'stripControlAll', we need to handle the ansi sequences first.
   -- Because we actually leave some sequences behind, we need to be more
   -- surgical removing the rest of the control chars (e.g. newline, tabs).
-  ShrunText.reallyUnsafeLiftUnlined (T.filter ctrlToFilter . stripAnsiControl)
+  ShrunText.reallyUnsafeMap (T.filter ctrlToFilter . stripAnsiControl)
   where
     -- stripAnsiControl should be handling all \ESC sequences, so we should
     -- be safe to ignore these, accomplishing our goal of preserving the SGR

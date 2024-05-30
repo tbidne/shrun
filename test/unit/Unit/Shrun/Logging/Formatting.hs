@@ -125,7 +125,7 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
     suffixes = L.repeat "\ESC[0m"
 
     stripUnlined :: UnlinedText -> UnlinedText
-    stripUnlined = ShrunText.reallyUnsafeLiftUnlined T.strip
+    stripUnlined = ShrunText.reallyUnsafeMap T.stripStart
 
 testFormatsCLCmdKey :: TestTree
 testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ do
@@ -153,7 +153,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText cmdKey ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg % #unUnlinedText),
+              T.stripStart (log ^. #msg % #unUnlinedText),
               suffix
             ]
         resultKeyHideOff = fmtKeyHideOff log ^. #unConsoleLog
@@ -163,7 +163,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg % #unUnlinedText),
+              T.stripStart (log ^. #msg % #unUnlinedText),
               suffix
             ]
         resultKeyHideOn = fmtKeyHideOn log ^. #unConsoleLog
@@ -209,7 +209,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg % #unUnlinedText),
+              T.stripStart (log ^. #msg % #unUnlinedText),
               suffix
             ]
         result = fmt log ^. #unConsoleLog
@@ -329,8 +329,7 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
-        -- StripControlNone -> T.strip (whitespace)
-        expected = prefix <> T.strip (log ^. #msg % #unUnlinedText) <> suffix
+        expected = prefix <> (log ^. #msg % #unUnlinedText) <> suffix
         result = fmt log
     expected === result
   where
@@ -375,7 +374,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText cmdKey ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg % #unUnlinedText),
+              log ^. #msg % #unUnlinedText,
               suffix
             ]
         resultKeyHideOff = fmtKeyHideOff log
@@ -385,7 +384,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg % #unUnlinedText),
+              log ^. #msg % #unUnlinedText,
               suffix
             ]
         resultKeyHideOn = fmtKeyHideOn log
@@ -432,7 +431,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.strip (log ^. #msg % #unUnlinedText),
+              log ^. #msg % #unUnlinedText,
               suffix
             ]
         result = fmt log
@@ -572,9 +571,9 @@ stripCharsTests =
 
 stripNone :: TestTree
 stripNone =
-  testCase "StripControlNone should only strip external whitespace" $ do
+  testCase "StripControlNone should only replace newlines" $ do
     "" @=? stripNone' ""
-    "\ESC[ foo \ESC[A  bar \n baz" @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
+    "   \ESC[ foo \ESC[A  bar \n baz \t  " @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
   where
     stripNone' = flip Formatting.stripChars StripControlNone
 
@@ -584,7 +583,7 @@ stripNone =
 
 stripAll :: TestTree
 stripAll =
-  testCase "StripControlAll should strip whitespace + all control" $ do
+  testCase "StripControlAll should strip all control" $ do
     "" @=? stripAll' ""
     "   oo    bar   baz   " @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
@@ -592,7 +591,7 @@ stripAll =
 
 stripSmart :: TestTree
 stripSmart =
-  testCase "StripControlSmart should strip whitespace + some control" $ do
+  testCase "StripControlSmart should strip some control" $ do
     "" @=? stripSmart' ""
     "    foo \ESC[m   bar   baz   " @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where

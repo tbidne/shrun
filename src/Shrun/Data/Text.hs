@@ -14,7 +14,7 @@ module Shrun.Data.Text
     -- * Functions
     concat,
     intercalate,
-    reallyUnsafeLiftUnlined,
+    reallyUnsafeMap,
   )
 where
 
@@ -97,5 +97,5 @@ intercalate (UnsafeUnlinedText d) =
 -- | Lifts a 'Text' function to 'UnlinedText'. Very unsafe in that we do not
 -- check for errors i.e. if the parameter function introduces any newlines,
 -- then this will silently succeed. This exists for performance.
-reallyUnsafeLiftUnlined :: (Text -> Text) -> UnlinedText -> UnlinedText
-reallyUnsafeLiftUnlined f (UnsafeUnlinedText t) = UnsafeUnlinedText (f t)
+reallyUnsafeMap :: (Text -> Text) -> UnlinedText -> UnlinedText
+reallyUnsafeMap f (UnsafeUnlinedText t) = UnsafeUnlinedText (f t)

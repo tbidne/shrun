@@ -85,6 +85,7 @@ formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
       coreFormatting
         ((,Nothing) <$> consoleLogging ^. #lineTrunc)
         (consoleLogging ^. #commandNameTrunc)
+        True
         (consoleLogging ^. #stripControl)
         keyHide
         log
@@ -110,6 +111,7 @@ formatFileLog keyHide fileLogging log = do
         coreFormatting
           ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
           (fileLogging ^. #commandNameTrunc)
+          False
           (fileLogging ^. #stripControl)
           keyHide
           log
@@ -144,6 +146,14 @@ coreFormatting ::
   Maybe (Truncation TruncLine, Maybe Natural) ->
   -- | Optional cmd name truncation
   Maybe (Truncation TruncCommandName) ->
+  -- | If true, strips leading whitespace. This is so that file logging
+  -- can preserve leading whitespace (so that the file output retains
+  -- potential alignment; alignment is irrelevant to console logs).
+  --
+  -- This is for leading only, not trailing, as the latter is irrelevant to
+  -- formatting, and we may want trailing whitespace if we ever concat two
+  -- logs together.
+  Bool ->
   -- | Strip control
   StripControl t ->
   -- | Key hide
@@ -151,26 +161,37 @@ coreFormatting ::
   -- | Log to format
   Log ->
   Text
-coreFormatting mLineTrunc mCommandNameTrunc stripControl keyHide log =
-  concatWithLineTrunc mLineTrunc prefix (msgStripped ^. #unUnlinedText)
-  where
-    -- prefix is something like "[Success] " or "[Command][some cmd] ".
-    -- Notice this does not include ANSI codes or a timestamp.
-    prefix = case log ^. #cmd of
-      Nothing -> brackets True logPrefix
-      Just cmd ->
-        let cmd' =
-              formatCommand
-                keyHide
-                mCommandNameTrunc
-                cmd
-         in mconcat
-              [ brackets False logPrefix,
-                cmd' ^. #unUnlinedText
-              ]
+coreFormatting
+  mLineTrunc
+  mCommandNameTrunc
+  stripLeading
+  stripControl
+  keyHide
+  log =
+    concatWithLineTrunc mLineTrunc prefix (msgStripped ^. #unUnlinedText)
+    where
+      -- prefix is something like "[Success] " or "[Command][some cmd] ".
+      -- Notice this does not include ANSI codes or a timestamp.
+      prefix = case log ^. #cmd of
+        Nothing -> brackets True logPrefix
+        Just cmd ->
+          let cmd' =
+                formatCommand
+                  keyHide
+                  mCommandNameTrunc
+                  cmd
+           in mconcat
+                [ brackets False logPrefix,
+                  cmd' ^. #unUnlinedText
+                ]
 
-    msgStripped = stripChars (log ^. #msg) stripControl
-    logPrefix = logToPrefix log
+      msgStripControlled = stripChars (log ^. #msg) stripControl
+      msgStripped =
+        if stripLeading
+          then ShrunText.reallyUnsafeMap T.stripStart msgStripControlled
+          else msgStripControlled
+
+      logPrefix = logToPrefix log
 
 formatCommand ::
   KeyHideSwitch ->
@@ -178,7 +199,7 @@ formatCommand ::
   CommandP1 ->
   UnlinedText
 formatCommand keyHide commandNameTrunc com =
-  ShrunText.reallyUnsafeLiftUnlined (brackets True . truncateNameFn) cmdName
+  ShrunText.reallyUnsafeMap (brackets True . truncateNameFn) cmdName
   where
     -- Get cmd name to display. Always strip control sequences. Futhermore,
     -- strip leading/trailing whitespace.
@@ -194,7 +215,7 @@ formatCommand keyHide commandNameTrunc com =
 -- separated by newlines do not get smashed together.
 formatCommandText :: Text -> UnlinedText
 formatCommandText =
-  ShrunText.reallyUnsafeLiftUnlined T.strip
+  ShrunText.reallyUnsafeMap T.strip
     . Utils.stripControlAll
     . ShrunText.fromTextReplace
 
@@ -248,14 +269,13 @@ displayCmd (MkCommandP _ cmd) _ = formatCommandText cmd
 
 -- | Applies the given 'StripControl' to the 'Text'.
 --
--- * 'StripControlAll': Strips whitespace + all control chars.
--- * 'StripControlSmart': Strips whitespace + 'ansi control' chars.
--- * 'StripControlNone': Strips whitespace.
+-- * 'StripControlAll': All control chars.
+-- * 'StripControlSmart': Ansi control chars.
+-- * 'StripControlNone': Nothing.
 stripChars :: UnlinedText -> StripControl t -> UnlinedText
 stripChars txt = \case
   StripControlAll -> Utils.stripControlAll txt
-  -- whitespace
-  StripControlNone -> ShrunText.reallyUnsafeLiftUnlined T.strip txt
+  StripControlNone -> txt
   StripControlSmart -> Utils.stripControlSmart txt
 {-# INLINE stripChars #-}
 

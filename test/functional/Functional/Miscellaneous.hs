@@ -64,7 +64,7 @@ spaceErrorLogs = testCase "Error Log with newlines is spaced" $ do
     expected =
       [ withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "2 seconds: abc   def",
         withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "abc",
-        withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "  def"
+        withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "def"
       ]
     unexpected =
       [ withErrorPrefix "sleep 1 && echo 'abc def' && sleep 1 && exit 1" <> "2 seconds: abcdef"

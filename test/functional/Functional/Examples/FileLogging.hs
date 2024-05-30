@@ -209,7 +209,7 @@ fileLogStripControlNone testArgs = testCase "Runs file-log strip-control none ex
     expectedFile =
       [ withCommandPrefix
           "printf ' foo  hello  bye '; sleep 2"
-          "foo \ESC[35m hello \ESC[3D bye"
+          " foo \ESC[35m hello \ESC[3D bye"
       ]
 
 fileLogStripControlSmart :: IO TestArgs -> TestTree

@@ -116,7 +116,7 @@ stripControlAll = testCase "Runs --console-log-strip-control all example" $ do
     -- try these out manually, note that \ESC will have to be substituted with
     -- \033.
     expected =
-      [ withCommandPrefix "printf ..." " foo  hello  bye "
+      [ withCommandPrefix "printf ..." "foo  hello  bye "
       ]
 
 stripControlNone :: TestTree
@@ -151,7 +151,7 @@ stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ 
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
         ]
     expected =
-      [ withCommandPrefix "printf ..." " foo \ESC[35m hello  bye "
+      [ withCommandPrefix "printf ..." "foo \ESC[35m hello  bye "
       ]
 
 timerFormatDigitalCompact :: TestTree
