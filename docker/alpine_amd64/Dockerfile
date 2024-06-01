@@ -40,7 +40,7 @@ echo 'PATH=$PATH:$HOME/.ghcup/bin' >> $HOME/.bashrc
 . $HOME/.bashrc
 
 echo "*** Installing ghc ***"
-ghcup install ghc 9.6.4 --set
+ghcup install ghc 9.8.2 --set
 
 echo "*** Installing cabal ***"
 ghcup install cabal 3.10.3.0 --set

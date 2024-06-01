@@ -22,13 +22,19 @@ import Integration.Utils
 import Shrun.Configuration.Data.CommandLogging
   ( CommandLoggingP
       ( MkCommandLoggingP,
+        bufferLength,
+        bufferTimeout,
         pollInterval,
         readSize,
+        readStrategy,
         reportReadErrors
       ),
     ReportReadErrorsSwitch (ReportReadErrorsOff, ReportReadErrorsOn),
   )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy
+  ( ReadStrategy (ReadBlock, ReadBlockLineBuffer),
+  )
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP (MkCommonLoggingP, keyHide),
   )
@@ -187,8 +193,11 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                     },
                 commandLogging =
                   MkCommandLoggingP
-                    { pollInterval = 127,
+                    { bufferLength = 20,
+                      bufferTimeout = 60,
+                      pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 20,
+                      readStrategy = ReadBlockLineBuffer,
                       reportReadErrors = ReportReadErrorsOn
                     },
                 fileLogging =
@@ -249,10 +258,16 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "180",
         "--console-log-command",
         "--common-log-key-hide",
+        "--command-log-buffer-length",
+        "40",
+        "--command-log-buffer-timeout",
+        "80",
         "--command-log-poll-interval",
         "127",
         "--command-log-read-size",
         "512 b",
+        "--command-log-read-strategy",
+        "block",
         "--command-log-report-read-errors",
         "--console-log-timer-format",
         "digital_compact",
@@ -289,8 +304,11 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                     },
                 commandLogging =
                   MkCommandLoggingP
-                    { pollInterval = 127,
+                    { bufferLength = 40,
+                      bufferTimeout = 80,
+                      pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 512,
+                      readStrategy = ReadBlock,
                       reportReadErrors = ReportReadErrorsOn
                     },
                 fileLogging =
@@ -452,8 +470,11 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
         "--no-timeout",
         "--no-init",
         "--no-common-log-key-hide",
+        "--no-command-log-buffer-length",
+        "--no-command-log-buffer-timeout",
         "--no-command-log-poll-interval",
         "--no-command-log-read-size",
+        "--no-command-log-read-strategy",
         "--no-command-log-report-read-errors",
         "--no-console-log-timer-format",
         "--no-console-log-command-name-trunc",
@@ -489,12 +510,21 @@ noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
         "--init",
         "blah",
         "--no-init",
+        "--command-log-buffer-length",
+        "555",
+        "--no-command-log-buffer-length",
+        "--command-log-buffer-timeout",
+        "444",
+        "--no-command-log-buffer-timeout",
         "--command-log-poll-interval",
         "555",
         "--no-command-log-poll-interval",
         "--command-log-read-size",
         "512 b",
         "--no-command-log-read-size",
+        "--command-log-read-strategy",
+        "block-line-buffer",
+        "--no-command-log-read-strategy",
         "--command-log-report-read-errors",
         "--no-command-log-report-read-errors",
         "--console-log-timer-format",

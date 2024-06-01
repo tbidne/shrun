@@ -122,6 +122,7 @@ formatFileLog keyHide fileLogging log = do
             line,
             "\n"
           ]
+
   pure $ UnsafeFileLog withTimestamp
 
 -- | Core formatting, shared by console and file logs. Basic idea:

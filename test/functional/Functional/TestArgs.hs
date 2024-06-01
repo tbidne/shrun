@@ -5,7 +5,7 @@ module Functional.TestArgs
   )
 where
 
-import Functional.Prelude
+import Shrun.Prelude
 
 data TestArgs = MkTestArgs
   { rootDir :: OsPath,

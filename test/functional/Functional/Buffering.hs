@@ -11,19 +11,24 @@ specs :: TestTree
 specs =
   testGroup
     "Buffering"
-    [ logsNoBuffer
-    ]
+    (multiTestReadStrategy testsParams)
+  where
+    testsParams :: List ReadStrategyTestParams
+    testsParams = [logsNoBuffer]
 
 -- We want to ensure that command logs are correctly not buffered i.e.
 -- they are streamed, not dumped at the end.
-logsNoBuffer :: TestTree
+logsNoBuffer :: ReadStrategyTestParams
 logsNoBuffer =
-  testCase "Command logs should not buffer" $ do
-    results <- L.reverse <$> run args
-
-    assertLogsEq expectedOrdered results
-
-    V.verifyExpected results (MkExpectedText <$> allExpected)
+  ReadStrategyTestParametricSimple
+    "Command logs should not buffer"
+    run
+    args
+    ( \results -> do
+        let results' = L.reverse results
+        assertLogsEq expectedOrdered results'
+        V.verifyExpected results' (MkExpectedText <$> allExpected)
+    )
   where
     -- NOTE: [Bash brace loop interpolation]
     --

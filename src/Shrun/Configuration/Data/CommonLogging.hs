@@ -11,9 +11,6 @@ module Shrun.Configuration.Data.CommonLogging
     -- * Functions
     mergeCommonLogging,
     toEnv,
-
-    -- * Misc
-    defaultMerged,
   )
 where
 
@@ -82,7 +79,7 @@ mergeCommonLogging args mToml =
         (args ^. #keyHide) <>?. (toml ^. #keyHide)
     }
   where
-    toml = fromMaybe defaultToml mToml
+    toml = fromMaybe def mToml
 
 instance DecodeTOML CommonLoggingToml where
   tomlDecoder =
@@ -97,16 +94,4 @@ toEnv :: CommonLoggingMerged -> CommonLoggingEnv
 toEnv merged =
   MkCommonLoggingP
     { keyHide = merged ^. #keyHide
-    }
-
-defaultToml :: CommonLoggingToml
-defaultToml =
-  MkCommonLoggingP
-    { keyHide = Nothing
-    }
-
-defaultMerged :: CommonLoggingMerged
-defaultMerged =
-  MkCommonLoggingP
-    { keyHide = def
     }

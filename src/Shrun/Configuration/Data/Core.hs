@@ -10,9 +10,6 @@ module Shrun.Configuration.Data.Core
     -- * Functions
     mergeCoreConfig,
     withCoreEnv,
-
-    -- * Misc
-    defaultMerged,
   )
 where
 
@@ -365,7 +362,7 @@ mergeCoreConfig args mToml = do
             (toml ^. #notify)
       }
   where
-    toml = fromMaybe defaultToml mToml
+    toml = fromMaybe def mToml
 
 -- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
 -- continuation.
@@ -421,27 +418,3 @@ instance
         fileLogging = def,
         notify = def
       }
-
-defaultToml :: CoreConfigToml
-defaultToml =
-  MkCoreConfigP
-    { init = Nothing,
-      timeout = Nothing,
-      commonLogging = Nothing,
-      commandLogging = Nothing,
-      consoleLogging = Nothing,
-      fileLogging = Nothing,
-      notify = Nothing
-    }
-
-defaultMerged :: CoreConfigMerged
-defaultMerged =
-  MkCoreConfigP
-    { init = Nothing,
-      timeout = Nothing,
-      commonLogging = CommonLogging.defaultMerged,
-      commandLogging = CommandLogging.defaultMerged,
-      consoleLogging = ConsoleLogging.defaultMerged,
-      fileLogging = Nothing,
-      notify = Nothing
-    }

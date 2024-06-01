@@ -17,6 +17,10 @@ the major/minor/patch definitions apply to the application's interface / usage
 * Updated blessed GHC to 9.8.2.
 
 ### Added
+* Add `--command-log-read-strategy (command-log.read-strategy)` option that
+  allows for line buffering.
+* Add `--command-log-buffer-length` and `--command-log-buffer-timeout` options
+  for use with `--command-log-read-strategy block-line-buffer`.
 * Added GHC 9.10 support.
 
 ### Fixed

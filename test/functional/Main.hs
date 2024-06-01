@@ -11,17 +11,30 @@ import Functional.Examples qualified as Examples
 import Functional.Miscellaneous qualified as Miscellaneous
 import Functional.Notify qualified as Notify
 import Functional.Prelude
-import Functional.TestArgs (TestArgs (MkTestArgs, configPath, rootDir, tmpDir))
+import Functional.ReadStrategyTest (ReadStrategyOpt)
+import Functional.TestArgs
+  ( TestArgs
+      ( MkTestArgs,
+        configPath,
+        rootDir,
+        tmpDir
+      ),
+  )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import System.Environment.Guard (guardOrElse')
 import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
 import Test.Tasty qualified as Tasty
+import Test.Tasty.Options (OptionDescription (Option))
 
 -- | Entry point for functional tests.
 main :: IO ()
 main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
-  defaultMain $ Tasty.withResource setup teardown specs
+  Tasty.defaultMainWithIngredients ingredients $ Tasty.withResource setup teardown specs
+  where
+    ingredients =
+      Tasty.includingOptions [Option @ReadStrategyOpt Proxy]
+        : Tasty.defaultIngredients
 
 specs :: IO TestArgs -> TestTree
 specs args = do
@@ -29,7 +42,7 @@ specs args = do
     "Functional Tests"
     [ Examples.specs args,
       Buffering.specs,
-      Miscellaneous.specs,
+      Miscellaneous.specs args,
       Notify.specs
     ]
 

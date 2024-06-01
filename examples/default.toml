@@ -75,6 +75,15 @@
 # # Configuration for "command logs", enabled by console-log.command and/or
 # # file-logging.
 # [command-log]
+# # Max text length held by the log buffer, used in conjunction with
+# # read-strategy block-line-buffer. Defaults to 1,000 characters.
+# buffer-length = 2000
+
+# # Max time the log buffer will hold a log before flushing it, used in
+# # conjunction with command-log.read-strategy = block-line-buffer. Defaults to
+# # 30 seconds."
+# buffer-timeout = 60
+
 # # Non-negative integer that determines how quickly we poll commands for logs,
 # # in microseconds. A value of 0 is interpreted as infinite i.e. limited only
 # # by the CPU. Defaults to 10,000.
@@ -87,6 +96,13 @@
 # # Logs larger than read-size will be read in a subsequent read, hence broken
 # # across lines. The default is "16 kb".
 # read-size = "1 mb"
+
+# # By default (strategy = block), we read command-log.read-size number of bytes
+# # at a time. The "block-line-buffer" strategy will buffer logs until a newline
+# # is found, or some size threshold is crossed. This can help preserve
+# # formatting in the file logs. This should only be used when running a
+# # _single_ command.
+# read-strategy = "block-line-buffer"
 
 # # Configuration for console logging.
 # [console-log]

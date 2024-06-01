@@ -8,6 +8,7 @@
 - [What if a command needs sudo?](#what-if-a-command-needs-sudo)
 - [What if my command relies on interactive shell](#what-if-my-command-relies-on-interactive-shell)
 - [Init vs. Legend](#init-vs-legend)
+- [Command log file formatting](#command-log-file-formatting)
 - [Bash auto-completions](#bash-auto-completions)
 
 ## If I don't run multiple commands all that often, does shrun hold any value?
@@ -39,7 +40,7 @@ $ shrun ...
 
 ## What if my command relies on interactive shell?
 
-Shrun executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc` or `~/.bash_profile`. This can be annoying if we want to run any of these functions/aliases.
+`shrun` executes shell commands non-interactively, which means we do not have access to anything defined in, say, `~/.bashrc` or `~/.bash_profile`. This can be annoying if we want to run any of these functions/aliases.
 
 ```sh
 # ~/.bashrc
@@ -154,6 +155,63 @@ If, instead, you don't want the alias in `~/.bashrc` or you regularly run it wit
 > ```sh
 > $ shrun --init ". ~/.bashrc" -c config.toml all
 > ```
+
+## Command log file formatting
+
+In general, we would like `shrun`'s file logging to preserve command log formatting when possible. For example, `shrun`'s test suite prints output like:
+
+```
+Test suite unit: RUNNING...
+Unit tests
+  Shrun.Configuration.Args.Parsing
+    Defaults
+      Parses default args:                                               OK
+          ✓ testDefaultArgs passed 1 test.
+    --config
+      Parses -c:                                                         OK
+          ✓ testConfigShort passed 1 test.
+      Parses --config:                                                   OK
+          ✓ testConfig passed 1 test.
+...
+```
+
+We would therefore like `shrun` to log something like:
+
+```
+[2024-06-03 17:48:13][Command][cabal test unit] Test suite unit: RUNNING...
+[2024-06-03 17:48:13][Command][cabal test unit] Unit tests
+[2024-06-03 17:48:13][Command][cabal test unit]   Shrun.Configuration.Args.Parsing
+[2024-06-03 17:48:13][Command][cabal test unit]     Defaults
+[2024-06-03 17:48:13][Command][cabal test unit]       Parses default args:                                               OK
+[2024-06-03 17:48:13][Command][cabal test unit]           ✓ testDefaultArgs passed 1 test.
+[2024-06-03 17:48:13][Command][cabal test unit]     --config
+[2024-06-03 17:48:13][Command][cabal test unit]       Parses -c:                                                         OK
+[2024-06-03 17:48:13][Command][cabal test unit]           ✓ testConfigShort passed 1 test.
+[2024-06-03 17:48:13][Command][cabal test unit]       Parses --config:                                                   OK
+[2024-06-03 17:48:13][Command][cabal test unit]           ✓ testConfig passed 1 test.
+...
+```
+
+However, there are some complications. The fundamental issue is that we are reading `N` bytes of data at a time, so there is no guarantee that our read will end at a newline. We thus have to handle newlines ourselves. To that end, we introduce several options that interact with command-log reading:
+
+- `--command-log-poll-interval`: How fast `shrun` reads logs from the underlying commands.
+- `--command-log-read-size`: Maximum number of bytes `shrun` will read from the underlying command, in a single read.
+- `--command-log-read-strategy`: The default, `block`, is the simple, "read N bytes at a time". `block-line-buffer` also reads `N` bytes, however, it buffers logs until a newline is found, or some threshold is exceeded.
+- `--command-log-buffer-length`: Used in conjunction with `--command-log-read-strategy block-line-buffer`. If the length is exceeded, whatever is in the buffer is logged, even if it is not newline-terminated.
+- `--command-log-buffer-timeout`: Same idea as `--command-log-buffer-length`, except the threshold is a timeout.
+
+The general hope is that logs are newline-terminated and `--command-log-read-size` is large enough to read whatever the underlying command is logging, so we will not end up cutting anything off. Then we can split the logs on newlines and log each line separately. Even so, there are a couple ways the intended formatting can be disrupted:
+
+- If the `--command-log-poll-interval` is slower than the underlying command's logging, there will be a build-up of logs in the next read, so it is possible the total size is greater than `--command-log-read-size`, hence we will be cutting off logs at an arbitrary place.
+- On the other hand, if the `--command-log-poll-interval` is _faster_, it is possible to break up an "incomplete log". For instance, our test examples prints the text description like `Parses default args:` immediately, then only prints the remaining `...OK` after the test finishes. Thus we might read the first part of the log without its corresponding end, and the log will be broken.
+
+To mitigate this, we introduce the `--command-log-read-strategy block-line-buffer` option. This option will buffer any logs that do _not_ end in a newline, and wait until the next newline is found, before logging the buffer. We include `--command-log-buffer-length` that will flush the buffer regardless once it grows beyond the specified size, to avoid holding an arbitrarily large string in memory. We also include `--command-log-buffer-timeout` to avoid holding onto a log for an arbitrary amount of time.
+
+We can now offer the following advice, if formatting is off.
+
+- The simplest method that could possibly improve the formatting is to increase `--command-log-read-size`, though this is already at a fairly high 16kb, so it may not be enough. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the example above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless.
+
+- If that doesn't work, and you are running a _single_ command that outputs newline-terminated logs, try `--command-log-read-strategy block-line-buffer`, possibly tweaking `--command-log-buffer-(length|timeout)` to your taste (though there are defaults for these). Otherwise stick with the default `--command-log-read-strategy block`, and make your peace with the fact that this is all best-effort 🙂.
 
 ## Bash auto-completions
 

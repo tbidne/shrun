@@ -20,11 +20,11 @@ module Shrun.Prelude
 
     -- * Misc utilities
     fromFoldable,
+    onJust,
     (<<$>>),
     (<<&>>),
     (.>),
     unsafeConvertIntegral,
-    todo,
     setUncaughtExceptionHandlerDisplay,
 
     -- * 'Text' replacements for 'P.String' functions.
@@ -37,8 +37,14 @@ module Shrun.Prelude
     List,
     Tuple2,
     Tuple3,
+    Tuple4,
 
 #endif
+
+    -- * Debug Utils
+    todo,
+    traceFile,
+    traceFileLine,
 
     -- * Prelude exports
     module X,
@@ -120,7 +126,7 @@ import Data.Text qualified as T
 import Data.Traversable as X (Traversable (traverse), for)
 import Data.Tuple as X (fst, snd)
 #if MIN_VERSION_base(4, 20, 0)
-import Data.Tuple.Experimental as X (Tuple2, Tuple3)
+import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4)
 #endif
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
@@ -186,6 +192,7 @@ import Effects.FileSystem.PathWriter as X
     removeFileIfExists,
   )
 import Effects.FileSystem.Utils as X (OsPath, decodeUtf8, osp, (</>))
+import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.IORef as X
   ( IORef,
     MonadIORef
@@ -266,6 +273,7 @@ import Optics.Core.Extras as X (is)
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.Exit as X (ExitCode (ExitFailure, ExitSuccess))
 import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)
+import System.IO.Unsafe (unsafePerformIO)
 import TOML as X
   ( DecodeTOML (tomlDecoder),
     Decoder,
@@ -345,6 +353,9 @@ type Tuple2 = (,)
 -- | Alias for (,,).
 type Tuple3 = (,,)
 
+-- | Alias for (,,,).
+type Tuple4 = (,,,)
+
 #endif
 
 -- | Like 'fromIntegral', except:
@@ -380,6 +391,15 @@ unsafeConvertIntegral x = case toIntegralSized x of
 todo :: forall {r :: RuntimeRep} (a :: TYPE r). (HasCallStack) => a
 todo = raise# (errorCallWithCallStackException "Prelude.todo: not yet implemented" ?callStack)
 {-# WARNING todo "todo remains in code" #-}
+
+traceFile :: FilePath -> Text -> a -> a
+traceFile path txt x = writeFn `seq` x
+  where
+    io = appendFileUtf8 (FsUtils.unsafeEncodeFpToOs path) txt
+    writeFn = unsafePerformIO io
+
+traceFileLine :: FilePath -> Text -> a -> a
+traceFileLine path txt = traceFile path (txt <> "\n")
 
 {- ORMOLU_DISABLE -}
 
@@ -419,3 +439,6 @@ setUncaughtExceptionHandlerDisplay =
 #endif
 
 {- ORMOLU_ENABLE -}
+
+onJust :: b -> Maybe a -> (a -> b) -> b
+onJust x m f = maybe x f m

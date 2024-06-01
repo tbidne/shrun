@@ -9,8 +9,11 @@
     - [Common Logging](#common-logging)
       - [Key Hide](#key-hide)
     - [Command Logging](#command-logging)
+      - [Buffer Length](#buffer-length)
+      - [Buffer Timeout](#buffer-timeout)
       - [Poll Interval](#poll-interval)
       - [Read Size](#read-size)
+      - [Read Strategy](#read-strategy)
     - [Console Logging](#console-logging)
       - [Command Log](#command-log)
       - [Command Name Truncation](#command-name-truncation)
@@ -162,6 +165,46 @@ Naturally, this does not affect commands that do not have a key (i.e. those not 
 
 Configuration for **command logs**, enabled by `console-log.command` and/or `file-logging`.
 
+#### Buffer Length
+
+**Arg:** `--command-log-buffer-length`
+
+**Description:** Max text length held by the log buffer, used in conjunction with `--command-log-read-strategy block-line-buffer`. Defaults to 1,000 characters.
+
+**Example:**
+
+> [!NOTE]
+> In this example, the log 'hi' is printed even though it is not newline-terminated, because the `--command-log-buffer-length 1` is exceeded (2 characters). On the other hand, the final log 'b' is not printed until the very end since it is within the buffer limit.
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-buffer-length 1 "printf hi && sleep 1 && printf b && sleep 2"</span>
+<span style="color: #69ff94">[Command][printf hi && sleep 1 && printf b && sleep 1] hi</span>
+<span style="color: #d6acff">[Timer] 1 second</span></code>
+</pre>
+
+#### Buffer Timeout
+
+**Arg:** `--command-log-buffer-timeout`
+
+**Description:** Max time the log buffer will hold a log before flushing it, used in conjunction with `--command-log-read-strategy block-line-buffer`. Defaults to 30 seconds.
+
+**Example:**
+
+> [!NOTE]
+> In this example, the logs 'hi' and 'b' are printed even though they are not newline-terminated, because the `--command-log-buffer-timeout 1` is exceeded (1 second).
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
+<span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] hi</span>
+<span style="color: #d6acff">[Timer] 1 second</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
+<span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] b</span>
+<span style="color: #d6acff">[Timer] 3 seconds</span></code>
+</pre>
+
 #### Poll Interval
 
 **Arg:** `--command-log-poll-interval NATURAL`
@@ -199,6 +242,24 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] f</span>
+<span style="color: #a3fefe">[Timer] 2 seconds</span></code>
+</pre>
+
+
+#### Read Strategy
+
+**Arg:** `--command-log-read-strategy (block | block-line-buffer)`
+
+**Description:** By default (strategy = block), we read `--command-log-read-size` number of bytes at a time. The "block-line-buffer" strategy will buffer logs until a newline is found, or some size threshold is crossed. This can help preserve formatting in the file logs. This should only be used when running a _single_ command.
+
+**Example:**
+
+> [!NOTE]
+> This is the previous example, but with `--command-log-read-strategy block-line-buffer` enabled. Notice the entire 'abcdef' is printed, since 'abcd' is read first, buffered, then 'f\n' is read, and the buffer flushed.
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5b --command-log-poll-interval 1_000_000 --command-log-read-strategy block-line-buffer "echo abcdef && sleep 2" </span>
+<span style="color:">[Command][echo abcdef && sleep 2] abcdef</span>
 <span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
 

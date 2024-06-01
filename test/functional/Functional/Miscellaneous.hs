@@ -1,24 +1,36 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Misc tests
 module Functional.Miscellaneous (specs) where
 
+import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
+import Functional.TestArgs (TestArgs)
 import Test.Shrun.Verifier qualified as V
 
-specs :: TestTree
-specs =
+specs :: IO TestArgs -> TestTree
+specs testArgs =
   testGroup
     "Miscellaneous"
-    [ splitNewlineLogs,
-      spaceErrorLogs,
-      stripControlAlwaysCmdNames,
-      reportsStderr,
-      slowOutputBroken
-    ]
+    (multiTestReadStrategy testsParams)
+  where
+    testsParams :: List ReadStrategyTestParams
+    testsParams =
+      [ splitNewlineLogs,
+        spaceErrorLogs,
+        stripControlAlwaysCmdNames,
+        reportsStderr,
+        slowOutputBroken,
+        formatsFileLogs testArgs
+      ]
 
-splitNewlineLogs :: TestTree
-splitNewlineLogs = testCase "Logs with newlines are split" $ do
-  results <- run args
-  V.verifyExpectedUnexpected results expected unexpected
+splitNewlineLogs :: ReadStrategyTestParams
+splitNewlineLogs =
+  ReadStrategyTestParametricSimple
+    "Logs with newlines are split"
+    run
+    args
+    (\results -> V.verifyExpectedUnexpected results expected unexpected)
   where
     args =
       withNoConfig
@@ -39,10 +51,13 @@ splitNewlineLogs = testCase "Logs with newlines are split" $ do
       [ withCommandPrefix printedCmd "line one line two"
       ]
 
-spaceErrorLogs :: TestTree
-spaceErrorLogs = testCase "Error Log with newlines is spaced" $ do
-  results <- runExitFailure args
-  V.verifyExpectedUnexpected results expected unexpected
+spaceErrorLogs :: ReadStrategyTestParams
+spaceErrorLogs =
+  ReadStrategyTestParametricSimple
+    "Error Log with newlines is spaced"
+    runExitFailure
+    args
+    (\results -> V.verifyExpectedUnexpected results expected unexpected)
   where
     args =
       withNoConfig
@@ -74,10 +89,13 @@ spaceErrorLogs = testCase "Error Log with newlines is spaced" $ do
 -- as it fit in alongside the other tests. However, we prefer those tests to
 -- match Configuration.md as closely as possible, to make maintaining the
 -- markdown file as easy as possible. Thus we move it here.
-stripControlAlwaysCmdNames :: TestTree
-stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
-  results <- run args
-  V.verifyExpected results expected
+stripControlAlwaysCmdNames :: ReadStrategyTestParams
+stripControlAlwaysCmdNames =
+  ReadStrategyTestParametricSimple
+    "Always strips command names"
+    run
+    args
+    (`V.verifyExpected` expected)
   where
     args =
       withNoConfig
@@ -95,10 +113,13 @@ stripControlAlwaysCmdNames = testCase "Always strips command names" $ do
 
 -- Tests that we default to stderr when it exists.
 -- See NOTE: [Stderr reporting].
-reportsStderr :: TestTree
-reportsStderr = testCase "Reports stderr" $ do
-  results <- runExitFailure args
-  V.verifyExpectedUnexpected results expected unexpected
+reportsStderr :: ReadStrategyTestParams
+reportsStderr =
+  ReadStrategyTestParametricSimple
+    "Reports stderr"
+    runExitFailure
+    args
+    (\results -> V.verifyExpectedUnexpected results expected unexpected)
   where
     scriptPath :: (IsString a) => a
     scriptPath = "./test/functional/Functional/stderr.sh"
@@ -138,10 +159,14 @@ reportsStderr = testCase "Reports stderr" $ do
 -- We include this test for documenting the current behavior, and if we ever
 -- "fix" this -- see NOTE: [Command log splitting] --, then we can simply
 -- flip the expected/unexpected below.
-slowOutputBroken :: TestTree
-slowOutputBroken = testCase "Slow output is broken" $ do
-  results <- run args
-  V.verifyExpectedUnexpected results expected unexpected
+slowOutputBroken :: ReadStrategyTestParams
+slowOutputBroken =
+  ReadStrategyTestSimple
+    "Slow output is broken"
+    run
+    args
+    blockAssertions
+    blockLineBufferAssertions
   where
     scriptPath :: (IsString a) => a
     scriptPath = "./test/functional/Functional/slow_output_broken.sh"
@@ -152,11 +177,121 @@ slowOutputBroken = testCase "Slow output is broken" $ do
           scriptPath
         ]
 
-    expected =
+    blockAssertions results =
+      V.verifyExpectedUnexpected results blockExpected blockUnexpected
+
+    blockExpected =
       [ withCommandPrefix scriptPath "first: ",
         withCommandPrefix scriptPath "second"
       ]
 
-    unexpected =
+    blockUnexpected =
       [ withCommandPrefix scriptPath "first: second"
+      ]
+
+    blockLineBufferAssertions results =
+      V.verifyExpected results blockLineBufferExpected
+
+    blockLineBufferExpected =
+      [ withCommandPrefix scriptPath "first: second"
+      ]
+
+formatsFileLogs :: IO TestArgs -> ReadStrategyTestParams
+formatsFileLogs testArgs =
+  ReadStrategyTestSetup
+    "Formats file logs"
+    run
+    ( do
+        outFile <- (</> [osp|file-log-formatted.log|]) . view #tmpDir <$> testArgs
+        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+            args =
+              withNoConfig
+                [ "--file-log",
+                  outFileStr,
+                  "--console-log-command",
+                  "--command-log-read-size",
+                  "5b", -- intentionally using a low size to test buffering
+                  cmd
+                ]
+
+        pure (args, outFile)
+    )
+    ( \(resultsConsole, outFile) -> do
+        V.verifyExpected resultsConsole blockConsoleExpected
+
+        resultsFile <- readLogFile outFile
+        V.verifyExpected resultsFile blockFileExpected
+    )
+    ( \(resultsConsole, outFile) -> do
+        V.verifyExpected resultsConsole bufferConsoleExpected
+
+        resultsFile <- readLogFile outFile
+        V.verifyExpected resultsFile bufferFileExpected
+    )
+  where
+    cmd :: (IsString a) => a
+    cmd = "test/functional/Functional/formatting.sh"
+
+    blockConsoleExpected =
+      [ withCommandPrefix cmd "Starting",
+        withCommandPrefix cmd "A tit",
+        withCommandPrefix cmd "le",
+        withCommandPrefix cmd "",
+        withCommandPrefix cmd "A hea",
+        withCommandPrefix cmd "der",
+        withCommandPrefix cmd "",
+        withCommandPrefix cmd "-",
+        withCommandPrefix cmd "Runni",
+        withCommandPrefix cmd "ng ta",
+        withCommandPrefix cmd "sk A",
+        withCommandPrefix cmd "",
+        withCommandPrefix cmd "OK",
+        withCommandPrefix cmd "",
+        withCommandPrefix cmd "- R",
+        withCommandPrefix cmd "unnin",
+        withCommandPrefix cmd "g tas",
+        withCommandPrefix cmd "k B",
+        withCommandPrefix cmd "",
+        withCommandPrefix cmd "FAIL",
+        withCommandPrefix cmd "Finis"
+      ]
+
+    blockFileExpected =
+      [ withCommandPrefix cmd "Starting",
+        withCommandPrefix cmd "A tit",
+        withCommandPrefix cmd "le",
+        withCommandPrefix cmd "  ",
+        withCommandPrefix cmd "A hea",
+        withCommandPrefix cmd "der",
+        withCommandPrefix cmd " ",
+        withCommandPrefix cmd "   - ",
+        withCommandPrefix cmd "Runni",
+        withCommandPrefix cmd "ng ta",
+        withCommandPrefix cmd "sk A ",
+        withCommandPrefix cmd "  ",
+        withCommandPrefix cmd "OK",
+        withCommandPrefix cmd "  ",
+        withCommandPrefix cmd "  - R",
+        withCommandPrefix cmd "unnin",
+        withCommandPrefix cmd "g tas",
+        withCommandPrefix cmd "k B  ",
+        withCommandPrefix cmd " ",
+        withCommandPrefix cmd "FAIL",
+        withCommandPrefix cmd "Finis"
+      ]
+
+    bufferConsoleExpected =
+      [ withCommandPrefix cmd "A title",
+        withCommandPrefix cmd "A header",
+        withCommandPrefix cmd "- Running task A   OK",
+        withCommandPrefix cmd "- Running task B   FAIL",
+        withCommandPrefix cmd "Finished"
+      ]
+
+    bufferFileExpected =
+      [ withCommandPrefix cmd "A title",
+        withCommandPrefix cmd "  A header",
+        withCommandPrefix cmd "    - Running task A   OK",
+        withCommandPrefix cmd "    - Running task B   FAIL",
+        withCommandPrefix cmd "Finished"
       ]

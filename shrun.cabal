@@ -69,6 +69,7 @@ library
     Shrun.Configuration.Data.CommandLogging
     Shrun.Configuration.Data.CommandLogging.PollInterval
     Shrun.Configuration.Data.CommandLogging.ReadSize
+    Shrun.Configuration.Data.CommandLogging.ReadStrategy
     Shrun.Configuration.Data.CommonLogging
     Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
     Shrun.Configuration.Data.ConfigPhase
@@ -251,6 +252,7 @@ test-suite functional
     Functional.Miscellaneous
     Functional.Notify
     Functional.Prelude
+    Functional.ReadStrategyTest
     Functional.TestArgs
 
   build-depends:
@@ -258,8 +260,10 @@ test-suite functional
     , effects-fs
     , env-guard
     , fdo-notify
+    , optparse-applicative
     , shrun
     , shrun-verifier
+    , tagged                ^>=0.8.6
     , tasty
     , tasty-hunit
     , text

@@ -12,6 +12,7 @@ module Shrun.Data.Text
     toText,
 
     -- * Functions
+    length,
     concat,
     intercalate,
     reallyUnsafeMap,
@@ -20,7 +21,7 @@ where
 
 import Data.String (IsString (fromString))
 import Data.Text qualified as T
-import Shrun.Prelude
+import Shrun.Prelude hiding (length)
 
 -- | Text after it has had all lines separated into different texts. We
 -- introduce a newtype for clarity. The idea is that when we read arbitrary
@@ -99,3 +100,6 @@ intercalate (UnsafeUnlinedText d) =
 -- then this will silently succeed. This exists for performance.
 reallyUnsafeMap :: (Text -> Text) -> UnlinedText -> UnlinedText
 reallyUnsafeMap f (UnsafeUnlinedText t) = UnsafeUnlinedText (f t)
+
+length :: UnlinedText -> Int
+length (UnsafeUnlinedText t) = T.length t

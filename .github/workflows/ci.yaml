@@ -43,7 +43,7 @@ jobs:
       - name: Integration Tests
         run: cabal test ${{ matrix.ghc.proj-file }} integration
       - name: Functional Tests
-        run: cabal test ${{ matrix.ghc.proj-file }} functional
+        run: cabal test ${{ matrix.ghc.proj-file }} functional --test-options '--read-strategy all'
       - name: Benchmarks
         if: ${{ matrix.os == 'ubuntu-latest' }}
         id: bench

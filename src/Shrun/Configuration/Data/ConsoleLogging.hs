@@ -12,9 +12,6 @@ module Shrun.Configuration.Data.ConsoleLogging
     -- * Functions
     mergeConsoleLogging,
     toEnv,
-
-    -- * Misc
-    defaultMerged,
   )
 where
 
@@ -299,7 +296,7 @@ mergeConsoleLogging args mToml = do
     argsCommandLogging :: WithDisabled Bool
     argsCommandLogging = args ^. #commandLogging $> True
 
-    toml = fromMaybe defaultToml mToml
+    toml = fromMaybe def mToml
 
 instance DecodeTOML ConsoleLoggingToml where
   tomlDecoder =
@@ -327,24 +324,4 @@ toEnv merged =
       lineTrunc = merged ^. #lineTrunc,
       stripControl = merged ^. #stripControl,
       timerFormat = merged ^. #timerFormat
-    }
-
-defaultToml :: ConsoleLoggingToml
-defaultToml =
-  MkConsoleLoggingP
-    { commandLogging = Nothing,
-      commandNameTrunc = Nothing,
-      lineTrunc = Nothing,
-      stripControl = Nothing,
-      timerFormat = Nothing
-    }
-
-defaultMerged :: ConsoleLoggingMerged
-defaultMerged =
-  MkConsoleLoggingP
-    { commandLogging = def,
-      commandNameTrunc = Nothing,
-      lineTrunc = Nothing,
-      stripControl = def,
-      timerFormat = def
     }

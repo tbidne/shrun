@@ -11,11 +11,17 @@ where
 import Data.ByteString.Lazy qualified as BSL
 import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
-import Effects.Time (withTiming)
+import Effects.Time (MonadTime (getMonotonicTime), withTiming)
 import Shrun.Configuration.Data.CommandLogging
   ( ReportReadErrorsSwitch
       ( ReportReadErrorsOff,
         ReportReadErrorsOn
+      ),
+  )
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy
+  ( ReadStrategy
+      ( ReadBlock,
+        ReadBlockLineBuffer
       ),
   )
 import Shrun.Configuration.Data.ConsoleLogging
@@ -40,11 +46,10 @@ import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.IO.Types
   ( CommandResult (CommandFailure, CommandSuccess),
-    ReadHandleResult (ReadErr, ReadNoData, ReadSuccess),
+    ReadHandleResult (ReadErr, ReadErrSuccess, ReadNoData, ReadSuccess),
     Stderr (MkStderr),
-    readHandle,
-    readHandleResultToStderr,
   )
+import Shrun.IO.Types qualified as IO.Types
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
 import Shrun.Logging.Types
@@ -210,6 +215,7 @@ tryCommandStream ::
     MonadMask m,
     MonadReader env m,
     MonadThread m,
+    MonadTime m,
     MonadTypedProcess m
   ) =>
   -- | Function to apply to streamed logs.
@@ -234,7 +240,7 @@ tryCommandStream logFn cmd = do
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
-    ExitFailure _ -> Just $ readHandleResultToStderr finalData
+    ExitFailure _ -> Just $ IO.Types.readHandleResultToStderr finalData
 
 -- NOTE: This was an attempt to set the buffering so that we could use
 -- hGetLine. Unfortunately that failed, see Note
@@ -255,6 +261,7 @@ streamOutput ::
     MonadIORef m,
     MonadReader env m,
     MonadThread m,
+    MonadTime m,
     MonadTypedProcess m
   ) =>
   -- | Function to apply to streamed logs.
@@ -276,7 +283,18 @@ streamOutput logFn cmd p = do
   lastReadErrRef <- newIORef ReadNoData
   commandLogging <- asks getCommandLogging
 
-  let reportReadErrors = commandLogging ^. #reportReadErrors
+  prevReadOutRef <- newIORef Nothing
+  prevReadErrRef <- newIORef Nothing
+
+  currTime <- getMonotonicTime
+
+  -- TODO: Verify that these do not alias
+  bufferFlushOutTimeRef <- newIORef currTime
+  bufferFlushErrTimeRef <- newIORef currTime
+
+  let bufferLength = commandLogging ^. #bufferLength
+      bufferTimeout = commandLogging ^. #bufferTimeout
+      reportReadErrors = commandLogging ^. #reportReadErrors
 
       pollInterval :: Natural
       pollInterval = commandLogging ^. (#pollInterval % #unPollInterval)
@@ -290,15 +308,26 @@ streamOutput logFn cmd p = do
           $ commandLogging
           ^. (#readSize % #unReadSize % _MkBytes)
 
-      readBlock :: (HasCallStack) => Handle -> m ReadHandleResult
-      readBlock = readHandle blockSize
+      readBlockOut :: m ReadHandleResult
+      readBlockErr :: m ReadHandleResult
+      (readBlockOut, readBlockErr) = case commandLogging ^. #readStrategy of
+        ReadBlock ->
+          ( IO.Types.readHandle Nothing blockSize (P.getStdout p),
+            IO.Types.readHandle Nothing blockSize (P.getStderr p)
+          )
+        ReadBlockLineBuffer ->
+          let outBufferParams = (prevReadOutRef, bufferLength, bufferTimeout, bufferFlushOutTimeRef)
+              errBufferParams = (prevReadErrRef, bufferLength, bufferTimeout, bufferFlushErrTimeRef)
+           in ( IO.Types.readHandle (Just outBufferParams) blockSize (P.getStdout p),
+                IO.Types.readHandle (Just errBufferParams) blockSize (P.getStderr p)
+              )
 
   exitCode <- U.untilJust $ do
     -- We need to read from both stdout and stderr -- regardless of if we
     -- created a single pipe in tryCommandStream -- or else we will miss
     -- messages
-    outResult <- readBlock (P.getStdout p)
-    errResult <- readBlock (P.getStderr p)
+    outResult <- readBlockOut
+    errResult <- readBlockErr
 
     writeLog logFn reportReadErrors cmd lastReadOutRef outResult
     writeLog logFn reportReadErrors cmd lastReadErrRef errResult
@@ -315,8 +344,29 @@ streamOutput logFn cmd p = do
 
   -- Leftover data. We need this as the process can exit before everything
   -- is read.
-  remainingOut <- readBlock (P.getStdout p)
-  remainingErr <- readBlock (P.getStderr p)
+  (remainingOut, remainingErr) <- do
+    -- This branch is really a paranoid "ensure we didn't change anything" if
+    -- using the ReadBlock strategy. It is possible ReadBlockLineBuffer behaves
+    -- the same most of the time; indeed, all of the tests pass with the
+    -- normal ReadBlock strategy above even if we use ReadBlockLineBuffer
+    -- below.
+    case commandLogging ^. #readStrategy of
+      ReadBlock -> (,) <$> readBlockOut <*> readBlockErr
+      ReadBlockLineBuffer -> do
+        let readRemaining toHandle ref =
+              IO.Types.readHandleRaw blockSize (toHandle p) >>= \case
+                -- Do not care about errors here, since we may still have leftover
+                -- data that we need to get. If we cared, we could log the errors
+                -- here, but it seems minor.
+                Left _ -> IO.Types.readAndUpdateRefFinal ref ""
+                Right bs -> IO.Types.readAndUpdateRefFinal ref bs
+
+        (,)
+          <$> readRemaining P.getStdout prevReadOutRef
+          <*> readRemaining P.getStderr prevReadErrRef
+
+  writeLog logFn reportReadErrors cmd lastReadOutRef remainingOut
+  writeLog logFn reportReadErrors cmd lastReadErrRef remainingErr
 
   -- NOTE: [Stderr reporting]
   --
@@ -370,6 +420,9 @@ writeLog _ _ _ _ ReadNoData = pure ()
 writeLog _ ReportReadErrorsOff _ _ (ReadErr _) = pure ()
 writeLog logFn ReportReadErrorsOn cmd lastReadRef r@(ReadErr messages) =
   writeLogHelper logFn cmd lastReadRef r messages
+writeLog logFn reportReadErrors cmd lastReadRef r@(ReadErrSuccess errs successes) = do
+  when (reportReadErrors == ReportReadErrorsOn) $ writeLogHelper logFn cmd lastReadRef r errs
+  writeLogHelper logFn cmd lastReadRef r successes
 writeLog logFn _ cmd lastReadRef r@(ReadSuccess messages) =
   writeLogHelper logFn cmd lastReadRef r messages
 

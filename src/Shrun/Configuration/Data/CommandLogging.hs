@@ -2,7 +2,19 @@
 
 module Shrun.Configuration.Data.CommandLogging
   ( -- * Types
+
+    -- ** Buffer length
+    BufferLength (..),
+    parseBufferLength,
+
+    -- ** Buffer timeout
+    BufferTimeout (..),
+    parseBufferTimeout,
+
+    -- ** Report read errors
     ReportReadErrorsSwitch (..),
+
+    -- ** Main
     CommandLoggingP (..),
     CommandLoggingArgs,
     CommandLoggingToml,
@@ -12,14 +24,12 @@ module Shrun.Configuration.Data.CommandLogging
     -- * Functions
     mergeCommandLogging,
     toEnv,
-
-    -- * Misc
-    defaultMerged,
   )
 where
 
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize)
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy (ReadStrategy)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -30,10 +40,57 @@ import Shrun.Configuration.Data.ConfigPhase
     ConfigPhaseF,
     SwitchF,
   )
+import Shrun.Configuration.Data.Core.Timeout
+import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.))
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
+
+newtype BufferLength = MkBufferLength Natural
+  deriving stock (Eq, Show)
+  deriving (Num) via Natural
+
+instance
+  (k ~ An_Iso, a ~ Natural, b ~ Natural) =>
+  LabelOptic "unBufferLength" k BufferLength BufferLength a b
+  where
+  labelOptic = iso (\(MkBufferLength x) -> x) MkBufferLength
+  {-# INLINE labelOptic #-}
+
+instance Default BufferLength where
+  def = MkBufferLength 1_000
+
+instance DecodeTOML BufferLength where
+  tomlDecoder = MkBufferLength <$> tomlDecoder
+
+parseBufferLength :: (Functor m) => m Natural -> m BufferLength
+parseBufferLength getNat = MkBufferLength <$> getNat
+
+newtype BufferTimeout = MkBufferTimeout Timeout
+  deriving stock (Eq, Show)
+  deriving (Num) via Natural
+
+instance
+  (k ~ An_Iso, a ~ Timeout, b ~ Timeout) =>
+  LabelOptic "unBufferTimeout" k BufferTimeout BufferTimeout a b
+  where
+  labelOptic = iso (\(MkBufferTimeout x) -> x) MkBufferTimeout
+  {-# INLINE labelOptic #-}
+
+instance Default BufferTimeout where
+  def = MkBufferTimeout 30
+
+instance DecodeTOML BufferTimeout where
+  tomlDecoder = MkBufferTimeout <$> tomlDecoder
+
+parseBufferTimeout ::
+  (Alternative f, MonadFail f) =>
+  f Natural ->
+  f Text ->
+  f BufferTimeout
+parseBufferTimeout getNat getTxt =
+  MkBufferTimeout <$> Timeout.parseTimeout getNat getTxt
 
 -- | Switch for logging read errors
 data ReportReadErrorsSwitch
@@ -66,14 +123,78 @@ instance
 -- | Holds config related to (console and file) command logging.
 type CommandLoggingP :: ConfigPhase -> Type
 data CommandLoggingP p = MkCommandLoggingP
-  { -- | How often to poll commands for logs, in microseconds.
+  { -- | Max log length held by the buffer for the ReadBlockLineBuffer
+    -- ReadStrategy.
+    bufferLength :: ConfigPhaseF p BufferLength,
+    -- | Max time the buffer will hold a log before flushing it, for the
+    -- ReadBlockLineBuffer ReadStrategy.
+    bufferTimeout :: ConfigPhaseF p BufferTimeout,
+    -- | How often to poll commands for logs, in microseconds.
     pollInterval :: ConfigPhaseF p PollInterval,
     -- | Determines the max log size we read from commands in one go.
     -- Note this is not on commandLogging or fileLogging since it affects both.
     readSize :: ConfigPhaseF p ReadSize,
+    -- | Reading strategy.
+    readStrategy :: ConfigPhaseF p ReadStrategy,
     -- | Determines if we should log read errors.
     reportReadErrors :: SwitchF p ReportReadErrorsSwitch
   }
+
+instance
+  (k ~ A_Lens, a ~ ConfigPhaseF p BufferLength, b ~ ConfigPhaseF p BufferLength) =>
+  LabelOptic "bufferLength" k (CommandLoggingP p) (CommandLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCommandLoggingP
+             _bufferLength
+             _bufferTimeout
+             _pollInterval
+             _readSize
+             _readStrategy
+             _reportReadErrors
+           ) ->
+          fmap
+            ( \bufferLength' ->
+                MkCommandLoggingP
+                  bufferLength'
+                  _bufferTimeout
+                  _pollInterval
+                  _readSize
+                  _readStrategy
+                  _reportReadErrors
+            )
+            (f _bufferLength)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ ConfigPhaseF p BufferTimeout, b ~ ConfigPhaseF p BufferTimeout) =>
+  LabelOptic "bufferTimeout" k (CommandLoggingP p) (CommandLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCommandLoggingP
+             _bufferLength
+             _bufferTimeout
+             _pollInterval
+             _readSize
+             _readStrategy
+             _reportReadErrors
+           ) ->
+          fmap
+            ( \bufferTimeout' ->
+                MkCommandLoggingP
+                  _bufferLength
+                  bufferTimeout'
+                  _pollInterval
+                  _readSize
+                  _readStrategy
+                  _reportReadErrors
+            )
+            (f _bufferTimeout)
+  {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ ConfigPhaseF p PollInterval, b ~ ConfigPhaseF p PollInterval) =>
@@ -83,15 +204,21 @@ instance
     lensVL
       $ \f
          ( MkCommandLoggingP
+             _bufferLength
+             _bufferTimeout
              _pollInterval
              _readSize
+             _readStrategy
              _reportReadErrors
            ) ->
           fmap
             ( \pollInterval' ->
                 MkCommandLoggingP
+                  _bufferLength
+                  _bufferTimeout
                   pollInterval'
                   _readSize
+                  _readStrategy
                   _reportReadErrors
             )
             (f _pollInterval)
@@ -105,18 +232,52 @@ instance
     lensVL
       $ \f
          ( MkCommandLoggingP
+             _bufferLength
+             _bufferTimeout
              _pollInterval
              _readSize
+             _readStrategy
              _reportReadErrors
            ) ->
           fmap
             ( \readSize' ->
                 MkCommandLoggingP
+                  _bufferLength
+                  _bufferTimeout
                   _pollInterval
                   readSize'
+                  _readStrategy
                   _reportReadErrors
             )
             (f _readSize)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ ConfigPhaseF p ReadStrategy, b ~ ConfigPhaseF p ReadStrategy) =>
+  LabelOptic "readStrategy" k (CommandLoggingP p) (CommandLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f
+         ( MkCommandLoggingP
+             _bufferLength
+             _bufferTimeout
+             _pollInterval
+             _readSize
+             _readStrategy
+             _reportReadErrors
+           ) ->
+          fmap
+            ( \readStrategy' ->
+                MkCommandLoggingP
+                  _bufferLength
+                  _bufferTimeout
+                  _pollInterval
+                  _readSize
+                  readStrategy'
+                  _reportReadErrors
+            )
+            (f _readStrategy)
   {-# INLINE labelOptic #-}
 
 instance
@@ -127,14 +288,20 @@ instance
     lensVL
       $ \f
          ( MkCommandLoggingP
+             _bufferLength
+             _bufferTimeout
              _pollInterval
              _readSize
+             _readStrategy
              _reportReadErrors
            ) ->
           fmap
             ( MkCommandLoggingP
+                _bufferLength
+                _bufferTimeout
                 _pollInterval
                 _readSize
+                _readStrategy
             )
             (f _reportReadErrors)
   {-# INLINE labelOptic #-}
@@ -160,7 +327,10 @@ deriving stock instance Eq (CommandLoggingP ConfigPhaseMerged)
 deriving stock instance Show (CommandLoggingP ConfigPhaseMerged)
 
 instance
-  ( Default (ConfigPhaseF p PollInterval),
+  ( Default (ConfigPhaseF p BufferLength),
+    Default (ConfigPhaseF p BufferTimeout),
+    Default (ConfigPhaseF p PollInterval),
+    Default (ConfigPhaseF p ReadStrategy),
     Default (ConfigPhaseF p ReadSize),
     Default (SwitchF p ReportReadErrorsSwitch)
   ) =>
@@ -168,7 +338,10 @@ instance
   where
   def =
     MkCommandLoggingP
-      { pollInterval = def,
+      { bufferLength = def,
+        bufferTimeout = def,
+        pollInterval = def,
+        readStrategy = def,
         readSize = def,
         reportReadErrors = def
       }
@@ -180,8 +353,14 @@ mergeCommandLogging ::
   CommandLoggingMerged
 mergeCommandLogging args mToml =
   MkCommandLoggingP
-    { pollInterval =
+    { bufferLength =
+        (args ^. #bufferLength) <>?. (toml ^. #bufferLength),
+      bufferTimeout =
+        (args ^. #bufferTimeout) <>?. (toml ^. #bufferTimeout),
+      pollInterval =
         (args ^. #pollInterval) <>?. (toml ^. #pollInterval),
+      readStrategy =
+        (args ^. #readStrategy) <>?. (toml ^. #readStrategy),
       readSize =
         (args ^. #readSize) <>?. (toml ^. #readSize),
       reportReadErrors =
@@ -196,20 +375,32 @@ mergeCommandLogging args mToml =
     argsReportReadErrors :: WithDisabled Bool
     argsReportReadErrors = args ^. #reportReadErrors $> True
 
-    toml = fromMaybe defaultToml mToml
+    toml = fromMaybe def mToml
 
 instance DecodeTOML CommandLoggingToml where
   tomlDecoder =
     MkCommandLoggingP
-      <$> decodePollInterval
+      <$> decodeBufferLength
+      <*> decodeBufferTimeout
+      <*> decodePollInterval
       <*> decodeReadSize
+      <*> decodeReadStrategy
       <*> decodeReportReadErrors
+
+decodeBufferLength :: Decoder (Maybe BufferLength)
+decodeBufferLength = getFieldOptWith tomlDecoder "buffer-length"
+
+decodeBufferTimeout :: Decoder (Maybe BufferTimeout)
+decodeBufferTimeout = getFieldOptWith tomlDecoder "buffer-timeout"
 
 decodePollInterval :: Decoder (Maybe PollInterval)
 decodePollInterval = getFieldOptWith tomlDecoder "poll-interval"
 
 decodeReadSize :: Decoder (Maybe ReadSize)
 decodeReadSize = getFieldOptWith tomlDecoder "read-size"
+
+decodeReadStrategy :: Decoder (Maybe ReadStrategy)
+decodeReadStrategy = getFieldOptWith tomlDecoder "read-strategy"
 
 decodeReportReadErrors :: Decoder (Maybe Bool)
 decodeReportReadErrors = getFieldOptWith tomlDecoder "report-read-errors"
@@ -218,23 +409,10 @@ decodeReportReadErrors = getFieldOptWith tomlDecoder "report-read-errors"
 toEnv :: CommandLoggingMerged -> CommandLoggingEnv
 toEnv merged =
   MkCommandLoggingP
-    { pollInterval = merged ^. #pollInterval,
+    { bufferLength = merged ^. #bufferLength,
+      bufferTimeout = merged ^. #bufferTimeout,
+      pollInterval = merged ^. #pollInterval,
+      readStrategy = merged ^. #readStrategy,
       readSize = merged ^. #readSize,
       reportReadErrors = merged ^. #reportReadErrors
-    }
-
-defaultToml :: CommandLoggingToml
-defaultToml =
-  MkCommandLoggingP
-    { pollInterval = Nothing,
-      readSize = Nothing,
-      reportReadErrors = Nothing
-    }
-
-defaultMerged :: CommandLoggingMerged
-defaultMerged =
-  MkCommandLoggingP
-    { pollInterval = def,
-      readSize = def,
-      reportReadErrors = def
     }

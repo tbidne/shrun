@@ -34,6 +34,11 @@ module Functional.Prelude
     runException,
     runExitFailure,
 
+    -- ** Read strategies
+    ReadStrategyTestParams (..),
+    ReadStrategyTest.testReadStrategy,
+    ReadStrategyTest.multiTestReadStrategy,
+
     -- * Expectations
 
     -- ** Text
@@ -54,16 +59,26 @@ module Functional.Prelude
     withBaseArgs,
     withNoConfig,
     notifySystemArg,
+    readLogFile,
   )
 where
 
 import Data.String as X (IsString)
+import Data.Text qualified as T
 import Data.Typeable (typeRep)
 #if !MIN_VERSION_base(4, 20, 0)
 import Effects.Exception (ExceptionCS)
 #endif
 import Effects.FileSystem.Utils (combineFilePaths)
 import Effects.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
+import Functional.ReadStrategyTest
+  ( ReadStrategyTestParams
+      ( ReadStrategyTestParametricSetup,
+        ReadStrategyTestParametricSimple,
+        ReadStrategyTestSimple
+      ),
+  )
+import Functional.ReadStrategyTest qualified as ReadStrategyTest
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Configuration.Env.Types
@@ -91,7 +106,13 @@ import Shrun.Notify.MonadNotify (MonadNotify (notify), ShrunNote)
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
 import Test.Shrun.Verifier (ResultText (MkResultText))
-import Test.Tasty as X (TestTree, defaultMain, testGroup, withResource)
+import Test.Tasty as X
+  ( TestTree,
+    askOption,
+    defaultMain,
+    testGroup,
+    withResource,
+  )
 import Test.Tasty.HUnit as X
   ( Assertion,
     assertBool,
@@ -383,3 +404,6 @@ notifySystemArg = "notify-send"
 
 cfp :: FilePath -> FilePath -> FilePath
 cfp = combineFilePaths
+
+readLogFile :: OsPath -> IO (List ResultText)
+readLogFile path = fmap MkResultText . T.lines <$> readFileUtf8ThrowM path

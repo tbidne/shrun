@@ -16,13 +16,21 @@ import Integration.Utils
 import Shrun.Configuration.Data.CommandLogging
   ( CommandLoggingP
       ( MkCommandLoggingP,
+        bufferLength,
+        bufferTimeout,
         pollInterval,
         readSize,
+        readStrategy,
         reportReadErrors
       ),
     ReportReadErrorsSwitch (ReportReadErrorsOff),
   )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy
+  ( ReadStrategy
+      ( ReadBlockLineBuffer
+      ),
+  )
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP
       ( MkCommonLoggingP,
@@ -113,8 +121,11 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                     },
                 commandLogging =
                   MkCommandLoggingP
-                    { pollInterval = 100,
+                    { bufferLength = 2000,
+                      bufferTimeout = 60,
+                      pollInterval = 100,
                       readSize = MkReadSize $ MkBytes 1_000_000,
+                      readStrategy = ReadBlockLineBuffer,
                       reportReadErrors = ReportReadErrorsOff
                     },
                 fileLogging = Nothing,

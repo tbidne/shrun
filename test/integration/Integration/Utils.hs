@@ -161,8 +161,7 @@ deriving via ConfigIO instance MonadTerminal NoConfigIO
 -- the expectation.
 makeConfigAndAssertEq ::
   forall m.
-  ( MonadDBus m,
-    MonadEnv m,
+  ( MonadEnv m,
     MonadFileReader m,
     MonadMask m,
     MonadOptparse m,
@@ -207,8 +206,7 @@ infix 1 ^?=@
 -- | Like 'makeConfigAndAssertEq' except we only compare select fields.
 makeConfigAndAssertFieldEq ::
   forall m.
-  ( MonadDBus m,
-    MonadEnv m,
+  ( MonadEnv m,
     MonadFileReader m,
     MonadMask m,
     MonadOptparse m,
@@ -231,8 +229,7 @@ makeConfigAndAssertFieldEq args toIO comparisons = do
 
 makeMergedConfig ::
   forall m.
-  ( MonadDBus m,
-    MonadEnv m,
+  ( MonadEnv m,
     MonadFileReader m,
     MonadMask m,
     MonadOptparse m,

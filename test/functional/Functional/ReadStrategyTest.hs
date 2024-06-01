@@ -1,0 +1,205 @@
+module Functional.ReadStrategyTest
+  ( ReadStrategyOpt (..),
+    ReadStrategyTestParams (..),
+    multiTestReadStrategy,
+    testReadStrategy,
+  )
+where
+
+import Data.Tagged (Tagged (Tagged))
+import Options.Applicative qualified as OA
+import Shrun.Prelude
+import Test.Tasty (TestName, TestTree, askOption, testGroup)
+import Test.Tasty.HUnit (testCase)
+import Test.Tasty.Options
+  ( IsOption
+      ( defaultValue,
+        optionCLParser,
+        optionHelp,
+        optionName,
+        parseValue
+      ),
+    mkOptionCLParser,
+  )
+
+-- | Test parameters, used for running tests against multiple read
+-- strategies.
+data ReadStrategyTestParams where
+  -- | Simple test that should be parametric over ReadStrategy.
+  ReadStrategyTestParametricSimple ::
+    -- | Test description
+    String ->
+    -- | Test runner
+    (List String -> IO a) ->
+    -- | Args
+    (List String) ->
+    -- | Assertions
+    (a -> IO ()) ->
+    ReadStrategyTestParams
+  -- | Simple test.
+  ReadStrategyTestSimple ::
+    -- | Test description
+    String ->
+    -- | Test runner
+    (List String -> IO a) ->
+    -- | Args
+    (List String) ->
+    -- | Block Assertions
+    (a -> IO ()) ->
+    -- | BlockLineBuffer assertions
+    (a -> IO ()) ->
+    ReadStrategyTestParams
+  -- | Test with more complicated setup that should be parametric over
+  -- ReadStrategy.
+  ReadStrategyTestParametricSetup ::
+    -- | Test description
+    String ->
+    -- | Test runner
+    (List String -> IO a) ->
+    -- | Args setup
+    (IO (List String, r)) ->
+    -- | Assertions
+    ((a, r) -> IO ()) ->
+    ReadStrategyTestParams
+  -- | Test with more complicated setup.
+  ReadStrategyTestSetup ::
+    -- | Test description
+    String ->
+    -- | Test runner
+    (List String -> IO a) ->
+    -- | Args
+    (IO (List String, r)) ->
+    -- | Block Assertions
+    ((a, r) -> IO ()) ->
+    -- | BlockLineBuffer assertions
+    ((a, r) -> IO ()) ->
+    ReadStrategyTestParams
+
+-- | Runs multiple tests against one or more command-log read strategies.
+multiTestReadStrategy :: List ReadStrategyTestParams -> List TestTree
+multiTestReadStrategy xs = xs >>= testReadStrategy
+
+-- | Runs a test against one or more command-log read strategies.
+testReadStrategy :: ReadStrategyTestParams -> List TestTree
+testReadStrategy (ReadStrategyTestParametricSimple desc runner args assertResults) =
+  [ askOption $ \case
+      ReadStrategyBlock -> blockTest
+      ReadStrategyBlockLineBuffer -> bufferTest
+      ReadStrategyAll ->
+        testGroup
+          "All command-log read strategies"
+          [ blockTest,
+            bufferTest
+          ]
+  ]
+  where
+    blockTest = blockTestSimple desc runner args assertResults
+    bufferTest = bufferTestSimple desc runner args assertResults
+testReadStrategy (ReadStrategyTestSimple desc runner args blockAssertions blockLineBufferAssertions) =
+  [ askOption $ \case
+      ReadStrategyBlock -> blockTest
+      ReadStrategyBlockLineBuffer -> bufferTest
+      ReadStrategyAll ->
+        testGroup
+          "All command-log read strategies"
+          [ blockTest,
+            bufferTest
+          ]
+  ]
+  where
+    blockTest = blockTestSimple desc runner args blockAssertions
+    bufferTest = bufferTestSimple desc runner args blockLineBufferAssertions
+testReadStrategy (ReadStrategyTestParametricSetup desc runner mkArgs assertResults) =
+  [ askOption $ \case
+      ReadStrategyBlock -> blockTest
+      ReadStrategyBlockLineBuffer -> bufferTest
+      ReadStrategyAll ->
+        testGroup
+          "All command-log read strategies"
+          [ blockTest,
+            bufferTest
+          ]
+  ]
+  where
+    blockTest = blockTestSetup desc runner mkArgs assertResults
+    bufferTest = bufferTestSetup desc runner mkArgs assertResults
+testReadStrategy (ReadStrategyTestSetup desc runner mkArgs blockAssertions blockLineBufferAssertions) =
+  [ askOption $ \case
+      ReadStrategyBlock -> blockTest
+      ReadStrategyBlockLineBuffer -> bufferTest
+      ReadStrategyAll ->
+        testGroup
+          "All command-log read strategies"
+          [ blockTest,
+            bufferTest
+          ]
+  ]
+  where
+    blockTest = blockTestSetup desc runner mkArgs blockAssertions
+    bufferTest = bufferTestSetup desc runner mkArgs blockLineBufferAssertions
+
+blockTestSimple ::
+  TestName ->
+  (List String -> IO a) ->
+  List String ->
+  (a -> IO ()) ->
+  TestTree
+blockTestSimple desc runner args assertResults = testCase desc $ do
+  results <- runner args
+  assertResults results
+
+bufferTestSimple ::
+  TestName ->
+  (List String -> IO a) ->
+  List String ->
+  (a -> IO ()) ->
+  TestTree
+bufferTestSimple desc runner args assertResults = testCase (bufferDesc desc) $ do
+  results <- runner (bufferArgs args)
+  assertResults results
+
+blockTestSetup ::
+  TestName ->
+  (List String -> IO a) ->
+  IO (List String, r) ->
+  ((a, r) -> IO ()) ->
+  TestTree
+blockTestSetup desc runner mkArgs assertResults = testCase desc $ do
+  (args, extra) <- mkArgs
+  results <- runner args
+  assertResults (results, extra)
+
+bufferTestSetup ::
+  TestName ->
+  (List String -> IO a) ->
+  IO (List String, r) ->
+  ((a, r) -> IO ()) ->
+  TestTree
+bufferTestSetup desc runner mkArgs assertResults = testCase (bufferDesc desc) $ do
+  (args, extra) <- mkArgs
+  results <- runner (bufferArgs args)
+  assertResults (results, extra)
+
+bufferDesc :: String -> String
+bufferDesc = (++ " (block-line-buffer)")
+
+bufferArgs :: List String -> List String
+bufferArgs = (++ ["--command-log-read-strategy", "block-line-buffer"])
+
+-- | Hedgehog option for ReadStrategy tests.
+data ReadStrategyOpt
+  = ReadStrategyBlock
+  | ReadStrategyBlockLineBuffer
+  | ReadStrategyAll
+  deriving stock (Eq, Show)
+
+instance IsOption ReadStrategyOpt where
+  defaultValue = ReadStrategyBlock
+  parseValue "block" = pure ReadStrategyBlock
+  parseValue "block-line-buffer" = pure ReadStrategyBlockLineBuffer
+  parseValue "all" = pure ReadStrategyAll
+  parseValue other = fail $ "Unrecognized option: " ++ other
+  optionName = Tagged "read-strategy"
+  optionHelp = Tagged "Runs tests with specified command-log read strategy"
+  optionCLParser =
+    mkOptionCLParser (OA.metavar "(block|block-line-buffer|all)")

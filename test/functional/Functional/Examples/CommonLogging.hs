@@ -9,15 +9,21 @@ tests :: TestTree
 tests =
   testGroup
     "CommonLogging"
-    [ keyHideOn,
-      keyHideOff
-    ]
+    (multiTestReadStrategy testsParams)
+  where
+    testsParams :: List ReadStrategyTestParams
+    testsParams =
+      [ keyHideOn,
+        keyHideOff
+      ]
 
-keyHideOn :: TestTree
+keyHideOn :: ReadStrategyTestParams
 keyHideOn =
-  testCase "Runs key hide example with --common-log-key-hide" $ do
-    results <- run args
-    V.verifyExpectedUnexpected results expected unexpected
+  ReadStrategyTestParametricSimple
+    "Runs key hide example with --common-log-key-hide"
+    run
+    args
+    (\results -> V.verifyExpectedUnexpected results expected unexpected)
   where
     args =
       withBaseArgs
@@ -33,11 +39,13 @@ keyHideOn =
         withSuccessPrefix "some-key"
       ]
 
-keyHideOff :: TestTree
+keyHideOff :: ReadStrategyTestParams
 keyHideOff =
-  testCase "Runs key hide example without --common-log-key-hide" $ do
-    results <- run args
-    V.verifyExpectedUnexpected results expected unexpected
+  ReadStrategyTestParametricSimple
+    "Runs key hide example without --common-log-key-hide"
+    run
+    args
+    (\results -> V.verifyExpectedUnexpected results expected unexpected)
   where
     args =
       withBaseArgs

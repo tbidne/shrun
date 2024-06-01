@@ -95,7 +95,6 @@ withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
 -- | Creates a 'MergedConfig' from CLI args and TOML config.
 getMergedConfig ::
   ( HasCallStack,
-    MonadDBus m,
     MonadFileReader m,
     MonadOptparse m,
     MonadPathReader m,
