@@ -247,22 +247,34 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
       readIORef prevReadRef
         >>= \case
           Nothing -> pure ReadNoData
-          Just prevRead -> prepareSendIfExceedsThresholds (const (pure ())) prevRead
+          Just prevRead ->
+            maybeToReadHandleResult
+              <$> prepareSendIfExceedsThresholds (const (pure ())) prevRead
 
     onPartialRead :: UnlinedText -> m ReadHandleResult
     onPartialRead finalPartialRead =
       readIORef prevReadRef >>= \case
-        Nothing -> do
-          prepareSendIfExceedsThresholds updateRef finalPartialRead
+        Nothing ->
+          maybeToReadHandleResult
+            <$> prepareSendIfExceedsThresholds updateRef finalPartialRead
         Just prevRead -> do
           let combinedRead = prevRead <> finalPartialRead
-          prepareSendIfExceedsThresholds updateRef combinedRead
+          maybeToReadHandleResult
+            <$> prepareSendIfExceedsThresholds updateRef combinedRead
 
     onCompletedAndPartialRead :: List UnlinedText -> UnlinedText -> m ReadHandleResult
     onCompletedAndPartialRead completedReads finalPartialRead = do
       completedReads' <- mPrependPrevRead prevReadRef completedReads
-      updateRef finalPartialRead
-      pure $ ReadSuccess completedReads'
+      finalPartialResult <- prepareSendIfExceedsThresholds updateRef finalPartialRead
+
+      -- We also check that the partial read does not immediately exceed our
+      -- thresholds. If it does, no sense storing it, send it now. This is
+      -- also consistent with how onPartialRead works.
+      let totalRead =
+            case finalPartialResult of
+              Nothing -> completedReads'
+              Just finalRead -> completedReads' ++ [finalRead]
+      pure $ ReadSuccess totalRead
 
     -- Turns this text into ReadSuccess iff the buffer thresholds are
     -- exceeded.
@@ -273,7 +285,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
       (UnlinedText -> m ()) ->
       -- The data to check.
       UnlinedText ->
-      m ReadHandleResult
+      m (Maybe UnlinedText)
     prepareSendIfExceedsThresholds onNoSend readData = do
       exceeds <- exceedsThreshold readData
       if exceeds
@@ -281,10 +293,10 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
           resetPrevReadRef'
           currTime <- getMonotonicTime
           writeIORef bufferWriteTimeRef currTime
-          pure $ ReadSuccess [readData]
+          pure $ Just readData
         else do
           onNoSend readData
-          pure ReadNoData
+          pure Nothing
 
     exceedsThreshold :: UnlinedText -> m Bool
     exceedsThreshold t =
@@ -312,6 +324,9 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
     resetPrevReadRef' = resetPrevReadRef prevReadRef
 
     updateRef = writeIORef prevReadRef . Just
+
+    maybeToReadHandleResult Nothing = ReadNoData
+    maybeToReadHandleResult (Just read) = ReadSuccess [read]
 
 -- | Intended for a final read that handles previous read data.
 readAndUpdateRefFinal ::

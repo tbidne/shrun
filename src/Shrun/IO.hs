@@ -288,7 +288,6 @@ streamOutput logFn cmd p = do
 
   currTime <- getMonotonicTime
 
-  -- TODO: Verify that these do not alias
   bufferFlushOutTimeRef <- newIORef currTime
   bufferFlushErrTimeRef <- newIORef currTime
 
