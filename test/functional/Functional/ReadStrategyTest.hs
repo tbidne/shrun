@@ -88,11 +88,13 @@ testReadStrategy (ReadStrategyTestParametricSimple desc runner args assertResult
       ReadStrategyAll ->
         testGroup
           "All command-log read strategies"
-          [ blockTest,
+          [ defaultTest,
+            blockTest,
             bufferTest
           ]
   ]
   where
+    defaultTest = defaultTestSimple desc runner args assertResults
     blockTest = blockTestSimple desc runner args assertResults
     bufferTest = bufferTestSimple desc runner args assertResults
 testReadStrategy (ReadStrategyTestSimple desc runner args blockAssertions blockLineBufferAssertions) =
@@ -116,11 +118,13 @@ testReadStrategy (ReadStrategyTestParametricSetup desc runner mkArgs assertResul
       ReadStrategyAll ->
         testGroup
           "All command-log read strategies"
-          [ blockTest,
+          [ defaultTest,
+            blockTest,
             bufferTest
           ]
   ]
   where
+    defaultTest = defaultTestSetup desc runner mkArgs assertResults
     blockTest = blockTestSetup desc runner mkArgs assertResults
     bufferTest = bufferTestSetup desc runner mkArgs assertResults
 testReadStrategy (ReadStrategyTestSetup desc runner mkArgs blockAssertions blockLineBufferAssertions) =
@@ -138,14 +142,27 @@ testReadStrategy (ReadStrategyTestSetup desc runner mkArgs blockAssertions block
     blockTest = blockTestSetup desc runner mkArgs blockAssertions
     bufferTest = bufferTestSetup desc runner mkArgs blockLineBufferAssertions
 
+-- NOTE: For parametric tests, we also want to verify the default
+-- (i.e. no args) behavior passes, since that is how such examples are defined.
+
+defaultTestSimple ::
+  String ->
+  (List String -> IO t) ->
+  List String ->
+  (t -> IO ()) ->
+  TestTree
+defaultTestSimple desc runner args assertResults = testCase desc $ do
+  results <- runner args
+  assertResults results
+
 blockTestSimple ::
   TestName ->
   (List String -> IO a) ->
   List String ->
   (a -> IO ()) ->
   TestTree
-blockTestSimple desc runner args assertResults = testCase desc $ do
-  results <- runner args
+blockTestSimple desc runner args assertResults = testCase (blockDesc desc) $ do
+  results <- runner (blockArgs args)
   assertResults results
 
 bufferTestSimple ::
@@ -158,15 +175,26 @@ bufferTestSimple desc runner args assertResults = testCase (bufferDesc desc) $ d
   results <- runner (bufferArgs args)
   assertResults results
 
+defaultTestSetup ::
+  TestName ->
+  (List String -> IO a) ->
+  IO (List String, r) ->
+  ((a, r) -> IO ()) ->
+  TestTree
+defaultTestSetup desc runner mkArgs assertResults = testCase desc $ do
+  (args, extra) <- mkArgs
+  results <- runner args
+  assertResults (results, extra)
+
 blockTestSetup ::
   TestName ->
   (List String -> IO a) ->
   IO (List String, r) ->
   ((a, r) -> IO ()) ->
   TestTree
-blockTestSetup desc runner mkArgs assertResults = testCase desc $ do
+blockTestSetup desc runner mkArgs assertResults = testCase (blockDesc desc) $ do
   (args, extra) <- mkArgs
-  results <- runner args
+  results <- runner (blockArgs args)
   assertResults (results, extra)
 
 bufferTestSetup ::
@@ -179,6 +207,12 @@ bufferTestSetup desc runner mkArgs assertResults = testCase (bufferDesc desc) $ 
   (args, extra) <- mkArgs
   results <- runner (bufferArgs args)
   assertResults (results, extra)
+
+blockDesc :: String -> String
+blockDesc = (++ " (block)")
+
+blockArgs :: List String -> List String
+blockArgs = (++ ["--command-log-read-strategy", "block"])
 
 bufferDesc :: String -> String
 bufferDesc = (++ " (block-line-buffer)")

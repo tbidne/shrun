@@ -192,11 +192,11 @@ We would therefore like `shrun` to log something like:
 ...
 ```
 
-However, there are some complications. The fundamental issue is that we are reading `N` bytes of data at a time, so there is no guarantee that our read will end at a newline. We thus have to handle newlines ourselves. To that end, we introduce several options that interact with command-log reading:
+However, there are some complications. It is easy to split logs on newlines and log each line separately, but the fundamental issue is that we are reading `N` bytes of data at a time, so there is no guarantee that our read will end at a newline. We thus have to handle this case ourselves. To that end, we introduce several options that interact with command-log reading:
 
 - `--command-log-poll-interval`: How fast `shrun` reads logs from the underlying commands.
 - `--command-log-read-size`: Maximum number of bytes `shrun` will read from the underlying command, in a single read.
-- `--command-log-read-strategy`: The default, `block`, is the simple, "read N bytes at a time". `block-line-buffer` also reads `N` bytes, however, it buffers logs until a newline is found, or some threshold is exceeded.
+- `--command-log-read-strategy`: The first strategy, `block`, simply reads and logs `N` bytes at a time. The more complex `block-line-buffer` also reads `N` bytes, however, it buffers logs until a newline is found, or some threshold is exceeded.
 - `--command-log-buffer-length`: Used in conjunction with `--command-log-read-strategy block-line-buffer`. If the length is exceeded, whatever is in the buffer is logged, even if it is not newline-terminated.
 - `--command-log-buffer-timeout`: Same idea as `--command-log-buffer-length`, except the threshold is a timeout.
 
@@ -207,11 +207,18 @@ The general hope is that logs are newline-terminated and `--command-log-read-siz
 
 To mitigate this, we introduce the `--command-log-read-strategy block-line-buffer` option. This option will buffer any logs that do _not_ end in a newline, and wait until the next newline is found, before logging the buffer. We include `--command-log-buffer-length` that will flush the buffer regardless once it grows beyond the specified size, to avoid holding an arbitrarily large string in memory. We also include `--command-log-buffer-timeout` to avoid holding onto a log for an arbitrary amount of time.
 
-We can now offer the following advice, if formatting is off.
+> [!WARNING]
+>
+> The `block-line-buffer` strategy only makes sense when there is exactly _one_ command. Otherwise we could easily mix up logs from different commands, leading to nonsense output.
 
-- The simplest method that could possibly improve the formatting is to increase `--command-log-read-size`, though this is already at a fairly high 16kb, so it may not be enough. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the example above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless.
+With that out of the way, we can now justify the default behavior.
 
-- If that doesn't work, and you are running a _single_ command that outputs newline-terminated logs, try `--command-log-read-strategy block-line-buffer`, possibly tweaking `--command-log-buffer-(length|timeout)` to your taste (though there are defaults for these). Otherwise stick with the default `--command-log-read-strategy block`, and make your peace with the fact that this is all best-effort 🙂.
+- When we have exactly one command and file-logging is active, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it only makes sense when there is a single command and file-logging is active.
+- Otherwise, we use the `block` strategy.
+
+There are various tweaks one can try if the file log formatting is still damaged e.g. increasing `--command-log-buffer-(length|timeout)` and/or `--command-log-read-size`. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the description above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless, so it is likely not a good solution.
+
+If none of those help, the best solution is likely to simply use `--command-log-read-strategy block`, -- which generally does a pretty good job -- and make your peace with the fact that this is all best-effort 🙂.
 
 ## Bash auto-completions
 

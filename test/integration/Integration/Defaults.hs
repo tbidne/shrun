@@ -197,7 +197,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                       bufferTimeout = 60,
                       pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 20,
-                      readStrategy = ReadBlockLineBuffer,
+                      readStrategy = Just ReadBlockLineBuffer,
                       reportReadErrors = ReportReadErrorsOn
                     },
                 fileLogging =
@@ -308,7 +308,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                       bufferTimeout = 80,
                       pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 512,
-                      readStrategy = ReadBlock,
+                      readStrategy = Just ReadBlock,
                       reportReadErrors = ReportReadErrorsOn
                     },
                 fileLogging =

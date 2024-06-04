@@ -29,7 +29,12 @@ where
 
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize)
-import Shrun.Configuration.Data.CommandLogging.ReadStrategy (ReadStrategy)
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy
+  ( ReadStrategy
+      ( ReadBlock,
+        ReadBlockLineBuffer
+      ),
+  )
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -37,14 +42,16 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
+    ConfigPhaseEnvF,
     ConfigPhaseF,
     SwitchF,
   )
 import Shrun.Configuration.Data.Core.Timeout
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.), (<>??))
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
+import Shrun.Data.Command (CommandP1)
 import Shrun.Prelude
 
 newtype BufferLength = MkBufferLength Int
@@ -139,7 +146,7 @@ data CommandLoggingP p = MkCommandLoggingP
     -- Note this is not on commandLogging or fileLogging since it affects both.
     readSize :: ConfigPhaseF p ReadSize,
     -- | Reading strategy.
-    readStrategy :: ConfigPhaseF p ReadStrategy,
+    readStrategy :: ConfigPhaseEnvF p ReadStrategy,
     -- | Determines if we should log read errors.
     reportReadErrors :: SwitchF p ReportReadErrorsSwitch
   }
@@ -257,7 +264,7 @@ instance
   {-# INLINE labelOptic #-}
 
 instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p ReadStrategy, b ~ ConfigPhaseF p ReadStrategy) =>
+  (k ~ A_Lens, a ~ ConfigPhaseEnvF p ReadStrategy, b ~ ConfigPhaseEnvF p ReadStrategy) =>
   LabelOptic "readStrategy" k (CommandLoggingP p) (CommandLoggingP p) a b
   where
   labelOptic =
@@ -334,7 +341,7 @@ instance
   ( Default (ConfigPhaseF p BufferLength),
     Default (ConfigPhaseF p BufferTimeout),
     Default (ConfigPhaseF p PollInterval),
-    Default (ConfigPhaseF p ReadStrategy),
+    Default (ConfigPhaseEnvF p ReadStrategy),
     Default (ConfigPhaseF p ReadSize),
     Default (SwitchF p ReportReadErrorsSwitch)
   ) =>
@@ -364,7 +371,7 @@ mergeCommandLogging args mToml =
       pollInterval =
         (args ^. #pollInterval) <>?. (toml ^. #pollInterval),
       readStrategy =
-        (args ^. #readStrategy) <>?. (toml ^. #readStrategy),
+        (args ^. #readStrategy) <>?? (toml ^. #readStrategy),
       readSize =
         (args ^. #readSize) <>?. (toml ^. #readSize),
       reportReadErrors =
@@ -409,14 +416,31 @@ decodeReadStrategy = getFieldOptWith tomlDecoder "read-strategy"
 decodeReportReadErrors :: Decoder (Maybe Bool)
 decodeReportReadErrors = getFieldOptWith tomlDecoder "report-read-errors"
 
--- | Creates env version from merged.
-toEnv :: CommandLoggingMerged -> CommandLoggingEnv
-toEnv merged =
+-- | Creates env version from merged. Requires commands because we pick
+-- the read strategy based on the number of commands.
+toEnv ::
+  Bool ->
+  NESeq CommandP1 ->
+  CommandLoggingMerged ->
+  CommandLoggingEnv
+toEnv fileLogging cmds merged =
   MkCommandLoggingP
     { bufferLength = merged ^. #bufferLength,
       bufferTimeout = merged ^. #bufferTimeout,
       pollInterval = merged ^. #pollInterval,
-      readStrategy = merged ^. #readStrategy,
+      readStrategy,
       readSize = merged ^. #readSize,
       reportReadErrors = merged ^. #reportReadErrors
     }
+  where
+    readStrategy = case merged ^. #readStrategy of
+      -- 1. If the read strategy was explicitly set, use it.
+      Just rs -> rs
+      -- 2. Read strategy was not set.
+      Nothing ->
+        if length cmds == 1 && fileLogging
+          -- 2.1. If we have exactly one command and file logging is active,
+          -- buffer newlines.
+          then ReadBlockLineBuffer
+          -- 2.2 Otherwise, use the normal block strategy.
+          else ReadBlock

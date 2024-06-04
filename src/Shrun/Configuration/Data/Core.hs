@@ -35,6 +35,7 @@ import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.WithDisabled ((<>??))
 import Shrun.Configuration.Default (Default (def))
+import Shrun.Data.Command (CommandP1)
 import Shrun.Notify.MonadDBus (MonadDBus)
 import Shrun.Prelude
 
@@ -378,10 +379,11 @@ withCoreEnv ::
     MonadTerminal m,
     MonadThrow m
   ) =>
+  NESeq CommandP1 ->
   CoreConfigMerged ->
   (CoreConfigEnv -> m a) ->
   m a
-withCoreEnv merged onCoreConfigEnv = do
+withCoreEnv cmds merged onCoreConfigEnv = do
   notify <- traverse Notify.toEnv (merged ^. #notify)
 
   FileLogging.withFileLoggingEnv (merged ^. #fileLogging) $ \fileLoggingEnv ->
@@ -390,7 +392,11 @@ withCoreEnv merged onCoreConfigEnv = do
             { init = merged ^. #init,
               timeout = merged ^. #timeout,
               commonLogging = CommonLogging.toEnv (merged ^. #commonLogging),
-              commandLogging = CommandLogging.toEnv (merged ^. #commandLogging),
+              commandLogging =
+                CommandLogging.toEnv
+                  (is _Just fileLoggingEnv)
+                  cmds
+                  (merged ^. #commandLogging),
               consoleLogging = ConsoleLogging.toEnv (merged ^. #consoleLogging),
               fileLogging = fileLoggingEnv,
               notify

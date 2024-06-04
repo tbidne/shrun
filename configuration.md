@@ -250,7 +250,11 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 **Arg:** `--command-log-read-strategy (block | block-line-buffer)`
 
-**Description:** By default (strategy = block), we read `--command-log-read-size` number of bytes at a time. The "block-line-buffer" strategy will buffer logs until a newline is found, or some size threshold is crossed. This can help preserve formatting in the file logs. This should only be used when running a _single_ command.
+**Description:** The `block` strategy reads `N` (`--command-log-read-size`) bytes at a time, whereas `block-line-buffer` also reads `N` bytes at a time, but buffers newlines, for potentially nicer formatted file logs. By default, we only use `block-line-buffer` when there is exactly one command and file-logging is on. Otherwise we use `block`. This option explicitly sets the strategy.
+
+> [!WARNING]
+>
+> The `block-line-buffer` strategy only makes sense when there is exactly _one_ command. Otherwise we could easily mix up logs from different commands, leading to nonsense output.
 
 **Example:**
 

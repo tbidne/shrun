@@ -125,7 +125,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                       bufferTimeout = 60,
                       pollInterval = 100,
                       readSize = MkReadSize $ MkBytes 1_000_000,
-                      readStrategy = ReadBlockLineBuffer,
+                      readStrategy = Just ReadBlockLineBuffer,
                       reportReadErrors = ReportReadErrorsOff
                     },
                 fileLogging = Nothing,

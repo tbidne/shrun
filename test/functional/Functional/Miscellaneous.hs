@@ -6,14 +6,18 @@ module Functional.Miscellaneous (specs) where
 import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
+import Test.Shrun.Verifier (ExpectedText)
 import Test.Shrun.Verifier qualified as V
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
   testGroup
     "Miscellaneous"
-    (multiTestReadStrategy testsParams)
+    (readStrategyDefaultTests testArgs : readStrategyTests)
   where
+    readStrategyTests =
+      multiTestReadStrategy testsParams
+
     testsParams :: List ReadStrategyTestParams
     testsParams =
       [ splitNewlineLogs,
@@ -295,3 +299,102 @@ formatsFileLogs testArgs =
         withCommandPrefix cmd "    - Running task B   FAIL",
         withCommandPrefix cmd "Finished"
       ]
+
+-- FIXME: Add test for default behavior
+
+readStrategyDefaultTests :: IO TestArgs -> TestTree
+readStrategyDefaultTests testArgs =
+  testGroup
+    "read-strategy default tests"
+    [ testReadStrategyMultiCmdsBlock testArgs,
+      testReadStrategyNoFileLogBlock,
+      testReadStrategyOneCmdFileLogBuffer testArgs
+    ]
+
+testReadStrategyMultiCmdsBlock :: IO TestArgs -> TestTree
+testReadStrategyMultiCmdsBlock testArgs = testCase "Multiple commands uses 'block'" $ do
+  outFile <- (</> [osp|read-strategy-multi-cmd-block.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--console-log-command",
+            "--command-log-read-size",
+            "2b",
+            readStrategyDefaultCmd,
+            "sleep 1"
+          ]
+
+  consoleResults <- run args
+  V.verifyExpected consoleResults expected
+
+  fileResults <- readLogFile outFile
+  V.verifyExpected fileResults expected
+  where
+    -- split since read-size = 2
+    expected =
+      [ withCommandPrefix readStrategyDefaultCmdLog "he",
+        withCommandPrefix readStrategyDefaultCmdLog "ll",
+        withCommandPrefix readStrategyDefaultCmdLog "o",
+        withCommandPrefix readStrategyDefaultCmdLog "by",
+        withCommandPrefix readStrategyDefaultCmdLog "e",
+        finishedPrefix
+      ]
+
+testReadStrategyNoFileLogBlock :: TestTree
+testReadStrategyNoFileLogBlock = testCase "No file logging uses 'block'" $ do
+  let args =
+        withNoConfig
+          [ "--console-log-command",
+            "--command-log-read-size",
+            "2b",
+            readStrategyDefaultCmd
+          ]
+
+  consoleResults <- run args
+  V.verifyExpected consoleResults expected
+  where
+    -- split since read-size = 2
+    expected =
+      [ withCommandPrefix readStrategyDefaultCmdLog "he",
+        withCommandPrefix readStrategyDefaultCmdLog "ll",
+        withCommandPrefix readStrategyDefaultCmdLog "o",
+        withCommandPrefix readStrategyDefaultCmdLog "by",
+        withCommandPrefix readStrategyDefaultCmdLog "e",
+        finishedPrefix
+      ]
+
+testReadStrategyOneCmdFileLogBuffer :: IO TestArgs -> TestTree
+testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
+  outFile <- (</> [osp|read-strategy-one-cmd-file-buffer.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--console-log-command",
+            "--command-log-read-size",
+            "2b",
+            readStrategyDefaultCmd
+          ]
+
+  consoleResults <- run args
+  V.verifyExpected consoleResults expected
+
+  fileResults <- readLogFile outFile
+  V.verifyExpected fileResults expected
+  where
+    desc = "One command and file logging uses 'block-line-buffer'"
+    -- Only newlines are split since logs w/o newlines are buffered
+    expected =
+      [ withCommandPrefix readStrategyDefaultCmdLog "hello",
+        withCommandPrefix readStrategyDefaultCmdLog "bye",
+        finishedPrefix
+      ]
+
+readStrategyDefaultCmd :: String
+readStrategyDefaultCmd = "printf 'hello\nbye' && sleep 1"
+
+readStrategyDefaultCmdLog :: ExpectedText
+readStrategyDefaultCmdLog = "printf 'hello bye' && sleep 1"

@@ -6,6 +6,7 @@ module Shrun.Configuration.Data.ConfigPhase
     -- * Type families
     ConfigPhaseF,
     ConfigPhaseMaybeF,
+    ConfigPhaseEnvF,
     LineTruncF,
     SwitchF,
   )
@@ -53,6 +54,19 @@ type family ConfigPhaseMaybeF p a where
   ConfigPhaseMaybeF ConfigPhaseToml a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseMerged a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseEnv a = Maybe a
+
+-- | General type family representing:
+--
+-- - Args: Maybe w/ disable flag
+-- - Toml: Maybe
+-- - Merged: Maybe
+-- - Env: Definite
+type ConfigPhaseEnvF :: ConfigPhase -> Type -> Type
+type family ConfigPhaseEnvF p a where
+  ConfigPhaseEnvF ConfigPhaseArgs a = WithDisabled a
+  ConfigPhaseEnvF ConfigPhaseToml a = Maybe a
+  ConfigPhaseEnvF ConfigPhaseMerged a = Maybe a
+  ConfigPhaseEnvF ConfigPhaseEnv a = a
 
 -- | General type family representing a boolean switch for a type @t@ that
 -- is isomorphic to Bool:

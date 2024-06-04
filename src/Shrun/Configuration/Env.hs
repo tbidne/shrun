@@ -156,17 +156,19 @@ fromMergedConfig cfg onEnv = do
   anyError <- newTVarA False
   consoleLogQueue <- newTBQueueA 1_000
 
-  CoreConfig.withCoreEnv (cfg ^. #coreConfig) $ \coreConfigEnv -> do
+  CoreConfig.withCoreEnv commands (cfg ^. #coreConfig) $ \coreConfigEnv -> do
     let env =
           MkEnv
             { config = coreConfigEnv,
               anyError,
               completedCommands,
               consoleLogQueue,
-              commands = cfg ^. #commands
+              commands
             }
 
     onEnv env
+  where
+    commands = cfg ^. #commands
 
 getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgConfig = getXdgConfig [osp|shrun|]
