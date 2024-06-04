@@ -105,7 +105,7 @@ formatFileLog ::
 formatFileLog keyHide fileLogging log = do
   currTime <- getSystemTimeString
   let timestamp = brackets False (pack currTime)
-      timestampLen = unsafeConvertIntegral $ T.length timestamp
+      timestampLen = T.length timestamp
 
       line =
         coreFormatting
@@ -144,7 +144,7 @@ coreFormatting ::
   -- can pass in the timestamp length so it is taken into account
   -- (command logging has no special prefix besides ANSI codes, which is
   -- ignored).
-  Maybe (Truncation TruncLine, Maybe Natural) ->
+  Maybe (Truncation TruncLine, Maybe Int) ->
   -- | Optional cmd name truncation
   Maybe (Truncation TruncCommandName) ->
   -- | If true, strips leading whitespace. This is so that file logging
@@ -237,7 +237,7 @@ formatCommandText =
 -- where @t'@ is @t@ truncated to @k@ chars. Notice the prefix is always
 -- included untarnished.
 concatWithLineTrunc ::
-  Maybe (Truncation TruncLine, Maybe Natural) ->
+  Maybe (Truncation TruncLine, Maybe Int) ->
   Text ->
   Text ->
   Text
@@ -246,7 +246,7 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
   prefix <> Utils.truncateIfNeeded lineTrunc' msg
   where
     lineTrunc' =
-      lineTrunc ∸ (prefixLen + unsafeConvertIntegral (T.length prefix))
+      lineTrunc ∸ (prefixLen + T.length prefix)
 
     prefixLen = fromMaybe 0 mPrefixLen
 

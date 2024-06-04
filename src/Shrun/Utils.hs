@@ -130,16 +130,12 @@ breakStripPoint point txt = case T.breakOn point txt of
 --
 -- >>> truncateIfNeeded 10 "This is 21 chars long"
 -- "This is..."
-truncateIfNeeded :: Natural -> Text -> Text
+truncateIfNeeded :: Int -> Text -> Text
 truncateIfNeeded n txt
-  | T.length txt <= n' = txt
+  | T.length txt <= n = txt
   | otherwise = txt'
   where
-    txt' = T.take (n' - 3) txt <> "..."
-    n' = n2i n
-
-n2i :: Natural -> Int
-n2i = unsafeConvertIntegral
+    txt' = T.take (n - 3) txt <> "..."
 
 -- NOTE: [StripControl Newlines]
 --

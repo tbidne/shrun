@@ -24,6 +24,7 @@ module Shrun.Prelude
     (<<$>>),
     (<<&>>),
     (.>),
+    convertIntegral,
     unsafeConvertIntegral,
     setUncaughtExceptionHandlerDisplay,
 
@@ -375,10 +376,27 @@ unsafeConvertIntegral ::
   ) =>
   a ->
   b
-unsafeConvertIntegral x = case toIntegralSized x of
-  Just y -> y
+unsafeConvertIntegral x = case convertIntegral x of
+  Right y -> y
+  Left err -> error err
+
+-- | Like 'fromIntegral', except the conversion is only between integral types.
+convertIntegral ::
+  forall a b.
+  ( Bits a,
+    Bits b,
+    Integral a,
+    Integral b,
+    Show a,
+    Typeable a,
+    Typeable b
+  ) =>
+  a ->
+  Either String b
+convertIntegral x = case toIntegralSized x of
+  Just y -> Right y
   Nothing ->
-    error $
+    Left $
       mconcat
         [ "Failed converting ",
           show x,

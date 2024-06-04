@@ -35,13 +35,13 @@ data TruncRegion
 -- | The maximum number of command characters to display in the logs.
 type Truncation :: TruncRegion -> Type
 newtype Truncation a = MkTruncation
-  { unTruncation :: Natural
+  { unTruncation :: Int
   }
   deriving stock (Eq, Ord, Show)
-  deriving (Num) via Natural
+  deriving (Num) via Int
 
 instance
-  (k ~ An_Iso, a ~ Natural, b ~ Natural) =>
+  (k ~ An_Iso, a ~ Int, b ~ Int) =>
   LabelOptic "unTruncation" k (Truncation r) (Truncation r) a b
   where
   labelOptic = iso (\(MkTruncation x) -> x) MkTruncation
@@ -51,7 +51,11 @@ instance DecodeTOML (Truncation a) where
   tomlDecoder = parseTruncation tomlDecoder
 
 parseTruncation :: (MonadFail m) => m Natural -> m (Truncation r)
-parseTruncation getNat = MkTruncation <$> getNat
+parseTruncation getNat = do
+  n <- getNat
+  case convertIntegral n of
+    Left err -> fail err
+    Right x -> pure $ MkTruncation x
 
 -- | Determines command log line truncation behavior. We need a separate
 -- type from 'Truncation' to add a third option, to detect the terminal size

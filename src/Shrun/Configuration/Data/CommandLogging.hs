@@ -47,12 +47,12 @@ import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
-newtype BufferLength = MkBufferLength Natural
+newtype BufferLength = MkBufferLength Int
   deriving stock (Eq, Show)
-  deriving (Num) via Natural
+  deriving (Num) via Int
 
 instance
-  (k ~ An_Iso, a ~ Natural, b ~ Natural) =>
+  (k ~ An_Iso, a ~ Int, b ~ Int) =>
   LabelOptic "unBufferLength" k BufferLength BufferLength a b
   where
   labelOptic = iso (\(MkBufferLength x) -> x) MkBufferLength
@@ -64,8 +64,12 @@ instance Default BufferLength where
 instance DecodeTOML BufferLength where
   tomlDecoder = MkBufferLength <$> tomlDecoder
 
-parseBufferLength :: (Functor m) => m Natural -> m BufferLength
-parseBufferLength getNat = MkBufferLength <$> getNat
+parseBufferLength :: (MonadFail m) => m Natural -> m BufferLength
+parseBufferLength getNat = do
+  n <- getNat
+  case convertIntegral n of
+    Left err -> fail err
+    Right x -> pure $ MkBufferLength x
 
 newtype BufferTimeout = MkBufferTimeout Timeout
   deriving stock (Eq, Show)

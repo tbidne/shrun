@@ -293,7 +293,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
         else bufferExceedsTime
 
     bufferExceedsLength :: UnlinedText -> Bool
-    bufferExceedsLength t = unsafeConvertIntegral tLen > bufLen
+    bufferExceedsLength t = tLen > bufLen
       where
         tLen = ShrunText.length t
         bufLen = bufferLength ^. #unBufferLength
