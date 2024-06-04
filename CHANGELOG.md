@@ -12,8 +12,6 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 ## [0.9.1]
 ### Changed
-* Simplify reading final error message.
-* Hide `--version` from primary usage section.
 * Updated blessed GHC to 9.8.2.
 
 ### Added
@@ -28,8 +26,10 @@ the major/minor/patch definitions apply to the application's interface / usage
   wrong.
 * Increase default `--command-log-read-size` to `16 kb` to better prevent
   command log splitting.
-* Improved formatting. Leading/trailing whitespace is no longer stripped, so
-  original formatting is preserved.
+* Improved formatting. Leading/trailing whitespace is no longer stripped from
+  file logs, so original formatting is preserved.
+* Simplify reading final error message.
+* Hide `--version` from primary usage section.
 
 ## [0.9] -- 2024-05-10
 ### Changed
