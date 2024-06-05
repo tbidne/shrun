@@ -8,22 +8,18 @@ module Shrun.Configuration.Data.CommandLogging.ReadStrategy
 where
 
 import Data.String (IsString)
-import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
 -- | Different read strategies for simplicity vs. potential prettier
 -- formatting.
 data ReadStrategy
-  = -- | Default strategy. Reads N bytes at a time.
+  = -- | Reads N bytes at a time.
     ReadBlock
-  | -- | Reads N bytes at a time but attempts to distinguish "complete" (newline
+  | -- | Reads N bytes at a time, but attempts to distinguish "complete" (newline
     -- terminated) vs. "partial" (anything else) reads. We do this to make
     -- the file log output prettier.
     ReadBlockLineBuffer
   deriving stock (Eq, Show)
-
-instance Default ReadStrategy where
-  def = ReadBlock
 
 instance DecodeTOML ReadStrategy where
   tomlDecoder = parseReadStrategy tomlDecoder
