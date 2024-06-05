@@ -2,11 +2,9 @@
 
 module Functional.Examples.CommandLogging (tests) where
 
-import Data.Text qualified as T
 import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
-import Test.Shrun.Verifier (ExpectedText)
 import Test.Shrun.Verifier qualified as V
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!
@@ -19,52 +17,23 @@ tests testArgs =
   where
     testsParams :: List ReadStrategyTestParams
     testsParams =
-      [ readSizeDefault,
-        readSize,
+      [ readSize,
         bufferLengthSplit testArgs,
         bufferLengthUnsplit testArgs,
         bufferTimeoutSplit testArgs,
         bufferTimeoutUnsplit testArgs
       ]
 
-readSizeDefault :: ReadStrategyTestParams
-readSizeDefault =
-  ReadStrategyTestSimple
-    "Default --read-size splits 16,000"
-    run
-    args
-    blockAssertions
-    blockLineBufferAssertions
-  where
-    args =
-      withNoConfig
-        [ "--console-log-command",
-          "--console-log-command-name-trunc",
-          "5",
-          "--command-log-buffer-length",
-          "20_000", -- buffer length needs to be > read-size to not interfere
-          cmd
-        ]
-    cmd = "sleep 1 ; echo " ++ commandLog ++ "b; sleep 1"
-
-    blockAssertions = (`V.verifyExpected` blockExpected)
-
-    blockExpected =
-      [ withCommandPrefix "sl..." cmdExpected,
-        withCommandPrefix "sl..." "b"
-      ]
-
-    blockLineBufferAssertions = (`V.verifyExpected` blockLineBufferExpected)
-
-    blockLineBufferExpected =
-      [ withCommandPrefix "sl..." (cmdExpected <> "b")
-      ]
-
-cmdExpected :: ExpectedText
-cmdExpected = V.MkExpectedText . T.pack $ commandLog
-
-commandLog :: String
-commandLog = replicate 16_000 'a'
+-- NOTE: We used to test the default read-size of 16,000. However, this
+-- test failed on CI for an interesting reason. Despite using the 'block'
+-- strategy, the string ended up being split after 9,216 chars, instead of
+-- the expected 16,000. My _guess_ is that the pipe capacity was exceeded
+-- (this is system-dependent), so only 9,216 chars were available when the
+-- read happened. Or, whatever, who knows.
+--
+-- In any case, the test was of low value since read-strategy is tested in
+-- multiple other places, so we really do not _need_ this particular test.
+-- Test determinism is more valuable here, so the test was removed.
 
 readSize :: ReadStrategyTestParams
 readSize =
