@@ -543,6 +543,7 @@ mergeFileLogging args mToml = for mPath $ \path -> do
       (Without, Nothing) -> Nothing
       (With p, _) -> Just p
       (_, Just toml) -> Just $ toml ^. #file % #path
+{-# INLINEABLE mergeFileLogging #-}
 
 instance DecodeTOML FileLoggingToml where
   tomlDecoder =
@@ -594,6 +595,7 @@ withFileLoggingEnv mFileLogging onFileLoggingEnv = do
             }
 
   withMLogging mFileLogging (onFileLoggingEnv . mkEnv)
+{-# INLINEABLE withFileLoggingEnv #-}
 
 withMLogging ::
   forall m a.
@@ -640,6 +642,7 @@ withMLogging (Just fileLogging) onLogging = do
     $ removeFileIfExists fp
 
   pure result
+{-# INLINEABLE withMLogging #-}
 
 handleLogFileSize ::
   ( HasCallStack,
@@ -684,6 +687,7 @@ handleLogFileSize fileSizeMode fp = do
 
     toDouble :: Integer -> Double
     toDouble = fromInteger
+{-# INLINEABLE handleLogFileSize #-}
 
 ensureFileExists ::
   ( HasCallStack,
@@ -695,9 +699,11 @@ ensureFileExists ::
 ensureFileExists fp = do
   exists <- doesFileExist fp
   unless exists $ writeFileUtf8 fp ""
+{-# INLINEABLE ensureFileExists #-}
 
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgState = getXdgState [osp|shrun|]
+{-# INLINEABLE getShrunXdgState #-}
 
 defaultToml :: FilePathDefault -> FileLoggingToml
 defaultToml path =

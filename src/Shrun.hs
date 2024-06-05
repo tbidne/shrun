@@ -132,6 +132,7 @@ shrun = displayRegions $ do
         hFlush h
       where
         MkFileLogOpened h fileQueue = fileLogging ^. #file
+    {-# INLINEABLE runWithFileLogging #-}
 
     runCommands :: (HasCallStack) => m ()
     runCommands = do
@@ -141,6 +142,8 @@ shrun = displayRegions $ do
 
       (totalTime, result) <- withTiming $ tryAny actionsWithTimer
       printFinalResult totalTime result
+    {-# INLINEABLE runCommands #-}
+{-# INLINEABLE shrun #-}
 
 runCommand ::
   forall m env.
@@ -200,6 +203,7 @@ runCommand cmd = do
     Just NotifyAll -> Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
     Just NotifyCommand -> Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
     _ -> pure ()
+{-# INLINEABLE runCommand #-}
 
 printFinalResult ::
   forall m env e b.
@@ -264,6 +268,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
     _ -> pure ()
 
   Logging.putRegionLog r finalLog
+{-# INLINEABLE printFinalResult #-}
 
 counter ::
   ( HasAnyError env,
@@ -293,6 +298,7 @@ counter = do
       sleep 1
       elapsed <- atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
       logCounter r elapsed
+{-# INLINEABLE counter #-}
 
 logCounter ::
   forall m env.
@@ -317,6 +323,7 @@ logCounter region elapsed = do
             mode = LogModeSet
           }
   Logging.regionLogToConsoleQueue region lg
+{-# INLINEABLE logCounter #-}
 
 keepRunning ::
   forall m env.
@@ -365,6 +372,7 @@ keepRunning region timer mto = do
           }
       pure False
     else pure True
+{-# INLINEABLE keepRunning #-}
 
 timedOut :: Natural -> Maybe Timeout -> Bool
 timedOut _ Nothing = False
@@ -382,6 +390,7 @@ pollQueueToConsole ::
 pollQueueToConsole queue = do
   -- NOTE: Same masking behavior as pollQueueToFile.
   forever $ atomicReadWrite queue printConsoleLog
+{-# INLINEABLE pollQueueToConsole #-}
 
 printConsoleLog ::
   ( HasCallStack,
@@ -391,6 +400,7 @@ printConsoleLog ::
   m ()
 printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
 printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
+{-# INLINEABLE printConsoleLog #-}
 
 pollQueueToFile ::
   ( HasCallStack,
@@ -409,9 +419,11 @@ pollQueueToFile fileLogging = do
     atomicReadWrite queue (logFile h)
   where
     MkFileLogOpened h queue = fileLogging ^. #file
+{-# INLINEABLE pollQueueToFile #-}
 
 logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
+{-# INLINEABLE logFile #-}
 
 -- | Reads from a queue and applies the function, if we receive a value.
 -- Atomic in the sense that if a read is successful, then we will apply the
@@ -428,3 +440,4 @@ atomicReadWrite ::
   m ()
 atomicReadWrite queue logAction =
   mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction
+{-# INLINEABLE atomicReadWrite #-}

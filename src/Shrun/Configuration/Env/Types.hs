@@ -258,6 +258,7 @@ prependCompletedCommand ::
 prependCompletedCommand command = do
   completedCommands <- asks getCompletedCommands
   modifyTVarA' completedCommands (command :<|)
+{-# INLINEABLE prependCompletedCommand #-}
 
 instance HasAnyError (Env r) where
   getAnyError = view #anyError
@@ -271,6 +272,7 @@ setAnyErrorTrue ::
   ) =>
   m ()
 setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA ref True
+{-# INLINEABLE setAnyErrorTrue #-}
 
 -- | Class for retrieving the notify config.
 class HasNotifyConfig env where

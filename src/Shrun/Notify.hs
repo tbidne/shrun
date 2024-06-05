@@ -58,6 +58,7 @@ sendNotif summary body urgency = do
       notify (mkNote timeout) >>= \case
         Nothing -> pure ()
         Just notifyEx -> withRegion Linear (logEx notifyEx)
+    {-# INLINEABLE notifyWithErrorLogging #-}
 
     logEx ex r = do
       -- set exit code
@@ -71,6 +72,8 @@ sendNotif summary body urgency = do
             lvl = LevelError,
             mode = LogModeFinish
           }
+    {-# INLINEABLE logEx #-}
+
     mkNote timeout =
       MkShrunNote
         { summary,
@@ -78,3 +81,4 @@ sendNotif summary body urgency = do
           urgency,
           timeout
         }
+    {-# INLINEABLE mkNote #-}

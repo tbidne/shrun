@@ -82,6 +82,7 @@ timeSpecToRelTime = fromSeconds . view #sec
 -- 1 :| [2,3,4]
 foldMap1 :: (Foldable f, Semigroup s) => (a -> s) -> a -> f a -> s
 foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
+{-# INLINEABLE foldMap1 #-}
 
 -- | Wrapper for 'Text'\'s 'T.breakOn' that differs in that:
 --
@@ -265,6 +266,7 @@ parseByteText txt =
 -- | Runs the action when it is 'Left'.
 whenLeft :: (Applicative f) => Either a b -> (a -> f ()) -> f ()
 whenLeft e action = either action (const (pure ())) e
+{-# INLINEABLE whenLeft #-}
 
 -- | @whileM_ mb ma@ executes @ma@ as long as @mb@ returns 'True'.
 whileM_ :: (Monad m) => m Bool -> m a -> m ()
@@ -274,6 +276,7 @@ whileM_ mb ma = go
       mb >>= \case
         True -> ma *> go
         False -> pure ()
+{-# INLINEABLE whileM_ #-}
 
 -- | Executes the monadic action until we receive a 'Just', returning the
 -- value.
@@ -284,6 +287,7 @@ untilJust m = go
       m >>= \case
         Nothing -> go
         Just x -> pure x
+{-# INLINEABLE untilJust #-}
 
 {- HLINT ignore unsafeListToNESeq "Redundant bracket" -}
 
@@ -315,3 +319,4 @@ readStripUnderscores t = case TR.readEither s of
   where
     noUnderscores = T.replace "_" "" t
     s = T.unpack noUnderscores
+{-# INLINEABLE readStripUnderscores #-}

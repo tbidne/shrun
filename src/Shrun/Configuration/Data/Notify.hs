@@ -208,6 +208,8 @@ toEnv notifyMerged = case systemMerged of
 
 #endif
 
+{-# INLINEABLE toEnv #-}
+
 mkNotify :: NotifyMerged -> NotifySystemEnv -> NotifyEnv
 mkNotify notifyToml systemP2 =
   MkNotifyP

@@ -42,6 +42,7 @@ parseReadStrategy getTxt =
             "'. Expected one of ",
             readStrategyStr
           ]
+{-# INLINEABLE parseReadStrategy #-}
 
 -- | Available 'ReadStrategy' strings.
 readStrategyStr :: (IsString a) => a

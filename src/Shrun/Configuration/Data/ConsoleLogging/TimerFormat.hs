@@ -52,6 +52,7 @@ parseTimerFormat getTxt =
     "prose_compact" -> pure ProseCompact
     "prose_full" -> pure ProseFull
     bad -> fail $ "Unrecognized timer-format: " <> unpack bad
+{-# INLINEABLE parseTimerFormat #-}
 
 -- | Available 'TimerFormat' strings.
 timerFormatStr :: (IsString a) => a

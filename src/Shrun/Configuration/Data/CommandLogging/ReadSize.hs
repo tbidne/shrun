@@ -119,3 +119,4 @@ parseReadSize getTxt = do
   case U.parseByteText byteTxt of
     Right b -> pure $ MkReadSize b
     Left err -> fail $ "Could not parse --command-log-read-size size: " <> unpack err
+{-# INLINEABLE parseReadSize #-}

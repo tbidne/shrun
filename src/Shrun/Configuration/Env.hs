@@ -71,6 +71,7 @@ makeEnvAndShrun ::
   ) =>
   m ()
 makeEnvAndShrun = withEnv @m @r (runShellT shrun)
+{-# INLINEABLE makeEnvAndShrun #-}
 
 -- | Creates an 'Env' from CLI args and TOML config to run with a monadic
 -- action.
@@ -91,6 +92,7 @@ withEnv ::
   (Env r -> m a) ->
   m a
 withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
+{-# INLINEABLE withEnv #-}
 
 -- | Creates a 'MergedConfig' from CLI args and TOML config.
 getMergedConfig ::
@@ -136,6 +138,7 @@ getMergedConfig = do
       case decode contents of
         Right cfg -> pure cfg
         Left tomlErr -> throwM tomlErr
+{-# INLINEABLE getMergedConfig #-}
 
 fromMergedConfig ::
   ( HasCallStack,
@@ -169,6 +172,8 @@ fromMergedConfig cfg onEnv = do
     onEnv env
   where
     commands = cfg ^. #commands
+{-# INLINEABLE fromMergedConfig #-}
 
 getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgConfig = getXdgConfig [osp|shrun|]
+{-# INLINEABLE getShrunXdgConfig #-}

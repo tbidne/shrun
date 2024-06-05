@@ -40,6 +40,7 @@ instance DecodeTOML Timeout where
 parseTimeout :: (Alternative f, MonadFail f) => f Natural -> f Text -> f Timeout
 parseTimeout getNat getTxt =
   (MkTimeout <$> getNat) <|> (getTxt >>= parseTimeoutStr)
+{-# INLINEABLE parseTimeout #-}
 
 parseTimeoutStr :: (MonadFail f) => Text -> f Timeout
 parseTimeoutStr txt = case RT.fromString str of
@@ -47,3 +48,4 @@ parseTimeoutStr txt = case RT.fromString str of
   Left err -> fail $ "Error reading time string: " <> err
   where
     str = unpack txt
+{-# INLINEABLE parseTimeoutStr #-}

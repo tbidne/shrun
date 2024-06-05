@@ -163,6 +163,7 @@ readHandle mBufferParams blockSize handle = do
         "" -> ReadNoData
         cs -> ReadSuccess (ShrunText.fromText $ decodeUtf8Lenient cs)
       Just bufferParams -> readAndUpdateRef bufferParams bs
+{-# INLINEABLE readHandle #-}
 
 -- | Attempts to read from the handle. Returns Left error or Right
 -- success.
@@ -197,6 +198,7 @@ readHandleRaw blockSize handle = do
           -- should be large enough that we are not likely to cut off a line
           -- prematurely, but obviously this is best-effort.
           Right <$> hGetNonBlocking handle blockSize
+    {-# INLINEABLE readHandle' #-}
 
     nothingIfReady = do
       -- NOTE: This somewhat torturous logic exists for a reason. We want to
@@ -220,6 +222,8 @@ readHandleRaw blockSize handle = do
           if not isReadable
             then pure $ Just "Handle is not readable"
             else pure Nothing
+    {-# INLINEABLE nothingIfReady #-}
+{-# INLINEABLE readHandleRaw #-}
 
 -- NOTE: [EOF / blocking error] We would like to check hIsEOF (definitely
 -- causes errors at the end) and probably hReady as well, but these both
@@ -250,6 +254,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
           Just prevRead ->
             maybeToReadHandleResult
               <$> prepareSendIfExceedsThresholds (const (pure ())) prevRead
+    {-# INLINEABLE onNoData #-}
 
     onPartialRead :: UnlinedText -> m ReadHandleResult
     onPartialRead finalPartialRead =
@@ -261,6 +266,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
           let combinedRead = prevRead <> finalPartialRead
           maybeToReadHandleResult
             <$> prepareSendIfExceedsThresholds updateRef combinedRead
+    {-# INLINEABLE onPartialRead #-}
 
     onCompletedAndPartialRead :: List UnlinedText -> UnlinedText -> m ReadHandleResult
     onCompletedAndPartialRead completedReads finalPartialRead = do
@@ -275,6 +281,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
               Nothing -> completedReads'
               Just finalRead -> completedReads' ++ [finalRead]
       pure $ ReadSuccess totalRead
+    {-# INLINEABLE onCompletedAndPartialRead #-}
 
     -- Turns this text into ReadSuccess iff the buffer thresholds are
     -- exceeded.
@@ -297,12 +304,14 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
         else do
           onNoSend readData
           pure Nothing
+    {-# INLINEABLE prepareSendIfExceedsThresholds #-}
 
     exceedsThreshold :: UnlinedText -> m Bool
     exceedsThreshold t =
       if bufferExceedsLength t
         then pure True
         else bufferExceedsTime
+    {-# INLINEABLE exceedsThreshold #-}
 
     bufferExceedsLength :: UnlinedText -> Bool
     bufferExceedsLength t = tLen > bufLen
@@ -320,13 +329,18 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
       pure $ diffTime > bufTimeout
       where
         bufTimeout = bufferTimeout ^. #unBufferTimeout % #unTimeout
+    {-# INLINEABLE bufferExceedsTime #-}
 
     resetPrevReadRef' = resetPrevReadRef prevReadRef
+    {-# INLINEABLE resetPrevReadRef' #-}
 
     updateRef = writeIORef prevReadRef . Just
+    {-# INLINEABLE updateRef #-}
 
     maybeToReadHandleResult Nothing = ReadNoData
     maybeToReadHandleResult (Just read) = ReadSuccess [read]
+    {-# INLINEABLE maybeToReadHandleResult #-}
+{-# INLINEABLE readAndUpdateRef #-}
 
 -- | Intended for a final read that handles previous read data.
 readAndUpdateRefFinal ::
@@ -349,19 +363,24 @@ readAndUpdateRefFinal prevReadRef =
       readIORef prevReadRef >>= \case
         Nothing -> resetPrevReadRef' $> ReadNoData
         Just prevRead -> resetPrevReadRef' $> ReadSuccess [prevRead]
+    {-# INLINEABLE onNoData #-}
 
     onPartialRead :: UnlinedText -> m ReadHandleResult
     onPartialRead finalPartialRead = do
       readIORef prevReadRef >>= \case
         Nothing -> resetPrevReadRef' $> ReadSuccess [finalPartialRead]
         Just prevRead -> resetPrevReadRef' $> ReadSuccess [prevRead <> finalPartialRead]
+    {-# INLINEABLE onPartialRead #-}
 
     onCompletedAndPartialRead :: List UnlinedText -> UnlinedText -> m ReadHandleResult
     onCompletedAndPartialRead completedReads finalPartialRead = do
       completedReads' <- mPrependPrevRead prevReadRef completedReads
       pure $ ReadSuccess $ completedReads' ++ [finalPartialRead]
+    {-# INLINEABLE onCompletedAndPartialRead #-}
 
     resetPrevReadRef' = resetPrevReadRef prevReadRef
+    {-# INLINEABLE resetPrevReadRef' #-}
+{-# INLINEABLE readAndUpdateRefFinal #-}
 
 mPrependPrevRead ::
   (HasCallStack, MonadIORef m) =>
@@ -378,6 +397,7 @@ mPrependPrevRead ref cr =
       (r : rs) -> resetPrevReadRef' $> prevRead <> r : rs
   where
     resetPrevReadRef' = resetPrevReadRef ref
+{-# INLINEABLE mPrependPrevRead #-}
 
 -- | Helper for reading a bytestring and handling a previous, partial read.
 readByteStringPrevHandler ::
@@ -411,6 +431,7 @@ readByteStringPrevHandler
     (Nothing, Just finalPartialRead) -> onPartialRead finalPartialRead
     (Just completedReads, Just finalPartialRead) ->
       onCompletedAndPartialRead completedReads finalPartialRead
+{-# INLINEABLE readByteStringPrevHandler #-}
 
 -- | Reads a bytestring, distinguishing between _complete_ and _partial_
 -- reads. A bytestring is considered _complete_ iff it is terminated with a
@@ -444,6 +465,7 @@ readByteString bs = case BS.unsnoc bs of
 
 resetPrevReadRef :: (HasCallStack, MonadIORef m) => IORef (Maybe a) -> m ()
 resetPrevReadRef prevReadRef = writeIORef prevReadRef Nothing
+{-# INLINEABLE resetPrevReadRef #-}
 
 -- TODO: Remove once we are past GHC 9.6
 unsnoc :: List a -> Maybe (List a, a)

@@ -62,6 +62,7 @@ putRegionLog region lg = do
 
   regionLogToConsoleQueue region lg
   for_ mFileLogging (\fl -> logToFileQueue keyHide fl lg)
+{-# INLINEABLE putRegionLog #-}
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
@@ -83,6 +84,7 @@ regionLogToConsoleQueue region log = do
   let formatted = formatConsoleLog keyHide consoleLogging log
 
   writeTBQueueA queue (LogRegion (log ^. #mode) region formatted)
+{-# INLINEABLE regionLogToConsoleQueue #-}
 
 -- | Writes the log to the file queue.
 logToFileQueue ::
@@ -100,3 +102,4 @@ logToFileQueue ::
 logToFileQueue keyHide fileLogging log = do
   formatted <- formatFileLog keyHide fileLogging log
   writeTBQueueA (fileLogging ^. #file % #queue) formatted
+{-# INLINEABLE logToFileQueue #-}

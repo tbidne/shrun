@@ -82,6 +82,7 @@ parseNotifyAction getTxt =
             "'. Expected one of ",
             notifyActionStr
           ]
+{-# INLINEABLE parseNotifyAction #-}
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
@@ -170,6 +171,7 @@ parseNotifySystem getTxt =
             "'. Expected one of ",
             notifySystemStr
           ]
+{-# INLINEABLE parseNotifySystem #-}
 
 -- | Available 'NotifySystem' strings.
 notifySystemStr :: (IsString a) => a
@@ -219,6 +221,7 @@ parseNotifyTimeout getTxt =
   getTxt >>= \case
     "never" -> pure NotifyTimeoutNever
     other -> NotifyTimeoutSeconds <$> U.readStripUnderscores other
+{-# INLINEABLE parseNotifyTimeout #-}
 
 -- | Available 'NotifyTimeout' strings.
 notifyTimeoutStr :: (IsString a) => a

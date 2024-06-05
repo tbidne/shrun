@@ -297,6 +297,7 @@ mergeConsoleLogging args mToml = do
     argsCommandLogging = args ^. #commandLogging $> True
 
     toml = fromMaybe def mToml
+{-# INLINEABLE mergeConsoleLogging #-}
 
 instance DecodeTOML ConsoleLoggingToml where
   tomlDecoder =

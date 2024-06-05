@@ -124,6 +124,7 @@ formatFileLog keyHide fileLogging log = do
           ]
 
   pure $ UnsafeFileLog withTimestamp
+{-# INLINEABLE formatFileLog #-}
 
 -- | Core formatting, shared by console and file logs. Basic idea:
 --

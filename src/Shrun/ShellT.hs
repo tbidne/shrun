@@ -76,3 +76,4 @@ instance
       sendNote (DBus client) = MonadDBus.notifyDBus client note
       sendNote NotifySend = MonadNotifySend.notifyNotifySend note
       sendNote AppleScript = MonadAppleScript.notifyAppleScript note
+  {-# INLINEABLE notify #-}

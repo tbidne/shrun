@@ -34,9 +34,11 @@ instance MonadNotifySend IO where
       . P.readProcessStderr
       . P.shell
       . T.unpack
+  {-# INLINEABLE notify #-}
 
 instance (MonadNotifySend m) => MonadNotifySend (ReaderT env m) where
   notify = lift . notify
+  {-# INLINEABLE notify #-}
 
 notifyNotifySend ::
   ( HasCallStack,
@@ -47,6 +49,7 @@ notifyNotifySend ::
 notifyNotifySend note =
   notify (shrunToNotifySend note) <<&>> \stderr ->
     MkNotifyException note NotifySend (decodeUtf8Lenient stderr)
+{-# INLINEABLE notifyNotifySend #-}
 
 shrunToNotifySend :: ShrunNote -> Text
 shrunToNotifySend shrunNote = txt

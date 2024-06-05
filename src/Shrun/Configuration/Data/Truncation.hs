@@ -56,6 +56,7 @@ parseTruncation getNat = do
   case convertIntegral n of
     Left err -> fail err
     Right x -> pure $ MkTruncation x
+{-# INLINEABLE parseTruncation #-}
 
 -- | Determines command log line truncation behavior. We need a separate
 -- type from 'Truncation' to add a third option, to detect the terminal size
@@ -77,12 +78,14 @@ parseLineTruncation getNat getTxt =
   Undetected
     <$> parseTruncation getNat
     <|> parseDetected getTxt
+{-# INLINEABLE parseLineTruncation #-}
 
 parseDetected :: (MonadFail m) => m Text -> m LineTruncation
 parseDetected getTxt =
   getTxt >>= \case
     "detect" -> pure Detected
     other -> fail $ "Wanted other, received: " <> unpack other
+{-# INLINEABLE parseDetected #-}
 
 decodeCommandNameTrunc :: Decoder (Maybe (Truncation TruncCommandName))
 decodeCommandNameTrunc = getFieldOptWith tomlDecoder "command-name-trunc"
@@ -101,3 +104,4 @@ configToLineTrunc Disabled = pure Nothing
 configToLineTrunc Without = pure Nothing
 configToLineTrunc (With Detected) = Just . MkTruncation <$> getTerminalWidth
 configToLineTrunc (With (Undetected x)) = pure $ Just x
+{-# INLINEABLE configToLineTrunc #-}

@@ -26,9 +26,11 @@ instance MonadAppleScript IO where
       . P.readProcessStderr
       . P.shell
       . T.unpack
+  {-# INLINEABLE notify #-}
 
 instance (MonadAppleScript m) => MonadAppleScript (ReaderT env m) where
   notify = lift . notify
+  {-# INLINEABLE notify #-}
 
 notifyAppleScript ::
   ( HasCallStack,
@@ -39,6 +41,7 @@ notifyAppleScript ::
 notifyAppleScript note =
   notify (shrunToAppleScript note) <<&>> \stderr ->
     MkNotifyException note AppleScript (decodeUtf8Lenient stderr)
+{-# INLINEABLE notifyAppleScript #-}
 
 shrunToAppleScript :: ShrunNote -> Text
 shrunToAppleScript shrunNote = txt

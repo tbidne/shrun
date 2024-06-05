@@ -322,6 +322,7 @@ headMaybe = foldr (\x _ -> Just x) Nothing
 -- | From foldable.
 fromFoldable :: (Foldable f) => a -> f a -> a
 fromFoldable x = fromMaybe x . headMaybe
+{-# INLINEABLE fromFoldable #-}
 
 -- | Lifted fmap.
 --
@@ -332,9 +333,12 @@ fromFoldable x = fromMaybe x . headMaybe
 
 infixl 4 <<$>>
 
+{-# INLINE (<<$>>) #-}
+
 -- | Flipped '(<<$>>)'; lifted `(<&>)`.
 (<<&>>) :: (Functor f, Functor g) => f (g a) -> (a -> b) -> f (g b)
 (<<&>>) = flip (<<$>>)
+{-# INLINE (<<&>>) #-}
 
 -- | Flipped '(.)'
 (.>) :: (a -> b) -> (b -> c) -> a -> c

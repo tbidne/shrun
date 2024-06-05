@@ -364,6 +364,7 @@ mergeCoreConfig args mToml = do
       }
   where
     toml = fromMaybe def mToml
+{-# INLINEABLE mergeCoreConfig #-}
 
 -- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
 -- continuation.
@@ -402,6 +403,7 @@ withCoreEnv cmds merged onCoreConfigEnv = do
               notify
             }
      in onCoreConfigEnv coreConfigEnv
+{-# INLINEABLE withCoreEnv #-}
 
 instance
   ( Default (ConfigPhaseMaybeF p Text),

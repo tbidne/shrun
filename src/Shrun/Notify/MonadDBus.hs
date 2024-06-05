@@ -30,14 +30,19 @@ class (Monad m) => MonadDBus m where
 
 instance MonadDBus IO where
   connectSession = DBusC.connectSession
+  {-# INLINEABLE connectSession #-}
+
   notify client note =
     tryAny (DBusN.notify client note) <&> \case
       Left err -> Just err
       Right _ -> Nothing
+  {-# INLINEABLE notify #-}
 
 instance (MonadDBus m) => MonadDBus (ReaderT env m) where
   connectSession = lift connectSession
+  {-# INLINEABLE connectSession #-}
   notify c = lift . notify c
+  {-# INLINEABLE notify #-}
 
 notifyDBus ::
   ( HasCallStack,
@@ -49,6 +54,7 @@ notifyDBus ::
 notifyDBus client note =
   notify client (shrunToDBus note) <<&>> \stderr ->
     MkNotifyException note (DBus ()) (T.pack $ displayException stderr)
+{-# INLINEABLE notifyDBus #-}
 
 shrunToDBus :: ShrunNote -> Note
 shrunToDBus shrunNote =

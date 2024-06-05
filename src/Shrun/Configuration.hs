@@ -73,3 +73,4 @@ mergeConfig args mToml = do
           }
   where
     cmdsText = args ^. #commands
+{-# INLINEABLE mergeConfig #-}

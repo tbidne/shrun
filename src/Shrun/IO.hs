@@ -76,6 +76,7 @@ shExitCode cmd = do
   pure (exitCode, wrap (MkStderr . ShrunText.fromText) stderr)
   where
     wrap f = f . decodeUtf8Lenient . BSL.toStrict
+{-# INLINEABLE shExitCode #-}
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
 -- 'Right' 'Stdout' otherwise.
@@ -91,6 +92,7 @@ tryShExitCode cmd =
   shExitCode cmd <&> \case
     (ExitSuccess, _) -> Nothing
     (ExitFailure _, stderr) -> Just stderr
+{-# INLINEABLE tryShExitCode #-}
 
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
@@ -148,6 +150,7 @@ tryCommandLogging command = do
         (ConsoleLogCmdOn, Nothing) -> \cmd ->
           withRegion Linear $ \region -> do
             let logFn = logConsole keyHide consoleLogQueue region consoleLogging
+                {-# INLINEABLE logFn #-}
 
             logFn hello
 
@@ -157,6 +160,7 @@ tryCommandLogging command = do
         (ConsoleLogCmdOff, Just fileLogging) -> \cmd -> do
           let logFn :: Log -> m ()
               logFn = logFile keyHide fileLogging
+              {-# INLINEABLE logFn #-}
 
           logFn hello
 
@@ -168,10 +172,12 @@ tryCommandLogging command = do
             let logFn log = do
                   logConsole keyHide consoleLogQueue region consoleLogging log
                   logFile keyHide fileLogging log
+                {-# INLINEABLE logFn #-}
 
             logFn hello
 
             tryCommandStream logFn cmd
+      {-# INLINEABLE cmdFn #-}
 
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
@@ -191,10 +197,12 @@ tryCommandLogging command = do
     logConsole keyHide consoleQueue region consoleLogging log = do
       let formatted = formatConsoleLog keyHide consoleLogging log
       writeTBQueueA consoleQueue (LogRegion (log ^. #mode) region formatted)
+    {-# INLINEABLE logConsole #-}
 
     logFile keyHide fileLogging log = do
       formatted <- formatFileLog keyHide fileLogging log
       writeTBQueueA (fileLogging ^. #file % #queue) formatted
+    {-# INLINEABLE logFile #-}
 
     hello =
       MkLog
@@ -203,6 +211,7 @@ tryCommandLogging command = do
           lvl = LevelCommand,
           mode = LogModeSet
         }
+{-# INLINEABLE tryCommandLogging #-}
 
 -- | Similar to 'tryCommand' except we attempt to stream the commands' output
 -- instead of the usual swallowing.
@@ -241,6 +250,7 @@ tryCommandStream logFn cmd = do
   pure $ case exitCode of
     ExitSuccess -> Nothing
     ExitFailure _ -> Just $ IO.Types.readHandleResultToStderr finalData
+{-# INLINEABLE tryCommandStream #-}
 
 -- NOTE: This was an attempt to set the buffering so that we could use
 -- hGetLine. Unfortunately that failed, see Note
@@ -300,6 +310,7 @@ streamOutput logFn cmd p = do
 
       sleepFn :: m ()
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
+      {-# INLINEABLE sleepFn #-}
 
       blockSize :: Int
       blockSize =
@@ -320,6 +331,8 @@ streamOutput logFn cmd p = do
            in ( IO.Types.readHandle (Just outBufferParams) blockSize (P.getStdout p),
                 IO.Types.readHandle (Just errBufferParams) blockSize (P.getStderr p)
               )
+      {-# INLINEABLE readBlockOut #-}
+      {-# INLINEABLE readBlockErr #-}
 
   exitCode <- U.untilJust $ do
     -- We need to read from both stdout and stderr -- regardless of if we
@@ -359,6 +372,7 @@ streamOutput logFn cmd p = do
                 -- here, but it seems minor.
                 Left _ -> IO.Types.readAndUpdateRefFinal ref ""
                 Right bs -> IO.Types.readAndUpdateRefFinal ref bs
+            {-# INLINEABLE readRemaining #-}
 
         (,)
           <$> readRemaining P.getStdout prevReadOutRef
@@ -395,6 +409,7 @@ streamOutput logFn cmd p = do
           ]
 
   pure (exitCode, finalData)
+{-# INLINEABLE streamOutput #-}
 
 -- We occasionally get invalid reads here -- usually when the command
 -- exits -- likely due to a race condition. It would be nice to
@@ -424,6 +439,7 @@ writeLog logFn reportReadErrors cmd lastReadRef r@(ReadErrSuccess errs successes
   writeLogHelper logFn cmd lastReadRef r successes
 writeLog logFn _ cmd lastReadRef r@(ReadSuccess messages) =
   writeLogHelper logFn cmd lastReadRef r messages
+{-# INLINEABLE writeLog #-}
 
 writeLogHelper ::
   ( HasCallStack,
@@ -445,3 +461,4 @@ writeLogHelper logFn cmd lastReadRef handleResult messages = do
           lvl = LevelCommand,
           mode = LogModeSet
         }
+{-# INLINEABLE writeLogHelper #-}

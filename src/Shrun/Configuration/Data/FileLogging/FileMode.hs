@@ -22,6 +22,7 @@ parseFileMode getTxt =
     "append" -> pure FileModeAppend
     "write" -> pure FileModeWrite
     bad -> fail $ "Unrecognized file-mode: " <> unpack bad
+{-# INLINEABLE parseFileMode #-}
 
 instance Default FileMode where
   def = FileModeWrite
