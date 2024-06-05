@@ -300,8 +300,6 @@ formatsFileLogs testArgs =
         withCommandPrefix cmd "Finished"
       ]
 
--- FIXME: Add test for default behavior
-
 readStrategyDefaultTests :: IO TestArgs -> TestTree
 readStrategyDefaultTests testArgs =
   testGroup
