@@ -8,7 +8,7 @@
 - [What if a command needs sudo?](#what-if-a-command-needs-sudo)
 - [What if my command relies on interactive shell](#what-if-my-command-relies-on-interactive-shell)
 - [Init vs. Legend](#init-vs-legend)
-- [Command log file formatting](#command-log-file-formatting)
+- [File log formatting](#File-log-formatting)
 - [Bash auto-completions](#bash-auto-completions)
 
 ## If I don't run multiple commands all that often, does shrun hold any value?
@@ -156,7 +156,7 @@ If, instead, you don't want the alias in `~/.bashrc` or you regularly run it wit
 > $ shrun --init ". ~/.bashrc" -c config.toml all
 > ```
 
-## Command log file formatting
+## File log formatting
 
 In general, we would like `shrun`'s file logging to preserve command log formatting when possible. For example, `shrun`'s test suite prints output like:
 
@@ -192,12 +192,12 @@ We would therefore like `shrun` to log something like:
 ...
 ```
 
-However, there are some complications. It is easy to split logs on newlines and log each line separately, but the fundamental issue is that we are reading `N` bytes of data at a time, so there is no guarantee that our read will end at a newline. We thus have to handle this case ourselves. To that end, we introduce several options that interact with command-log reading:
+It is easy to split logs on newlines and log each line separately, but there are still complications. The fundamental problem is that we are reading `N` bytes of data at a time, so there is no guarantee that our read will end at a newline. We thus have to handle this case ourselves. To that end, we introduce several options that interact with command-log reading:
 
 - `--command-log-poll-interval`: How fast `shrun` reads logs from the underlying commands.
 - `--command-log-read-size`: Maximum number of bytes `shrun` will read from the underlying command, in a single read.
 - `--command-log-read-strategy`: The first strategy, `block`, simply reads and logs `N` bytes at a time. The more complex `block-line-buffer` also reads `N` bytes, however, it buffers logs until a newline is found, or some threshold is exceeded.
-- `--command-log-buffer-length`: Used in conjunction with `--command-log-read-strategy block-line-buffer`. If the length is exceeded, whatever is in the buffer is logged, even if it is not newline-terminated.
+- `--command-log-buffer-length`: Used in conjunction with `block-line-buffer`. If the length is exceeded, the buffer is flushed, to avoid holding an arbitrarily large string in memory.
 - `--command-log-buffer-timeout`: Same idea as `--command-log-buffer-length`, except the threshold is a timeout.
 
 The general hope is that logs are newline-terminated and `--command-log-read-size` is large enough to read whatever the underlying command is logging, so we will not end up cutting anything off. Then we can split the logs on newlines and log each line separately. Even so, there are a couple ways the intended formatting can be disrupted:
@@ -205,7 +205,7 @@ The general hope is that logs are newline-terminated and `--command-log-read-siz
 - If the `--command-log-poll-interval` is slower than the underlying command's logging, there will be a build-up of logs in the next read, so it is possible the total size is greater than `--command-log-read-size`, hence we will be cutting off logs at an arbitrary place.
 - On the other hand, if the `--command-log-poll-interval` is _faster_, it is possible to break up an "incomplete log". For instance, our test examples prints the text description like `Parses default args:` immediately, then only prints the remaining `...OK` after the test finishes. Thus we might read the first part of the log without its corresponding end, and the log will be broken.
 
-To mitigate this, we introduce the `--command-log-read-strategy block-line-buffer` option. This option will buffer any logs that do _not_ end in a newline, and wait until the next newline is found, before logging the buffer. We include `--command-log-buffer-length` that will flush the buffer regardless once it grows beyond the specified size, to avoid holding an arbitrarily large string in memory. We also include `--command-log-buffer-timeout` to avoid holding onto a log for an arbitrary amount of time.
+The `block-line-buffer` strategy is the primary solution to these problems, and indeed the reason this option was introduced.
 
 > [!WARNING]
 >
@@ -216,9 +216,9 @@ With that out of the way, we can now justify the default behavior.
 - When we have exactly one command and file-logging is active, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it only makes sense when there is a single command and file-logging is active.
 - Otherwise, we use the `block` strategy.
 
-There are various tweaks one can try if the file log formatting is still damaged e.g. increasing `--command-log-buffer-(length|timeout)` and/or `--command-log-read-size`. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the description above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless, so it is likely not a good solution.
+There are various other tweaks one can try if the file log formatting is still damaged e.g. increasing `--command-log-buffer-(length|timeout)` and/or `--command-log-read-size`. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the description above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless, so it is likely not a good solution.
 
-If none of those help, the best solution is likely to simply use `--command-log-read-strategy block`, -- which generally does a pretty good job -- and make your peace with the fact that this is all best-effort 🙂.
+If none of those help, the best solution is likely to simply use `--command-log-read-strategy block` -- which generally does a pretty good job -- and make your peace with the fact that this is all best-effort 🙂.
 
 ## Bash auto-completions
 
