@@ -95,7 +95,7 @@ library
     Shrun.Data.Command
     Shrun.Data.Text
     Shrun.IO
-    Shrun.IO.Types
+    Shrun.IO.Handle
     Shrun.Logging
     Shrun.Logging.Formatting
     Shrun.Logging.MonadRegionLogger
@@ -186,7 +186,7 @@ test-suite unit
     Unit.Shrun.Configuration.Args.Parsing.TestUtils
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
-    Unit.Shrun.IO.Types
+    Unit.Shrun.IO.Handle
     Unit.Shrun.Logging.Formatting
     Unit.Shrun.Logging.Generators
     Unit.Shrun.Utils

@@ -32,8 +32,11 @@ import Shrun.Configuration.Env.Types
   )
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Text qualified as ShrunText
-import Shrun.IO (Stderr (MkStderr), tryCommandLogging)
-import Shrun.IO.Types (CommandResult (CommandFailure, CommandSuccess))
+import Shrun.IO
+  ( CommandResult (CommandFailure, CommandSuccess),
+    Stderr (MkStderr),
+    tryCommandLogging,
+  )
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as LogFmt
 import Shrun.Logging.MonadRegionLogger

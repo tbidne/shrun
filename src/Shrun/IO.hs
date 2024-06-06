@@ -1,6 +1,7 @@
 -- | Provides the low-level `IO` functions for running shell commands.
 module Shrun.IO
-  ( -- * Stdout/stderr newtypes
+  ( -- * Types
+    CommandResult (..),
     Stderr (..),
 
     -- * Running commands
@@ -9,6 +10,7 @@ module Shrun.IO
 where
 
 import Data.ByteString.Lazy qualified as BSL
+import Data.Time.Relative (RelativeTime)
 import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
 import Effects.Time (MonadTime (getMonotonicTime), withTiming)
@@ -44,12 +46,10 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
-import Shrun.IO.Types
-  ( CommandResult (CommandFailure, CommandSuccess),
-    ReadHandleResult (ReadErr, ReadErrSuccess, ReadNoData, ReadSuccess),
-    Stderr (MkStderr),
+import Shrun.IO.Handle
+  ( ReadHandleResult (ReadErr, ReadErrSuccess, ReadNoData, ReadSuccess),
   )
-import Shrun.IO.Types qualified as IO.Types
+import Shrun.IO.Handle qualified as Handle
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
 import Shrun.Logging.Types
@@ -60,6 +60,23 @@ import Shrun.Logging.Types
   )
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+
+-- | Newtype wrapper for stderr.
+newtype Stderr = MkStderr {unStderr :: List UnlinedText}
+  deriving stock (Eq, Show)
+
+-- | Turns a 'ReadHandleResult' into a 'Stderr'.
+readHandleResultToStderr :: ReadHandleResult -> Stderr
+readHandleResultToStderr ReadNoData = MkStderr $ ShrunText.fromText "<No data>"
+readHandleResultToStderr (ReadErr errs) = MkStderr errs
+readHandleResultToStderr (ReadSuccess errs) = MkStderr errs
+readHandleResultToStderr (ReadErrSuccess e1 e2) = MkStderr (e1 <> e2)
+
+-- | Result of running a command.
+data CommandResult
+  = CommandSuccess RelativeTime
+  | CommandFailure RelativeTime Stderr
+  deriving stock (Eq, Show)
 
 -- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::
@@ -249,7 +266,7 @@ tryCommandStream logFn cmd = do
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
-    ExitFailure _ -> Just $ IO.Types.readHandleResultToStderr finalData
+    ExitFailure _ -> Just $ readHandleResultToStderr finalData
 {-# INLINEABLE tryCommandStream #-}
 
 -- NOTE: This was an attempt to set the buffering so that we could use
@@ -322,14 +339,14 @@ streamOutput logFn cmd p = do
       readBlockErr :: m ReadHandleResult
       (readBlockOut, readBlockErr) = case commandLogging ^. #readStrategy of
         ReadBlock ->
-          ( IO.Types.readHandle Nothing blockSize (P.getStdout p),
-            IO.Types.readHandle Nothing blockSize (P.getStderr p)
+          ( Handle.readHandle Nothing blockSize (P.getStdout p),
+            Handle.readHandle Nothing blockSize (P.getStderr p)
           )
         ReadBlockLineBuffer ->
           let outBufferParams = (prevReadOutRef, bufferLength, bufferTimeout, bufferFlushOutTimeRef)
               errBufferParams = (prevReadErrRef, bufferLength, bufferTimeout, bufferFlushErrTimeRef)
-           in ( IO.Types.readHandle (Just outBufferParams) blockSize (P.getStdout p),
-                IO.Types.readHandle (Just errBufferParams) blockSize (P.getStderr p)
+           in ( Handle.readHandle (Just outBufferParams) blockSize (P.getStdout p),
+                Handle.readHandle (Just errBufferParams) blockSize (P.getStderr p)
               )
       {-# INLINEABLE readBlockOut #-}
       {-# INLINEABLE readBlockErr #-}
@@ -366,12 +383,12 @@ streamOutput logFn cmd p = do
       ReadBlock -> (,) <$> readBlockOut <*> readBlockErr
       ReadBlockLineBuffer -> do
         let readRemaining toHandle ref =
-              IO.Types.readHandleRaw blockSize (toHandle p) >>= \case
+              Handle.readHandleRaw blockSize (toHandle p) >>= \case
                 -- Do not care about errors here, since we may still have leftover
                 -- data that we need to get. If we cared, we could log the errors
                 -- here, but it seems minor.
-                Left _ -> IO.Types.readAndUpdateRefFinal ref ""
-                Right bs -> IO.Types.readAndUpdateRefFinal ref bs
+                Left _ -> Handle.readAndUpdateRefFinal ref ""
+                Right bs -> Handle.readAndUpdateRefFinal ref bs
             {-# INLINEABLE readRemaining #-}
 
         (,)

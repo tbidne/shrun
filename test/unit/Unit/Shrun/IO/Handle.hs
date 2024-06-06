@@ -1,4 +1,4 @@
-module Unit.Shrun.IO.Types (tests) where
+module Unit.Shrun.IO.Handle (tests) where
 
 {- HLINT ignore "Monoid law, left identity" -}
 {- HLINT ignore "Monoid law, right identity" -}
@@ -7,13 +7,20 @@ import Hedgehog.Gen qualified as G
 import Hedgehog.Range qualified as R
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
-import Shrun.IO.Types
+import Shrun.IO.Handle
+  ( ReadHandleResult
+      ( ReadErr,
+        ReadErrSuccess,
+        ReadNoData,
+        ReadSuccess
+      ),
+  )
 import Unit.Prelude
 
 tests :: TestTree
 tests =
   testGroup
-    "Shrun.IO.Types"
+    "Shrun.IO.Handle"
     [ readHandleResultTests
     ]
 
@@ -76,6 +83,7 @@ genReadHandleResult :: Gen ReadHandleResult
 genReadHandleResult =
   G.choice
     [ genReadSuccess,
+      genReadErrSuccess,
       genReadErr,
       pure ReadNoData
     ]
@@ -83,11 +91,14 @@ genReadHandleResult =
 genReadSuccess :: Gen ReadHandleResult
 genReadSuccess = ReadSuccess <$> genUnlinedTexts
 
+genReadErrSuccess :: Gen ReadHandleResult
+genReadErrSuccess = ReadErrSuccess <$> genUnlinedTexts <*> genUnlinedTexts
+
 genReadErr :: Gen ReadHandleResult
 genReadErr = ReadErr <$> genUnlinedTexts
 
 genNoSuccess :: Gen ReadHandleResult
-genNoSuccess = G.choice [genReadErr, pure ReadNoData]
+genNoSuccess = G.choice [genReadErrSuccess, genReadErr, pure ReadNoData]
 
 genUnlinedTexts :: Gen (List UnlinedText)
 genUnlinedTexts = ShrunText.fromText <$> genText

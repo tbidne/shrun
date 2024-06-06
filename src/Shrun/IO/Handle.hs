@@ -1,14 +1,9 @@
 {-# LANGUAGE CPP #-}
 
 -- | Provides types for typical "IO" processes.
-module Shrun.IO.Types
-  ( -- * Types
-    Stderr (..),
-    CommandResult (..),
-
-    -- * Read handle result
+module Shrun.IO.Handle
+  ( -- * Read handle result
     ReadHandleResult (..),
-    readHandleResultToStderr,
 
     -- * Reading
     readHandle,
@@ -21,7 +16,6 @@ import Data.ByteString qualified as BS
 #if MIN_VERSION_base (4, 19, 0)
 import Data.List qualified as L
 #endif
-import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.HandleReader
   ( MonadHandleReader (hIsClosed),
     hGetNonBlocking,
@@ -33,16 +27,6 @@ import Shrun.Configuration.Data.CommandLogging
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude
-
--- | Newtype wrapper for stderr.
-newtype Stderr = MkStderr {unStderr :: List UnlinedText}
-  deriving stock (Eq, Show)
-
--- | Result of running a command.
-data CommandResult
-  = CommandSuccess RelativeTime
-  | CommandFailure RelativeTime Stderr
-  deriving stock (Eq, Show)
 
 -- | Result from reading a handle. The ordering is based on:
 --
@@ -75,13 +59,6 @@ instance Semigroup ReadHandleResult where
 
 instance Monoid ReadHandleResult where
   mempty = ReadNoData
-
--- | Turns a 'ReadHandleResult' into a 'Stderr'.
-readHandleResultToStderr :: ReadHandleResult -> Stderr
-readHandleResultToStderr ReadNoData = MkStderr $ ShrunText.fromText "<No data>"
-readHandleResultToStderr (ReadErr errs) = MkStderr errs
-readHandleResultToStderr (ReadSuccess errs) = MkStderr errs
-readHandleResultToStderr (ReadErrSuccess e1 e2) = MkStderr (e1 <> e2)
 
 -- NOTE: [Completed vs. Partial Reads]
 --
