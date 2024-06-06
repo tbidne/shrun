@@ -149,20 +149,9 @@ reportsStderr =
         withErrorPrefix scriptPath <> "1 second: more output"
       ]
 
--- This is an "anti" test. We actually do not want this behavior. Ideally,
--- the lines:
---
---   echo -n "first: "
---   sleep 1
---   echo "second"
---
--- Should produce "first: second", since that is the original intention
--- (-n means do not append a newline). But because the time between logs is
--- longer than the poll-interval, it is split.
---
--- We include this test for documenting the current behavior, and if we ever
--- "fix" this -- see NOTE: [Command log splitting] --, then we can simply
--- flip the expected/unexpected below.
+-- This is a combination "anti-test" and test. The block expectation is the
+-- behavior that we are trying to improve, which is verified by the buffer
+-- expectation.
 slowOutputBroken :: ReadStrategyTestParams
 slowOutputBroken =
   ReadStrategyTestSimple
