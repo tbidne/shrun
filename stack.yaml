@@ -28,6 +28,6 @@ extra-deps:
   - git: https://github.com/tbidne/relative-time.git
     commit: b3be9b3b904059671ef07dbcbb11b8c04d50ddde
   - git: https://github.com/tbidne/si-bytes.git
-    commit: 308faf0ab25b39e0dda8de23d5d315e82260080f
+    commit: df01a076966e7fe9af8cc49bb438078a14a8d951
   - git: https://github.com/tbidne/smart-math.git
     commit: 9bd570201445904d12d0e0b792f171d02e6f361e

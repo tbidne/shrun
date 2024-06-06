@@ -11,13 +11,13 @@ import Shrun.Prelude
 import Shrun.Utils qualified as U
 
 -- | Read size for command logs.
-newtype ReadSize = MkReadSize {unReadSize :: Bytes B Natural}
+newtype ReadSize = MkReadSize {unReadSize :: Bytes B Int}
   deriving stock (Eq, Show)
 
 instance
   ( k ~ An_Iso,
-    a ~ Bytes B Natural,
-    b ~ Bytes B Natural
+    a ~ Bytes B Int,
+    b ~ Bytes B Int
   ) =>
   LabelOptic
     "unReadSize"
@@ -116,7 +116,10 @@ instance DecodeTOML ReadSize where
 parseReadSize :: (MonadFail m) => m Text -> m ReadSize
 parseReadSize getTxt = do
   byteTxt <- getTxt
+  -- Read an unbounded natural, then try to convert to the Int we need.
   case U.parseByteText byteTxt of
-    Right b -> pure $ MkReadSize b
+    Right b -> case traverse convertIntegral b of
+      Left err -> fail $ "Could not convert read-size: " ++ err
+      Right b' -> pure $ MkReadSize b'
     Left err -> fail $ "Could not parse --command-log-read-size size: " <> unpack err
 {-# INLINEABLE parseReadSize #-}

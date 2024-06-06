@@ -19,6 +19,7 @@ module Shrun.Prelude
     headMaybe,
 
     -- * Misc utilities
+    EitherString (..),
     fromFoldable,
     onJust,
     (<<$>>),
@@ -124,7 +125,7 @@ import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.String as X (String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
-import Data.Traversable as X (Traversable (traverse), for)
+import Data.Traversable as X (Traversable (sequenceA, traverse), for)
 import Data.Tuple as X (fst, snd)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4)
@@ -464,3 +465,34 @@ setUncaughtExceptionHandlerDisplay =
 
 onJust :: b -> Maybe a -> (a -> b) -> b
 onJust x m f = maybe x f m
+
+-- | Either, specializing Left to String, for the purposes of MonadFail.
+data EitherString a
+  = EitherLeft String
+  | EitherRight a
+  deriving stock (Eq, Functor, Show)
+
+instance Applicative EitherString where
+  pure = EitherRight
+
+  EitherRight f <*> EitherRight x = EitherRight (f x)
+  EitherLeft x <*> _ = EitherLeft x
+  _ <*> EitherLeft x = EitherLeft x
+
+instance Monad EitherString where
+  EitherRight x >>= f = f x
+  EitherLeft x >>= _ = EitherLeft x
+
+instance Foldable EitherString where
+  foldr _ e (EitherLeft _) = e
+  foldr f e (EitherRight x) = f x e
+
+instance Traversable EitherString where
+  sequenceA (EitherLeft x) = pure (EitherLeft x)
+  sequenceA (EitherRight x) = EitherRight <$> x
+
+  traverse _ (EitherLeft x) = pure (EitherLeft x)
+  traverse f (EitherRight x) = EitherRight <$> f x
+
+instance MonadFail EitherString where
+  fail = EitherLeft

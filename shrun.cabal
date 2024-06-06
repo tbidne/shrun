@@ -184,6 +184,7 @@ test-suite unit
     Unit.Shrun.Configuration.Args.Parsing.FileLogging
     Unit.Shrun.Configuration.Args.Parsing.Notify
     Unit.Shrun.Configuration.Args.Parsing.TestUtils
+    Unit.Shrun.Configuration.Data.CommandLogging.ReadSize
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
     Unit.Shrun.IO.Handle
@@ -198,6 +199,7 @@ test-suite unit
     , hedgehog              >=1.0.2   && <1.5
     , optparse-applicative
     , shrun
+    , si-bytes
     , tasty                 >=1.1.0.3 && <1.6
     , tasty-hedgehog        >=1.2.0.0 && <1.5
     , tasty-hunit           >=0.9     && <0.11

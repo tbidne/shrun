@@ -330,10 +330,7 @@ streamOutput logFn cmd p = do
       {-# INLINEABLE sleepFn #-}
 
       blockSize :: Int
-      blockSize =
-        unsafeConvertIntegral
-          $ commandLogging
-          ^. (#readSize % #unReadSize % _MkBytes)
+      blockSize = commandLogging ^. (#readSize % #unReadSize % _MkBytes)
 
       readBlockOut :: m ReadHandleResult
       readBlockErr :: m ReadHandleResult
