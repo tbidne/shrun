@@ -2,6 +2,12 @@ module Functional.Examples.Notify (tests) where
 
 import DBus.Notify (UrgencyLevel (Normal))
 import Functional.Prelude
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout
+      ( NotifyTimeoutNever,
+        NotifyTimeoutSeconds
+      ),
+  )
 import Shrun.Notify.MonadNotify
   ( ShrunNote
       ( MkShrunNote,
@@ -9,12 +15,6 @@ import Shrun.Notify.MonadNotify
         summary,
         timeout,
         urgency
-      ),
-  )
-import Shrun.Notify.Types
-  ( NotifyTimeout
-      ( NotifyTimeoutNever,
-        NotifyTimeoutSeconds
       ),
   )
 

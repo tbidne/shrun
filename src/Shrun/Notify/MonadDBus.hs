@@ -10,14 +10,14 @@ import DBus.Client qualified as DBusC
 import DBus.Notify (Hint (Urgency), Note)
 import DBus.Notify qualified as DBusN
 import Data.Text qualified as T
-import Shrun.Notify.MonadNotify (NotifyException (MkNotifyException), ShrunNote)
-import Shrun.Notify.Types
-  ( NotifySystemP (DBus),
-    NotifyTimeout
+import Shrun.Configuration.Data.Notify.System (NotifySystemP (DBus))
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout
       ( NotifyTimeoutNever,
         NotifyTimeoutSeconds
       ),
   )
+import Shrun.Notify.MonadNotify (NotifyException (MkNotifyException), ShrunNote)
 import Shrun.Prelude
 
 -- | Effect for DBus.

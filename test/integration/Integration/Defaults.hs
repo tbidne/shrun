@@ -116,6 +116,15 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
+import Shrun.Configuration.Data.Notify.Action
+  ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
+  )
+import Shrun.Configuration.Data.Notify.System
+  ( NotifySystemP (AppleScript, DBus, NotifySend),
+  )
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
+  )
 import Shrun.Configuration.Data.StripControl
   ( StripControl
       ( StripControlAll,
@@ -124,11 +133,6 @@ import Shrun.Configuration.Data.StripControl
       ),
   )
 import Shrun.Data.Command (CommandP (MkCommandP))
-import Shrun.Notify.Types
-  ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
-    NotifySystemP (AppleScript, DBus, NotifySend),
-    NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
-  )
 import Test.Tasty.Hedgehog (testProperty)
 
 specs :: IO TestArgs -> TestTree

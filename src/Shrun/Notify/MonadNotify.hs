@@ -12,12 +12,12 @@ where
 import DBus.Notify (UrgencyLevel)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
-import Shrun.Data.Text (UnlinedText)
-import Shrun.Notify.Types
+import Shrun.Configuration.Data.Notify.System
   ( NotifySystemMerged,
-    NotifyTimeout,
     displayNotifySystem,
   )
+import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout)
+import Shrun.Data.Text (UnlinedText)
 import Shrun.Prelude
 
 -- | Holds notification data.

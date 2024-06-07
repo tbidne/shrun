@@ -18,6 +18,13 @@ import Shrun.Configuration.Data.FileLogging
   ( FileLogOpened (MkFileLogOpened),
     FileLoggingEnv,
   )
+import Shrun.Configuration.Data.Notify.Action
+  ( NotifyAction
+      ( NotifyAll,
+        NotifyCommand,
+        NotifyFinal
+      ),
+  )
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
     HasCommandLogging,
@@ -64,13 +71,6 @@ import Shrun.Logging.Types
   )
 import Shrun.Notify qualified as Notify
 import Shrun.Notify.MonadNotify (MonadNotify)
-import Shrun.Notify.Types
-  ( NotifyAction
-      ( NotifyAll,
-        NotifyCommand,
-        NotifyFinal
-      ),
-  )
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils

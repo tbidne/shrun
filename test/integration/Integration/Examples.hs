@@ -72,13 +72,15 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
   )
+import Shrun.Configuration.Data.Notify.Action (NotifyAction (NotifyCommand))
+import Shrun.Configuration.Data.Notify.System
+  ( NotifySystemP (AppleScript, NotifySend),
+  )
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout (NotifyTimeoutNever),
+  )
 import Shrun.Configuration.Data.StripControl (StripControl (StripControlSmart))
 import Shrun.Data.Command (CommandP (MkCommandP))
-import Shrun.Notify.Types
-  ( NotifyAction (NotifyCommand),
-    NotifySystemP (AppleScript, NotifySend),
-    NotifyTimeout (NotifyTimeoutNever),
-  )
 
 specs :: TestTree
 specs =

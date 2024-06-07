@@ -8,17 +8,17 @@ where
 import DBus.Notify (UrgencyLevel (Critical, Low, Normal))
 import Data.Text qualified as T
 import Effects.Process.Typed qualified as P
+import Shrun.Configuration.Data.Notify.System (NotifySystemP (NotifySend))
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout
+      ( NotifyTimeoutNever,
+        NotifyTimeoutSeconds
+      ),
+  )
 import Shrun.Notify.MonadNotify
   ( NotifyException (MkNotifyException),
     ShrunNote,
     exitFailureToStderr,
-  )
-import Shrun.Notify.Types
-  ( NotifySystemP (NotifySend),
-    NotifyTimeout
-      ( NotifyTimeoutNever,
-        NotifyTimeoutSeconds
-      ),
   )
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils

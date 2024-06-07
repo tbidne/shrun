@@ -3,6 +3,9 @@ module Functional.Notify (specs) where
 
 import DBus.Notify (UrgencyLevel (Normal))
 import Functional.Prelude
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout (NotifyTimeoutSeconds),
+  )
 import Shrun.Notify.MonadNotify
   ( ShrunNote
       ( MkShrunNote,
@@ -12,7 +15,6 @@ import Shrun.Notify.MonadNotify
         urgency
       ),
   )
-import Shrun.Notify.Types (NotifyTimeout (NotifyTimeoutSeconds))
 
 specs :: TestTree
 specs = testGroup "Notify" notifyTests

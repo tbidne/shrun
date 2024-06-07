@@ -22,6 +22,23 @@ import Shrun.Configuration.Data.ConfigPhase
       ),
     ConfigPhaseF,
   )
+import Shrun.Configuration.Data.Notify.Action
+  ( NotifyAction,
+  )
+import Shrun.Configuration.Data.Notify.System
+  ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
+    NotifySystemEnv,
+    NotifySystemP (AppleScript, DBus, NotifySend),
+    OsxNotifySystemMismatch
+      ( OsxNotifySystemMismatchDBus,
+        OsxNotifySystemMismatchNotifySend
+      ),
+    displayNotifySystem,
+    mergeNotifySystem,
+  )
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout,
+  )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
     (<>?),
@@ -30,19 +47,6 @@ import Shrun.Configuration.Data.WithDisabled
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default, def)
 import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
-import Shrun.Notify.Types
-  ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
-    NotifyAction,
-    NotifySystemEnv,
-    NotifySystemP (AppleScript, DBus, NotifySend),
-    NotifyTimeout,
-    OsxNotifySystemMismatch
-      ( OsxNotifySystemMismatchDBus,
-        OsxNotifySystemMismatchNotifySend
-      ),
-    displayNotifySystem,
-    mergeNotifySystem,
-  )
 import Shrun.Prelude
 
 -- See NOTE: [Args vs. Toml mandatory fields]

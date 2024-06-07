@@ -83,6 +83,9 @@ library
     Shrun.Configuration.Data.FileLogging.FileSizeMode
     Shrun.Configuration.Data.MergedConfig
     Shrun.Configuration.Data.Notify
+    Shrun.Configuration.Data.Notify.Action
+    Shrun.Configuration.Data.Notify.System
+    Shrun.Configuration.Data.Notify.Timeout
     Shrun.Configuration.Data.StripControl
     Shrun.Configuration.Data.Truncation
     Shrun.Configuration.Data.WithDisabled
@@ -106,7 +109,6 @@ library
     Shrun.Notify.MonadDBus
     Shrun.Notify.MonadNotify
     Shrun.Notify.MonadNotifySend
-    Shrun.Notify.Types
     Shrun.Prelude
     Shrun.ShellT
     Shrun.Utils

@@ -2,12 +2,16 @@ module Unit.Shrun.Configuration.Args.Parsing.Notify (tests) where
 
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Notify (NotifyArgs)
-import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
-import Shrun.Notify.Types
+import Shrun.Configuration.Data.Notify.Action
   ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
-    NotifySystemP (AppleScript, DBus, NotifySend),
-    NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
+import Shrun.Configuration.Data.Notify.System
+  ( NotifySystemP (AppleScript, DBus, NotifySend),
+  )
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
+  )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 

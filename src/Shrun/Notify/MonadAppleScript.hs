@@ -7,12 +7,12 @@ where
 
 import Data.Text qualified as T
 import Effects.Process.Typed qualified as P
+import Shrun.Configuration.Data.Notify.System (NotifySystemP (AppleScript))
 import Shrun.Notify.MonadNotify
   ( NotifyException (MkNotifyException),
     ShrunNote,
     exitFailureToStderr,
   )
-import Shrun.Notify.Types (NotifySystemP (AppleScript))
 import Shrun.Prelude
 
 -- | Effect for apple script.
