@@ -48,16 +48,6 @@ parseNatSucceeds = testPropertyNamed desc name $ do
           annotate $ expectedSuccess txt err
           failure
         EitherRight _ -> pure ()
-
-    allDoubleSizes <- forAll genAllMaxBytesDouble
-
-    for_ allDoubleSizes $ \bytes -> do
-      let txt = bytesToText (MkFloatingFormatter (Just 6)) bytes
-      case ReadSize.parseReadSize (pure txt) of
-        EitherLeft err -> do
-          annotate $ expectedSuccess txt err
-          failure
-        EitherRight _ -> pure ()
   where
     desc = "Integral bytes up to max Int succeedes"
     name = "parseNatSucceeds"
@@ -65,16 +55,6 @@ parseNatSucceeds = testPropertyNamed desc name $ do
 parseDoubleSucceeds :: TestTree
 parseDoubleSucceeds = testPropertyNamed desc name $ do
   property $ do
-    allNatSizes <- forAll genAllMaxBytes
-
-    for_ allNatSizes $ \bytes -> do
-      let txt = bytesToText MkIntegralFormatter bytes
-      case ReadSize.parseReadSize (pure txt) of
-        EitherLeft err -> do
-          annotate $ expectedSuccess txt err
-          failure
-        EitherRight _ -> pure ()
-
     allDoubleSizes <- forAll genAllMaxBytesDouble
 
     for_ allDoubleSizes $ \bytes -> do
