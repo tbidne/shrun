@@ -19,20 +19,20 @@ description:
 
 category:           Shell scripting, Utils, Concurrency
 extra-source-files:
-  cabal.project
   cabal.ghc982.project
   cabal.ghc982.project.freeze
+  cabal.project
   CHANGELOG.md
   configuration.md
+  examples/*.toml
   examples/bashrc
   examples/demo.gif
-  examples/*.toml
   faq.md
   LICENSE
   README.md
+  test/functional/scripts/*.sh
   test/integration/toml/*.toml
   test/integration/toml/osx/*.toml
-  test/functional/scripts/*.sh
 
 source-repository head
   type:     git
