@@ -234,8 +234,8 @@ lineTruncDetect = testPropertyNamed desc "lineTruncDetect"
     args = ["-c", getIntConfig "misc", "cmd1"]
 
     expected =
-      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 87,
-        #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 87
+      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 86,
+        #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 86
       ]
 
 testFileSizeModeNothing :: TestTree

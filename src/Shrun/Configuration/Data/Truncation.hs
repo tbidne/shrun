@@ -102,6 +102,10 @@ configToLineTrunc ::
   m (Maybe (Truncation TruncLine))
 configToLineTrunc Disabled = pure Nothing
 configToLineTrunc Without = pure Nothing
-configToLineTrunc (With Detected) = Just . MkTruncation <$> getTerminalWidth
+configToLineTrunc (With Detected) =
+  -- We subtract one because otherwise we can fill the entire terminal with a
+  -- log, which will automatically add a newline. The point of this option is
+  -- to avoid multiple lines, hence the subtraction.
+  Just . MkTruncation . (\x -> x - 1) <$> getTerminalWidth
 configToLineTrunc (With (Undetected x)) = pure $ Just x
 {-# INLINEABLE configToLineTrunc #-}

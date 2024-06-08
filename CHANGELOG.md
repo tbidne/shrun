@@ -22,6 +22,8 @@ the major/minor/patch definitions apply to the application's interface / usage
 * Added GHC 9.10 support.
 
 ### Fixed
+* Line truncation `detect` option now subtracts one, so terminals do not add
+  an extra newline.
 * More `HasCallStack` annotations for better callstacks in case something goes
   wrong.
 * Increase default `--command-log-read-size` to `16 kb` to better prevent
