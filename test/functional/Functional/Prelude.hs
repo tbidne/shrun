@@ -58,6 +58,8 @@ module Functional.Prelude
     -- * Misc
     withBaseArgs,
     withNoConfig,
+    appendScriptsHome,
+    scriptsHomeStr,
     notifySystemArg,
     readLogFile,
   )
@@ -407,3 +409,9 @@ cfp = combineFilePaths
 
 readLogFile :: OsPath -> IO (List ResultText)
 readLogFile path = fmap MkResultText . T.lines <$> readFileUtf8ThrowM path
+
+appendScriptsHome :: (IsString a, Semigroup a) => a -> a
+appendScriptsHome p = scriptsHomeStr <> "/" <> p
+
+scriptsHomeStr :: (IsString a) => a
+scriptsHomeStr = "test/functional/scripts"

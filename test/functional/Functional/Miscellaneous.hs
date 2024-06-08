@@ -125,8 +125,8 @@ reportsStderr =
     args
     (\results -> V.verifyExpectedUnexpected results expected unexpected)
   where
-    scriptPath :: (IsString a) => a
-    scriptPath = "./test/functional/Functional/stderr.sh"
+    scriptPath :: (IsString a, Semigroup a) => a
+    scriptPath = appendScriptsHome "stderr.sh"
 
     args =
       withNoConfig
@@ -161,8 +161,8 @@ slowOutputBroken =
     blockAssertions
     blockLineBufferAssertions
   where
-    scriptPath :: (IsString a) => a
-    scriptPath = "./test/functional/Functional/slow_output_broken.sh"
+    scriptPath :: (IsString a, Semigroup a) => a
+    scriptPath = appendScriptsHome "slow_output_broken.sh"
 
     args =
       withNoConfig
@@ -222,8 +222,8 @@ formatsFileLogs testArgs =
         V.verifyExpected resultsFile bufferFileExpected
     )
   where
-    cmd :: (IsString a) => a
-    cmd = "test/functional/Functional/formatting.sh"
+    cmd :: (IsString a, Semigroup a) => a
+    cmd = appendScriptsHome "formatting.sh"
 
     blockConsoleExpected =
       [ withCommandPrefix cmd "Starting",
