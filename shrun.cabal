@@ -13,13 +13,26 @@ synopsis:           A utility program for running shell commands concurrently.
 description:
   Please see the README at https://github.com/tbidne/shrun/#readme
 
+-- TODO: Some of these really don't belong in extra-source-files (and we'd
+-- also like to include more in sdist e.g. nix/stack files), but for now
+-- include them: See https://github.com/haskell/cabal/issues/8817.
+
 category:           Shell scripting, Utils, Concurrency
 extra-source-files:
+  cabal.project
+  cabal.ghc982.project
+  cabal.ghc982.project.freeze
   CHANGELOG.md
   configuration.md
-  examples/default.toml
+  examples/bashrc
+  examples/demo.gif
+  examples/*.toml
   faq.md
+  LICENSE
   README.md
+  test/integration/toml/*.toml
+  test/integration/toml/osx/*.toml
+  test/functional/scripts/*.sh
 
 source-repository head
   type:     git
