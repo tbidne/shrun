@@ -4,6 +4,8 @@
 module Unit.Shrun.Configuration.Args.Parsing (tests) where
 
 import Data.Sequence qualified as Seq
+import Data.Text qualified as T
+import Options.Applicative qualified as OA
 import Shrun.Configuration.Args (defaultArgs)
 import Shrun.Utils qualified as U
 import Unit.Prelude
@@ -18,7 +20,8 @@ tests =
     [ defaultTests,
       configTests,
       Core.tests,
-      commandTests
+      commandTests,
+      testDefaultOption
     ]
 
 defaultTests :: TestTree
@@ -89,3 +92,35 @@ testCommands =
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) U.defArgs
     cmds = U.unsafeListToNESeq ["one", "two", "three"]
+
+testDefaultOption :: TestTree
+testDefaultOption = testPropertyNamed desc "testDefaultOption"
+  $ withTests 1
+  $ property
+  $ do
+    expected <- liftIO $ readFileUtf8ThrowM [osp|examples/default.toml|]
+
+    let result = U.execParserUnit ["--default-config"]
+
+    case result of
+      OA.Success x -> do
+        annotateShow x
+        failure
+      OA.Failure f -> do
+        let expectedLines = T.lines expected
+            expectedLen = length expectedLines
+            resultLines = T.lines $ pack $ fst (OA.renderFailure f "")
+            resultLen = length resultLines
+
+        annotateShow expectedLines
+        annotateShow resultLines
+
+        expectedLen === resultLen
+
+        for_ (zip expectedLines resultLines) $ \(e, r) -> do
+          e === r
+      OA.CompletionInvoked x -> do
+        annotateShow x
+        failure
+  where
+    desc = "--default-config === examples/default.toml"

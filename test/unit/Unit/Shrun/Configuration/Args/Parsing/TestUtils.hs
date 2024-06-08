@@ -4,6 +4,7 @@ module Unit.Shrun.Configuration.Args.Parsing.TestUtils
     verifyFailure,
 
     -- * Utils
+    execParserUnit,
     updateDefArgs,
     disableDefArgs,
     updateDefCoreArgs,
@@ -16,7 +17,7 @@ module Unit.Shrun.Configuration.Args.Parsing.TestUtils
 where
 
 import Data.Sequence qualified as Seq
-import Options.Applicative (ParserPrefs)
+import Options.Applicative (ParserPrefs, ParserResult)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Args.Parsing (Args, parserInfoArgs)
@@ -24,9 +25,12 @@ import Shrun.Configuration.Data.Core (CoreConfigArgs)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 
+execParserUnit :: List String -> ParserResult Args
+execParserUnit = OA.execParserPure prefs parserInfoArgs
+
 verifyResult :: List String -> Maybe Args -> Property
 verifyResult argList expected = withTests 1 $ property $ do
-  let parseResult = OA.execParserPure prefs parserInfoArgs argList
+  let parseResult = execParserUnit argList
 
   result <- case parseResult of
     OA.Success x -> pure $ Just x
@@ -39,7 +43,7 @@ verifyResult argList expected = withTests 1 $ property $ do
 
 verifyFailure :: List String -> Property
 verifyFailure argList = withTests 1 $ property $ do
-  let parseResult = OA.execParserPure prefs parserInfoArgs argList
+  let parseResult = execParserUnit argList
 
   case parseResult of
     OA.Success _ -> failure

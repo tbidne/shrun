@@ -44,7 +44,6 @@ import Text.Read qualified as TR
 
 -- $setup
 -- >>> :set -XOverloadedLists
--- >>> :set -XTemplateHaskell
 -- >>> import Data.List.NonEmpty (NonEmpty (..))
 -- >>> import Data.Semigroup (Sum (..))
 -- >>> import Data.Text qualified as T
