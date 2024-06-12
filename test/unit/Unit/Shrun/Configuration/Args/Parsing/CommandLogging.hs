@@ -1,5 +1,6 @@
 module Unit.Shrun.Configuration.Args.Parsing.CommandLogging (tests) where
 
+import GHC.Real (fromIntegral)
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy (ReadBlock, ReadBlockLineBuffer),
@@ -25,6 +26,7 @@ bufferLengthTests =
   testGroup
     "--command-log-buffer-length"
     [ testBufferLength,
+      testBufferLengthOverflow,
       testNoBufferLength
     ]
 
@@ -37,6 +39,17 @@ testBufferLength =
   where
     argList = ["--command-log-buffer-length", "2_000", "command"]
     expected = U.updateDefCoreArgs (#commandLogging % #bufferLength) 2_000
+
+testBufferLengthOverflow :: TestTree
+testBufferLengthOverflow =
+  testPropertyNamed
+    "--command-log-buffer-length overflow fails"
+    "testBufferLengthOverflow"
+    $ U.verifyFailure argList
+  where
+    maxIntInc = fromIntegral @Int @Natural (maxBound @Int) + 1
+    maxIntIncArg = show maxIntInc ++ " b"
+    argList = ["--command-log-buffer-length", maxIntIncArg, "command"]
 
 testNoBufferLength :: TestTree
 testNoBufferLength =
@@ -123,6 +136,7 @@ readSizeTests =
   testGroup
     "--command-log-read-size"
     [ testReadSize,
+      testReadSizeOverflow,
       testNoReadSize
     ]
 
@@ -135,6 +149,17 @@ testReadSize =
   where
     argList = ["--command-log-read-size", "2 kb", "command"]
     expected = U.updateDefCoreArgs (#commandLogging % #readSize) (MkReadSize $ MkBytes 2_000)
+
+testReadSizeOverflow :: TestTree
+testReadSizeOverflow =
+  testPropertyNamed
+    "--command-log-read-size overflow fails"
+    "testReadSizeOverflow"
+    $ U.verifyFailure argList
+  where
+    maxIntInc = fromIntegral @Int @Natural (maxBound @Int) + 1
+    maxIntIncArg = show maxIntInc ++ " b"
+    argList = ["--command-log-read-size", maxIntIncArg, "command"]
 
 testNoReadSize :: TestTree
 testNoReadSize =
