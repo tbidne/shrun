@@ -24,6 +24,9 @@ module Shrun.Configuration.Data.CommandLogging
     -- * Functions
     mergeCommandLogging,
     toEnv,
+
+    -- * Exceptions
+    ReadStrategyException (..),
   )
 where
 
@@ -46,7 +49,7 @@ import Shrun.Configuration.Data.ConfigPhase
     ConfigPhaseF,
     SwitchF,
   )
-import Shrun.Configuration.Data.Core.Timeout
+import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.), (<>??))
 import Shrun.Configuration.Data.WithDisabled qualified as WD
@@ -421,28 +424,50 @@ decodeReportReadErrors = getFieldOptWith tomlDecoder "report-read-errors"
 -- | Creates env version from merged. Requires commands because we pick
 -- the read strategy based on the number of commands.
 toEnv ::
-  Bool ->
+  ( HasCallStack,
+    MonadThrow m
+  ) =>
   NESeq CommandP1 ->
   CommandLoggingMerged ->
-  CommandLoggingEnv
-toEnv fileLogging cmds merged =
-  MkCommandLoggingP
-    { bufferLength = merged ^. #bufferLength,
-      bufferTimeout = merged ^. #bufferTimeout,
-      pollInterval = merged ^. #pollInterval,
-      readStrategy,
-      readSize = merged ^. #readSize,
-      reportReadErrors = merged ^. #reportReadErrors
-    }
+  m CommandLoggingEnv
+toEnv cmds merged = do
+  readStrategy <- mkReadStrategy
+  pure
+    $ MkCommandLoggingP
+      { bufferLength = merged ^. #bufferLength,
+        bufferTimeout = merged ^. #bufferTimeout,
+        pollInterval = merged ^. #pollInterval,
+        readStrategy,
+        readSize = merged ^. #readSize,
+        reportReadErrors = merged ^. #reportReadErrors
+      }
   where
-    readStrategy = case merged ^. #readStrategy of
-      -- 1. If the read strategy was explicitly set, use it.
-      Just rs -> rs
-      -- 2. Read strategy was not set.
+    -- In general we want to let the user pick or pick a good default, but
+    -- we need to verify ReadBlockLineBuffer strategy is okay if the user
+    -- selects it.
+    mkReadStrategy = case merged ^. #readStrategy of
+      -- 1. User set ReadBlockLineBuffer, verify it's okay.
+      Just ReadBlockLineBuffer ->
+        if readBlockLineBufferAllowed
+          then pure ReadBlockLineBuffer
+          else throwM MkReadStrategyException
+      -- 2. User set ReadBlock, fine.
+      Just ReadBlock -> pure ReadBlock
+      -- 3. User did not specify. Pick a good default.
       Nothing ->
-        if length cmds == 1 && fileLogging
-          -- 2.1. If we have exactly one command and file logging is active,
-          -- buffer newlines.
-          then ReadBlockLineBuffer
-          -- 2.2 Otherwise, use the normal block strategy.
-          else ReadBlock
+        if readBlockLineBufferAllowed
+          then pure ReadBlockLineBuffer
+          else pure ReadBlock
+
+    readBlockLineBufferAllowed = length cmds == 1
+
+data ReadStrategyException = MkReadStrategyException
+  deriving stock (Eq, Show)
+
+instance Exception ReadStrategyException where
+  displayException _ =
+    mconcat
+      [ "The --command-log-read-strategy 'block-line-buffer' strategy was ",
+        "specified, however, it is only valid when there is exactly one ",
+        "command."
+      ]

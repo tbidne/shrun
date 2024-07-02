@@ -28,7 +28,7 @@ import Shrun.Configuration.Data.CommandLogging
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy
-      ( ReadBlockLineBuffer
+      ( ReadBlock
       ),
   )
 import Shrun.Configuration.Data.CommonLogging
@@ -127,7 +127,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                       bufferTimeout = 60,
                       pollInterval = 100,
                       readSize = MkReadSize $ MkBytes 1_000_000,
-                      readStrategy = Just ReadBlockLineBuffer,
+                      readStrategy = Just ReadBlock,
                       reportReadErrors = ReportReadErrorsOff
                     },
                 fileLogging = Nothing,

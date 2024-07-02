@@ -165,8 +165,8 @@ readStrategyParser = Utils.withDisabledParser mainParser "command-log-read-strat
           "time, whereas 'block-line-buffer' also reads N bytes at a time, ",
           "but buffers newlines, for potentially nicer formatted file logs. ",
           "By default, we only use 'block-line-buffer' when there is exactly ",
-          "one command and file-logging is on. Otherwise we use 'block'. ",
-          "This option explicitly sets the strategy."
+          "one command. Otherwise we use 'block'. This option explicitly sets ",
+          "the strategy."
         ]
 
 reportReadErrorsParser :: Parser (WithDisabled ())

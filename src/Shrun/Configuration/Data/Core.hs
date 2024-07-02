@@ -386,6 +386,7 @@ withCoreEnv ::
   m a
 withCoreEnv cmds merged onCoreConfigEnv = do
   notify <- traverse Notify.toEnv (merged ^. #notify)
+  commandLogging <- CommandLogging.toEnv cmds (merged ^. #commandLogging)
 
   FileLogging.withFileLoggingEnv (merged ^. #fileLogging) $ \fileLoggingEnv ->
     let coreConfigEnv =
@@ -393,11 +394,7 @@ withCoreEnv cmds merged onCoreConfigEnv = do
             { init = merged ^. #init,
               timeout = merged ^. #timeout,
               commonLogging = CommonLogging.toEnv (merged ^. #commonLogging),
-              commandLogging =
-                CommandLogging.toEnv
-                  (is _Just fileLoggingEnv)
-                  cmds
-                  (merged ^. #commandLogging),
+              commandLogging,
               consoleLogging = ConsoleLogging.toEnv (merged ^. #consoleLogging),
               fileLogging = fileLoggingEnv,
               notify

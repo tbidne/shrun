@@ -9,6 +9,7 @@ import Data.Text qualified as T
 import Effects.Exception (StringException)
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
+import Shrun.Configuration.Data.CommandLogging (ReadStrategyException)
 import Shrun.Configuration.Data.Notify.System
   ( LinuxNotifySystemMismatch,
     OsxNotifySystemMismatch,
@@ -28,7 +29,8 @@ specs =
         emptyKey,
         emptyValue,
         cyclicKeys,
-        emptyFileLog
+        emptyFileLog,
+        testReadStrategyFailure
       ]
         <> osTests
     )
@@ -124,6 +126,33 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
   logs @=? []
   where
     expectedErr = "Decode error at '.file-log.path': Empty path given for --file-log"
+
+testReadStrategyFailure :: TestTree
+testReadStrategyFailure = testCase desc $ do
+  logsRef <- newIORef []
+  result <- runCaptureError @ReadStrategyException args logsRef
+
+  case result of
+    Just err -> expectedErr @=? displayException err
+    Nothing -> assertFailure "Expected exception"
+
+  logs <- readIORef logsRef
+  logs @=? []
+  where
+    desc = "Read strategy block-line-buffer w/ multiple commands throws error"
+    args =
+      [ "--no-config",
+        "--command-log-read-strategy",
+        "block-line-buffer",
+        "cmd1",
+        "cmd2"
+      ]
+    expectedErr =
+      mconcat
+        [ "The --command-log-read-strategy 'block-line-buffer' strategy was ",
+          "specified, however, it is only valid when there is exactly one ",
+          "command."
+        ]
 
 #if OSX
 osTests :: [TestTree]

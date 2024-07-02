@@ -213,7 +213,7 @@ The `block-line-buffer` strategy is the primary solution to these problems, and 
 
 With that out of the way, we can now justify the default behavior.
 
-- When we have exactly one command and file-logging is active, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it only makes sense when there is a single command and file-logging is active.
+- When we have exactly one command, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it only makes sense when there is a single command.
 - Otherwise, we use the `block` strategy.
 
 There are various other tweaks one can try if the file log formatting is still damaged e.g. increasing `--command-log-buffer-(length|timeout)` and/or `--command-log-read-size`. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the description above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless, so it is likely not a good solution.

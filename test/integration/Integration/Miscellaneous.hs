@@ -18,6 +18,9 @@ import Integration.Utils
   )
 import Shrun.Configuration qualified as Configuration
 import Shrun.Configuration.Args qualified as Args
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy
+  ( ReadStrategy (ReadBlockLineBuffer),
+  )
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (DeleteOnSuccessOn),
   )
@@ -42,6 +45,7 @@ specs testArgs =
       lineTruncDetect,
       testFileLogDeleteOnSuccess,
       testFileSizeModeNothing,
+      testReadBlockLineBufferReadStrategy,
       testDefaultConfigs
     ]
 
@@ -269,6 +273,22 @@ testFileLogDeleteOnSuccess = testPropertyNamed desc "testFileLogDeleteOnSuccess"
     args = ["-c", getIntConfig "basic-file-log", "cmd"]
 
     expected = [#coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just DeleteOnSuccessOn]
+
+testReadBlockLineBufferReadStrategy :: TestTree
+testReadBlockLineBufferReadStrategy = testPropertyNamed desc "testReadBlockLineBufferReadStrategy"
+  $ withTests 1
+  $ property
+  $ do
+    logsRef <- liftIO $ newIORef []
+    makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+    logs <- liftIO $ readIORef logsRef
+    logs === []
+  where
+    desc = "Read block-line-buffer read-strategy"
+    args = ["-c", getIntConfig "config", "cmd"]
+
+    expected = [#coreConfig % #commandLogging % #readStrategy ^=@ Just ReadBlockLineBuffer]
 
 newtype TermIO a = MkTermIO (IO a)
   deriving (Applicative, Functor, Monad, MonadThrow) via IO

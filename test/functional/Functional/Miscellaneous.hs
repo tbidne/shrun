@@ -294,7 +294,7 @@ readStrategyDefaultTests testArgs =
   testGroup
     "read-strategy default tests"
     [ testReadStrategyMultiCmdsBlock testArgs,
-      testReadStrategyNoFileLogBlock,
+      testReadStrategyOneCmdBuffer,
       testReadStrategyOneCmdFileLogBuffer testArgs
     ]
 
@@ -329,8 +329,8 @@ testReadStrategyMultiCmdsBlock testArgs = testCase "Multiple commands uses 'bloc
         finishedPrefix
       ]
 
-testReadStrategyNoFileLogBlock :: TestTree
-testReadStrategyNoFileLogBlock = testCase "No file logging uses 'block'" $ do
+testReadStrategyOneCmdBuffer :: TestTree
+testReadStrategyOneCmdBuffer = testCase "One command uses 'block-line-buffer'" $ do
   let args =
         withNoConfig
           [ "--console-log-command",
@@ -344,11 +344,8 @@ testReadStrategyNoFileLogBlock = testCase "No file logging uses 'block'" $ do
   where
     -- split since read-size = 2
     expected =
-      [ withCommandPrefix readStrategyDefaultCmdLog "he",
-        withCommandPrefix readStrategyDefaultCmdLog "ll",
-        withCommandPrefix readStrategyDefaultCmdLog "o",
-        withCommandPrefix readStrategyDefaultCmdLog "by",
-        withCommandPrefix readStrategyDefaultCmdLog "e",
+      [ withCommandPrefix readStrategyDefaultCmdLog "hello",
+        withCommandPrefix readStrategyDefaultCmdLog "bye",
         finishedPrefix
       ]
 

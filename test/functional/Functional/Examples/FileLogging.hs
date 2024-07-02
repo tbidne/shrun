@@ -13,44 +13,40 @@ tests :: IO TestArgs -> TestTree
 tests args =
   testGroup
     "FileLogging"
-    (multiTestReadStrategy testsParams)
+    ( [ fileLog args,
+        fileLogDeleteOnSuccessFail args
+      ]
+        ++ multiTestReadStrategy testsParams
+    )
   where
     testsParams :: List ReadStrategyTestParams
     testsParams =
-      [ fileLog args,
-        fileLogCommandNameTruncN args,
+      [ fileLogCommandNameTruncN args,
         fileLogDeleteOnSuccess args,
-        fileLogDeleteOnSuccessFail args,
         fileLogLineTruncN args,
         fileLogStripControlAll args,
         fileLogStripControlNone args,
         fileLogStripControlSmart args
       ]
 
-fileLog :: IO TestArgs -> ReadStrategyTestParams
-fileLog testArgs =
-  ReadStrategyTestParametricSetup
-    "Runs file-log example"
-    runExitFailure
-    ( do
-        outFile <- (</> [osp|readme-file-out.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
-            args =
-              withNoConfig
-                [ "--file-log",
-                  outFileStr,
-                  "sleep 2",
-                  "bad",
-                  "for i in 1 2 3; do echo hi; sleep 1; done"
-                ]
-        pure (args, outFile)
-    )
-    ( \(resultsConsole, outFile) -> do
-        V.verifyExpected resultsConsole expectedConsole
+fileLog :: IO TestArgs -> TestTree
+fileLog testArgs = testCase "Runs file-log example" $ do
+  outFile <- (</> [osp|readme-file-out.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "sleep 2",
+            "bad",
+            "for i in 1 2 3; do echo hi; sleep 1; done"
+          ]
 
-        resultsFile <- readLogFile outFile
-        V.verifyExpected resultsFile expectedFile
-    )
+  resultsConsole <- runExitFailure args
+  V.verifyExpected resultsConsole expectedConsole
+
+  resultsFile <- readLogFile outFile
+  V.verifyExpected resultsFile expectedFile
   where
     expectedConsole =
       [ withErrorPrefix "bad",
@@ -128,34 +124,28 @@ fileLogDeleteOnSuccess testArgs =
         finishedPrefix
       ]
 
-fileLogDeleteOnSuccessFail :: IO TestArgs -> ReadStrategyTestParams
-fileLogDeleteOnSuccessFail testArgs =
-  ReadStrategyTestParametricSetup
-    "Runs file-log-delete-on-success failure example"
-    runExitFailure
-    ( do
-        outFile <- (</> [osp|del-on-success-fail.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
-            args =
-              withNoConfig
-                [ "--file-log",
-                  outFileStr,
-                  "--file-log-delete-on-success",
-                  "bad",
-                  "sleep 2"
-                ]
-        pure (args, outFile)
-    )
-    ( \(resultsConsole, outFile) -> do
-        V.verifyExpected resultsConsole expectedConsole
+fileLogDeleteOnSuccessFail :: IO TestArgs -> TestTree
+fileLogDeleteOnSuccessFail testArgs = testCase "Runs file-log-delete-on-success failure example" $ do
+  outFile <- (</> [osp|del-on-success-fail.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--file-log-delete-on-success",
+            "bad",
+            "sleep 2"
+          ]
 
-        exists <- doesFileExist outFile
+  resultsConsole <- runExitFailure args
+  V.verifyExpected resultsConsole expectedConsole
 
-        assertBool "File should exist" exists
+  exists <- doesFileExist outFile
 
-        resultsFile <- readLogFile outFile
-        V.verifyExpected resultsFile expectedFile
-    )
+  assertBool "File should exist" exists
+
+  resultsFile <- readLogFile outFile
+  V.verifyExpected resultsFile expectedFile
   where
     expectedConsole =
       [ withErrorPrefix "bad",
