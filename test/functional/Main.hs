@@ -3,8 +3,8 @@
 -- | Runs functional tests.
 module Main (main) where
 
-import Effects.FileSystem.PathReader qualified as Dir
-import Effects.FileSystem.PathWriter qualified as Dir
+import Effects.FileSystem.PathReader qualified as PR
+import Effects.FileSystem.PathWriter qualified as PW
 import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Buffering qualified as Buffering
 import Functional.Examples qualified as Examples
@@ -48,13 +48,13 @@ specs args = do
 
 setup :: IO TestArgs
 setup = do
-  rootTmpDir <- (</> [osp|shrun|]) <$> Dir.getTemporaryDirectory
+  rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
   let workingTmpDir = rootTmpDir </> [osp|test/functional|]
 
-  cwd <- (</> [osp|test/functional|]) <$> Dir.getCurrentDirectory
+  cwd <- (</> [osp|test/functional|]) <$> PR.getCurrentDirectory
   let lp = cwd </> [osp|config.toml|]
 
-  Dir.createDirectoryIfMissing True workingTmpDir
+  PW.createDirectoryIfMissing True workingTmpDir
   pure
     $ MkTestArgs
       { rootDir = rootTmpDir,
@@ -69,11 +69,8 @@ teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
       let root = testArgs ^. #rootDir
           cwd = testArgs ^. #tmpDir
 
-      void $ tryAny $ do
-        removeDirectoryIfExists cwd
-        removeDirectoryIfExists $ root </> [osp|test/functional|]
-        removeDirectoryIfExists $ root </> [osp|test|]
-        removeDirectoryIfExists root
+      PW.removeDirectoryRecursiveIfExists cwd
+      PW.removeDirectoryRecursiveIfExists root
 
     doNothing =
       putStrLn
