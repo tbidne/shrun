@@ -288,7 +288,7 @@ testReadBlockLineBufferReadStrategy = testPropertyNamed desc "testReadBlockLineB
     desc = "Read block-line-buffer read-strategy"
     args = ["-c", getIntConfig "config", "cmd"]
 
-    expected = [#coreConfig % #commandLogging % #readStrategy ^=@ Just ReadBlockLineBuffer]
+    expected = [#coreConfig % #commandLogging % #readStrategy ^=@ ReadBlockLineBuffer]
 
 newtype TermIO a = MkTermIO (IO a)
   deriving (Applicative, Functor, Monad, MonadThrow) via IO

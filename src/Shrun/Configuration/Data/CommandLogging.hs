@@ -24,6 +24,7 @@ module Shrun.Configuration.Data.CommandLogging
     -- * Functions
     mergeCommandLogging,
     toEnv,
+    defaultCommandLoggingMerged,
 
     -- * Exceptions
     ReadStrategyException (..),
@@ -38,6 +39,7 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
         ReadBlockLineBuffer
       ),
   )
+import Shrun.Configuration.Data.CommandLogging.ReadStrategy qualified as RS
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -45,7 +47,6 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
-    ConfigPhaseEnvF,
     ConfigPhaseF,
     SwitchF,
   )
@@ -151,7 +152,7 @@ data CommandLoggingP p = MkCommandLoggingP
     -- Note this is not on commandLogging or fileLogging since it affects both.
     readSize :: ConfigPhaseF p ReadSize,
     -- | Reading strategy.
-    readStrategy :: ConfigPhaseEnvF p ReadStrategy,
+    readStrategy :: ConfigPhaseF p ReadStrategy,
     -- | Determines if we should log read errors.
     reportReadErrors :: SwitchF p ReportReadErrorsSwitch
   }
@@ -269,7 +270,7 @@ instance
   {-# INLINE labelOptic #-}
 
 instance
-  (k ~ A_Lens, a ~ ConfigPhaseEnvF p ReadStrategy, b ~ ConfigPhaseEnvF p ReadStrategy) =>
+  (k ~ A_Lens, a ~ ConfigPhaseF p ReadStrategy, b ~ ConfigPhaseF p ReadStrategy) =>
   LabelOptic "readStrategy" k (CommandLoggingP p) (CommandLoggingP p) a b
   where
   labelOptic =
@@ -342,16 +343,7 @@ deriving stock instance Eq (CommandLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (CommandLoggingP ConfigPhaseMerged)
 
-instance
-  ( Default (ConfigPhaseF p BufferLength),
-    Default (ConfigPhaseF p BufferTimeout),
-    Default (ConfigPhaseF p PollInterval),
-    Default (ConfigPhaseEnvF p ReadStrategy),
-    Default (ConfigPhaseF p ReadSize),
-    Default (SwitchF p ReportReadErrorsSwitch)
-  ) =>
-  Default (CommandLoggingP p)
-  where
+instance Default (CommandLoggingP ConfigPhaseArgs) where
   def =
     MkCommandLoggingP
       { bufferLength = def,
@@ -362,36 +354,84 @@ instance
         reportReadErrors = def
       }
 
+instance Default (CommandLoggingP ConfigPhaseToml) where
+  def =
+    MkCommandLoggingP
+      { bufferLength = def,
+        bufferTimeout = def,
+        pollInterval = def,
+        readStrategy = def,
+        readSize = def,
+        reportReadErrors = def
+      }
+
+defaultCommandLoggingMerged ::
+  Bool ->
+  NESeq CommandP1 ->
+  CommandLoggingP ConfigPhaseMerged
+defaultCommandLoggingMerged fileLogging cmds =
+  MkCommandLoggingP
+    { bufferLength = def,
+      bufferTimeout = def,
+      pollInterval = def,
+      readStrategy = RS.defaultReadStrategy fileLogging cmds,
+      readSize = def,
+      reportReadErrors = def
+    }
+
 -- | Merges args and toml configs.
 mergeCommandLogging ::
+  ( HasCallStack,
+    MonadThrow m
+  ) =>
+  Bool ->
+  NESeq CommandP1 ->
   CommandLoggingArgs ->
   Maybe CommandLoggingToml ->
-  CommandLoggingMerged
-mergeCommandLogging args mToml =
-  MkCommandLoggingP
-    { bufferLength =
-        (args ^. #bufferLength) <>?. (toml ^. #bufferLength),
-      bufferTimeout =
-        (args ^. #bufferTimeout) <>?. (toml ^. #bufferTimeout),
-      pollInterval =
-        (args ^. #pollInterval) <>?. (toml ^. #pollInterval),
-      readStrategy =
-        (args ^. #readStrategy) <>?? (toml ^. #readStrategy),
-      readSize =
-        (args ^. #readSize) <>?. (toml ^. #readSize),
-      reportReadErrors =
-        WD.fromDefault
-          ( review #boolIso
-              <$> argsReportReadErrors
-              <>? (toml ^. #reportReadErrors)
-          )
-    }
+  m CommandLoggingMerged
+mergeCommandLogging fileLogging cmds args mToml = do
+  readStrategy <-
+    guardReadStrategy
+      ((args ^. #readStrategy) <>?? (toml ^. #readStrategy))
+
+  pure
+    $ MkCommandLoggingP
+      { bufferLength =
+          (args ^. #bufferLength) <>?. (toml ^. #bufferLength),
+        bufferTimeout =
+          (args ^. #bufferTimeout) <>?. (toml ^. #bufferTimeout),
+        pollInterval =
+          (args ^. #pollInterval) <>?. (toml ^. #pollInterval),
+        readStrategy,
+        readSize =
+          (args ^. #readSize) <>?. (toml ^. #readSize),
+        reportReadErrors =
+          WD.fromDefault
+            ( review #boolIso
+                <$> argsReportReadErrors
+                <>? (toml ^. #reportReadErrors)
+            )
+      }
   where
     -- Convert WithDisabled () -> WithDisabled Bool for below operation.
     argsReportReadErrors :: WithDisabled Bool
     argsReportReadErrors = args ^. #reportReadErrors $> True
 
     toml = fromMaybe def mToml
+
+    -- In general we want to let the user pick or pick a good default, but
+    -- we need to verify ReadBlockLineBuffer strategy is okay if the user
+    -- selects it.
+    guardReadStrategy = \case
+      -- 1. User set ReadBlockLineBuffer, verify it's okay.
+      Just ReadBlockLineBuffer ->
+        if RS.readBlockLineBufferNotAllowed fileLogging cmds
+          then throwM MkReadStrategyException
+          else pure ReadBlockLineBuffer
+      -- 2. User set ReadBlock, fine.
+      Just ReadBlock -> pure ReadBlock
+      -- 3. User did not specify. Pick a good default.
+      Nothing -> pure $ RS.defaultReadStrategy fileLogging cmds
 
 instance DecodeTOML CommandLoggingToml where
   tomlDecoder =
@@ -423,50 +463,16 @@ decodeReportReadErrors = getFieldOptWith tomlDecoder "report-read-errors"
 
 -- | Creates env version from merged. Requires commands because we pick
 -- the read strategy based on the number of commands.
-toEnv ::
-  ( HasCallStack,
-    MonadThrow m
-  ) =>
-  Bool ->
-  NESeq CommandP1 ->
-  CommandLoggingMerged ->
-  m CommandLoggingEnv
-toEnv fileLogging cmds merged = do
-  readStrategy <- mkReadStrategy
-  pure
-    $ MkCommandLoggingP
-      { bufferLength = merged ^. #bufferLength,
-        bufferTimeout = merged ^. #bufferTimeout,
-        pollInterval = merged ^. #pollInterval,
-        readStrategy,
-        readSize = merged ^. #readSize,
-        reportReadErrors = merged ^. #reportReadErrors
-      }
-  where
-    -- In general we want to let the user pick or pick a good default, but
-    -- we need to verify ReadBlockLineBuffer strategy is okay if the user
-    -- selects it.
-    mkReadStrategy = case merged ^. #readStrategy of
-      -- 1. User set ReadBlockLineBuffer, verify it's okay.
-      Just ReadBlockLineBuffer ->
-        if readBlockLineBufferNotAllowed
-          then throwM MkReadStrategyException
-          else pure ReadBlockLineBuffer
-      -- 2. User set ReadBlock, fine.
-      Just ReadBlock -> pure ReadBlock
-      -- 3. User did not specify. Pick a good default.
-      Nothing ->
-        if readBlockLineBufferNotAllowed
-          then pure ReadBlock
-          else pure ReadBlockLineBuffer
-
-    -- The only time ReadBlockLineBuffer is bad is if there are multiple
-    -- commands and file logging is active. Console logging handles multiple
-    -- commands just fine, since each command has its own buffers and console
-    -- region. The problem with filelogging is that it all goes to the same
-    -- file.
-    readBlockLineBufferNotAllowed =
-      length cmds > 1 && fileLogging
+toEnv :: CommandLoggingMerged -> CommandLoggingEnv
+toEnv merged =
+  MkCommandLoggingP
+    { bufferLength = merged ^. #bufferLength,
+      bufferTimeout = merged ^. #bufferTimeout,
+      pollInterval = merged ^. #pollInterval,
+      readStrategy = merged ^. #readStrategy,
+      readSize = merged ^. #readSize,
+      reportReadErrors = merged ^. #reportReadErrors
+    }
 
 data ReadStrategyException = MkReadStrategyException
   deriving stock (Eq, Show)

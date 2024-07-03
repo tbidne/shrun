@@ -4,8 +4,8 @@
 module Main (main) where
 
 import Effects.FileSystem.PathReader qualified as Dir
-import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.FileSystem.PathWriter qualified as Dir
+import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
 import Integration.Failures qualified as Failures

@@ -25,7 +25,6 @@ buffer-length = 20
 buffer-timeout = 60
 poll-interval = 127
 read-size = "20 b"
-read-strategy = "block-line-buffer"
 report-read-errors = true
 
 [console-log]

@@ -44,6 +44,7 @@ mergeConfig args mToml = do
 
       coreConfig <-
         mergeCoreConfig
+          commands
           (args ^. #coreConfig)
           Nothing
 
@@ -63,6 +64,7 @@ mergeConfig args mToml = do
 
       coreConfig <-
         mergeCoreConfig
+          commands
           (args ^. #coreConfig)
           (Just $ toml ^. #coreConfig)
 

@@ -159,7 +159,7 @@ fromMergedConfig cfg onEnv = do
   anyError <- newTVarA False
   consoleLogQueue <- newTBQueueA 1_000
 
-  CoreConfig.withCoreEnv commands (cfg ^. #coreConfig) $ \coreConfigEnv -> do
+  CoreConfig.withCoreEnv (cfg ^. #coreConfig) $ \coreConfigEnv -> do
     let env =
           MkEnv
             { config = coreConfigEnv,

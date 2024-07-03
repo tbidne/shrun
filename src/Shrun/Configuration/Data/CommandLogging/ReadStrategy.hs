@@ -4,10 +4,13 @@ module Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy (..),
     parseReadStrategy,
     readStrategyStr,
+    defaultReadStrategy,
+    readBlockLineBufferNotAllowed,
   )
 where
 
 import Data.String (IsString)
+import Shrun.Data.Command (CommandP1)
 import Shrun.Prelude
 
 -- | Different read strategies for simplicity vs. potential prettier
@@ -23,6 +26,16 @@ data ReadStrategy
 
 instance DecodeTOML ReadStrategy where
   tomlDecoder = parseReadStrategy tomlDecoder
+
+defaultReadStrategy :: Bool -> NESeq CommandP1 -> ReadStrategy
+defaultReadStrategy fileLogging cmds =
+  if readBlockLineBufferNotAllowed fileLogging cmds
+    then ReadBlock
+    else ReadBlockLineBuffer
+
+readBlockLineBufferNotAllowed :: Bool -> NESeq CommandP1 -> Bool
+readBlockLineBufferNotAllowed fileLogging cmds =
+  length cmds > 1 && fileLogging
 
 -- | Parses 'ReadStrategy'.
 parseReadStrategy :: (MonadFail m) => m Text -> m ReadStrategy

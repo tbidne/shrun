@@ -10,6 +10,7 @@ module Shrun.Configuration.Data.Core
     -- * Functions
     mergeCoreConfig,
     withCoreEnv,
+    defaultCoreConfigMerged,
   )
 where
 
@@ -327,12 +328,14 @@ deriving stock instance Show (CoreConfigP ConfigPhaseMerged)
 
 mergeCoreConfig ::
   ( HasCallStack,
-    MonadTerminal m
+    MonadTerminal m,
+    MonadThrow m
   ) =>
+  NESeq CommandP1 ->
   CoreConfigArgs ->
   Maybe CoreConfigToml ->
   m CoreConfigMerged
-mergeCoreConfig args mToml = do
+mergeCoreConfig cmds args mToml = do
   consoleLogging <-
     mergeConsoleLogging
       (args ^. #consoleLogging)
@@ -343,6 +346,13 @@ mergeCoreConfig args mToml = do
       (args ^. #fileLogging)
       (toml ^. #fileLogging)
 
+  commandLogging <-
+    mergeCommandLogging
+      (is _Just fileLogging)
+      cmds
+      (args ^. #commandLogging)
+      (toml ^. #commandLogging)
+
   pure
     $ MkCoreConfigP
       { timeout = (args ^. #timeout) <>?? (toml ^. #timeout),
@@ -352,10 +362,7 @@ mergeCoreConfig args mToml = do
             (args ^. #commonLogging)
             (toml ^. #commonLogging),
         consoleLogging,
-        commandLogging =
-          mergeCommandLogging
-            (args ^. #commandLogging)
-            (toml ^. #commandLogging),
+        commandLogging,
         fileLogging,
         notify =
           mergeNotifyLogging
@@ -380,26 +387,19 @@ withCoreEnv ::
     MonadTerminal m,
     MonadThrow m
   ) =>
-  NESeq CommandP1 ->
   CoreConfigMerged ->
   (CoreConfigEnv -> m a) ->
   m a
-withCoreEnv cmds merged onCoreConfigEnv = do
+withCoreEnv merged onCoreConfigEnv = do
   notify <- traverse Notify.toEnv (merged ^. #notify)
 
   FileLogging.withFileLoggingEnv (merged ^. #fileLogging) $ \fileLoggingEnv -> do
-    commandLogging <-
-      CommandLogging.toEnv
-        (is _Just fileLoggingEnv)
-        cmds
-        (merged ^. #commandLogging)
-
     let coreConfigEnv =
           MkCoreConfigP
             { init = merged ^. #init,
               timeout = merged ^. #timeout,
               commonLogging = CommonLogging.toEnv (merged ^. #commonLogging),
-              commandLogging,
+              commandLogging = CommandLogging.toEnv (merged ^. #commandLogging),
               consoleLogging = ConsoleLogging.toEnv (merged ^. #consoleLogging),
               fileLogging = fileLoggingEnv,
               notify
@@ -407,17 +407,7 @@ withCoreEnv cmds merged onCoreConfigEnv = do
      in onCoreConfigEnv coreConfigEnv
 {-# INLINEABLE withCoreEnv #-}
 
-instance
-  ( Default (ConfigPhaseMaybeF p Text),
-    Default (ConfigPhaseMaybeF p Timeout),
-    Default (TomlOptF p (CommonLoggingP p)),
-    Default (TomlOptF p (CommandLoggingP p)),
-    Default (TomlOptF p (ConsoleLoggingP p)),
-    Default (ArgsOnlyDetF p (FileLoggingP p)),
-    Default (ArgsOnlyDetF p (NotifyP p))
-  ) =>
-  Default (CoreConfigP p)
-  where
+instance Default (CoreConfigP ConfigPhaseArgs) where
   def =
     MkCoreConfigP
       { init = def,
@@ -428,3 +418,32 @@ instance
         fileLogging = def,
         notify = def
       }
+
+instance Default (CoreConfigP ConfigPhaseToml) where
+  def =
+    MkCoreConfigP
+      { init = def,
+        timeout = def,
+        commonLogging = def,
+        commandLogging = def,
+        consoleLogging = def,
+        fileLogging = def,
+        notify = def
+      }
+
+defaultCoreConfigMerged :: NESeq CommandP1 -> CoreConfigP ConfigPhaseMerged
+defaultCoreConfigMerged cmds =
+  MkCoreConfigP
+    { init = def,
+      timeout = def,
+      commonLogging = def,
+      commandLogging =
+        CommandLogging.defaultCommandLoggingMerged
+          (is _Just fileLogging)
+          cmds,
+      consoleLogging = def,
+      fileLogging,
+      notify = def
+    }
+  where
+    fileLogging = def

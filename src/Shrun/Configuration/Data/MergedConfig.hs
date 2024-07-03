@@ -7,7 +7,7 @@ module Shrun.Configuration.Data.MergedConfig
 where
 
 import Shrun.Configuration.Data.Core (CoreConfigMerged)
-import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Data.Core qualified as CoreConfig
 import Shrun.Data.Command (CommandP1)
 import Shrun.Prelude
 
@@ -55,6 +55,6 @@ instance
 defaultMergedConfig :: NESeq CommandP1 -> MergedConfig
 defaultMergedConfig commands =
   MkMergedConfig
-    { coreConfig = def,
+    { coreConfig = CoreConfig.defaultCoreConfigMerged commands,
       commands
     }
