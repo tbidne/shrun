@@ -427,10 +427,11 @@ toEnv ::
   ( HasCallStack,
     MonadThrow m
   ) =>
+  Bool ->
   NESeq CommandP1 ->
   CommandLoggingMerged ->
   m CommandLoggingEnv
-toEnv cmds merged = do
+toEnv fileLogging cmds merged = do
   readStrategy <- mkReadStrategy
   pure
     $ MkCommandLoggingP
@@ -448,18 +449,24 @@ toEnv cmds merged = do
     mkReadStrategy = case merged ^. #readStrategy of
       -- 1. User set ReadBlockLineBuffer, verify it's okay.
       Just ReadBlockLineBuffer ->
-        if readBlockLineBufferAllowed
-          then pure ReadBlockLineBuffer
-          else throwM MkReadStrategyException
+        if readBlockLineBufferNotAllowed
+          then throwM MkReadStrategyException
+          else pure ReadBlockLineBuffer
       -- 2. User set ReadBlock, fine.
       Just ReadBlock -> pure ReadBlock
       -- 3. User did not specify. Pick a good default.
       Nothing ->
-        if readBlockLineBufferAllowed
-          then pure ReadBlockLineBuffer
-          else pure ReadBlock
+        if readBlockLineBufferNotAllowed
+          then pure ReadBlock
+          else pure ReadBlockLineBuffer
 
-    readBlockLineBufferAllowed = length cmds == 1
+    -- The only time ReadBlockLineBuffer is bad is if there are multiple
+    -- commands and file logging is active. Console logging handles multiple
+    -- commands just fine, since each command has its own buffers and console
+    -- region. The problem with filelogging is that it all goes to the same
+    -- file.
+    readBlockLineBufferNotAllowed =
+      length cmds > 1 && fileLogging
 
 data ReadStrategyException = MkReadStrategyException
   deriving stock (Eq, Show)

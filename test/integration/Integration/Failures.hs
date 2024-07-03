@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
 module Integration.Failures (specs) where
@@ -7,6 +8,7 @@ import Control.Exception (IOException)
 import Data.List qualified as L
 import Data.Text qualified as T
 import Effects.Exception (StringException)
+import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Shrun.Configuration.Data.CommandLogging (ReadStrategyException)
@@ -20,8 +22,8 @@ import Shrun.Configuration.Legend
     DuplicateKeyError (MkDuplicateKeyError),
   )
 
-specs :: TestTree
-specs =
+specs :: IO TestArgs -> TestTree
+specs testArgs =
   testGroup
     "Failures"
     ( [ missingConfig,
@@ -30,7 +32,7 @@ specs =
         emptyValue,
         cyclicKeys,
         emptyFileLog,
-        testReadStrategyFailure
+        testReadStrategyFailure testArgs
       ]
         <> osTests
     )
@@ -127,10 +129,13 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
   where
     expectedErr = "Decode error at '.file-log.path': Empty path given for --file-log"
 
-testReadStrategyFailure :: TestTree
-testReadStrategyFailure = testCase desc $ do
+testReadStrategyFailure :: IO TestArgs -> TestTree
+testReadStrategyFailure testArgs = testCase desc $ do
+  logPath <- liftIO $ (</> [osp|read-strategy-failure|]) . view #workingTmpDir <$> testArgs
+  let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
   logsRef <- newIORef []
-  result <- runCaptureError @ReadStrategyException args logsRef
+
+  result <- runCaptureError @ReadStrategyException (args logsPathStr) logsRef
 
   case result of
     Just err -> expectedErr @=? displayException err
@@ -139,11 +144,13 @@ testReadStrategyFailure = testCase desc $ do
   logs <- readIORef logsRef
   logs @=? []
   where
-    desc = "Read strategy block-line-buffer w/ multiple commands throws error"
-    args =
+    desc = "Read strategy block-line-buffer w/ multiple commands and file-logging throws error"
+    args fp =
       [ "--no-config",
         "--command-log-read-strategy",
         "block-line-buffer",
+        "--file-log",
+        fp,
         "cmd1",
         "cmd2"
       ]

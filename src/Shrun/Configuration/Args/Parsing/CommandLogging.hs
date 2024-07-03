@@ -161,12 +161,12 @@ readStrategyParser = Utils.withDisabledParser mainParser "command-log-read-strat
           ]
     helpTxt =
       mconcat
-        [ "The 'block' strategy reads N (--command-log-read-size) bytes at a ",
-          "time, whereas 'block-line-buffer' also reads N bytes at a time, ",
-          "but buffers newlines, for potentially nicer formatted file logs. ",
-          "By default, we only use 'block-line-buffer' when there is exactly ",
-          "one command. Otherwise we use 'block'. This option explicitly sets ",
-          "the strategy."
+        [ "The 'block' strategy reads N (--command-log-read-size) bytes at a time, ",
+          "whereas 'block-line-buffer' also reads N bytes at a time, but buffers ",
+          "newlines, for potentially nicer formatted logs. By default, we use ",
+          "'block-line-buffer' if we are only running one command and/or file-logging ",
+          "is not active. For multiple commands with file-logging, we default to ",
+          "'block'. This option explicitly sets the strategy."
         ]
 
 reportReadErrorsParser :: Parser (WithDisabled ())

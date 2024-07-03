@@ -21,7 +21,7 @@ main = do
         "Integration tests"
         [ Defaults.specs tmpDir,
           Examples.specs,
-          Failures.specs,
+          Failures.specs tmpDir,
           Miscellaneous.specs tmpDir
         ]
 

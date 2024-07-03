@@ -293,13 +293,13 @@ readStrategyDefaultTests :: IO TestArgs -> TestTree
 readStrategyDefaultTests testArgs =
   testGroup
     "read-strategy default tests"
-    [ testReadStrategyMultiCmdsBlock testArgs,
-      testReadStrategyOneCmdBuffer,
+    [ testReadStrategyMultiCmdsFileBlock testArgs,
+      testReadStrategyMultiCmdsBuffer,
       testReadStrategyOneCmdFileLogBuffer testArgs
     ]
 
-testReadStrategyMultiCmdsBlock :: IO TestArgs -> TestTree
-testReadStrategyMultiCmdsBlock testArgs = testCase "Multiple commands uses 'block'" $ do
+testReadStrategyMultiCmdsFileBlock :: IO TestArgs -> TestTree
+testReadStrategyMultiCmdsFileBlock testArgs = testCase desc $ do
   outFile <- (</> [osp|read-strategy-multi-cmd-block.log|]) . view #tmpDir <$> testArgs
   let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
       args =
@@ -319,6 +319,7 @@ testReadStrategyMultiCmdsBlock testArgs = testCase "Multiple commands uses 'bloc
   fileResults <- readLogFile outFile
   V.verifyExpected fileResults expected
   where
+    desc = "Multiple commands and file logging uses 'block'"
     -- split since read-size = 2
     expected =
       [ withCommandPrefix readStrategyDefaultCmdLog "he",
@@ -329,19 +330,21 @@ testReadStrategyMultiCmdsBlock testArgs = testCase "Multiple commands uses 'bloc
         finishedPrefix
       ]
 
-testReadStrategyOneCmdBuffer :: TestTree
-testReadStrategyOneCmdBuffer = testCase "One command uses 'block-line-buffer'" $ do
+testReadStrategyMultiCmdsBuffer :: TestTree
+testReadStrategyMultiCmdsBuffer = testCase desc $ do
   let args =
         withNoConfig
           [ "--console-log-command",
             "--command-log-read-size",
             "2b",
-            readStrategyDefaultCmd
+            readStrategyDefaultCmd,
+            "sleep 1"
           ]
 
   consoleResults <- run args
   V.verifyExpected consoleResults expected
   where
+    desc = "Multiple commands and no file logging uses 'block-line-buffer'"
     -- split since read-size = 2
     expected =
       [ withCommandPrefix readStrategyDefaultCmdLog "hello",
