@@ -3,8 +3,8 @@
 -- | Runs integration tests.
 module Main (main) where
 
-import Effects.FileSystem.PathReader qualified as Dir
-import Effects.FileSystem.PathWriter qualified as Dir
+import Effects.FileSystem.PathReader qualified as PR
+import Effects.FileSystem.PathWriter qualified as PW
 import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
@@ -29,10 +29,10 @@ main = do
 
 setup :: IO TestArgs
 setup = do
-  rootTmpDir <- (</> [osp|shrun|]) <$> Dir.getTemporaryDirectory
+  rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
   let workingTmpDir = rootTmpDir </> [osp|test/integration|]
 
-  Dir.createDirectoryIfMissing True workingTmpDir
+  PW.createDirectoryIfMissing True workingTmpDir
   pure $ MkTestArgs rootTmpDir workingTmpDir
 
 teardown :: TestArgs -> IO ()
@@ -47,6 +47,5 @@ teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
       let root = testArgs ^. #rootTmpDir
           cwd = testArgs ^. #workingTmpDir
 
-      void $ tryAny $ do
-        removeDirectoryIfExists cwd
-        removeDirectoryIfExists root
+      PW.removeDirectoryRecursiveIfExists cwd
+      PW.removeDirectoryRecursiveIfExists root
