@@ -4,12 +4,14 @@
 module Main (main) where
 
 import Effects.FileSystem.PathReader qualified as Dir
+import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.FileSystem.PathWriter qualified as Dir
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
 import Integration.Failures qualified as Failures
 import Integration.Miscellaneous qualified as Miscellaneous
 import Integration.Prelude
+import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 
 -- | Entry point for integration tests.
 main :: IO ()
@@ -34,28 +36,17 @@ setup = do
   pure $ MkTestArgs rootTmpDir workingTmpDir
 
 teardown :: TestArgs -> IO ()
-teardown testArgs = do
-  let root = testArgs ^. #rootTmpDir
-      cwd = testArgs ^. #workingTmpDir
+teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
+  where
+    doNothing =
+      putStrLn
+        $ "*** Not cleaning up tmp dir: "
+        <> FsUtils.decodeOsToFpShow (testArgs ^. #rootTmpDir)
 
-  -- because this is caused in a bracket-style cleanup, we really do not want
-  -- this to throw
-  void $ tryAny $ do
-    -- There are several tests that rely on this log's existence, since it
-    -- exists in the 'config' directory, and these tests test that default.
-    -- Thus we cannot delete it until everything has finished.
-    removeFileIfExists [osp|test/integration/toml/shrun.log|]
-    removeFileIfExists [osp|test/integration/toml/osx/shrun.log|]
+    cleanup = do
+      let root = testArgs ^. #rootTmpDir
+          cwd = testArgs ^. #workingTmpDir
 
-    -- Ideally we want to clean up after ourselves in each test. However,
-    -- we switched to hedgehog's test suite, which runs in PropertyT, thus
-    -- cannot use finally (no MonadMask instance).
-    --
-    -- For now, this is good enough.
-    removeFileIfExists $ cwd </> [osp|shrun.log|]
-    removeFileIfExists $ cwd </> [osp|large-file-warn|]
-    removeFileIfExists $ cwd </> [osp|large-file-del|]
-    removeFileIfExists $ cwd </> [osp|cli-log|]
-    removeFileIfExists $ root </> [osp|test/integration|]
-    removeFileIfExists $ root </> [osp|test|]
-    removeDirectoryIfExists root
+      void $ tryAny $ do
+        removeDirectoryIfExists cwd
+        removeDirectoryIfExists root

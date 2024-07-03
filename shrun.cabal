@@ -241,6 +241,7 @@ test-suite integration
     , effects-exceptions
     , effects-fs
     , effects-terminal
+    , env-guard
     , hedgehog
     , nonempty-containers
     , shrun
