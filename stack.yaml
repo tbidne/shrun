@@ -25,6 +25,8 @@ extra-deps:
       - lib/effects-thread
       - lib/effects-typed-process
       - lib/effects-unix-compat
+  - git: https://github.com/tbidne/optparse-applicative.git
+    commit: dd7cf0a07f708c98d7b4a1e065e7d1a0b8a635a9
   - git: https://github.com/tbidne/relative-time.git
     commit: b3be9b3b904059671ef07dbcbb11b8c04d50ddde
   - git: https://github.com/tbidne/si-bytes.git

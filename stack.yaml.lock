@@ -197,6 +197,17 @@ packages:
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-unix-compat
 - completed:
+    commit: dd7cf0a07f708c98d7b4a1e065e7d1a0b8a635a9
+    git: https://github.com/tbidne/optparse-applicative.git
+    name: optparse-applicative
+    pantry-tree:
+      sha256: 23e88cd9802f1eac08f8d6e5cdd9ba51556d4a1c99a421e7e5be68b421b724d1
+      size: 4310
+    version: 0.18.1.0
+  original:
+    commit: dd7cf0a07f708c98d7b4a1e065e7d1a0b8a635a9
+    git: https://github.com/tbidne/optparse-applicative.git
+- completed:
     commit: b3be9b3b904059671ef07dbcbb11b8c04d50ddde
     git: https://github.com/tbidne/relative-time.git
     name: relative-time

@@ -148,6 +148,23 @@
         "url": "https://github.com/NixOS/nixpkgs/archive/50eb7ecf4cd0a5756d7275c8ba36790e5bd53e33.tar.gz"
       }
     },
+    "optparse-applicative": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1721607236,
+        "narHash": "sha256-Ku+3xCQeGdGlKWID0yFtLQPJ/I88BojQhOMR8PEfsbE=",
+        "owner": "tbidne",
+        "repo": "optparse-applicative",
+        "rev": "dd7cf0a07f708c98d7b4a1e065e7d1a0b8a635a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "ref": "parser-groups",
+        "repo": "optparse-applicative",
+        "type": "github"
+      }
+    },
     "relative-time": {
       "inputs": {
         "algebra-simple": [
@@ -188,6 +205,7 @@
         "monad-effects": "monad-effects",
         "nix-hs-utils": "nix-hs-utils",
         "nixpkgs": "nixpkgs",
+        "optparse-applicative": "optparse-applicative",
         "relative-time": "relative-time",
         "si-bytes": "si-bytes",
         "smart-math": "smart-math"
