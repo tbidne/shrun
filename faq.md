@@ -6,10 +6,10 @@
 
 - [If I don't run multiple commands all that often, does shrun hold any value?](#if-i-dont-run-multiple-commands-all-that-often-does-shrun-hold-any-value)
 - [What if a command needs sudo?](#what-if-a-command-needs-sudo)
-- [What if my command relies on interactive shell](#what-if-my-command-relies-on-interactive-shell)
-- [Init vs. Legend](#init-vs-legend)
-- [File log formatting](#File-log-formatting)
-- [Bash auto-completions](#bash-auto-completions)
+- [What if my command relies on interactive shell?](#what-if-my-command-relies-on-interactive-shell)
+- [Init vs. Legend?](#init-vs-legend)
+- [Can file logging preserve formatting?](#can-file-logging-preserve-formatting)
+- [How do I set bash auto-completions?](#how-do-i-set-bash-auto-completions)
 
 ## If I don't run multiple commands all that often, does shrun hold any value?
 
@@ -80,7 +80,7 @@ $ shrun ". ~/.bashrc && foo" ". ~/.bashrc && bar"
 > $ shrun --init ". ~/.bash_functions.sh" ...
 > ```
 
-## Init vs. Legend
+## Init vs. Legend?
 
 There are two ways to use command aliases with `shrun`. One is with the toml file's [`legend`](./configuration.md#legend) section:
 
@@ -156,7 +156,7 @@ If, instead, you don't want the alias in `~/.bashrc` or you regularly run it wit
 > $ shrun --init ". ~/.bashrc" -c config.toml all
 > ```
 
-## File log formatting
+## Can file logging preserve formatting?
 
 In general, we would like `shrun`'s file logging to preserve command log formatting when possible. For example, `shrun`'s test suite prints output like:
 
@@ -213,8 +213,8 @@ The `block-line-buffer` strategy is the primary solution to these problems, and 
 
 With that out of the way, we can now justify the default behavior.
 
-- When we have exactly one command, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it only makes sense when there is a single command.
-- Otherwise, we use the `block` strategy.
+- When we have exactly one command and/or `file-logging` is disabled, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it can lead to nonsense file logs when there are multiple commands.
+- Otherwise (multiple command and `file-logging` enabled), we use the `block` strategy.
 
 > [!TIP]
 >
@@ -224,7 +224,7 @@ There are various other tweaks one can try if the file log formatting is still d
 
 If none of those help, the best solution is likely to simply use `--command-log-read-strategy block` -- which generally does a pretty good job -- and make your peace with the fact that this is all best-effort 🙂.
 
-## Bash auto-completions
+## How do I set bash auto-completions?
 
 To get bash auto-completions for `shrun` options, add the following to your `.bashrc` (assuming `shrun` is on the `PATH`):
 
