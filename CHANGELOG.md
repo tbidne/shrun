@@ -10,7 +10,7 @@ Note that PVP is applied to the _application_, **not** the library. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
-## [0.9.1]
+## [0.9.1] -- 2024-07-27
 ### Changed
 * Updated blessed GHC to 9.8.2.
 
@@ -244,7 +244,7 @@ the major/minor/patch definitions apply to the application's interface / usage
 
 * First version. Released on an unsuspecting world.
 
-[0.9.1]: https://github.com/tbidne/shrun/compare/0.9...main
+[0.9.1]: https://github.com/tbidne/shrun/compare/0.9...0.9.1
 [0.9]: https://github.com/tbidne/shrun/compare/0.8.1...0.9
 [0.8.1]: https://github.com/tbidne/shrun/compare/0.8...0.8.1
 [0.8]: https://github.com/tbidne/shrun/compare/0.7...0.8
