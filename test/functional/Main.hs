@@ -49,9 +49,9 @@ specs args = do
 setup :: IO TestArgs
 setup = do
   rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
-  let workingTmpDir = rootTmpDir </> [osp|test/functional|]
+  let workingTmpDir = rootTmpDir </> tmpName
 
-  cwd <- (</> [osp|test/functional|]) <$> PR.getCurrentDirectory
+  cwd <- (</> tmpName) <$> PR.getCurrentDirectory
   let lp = cwd </> [osp|config.toml|]
 
   PW.createDirectoryIfMissing True workingTmpDir
@@ -61,16 +61,17 @@ setup = do
         tmpDir = workingTmpDir,
         configPath = lp
       }
+  where
+    tmpName = [osp|test|] </> [osp|functional|]
 
 teardown :: TestArgs -> IO ()
 teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     cleanup = do
-      let root = testArgs ^. #rootDir
-          cwd = testArgs ^. #tmpDir
+      let cwd = testArgs ^. #tmpDir
 
+      -- see NOTE: [Test cleanup]
       PW.removeDirectoryRecursiveIfExists cwd
-      PW.removeDirectoryRecursiveIfExists root
 
     doNothing =
       putStrLn

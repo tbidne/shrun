@@ -44,8 +44,9 @@ teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
         <> FsUtils.decodeOsToFpShow (testArgs ^. #rootTmpDir)
 
     cleanup = do
-      let root = testArgs ^. #rootTmpDir
-          cwd = testArgs ^. #workingTmpDir
+      let cwd = testArgs ^. #workingTmpDir
 
+      -- NOTE: [Test cleanup]
+      --
+      -- Don't delete rootTmp because other tests may be using it.
       PW.removeDirectoryRecursiveIfExists cwd
-      PW.removeDirectoryRecursiveIfExists root
