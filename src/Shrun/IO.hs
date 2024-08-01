@@ -68,9 +68,9 @@ newtype Stderr = MkStderr {unStderr :: List UnlinedText}
 -- | Turns a 'ReadHandleResult' into a 'Stderr'.
 readHandleResultToStderr :: ReadHandleResult -> Stderr
 readHandleResultToStderr ReadNoData = MkStderr $ ShrunText.fromText "<No data>"
-readHandleResultToStderr (ReadErr errs) = MkStderr errs
-readHandleResultToStderr (ReadSuccess errs) = MkStderr errs
-readHandleResultToStderr (ReadErrSuccess e1 e2) = MkStderr (e1 <> e2)
+readHandleResultToStderr (ReadErr errs) = MkStderr (neToList errs)
+readHandleResultToStderr (ReadSuccess errs) = MkStderr (neToList errs)
+readHandleResultToStderr (ReadErrSuccess e1 e2) = MkStderr (neToList $ e1 <> e2)
 
 -- | Result of running a command.
 data CommandResult
@@ -463,7 +463,7 @@ writeLogHelper ::
   CommandP1 ->
   IORef ReadHandleResult ->
   ReadHandleResult ->
-  [UnlinedText] ->
+  NonEmpty UnlinedText ->
   m ()
 writeLogHelper logFn cmd lastReadRef handleResult messages = do
   writeIORef lastReadRef handleResult

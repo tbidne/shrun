@@ -6,6 +6,7 @@ module Shrun.Data.Text
     -- * Creation
     fromText,
     fromTextReplace,
+    unsafeFromTextNE,
     unsafeUnlinedText,
 
     -- * Elimination
@@ -56,6 +57,10 @@ instance
 -- | Creates a list of 'UnlinedText'.
 fromText :: Text -> List UnlinedText
 fromText = fmap UnsafeUnlinedText . T.lines
+
+-- | Requires input text to be non-empty to be safe.
+unsafeFromTextNE :: (HasCallStack) => Text -> NonEmpty UnlinedText
+unsafeFromTextNE = fmap UnsafeUnlinedText . unsafeListToNE . T.lines
 
 -- | Creates a single 'UnlinedText' by replacing newlines with
 -- whitespace.

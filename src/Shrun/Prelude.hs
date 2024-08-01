@@ -27,6 +27,8 @@ module Shrun.Prelude
     (.>),
     convertIntegral,
     unsafeConvertIntegral,
+    neToList,
+    unsafeListToNE,
     setUncaughtExceptionHandlerDisplay,
 
     -- * 'Text' replacements for 'P.String' functions.
@@ -130,6 +132,7 @@ import Data.Tuple as X (fst, snd)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4)
 #endif
+import Data.List.NonEmpty qualified as NE
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Effects.Concurrent.Async as X (MonadAsync)
@@ -363,6 +366,12 @@ type Tuple3 = (,,)
 type Tuple4 = (,,,)
 
 #endif
+
+neToList :: NonEmpty a -> List a
+neToList = NE.toList
+
+unsafeListToNE :: (HasCallStack) => List a -> NonEmpty a
+unsafeListToNE = NE.fromList
 
 -- | Like 'fromIntegral', except:
 --
