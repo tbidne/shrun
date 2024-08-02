@@ -100,8 +100,8 @@ genReadErr = ReadErr <$> genUnlinedTexts
 genNoSuccess :: Gen ReadHandleResult
 genNoSuccess = G.choice [genReadErrSuccess, genReadErr, pure ReadNoData]
 
-genUnlinedTexts :: Gen (List UnlinedText)
-genUnlinedTexts = ShrunText.fromText <$> genText
+genUnlinedTexts :: Gen (NonEmpty UnlinedText)
+genUnlinedTexts = ShrunText.unsafeFromTextNE <$> genText
 
 genText :: Gen Text
 genText = G.text (R.linearFrom 1 1 20) G.unicode

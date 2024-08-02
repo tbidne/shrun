@@ -15,7 +15,9 @@ import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed qualified as P
 import Effects.Time (MonadTime (getMonotonicTime), withTiming)
 import Shrun.Configuration.Data.CommandLogging
-  ( ReportReadErrorsSwitch
+  ( BufferLength,
+    BufferTimeout,
+    ReportReadErrorsSwitch
       ( ReportReadErrorsOff,
         ReportReadErrorsOn
       ),
@@ -306,17 +308,7 @@ streamOutput logFn cmd p = do
   -- report it to the user. Programs can be inconsistent where they report
   -- errors, so we read both stdout and stderr, prioritizing the latter when
   -- both exist.
-  lastReadOutRef <- newIORef ReadNoData
-  lastReadErrRef <- newIORef ReadNoData
   commandLogging <- asks getCommandLogging
-
-  prevReadOutRef <- newIORef Nothing
-  prevReadErrRef <- newIORef Nothing
-
-  currTime <- getMonotonicTime
-
-  bufferFlushOutTimeRef <- newIORef currTime
-  bufferFlushErrTimeRef <- newIORef currTime
 
   let bufferLength = commandLogging ^. #bufferLength
       bufferTimeout = commandLogging ^. #bufferTimeout
@@ -332,21 +324,39 @@ streamOutput logFn cmd p = do
       blockSize :: Int
       blockSize = commandLogging ^. (#readSize % #unReadSize % _MkBytes)
 
-      readBlockOut :: m ReadHandleResult
-      readBlockErr :: m ReadHandleResult
-      (readBlockOut, readBlockErr) = case commandLogging ^. #readStrategy of
-        ReadBlock ->
-          ( Handle.readHandle Nothing blockSize (P.getStdout p),
-            Handle.readHandle Nothing blockSize (P.getStderr p)
+      readStrategy = commandLogging ^. #readStrategy
+
+      handleToParams ::
+        Handle ->
+        m
+          ( Tuple3
+              (IORef ReadHandleResult)
+              (IORef (Maybe UnlinedText))
+              (m ReadHandleResult)
           )
-        ReadBlockLineBuffer ->
-          let outBufferParams = (prevReadOutRef, bufferLength, bufferTimeout, bufferFlushOutTimeRef)
-              errBufferParams = (prevReadErrRef, bufferLength, bufferTimeout, bufferFlushErrTimeRef)
-           in ( Handle.readHandle (Just outBufferParams) blockSize (P.getStdout p),
-                Handle.readHandle (Just errBufferParams) blockSize (P.getStderr p)
-              )
-      {-# INLINEABLE readBlockOut #-}
-      {-# INLINEABLE readBlockErr #-}
+      handleToParams =
+        mkHandleParams
+          blockSize
+          readStrategy
+          bufferLength
+          bufferTimeout
+
+      outHandle = P.getStdout p
+      errHandle = P.getStderr p
+
+  -- - lastReadXRef: The result of the last read for handle X.
+  --
+  -- - prevReadXRef: Whatever was leftover from the last read for handle X.
+  --   This is part of the "read block line buffer" strategy i.e. only
+  --   contains "partial data" from the previous read when it exists
+  --   and we are using that strategy. Compare to lastReadXRef, which
+  --   __always__ contains the results for the last read, for the purposes
+  --   of error reporting.
+  --
+  -- - readXOut: Function for reading from handle X.
+
+  (lastReadOutRef, prevReadOutRef, readBlockOut) <- handleToParams outHandle
+  (lastReadErrRef, prevReadErrRef, readBlockErr) <- handleToParams errHandle
 
   exitCode <- U.untilJust $ do
     -- We need to read from both stdout and stderr -- regardless of if we
@@ -364,7 +374,7 @@ streamOutput logFn cmd p = do
 
     P.getExitCode p
 
-  -- Try to get final data.
+  -- These are the final reads while the process was running.
   lastReadOut <- readIORef lastReadOutRef
   lastReadErr <- readIORef lastReadErrRef
 
@@ -379,18 +389,9 @@ streamOutput logFn cmd p = do
     case commandLogging ^. #readStrategy of
       ReadBlock -> (,) <$> readBlockOut <*> readBlockErr
       ReadBlockLineBuffer -> do
-        let readRemaining toHandle ref =
-              Handle.readHandleRaw blockSize (toHandle p) >>= \case
-                -- Do not care about errors here, since we may still have leftover
-                -- data that we need to get. If we cared, we could log the errors
-                -- here, but it seems minor.
-                Left _ -> Handle.readAndUpdateRefFinal ref ""
-                Right bs -> Handle.readAndUpdateRefFinal ref bs
-            {-# INLINEABLE readRemaining #-}
-
         (,)
-          <$> readRemaining P.getStdout prevReadOutRef
-          <*> readRemaining P.getStderr prevReadErrRef
+          <$> readFinalWithPrev blockSize outHandle prevReadOutRef
+          <*> readFinalWithPrev blockSize errHandle prevReadErrRef
 
   writeLog logFn reportReadErrors cmd lastReadOutRef remainingOut
   writeLog logFn reportReadErrors cmd lastReadErrRef remainingErr
@@ -424,6 +425,77 @@ streamOutput logFn cmd p = do
 
   pure (exitCode, finalData)
 {-# INLINEABLE streamOutput #-}
+
+-- | Create params for reading from the handle.
+mkHandleParams ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadHandleReader m,
+    MonadIORef m,
+    MonadTime m
+  ) =>
+  -- | Read block size.
+  Int ->
+  -- | Read strategy.
+  ReadStrategy ->
+  -- | Max buffer length, for read-block-line-buffer strategy.
+  BufferLength ->
+  -- | Max buffer time, for read-block-line-buffer strategy.
+  BufferTimeout ->
+  -- | Handle from which to read.
+  Handle ->
+  -- | Returns:
+  --
+  --  1. Ref for the last read (always active).
+  --  2. Ref for previous partial read (only for read-block-line-buffer
+  --     strategy).
+  --  3. Read function.
+  m
+    ( Tuple3
+        (IORef ReadHandleResult)
+        (IORef (Maybe UnlinedText))
+        (m ReadHandleResult)
+    )
+mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
+  lastReadRef <- newIORef ReadNoData
+  prevReadRef <- newIORef Nothing
+
+  currTime <- getMonotonicTime
+  bufFlushTimeRef <- newIORef currTime
+
+  let readFn = case readStrategy of
+        ReadBlock -> Handle.readHandle Nothing blockSize handle
+        ReadBlockLineBuffer ->
+          let outBufferParams = (prevReadRef, bufLength, bufTimeout, bufFlushTimeRef)
+           in Handle.readHandle (Just outBufferParams) blockSize handle
+
+  pure (lastReadRef, prevReadRef, readFn)
+{-# INLINEABLE mkHandleParams #-}
+
+-- | Final read after the process has exited, to retrieve leftover data.
+-- Only used with the read-block-line-buffer strategy.
+readFinalWithPrev ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadHandleReader m,
+    MonadIORef m
+  ) =>
+  -- | Block size.
+  Int ->
+  -- | Handle from which to read.
+  Handle ->
+  -- | Previous partial read.
+  IORef (Maybe UnlinedText) ->
+  -- | Result.
+  m ReadHandleResult
+readFinalWithPrev blockSize handle prevReadRef = do
+  Handle.readHandleRaw blockSize handle >>= \case
+    -- Do not care about errors here, since we may still have leftover
+    -- data that we need to get. If we cared, we could log the errors
+    -- here, but it seems minor.
+    Left _ -> Handle.readAndUpdateRefFinal prevReadRef ""
+    Right bs -> Handle.readAndUpdateRefFinal prevReadRef bs
+{-# INLINEABLE readFinalWithPrev #-}
 
 -- We occasionally get invalid reads here -- usually when the command
 -- exits -- likely due to a race condition. It would be nice to
