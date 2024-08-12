@@ -41,8 +41,8 @@ import Shrun.Configuration.Data.Notify.Timeout
   )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
+    (<.>?),
     (<>?),
-    (<>?.),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default, def)
@@ -161,7 +161,7 @@ mergeNotifyLogging args mToml =
             system =
               mergeNotifySystem (args ^. #system) (toml ^. #system),
             timeout =
-              (args ^. #timeout) <>?. (toml ^. #timeout)
+              (args ^. #timeout) <.>? (toml ^. #timeout)
           }
   where
     mAction = case (args ^. #action, mToml) of

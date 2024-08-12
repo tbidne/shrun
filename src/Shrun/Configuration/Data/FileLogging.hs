@@ -67,9 +67,9 @@ import Shrun.Configuration.Data.Truncation
   )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With, Without),
+    (<.>?),
     (<>?),
-    (<>?.),
-    (<>??),
+    (<?>?),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
@@ -494,12 +494,12 @@ mergeFileLogging args mToml = for mPath $ \path -> do
           MkFileLogInitP
             { path,
               mode =
-                (args ^. #file % #mode) <>?. (toml ^. #file % #mode),
+                (args ^. #file % #mode) <.>? (toml ^. #file % #mode),
               sizeMode =
-                (args ^. #file % #sizeMode) <>?. (toml ^. #file % #sizeMode)
+                (args ^. #file % #sizeMode) <.>? (toml ^. #file % #sizeMode)
             },
         commandNameTrunc =
-          (args ^. #commandNameTrunc) <>?? (toml ^. #commandNameTrunc),
+          (args ^. #commandNameTrunc) <?>? (toml ^. #commandNameTrunc),
         deleteOnSuccess =
           WD.fromDefault
             ( review #boolIso
@@ -508,7 +508,7 @@ mergeFileLogging args mToml = for mPath $ \path -> do
             ),
         lineTrunc,
         stripControl =
-          (args ^. #stripControl) <>?. (toml ^. #stripControl)
+          (args ^. #stripControl) <.>? (toml ^. #stripControl)
       }
   where
     -- Convert WithDisabled () -> WithDisabled Bool for below operation.

@@ -34,7 +34,7 @@ import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
 import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
-import Shrun.Configuration.Data.WithDisabled ((<>??))
+import Shrun.Configuration.Data.WithDisabled ((<?>?))
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Data.Command (CommandP1)
 import Shrun.Notify.MonadDBus (MonadDBus)
@@ -355,8 +355,8 @@ mergeCoreConfig cmds args mToml = do
 
   pure
     $ MkCoreConfigP
-      { timeout = (args ^. #timeout) <>?? (toml ^. #timeout),
-        init = (args ^. #init) <>?? (toml ^. #init),
+      { timeout = (args ^. #timeout) <?>? (toml ^. #timeout),
+        init = (args ^. #init) <?>? (toml ^. #init),
         commonLogging =
           mergeCommonLogging
             (args ^. #commonLogging)

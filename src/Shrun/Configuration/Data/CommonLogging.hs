@@ -24,7 +24,7 @@ import Shrun.Configuration.Data.ConfigPhase
       ),
     ConfigPhaseF,
   )
-import Shrun.Configuration.Data.WithDisabled ((<>?.))
+import Shrun.Configuration.Data.WithDisabled ((<.>?))
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
@@ -76,7 +76,7 @@ mergeCommonLogging ::
 mergeCommonLogging args mToml =
   MkCommonLoggingP
     { keyHide =
-        (args ^. #keyHide) <>?. (toml ^. #keyHide)
+        (args ^. #keyHide) <.>? (toml ^. #keyHide)
     }
   where
     toml = fromMaybe def mToml

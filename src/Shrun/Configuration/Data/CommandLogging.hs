@@ -52,7 +52,7 @@ import Shrun.Configuration.Data.ConfigPhase
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.), (<>??))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<.>?), (<>?), (<?>?))
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Data.Command (CommandP1)
@@ -392,19 +392,19 @@ mergeCommandLogging ::
 mergeCommandLogging fileLogging cmds args mToml = do
   readStrategy <-
     guardReadStrategy
-      ((args ^. #readStrategy) <>?? (toml ^. #readStrategy))
+      ((args ^. #readStrategy) <?>? (toml ^. #readStrategy))
 
   pure
     $ MkCommandLoggingP
       { bufferLength =
-          (args ^. #bufferLength) <>?. (toml ^. #bufferLength),
+          (args ^. #bufferLength) <.>? (toml ^. #bufferLength),
         bufferTimeout =
-          (args ^. #bufferTimeout) <>?. (toml ^. #bufferTimeout),
+          (args ^. #bufferTimeout) <.>? (toml ^. #bufferTimeout),
         pollInterval =
-          (args ^. #pollInterval) <>?. (toml ^. #pollInterval),
+          (args ^. #pollInterval) <.>? (toml ^. #pollInterval),
         readStrategy,
         readSize =
-          (args ^. #readSize) <>?. (toml ^. #readSize),
+          (args ^. #readSize) <.>? (toml ^. #readSize),
         reportReadErrors =
           WD.fromDefault
             ( review #boolIso

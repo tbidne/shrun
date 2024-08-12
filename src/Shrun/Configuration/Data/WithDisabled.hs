@@ -11,10 +11,11 @@ module Shrun.Configuration.Data.WithDisabled
     fromWithDisabled,
     fromDefault,
 
-    -- * Misc
+    -- * Operators
+    -- $operators
     (<>?),
-    (<>?.),
-    (<>??),
+    (<.>?),
+    (<?>?),
 
     -- * Optics
     _With,
@@ -137,6 +138,23 @@ fromWithDisabled x _ = x
 fromDefault :: (Default a) => WithDisabled a -> a
 fromDefault = fromWithDisabled def
 
+-- $operators
+--
+-- The operators follow a pattern. The basic idea is that we are running
+-- the semigroup instance and doing something else, hence the base operator
+-- is (<>).
+--
+-- A (?) on the left (right) side of the (<>) signifies that the LHS (RHS)
+-- is a 'Maybe' that is lifted into 'WithDisabled', before running the
+-- semigroup.
+--
+-- The symbol __inside__ of the (<>) indicates the result. A dot
+-- i.e. (<.>) is meant to evoke field extraction aka record-dot-syntax.
+-- In other words, this operator runs the semigroup then extracts the
+-- underlying field, falling back to the 'Default' instance.
+--
+-- The (?) symbol, on the other hand, indicates the result is a 'Maybe'.
+
 -- | @l <>? r@ lifts 'Maybe' @r@ into a 'WithDisabled' per 'fromMaybe' then
 -- runs the 'Semigroup'.
 (<>?) :: WithDisabled a -> Maybe a -> WithDisabled a
@@ -145,13 +163,13 @@ wd <>? m = wd <> fromMaybe m
 infixr 6 <>?
 
 -- | Like '(<>?)' except we extract a result via 'fromDefault'.
-(<>?.) :: (Default a) => WithDisabled a -> Maybe a -> a
-x <>?. y = fromDefault (x <>? y)
+(<.>?) :: (Default a) => WithDisabled a -> Maybe a -> a
+x <.>? y = fromDefault (x <>? y)
 
-infixr 6 <>?.
+infixr 6 <.>?
 
 -- | Like '(<>?)' except we extract a Maybe via 'toMaybe'.
-(<>??) :: WithDisabled a -> Maybe a -> Maybe a
-x <>?? y = toMaybe (x <>? y)
+(<?>?) :: WithDisabled a -> Maybe a -> Maybe a
+x <?>? y = toMaybe (x <>? y)
 
-infixr 6 <>??
+infixr 6 <?>?

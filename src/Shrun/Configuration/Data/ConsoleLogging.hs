@@ -36,7 +36,7 @@ import Shrun.Configuration.Data.Truncation
     decodeCommandNameTrunc,
     decodeLineTrunc,
   )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<>?), (<>?.), (<>??))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<.>?), (<>?), (<?>?))
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
@@ -284,12 +284,12 @@ mergeConsoleLogging args mToml = do
                 <$> argsCommandLogging
                 <>? (toml ^. #commandLogging)
             ),
-        commandNameTrunc = (args ^. #commandNameTrunc) <>?? (toml ^. #commandNameTrunc),
+        commandNameTrunc = (args ^. #commandNameTrunc) <?>? (toml ^. #commandNameTrunc),
         lineTrunc,
         stripControl =
-          (args ^. #stripControl) <>?. (toml ^. #stripControl),
+          (args ^. #stripControl) <.>? (toml ^. #stripControl),
         timerFormat =
-          (args ^. #timerFormat) <>?. (toml ^. #timerFormat)
+          (args ^. #timerFormat) <.>? (toml ^. #timerFormat)
       }
   where
     -- Convert WithDisabled () -> WithDisabled Bool for below operation.
