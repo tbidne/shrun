@@ -55,7 +55,7 @@ cd /opt/shrun
 # works for install.
 
 cabal update
-cabal build --enable-executable-static --enable-executable-stripping exe:shrun --ghc-options -Werror
+cabal build --enable-executable-static --enable-executable-stripping exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
 
 echo "*** Copy binary ***"
 

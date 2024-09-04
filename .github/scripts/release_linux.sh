@@ -15,6 +15,6 @@ mkdir -p bin
 #
 # Use cabal build for now for symmetry with linux static release.
 cabal update
-cabal build exe:shrun --ghc-options -Werror
+cabal build exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
 
 cp ./dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/x/shrun/opt/build/shrun/shrun "bin/shrun_$shrun_vers-$arch-linux-ubuntu_$ubuntu_vers"
