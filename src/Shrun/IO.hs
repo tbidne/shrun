@@ -353,7 +353,7 @@ streamOutput logFn cmd p = do
   --   __always__ contains the results for the last read, for the purposes
   --   of error reporting.
   --
-  -- - readXOut: Function for reading from handle X.
+  -- - readBlockX: Function for reading from handle X.
 
   (lastReadOutRef, prevReadOutRef, readBlockOut) <- handleToParams outHandle
   (lastReadErrRef, prevReadErrRef, readBlockErr) <- handleToParams errHandle
@@ -403,7 +403,7 @@ streamOutput logFn cmd p = do
   -- relevant information. We have two possible reads here:
   --
   -- 1. The last read while the process was running (lastReadErr)
-  -- 2. A final read after the process exited (remainingData)
+  -- 2. A final read after the process exited (remainingErr)
   --
   -- We prioritize (Semigroup), in order:
   --
