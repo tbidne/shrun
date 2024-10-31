@@ -7,8 +7,6 @@ module Integration.Failures (specs) where
 import Control.Exception (IOException)
 import Data.List qualified as L
 import Data.Text qualified as T
-import Effects.Exception (StringException)
-import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Shrun.Configuration.Data.CommandLogging (ReadStrategyException)
@@ -132,7 +130,7 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
 testReadStrategyFailure :: IO TestArgs -> TestTree
 testReadStrategyFailure testArgs = testCase desc $ do
   logPath <- liftIO $ (</> [osp|read-strategy-failure|]) . view #workingTmpDir <$> testArgs
-  let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
+  let logsPathStr = unsafeDecode logPath
   logsRef <- newIORef []
 
   result <- runCaptureError @ReadStrategyException (args logsPathStr) logsRef
@@ -234,7 +232,7 @@ runCaptureError :: (Exception e) => [String] -> IORef [Text] -> IO (Maybe e)
 runCaptureError args logsRef =
   flip runConfigIO logsRef
     $ withArgs args (withEnv pure $> Nothing)
-    `catchCS` \(ex :: e) -> pure (Just ex)
+    `catch` \(ex :: e) -> pure (Just ex)
 
 exContains :: (Exception e) => Text -> e -> Assertion
 exContains txt ex = assertBool (T.unpack desc) . T.isInfixOf txt $ exTxt

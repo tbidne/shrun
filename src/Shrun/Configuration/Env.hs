@@ -15,7 +15,6 @@ where
 
 import Data.Sequence qualified as Seq
 import Data.Text qualified as T
-import Effects.FileSystem.Utils qualified as FsUtils
 import Shrun (runShellT, shrun)
 import Shrun.Configuration (mergeConfig)
 import Shrun.Configuration.Args.Parsing
@@ -123,8 +122,9 @@ getMergedConfig = do
           then Just <$> readConfig path
           else do
             putTextLn
-              ( "No default config found at: "
-                  <> T.pack (FsUtils.decodeOsToFpShow path)
+              ( "No default config found at: '"
+                  <> T.pack (decodeLenient path)
+                  <> "'"
               )
             pure Nothing
       -- 3. noConfig is false and toml config explicitly set: try reading

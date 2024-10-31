@@ -24,7 +24,6 @@ import Data.Bytes
 import Data.Text qualified as T
 import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile))
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
-import Effects.FileSystem.Utils qualified as FsUtils
 import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
@@ -669,7 +668,7 @@ handleLogFileSize fileSizeMode fp = do
     sizeWarning warnSize fileSize =
       mconcat
         [ "Warning: log file '",
-          T.pack $ FsUtils.decodeOsToFpShow fp,
+          T.pack $ decodeLenient fp,
           "' has size: ",
           formatBytes fileSize,
           ", but specified threshold is: ",

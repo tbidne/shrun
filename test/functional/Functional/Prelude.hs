@@ -68,11 +68,7 @@ where
 import Data.String as X (IsString)
 import Data.Text qualified as T
 import Data.Typeable (typeRep)
-#if !MIN_VERSION_base(4, 20, 0)
-import Effects.Exception (ExceptionCS)
-#endif
-import Effects.FileSystem.Utils (combineFilePaths)
-import Effects.FileSystem.Utils as X (unsafeDecodeOsToFp, (</>!))
+import FileSystem.OsPath as X (combineFilePaths, unsafeDecode)
 import Functional.ReadStrategyTest
   ( ReadStrategyTestParams
       ( ReadStrategyTestParametricSetup,
@@ -235,18 +231,11 @@ run = fmap fst . runMaybeException ExNothing
 runNotes :: List String -> IO (List ShrunNote)
 runNotes = fmap snd . runMaybeException ExNothing
 
-{- ORMOLU_DISABLE -}
-
 -- | 'runException' specialized to ExitFailure.
 runExitFailure :: List String -> IO (List ResultText)
 runExitFailure =
-#if MIN_VERSION_base(4, 20, 0)
-  fmap fst . runMaybeException (ExJust $ Proxy @ExitCode)
-#else
-  fmap fst . runMaybeException (ExJust $ Proxy @(ExceptionCS ExitCode))
-#endif
-
-{- ORMOLU_ENABLE -}
+  fmap fst
+    . runMaybeException (ExJust $ Proxy @ExitCode)
 
 -- | Like 'runException', except it expects an exception.
 runException ::
@@ -285,14 +274,14 @@ runMaybeException mException argList = do
   case mException of
     -- 1. Not expecting an exception
     ExNothing -> do
-      tryAny action >>= \case
+      trySync action >>= \case
         -- 1.1: Received an exception: print logs and rethrow
         Left ex -> printLogsReThrow ex ls
         -- 1.2: No exception, return logs/notes
         Right _ -> readRefs ls shrunNotes
     -- 2. Expecting exception e
     ExJust @e proxy ->
-      tryAny action >>= \case
+      trySync action >>= \case
         -- 2.1: Received no exception: print logs and die
         Right _ -> do
           printLogs ls

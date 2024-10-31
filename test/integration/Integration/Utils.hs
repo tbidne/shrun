@@ -42,7 +42,6 @@ import Effects.FileSystem.PathReader
         getXdgDirectory
       ),
   )
-import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.Terminal
   ( MonadTerminal (getChar, getTerminalSize),
     Window (Window),
@@ -91,10 +90,10 @@ instance MonadPathReader ConfigIO where
 
 #if OSX
   getXdgDirectory _ _ =
-    pure (FsUtils.unsafeEncodeFpToOs $ concatDirs ["test", "integration", "toml", "osx"])
+    pure (unsafeEncode $ concatDirs ["test", "integration", "toml", "osx"])
 #else
   getXdgDirectory _ _ =
-    pure (FsUtils.unsafeEncodeFpToOs $ concatDirs ["test", "integration", "toml"])
+    pure (unsafeEncode $ concatDirs ["test", "integration", "toml"])
 #endif
 
 instance MonadTerminal ConfigIO where

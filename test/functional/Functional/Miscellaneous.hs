@@ -3,7 +3,6 @@
 -- | Misc tests
 module Functional.Miscellaneous (specs) where
 
-import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Test.Shrun.Verifier (ExpectedText)
@@ -196,7 +195,7 @@ formatsFileLogs testArgs =
     run
     ( do
         outFile <- (</> [osp|file-log-formatted.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -301,7 +300,7 @@ readStrategyDefaultTests testArgs =
 testReadStrategyMultiCmdsFileBlock :: IO TestArgs -> TestTree
 testReadStrategyMultiCmdsFileBlock testArgs = testCase desc $ do
   outFile <- (</> [osp|read-strategy-multi-cmd-block.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+  let outFileStr = unsafeDecode outFile
       args =
         withNoConfig
           [ "--file-log",
@@ -355,7 +354,7 @@ testReadStrategyMultiCmdsBuffer = testCase desc $ do
 testReadStrategyOneCmdFileLogBuffer :: IO TestArgs -> TestTree
 testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
   outFile <- (</> [osp|read-strategy-one-cmd-file-buffer.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+  let outFileStr = unsafeDecode outFile
       args =
         withNoConfig
           [ "--file-log",

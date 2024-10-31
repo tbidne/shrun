@@ -5,7 +5,6 @@ module Main (main) where
 
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
-import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Buffering qualified as Buffering
 import Functional.Examples qualified as Examples
 import Functional.Miscellaneous qualified as Miscellaneous
@@ -75,5 +74,6 @@ teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
 
     doNothing =
       putStrLn
-        $ "*** Not cleaning up tmp dir: "
-        <> FsUtils.decodeOsToFpShow (testArgs ^. #tmpDir)
+        $ "*** Not cleaning up tmp dir: '"
+        <> decodeLenient (testArgs ^. #tmpDir)
+        <> "'"

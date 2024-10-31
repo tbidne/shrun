@@ -7,7 +7,6 @@ module Integration.Miscellaneous (specs) where
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.String (IsString)
 import Data.Text qualified as T
-import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
   ( makeConfigAndAssertFieldEq,
@@ -56,7 +55,7 @@ logFileWarn testArgs = testPropertyNamed desc "logFileWarn"
   $ do
     logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
     logsRef <- liftIO $ newIORef []
-    let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
+    let logsPathStr = unsafeDecode logPath
         contents = T.replicate 1_500 "test "
 
         run = liftIO $ do
@@ -105,7 +104,7 @@ logFileDelete testArgs = testPropertyNamed desc "logFileDelete"
   $ do
     logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
     logsRef <- liftIO $ newIORef []
-    let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
+    let logPathStr = unsafeDecode logPath
         contents = T.replicate 1_500 "test "
 
         run = liftIO $ do
@@ -149,7 +148,7 @@ logFileNothing testArgs = testPropertyNamed desc "logFileNothing"
   $ do
     logPath <- liftIO $ (</> [osp|large-file-nothing|]) . view #workingTmpDir <$> testArgs
     logsRef <- liftIO $ newIORef []
-    let logsPathStr = FsUtils.unsafeDecodeOsToFp logPath
+    let logsPathStr = unsafeDecode logPath
         contents = T.replicate 1_500 "test "
 
         run = liftIO $ do

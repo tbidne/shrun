@@ -33,7 +33,7 @@ instance MonadDBus IO where
   {-# INLINEABLE connectSession #-}
 
   notify client note =
-    tryAny (DBusN.notify client note) <&> \case
+    trySync (DBusN.notify client note) <&> \case
       Left err -> Just err
       Right _ -> Nothing
   {-# INLINEABLE notify #-}

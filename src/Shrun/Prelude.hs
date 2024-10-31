@@ -63,6 +63,16 @@ import Control.Applicative as X
     (<**>),
   )
 import Control.Concurrent as X (threadDelay)
+import Control.Exception as X
+  ( Exception (displayException, fromException),
+    SomeException,
+  )
+import Control.Exception.Utils as X
+  ( TextException,
+    catchSync,
+    exitFailure,
+    trySync,
+  )
 import Control.Monad as X
   ( Monad ((>>=)),
     forever,
@@ -73,6 +83,17 @@ import Control.Monad as X
     (<=<),
     (=<<),
     (>=>),
+  )
+import Control.Monad.Catch as X
+  ( MonadCatch,
+    MonadMask,
+    MonadThrow,
+    bracket,
+    catch,
+    finally,
+    mask,
+    throwM,
+    try,
   )
 import Control.Monad.Fail as X (MonadFail (fail))
 import Control.Monad.IO.Class as X (MonadIO (liftIO))
@@ -111,6 +132,7 @@ import Data.Functor as X
   )
 import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
+import GHC.Conc.Sync (setUncaughtExceptionHandler)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.List as X (List, filter, replicate, zip, (++))
 #else
@@ -150,25 +172,6 @@ import Effects.Concurrent.STM as X
     writeTVarA,
   )
 import Effects.Concurrent.Thread as X (MonadThread)
-import Effects.Exception as X
-  ( Exception (displayException, fromException),
-    MonadCatch,
-    MonadMask,
-    MonadThrow,
-    SomeException,
-    bracket,
-    catchAny,
-    catchCS,
-    displayException,
-    exitFailure,
-    finally,
-    mask,
-    throwCS,
-    throwM,
-    try,
-    tryAny,
-  )
-import Effects.Exception qualified as Ex
 import Effects.FileSystem.FileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,
@@ -196,8 +199,6 @@ import Effects.FileSystem.PathWriter as X
     removeFile,
     removeFileIfExists,
   )
-import Effects.FileSystem.Utils as X (OsPath, decodeUtf8, osp, (</>))
-import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.IORef as X
   ( IORef,
     MonadIORef
@@ -219,6 +220,9 @@ import Effects.System.Terminal as X
     putTextLn,
   )
 import Effects.Time as X (MonadTime)
+import FileSystem.OsPath as X (OsPath, decodeLenient, osp, (</>))
+import FileSystem.OsPath qualified as OsPath
+import FileSystem.UTF8 as X (decodeUtf8)
 import GHC.Enum as X (Bounded (maxBound, minBound), Enum (toEnum))
 import GHC.Err as X (error, undefined)
 import GHC.Exception (errorCallWithCallStackException)
@@ -427,50 +431,21 @@ todo = raise# (errorCallWithCallStackException "Prelude.todo: not yet implemente
 traceFile :: FilePath -> Text -> a -> a
 traceFile path txt x = writeFn `seq` x
   where
-    io = appendFileUtf8 (FsUtils.unsafeEncodeFpToOs path) txt
+    io = appendFileUtf8 (OsPath.unsafeEncode path) txt
     writeFn = unsafePerformIO io
 
 traceFileLine :: FilePath -> Text -> a -> a
 traceFileLine path txt = traceFile path (txt <> "\n")
 
-{- ORMOLU_DISABLE -}
-
--- | TODO: We have a weird error on OSX that is caused by the CPP in
--- app/Main.hs:
---
---      error: non-portable path to file '".stack-work/dist/aarch64-osx/ghc-9.8.2/build/Shrun/autogen/cabal_macros.h"'; specified path differs in case from file name on disk [-Werror,-Wnonportable-include-path]
---     #include ".stack-work/dist/aarch64-osx/ghc-9.8.2/build/shrun/autogen/cabal_macros.h"
---     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
---     ".stack-work/dist/aarch64-osx/ghc-9.8.2/build/Shrun/autogen/cabal_macros.h"
---
--- There are multiple solutions:
---
--- 1. Attempt to disable -Wnonportable-include-path
---    (see also https://github.com/IHaskell/IHaskell/issues/942).
---
--- 2. Move the CPP here (seems fine here (maybe because it's not an exe?)).
---
--- In any case, once we move completely to GHC 9.10+, we can remove this
--- branch.
 setUncaughtExceptionHandlerDisplay :: IO ()
 setUncaughtExceptionHandlerDisplay =
-  Ex.setUncaughtExceptionHandler printExceptExitCode
+  setUncaughtExceptionHandler printExceptExitCode
   where
-#if MIN_VERSION_base(4, 20, 0)
     printExceptExitCode ex = case fromException ex of
       Just ExitSuccess -> pure ()
       -- for command failures
       Just (ExitFailure _) -> pure ()
       Nothing -> putStrLn $ displayException ex
-#else
-    printExceptExitCode ex = case fromException ex of
-      Just (Ex.MkExceptionCS ExitSuccess _) -> pure ()
-      -- for command failures
-      Just (Ex.MkExceptionCS (ExitFailure _) _) -> pure ()
-      Nothing -> putStrLn $ displayException ex
-#endif
-
-{- ORMOLU_ENABLE -}
 
 onJust :: b -> Maybe a -> (a -> b) -> b
 onJust x m f = maybe x f m

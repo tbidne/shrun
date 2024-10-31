@@ -167,7 +167,7 @@ runShrun args = do
   consoleQueue <- newTBQueueA 1
   logsRef <- newIORef []
   eSomeEx <-
-    tryAny
+    trySync
       $ withArgs
         args
         ( withEnv

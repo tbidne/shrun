@@ -2,7 +2,6 @@
 
 module Functional.Examples.FileLogging (tests) where
 
-import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Test.Shrun.Verifier qualified as V
@@ -32,7 +31,7 @@ tests args =
 fileLog :: IO TestArgs -> TestTree
 fileLog testArgs = testCase "Runs file-log example" $ do
   outFile <- (</> [osp|readme-file-out.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+  let outFileStr = unsafeDecode outFile
       args =
         withNoConfig
           [ "--file-log",
@@ -66,7 +65,7 @@ fileLogCommandNameTruncN testArgs =
     run
     ( do
         outFile <- (</> [osp|readme-file-log-command-name-trunc-out.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -101,7 +100,7 @@ fileLogDeleteOnSuccess testArgs =
     run
     ( do
         outFile <- (</> [osp|del-on-success.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -127,7 +126,7 @@ fileLogDeleteOnSuccess testArgs =
 fileLogDeleteOnSuccessFail :: IO TestArgs -> TestTree
 fileLogDeleteOnSuccessFail testArgs = testCase "Runs file-log-delete-on-success failure example" $ do
   outFile <- (</> [osp|del-on-success-fail.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+  let outFileStr = unsafeDecode outFile
       args =
         withNoConfig
           [ "--file-log",
@@ -161,7 +160,7 @@ fileLogLineTruncN testArgs =
     run
     ( do
         outFile <- (</> [osp|line-trunc.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -192,7 +191,7 @@ fileLogStripControlAll testArgs =
     run
     ( do
         outFile <- (</> [osp|readme-file-out-strip-control-all.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -219,7 +218,7 @@ fileLogStripControlNone testArgs =
     run
     ( do
         outFile <- (</> [osp|readme-file-out-strip-control-none.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -248,7 +247,7 @@ fileLogStripControlSmart testArgs =
     run
     ( do
         outFile <- (</> [osp|readme-file-out-strip-control-smart.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",

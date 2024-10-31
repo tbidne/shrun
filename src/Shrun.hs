@@ -143,7 +143,7 @@ shrun = displayRegions $ do
       let actions = Async.mapConcurrently_ runCommand cmds
           actionsWithTimer = Async.race_ actions counter
 
-      (totalTime, result) <- withTiming $ tryAny actionsWithTimer
+      (totalTime, result) <- withTiming $ trySync actionsWithTimer
       printFinalResult totalTime result
     {-# INLINEABLE runCommands #-}
 {-# INLINEABLE shrun #-}

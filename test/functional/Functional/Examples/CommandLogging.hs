@@ -2,7 +2,6 @@
 
 module Functional.Examples.CommandLogging (tests) where
 
-import Effects.FileSystem.Utils qualified as FsUtils
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Test.Shrun.Verifier qualified as V
@@ -76,7 +75,7 @@ bufferLengthSplit testArgs =
     run
     ( do
         outFile <- (</> [osp|buffer-length-split.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -111,7 +110,7 @@ bufferLengthUnsplit testArgs =
     run
     ( do
         outFile <- (</> [osp|buffer-length-unsplit.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -156,7 +155,7 @@ bufferTimeoutSplit testArgs =
     run
     ( do
         outFile <- (</> [osp|buffer-timeout-split.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",
@@ -191,7 +190,7 @@ bufferTimeoutUnsplit testArgs =
     run
     ( do
         outFile <- (</> [osp|buffer-timeout-unsplit.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = FsUtils.unsafeDecodeOsToFp outFile
+        let outFileStr = unsafeDecode outFile
             args =
               withNoConfig
                 [ "--file-log",

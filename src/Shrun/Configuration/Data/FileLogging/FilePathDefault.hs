@@ -6,7 +6,7 @@ module Shrun.Configuration.Data.FileLogging.FilePathDefault
 where
 
 import Data.Text qualified as T
-import Effects.FileSystem.Utils qualified as FsUtils
+import FileSystem.OsPath qualified as OsPath
 import Shrun.Prelude
 
 -- | OsPath option that includes a default possibility.
@@ -23,5 +23,5 @@ parseFilePathDefault getTxt =
   getTxt >>= \case
     "default" -> pure FPDefault
     "" -> fail "Empty path given for --file-log"
-    other -> FPManual <$> FsUtils.encodeFpToOsFail (T.unpack other)
+    other -> FPManual <$> OsPath.encodeFail (T.unpack other)
 {-# INLINEABLE parseFilePathDefault #-}

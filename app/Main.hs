@@ -18,9 +18,9 @@ main = do
   -- is just unhelpful noise.
   setUncaughtExceptionHandlerDisplay
 
-  makeEnvAndShrun @IO @ConsoleRegion `catchCS` doNothingOnSuccess
+  makeEnvAndShrun @IO @ConsoleRegion `catch` doNothingOnSuccess
   where
-    -- We need to catchCS ExitCode so that optparse applicative's --help
+    -- We need to catch ExitCode so that optparse applicative's --help
     -- does not set the error code to failure...but then we need to rethrow
     -- failures.
     doNothingOnSuccess :: ExitCode -> IO ()

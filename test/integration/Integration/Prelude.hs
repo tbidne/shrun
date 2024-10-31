@@ -12,8 +12,12 @@ module Integration.Prelude
   )
 where
 
-import Effects.FileSystem.Utils as X ((</>!))
-import Effects.FileSystem.Utils qualified as FsUtils
+import FileSystem.OsPath as X
+  ( combineFilePaths,
+    unsafeDecode,
+    unsafeEncode,
+    (</>!),
+  )
 import Hedgehog as X
   ( Property,
     PropertyT,
@@ -106,7 +110,7 @@ getIntConfig fileName =
     <> ".toml"
 
 concatDirs :: [FilePath] -> FilePath
-concatDirs = foldr FsUtils.combineFilePaths []
+concatDirs = foldr combineFilePaths []
 
 osExt :: FilePath -> FilePath
 #if OSX

@@ -41,6 +41,28 @@ packages:
     commit: f93b202c9d154b25b42b048570cf6648451aa577
     git: https://github.com/tbidne/bounds.git
 - completed:
+    commit: 9ecb81e4a16f62736dbe7f90cb1983e7212b0c0f
+    git: https://github.com/tbidne/exception-utils.git
+    name: exception-utils
+    pantry-tree:
+      sha256: 1891036ba15c61885fc6ae52fa3c942a8efe32a3e3999cb4af05aab138822de6
+      size: 1032
+    version: '0.1'
+  original:
+    commit: 9ecb81e4a16f62736dbe7f90cb1983e7212b0c0f
+    git: https://github.com/tbidne/exception-utils.git
+- completed:
+    commit: 5406cea74491f382478e70734535c62fe6deef7d
+    git: https://github.com/tbidne/fs-utils.git
+    name: fs-utils
+    pantry-tree:
+      sha256: 47fed6f7db9855538f19990514bed5ab820283961352efb01994a9de27f8e2c2
+      size: 1040
+    version: '0.1'
+  original:
+    commit: 5406cea74491f382478e70734535c62fe6deef7d
+    git: https://github.com/tbidne/fs-utils.git
+- completed:
     commit: aeecb47f4aa144e686a7d596670bade5bf47e7d4
     git: https://github.com/tbidne/monad-effects.git
     name: effects-async

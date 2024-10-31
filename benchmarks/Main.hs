@@ -6,7 +6,7 @@ import Bench.Prelude
 import Control.DeepSeq (force)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.PathWriter qualified as WDir
-import Effects.FileSystem.Utils qualified as FsUtils
+import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude hiding (IO)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.Tasty.Bench
@@ -35,7 +35,7 @@ commandLogs :: Benchmark
 commandLogs = bgroup "Command Logging" (runLoops ["--console-log-command", "--no-config"])
 
 fileLogs :: OsPath -> Benchmark
-fileLogs testDir = bgroup "File Logging" (runLoops ["-f", FsUtils.unsafeDecodeOsToFp fp, "--no-config"])
+fileLogs testDir = bgroup "File Logging" (runLoops ["-f", unsafeDecode fp, "--no-config"])
   where
     fp = testDir </> [osp|bench.log|]
 
@@ -77,5 +77,6 @@ teardown testDir = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
     cleanup = WDir.removePathForcibly testDir
     doNothing =
       putStrLn
-        $ "*** Not cleaning up tmp dir: "
-        <> FsUtils.decodeOsToFpShow testDir
+        $ "*** Not cleaning up tmp dir: '"
+        <> decodeLenient testDir
+        <> "'"

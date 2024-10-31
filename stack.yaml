@@ -10,6 +10,10 @@ extra-deps:
     commit: f8590486ec0fc66acf7db20308e1ed6993a52151
   - git: https://github.com/tbidne/bounds.git
     commit: f93b202c9d154b25b42b048570cf6648451aa577
+  - git: https://github.com/tbidne/exception-utils.git
+    commit: 9ecb81e4a16f62736dbe7f90cb1983e7212b0c0f
+  - git: https://github.com/tbidne/fs-utils.git
+    commit: 5406cea74491f382478e70734535c62fe6deef7d
   - git: https://github.com/tbidne/monad-effects.git
     commit: aeecb47f4aa144e686a7d596670bade5bf47e7d4
     subdirs:

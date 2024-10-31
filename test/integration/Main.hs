@@ -5,7 +5,6 @@ module Main (main) where
 
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
-import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Defaults qualified as Defaults
 import Integration.Examples qualified as Examples
 import Integration.Failures qualified as Failures
@@ -40,8 +39,9 @@ teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     doNothing =
       putStrLn
-        $ "*** Not cleaning up tmp dir: "
-        <> FsUtils.decodeOsToFpShow (testArgs ^. #rootTmpDir)
+        $ "*** Not cleaning up tmp dir: '"
+        <> decodeLenient (testArgs ^. #rootTmpDir)
+        <> "'"
 
     cleanup = do
       let cwd = testArgs ^. #workingTmpDir

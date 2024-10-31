@@ -5,7 +5,6 @@
 
 module Integration.Defaults (specs) where
 
-import Effects.FileSystem.Utils qualified as FsUtils
 import Integration.Prelude
 import Integration.Utils
   ( CompareField (MkCompareField),
@@ -160,7 +159,7 @@ defaultEnv = testPropertyNamed desc "defaultEnv"
     makeConfigAndAssertEq ["cmd"] (`runNoConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
-    ["No default config found at: ./config.toml"] === logs
+    ["No default config found at: './config.toml'"] === logs
   where
     desc = "No arguments and empty config path should return default Env"
     expected = defaultConfig
@@ -236,7 +235,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
   $ do
     logPath <- liftIO $ (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
     logsRef <- liftIO $ newIORef []
-    let logPathStr = FsUtils.unsafeDecodeOsToFp logPath
+    let logPathStr = unsafeDecode logPath
 
     makeConfigAndAssertEq (args logPathStr) (`runConfigIO` logsRef) (expected logPath)
 
@@ -417,7 +416,7 @@ fileLogStripControlDefaultsAll = testPropertyNamed desc "fileLogStripControlDefa
     makeConfigAndAssertFieldEq args1 (`runNoConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
-    ["No default config found at: ./config.toml"] === logs
+    ["No default config found at: './config.toml'"] === logs
 
     -- Test that with toml defaults to All
     makeConfigAndAssertFieldEq args2 (`runNoConfigIO` logsRef) expected
