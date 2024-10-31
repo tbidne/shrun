@@ -144,7 +144,7 @@ library
     , exception-utils        ^>=0.1
     , exceptions             ^>=0.10.4
     , fdo-notify             ^>=0.3.1
-    , hashable               >=1.3.0.0  && <1.5
+    , hashable               >=1.3.0.0  && <1.6
     , mtl                    >=2.2.1    && <2.4
     , nonempty-containers    >=0.3.4.2  && <0.4
     , optics-core            ^>=0.4
@@ -210,7 +210,7 @@ test-suite unit
     , base
     , containers
     , effects-time
-    , hedgehog              >=1.0.2   && <1.5
+    , hedgehog              >=1.0.2   && <1.6
     , optparse-applicative
     , shrun
     , si-bytes
@@ -312,6 +312,6 @@ benchmark benchmarks
     , effects-fs
     , env-guard    ^>=0.2
     , shrun
-    , tasty-bench  ^>=0.3
+    , tasty-bench  >=0.3     && <0.5
 
   hs-source-dirs: benchmarks
