@@ -43,27 +43,20 @@ echo "*** Installing ghc ***"
 ghcup install ghc 9.8.2 --set
 
 echo "*** Installing cabal ***"
-ghcup install cabal 3.10.3.0 --set
+ghcup install cabal 3.12 --set
 
 echo "*** Building shrun ***"
 
 cd /opt/shrun
 
-# NOTE: [Cabal Build vs. Install]
-#
-# Replace 'cabal build' with 'cabal install' once --enable-executable-static
-# works for install.
+arch=$(uname -m)
 
 cabal update
-cabal build --enable-executable-static --enable-executable-stripping exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
+cabal install --installdir bin/ --program-suffix "_$shrun_vers-$arch-linux-static" --enable-executable-static --enable-executable-stripping exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
 
 echo "*** Copy binary ***"
 
 mkdir -p /opt/shrun/bin
-
-arch=$(uname -m)
-
-cp ./dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/x/shrun/opt/build/shrun/shrun "/opt/shrun/bin/shrun_$shrun_vers-$arch-linux-static"
 
 cd ../../
 

@@ -11,10 +11,6 @@ arch=$(uname -m)
 
 mkdir -p bin
 
-# see NOTE: [Cabal Build vs. Install]
-#
-# Use cabal build for now for symmetry with linux static release.
 cabal update
-cabal build exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
+cabal install exe:shrun --installdir bin/ --program-suffix "_$shrun_vers-$arch-linux-ubuntu_$ubuntu_vers" --project-file cabal.ghc982.project --ghc-options -Werror
 
-cp ./dist-newstyle/build/x86_64-linux/ghc-*/shrun-*/x/shrun/opt/build/shrun/shrun "bin/shrun_$shrun_vers-$arch-linux-ubuntu_$ubuntu_vers"

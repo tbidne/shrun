@@ -19,10 +19,6 @@ fi
 
 mkdir -p bin
 
-# see NOTE: [Cabal Build vs. Install]
-#
-# Use cabal build for now for symmetry with linux static release.
 cabal update
-cabal build exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
+cabal install exe:shrun --installdir bin/ --program-suffix "_$shrun_vers-$arch-macos_$apple_vers-darwin" --project-file cabal.ghc982.project --ghc-options -Werror
 
-cp ./dist-newstyle/build/$cabal_build_dir/ghc-*/shrun-*/x/shrun/opt/build/shrun/shrun "bin/shrun_$shrun_vers-$arch-macos_$apple_vers-darwin"
