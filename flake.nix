@@ -99,7 +99,6 @@
               ]
               // nix-hs-utils.mkRelLibs "${inputs.monad-effects}/lib" final [
                 "effects-async"
-                "effects-exceptions"
                 "effects-env"
                 "effects-fs"
                 "effects-ioref"
