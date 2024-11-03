@@ -1,5 +1,5 @@
 -- | Effect for DBus.
-module Shrun.Notify.MonadDBus
+module Shrun.Notify.DBus
   ( MonadDBus (..),
     notifyDBus,
   )

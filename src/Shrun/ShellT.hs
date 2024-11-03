@@ -12,13 +12,11 @@ import Shrun.Configuration.Data.Notify.System
   )
 import Shrun.Configuration.Env.Types (Env)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger)
-import Shrun.Notify.MonadAppleScript (MonadAppleScript)
-import Shrun.Notify.MonadAppleScript qualified as MonadAppleScript
-import Shrun.Notify.MonadDBus (MonadDBus)
-import Shrun.Notify.MonadDBus qualified as MonadDBus
+import Shrun.Notify.AppleScript qualified as AppleScript
+import Shrun.Notify.DBus (MonadDBus)
+import Shrun.Notify.DBus qualified as DBus
 import Shrun.Notify.MonadNotify (MonadNotify (notify))
-import Shrun.Notify.MonadNotifySend (MonadNotifySend)
-import Shrun.Notify.MonadNotifySend qualified as MonadNotifySend
+import Shrun.Notify.NotifySend qualified as NotifySend
 import Shrun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.
@@ -28,7 +26,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
     ( Functor,
       Applicative,
       Monad,
-      MonadAppleScript,
       MonadAsync,
       MonadDBus,
       MonadCatch,
@@ -39,7 +36,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadIO,
       MonadIORef,
       MonadMask,
-      MonadNotifySend,
       MonadPathWriter,
       MonadTypedProcess,
       MonadReader env,
@@ -64,9 +60,8 @@ runShellT (MkShellT rdr) = runReaderT rdr
 deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT (Env r) m)
 
 instance
-  ( MonadAppleScript m,
-    MonadDBus m,
-    MonadNotifySend m
+  ( MonadDBus m,
+    MonadTypedProcess m
   ) =>
   MonadNotify (ShellT (Env r) m)
   where
@@ -75,7 +70,7 @@ instance
       Nothing -> pure Nothing
       Just nenv -> sendNote nenv
     where
-      sendNote (DBus client) = MonadDBus.notifyDBus client note
-      sendNote NotifySend = MonadNotifySend.notifyNotifySend note
-      sendNote AppleScript = MonadAppleScript.notifyAppleScript note
+      sendNote (DBus client) = DBus.notifyDBus client note
+      sendNote NotifySend = NotifySend.notifyNotifySend note
+      sendNote AppleScript = AppleScript.notifyAppleScript note
   {-# INLINEABLE notify #-}

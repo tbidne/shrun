@@ -51,8 +51,7 @@ import Shrun.Configuration.Data.MergedConfig (MergedConfig, defaultMergedConfig)
 import Shrun.Configuration.Data.Notify.System (NotifySystemMerged)
 import Shrun.Configuration.Data.Notify.System qualified as Notify.System
 import Shrun.Configuration.Env qualified as Env
-import Shrun.Notify.MonadDBus (MonadDBus (connectSession, notify))
-import Shrun.Notify.MonadNotifySend (MonadNotifySend (notify))
+import Shrun.Notify.DBus (MonadDBus (connectSession, notify))
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
@@ -120,9 +119,6 @@ instance MonadDBus ConfigIO where
         }
   notify = error "notify: unimplemented"
 
-instance MonadNotifySend ConfigIO where
-  notify = error "notify: unimplemented"
-
 -- IO with no default config file
 newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
   deriving
@@ -142,9 +138,7 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
       MonadThrow
     )
     via (ReaderT (IORef [Text])) IO
-  deriving
-    (MonadDBus, MonadNotifySend)
-    via ConfigIO
+  deriving (MonadDBus) via ConfigIO
 
 runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr

@@ -1,7 +1,6 @@
 -- | Effect for AppleScript.
-module Shrun.Notify.MonadAppleScript
-  ( MonadAppleScript (..),
-    notifyAppleScript,
+module Shrun.Notify.AppleScript
+  ( notifyAppleScript,
   )
 where
 
@@ -15,32 +14,22 @@ import Shrun.Notify.MonadNotify
   )
 import Shrun.Prelude
 
--- | Effect for apple script.
-class (Monad m) => MonadAppleScript m where
-  -- | Sends a notification via apple script.
-  notify :: (HasCallStack) => Text -> m (Maybe ByteString)
-
-instance MonadAppleScript IO where
-  notify =
-    fmap exitFailureToStderr
-      . P.readProcessStderr
-      . P.shell
-      . T.unpack
-  {-# INLINEABLE notify #-}
-
-instance (MonadAppleScript m) => MonadAppleScript (ReaderT env m) where
-  notify = lift . notify
-  {-# INLINEABLE notify #-}
-
 notifyAppleScript ::
   ( HasCallStack,
-    MonadAppleScript m
+    MonadTypedProcess m
   ) =>
   ShrunNote ->
   m (Maybe NotifyException)
 notifyAppleScript note =
   notify (shrunToAppleScript note) <<&>> \stderr ->
     MkNotifyException note AppleScript (decodeUtf8Lenient stderr)
+  where
+    notify :: (HasCallStack, MonadTypedProcess m) => Text -> m (Maybe ByteString)
+    notify =
+      fmap exitFailureToStderr
+        . P.readProcessStderr
+        . P.shell
+        . T.unpack
 {-# INLINEABLE notifyAppleScript #-}
 
 shrunToAppleScript :: ShrunNote -> Text

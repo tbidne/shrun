@@ -1,7 +1,6 @@
 -- | Effect for NotifySend.
-module Shrun.Notify.MonadNotifySend
-  ( MonadNotifySend (..),
-    notifyNotifySend,
+module Shrun.Notify.NotifySend
+  ( notifyNotifySend,
   )
 where
 
@@ -23,32 +22,22 @@ import Shrun.Notify.MonadNotify
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
--- | Effect for notify-send.
-class (Monad m) => MonadNotifySend m where
-  -- | Sends a notification via notify-send.
-  notify :: (HasCallStack) => Text -> m (Maybe ByteString)
-
-instance MonadNotifySend IO where
-  notify =
-    fmap exitFailureToStderr
-      . P.readProcessStderr
-      . P.shell
-      . T.unpack
-  {-# INLINEABLE notify #-}
-
-instance (MonadNotifySend m) => MonadNotifySend (ReaderT env m) where
-  notify = lift . notify
-  {-# INLINEABLE notify #-}
-
 notifyNotifySend ::
   ( HasCallStack,
-    MonadNotifySend m
+    MonadTypedProcess m
   ) =>
   ShrunNote ->
   m (Maybe NotifyException)
 notifyNotifySend note =
   notify (shrunToNotifySend note) <<&>> \stderr ->
     MkNotifyException note NotifySend (decodeUtf8Lenient stderr)
+  where
+    notify :: (HasCallStack, MonadTypedProcess m) => Text -> m (Maybe ByteString)
+    notify =
+      fmap exitFailureToStderr
+        . P.readProcessStderr
+        . P.shell
+        . T.unpack
 {-# INLINEABLE notifyNotifySend #-}
 
 shrunToNotifySend :: ShrunNote -> Text

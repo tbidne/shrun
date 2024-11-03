@@ -37,7 +37,7 @@ import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.WithDisabled ((<?>?))
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Data.Command (CommandP1)
-import Shrun.Notify.MonadDBus (MonadDBus)
+import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Prelude
 
 -- | For types that are only guaranteed to exist for Args. Generally this

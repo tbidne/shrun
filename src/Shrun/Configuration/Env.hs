@@ -37,9 +37,7 @@ import Shrun.Configuration.Env.Types
     HasConsoleLogging,
   )
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
-import Shrun.Notify.MonadAppleScript (MonadAppleScript)
-import Shrun.Notify.MonadDBus (MonadDBus)
-import Shrun.Notify.MonadNotifySend (MonadNotifySend)
+import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 
@@ -48,7 +46,6 @@ makeEnvAndShrun ::
   forall m r.
   ( HasCallStack,
     HasConsoleLogging (Env r) (Region (ShellT (Env r) m)),
-    MonadAppleScript m,
     MonadAsync m,
     MonadDBus m,
     MonadFileReader m,
@@ -56,7 +53,6 @@ makeEnvAndShrun ::
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
-    MonadNotifySend m,
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,

@@ -117,10 +117,10 @@ library
     Shrun.Logging.Types
     Shrun.Logging.Types.Internal
     Shrun.Notify
-    Shrun.Notify.MonadAppleScript
-    Shrun.Notify.MonadDBus
+    Shrun.Notify.AppleScript
+    Shrun.Notify.DBus
     Shrun.Notify.MonadNotify
-    Shrun.Notify.MonadNotifySend
+    Shrun.Notify.NotifySend
     Shrun.Prelude
     Shrun.ShellT
     Shrun.Utils

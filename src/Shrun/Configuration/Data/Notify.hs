@@ -46,7 +46,7 @@ import Shrun.Configuration.Data.WithDisabled
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default, def)
-import Shrun.Notify.MonadDBus (MonadDBus (connectSession))
+import Shrun.Notify.DBus (MonadDBus (connectSession))
 import Shrun.Prelude
 
 -- See NOTE: [Args vs. Toml mandatory fields]
