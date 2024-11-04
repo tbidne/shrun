@@ -156,6 +156,32 @@
             format = nix-hs-utils.format compilerPkgs;
             lint = nix-hs-utils.lint compilerPkgs;
             lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
+
+            format-yaml =
+              let
+                drv = pkgs.writeShellApplication {
+                  name = "format-yaml";
+                  text = "prettier -w ./*.yaml";
+                  runtimeInputs = [ pkgs.nodePackages.prettier ];
+                };
+              in
+              {
+                type = "app";
+                program = "${drv}/bin/${drv.name}";
+              };
+
+            lint-yaml =
+              let
+                drv = pkgs.writeShellApplication {
+                  name = "lint-yaml";
+                  text = "yamllint .";
+                  runtimeInputs = [ pkgs.yamllint ];
+                };
+              in
+              {
+                type = "app";
+                program = "${drv}/bin/${drv.name}";
+              };
           };
         };
       systems = [

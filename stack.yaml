@@ -1,8 +1,25 @@
+---
 resolver: nightly-2024-05-22
 packages:
   - .
 ghc-options:
-  "$locals": -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-deriving-strategies -Wmissing-export-lists -Wmissing-exported-signatures -Wmissing-home-modules -Wpartial-fields -Wprepositive-qualified-module -Wredundant-constraints -Wunused-binds -Wunused-packages -Wunused-type-patterns -Wno-deprecations -Wno-unticked-promoted-constructors
+  "$locals": -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-deriving-strategies
+    -Wmissing-export-lists
+    -Wmissing-exported-signatures
+    -Wmissing-home-modules
+    -Wpartial-fields
+    -Wprepositive-qualified-module
+    -Wredundant-constraints
+    -Wunused-binds
+    -Wunused-packages
+    -Wunused-type-patterns
+    -Wno-deprecations
+    -Wno-unticked-promoted-constructors
 extra-deps:
   - env-guard-0.2@sha256:99b89cde1ed6d599880dfbc72b2c9a75ced57b7800a70dcb57d3e3e89e42184c,1312
   - text-display-0.0.5.2@sha256:6e6a5bf1c83dfa6c34692ed5d8ea87f1bd385984309b42c302f2156f4d82477b,2670
