@@ -550,7 +550,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify Action
 
-**Arg:** `--notify-action (final |command | all)`
+**Arg:** `--notify-action (final | command | all)`
 
 **Description:** Sends notifications for various actions. `final` sends off a notification when `shrun` itself finishes whereas `command` sends one off each time a command finishes. `all` implies `final` and `command`.
 

@@ -42,4 +42,4 @@ parseNotifyAction getTxt =
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
-notifyActionStr = "(final |command | all)"
+notifyActionStr = "(final | command | all)"
