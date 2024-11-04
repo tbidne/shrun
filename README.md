@@ -159,8 +159,8 @@ Then include this in the `systemPackages`:
 
 # Configuration
 
-See [configuration.md](configuration.md) for the available options.
+See [configuration.md](documentation/configuration.md) for the available options.
 
 # FAQ
 
-See [faq.md](faq.md).
+See [faq.md](documentation/faq.md).
