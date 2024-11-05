@@ -138,7 +138,8 @@ readHandle mBufferParams blockSize handle = do
     Right bs -> case mBufferParams of
       Nothing -> pure $ case bs of
         "" -> ReadNoData
-        -- Empty case probably impossible, se NOTE: [Non-Empty BS Read]
+        -- Empty case probably impossible, for the same reasons in
+        -- NOTE: [Non-Empty BS Read].
         cs -> case ShrunText.fromText (decodeUtf8Lenient cs) of
           [] -> ReadNoData
           (x : xs) -> ReadSuccess (x :| xs)
@@ -400,15 +401,15 @@ readByteStringPrevHandler
   onCompletedAndPartialRead
   prevReadRef
   bs = case readByteString bs of
-    (Nothing, Nothing) -> onNoData
+    ([], Nothing) -> onNoData
     -- This case is always handled the same: Prepend the prevRead if it
     -- exists, and send all.
-    (Just completedReads, Nothing) -> do
-      completedReads' <- mPrependPrevRead prevReadRef completedReads
-      pure $ ReadSuccess completedReads'
-    (Nothing, Just finalPartialRead) -> onPartialRead finalPartialRead
-    (Just completedReads, Just finalPartialRead) ->
-      onCompletedAndPartialRead completedReads finalPartialRead
+    (c : cs, Nothing) -> do
+      completedReads <- mPrependPrevRead prevReadRef (c :| cs)
+      pure $ ReadSuccess completedReads
+    ([], Just finalPartialRead) -> onPartialRead finalPartialRead
+    (c : cs, Just finalPartialRead) ->
+      onCompletedAndPartialRead (c :| cs) finalPartialRead
 {-# INLINEABLE readByteStringPrevHandler #-}
 
 -- | Reads a bytestring, distinguishing between _complete_ and _partial_
@@ -417,38 +418,43 @@ readByteStringPrevHandler
 --
 -- The tuple's left element contains all completed reads. The right element
 -- is the final, partial read, if it exists.
-readByteString :: ByteString -> Tuple2 (Maybe (NonEmpty UnlinedText)) (Maybe UnlinedText)
+readByteString :: ByteString -> Tuple2 (List UnlinedText) (Maybe UnlinedText)
 readByteString bs = case BS.unsnoc bs of
   -- 1. Empty: No output
-  Nothing -> (Nothing, Nothing)
+  Nothing -> ([], Nothing)
   -- 2. Non-empty, ends with a newline: This means all reads end with a
   --    newline i.e. are complete.
-  Just (_, 10) ->
-    case decodeRead bs of
-      -- NOTE: [Non-Empty BS Read]
-      --
-      -- This is _probably_ impossible. By this point, unsnoc has already
-      -- proven that bs is non-empty, and T.lines (called by decodeRead)
-      -- only gives an empty string when the input is empty. So the only
-      -- possibly way this is empty is if decodeUtf8Lenient somehow turns
-      -- non-empty bs into empty text. Probably impossible, but we have this
-      -- check since it's better than a runtime error.
-      [] -> (Nothing, Nothing)
-      (t : ts) -> (Just (t :| ts), Nothing)
+  --
+  -- NOTE: [Non-Empty BS Read]
+  --
+  -- Note that returning an empty list is __probably__ impossible here, since
+  -- unsnoc has already proven that bs is non-empty, and T.lines
+  -- (called by decodeRead) only gives an empty string when the input is empty.
+  -- So the only possibly way this is empty is if decodeUtf8Lenient somehow
+  -- turns non-empty bs into empty text. Probably impossible, but we have this
+  -- check since it's better than a runtime error.
+  Just (_, 10) -> (decodeRead bs, Nothing)
   -- 3. Non-empty, does not end with a newline: This means the last (and
   --    possibly only) read is partial.
-  Just (_, _) ->
-    let allReads = decodeRead bs
-     in case unsnoc allReads of
-          -- 3.1: Only one read: It is partial.
-          Just ([], finalPartialRead) -> (Nothing, Just finalPartialRead)
-          -- 3.2: Multiple reads: Last is partial.
-          Just (t : ts, finalPartialRead) ->
-            (Just (t :| ts), Just finalPartialRead)
-          -- 3.3: allReads is empty: Should be impossible, T.lines (used in
-          --      fromText) only produces empty output when the input is empty,
-          --      but we have already confirmed the ByteString is non-empty.
-          Nothing -> (Nothing, Nothing)
+  --
+  -- unsnoc will separate the (zero or more) completed read(s) from the final
+  -- partial read, which is what we want:
+  --
+  --     List UnlinedText -> Maybe (List UnlinedText, UnlinedText)
+  --
+  -- sequenceA will then swap the effects so that we always return the
+  -- completed reads(s) and possibly empty final partial read:
+  --
+  --     Maybe (List UnlinedText, UnlinedText) -> (List UnlinedText, Maybe UnlinedText)
+  --
+  -- Strictly speaking, the final partial read should always exist, since we
+  -- proved the string ends in a non-newline with the case analysis i.e. this
+  -- should always return (completed, Just partial).
+  --
+  -- Unfortunately we cannot prove this to the type system at the moment,
+  -- since we need to keep the bytestring together for decoding (hence cannot
+  -- use the case-analysis evidence).
+  Just (_, _) -> sequenceA $ unsnoc $ decodeRead bs
   where
     decodeRead = ShrunText.fromText . decodeUtf8Lenient
 
