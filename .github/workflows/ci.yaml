@@ -63,6 +63,7 @@ jobs:
         # yamllint disable rule:line-length
         run: |
           cabal bench ${{ matrix.ghc.proj-file }} --benchmark-options '
+            +RTS -T -RTS
             --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
             --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
