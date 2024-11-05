@@ -38,11 +38,11 @@ The configuration is done via CLI args and optional `toml` config file. In gener
 CLI + TOML -> Merged -> Env
 ```
 
-That is, we combine the `CLI` and `TOML` configuration (with `CLI` taking precedence) to produce a `Merged` configuration. We then turn that into the `Env` that is actually used to run our application. The `Merged` config is quite close to `Env`, though the latter will actually initialize resources as needed e.g. opening file handles.
+We combine the `CLI` and `TOML` configuration (with `CLI` taking precedence) to produce a `Merged` configuration. We then turn that into the `Env` that is actually used to run our application. The `Merged` config is quite close to `Env`, though the latter will actually initialize resources as needed e.g. opening file handles.
 
 In order to tame the number of types and impose some order, we employ the *Trees That Grow* approach. That is, data types are indexed by another type, which is then used as a parameter to a type family.
 
-That is, we separate our configuration into **phases**, so that we can reuse the same types, while varying the fields as necessary:
+In particular, we separate our configuration into **phases**, so that we can reuse the same types, while varying the fields as necessary:
 
 ```haskell
 data ConfigPhase
@@ -100,7 +100,7 @@ data CoreConfigArgs = MkCoreConfigP
 
 ```
 
-The CLI `file` parameter is optional configuration for path, mode, and size-mode. These can also be disabled.
+The CLI `file` parameter is `WithDisabled` for path, mode, and size-mode. This is like `Maybe`, hence optional, with an additional option for disabling the field entirely.
 
 ```haskell
 -- ConfigPhaseToml phase
@@ -125,7 +125,7 @@ data CoreConfigToml = MkCoreConfigP
   }
 ```
 
-The TOML `file` parameter is a mandatory path and optional mode and size-mode. Because the entire `fileLogging` itself is optional, making the path optional again would be redundant, hence it is required when `fileLogging` exists.
+The TOML `file` parameter, on the other hand, is a mandatory path and optional mode and size-mode. Because the entire `FileLoggingToml` itself is optional, if it is specified in the TOML, we require the path since there is no reason to specify configuration if the path itself is not given.
 
 ```haskell
 -- ConfigPhaseMerged phase
@@ -150,7 +150,7 @@ data CoreConfigMerged = MkCoreConfigP
   }
 ```
 
-The Merged `file` parameter is a mandatory path, mode, size-mode. We now fill in missing defaults, so if `FileLoggingMerged` exists, so does every field.
+The Merged `file` parameter is a mandatory path, mode, size-mode. We now fill in missing values with defaults, so if `FileLoggingMerged` exists, so does every field.
 
 ```haskell
 -- ConfigPhaseEnv phase
@@ -174,14 +174,18 @@ data CoreConfigEnv = MkCoreConfigP
   }
 ```
 
-Finally, if `fileLogging` exists, `CoreConfigEnv`'s `file` parameter corresponds to the actually opened file handle, along with a queue for logging.
+Finally, if `FileLoggingEnv` exists, `CoreConfigEnv`'s `file` parameter corresponds to the actually opened file handle, along with a queue for logging. To summarize, we have evolved our file configuration thusly:
+
+```
+(optional) parameters -> combined configuration -> open file
+```
 
 By doing this, we receive the following benefits:
 
 - Sharing the same type means we do not have to worry about keeping multiple types in sync.
 - The data evolutions process is cleanly organized. That is, the `CLI` and `TOML` are all self-contained. The `Merged` phase is responsible for combining the two and filling in required defaults. Finally, `Env` is what we use to run the application.
 
-The type families keep us honest, so we can specify what types each phase should have, and then the compiler ensures that we meet this requirement.
+Furthermore, it is easy to see how the data evolves: just look at the type family for a given field. There is no need to dig through large functions just to see what a particular field is or where a default value might be given.
 
 ### Misc
 
