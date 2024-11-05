@@ -73,4 +73,3 @@ instance
       sendNote (DBus client) = DBus.notifyDBus client note
       sendNote NotifySend = NotifySend.notifyNotifySend note
       sendNote AppleScript = AppleScript.notifyAppleScript note
-  {-# INLINEABLE notify #-}

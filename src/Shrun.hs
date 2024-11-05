@@ -135,7 +135,6 @@ shrun = displayRegions $ do
         hFlush h
       where
         MkFileLogOpened h fileQueue = fileLogging ^. #file
-    {-# INLINEABLE runWithFileLogging #-}
 
     runCommands :: (HasCallStack) => m ()
     runCommands = do
@@ -145,7 +144,6 @@ shrun = displayRegions $ do
 
       (totalTime, result) <- withTiming $ trySync actionsWithTimer
       printFinalResult totalTime result
-    {-# INLINEABLE runCommands #-}
 {-# INLINEABLE shrun #-}
 
 runCommand ::

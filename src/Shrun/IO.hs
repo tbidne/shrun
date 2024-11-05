@@ -169,7 +169,6 @@ tryCommandLogging command = do
         (ConsoleLogCmdOn, Nothing) -> \cmd ->
           withRegion Linear $ \region -> do
             let logFn = logConsole keyHide consoleLogQueue region consoleLogging
-                {-# INLINEABLE logFn #-}
 
             logFn hello
 
@@ -179,7 +178,6 @@ tryCommandLogging command = do
         (ConsoleLogCmdOff, Just fileLogging) -> \cmd -> do
           let logFn :: Log -> m ()
               logFn = logFile keyHide fileLogging
-              {-# INLINEABLE logFn #-}
 
           logFn hello
 
@@ -191,12 +189,10 @@ tryCommandLogging command = do
             let logFn log = do
                   logConsole keyHide consoleLogQueue region consoleLogging log
                   logFile keyHide fileLogging log
-                {-# INLINEABLE logFn #-}
 
             logFn hello
 
             tryCommandStream logFn cmd
-      {-# INLINEABLE cmdFn #-}
 
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
@@ -216,12 +212,10 @@ tryCommandLogging command = do
     logConsole keyHide consoleQueue region consoleLogging log = do
       let formatted = formatConsoleLog keyHide consoleLogging log
       writeTBQueueA consoleQueue (LogRegion (log ^. #mode) region formatted)
-    {-# INLINEABLE logConsole #-}
 
     logFile keyHide fileLogging log = do
       formatted <- formatFileLog keyHide fileLogging log
       writeTBQueueA (fileLogging ^. #file % #queue) formatted
-    {-# INLINEABLE logFile #-}
 
     hello =
       MkLog
@@ -319,7 +313,6 @@ streamOutput logFn cmd p = do
 
       sleepFn :: m ()
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
-      {-# INLINEABLE sleepFn #-}
 
       blockSize :: Int
       blockSize = commandLogging ^. (#readSize % #unReadSize % _MkBytes)
