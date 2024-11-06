@@ -55,24 +55,24 @@ instance
   (k ~ A_Lens, a ~ WithDisabled OsPath, b ~ WithDisabled OsPath) =>
   LabelOptic "configPath" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs _configPath _coreConfig _commands) ->
-    fmap (\configPath' -> MkArgs configPath' _coreConfig _commands) (f _configPath)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3) ->
+    fmap (\b -> MkArgs b a2 a3) (f a1)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ CoreConfigArgs, b ~ CoreConfigArgs) =>
   LabelOptic "coreConfig" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs _configPath _coreConfig _commands) ->
-    fmap (\coreConfig' -> MkArgs _configPath coreConfig' _commands) (f _coreConfig)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3) ->
+    fmap (\b -> MkArgs a1 b a3) (f a2)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ NESeq Text, b ~ NESeq Text) =>
   LabelOptic "commands" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs _configPath _coreConfig _commands) ->
-    fmap (MkArgs _configPath _coreConfig) (f _commands)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3) ->
+    fmap (\b -> MkArgs a1 a2 b) (f a3)
   {-# INLINE labelOptic #-}
 
 -- | 'ParserInfo' type for parsing 'Args'.

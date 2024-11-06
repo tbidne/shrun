@@ -86,28 +86,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCoreConfigP
-             _init
-             _timeout
-             _commonLogging
-             _commandLogging
-             _consoleLogging
-             _fileLogging
-             _notify
-           ) ->
-          fmap
-            ( \init' ->
-                MkCoreConfigP
-                  init'
-                  _timeout
-                  _commonLogging
-                  _commandLogging
-                  _consoleLogging
-                  _fileLogging
-                  _notify
-            )
-            (f _init)
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkCoreConfigP b a2 a3 a4 a5 a6 a7)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -119,28 +101,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCoreConfigP
-             _init
-             _timeout
-             _commonLogging
-             _commandLogging
-             _consoleLogging
-             _fileLogging
-             _notify
-           ) ->
-          fmap
-            ( \timeout' ->
-                MkCoreConfigP
-                  _init
-                  timeout'
-                  _commonLogging
-                  _commandLogging
-                  _consoleLogging
-                  _fileLogging
-                  _notify
-            )
-            (f _timeout)
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkCoreConfigP a1 b a3 a4 a5 a6 a7)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -152,28 +116,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCoreConfigP
-             _init
-             _timeout
-             _commonLogging
-             _commandLogging
-             _consoleLogging
-             _fileLogging
-             _notify
-           ) ->
-          fmap
-            ( \commonLogging' ->
-                MkCoreConfigP
-                  _init
-                  _timeout
-                  commonLogging'
-                  _commandLogging
-                  _consoleLogging
-                  _fileLogging
-                  _notify
-            )
-            (f _commonLogging)
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkCoreConfigP a1 a2 b a4 a5 a6 a7)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -185,28 +131,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCoreConfigP
-             _init
-             _timeout
-             _commonLogging
-             _commandLogging
-             _consoleLogging
-             _fileLogging
-             _notify
-           ) ->
-          fmap
-            ( \commandLogging' ->
-                MkCoreConfigP
-                  _init
-                  _timeout
-                  _commonLogging
-                  commandLogging'
-                  _consoleLogging
-                  _fileLogging
-                  _notify
-            )
-            (f _commandLogging)
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkCoreConfigP a1 a2 a3 b a5 a6 a7)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance
@@ -218,28 +146,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCoreConfigP
-             _init
-             _timeout
-             _commonLogging
-             _commandLogging
-             _consoleLogging
-             _fileLogging
-             _notify
-           ) ->
-          fmap
-            ( \consoleLogging' ->
-                MkCoreConfigP
-                  _init
-                  _timeout
-                  _commonLogging
-                  _commandLogging
-                  consoleLogging'
-                  _fileLogging
-                  _notify
-            )
-            (f _consoleLogging)
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkCoreConfigP a1 a2 a3 a4 b a6 a7)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 instance
@@ -251,28 +161,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCoreConfigP
-             _init
-             _timeout
-             _commonLogging
-             _commandLogging
-             _consoleLogging
-             _fileLogging
-             _notify
-           ) ->
-          fmap
-            ( \fileLogging' ->
-                MkCoreConfigP
-                  _init
-                  _timeout
-                  _commonLogging
-                  _commandLogging
-                  _consoleLogging
-                  fileLogging'
-                  _notify
-            )
-            (f _fileLogging)
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 b a7)
+          (f a6)
   {-# INLINE labelOptic #-}
 
 instance
@@ -284,26 +176,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCoreConfigP
-             _init
-             _timeout
-             _commonLogging
-             _commandLogging
-             _consoleLogging
-             _fileLogging
-             _notify
-           ) ->
-          fmap
-            ( MkCoreConfigP
-                _init
-                _timeout
-                _commonLogging
-                _commandLogging
-                _consoleLogging
-                _fileLogging
-            )
-            (f _notify)
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 a6 b)
+          (f a7)
   {-# INLINE labelOptic #-}
 
 type CoreConfigArgs = CoreConfigP ConfigPhaseArgs

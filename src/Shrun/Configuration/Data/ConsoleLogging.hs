@@ -92,24 +92,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkConsoleLoggingP
-             _commandLogging
-             _commandNameTrunc
-             _lineTrunc
-             _stripControl
-             _timerFormat
-           ) ->
-          fmap
-            ( \commandLogging' ->
-                MkConsoleLoggingP
-                  commandLogging'
-                  _commandNameTrunc
-                  _lineTrunc
-                  _stripControl
-                  _timerFormat
-            )
-            (f _commandLogging)
+      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkConsoleLoggingP b a2 a3 a4 a5)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -121,24 +107,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkConsoleLoggingP
-             _commandLogging
-             _commandNameTrunc
-             _lineTrunc
-             _stripControl
-             _timerFormat
-           ) ->
-          fmap
-            ( \commandNameTrunc' ->
-                MkConsoleLoggingP
-                  _commandLogging
-                  commandNameTrunc'
-                  _lineTrunc
-                  _stripControl
-                  _timerFormat
-            )
-            (f _commandNameTrunc)
+      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkConsoleLoggingP a1 b a3 a4 a5)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -150,24 +122,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkConsoleLoggingP
-             _commandLogging
-             _commandNameTrunc
-             _lineTrunc
-             _stripControl
-             _timerFormat
-           ) ->
-          fmap
-            ( \lineTrunc' ->
-                MkConsoleLoggingP
-                  _commandLogging
-                  _commandNameTrunc
-                  lineTrunc'
-                  _stripControl
-                  _timerFormat
-            )
-            (f _lineTrunc)
+      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkConsoleLoggingP a1 a2 b a4 a5)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -179,24 +137,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkConsoleLoggingP
-             _commandLogging
-             _commandNameTrunc
-             _lineTrunc
-             _stripControl
-             _timerFormat
-           ) ->
-          fmap
-            ( \stripControl' ->
-                MkConsoleLoggingP
-                  _commandLogging
-                  _commandNameTrunc
-                  _lineTrunc
-                  stripControl'
-                  _timerFormat
-            )
-            (f _stripControl)
+      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkConsoleLoggingP a1 a2 a3 b a5)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance
@@ -208,22 +152,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkConsoleLoggingP
-             _commandLogging
-             _commandNameTrunc
-             _lineTrunc
-             _stripControl
-             _timerFormat
-           ) ->
-          fmap
-            ( MkConsoleLoggingP
-                _commandLogging
-                _commandNameTrunc
-                _lineTrunc
-                _stripControl
-            )
-            (f _timerFormat)
+      $ \f (MkConsoleLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkConsoleLoggingP a1 a2 a3 a4 b)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 type ConsoleLoggingArgs = ConsoleLoggingP ConfigPhaseArgs

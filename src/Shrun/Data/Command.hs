@@ -43,11 +43,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkCommandP _key _command) ->
-          fmap
-            (`MkCommandP` _command)
-            (f _key)
+      $ \f (MkCommandP a1 a2) ->
+        fmap
+          (\b -> MkCommandP b a2)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -59,11 +58,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkCommandP _key _command) ->
-          fmap
-            (MkCommandP _key)
-            (f _command)
+      $ \f (MkCommandP a1 a2) ->
+        fmap
+          (\b -> MkCommandP a1 b)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance IsString (CommandP CommandPhase1) where

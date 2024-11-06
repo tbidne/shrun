@@ -36,16 +36,16 @@ instance
   (k ~ A_Lens, a ~ CoreConfigToml, b ~ CoreConfigToml) =>
   LabelOptic "coreConfig" k Toml Toml a b
   where
-  labelOptic = lensVL $ \f (MkToml _coreConfig _legend) ->
-    fmap (`MkToml` _legend) (f _coreConfig)
+  labelOptic = lensVL $ \f (MkToml a1 a2) ->
+    fmap (\b -> MkToml b a2) (f a1)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ Maybe (List KeyVal), b ~ Maybe (List KeyVal)) =>
   LabelOptic "legend" k Toml Toml a b
   where
-  labelOptic = lensVL $ \f (MkToml _coreConfig _legend) ->
-    fmap (MkToml _coreConfig) (f _legend)
+  labelOptic = lensVL $ \f (MkToml a1 a2) ->
+    fmap (\b -> MkToml a1 b) (f a2)
   {-# INLINE labelOptic #-}
 
 instance Default Toml where

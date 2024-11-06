@@ -147,11 +147,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFileLogInitP _path _mode _sizeMode) ->
-          fmap
-            (\path' -> MkFileLogInitP path' _mode _sizeMode)
-            (f _path)
+      $ \f (MkFileLogInitP a1 a2 a3) ->
+        fmap
+          (\b -> MkFileLogInitP b a2 a3)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -163,11 +162,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFileLogInitP _path _mode _sizeMode) ->
-          fmap
-            (\mode' -> MkFileLogInitP _path mode' _sizeMode)
-            (f _mode)
+      $ \f (MkFileLogInitP a1 a2 a3) ->
+        fmap
+          (\b -> MkFileLogInitP a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -179,11 +177,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFileLogInitP _path _mode _sizeMode) ->
-          fmap
-            (MkFileLogInitP _path _mode)
-            (f _sizeMode)
+      $ \f (MkFileLogInitP a1 a2 a3) ->
+        fmap
+          (\b -> MkFileLogInitP a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 type FileLogInitArgs = FileLogInitP ConfigPhaseArgs
@@ -246,11 +243,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFileLogOpened _handle _queue) ->
-          fmap
-            (`MkFileLogOpened` _queue)
-            (f _handle)
+      $ \f (MkFileLogOpened a1 a2) ->
+        fmap
+          (\b -> MkFileLogOpened b a2)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -262,11 +258,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFileLogOpened _handle _queue) ->
-          fmap
-            (MkFileLogOpened _handle)
-            (f _queue)
+      $ \f (MkFileLogOpened a1 a2) ->
+        fmap
+          (\b -> MkFileLogOpened a1 b)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 type FileLogFileF :: ConfigPhase -> Type
@@ -301,24 +296,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkFileLoggingP
-             _file
-             _commandNameTrunc
-             _deleteOnSuccess
-             _lineTrunc
-             _stripControl
-           ) ->
-          fmap
-            ( \file' ->
-                MkFileLoggingP
-                  file'
-                  _commandNameTrunc
-                  _deleteOnSuccess
-                  _lineTrunc
-                  _stripControl
-            )
-            (f _file)
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkFileLoggingP b a2 a3 a4 a5)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -330,24 +311,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkFileLoggingP
-             _file
-             _commandNameTrunc
-             _deleteOnSuccess
-             _lineTrunc
-             _stripControl
-           ) ->
-          fmap
-            ( \commandNameTrunc' ->
-                MkFileLoggingP
-                  _file
-                  commandNameTrunc'
-                  _deleteOnSuccess
-                  _lineTrunc
-                  _stripControl
-            )
-            (f _commandNameTrunc)
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkFileLoggingP a1 b a3 a4 a5)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -359,24 +326,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkFileLoggingP
-             _file
-             _commandNameTrunc
-             _deleteOnSuccess
-             _lineTrunc
-             _stripControl
-           ) ->
-          fmap
-            ( \deleteOnSuccess' ->
-                MkFileLoggingP
-                  _file
-                  _commandNameTrunc
-                  deleteOnSuccess'
-                  _lineTrunc
-                  _stripControl
-            )
-            (f _deleteOnSuccess)
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkFileLoggingP a1 a2 b a4 a5)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -388,24 +341,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkFileLoggingP
-             _file
-             _commandNameTrunc
-             _deleteOnSuccess
-             _lineTrunc
-             _stripControl
-           ) ->
-          fmap
-            ( \lineTrunc' ->
-                MkFileLoggingP
-                  _file
-                  _commandNameTrunc
-                  _deleteOnSuccess
-                  lineTrunc'
-                  _stripControl
-            )
-            (f _lineTrunc)
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkFileLoggingP a1 a2 a3 b a5)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance
@@ -417,22 +356,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkFileLoggingP
-             _file
-             _commandNameTrunc
-             _deleteOnSuccess
-             _lineTrunc
-             _stripControl
-           ) ->
-          fmap
-            ( MkFileLoggingP
-                _file
-                _commandNameTrunc
-                _deleteOnSuccess
-                _lineTrunc
-            )
-            (f _stripControl)
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkFileLoggingP a1 a2 a3 a4 b)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 type FileLoggingArgs = FileLoggingP ConfigPhaseArgs

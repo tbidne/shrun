@@ -79,11 +79,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkNotifyP _action _system _timeout) ->
-          fmap
-            (\action' -> MkNotifyP action' _system _timeout)
-            (f _action)
+      $ \f (MkNotifyP a1 a2 a3) ->
+        fmap
+          (\b -> MkNotifyP b a2 a3)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -95,11 +94,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkNotifyP _action _system _timeout) ->
-          fmap
-            (\system' -> MkNotifyP _action system' _timeout)
-            (f _system)
+      $ \f (MkNotifyP a1 a2 a3) ->
+        fmap
+          (\b -> MkNotifyP a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -111,11 +109,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkNotifyP _action _system _timeout) ->
-          fmap
-            (MkNotifyP _action _system)
-            (f _timeout)
+      $ \f (MkNotifyP a1 a2 a3) ->
+        fmap
+          (\b -> MkNotifyP a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 type NotifyArgs = NotifyP ConfigPhaseArgs

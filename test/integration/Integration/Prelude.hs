@@ -60,11 +60,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkTestArgs _rootTmpDir _workingTmpDir) ->
-          fmap
-            (`MkTestArgs` _workingTmpDir)
-            (f _rootTmpDir)
+      $ \f (MkTestArgs a1 a2) ->
+        fmap
+          (\b -> MkTestArgs b a2)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -76,11 +75,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkTestArgs _rootTmpDir _workingTmpDir) ->
-          fmap
-            (MkTestArgs _rootTmpDir)
-            (f _workingTmpDir)
+      $ \f (MkTestArgs a1 a2) ->
+        fmap
+          (\b -> MkTestArgs a1 b)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 -- | Retrieves file path from the examples directory, potentially appending

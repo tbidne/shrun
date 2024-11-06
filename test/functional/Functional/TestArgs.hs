@@ -8,11 +8,26 @@ where
 import Shrun.Prelude
 
 data TestArgs = MkTestArgs
-  { rootDir :: OsPath,
-    tmpDir :: OsPath,
-    configPath :: OsPath
+  { configPath :: OsPath,
+    rootDir :: OsPath,
+    tmpDir :: OsPath
   }
   deriving stock (Show)
+
+instance
+  ( k ~ A_Lens,
+    a ~ OsPath,
+    b ~ OsPath
+  ) =>
+  LabelOptic "configPath" k TestArgs TestArgs a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkTestArgs a1 a2 a3) ->
+        fmap
+          (\b -> MkTestArgs b a2 a3)
+          (f a1)
+  {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Lens,
@@ -23,11 +38,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkTestArgs _rootDir _tmpDir _configPath) ->
-          fmap
-            (\rootDir' -> MkTestArgs rootDir' _tmpDir _configPath)
-            (f _rootDir)
+      $ \f (MkTestArgs a1 a2 a3) ->
+        fmap
+          (\b -> MkTestArgs a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -39,25 +53,8 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkTestArgs _rootDir _tmpDir _configPath) ->
-          fmap
-            (\tmpDir' -> MkTestArgs _rootDir tmpDir' _configPath)
-            (f _tmpDir)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ OsPath,
-    b ~ OsPath
-  ) =>
-  LabelOptic "configPath" k TestArgs TestArgs a b
-  where
-  labelOptic =
-    lensVL
-      $ \f
-         (MkTestArgs _rootDir _tmpDir _configPath) ->
-          fmap
-            (MkTestArgs _rootDir _tmpDir)
-            (f _configPath)
+      $ \f (MkTestArgs a1 a2 a3) ->
+        fmap
+          (\b -> MkTestArgs a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}

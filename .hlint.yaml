@@ -1,0 +1,23 @@
+---
+# Ignoring complaints about e.g. \b -> MkFileLogInitP a1 a2 b
+- ignore:
+    name: "Avoid lambda"
+    within:
+      - "Shrun.Configuration.Args.Parsing"
+      - "Shrun.Configuration.Data.CommandLogging"
+      - "Shrun.Configuration.Data.ConsoleLogging"
+      - "Shrun.Configuration.Data.Core"
+      - "Shrun.Configuration.Data.FileLogging"
+      - "Shrun.Configuration.Data.MergedConfig"
+      - "Shrun.Configuration.Data.Notify"
+      - "Shrun.Configuration.Env.Types"
+      - "Shrun.Configuration.Toml"
+      - "Shrun.Data.Command"
+      - "Shrun.Logging.Types"
+      - "Shrun.Notify.MonadNotify"
+      - "Functional.Prelude"
+      - "Functional.TestArgs"
+      - "Integration.Prelude"
+
+- ignore:
+    name: "Avoid lambda using `infix`"

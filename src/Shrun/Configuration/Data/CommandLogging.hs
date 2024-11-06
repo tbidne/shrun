@@ -163,26 +163,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCommandLoggingP
-             _bufferLength
-             _bufferTimeout
-             _pollInterval
-             _readSize
-             _readStrategy
-             _reportReadErrors
-           ) ->
-          fmap
-            ( \bufferLength' ->
-                MkCommandLoggingP
-                  bufferLength'
-                  _bufferTimeout
-                  _pollInterval
-                  _readSize
-                  _readStrategy
-                  _reportReadErrors
-            )
-            (f _bufferLength)
+      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkCommandLoggingP b a2 a3 a4 a5 a6)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -191,26 +175,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCommandLoggingP
-             _bufferLength
-             _bufferTimeout
-             _pollInterval
-             _readSize
-             _readStrategy
-             _reportReadErrors
-           ) ->
-          fmap
-            ( \bufferTimeout' ->
-                MkCommandLoggingP
-                  _bufferLength
-                  bufferTimeout'
-                  _pollInterval
-                  _readSize
-                  _readStrategy
-                  _reportReadErrors
-            )
-            (f _bufferTimeout)
+      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkCommandLoggingP a1 b a3 a4 a5 a6)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -219,26 +187,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCommandLoggingP
-             _bufferLength
-             _bufferTimeout
-             _pollInterval
-             _readSize
-             _readStrategy
-             _reportReadErrors
-           ) ->
-          fmap
-            ( \pollInterval' ->
-                MkCommandLoggingP
-                  _bufferLength
-                  _bufferTimeout
-                  pollInterval'
-                  _readSize
-                  _readStrategy
-                  _reportReadErrors
-            )
-            (f _pollInterval)
+      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkCommandLoggingP a1 a2 b a4 a5 a6)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -247,26 +199,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCommandLoggingP
-             _bufferLength
-             _bufferTimeout
-             _pollInterval
-             _readSize
-             _readStrategy
-             _reportReadErrors
-           ) ->
-          fmap
-            ( \readSize' ->
-                MkCommandLoggingP
-                  _bufferLength
-                  _bufferTimeout
-                  _pollInterval
-                  readSize'
-                  _readStrategy
-                  _reportReadErrors
-            )
-            (f _readSize)
+      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkCommandLoggingP a1 a2 a3 b a5 a6)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance
@@ -275,26 +211,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCommandLoggingP
-             _bufferLength
-             _bufferTimeout
-             _pollInterval
-             _readSize
-             _readStrategy
-             _reportReadErrors
-           ) ->
-          fmap
-            ( \readStrategy' ->
-                MkCommandLoggingP
-                  _bufferLength
-                  _bufferTimeout
-                  _pollInterval
-                  _readSize
-                  readStrategy'
-                  _reportReadErrors
-            )
-            (f _readStrategy)
+      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkCommandLoggingP a1 a2 a3 a4 b a6)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 instance
@@ -303,24 +223,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkCommandLoggingP
-             _bufferLength
-             _bufferTimeout
-             _pollInterval
-             _readSize
-             _readStrategy
-             _reportReadErrors
-           ) ->
-          fmap
-            ( MkCommandLoggingP
-                _bufferLength
-                _bufferTimeout
-                _pollInterval
-                _readSize
-                _readStrategy
-            )
-            (f _reportReadErrors)
+      $ \f (MkCommandLoggingP a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkCommandLoggingP a1 a2 a3 a4 a5 b)
+          (f a6)
   {-# INLINE labelOptic #-}
 
 type CommandLoggingArgs = CommandLoggingP ConfigPhaseArgs

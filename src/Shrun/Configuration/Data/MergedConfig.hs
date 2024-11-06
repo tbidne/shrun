@@ -29,11 +29,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkMergedConfig _coreConfig _commands) ->
-          fmap
-            (`MkMergedConfig` _commands)
-            (f _coreConfig)
+      $ \f (MkMergedConfig a1 a2) ->
+        fmap
+          (\b -> MkMergedConfig b a2)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -45,11 +44,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkMergedConfig _coreConfig _commands) ->
-          fmap
-            (MkMergedConfig _coreConfig)
-            (f _commands)
+      $ \f (MkMergedConfig a1 a2) ->
+        fmap
+          (\b -> MkMergedConfig a1 b)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 defaultMergedConfig :: NESeq CommandP1 -> MergedConfig

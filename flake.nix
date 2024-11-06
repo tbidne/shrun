@@ -161,7 +161,7 @@
               let
                 drv = pkgs.writeShellApplication {
                   name = "format-yaml";
-                  text = "prettier -w ./*.yaml";
+                  text = "prettier -w -- **/*yaml";
                   runtimeInputs = [ pkgs.nodePackages.prettier ];
                 };
               in

@@ -87,24 +87,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkEnv
-             _config
-             _completedCommands
-             _consoleLogQueue
-             _anyError
-             _commands
-           ) ->
-          fmap
-            ( \config' ->
-                MkEnv
-                  config'
-                  _completedCommands
-                  _consoleLogQueue
-                  _anyError
-                  _commands
-            )
-            (f _config)
+      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkEnv b a2 a3 a4 a5)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -116,24 +102,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkEnv
-             _config
-             _completedCommands
-             _consoleLogQueue
-             _anyError
-             _commands
-           ) ->
-          fmap
-            ( \completedCommands' ->
-                MkEnv
-                  _config
-                  completedCommands'
-                  _consoleLogQueue
-                  _anyError
-                  _commands
-            )
-            (f _completedCommands)
+      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkEnv a1 b a3 a4 a5)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -145,24 +117,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkEnv
-             _config
-             _completedCommands
-             _consoleLogQueue
-             _anyError
-             _commands
-           ) ->
-          fmap
-            ( \consoleLogQueue' ->
-                MkEnv
-                  _config
-                  _completedCommands
-                  consoleLogQueue'
-                  _anyError
-                  _commands
-            )
-            (f _consoleLogQueue)
+      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkEnv a1 a2 b a4 a5)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -174,24 +132,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkEnv
-             _config
-             _completedCommands
-             _consoleLogQueue
-             _anyError
-             _commands
-           ) ->
-          fmap
-            ( \anyError' ->
-                MkEnv
-                  _config
-                  _completedCommands
-                  _consoleLogQueue
-                  anyError'
-                  _commands
-            )
-            (f _anyError)
+      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 b a5)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance
@@ -203,22 +147,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         ( MkEnv
-             _config
-             _completedCommands
-             _consoleLogQueue
-             _anyError
-             _commands
-           ) ->
-          fmap
-            ( MkEnv
-                _config
-                _completedCommands
-                _consoleLogQueue
-                _anyError
-            )
-            (f _commands)
+      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 a4 b)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 instance HasTimeout (Env r) where

@@ -22,12 +22,27 @@ import Shrun.Prelude
 
 -- | Holds notification data.
 data ShrunNote = MkShrunNote
-  { summary :: UnlinedText,
-    body :: UnlinedText,
-    urgency :: UrgencyLevel,
-    timeout :: NotifyTimeout
+  { body :: UnlinedText,
+    summary :: UnlinedText,
+    timeout :: NotifyTimeout,
+    urgency :: UrgencyLevel
   }
   deriving stock (Eq, Show)
+
+instance
+  ( k ~ A_Lens,
+    a ~ UnlinedText,
+    b ~ UnlinedText
+  ) =>
+  LabelOptic "body" k ShrunNote ShrunNote a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkShrunNote a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkShrunNote b a2 a3 a4)
+          (f a1)
+  {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Lens,
@@ -38,27 +53,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkShrunNote _summary _body _urgency _timeout) ->
-          fmap
-            (\summary' -> MkShrunNote summary' _body _urgency _timeout)
-            (f _summary)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ UrgencyLevel,
-    b ~ UrgencyLevel
-  ) =>
-  LabelOptic "urgency" k ShrunNote ShrunNote a b
-  where
-  labelOptic =
-    lensVL
-      $ \f
-         (MkShrunNote _summary _body _urgency _timeout) ->
-          fmap
-            (\urgency' -> MkShrunNote _summary _body urgency' _timeout)
-            (f _urgency)
+      $ \f (MkShrunNote a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkShrunNote a1 b a3 a4)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -70,27 +68,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkShrunNote _summary _body _urgency _timeout) ->
-          fmap
-            (MkShrunNote _summary _body _urgency)
-            (f _timeout)
+      $ \f (MkShrunNote a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkShrunNote a1 a2 b a4)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Lens,
-    a ~ UnlinedText,
-    b ~ UnlinedText
+    a ~ UrgencyLevel,
+    b ~ UrgencyLevel
   ) =>
-  LabelOptic "body" k ShrunNote ShrunNote a b
+  LabelOptic "urgency" k ShrunNote ShrunNote a b
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkShrunNote _summary _body _urgency _timeout) ->
-          fmap
-            (\body' -> MkShrunNote _summary body' _urgency _timeout)
-            (f _body)
+      $ \f (MkShrunNote a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkShrunNote a1 a2 a3 b)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 -- | Exception for sending desktop notifications.

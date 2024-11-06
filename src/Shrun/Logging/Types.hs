@@ -70,11 +70,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkLog _cmd _msg _lvl _mode) ->
-          fmap
-            (\cmd' -> MkLog cmd' _msg _lvl _mode)
-            (f _cmd)
+      $ \f (MkLog a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkLog b a2 a3 a4)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -86,11 +85,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkLog _cmd _msg _lvl _mode) ->
-          fmap
-            (\msg' -> MkLog _cmd msg' _lvl _mode)
-            (f _msg)
+      $ \f (MkLog a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkLog a1 b a3 a4)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -102,11 +100,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkLog _cmd _msg _lvl _mode) ->
-          fmap
-            (\lvl' -> MkLog _cmd _msg lvl' _mode)
-            (f _lvl)
+      $ \f (MkLog a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkLog a1 a2 b a4)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -118,9 +115,8 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkLog _cmd _msg _lvl _mode) ->
-          fmap
-            (MkLog _cmd _msg _lvl)
-            (f _mode)
+      $ \f (MkLog a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkLog a1 a2 a3 b)
+          (f a4)
   {-# INLINE labelOptic #-}

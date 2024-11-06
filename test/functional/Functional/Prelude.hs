@@ -137,11 +137,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFuncEnv _coreEnv _logs _shrunNotes) ->
-          fmap
-            (\coreEnv' -> MkFuncEnv coreEnv' _logs _shrunNotes)
-            (f _coreEnv)
+      $ \f (MkFuncEnv a1 a2 a3) ->
+        fmap
+          (\b -> MkFuncEnv b a2 a3)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
@@ -153,11 +152,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFuncEnv _coreEnv _logs _shrunNotes) ->
-          fmap
-            (\logs' -> MkFuncEnv _coreEnv logs' _shrunNotes)
-            (f _logs)
+      $ \f (MkFuncEnv a1 a2 a3) ->
+        fmap
+          (\b -> MkFuncEnv a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -169,11 +167,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f
-         (MkFuncEnv _coreEnv _logs _shrunNotes) ->
-          fmap
-            (MkFuncEnv _coreEnv _logs)
-            (f _shrunNotes)
+      $ \f (MkFuncEnv a1 a2 a3) ->
+        fmap
+          (\b -> MkFuncEnv a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance HasTimeout FuncEnv where
