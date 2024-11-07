@@ -163,13 +163,11 @@ jobs:
       - name: Formatting
         run: |
           nix run .#format
-          nix run .#format-yaml
           git diff --exit-code --color=always
 
       - name: Lint
         run: |
           nix run .#lint
-          nix run .#lint-yaml
 
   release_osx:
     needs: [cabal, stack, nix, notify-tests, lint]

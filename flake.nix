@@ -130,6 +130,11 @@
               wrapProgram $out/bin/stack --add-flags "--no-nix --system-ghc"
             '';
           };
+
+          pkgsMkDrv = {
+            inherit pkgs;
+            mkDrv = false;
+          };
         in
         {
           packages.default = mkPkg false;
@@ -153,35 +158,21 @@
           };
 
           apps = {
-            format = nix-hs-utils.format compilerPkgs;
-            lint = nix-hs-utils.lint compilerPkgs;
+            format = nix-hs-utils.mergeApps {
+              apps = [
+                (nix-hs-utils.format (compilerPkgs // pkgsMkDrv))
+                (nix-hs-utils.format-yaml pkgsMkDrv)
+              ];
+            };
+
+            lint = nix-hs-utils.mergeApps {
+              apps = [
+                (nix-hs-utils.lint (compilerPkgs // pkgsMkDrv))
+                (nix-hs-utils.lint-yaml pkgsMkDrv)
+              ];
+            };
+
             lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
-
-            format-yaml =
-              let
-                drv = pkgs.writeShellApplication {
-                  name = "format-yaml";
-                  text = "prettier -w -- **/*yaml";
-                  runtimeInputs = [ pkgs.nodePackages.prettier ];
-                };
-              in
-              {
-                type = "app";
-                program = "${drv}/bin/${drv.name}";
-              };
-
-            lint-yaml =
-              let
-                drv = pkgs.writeShellApplication {
-                  name = "lint-yaml";
-                  text = "yamllint .";
-                  runtimeInputs = [ pkgs.yamllint ];
-                };
-              in
-              {
-                type = "app";
-                program = "${drv}/bin/${drv.name}";
-              };
           };
         };
       systems = [
