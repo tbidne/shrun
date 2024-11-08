@@ -172,7 +172,7 @@
               ];
             };
 
-            lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
+            lint-refactor = nix-hs-utils.lint-refactor compilerPkgs;
           };
         };
       systems = [
