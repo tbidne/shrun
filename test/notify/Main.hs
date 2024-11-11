@@ -55,7 +55,7 @@ tests = do
     "Notify Tests"
     osTests
 
-osTests :: [TestTree]
+osTests :: List TestTree
 
 #if OSX
 osTests =
@@ -112,7 +112,7 @@ mkArgs system =
 data NotifyEnv = MkNotifyEnv
   { unNotifyEnv :: Env (),
     consoleQueue :: TBQueue (LogRegion ()),
-    logsRef :: IORef [Text]
+    logsRef :: IORef (List Text)
   }
 
 instance HasAnyError NotifyEnv where

@@ -107,7 +107,7 @@ getIntConfig fileName =
   concatDirs ["test", "integration", "toml", fileName]
     <> ".toml"
 
-concatDirs :: [FilePath] -> FilePath
+concatDirs :: List FilePath -> FilePath
 concatDirs = foldr combineFilePaths []
 
 osExt :: FilePath -> FilePath

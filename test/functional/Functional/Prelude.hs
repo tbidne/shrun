@@ -363,14 +363,14 @@ withTimeoutPrefix = (timeoutPrefix <>)
 withFinishedPrefix :: (Semigroup s, IsString s) => s -> s
 withFinishedPrefix = (finishedPrefix <>)
 
-withBaseArgs :: [String] -> [String]
+withBaseArgs :: List String -> List String
 withBaseArgs as =
   [ "-c",
     configPath
   ]
     <> as
 
-withNoConfig :: [String] -> [String]
+withNoConfig :: List String -> List String
 withNoConfig as =
   [ "--no-config"
   ]

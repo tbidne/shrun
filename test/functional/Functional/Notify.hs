@@ -19,7 +19,7 @@ import Shrun.Notify.MonadNotify
 specs :: TestTree
 specs = testGroup "Notify" notifyTests
 
-notifyTests :: [TestTree]
+notifyTests :: List TestTree
 notifyTests =
   [ notifySystem,
     notifyActionCommand,

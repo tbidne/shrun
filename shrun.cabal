@@ -167,7 +167,6 @@ library shrun-verifier
   exposed-modules: Test.Shrun.Verifier
   build-depends:
     , base
-    , optics-core
     , tasty-hunit
     , text
 

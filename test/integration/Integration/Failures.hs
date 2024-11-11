@@ -160,7 +160,7 @@ testReadStrategyFailure testArgs = testCase desc $ do
         ]
 
 #if OSX
-osTests :: [TestTree]
+osTests :: List TestTree
 osTests =
   [ osxNotifyConfigError,
     osxDBusError,
@@ -199,7 +199,7 @@ osxNotifySendError = testCase "OSX with notify-send throws exception" $ do
     Just ex -> exContains "Detected osx, but NotifySend is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
 #else
-osTests :: [TestTree]
+osTests :: List TestTree
 osTests =
   [ linuxNotifyConfigError,
     linuxAppleScriptError
@@ -228,7 +228,7 @@ linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
     Nothing -> assertFailure "Expected exception"
 #endif
 
-runCaptureError :: (Exception e) => [String] -> IORef [Text] -> IO (Maybe e)
+runCaptureError :: (Exception e) => List String -> IORef (List Text) -> IO (Maybe e)
 runCaptureError args logsRef =
   flip runConfigIO logsRef
     $ withArgs args (withEnv pure $> Nothing)

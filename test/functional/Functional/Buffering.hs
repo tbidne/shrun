@@ -84,7 +84,7 @@ assertLogsEq expectedOrdered results = case go expectedOrdered results' of
   Nothing -> pure ()
   Just errMsg -> assertFailure $ unpack errMsg
   where
-    results' = view #unResultText <$> results
+    results' = (.unResultText) <$> results
 
     go :: List Text -> List Text -> Maybe Text
     go [] [] = Nothing

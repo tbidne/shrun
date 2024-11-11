@@ -54,7 +54,7 @@ import Shrun.Configuration.Env qualified as Env
 import Shrun.Notify.DBus (MonadDBus (connectSession, notify))
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
-newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
+newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
   deriving
     ( Applicative,
       Functor,
@@ -69,13 +69,13 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef [Text]) IO a)
       MonadOptparse,
       MonadPathWriter,
       MonadIORef,
-      MonadReader (IORef [Text]),
+      MonadReader (IORef (List Text)),
       MonadSTM,
       MonadThrow
     )
-    via (ReaderT (IORef [Text])) IO
+    via (ReaderT (IORef (List Text))) IO
 
-runConfigIO :: ConfigIO a -> IORef [Text] -> IO a
+runConfigIO :: ConfigIO a -> IORef (List Text) -> IO a
 runConfigIO (MkConfigIO rdr) = runReaderT rdr
 
 -- HACK: Listing all the MonadPathReader methods is tedious and unnecessary,
@@ -120,7 +120,7 @@ instance MonadDBus ConfigIO where
   notify = error "notify: unimplemented"
 
 -- IO with no default config file
-newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
+newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
   deriving
     ( Applicative,
       MonadPathWriter,
@@ -137,10 +137,10 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef [Text]) IO a)
       MonadSTM,
       MonadThrow
     )
-    via (ReaderT (IORef [Text])) IO
+    via (ReaderT (IORef (List Text))) IO
   deriving (MonadDBus) via ConfigIO
 
-runNoConfigIO :: NoConfigIO a -> IORef [Text] -> IO a
+runNoConfigIO :: NoConfigIO a -> IORef (List Text) -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
 
 instance MonadPathReader NoConfigIO where
