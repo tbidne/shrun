@@ -24,7 +24,6 @@ module Shrun.Prelude
     onJust,
     (<<$>>),
     (<<&>>),
-    (.>),
     convertIntegral,
     unsafeConvertIntegral,
     neToList,
@@ -62,6 +61,7 @@ import Control.Applicative as X
     Applicative (liftA2, pure, (*>), (<*>)),
     (<**>),
   )
+import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
 import Control.Exception as X
   ( Exception (displayException, fromException),
@@ -123,7 +123,7 @@ import Data.Foldable as X
     length,
     traverse_,
   )
-import Data.Function as X (const, flip, id, ($), (&), (.))
+import Data.Function as X (const, flip, id, ($), (&))
 import Data.Functor as X
   ( Functor (fmap),
     ($>),
@@ -347,13 +347,6 @@ infixl 4 <<$>>
 (<<&>>) :: (Functor f, Functor g) => f (g a) -> (a -> b) -> f (g b)
 (<<&>>) = flip (<<$>>)
 {-# INLINE (<<&>>) #-}
-
--- | Flipped '(.)'
-(.>) :: (a -> b) -> (b -> c) -> a -> c
-f .> g = g . f
-{-# INLINE (.>) #-}
-
-infixr 9 .>
 
 #if !MIN_VERSION_base(4, 20, 0)
 

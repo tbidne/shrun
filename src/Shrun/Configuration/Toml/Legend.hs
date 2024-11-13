@@ -88,9 +88,11 @@ decodeVal = getFieldWith (decodeArray <|> fmap NESeq.singleton decodeNonEmptyTex
 
 decodeArray :: Decoder (NESeq Text)
 decodeArray =
-  tomlDecoder >>= traverse testNE .> \case
-    Just xs -> pure $ NESeq.fromList xs
-    Nothing -> fail "Unexpected empty val"
+  tomlDecoder
+    >>= ( traverse testNE >>> \case
+            Just xs -> pure $ NESeq.fromList xs
+            Nothing -> fail "Unexpected empty val"
+        )
 
 decodeNonEmptyText :: Decoder Text
 decodeNonEmptyText =
