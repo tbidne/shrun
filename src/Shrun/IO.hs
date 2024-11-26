@@ -12,6 +12,7 @@ where
 import Data.ByteString.Lazy qualified as BSL
 import Data.Time.Relative (RelativeTime)
 import Effects.Concurrent.Thread (microsleep)
+import Effects.Process.Typed (ProcessConfig)
 import Effects.Process.Typed qualified as P
 import Effects.Time (MonadTime (getMonotonicTime), withTiming)
 import Shrun.Configuration.Data.CommandLogging
@@ -248,14 +249,13 @@ tryCommandStream ::
   -- with an error, even if the error message itself is blank.
   m (Maybe Stderr)
 tryCommandStream logFn cmd = do
-  let outSpec = P.createPipe
-      errSpec = P.createPipe
+  let initToConfig :: Maybe Text -> ProcessConfig () Handle Handle
+      initToConfig =
+        P.setStderr P.createPipe
+          . P.setStdout P.createPipe
+          . commandToProcess cmd
 
-  procConfig <-
-    asks getInit
-      <&> P.setStderr outSpec
-      . P.setStdout errSpec
-      . commandToProcess cmd
+  procConfig <- initToConfig <$> asks getInit
 
   (exitCode, finalData) <-
     P.withProcessWait procConfig (streamOutput logFn cmd)
