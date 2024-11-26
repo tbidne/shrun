@@ -7,7 +7,6 @@ module Shrun.Configuration.Data.Notify.Timeout
 where
 
 import Data.Bits (toIntegralSized)
-import Data.String (IsString)
 import Data.Word (Word16)
 import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Default (Default (def))

@@ -172,10 +172,15 @@ fileLogModeParser = Utils.withDisabledParser mainParser "file-log-mode"
           ( mconcat
               [ OA.long "file-log-mode",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(append | write)"
+                OA.metavar FileMode.fileModeStr
               ]
           )
-    helpTxt = "Mode in which to open the log file. Defaults to write."
+    helpTxt =
+      mconcat
+        [ "Mode in which to open the log file. Defaults to write. The 'rename'",
+          "option will rename the requested log file if there is a collision ",
+          "e.g. '-f shrun.log' will become 'shrun (1).log'."
+        ]
 
 fileLogSizeModeParser :: Parser (WithDisabled FileSizeMode)
 fileLogSizeModeParser = Utils.withDisabledParser mainParser "file-log-size-mode"

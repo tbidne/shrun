@@ -146,7 +146,7 @@ import Data.Proxy as X (Proxy (Proxy))
 import Data.Semigroup as X (Semigroup ((<>)))
 import Data.Sequence as X (Seq ((:<|), (:|>)))
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
-import Data.String as X (String)
+import Data.String as X (IsString, String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
 import Data.Traversable as X (Traversable (sequenceA, traverse), for)
@@ -198,6 +198,7 @@ import Effects.FileSystem.PathWriter as X
     removeDirectoryIfExists,
     removeFile,
     removeFileIfExists,
+    removeFileIfExists_,
   )
 import Effects.IORef as X
   ( IORef,

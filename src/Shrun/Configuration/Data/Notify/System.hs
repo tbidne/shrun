@@ -23,7 +23,6 @@ module Shrun.Configuration.Data.Notify.System
 where
 
 import DBus.Client (Client)
-import Data.String (IsString)
 import Data.Text qualified as T
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase

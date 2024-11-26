@@ -3,7 +3,6 @@ module Unit.Shrun.Logging.Formatting (tests) where
 
 import Data.Functor.Identity (Identity (Identity))
 import Data.List qualified as L
-import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Time (midday)
 import Data.Time.LocalTime (utc)

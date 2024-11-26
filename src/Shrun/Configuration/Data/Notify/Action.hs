@@ -6,7 +6,6 @@ module Shrun.Configuration.Data.Notify.Action
   )
 where
 
-import Data.String (IsString)
 import Data.Text qualified as T
 import Shrun.Prelude
 

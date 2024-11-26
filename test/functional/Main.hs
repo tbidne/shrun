@@ -70,7 +70,7 @@ teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
       let cwd = testArgs ^. #tmpDir
 
       -- see NOTE: [Test cleanup]
-      PW.removeDirectoryRecursiveIfExists cwd
+      PW.removeDirectoryRecursiveIfExists_ cwd
 
     doNothing =
       putStrLn

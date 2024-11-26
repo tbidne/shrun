@@ -65,7 +65,6 @@ module Functional.Prelude
   )
 where
 
-import Data.String as X (IsString)
 import Data.Text qualified as T
 import Data.Typeable (typeRep)
 import FileSystem.OsPath as X (combineFilePaths, unsafeDecode)

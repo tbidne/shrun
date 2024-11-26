@@ -13,7 +13,6 @@ module Shrun.Configuration.Data.ConsoleLogging.TimerFormat
   )
 where
 
-import Data.String (IsString)
 import Data.Text qualified as T
 import Data.Time.Relative
   ( Format (MkFormat),

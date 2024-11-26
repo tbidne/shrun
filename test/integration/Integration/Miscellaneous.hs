@@ -5,7 +5,6 @@
 module Integration.Miscellaneous (specs) where
 
 import Data.Sequence.NonEmpty qualified as NESeq
-import Data.String (IsString)
 import Data.Text qualified as T
 import Integration.Prelude
 import Integration.Utils
@@ -22,6 +21,9 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   )
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (DeleteOnSuccessOn),
+  )
+import Shrun.Configuration.Data.FileLogging.FileMode
+  ( FileMode (FileModeRename),
   )
 import Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode (FileSizeModeNothing),
@@ -238,7 +240,8 @@ lineTruncDetect = testPropertyNamed desc "lineTruncDetect"
 
     expected =
       [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 86,
-        #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 86
+        #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 86,
+        #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeRename
       ]
 
 testFileSizeModeNothing :: TestTree

@@ -10,6 +10,11 @@ Note that PVP is applied to the _application_, **not** the library. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
+## [Unreleased]
+### Added
+* Add `--file-log-mode rename`, that renames the requested log file if it
+  already exists. E.g. `-f shrun.log` becomes `shrun (1).log`.
+
 ## [0.9.1] -- 2024-07-27
 ### Changed
 * Updated blessed GHC to 9.8.2.

@@ -23,6 +23,9 @@ tests args =
       [ fileLogCommandNameTruncN args,
         fileLogDeleteOnSuccess args,
         fileLogLineTruncN args,
+        fileLogModeAppend args,
+        fileLogModeRename args,
+        fileLogModeWrite args,
         fileLogStripControlAll args,
         fileLogStripControlNone args,
         fileLogStripControlSmart args
@@ -183,6 +186,153 @@ fileLogLineTruncN testArgs =
       [ withCommandPrefix "echo 'some ridiculously long command i mean is this really necessary' && sleep 2" "Star...",
         withCommandPrefix "echo 'some ridiculously long command i mean is this really necessary' && sleep 2" "some..."
       ]
+
+-- NOTE: File log mode tests are not configuration.md examples due to
+-- simplicity.
+
+fileLogModeAppend :: IO TestArgs -> ReadStrategyTestParams
+fileLogModeAppend testArgs =
+  ReadStrategyTestParametricSetup
+    "Runs file-log-mode append"
+    ( \xs -> do
+        run xs
+        run xs
+        run xs
+    )
+    ( do
+        tmpDir <- view #tmpDir <$> testArgs
+        let outFile = tmpDir </> [osp|fileLogModeAppend.log|]
+            outFileStr = unsafeDecode outFile
+            args =
+              withNoConfig
+                [ "--file-log",
+                  outFileStr,
+                  "--file-log-mode",
+                  "append",
+                  "sleep 2"
+                ]
+        pure (args, tmpDir)
+    )
+    ( \(resultsConsole, tmpDir) -> do
+        V.verifyExpected resultsConsole expectedConsole
+
+        let log = tmpDir </> [osp|fileLogModeAppend.log|]
+
+        exists <- doesFileExist log
+        assertBool ("File should exist: " <> decodeLenient log) exists
+        resultsFile <- readLogFile log
+        V.verifyExpected resultsFile expectedConsole
+
+        -- because we are appending 3 lines to the file 3 times
+        9 @=? length resultsFile
+
+        let log2 = tmpDir </> [osp|fileLogModeAppend (1).log|]
+            log3 = tmpDir </> [osp|fileLogModeAppend (2).log|]
+
+        for_ [log2, log3] $ \badLog -> do
+          badExists <- doesFileExist badLog
+          assertBool ("File should not exist: " <> decodeLenient badLog) (not badExists)
+    )
+  where
+    expectedConsole =
+      [ withSuccessPrefix "sleep 2",
+        finishedPrefix
+      ]
+
+fileLogModeRename :: IO TestArgs -> ReadStrategyTestParams
+fileLogModeRename testArgs =
+  ReadStrategyTestParametricSetup
+    "Runs file-log-mode rename"
+    ( \xs -> do
+        run xs
+        run xs
+        run xs
+    )
+    ( do
+        tmpDir <- view #tmpDir <$> testArgs
+        let outFile = tmpDir </> [osp|fileLogModeRename.log|]
+            outFileStr = unsafeDecode outFile
+            args =
+              withNoConfig
+                [ "--file-log",
+                  outFileStr,
+                  "--file-log-mode",
+                  "rename",
+                  "sleep 2"
+                ]
+        pure (args, tmpDir)
+    )
+    ( \(resultsConsole, tmpDir) -> do
+        V.verifyExpected resultsConsole expectedConsole
+
+        let log1 = tmpDir </> [osp|fileLogModeRename.log|]
+            log2 = tmpDir </> [osp|fileLogModeRename (1).log|]
+            log3 = tmpDir </> [osp|fileLogModeRename (2).log|]
+
+        for_ [log1, log2, log3] $ \log -> do
+          exists <- doesFileExist log
+          assertBool ("File should exist: " <> decodeLenient log) exists
+
+          resultsFile <- readLogFile log
+          V.verifyExpected resultsFile expectedFile
+
+        let badLog = tmpDir </> [osp|fileLogModeRename (3).log|]
+        exists <- doesFileExist badLog
+        assertBool ("File should not exist: " <> decodeLenient badLog) (not exists)
+    )
+  where
+    expectedConsole =
+      [ withSuccessPrefix "sleep 2",
+        finishedPrefix
+      ]
+    expectedFile = expectedConsole
+
+fileLogModeWrite :: IO TestArgs -> ReadStrategyTestParams
+fileLogModeWrite testArgs =
+  ReadStrategyTestParametricSetup
+    "Runs file-log-mode write"
+    ( \xs -> do
+        run xs
+        run xs
+        run xs
+    )
+    ( do
+        tmpDir <- view #tmpDir <$> testArgs
+        let outFile = tmpDir </> [osp|fileLogModeWrite.log|]
+            outFileStr = unsafeDecode outFile
+            args =
+              withNoConfig
+                [ "--file-log",
+                  outFileStr,
+                  "--file-log-mode",
+                  "write",
+                  "sleep 2"
+                ]
+        pure (args, tmpDir)
+    )
+    ( \(resultsConsole, tmpDir) -> do
+        V.verifyExpected resultsConsole expectedConsole
+
+        let log = tmpDir </> [osp|fileLogModeWrite.log|]
+
+        exists <- doesFileExist log
+        assertBool ("File should exist: " <> decodeLenient log) exists
+        resultsFile <- readLogFile log
+        V.verifyExpected resultsFile expectedFile
+
+        let log2 = tmpDir </> [osp|fileLogModeWrite (1).log|]
+            log3 = tmpDir </> [osp|fileLogModeWrite (2).log|]
+
+        for_ [log2, log3] $ \badLog -> do
+          badExists <- doesFileExist badLog
+          assertBool ("File should not exist: " <> decodeLenient badLog) (not badExists)
+    )
+  where
+    expectedConsole =
+      [ withSuccessPrefix "sleep 2",
+        finishedPrefix
+      ]
+    expectedFile = expectedConsole
 
 fileLogStripControlAll :: IO TestArgs -> ReadStrategyTestParams
 fileLogStripControlAll testArgs =

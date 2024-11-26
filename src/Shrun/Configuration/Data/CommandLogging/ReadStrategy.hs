@@ -9,7 +9,6 @@ module Shrun.Configuration.Data.CommandLogging.ReadStrategy
   )
 where
 
-import Data.String (IsString)
 import Shrun.Data.Command (CommandP1)
 import Shrun.Prelude
 

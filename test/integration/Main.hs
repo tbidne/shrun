@@ -49,4 +49,4 @@ teardown testArgs = guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
       -- NOTE: [Test cleanup]
       --
       -- Don't delete rootTmp because other tests may be using it.
-      PW.removeDirectoryRecursiveIfExists cwd
+      PW.removeDirectoryRecursiveIfExists_ cwd

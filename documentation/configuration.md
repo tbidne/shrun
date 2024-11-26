@@ -513,9 +513,9 @@ vs.
 
 #### File Log Mode
 
-**Arg:** `--file-log-mode (append | write)`
+**Arg:** `--file-log-mode (append | rename | write)`
 
-**Description:** Mode in which to open the log file. Defaults to write.
+**Description:** Mode in which to open the log file. Can be `write` (the default), `append`, or `rename`. The `rename` option will rename the requested log file if there is a collision e.g. `-f shrun.log` will become `shrun (1).log`.
 
 #### File Log Size Mode
 

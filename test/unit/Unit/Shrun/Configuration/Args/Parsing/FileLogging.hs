@@ -5,8 +5,12 @@ module Unit.Shrun.Configuration.Args.Parsing.FileLogging (tests) where
 
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.FileLogging (FileLoggingArgs)
-import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeAppend, FileModeWrite))
-import Shrun.Configuration.Data.FileLogging.FilePathDefault (FilePathDefault (FPDefault, FPManual))
+import Shrun.Configuration.Data.FileLogging.FileMode
+  ( FileMode (FileModeAppend, FileModeRename, FileModeWrite),
+  )
+import Shrun.Configuration.Data.FileLogging.FilePathDefault
+  ( FilePathDefault (FPDefault, FPManual),
+  )
 import Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode
       ( FileSizeModeDelete,
@@ -17,7 +21,9 @@ import Shrun.Configuration.Data.FileLogging.FileSizeMode
 import Shrun.Configuration.Data.StripControl
   ( StripControl (StripControlAll, StripControlNone, StripControlSmart),
   )
-import Shrun.Configuration.Data.Truncation (LineTruncation (Detected, Undetected))
+import Shrun.Configuration.Data.Truncation
+  ( LineTruncation (Detected, Undetected),
+  )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
@@ -224,6 +230,7 @@ modeTests =
   testGroup
     "--file-log-mode"
     [ testModeAppend,
+      testModeRename,
       testModeWrite,
       testNoMode
     ]
@@ -236,6 +243,15 @@ testModeAppend =
     desc = "Parses --file-log-mode append"
     argList = ["--file-log-mode", "append", "command"]
     expected = updateDefFileLogArgs (#file % #mode) FileModeAppend
+
+testModeRename :: TestTree
+testModeRename =
+  testPropertyNamed desc "testModeRename"
+    $ U.verifyResult argList expected
+  where
+    desc = "Parses --file-log-mode rename"
+    argList = ["--file-log-mode", "rename", "command"]
+    expected = updateDefFileLogArgs (#file % #mode) FileModeRename
 
 testModeWrite :: TestTree
 testModeWrite =

@@ -15,6 +15,7 @@ module Shrun.Utils
     foldMap1,
 
     -- * Misc Utils
+    fmtUnrecognizedError,
     parseByteText,
     whileM_,
     whenLeft,
@@ -319,3 +320,26 @@ readStripUnderscores t = case TR.readEither s of
     noUnderscores = T.replace "_" "" t
     s = T.unpack noUnderscores
 {-# INLINEABLE readStripUnderscores #-}
+
+-- | Provides a standard format for "unrecognized param" failures.
+fmtUnrecognizedError ::
+  ( IsString a,
+    Monoid a
+  ) =>
+  -- | Field name.
+  a ->
+  -- | Valid values.
+  a ->
+  -- | Bad unrecognized value.
+  a ->
+  -- | Error message.
+  a
+fmtUnrecognizedError fieldName validVals badValue =
+  mconcat
+    [ "Unrecognized ",
+      fieldName,
+      ": '",
+      badValue,
+      "'. Expected one of ",
+      validVals
+    ]

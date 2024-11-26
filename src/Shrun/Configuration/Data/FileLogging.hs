@@ -22,8 +22,10 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Text qualified as T
-import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile))
+import Data.Word (Word16)
+import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile), die)
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
+import FileSystem.OsPath (encodeThrowM)
 import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
@@ -40,6 +42,7 @@ import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode
       ( FileModeAppend,
+        FileModeRename,
         FileModeWrite
       ),
   )
@@ -74,6 +77,7 @@ import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
+import System.OsPath qualified as OsPath
 
 -- | Switch for deleting the log file upon success.
 data DeleteOnSuccessSwitch
@@ -498,7 +502,8 @@ withFileLoggingEnv ::
     MonadPathReader m,
     MonadPathWriter m,
     MonadSTM m,
-    MonadTerminal m
+    MonadTerminal m,
+    MonadThrow m
   ) =>
   Maybe FileLoggingMerged ->
   (Maybe FileLoggingEnv -> m a) ->
@@ -531,7 +536,8 @@ withMLogging ::
     MonadPathReader m,
     MonadPathWriter m,
     MonadSTM m,
-    MonadTerminal m
+    MonadTerminal m,
+    MonadThrow m
   ) =>
   Maybe FileLoggingMerged ->
   (MLogging -> m a) ->
@@ -540,8 +546,10 @@ withMLogging ::
 withMLogging Nothing onLogging = onLogging Nothing
 -- 2. Use the default path.
 withMLogging (Just fileLogging) onLogging = do
-  let ioMode = case fileLogging ^. #file % #mode of
+  let fileMode = fileLogging ^. #file % #mode
+      ioMode = case fileMode of
         FileModeAppend -> AppendMode
+        FileModeRename -> WriteMode
         FileModeWrite -> WriteMode
 
   fp <- case fileLogging ^. #file % #path of
@@ -553,19 +561,19 @@ withMLogging (Just fileLogging) onLogging = do
       pure fp
     FPManual fp -> pure fp
 
-  ensureFileExists fp
-  handleLogFileSize (fileLogging ^. #file % #sizeMode) fp
+  uniqFp <- createLogFile fileMode fp
+  handleLogFileSize (fileLogging ^. #file % #sizeMode) uniqFp
   fileQueue <- newTBQueueA 1000
 
   result <-
-    withBinaryFile fp ioMode $ \h ->
+    withBinaryFile uniqFp ioMode $ \h ->
       onLogging (Just (fileLogging, h, fileQueue))
 
   -- If the above command succeeded and deleteOnSuccess is true, delete the
   -- log file. Otherwise we will not reach here due to withBinaryFile
   -- rethrowing an exception, so the file will not be deleted.
   when (fileLogging ^. #deleteOnSuccess % #boolIso)
-    $ removeFileIfExists fp
+    $ removeFileIfExists_ uniqFp
 
   pure result
 {-# INLINEABLE withMLogging #-}
@@ -615,17 +623,57 @@ handleLogFileSize fileSizeMode fp = do
     toDouble = fromInteger
 {-# INLINEABLE handleLogFileSize #-}
 
-ensureFileExists ::
+-- | Ensures the given path exists. If the path already exists and the file
+-- mode is FileModeRename, we rename the new path sequentially, to avoid
+-- a collision.
+createLogFile ::
   ( HasCallStack,
     MonadFileWriter m,
-    MonadPathReader m
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadThrow m
+  ) =>
+  -- | Mode in which to open the new log file.
+  FileMode ->
+  -- | Full path of the desired file.
+  OsPath ->
+  m OsPath
+createLogFile mode fp = do
+  exists <- doesFileExist fp
+
+  if exists
+    then case mode of
+      FileModeRename -> do
+        newFp <- uniqName fp
+        writeFileUtf8 newFp "" $> newFp
+      _ -> pure fp
+    else writeFileUtf8 fp "" $> fp
+{-# INLINEABLE createLogFile #-}
+
+uniqName ::
+  forall m.
+  ( HasCallStack,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadThrow m
   ) =>
   OsPath ->
-  m ()
-ensureFileExists fp = do
-  exists <- doesFileExist fp
-  unless exists $ writeFileUtf8 fp ""
-{-# INLINEABLE ensureFileExists #-}
+  m OsPath
+uniqName fp = go 1
+  where
+    (base, ext) = OsPath.splitExtension fp
+
+    appendNum c = base <> [osp| (|] <> c <> [osp|)|] <> ext
+
+    go :: Word16 -> m OsPath
+    go !counter
+      | counter == maxBound = die $ "Failed renaming file: " <> show fp
+      | otherwise = do
+          newFp <- appendNum <$> encodeThrowM (show counter)
+          b <- doesFileExist newFp
+          if b
+            then go (counter + 1)
+            else pure newFp
 
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgState = getXdgState [osp|shrun|]
