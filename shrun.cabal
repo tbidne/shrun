@@ -22,17 +22,17 @@ extra-source-files:
   cabal.ghc982.project
   cabal.ghc982.project.freeze
   cabal.project
-  CHANGELOG.md
-  configuration.md
+  documentation/*.md
   examples/*.toml
   examples/bashrc
   examples/demo.gif
-  faq.md
   LICENSE
   README.md
   test/functional/scripts/*.sh
   test/integration/toml/*.toml
   test/integration/toml/osx/*.toml
+
+extra-doc-files:    CHANGELOG.md
 
 source-repository head
   type:     git
@@ -168,7 +168,7 @@ library shrun-verifier
   exposed-modules: Test.Shrun.Verifier
   build-depends:
     , base
-    , tasty-hunit
+    , tasty-hunit  >=0.9 && <0.11
     , text
 
   hs-source-dirs:  test/verifier
@@ -216,7 +216,7 @@ test-suite unit
     , si-bytes
     , tasty                 >=1.1.0.3 && <1.6
     , tasty-hedgehog        >=1.2.0.0 && <1.5
-    , tasty-hunit           >=0.9     && <0.11
+    , tasty-hunit
     , text
     , time                  >=1.9.3   && <1.15
     , unordered-containers
