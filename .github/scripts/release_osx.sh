@@ -2,7 +2,7 @@
 
 set -e
 
-shrun_vers="0.9.1"
+shrun_vers="0.9.2"
 
 # strip tab and/or spaces from output
 apple_vers=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' \t')

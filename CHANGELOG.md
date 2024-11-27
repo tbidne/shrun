@@ -254,6 +254,7 @@ for versions < 1.
 
 * First version. Released on an unsuspecting world.
 
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.9.1...main
 [0.9.1]: https://github.com/tbidne/shrun/compare/0.9...0.9.1
 [0.9]: https://github.com/tbidne/shrun/compare/0.8.1...0.9
 [0.8.1]: https://github.com/tbidne/shrun/compare/0.8...0.8.1

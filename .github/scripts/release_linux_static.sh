@@ -2,7 +2,7 @@
 
 set -e
 
-shrun_vers="0.9.1"
+shrun_vers="0.9.2"
 
 dir=$1
 
