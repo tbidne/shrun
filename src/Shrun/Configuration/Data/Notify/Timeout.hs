@@ -12,6 +12,7 @@ import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import Shrun.Utils qualified as Utils
 import TOML (Value (Integer, String))
 
 -- | Determines notification timeout.
@@ -37,19 +38,39 @@ instance DecodeTOML NotifyTimeout where
     String bad -> invalidValue strErr (String bad)
     Integer i -> case toIntegralSized i of
       Just i' -> pure $ NotifyTimeoutSeconds i'
-      Nothing -> invalidValue tooLargeErr (Integer i)
+      Nothing -> invalidValue (tooLargeErr Nothing) (Integer i)
     badTy -> typeMismatch badTy
     where
-      tooLargeErr = "Timeout integer too large. Max is: " <> showt maxW16
       strErr = "Unexpected timeout. Only valid string is 'never'."
-      maxW16 = maxBound @Word16
+
+tooLargeErr :: Maybe Integer -> Text
+tooLargeErr Nothing = "Timeout integer too large. Max is: " <> showt maxW16
+tooLargeErr (Just i) =
+  mconcat
+    [ "Timeout integer '",
+      showt i,
+      "' too large. Max is: ",
+      showt maxW16
+    ]
+
+maxW16 :: Word16
+maxW16 = maxBound
 
 -- | Parses 'NotifyTimeout'.
 parseNotifyTimeout :: (MonadFail m) => m Text -> m NotifyTimeout
 parseNotifyTimeout getTxt =
   getTxt >>= \case
     "never" -> pure NotifyTimeoutNever
-    other -> NotifyTimeoutSeconds <$> U.readStripUnderscores other
+    other -> case U.readStripUnderscores @_ @Integer other of
+      Just nInt -> case toIntegralSized nInt of
+        Just nW16 -> pure $ NotifyTimeoutSeconds nW16
+        Nothing -> fail (unpack $ tooLargeErr (Just nInt))
+      Nothing ->
+        fail
+          $ Utils.fmtUnrecognizedError
+            "notify timeout"
+            notifyTimeoutStr
+            (unpack other)
 {-# INLINEABLE parseNotifyTimeout #-}
 
 -- | Available 'NotifyTimeout' strings.

@@ -6,8 +6,8 @@ module Shrun.Configuration.Data.Notify.Action
   )
 where
 
-import Data.Text qualified as T
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Determines for which actions we should send notifications.
 data NotifyAction
@@ -29,14 +29,12 @@ parseNotifyAction getTxt =
     "final" -> pure NotifyFinal
     "command" -> pure NotifyCommand
     "all" -> pure NotifyAll
-    other ->
+    bad ->
       fail
-        $ mconcat
-          [ "Unrecognized notify action: '",
-            T.unpack other,
-            "'. Expected one of ",
-            notifyActionStr
-          ]
+        $ Utils.fmtUnrecognizedError
+          "notify action"
+          notifyActionStr
+          (unpack bad)
 {-# INLINEABLE parseNotifyAction #-}
 
 -- | Available 'NotifyAction' strings.

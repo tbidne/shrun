@@ -23,7 +23,6 @@ module Shrun.Configuration.Data.Notify.System
 where
 
 import DBus.Client (Client)
-import Data.Text qualified as T
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -37,6 +36,7 @@ import Shrun.Configuration.Data.WithDisabled
   )
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Maps DBus to its phased param.
 type DBusF :: ConfigPhase -> Type
@@ -113,14 +113,12 @@ parseNotifySystem getTxt =
     "dbus" -> pure $ DBus ()
     "notify-send" -> pure NotifySend
     "apple-script" -> pure AppleScript
-    other ->
+    bad ->
       fail
-        $ mconcat
-          [ "Unrecognized notify system: '",
-            T.unpack other,
-            "'. Expected one of ",
-            notifySystemStr
-          ]
+        $ Utils.fmtUnrecognizedError
+          "notify system"
+          notifySystemStr
+          (unpack bad)
 {-# INLINEABLE parseNotifySystem #-}
 
 -- | Available 'NotifySystem' strings.

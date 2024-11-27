@@ -11,6 +11,7 @@ where
 
 import Shrun.Data.Command (CommandP1)
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Different read strategies for simplicity vs. potential prettier
 -- formatting.
@@ -42,14 +43,12 @@ parseReadStrategy getTxt =
   getTxt >>= \case
     "block" -> pure ReadBlock
     "block-line-buffer" -> pure ReadBlockLineBuffer
-    other ->
+    bad ->
       fail
-        $ mconcat
-          [ "Unrecognized read strategy: '",
-            unpack other,
-            "'. Expected one of ",
-            readStrategyStr
-          ]
+        $ Utils.fmtUnrecognizedError
+          "read strategy"
+          readStrategyStr
+          (unpack bad)
 {-# INLINEABLE parseReadStrategy #-}
 
 -- | Available 'ReadStrategy' strings.

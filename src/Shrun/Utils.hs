@@ -330,16 +330,17 @@ fmtUnrecognizedError ::
   a ->
   -- | Valid values.
   a ->
-  -- | Bad unrecognized value.
+  -- | Bad unrecognized value or error message.
   a ->
   -- | Error message.
   a
 fmtUnrecognizedError fieldName validVals badValue =
   mconcat
-    [ "Unrecognized ",
+    [ "Error parsing ",
       fieldName,
       ": '",
       badValue,
       "'. Expected one of ",
-      validVals
+      validVals,
+      "."
     ]

@@ -27,6 +27,7 @@ import Data.Time.Relative qualified as RT
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Determines how to format the timer.
 data TimerFormat
@@ -50,7 +51,12 @@ parseTimerFormat getTxt =
     "digital_full" -> pure DigitalFull
     "prose_compact" -> pure ProseCompact
     "prose_full" -> pure ProseFull
-    bad -> fail $ "Unrecognized timer-format: " <> unpack bad
+    bad ->
+      fail
+        $ Utils.fmtUnrecognizedError
+          "timer format"
+          timerFormatStr
+          (unpack bad)
 {-# INLINEABLE parseTimerFormat #-}
 
 -- | Available 'TimerFormat' strings.

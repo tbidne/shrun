@@ -101,7 +101,7 @@ lineTruncParser = Utils.withDisabledParser mainParser "console-log-line-trunc"
           ( mconcat
               [ OA.long "console-log-line-trunc",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(NATURAL | detect)"
+                OA.metavar Trunc.lineTruncStr
               ]
           )
     helpTxt =
@@ -124,7 +124,7 @@ stripControlParser =
           ( mconcat
               [ OA.long "console-log-strip-control",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(all | smart | none)"
+                OA.metavar StripControl.stripControlStr
               ]
           )
     helpTxt =

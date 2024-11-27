@@ -3,11 +3,13 @@ module Shrun.Configuration.Data.StripControl
     parseStripControl,
     ConsoleLogStripControl,
     FileLogStripControl,
+    stripControlStr,
   )
 where
 
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 data StripControlType
   = StripControlConsoleLog
@@ -41,13 +43,16 @@ parseStripControl getTxt =
     "smart" -> pure StripControlSmart
     bad ->
       fail
-        $ mconcat
-          [ "Wanted one of (all|none|smart), received: ",
-            unpack bad
-          ]
+        $ Utils.fmtUnrecognizedError
+          "strip control"
+          stripControlStr
+          (unpack bad)
 
 instance Default ConsoleLogStripControl where
   def = StripControlSmart
 
 instance Default FileLogStripControl where
   def = StripControlAll
+
+stripControlStr :: String
+stripControlStr = "(all | none | smart)"

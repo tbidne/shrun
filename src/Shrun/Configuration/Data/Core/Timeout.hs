@@ -5,11 +5,13 @@ module Shrun.Configuration.Data.Core.Timeout
   ( Timeout (..),
     parseTimeout,
     parseTimeoutStr,
+    timeoutStr,
   )
 where
 
 import Data.Time.Relative qualified as RT
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Represents a timeout, which is a non-negative integer.
 newtype Timeout = MkTimeout
@@ -45,7 +47,15 @@ parseTimeout getNat getTxt =
 parseTimeoutStr :: (MonadFail f) => Text -> f Timeout
 parseTimeoutStr txt = case RT.fromString str of
   Right n -> pure $ MkTimeout $ RT.toSeconds n
-  Left err -> fail $ "Error reading time string: " <> err
+  Left bad ->
+    fail
+      $ Utils.fmtUnrecognizedError
+        "timeout"
+        timeoutStr
+        bad
   where
     str = unpack txt
 {-# INLINEABLE parseTimeoutStr #-}
+
+timeoutStr :: String
+timeoutStr = "(NATURAL | STRING)"

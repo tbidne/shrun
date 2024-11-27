@@ -62,7 +62,7 @@ timeoutParser = Utils.withDisabledParser mainParser "timeout"
               [ OA.long "timeout",
                 OA.short 't',
                 Utils.mkHelp helpTxt,
-                OA.metavar "(NATURAL | STRING)"
+                OA.metavar Timeout.timeoutStr
               ]
           )
     helpTxt =

@@ -137,7 +137,7 @@ lineTruncParser = Utils.withDisabledParser mainParser "file-log-line-trunc"
           ( mconcat
               [ OA.long "file-log-line-trunc",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(NATURAL | detect)"
+                OA.metavar Trunc.lineTruncStr
               ]
           )
     helpTxt = "Like --console-log-line-trunc, but for --file-log."
@@ -153,7 +153,7 @@ fileLogStripControlParser =
           ( mconcat
               [ OA.long "file-log-strip-control",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(all | smart | none)"
+                OA.metavar StripControl.stripControlStr
               ]
           )
     helpTxt =
@@ -192,7 +192,7 @@ fileLogSizeModeParser = Utils.withDisabledParser mainParser "file-log-size-mode"
           ( mconcat
               [ OA.long "file-log-size-mode",
                 Utils.mkHelp helpTxt,
-                OA.metavar FileSizeMode.expectedStr
+                OA.metavar FileSizeMode.fileSizeModeStr
               ]
           )
     helpTxt =

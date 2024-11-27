@@ -1,7 +1,7 @@
 module Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode (..),
     parseFileSizeMode,
-    expectedStr,
+    fileSizeModeStr,
   )
 where
 
@@ -12,6 +12,7 @@ import Data.Text qualified as T
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import Shrun.Utils qualified as Utils
 
 -- | Determines what to do if the log file surpasses the given size
 -- threshold.
@@ -39,13 +40,10 @@ parseFileSizeMode getTxt = do
         "delete" -> pure FileSizeModeDelete
         bad ->
           fail
-            $ mconcat
-              [ "Expected file-log-size-mode as one of ",
-                expectedStr,
-                " received: '",
-                unpack bad,
-                "'"
-              ]
+            $ Utils.fmtUnrecognizedError
+              "size mode"
+              fileSizeModeStr
+              (unpack bad)
       case U.parseByteText byteTxt of
         Right b -> pure $ cons b
         Left err -> fail $ "Could not parse --file-log-size-mode size: " <> unpack err
@@ -57,5 +55,5 @@ instance Default FileSizeMode where
       defBytes :: Bytes M Natural
       defBytes = MkBytes 50
 
-expectedStr :: String
-expectedStr = "(warn BYTES | delete BYTES | nothing)"
+fileSizeModeStr :: String
+fileSizeModeStr = "(warn BYTES | delete BYTES | nothing)"

@@ -9,6 +9,7 @@ where
 import Data.Tagged (Tagged (Tagged))
 import Options.Applicative qualified as OA
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 import Test.Tasty (TestName, TestTree, askOption, testGroup)
 import Test.Tasty.HUnit (testCase)
 import Test.Tasty.Options
@@ -232,8 +233,16 @@ instance IsOption ReadStrategyOpt where
   parseValue "block" = pure ReadStrategyBlock
   parseValue "block-line-buffer" = pure ReadStrategyBlockLineBuffer
   parseValue "all" = pure ReadStrategyAll
-  parseValue other = fail $ "Unrecognized option: " ++ other
+  parseValue bad =
+    fail
+      $ Utils.fmtUnrecognizedError
+        "read-strategy"
+        readStrategyStr
+        bad
   optionName = Tagged "read-strategy"
   optionHelp = Tagged "Runs tests with specified command-log read strategy"
   optionCLParser =
-    mkOptionCLParser (OA.metavar "(block|block-line-buffer|all)")
+    mkOptionCLParser (OA.metavar readStrategyStr)
+
+readStrategyStr :: (IsString a) => a
+readStrategyStr = "(block | block-line-buffer | all)"

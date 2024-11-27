@@ -11,6 +11,7 @@ module Shrun.Configuration.Data.Truncation
     decodeCommandNameTrunc,
     decodeLineTrunc,
     configToLineTrunc,
+    lineTruncStr,
   )
 where
 
@@ -23,6 +24,7 @@ import Shrun.Configuration.Data.WithDisabled
       ),
   )
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | The different regions to apply truncation rules.
 data TruncRegion
@@ -77,15 +79,28 @@ parseLineTruncation ::
 parseLineTruncation getNat getTxt =
   Undetected
     <$> parseTruncation getNat
+    -- NOTE: [Detect second parser]
     <|> parseDetected getTxt
 {-# INLINEABLE parseLineTruncation #-}
 
+-- Because this parser is used second, its error message is what will be
+-- displayed.
+--
+-- see NOTE: [Detect second parser]
 parseDetected :: (MonadFail m) => m Text -> m LineTruncation
 parseDetected getTxt =
   getTxt >>= \case
     "detect" -> pure Detected
-    other -> fail $ "Wanted other, received: " <> unpack other
+    bad ->
+      fail
+        $ Utils.fmtUnrecognizedError
+          "line truncation"
+          lineTruncStr
+          (unpack bad)
 {-# INLINEABLE parseDetected #-}
+
+lineTruncStr :: String
+lineTruncStr = "(NATURAL | detect)"
 
 decodeCommandNameTrunc :: Decoder (Maybe (Truncation TruncCommandName))
 decodeCommandNameTrunc = getFieldOptWith tomlDecoder "command-name-trunc"
