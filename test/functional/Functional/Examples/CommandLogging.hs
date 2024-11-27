@@ -73,7 +73,7 @@ bufferLengthSplit testArgs =
   ReadStrategyTestParametricSetup
     "Runs --command-log-buffer-length split example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|buffer-length-split.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -108,7 +108,7 @@ bufferLengthUnsplit testArgs =
   ReadStrategyTestSetup
     "Runs --command-log-buffer-length unsplit example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|buffer-length-unsplit.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -153,7 +153,7 @@ bufferTimeoutSplit testArgs =
   ReadStrategyTestParametricSetup
     "Runs --command-log-buffer-timeout split example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|buffer-timeout-split.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -188,7 +188,7 @@ bufferTimeoutUnsplit testArgs =
   ReadStrategyTestSetup
     "Runs --command-log-buffer-timeout unsplit example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|buffer-timeout-unsplit.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =

@@ -2,6 +2,7 @@
 
 module Functional.Examples.FileLogging (tests) where
 
+import FileSystem.OsPath (unsafeEncode)
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Test.Shrun.Verifier qualified as V
@@ -66,7 +67,7 @@ fileLogCommandNameTruncN testArgs =
   ReadStrategyTestParametricSetup
     "Runs --file-log-command-name-trunc 10 example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|readme-file-log-command-name-trunc-out.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -101,7 +102,7 @@ fileLogDeleteOnSuccess testArgs =
   ReadStrategyTestParametricSetup
     "Runs file-log-delete-on-success example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|del-on-success.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -161,7 +162,7 @@ fileLogLineTruncN testArgs =
   ReadStrategyTestParametricSetup
     "Runs --file-log-line-trunc 120 example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|line-trunc.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -190,6 +191,41 @@ fileLogLineTruncN testArgs =
 -- NOTE: File log mode tests are not configuration.md examples due to
 -- simplicity.
 
+-- NOTE: [File Log Mode tests]
+--
+-- The file log mode tests test the different behaviors of the log file:
+--
+-- append: logs are appended to the same file.
+-- rename: we create multiple log files with sequential names.
+-- write: the log file is overwritten.
+--
+-- In general, this means we create a base log file like
+--
+--     /tmp/test-name_read-strategy.log
+--
+-- where read-strategy is used to provide a unique path for each test
+-- (e.g. we do not want fileLogModeAppend to use the same path for its
+-- buffer and block tests, since the interference will cause failures).
+--
+-- We then check for existence and content, and then -- depending on the
+-- test -- run checks against renamed log files i.e.
+--
+--     /tmp/test-name_read-strategy (1).log
+---
+-- For example, in the fileLogModeRename block test, we expect the following to
+-- all exist:
+--
+--     /tmp/fileLogModeRename_block.log
+--     /tmp/fileLogModeRename_block (1).log
+--     /tmp/fileLogModeRename_block (2).log
+--
+-- OTOH, for fileLogModeAppend, we expect only
+--
+--     /tmp/fileLogModeAppend_block.log
+--
+-- to exist, while the others should __not__ exist. We use the mkLogPath
+-- function to make creating these paths a little nicer.
+
 fileLogModeAppend :: IO TestArgs -> ReadStrategyTestParams
 fileLogModeAppend testArgs =
   ReadStrategyTestParametricSetup
@@ -199,9 +235,9 @@ fileLogModeAppend testArgs =
         run xs
         run xs
     )
-    ( do
+    ( \rsType -> do
         tmpDir <- view #tmpDir <$> testArgs
-        let outFile = tmpDir </> [osp|fileLogModeAppend.log|]
+        let outFile = mkLogPath tmpDir baseName rsType Nothing
             outFileStr = unsafeDecode outFile
             args =
               withNoConfig
@@ -211,12 +247,12 @@ fileLogModeAppend testArgs =
                   "append",
                   "sleep 2"
                 ]
-        pure (args, tmpDir)
+        pure (args, (tmpDir, rsType))
     )
-    ( \(resultsConsole, tmpDir) -> do
+    ( \(resultsConsole, (tmpDir, rsType)) -> do
         V.verifyExpected resultsConsole expectedConsole
 
-        let log = tmpDir </> [osp|fileLogModeAppend.log|]
+        let log = mkLogPath tmpDir baseName rsType Nothing
 
         exists <- doesFileExist log
         assertBool ("File should exist: " <> decodeLenient log) exists
@@ -226,14 +262,15 @@ fileLogModeAppend testArgs =
         -- because we are appending 3 lines to the file 3 times
         9 @=? length resultsFile
 
-        let log2 = tmpDir </> [osp|fileLogModeAppend (1).log|]
-            log3 = tmpDir </> [osp|fileLogModeAppend (2).log|]
+        let log2 = mkLogPath tmpDir baseName rsType (Just 1)
+            log3 = mkLogPath tmpDir baseName rsType (Just 2)
 
         for_ [log2, log3] $ \badLog -> do
           badExists <- doesFileExist badLog
           assertBool ("File should not exist: " <> decodeLenient badLog) (not badExists)
     )
   where
+    baseName = [osp|fileLogModeAppend_|]
     expectedConsole =
       [ withSuccessPrefix "sleep 2",
         finishedPrefix
@@ -248,9 +285,9 @@ fileLogModeRename testArgs =
         run xs
         run xs
     )
-    ( do
+    ( \rsType -> do
         tmpDir <- view #tmpDir <$> testArgs
-        let outFile = tmpDir </> [osp|fileLogModeRename.log|]
+        let outFile = mkLogPath tmpDir baseName rsType Nothing
             outFileStr = unsafeDecode outFile
             args =
               withNoConfig
@@ -260,14 +297,14 @@ fileLogModeRename testArgs =
                   "rename",
                   "sleep 2"
                 ]
-        pure (args, tmpDir)
+        pure (args, (tmpDir, rsType))
     )
-    ( \(resultsConsole, tmpDir) -> do
+    ( \(resultsConsole, (tmpDir, rsType)) -> do
         V.verifyExpected resultsConsole expectedConsole
 
-        let log1 = tmpDir </> [osp|fileLogModeRename.log|]
-            log2 = tmpDir </> [osp|fileLogModeRename (1).log|]
-            log3 = tmpDir </> [osp|fileLogModeRename (2).log|]
+        let log1 = mkLogPath tmpDir baseName rsType Nothing
+            log2 = mkLogPath tmpDir baseName rsType (Just 1)
+            log3 = mkLogPath tmpDir baseName rsType (Just 2)
 
         for_ [log1, log2, log3] $ \log -> do
           exists <- doesFileExist log
@@ -276,11 +313,14 @@ fileLogModeRename testArgs =
           resultsFile <- readLogFile log
           V.verifyExpected resultsFile expectedFile
 
-        let badLog = tmpDir </> [osp|fileLogModeRename (3).log|]
+          3 @=? length resultsFile
+
+        let badLog = mkLogPath tmpDir baseName rsType (Just 3)
         exists <- doesFileExist badLog
         assertBool ("File should not exist: " <> decodeLenient badLog) (not exists)
     )
   where
+    baseName = [osp|fileLogModeRename_|]
     expectedConsole =
       [ withSuccessPrefix "sleep 2",
         finishedPrefix
@@ -296,9 +336,9 @@ fileLogModeWrite testArgs =
         run xs
         run xs
     )
-    ( do
+    ( \rsType -> do
         tmpDir <- view #tmpDir <$> testArgs
-        let outFile = tmpDir </> [osp|fileLogModeWrite.log|]
+        let outFile = mkLogPath tmpDir baseName rsType Nothing
             outFileStr = unsafeDecode outFile
             args =
               withNoConfig
@@ -308,26 +348,29 @@ fileLogModeWrite testArgs =
                   "write",
                   "sleep 2"
                 ]
-        pure (args, tmpDir)
+        pure (args, (tmpDir, rsType))
     )
-    ( \(resultsConsole, tmpDir) -> do
+    ( \(resultsConsole, (tmpDir, rsType)) -> do
         V.verifyExpected resultsConsole expectedConsole
 
-        let log = tmpDir </> [osp|fileLogModeWrite.log|]
+        let log = mkLogPath tmpDir baseName rsType Nothing
 
         exists <- doesFileExist log
         assertBool ("File should exist: " <> decodeLenient log) exists
         resultsFile <- readLogFile log
         V.verifyExpected resultsFile expectedFile
 
-        let log2 = tmpDir </> [osp|fileLogModeWrite (1).log|]
-            log3 = tmpDir </> [osp|fileLogModeWrite (2).log|]
+        3 @=? length resultsFile
+
+        let log2 = mkLogPath tmpDir baseName rsType (Just 1)
+            log3 = mkLogPath tmpDir baseName rsType (Just 2)
 
         for_ [log2, log3] $ \badLog -> do
           badExists <- doesFileExist badLog
           assertBool ("File should not exist: " <> decodeLenient badLog) (not badExists)
     )
   where
+    baseName = [osp|fileLogModeWrite_|]
     expectedConsole =
       [ withSuccessPrefix "sleep 2",
         finishedPrefix
@@ -339,7 +382,7 @@ fileLogStripControlAll testArgs =
   ReadStrategyTestParametricSetup
     "Runs file-log strip-control all example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|readme-file-out-strip-control-all.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -366,7 +409,7 @@ fileLogStripControlNone testArgs =
   ReadStrategyTestParametricSetup
     "Runs file-log strip-control none example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|readme-file-out-strip-control-none.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -395,7 +438,7 @@ fileLogStripControlSmart testArgs =
   ReadStrategyTestParametricSetup
     "Runs file-log strip-control smart example"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|readme-file-out-strip-control-smart.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
@@ -418,3 +461,38 @@ fileLogStripControlSmart testArgs =
           "printf ' foo  hello  bye '; sleep 2"
           " foo \ESC[35m hello  bye "
       ]
+
+-- | mkLogPath is used to make log paths, based on the current read-strategy
+-- (used for uniqueness) and sequential number (for file-log-mode rename)
+--
+-- Examples:
+--
+-- @
+--   -- mkLogPath /tmp fileLogModeAppend_ block Nothing
+--   "\/tmp\/fileLogModeAppend_block.log"
+--
+--   -- mkLogPath /tmp fileLogModeAppend_ block (Just 1)
+--   "\/tmp\/fileLogModeAppend_block (1).log"
+--
+--   -- mkLogPath /tmp fileLogModeAppend_ block (Just 2)
+--   "\/tmp\/fileLogModeAppend_block (2).log"
+-- @
+--
+-- See NOTE: [File Log Mode tests] for the motivation.
+mkLogPath ::
+  -- | Temp directory
+  OsPath ->
+  -- | base name
+  OsPath ->
+  -- | read-strategy type
+  OsPath ->
+  -- | Sequence file number, if applicable
+  Maybe Int ->
+  -- | Combined name
+  OsPath
+mkLogPath tmpDir base rsType mSEqNum =
+  tmpDir </> base <> rsType <> suffix
+  where
+    suffix = case mSEqNum of
+      Nothing -> [osp|.log|]
+      Just i -> [osp| (|] <> unsafeEncode (show i) <> [osp|).log|]

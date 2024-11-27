@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module Functional.ReadStrategyTest
   ( ReadStrategyOpt (..),
     ReadStrategyTestParams (..),
@@ -37,7 +39,7 @@ data ReadStrategyTestParams where
     -- | Assertions
     (a -> IO ()) ->
     ReadStrategyTestParams
-  -- | Simple test.
+  -- | Simple test, not parametric.
   ReadStrategyTestSimple ::
     -- | Test description
     String ->
@@ -57,8 +59,11 @@ data ReadStrategyTestParams where
     String ->
     -- | Test runner
     (List String -> IO a) ->
-    -- | Args setup
-    (IO (List String, r)) ->
+    -- | Args setup. The argument is an OsPath verison of the read-startegy
+    -- type i.e. block, buffer, or default. We use this for creating unique
+    -- paths i.e. we do not want two read-strategy tests to use the same
+    -- path when creating log files.
+    (OsPath -> IO (List String, r)) ->
     -- | Assertions
     ((a, r) -> IO ()) ->
     ReadStrategyTestParams
@@ -68,8 +73,11 @@ data ReadStrategyTestParams where
     String ->
     -- | Test runner
     (List String -> IO a) ->
-    -- | Args
-    (IO (List String, r)) ->
+    -- | Args setup.  The argument is an OsPath verison of the read-startegy
+    -- type i.e. block, buffer, or default. We use this for creating unique
+    -- paths i.e. we do not want two read-strategy tests to use the same
+    -- path when creating log files.
+    (OsPath -> IO (List String, r)) ->
     -- | Block Assertions
     ((a, r) -> IO ()) ->
     -- | BlockLineBuffer assertions
@@ -125,9 +133,9 @@ testReadStrategy (ReadStrategyTestParametricSetup desc runner mkArgs assertResul
           ]
   ]
   where
-    defaultTest = defaultTestSetup desc runner mkArgs assertResults
-    blockTest = blockTestSetup desc runner mkArgs assertResults
-    bufferTest = bufferTestSetup desc runner mkArgs assertResults
+    defaultTest = defaultTestSetup desc runner (mkArgs [osp|default|]) assertResults
+    blockTest = blockTestSetup desc runner (mkArgs [osp|block|]) assertResults
+    bufferTest = bufferTestSetup desc runner (mkArgs [osp|buffer|]) assertResults
 testReadStrategy (ReadStrategyTestSetup desc runner mkArgs blockAssertions blockLineBufferAssertions) =
   [ askOption $ \case
       ReadStrategyBlock -> blockTest
@@ -140,8 +148,8 @@ testReadStrategy (ReadStrategyTestSetup desc runner mkArgs blockAssertions block
           ]
   ]
   where
-    blockTest = blockTestSetup desc runner mkArgs blockAssertions
-    bufferTest = bufferTestSetup desc runner mkArgs blockLineBufferAssertions
+    blockTest = blockTestSetup desc runner (mkArgs [osp|block|]) blockAssertions
+    bufferTest = bufferTestSetup desc runner (mkArgs [osp|buffer|]) blockLineBufferAssertions
 
 -- NOTE: For parametric tests, we also want to verify the default
 -- (i.e. no args) behavior passes, since that is how such examples are defined.

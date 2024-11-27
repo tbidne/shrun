@@ -193,7 +193,7 @@ formatsFileLogs testArgs =
   ReadStrategyTestSetup
     "Formats file logs"
     run
-    ( do
+    ( \_ -> do
         outFile <- (</> [osp|file-log-formatted.log|]) . view #tmpDir <$> testArgs
         let outFileStr = unsafeDecode outFile
             args =
