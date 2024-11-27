@@ -10,6 +10,11 @@ Note that PVP is applied to the _application_, **not** the library. That is,
 the major/minor/patch definitions apply to the application's interface / usage
 (e.g. cli args, config file), not the library.
 
+For those unfamiliar with PVP, it is essentially
+[SemVer](https://semver.org/spec/v2.0.0.html), except the PVP major version is
+the first _two_ components (e.g. `0.9` in `0.9.1`), and PVP has no exception
+for versions < 1.
+
 ## [Unreleased]
 ### Added
 * Add `--file-log-mode rename`, that renames the requested log file if it
