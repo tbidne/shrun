@@ -8,8 +8,11 @@ where
 import Shrun.Prelude
 
 data TestArgs = MkTestArgs
-  { configPath :: OsPath,
+  { -- | Path to test toml file i.e. <shrun_repo>/test/functional/config.toml.
+    configPath :: OsPath,
+    -- | <tmp>/shrun.
     rootDir :: OsPath,
+    -- | <tmp>/shrun/test/functional.
     tmpDir :: OsPath
   }
   deriving stock (Show)

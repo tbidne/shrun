@@ -50,6 +50,10 @@ setup = do
   rootTmpDir <- (</> [osp|shrun|]) <$> PR.getTemporaryDirectory
   let workingTmpDir = rootTmpDir </> tmpName
 
+  -- Make sure we delete any leftover files from a previous run, so tests
+  -- have a clean environment.
+  PW.removeDirectoryRecursiveIfExists_ workingTmpDir
+
   cwd <- (</> tmpName) <$> PR.getCurrentDirectory
   let lp = cwd </> [osp|config.toml|]
 
