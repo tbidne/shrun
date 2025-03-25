@@ -91,13 +91,14 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 * [`cabal 3.8+`](https://www.haskell.org/cabal/download.html)
 * One of:
-  * [`ghc 9.6`](https://www.haskell.org/ghc/download.html)
-  * [`ghc 9.8`](https://www.haskell.org/ghc/download.html)
-  * [`ghc 9.10`](https://www.haskell.org/ghc/download.html)
+  * [`ghc 9.6`](https://www.haskell.org/ghc/download_ghc_9_6_6.html)
+  * [`ghc 9.8`](https://www.haskell.org/ghc/download_ghc_9_8_4.html)
+  * [`ghc 9.10`](https://www.haskell.org/ghc/download_ghc_9_10_1.html)
+  * [`ghc 9.12`](https://www.haskell.org/ghc/download_ghc_9_12_2.html)
 
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
-The current "blessed" version is `ghc-9.8.2`.
+The current "blessed" version is `ghc-9.10.1`.
 
 ### Build Shrun
 

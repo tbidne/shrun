@@ -1,0 +1,5 @@
+import: cabal.project
+
+with-compiler: ghc-9.12.1
+
+allow-newer: dbus:template-haskell

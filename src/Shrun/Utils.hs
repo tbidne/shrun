@@ -26,7 +26,7 @@ module Shrun.Utils
   )
 where
 
-import Data.Bytes (Conversion (convert), SomeSize, parse)
+import Data.Bytes (Conversion (convert_), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Either (either)
 import Data.Sequence.NonEmpty qualified as NESeq
@@ -258,9 +258,9 @@ splitAnsi t =
 parseByteText :: Text -> Either Text (Bytes B Natural)
 parseByteText txt =
   case parse @(SomeSize Natural) txt of
-    Right b -> Right $ convert (Proxy @B) b
+    Right b -> Right $ convert_ @_ @B b
     Left _ -> case parse @(SomeSize Double) txt of
-      Right b -> Right (truncate <$> convert (Proxy @B) b)
+      Right b -> Right (truncate <$> convert_ @_ @B b)
       Left err -> Left err
 
 -- | Runs the action when it is 'Left'.

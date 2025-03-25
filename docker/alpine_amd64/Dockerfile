@@ -40,7 +40,7 @@ echo 'PATH=$PATH:$HOME/.ghcup/bin' >> $HOME/.bashrc
 . $HOME/.bashrc
 
 echo "*** Installing ghc ***"
-ghcup install ghc 9.8.2 --set
+ghcup install ghc 9.10.1 --set
 
 echo "*** Installing cabal ***"
 ghcup install cabal 3.12 --set
@@ -52,7 +52,7 @@ cd /opt/shrun
 arch=$(uname -m)
 
 cabal update
-cabal install --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
+cabal install --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping exe:shrun --project-file cabal.ghc9101.project --ghc-options -Werror
 
 echo "*** Copy binary ***"
 

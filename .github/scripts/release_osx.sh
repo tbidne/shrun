@@ -24,7 +24,7 @@ mkdir -p bin
 suffix="_$shrun_vers-$arch-macos_$apple_vers-darwin"
 
 cabal update
-cabal install exe:shrun --installdir bin/ --program-suffix $suffix --project-file cabal.ghc982.project --ghc-options -Werror
+cabal install exe:shrun --installdir bin/ --program-suffix $suffix --project-file cabal.ghc9101.project --ghc-options -Werror
 
 echo "*** Testing exe ***"
 ./bin/shrun$suffix --version

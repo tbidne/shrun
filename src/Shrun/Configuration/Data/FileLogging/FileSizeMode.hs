@@ -5,7 +5,7 @@ module Shrun.Configuration.Data.FileLogging.FileSizeMode
   )
 where
 
-import Data.Bytes (Conversion (convert))
+import Data.Bytes (Conversion (convert_))
 import Data.Bytes.Size (Size (M))
 import Data.Char qualified as Ch
 import Data.Text qualified as T
@@ -50,7 +50,7 @@ parseFileSizeMode getTxt = do
 {-# INLINEABLE parseFileSizeMode #-}
 
 instance Default FileSizeMode where
-  def = FileSizeModeWarn $ convert (Proxy @B) defBytes
+  def = FileSizeModeWarn $ convert_ @_ @B defBytes
     where
       defBytes :: Bytes M Natural
       defBytes = MkBytes 50

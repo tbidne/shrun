@@ -27,7 +27,7 @@ instance Default NotifyTimeout where
   def = NotifyTimeoutSeconds 10
 
 instance FromInteger NotifyTimeout where
-  afromInteger = NotifyTimeoutSeconds . fromInteger
+  fromZ = NotifyTimeoutSeconds . fromInteger
 
 -- DecodeTOML instance does not reuse parseNotifyTimeout as we want to
 -- enforce the integer type.
