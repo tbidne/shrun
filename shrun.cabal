@@ -3,7 +3,7 @@ name:               shrun
 version:            0.9.2
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==9.6.5 || ==9.8.2 || ==9.10.1
+tested-with:        GHC ==9.6.6 || ==9.8.4 || ==9.10.1 || ==9.12.1
 copyright:          2021-2025 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -19,8 +19,8 @@ description:
 
 category:           Shell scripting, Utils, Concurrency
 extra-source-files:
-  cabal.ghc982.project
-  cabal.ghc982.project.freeze
+  cabal.ghc9101.project
+  cabal.ghc9101.project.freeze
   cabal.project
   documentation/*.md
   examples/*.toml
@@ -126,10 +126,10 @@ library
     Shrun.Utils
 
   build-depends:
-    , base                   >=4.17      && <4.21
+    , base                   >=4.17      && <4.22
     , bytestring             >=0.10.12   && <0.13
     , concurrent-output      ^>=1.10.7
-    , containers             >=0.6.2.1   && <0.8
+    , containers             >=0.6.2.1   && <0.9
     , dbus                   >=1.2.14    && <1.4
     , effects-async          ^>=0.1
     , effects-env            ^>=0.1
@@ -159,7 +159,7 @@ library
 
   -- For tuple syntax
   if impl(ghc >=9.10.1)
-    build-depends: ghc-experimental ^>=0.1.0.0
+    build-depends: ghc-experimental >=0.1.0.0 && <9.1202.0
 
   hs-source-dirs:  src
 

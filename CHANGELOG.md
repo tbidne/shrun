@@ -16,9 +16,13 @@ the first _two_ components (e.g. `0.9` in `0.9.1`), and PVP has no exception
 for versions < 1.
 
 ## [Unreleased]
+### Changed
+* Updated blessed GHC to 9.10.1.
+
 ### Added
 * Add `--file-log-mode rename`, that renames the requested log file if it
   already exists. E.g. `-f shrun.log` becomes `shrun (1).log`.
+* Add GHC 9.12 support.
 
 ## [0.9.1] -- 2024-07-27
 ### Changed

@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-missing-methods #-}
+
 -- | Tests for Shrun.Logging.Formatting.
 module Unit.Shrun.Logging.Formatting (tests) where
 

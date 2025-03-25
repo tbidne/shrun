@@ -2,8 +2,6 @@
 
 set -e
 
-shrun_vers="0.9.2"
-
 # strip tab and/or spaces from output
 apple_vers=$(sw_vers | grep ProductVersion | cut -d':' -f2 | tr -d ' \t')
 
@@ -21,10 +19,10 @@ cabal_build_dir="$arch-osx"
 
 mkdir -p bin
 
-suffix="_$shrun_vers-$arch-macos_$apple_vers-darwin"
+suffix="_$SHRUN_VERS-$arch-macos_$apple_vers-darwin"
 
 cabal update
-cabal install exe:shrun --installdir bin/ --program-suffix $suffix --project-file cabal.ghc982.project --ghc-options -Werror
+cabal install exe:shrun --installdir bin/ --program-suffix $suffix --project-file $CABAL_PROJ --ghc-options -Werror
 
 echo "*** Testing exe ***"
 ./bin/shrun$suffix --version

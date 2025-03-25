@@ -2,6 +2,9 @@
 FROM arm64v8/alpine AS build-stage
 LABEL stage=build-stage
 
+ARG CABAL_PROJ
+ARG CABAL_VERS
+ARG GHC_VERS
 ARG suffix
 
 RUN mkdir -p /opt/shrun
@@ -39,11 +42,11 @@ echo 'PATH=$PATH:$HOME/.ghcup/bin' >> $HOME/.bashrc
 
 . $HOME/.bashrc
 
-echo "*** Installing ghc ***"
-ghcup install ghc 9.8.2 --set
+echo "*** Installing ghc $GHC_VERS ***"
+ghcup install ghc $GHC_VERS --set
 
-echo "*** Installing cabal ***"
-ghcup install cabal 3.12 --set
+echo "*** Installing cabal $CABAL_VERS ***"
+ghcup install cabal $CABAL_VERS --set
 
 echo "*** Building shrun ***"
 
@@ -52,7 +55,7 @@ cd /opt/shrun
 arch=$(uname -m)
 
 cabal update
-cabal install --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping exe:shrun --project-file cabal.ghc982.project --ghc-options -Werror
+cabal install --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping exe:shrun --project-file $CABAL_PROJ --ghc-options -Werror
 
 echo "*** Copy binary ***"
 

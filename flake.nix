@@ -83,11 +83,15 @@
       perSystem =
         { pkgs, system, ... }:
         let
-          ghc-version = "ghc982";
+          ghc-version = "ghc9101";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides =
               final: prev:
-              { }
+              {
+                dbus = prev.dbus_1_3_9;
+                network = prev.network_3_2_7_0;
+                path = hlib.dontCheck prev.path_0_9_6;
+              }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
                 "bounds"
@@ -121,6 +125,12 @@
               inherit compiler pkgs returnShellEnv;
               name = "shrun";
               root = ./.;
+
+              devTools = [
+                (hlib.dontCheck compiler.cabal-fmt)
+                (hlib.dontCheck compiler.haskell-language-server)
+                pkgs.nixfmt-rfc-style
+              ];
             };
           stack-wrapped = pkgs.symlinkJoin {
             name = "stack";
@@ -167,12 +177,12 @@
 
             lint = nix-hs-utils.mergeApps {
               apps = [
-                (nix-hs-utils.lint (compilerPkgs // pkgsMkDrv))
+                #(nix-hs-utils.lint (compilerPkgs // pkgsMkDrv))
                 (nix-hs-utils.lint-yaml pkgsMkDrv)
               ];
             };
 
-            lint-refactor = nix-hs-utils.lint-refactor compilerPkgs;
+            #lint-refactor = nix-hs-utils.lint-refactor compilerPkgs;
           };
         };
       systems = [

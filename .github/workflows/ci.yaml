@@ -5,6 +5,7 @@ on: # yamllint disable-line rule:truthy rule:comments
     branches:
       - main
       - release
+      - inputs
 
   pull_request:
     branches:
@@ -12,17 +13,26 @@ on: # yamllint disable-line rule:truthy rule:comments
       - release
 
   workflow_dispatch:
+
+env:
+  CABAL_VERS: "3.12"
+  GHC_VERS: "9.10.1"
+  CABAL_PROJ: "cabal.ghc9101.project"
+  SHRUN_VERS: "0.9.2"
+
 jobs:
   cabal:
     strategy:
       fail-fast: false
       matrix:
         ghc:
-          - vers: "9.6.5"
+          - vers: "9.6.6"
             proj-file: ""
-          - vers: "9.8.2"
-            proj-file: "--project-file cabal.ghc982.project"
+          - vers: "9.8.4"
+            proj-file: ""
           - vers: "9.10.1"
+            proj-file: "--project-file cabal.ghc9101.project"
+          - vers: "9.12.1"
             proj-file: ""
         os:
           - "macos-latest"
@@ -64,6 +74,7 @@ jobs:
         run: |
           cabal bench ${{ matrix.ghc.proj-file }} --benchmark-options '
             +RTS -T -RTS
+            -t100
             --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
             --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
@@ -72,11 +83,25 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         if: ${{ failure() && steps.bench.conclusion == 'failure' }}
+        id: bench-upload
         with:
-          name: build-artifacts
+          # Unique because we only run the benchmarks on ubuntu
+          name: bench-artifacts-${{ matrix.ghc.vers }}
           path: |
             benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
+
+  merge-benchmarks:
+    runs-on: "ubuntu-latest"
+    needs: cabal
+    if: ${{ always() && needs.cabal.result == 'failure' }}
+    steps:
+      - name: Merge Bench Artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: bench-artifacts
+          pattern: bench-artifacts-*
+          delete-merged: true
 
   stack:
     strategy:
@@ -192,17 +217,20 @@ jobs:
 
           - name: "alpine_amd64"
             os: "ubuntu-24.04"
-            script: ".github/scripts/release_linux_static.sh"
+            script: ".github/scripts/release_linux.sh"
             script_args: "alpine_amd64"
 
           - name: "alpine_arm64v8"
             os: "ubuntu-24.04-arm"
-            script: ".github/scripts/release_linux_static.sh"
+            script: ".github/scripts/release_linux.sh"
             script_args: "alpine_arm64v8"
 
     runs-on: ${{ matrix.platform.os }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify env vars
+        run: .github/scripts/verify_env.sh
 
       - uses: docker/setup-docker-action@v4
         if: ${{ matrix.platform.name == 'alpine_amd64' || matrix.platform.name == 'alpine_arm64v8' }}
@@ -215,8 +243,8 @@ jobs:
       - uses: haskell-actions/setup@v2
         if: ${{ matrix.platform.name != 'alpine_amd64' && matrix.platform.name != 'alpine_arm64v8' }}
         with:
-          ghc-version: "9.8.2"
-          cabal-version: "3.12"
+          ghc-version: ${{ env.GHC_VERS }}
+          cabal-version: ${{ env.CABAL_VERS }}
 
       - name: Install binary
         shell: bash
@@ -226,16 +254,16 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts-${{ matrix.platform.name }}
+          name: release-artifacts-${{ matrix.platform.name }}
           path: bin
 
-  merge:
+  merge-releases:
     runs-on: "ubuntu-latest"
     needs: release
     steps:
-      - name: Merge Artifacts
+      - name: Merge Release Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
-          name: build-artifacts
-          pattern: build-artifacts-*
+          name: release-artifacts
+          pattern: release-artifacts-*
           delete-merged: true

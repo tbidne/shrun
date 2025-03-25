@@ -1,5 +1,5 @@
 ---
-resolver: nightly-2024-05-22
+resolver: nightly-2025-03-25
 packages:
   - .
 ghc-options:
@@ -24,15 +24,15 @@ extra-deps:
   - env-guard-0.2@sha256:99b89cde1ed6d599880dfbc72b2c9a75ced57b7800a70dcb57d3e3e89e42184c,1312
   - text-display-0.0.5.2@sha256:6e6a5bf1c83dfa6c34692ed5d8ea87f1bd385984309b42c302f2156f4d82477b,2670
   - git: https://github.com/tbidne/algebra-simple.git
-    commit: f8590486ec0fc66acf7db20308e1ed6993a52151
+    commit: 37ec7127fbd0f591d4539e4bf72a0badd7569181
   - git: https://github.com/tbidne/bounds.git
-    commit: f93b202c9d154b25b42b048570cf6648451aa577
+    commit: b7ca541cfdd8564bcebe5d38456fe7abf77885b8
   - git: https://github.com/tbidne/exception-utils.git
-    commit: 9ecb81e4a16f62736dbe7f90cb1983e7212b0c0f
+    commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
   - git: https://github.com/tbidne/fs-utils.git
-    commit: 5406cea74491f382478e70734535c62fe6deef7d
+    commit: 83472bc22a938db0d3b4c02a24a52bfca0484637
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 7cc259bce3becc2c72bed1e8dd6f46ecc41efe70
+    commit: 3099ce03d0126f83aa84284d40f98d57fe01d9e0
     subdirs:
       - lib/effects-async
       - lib/effects-env
@@ -46,8 +46,8 @@ extra-deps:
       - lib/effects-typed-process
       - lib/effects-unix-compat
   - git: https://github.com/tbidne/relative-time.git
-    commit: b3be9b3b904059671ef07dbcbb11b8c04d50ddde
+    commit: b6ea05272e3031cede2cbc7e8b7898ef93d6a2a6
   - git: https://github.com/tbidne/si-bytes.git
-    commit: df01a076966e7fe9af8cc49bb438078a14a8d951
+    commit: baf98b6945e32fc48b2e31e72ab3abaa966c4115
   - git: https://github.com/tbidne/smart-math.git
-    commit: 9bd570201445904d12d0e0b792f171d02e6f361e
+    commit: 86a707b4dbbbe87814d13424167876db641923a1

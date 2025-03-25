@@ -142,14 +142,14 @@ genAllMaxBytesDouble = bytesToAllSizes <$> genMaxBytesDouble
 bytesToAllSizes :: (FromInteger a, MGroup a) => Bytes B a -> List (SomeSize a)
 bytesToAllSizes b =
   [ Bytes.hideSize b,
-    Bytes.hideSize $ Bytes.convert (Proxy @K) b,
-    Bytes.hideSize $ Bytes.convert (Proxy @M) b,
-    Bytes.hideSize $ Bytes.convert (Proxy @G) b,
-    Bytes.hideSize $ Bytes.convert (Proxy @T) b,
-    Bytes.hideSize $ Bytes.convert (Proxy @P) b,
-    Bytes.hideSize $ Bytes.convert (Proxy @E) b,
-    Bytes.hideSize $ Bytes.convert (Proxy @Z) b,
-    Bytes.hideSize $ Bytes.convert (Proxy @Y) b
+    Bytes.hideSize $ Bytes.convert_ @_ @K b,
+    Bytes.hideSize $ Bytes.convert_ @_ @M b,
+    Bytes.hideSize $ Bytes.convert_ @_ @G b,
+    Bytes.hideSize $ Bytes.convert_ @_ @T b,
+    Bytes.hideSize $ Bytes.convert_ @_ @P b,
+    Bytes.hideSize $ Bytes.convert_ @_ @E b,
+    Bytes.hideSize $ Bytes.convert_ @_ @Z b,
+    Bytes.hideSize $ Bytes.convert_ @_ @Y b
   ]
 
 genMaxBytes :: Gen (Bytes B Natural)
