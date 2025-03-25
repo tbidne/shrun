@@ -203,7 +203,6 @@ When shrun itself is changed in a way that impacts the version, we need to updat
 - `CHANGELOG.md`.
 - `README.md`, `configuration.md` and/or `faq.md`, if necessary.
 - `release_linux_static.shrun_vers`.
-- `release_linux.shrun_vers`.
 - `release_osx.shrun_vers`.
 
 ### General libraries
