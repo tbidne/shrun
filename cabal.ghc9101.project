@@ -1,0 +1,3 @@
+import: cabal.project
+
+with-compiler: ghc-9.10.1

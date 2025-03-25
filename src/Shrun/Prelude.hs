@@ -109,7 +109,7 @@ import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
 import Data.Bytes as X
   ( Bytes (MkBytes),
-    FromInteger (afromInteger),
+    FromInteger (fromZ),
     Size (B),
     _MkBytes,
   )

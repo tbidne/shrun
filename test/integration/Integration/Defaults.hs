@@ -210,7 +210,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                           MkFileLogInitP
                             { path = FPDefault,
                               mode = FileModeAppend,
-                              sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
+                              sizeMode = FileSizeModeWarn $ fromZ 50_000_000
                             },
                         commandNameTrunc = Just 45,
                         lineTrunc = Just 200,
@@ -321,7 +321,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                           MkFileLogInitP
                             { path = FPManual logPath,
                               mode = FileModeAppend,
-                              sizeMode = FileSizeModeWarn $ afromInteger 50_000_000
+                              sizeMode = FileSizeModeWarn $ fromZ 50_000_000
                             },
                         commandNameTrunc = Just 35,
                         deleteOnSuccess = DeleteOnSuccessOn,
