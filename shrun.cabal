@@ -19,8 +19,8 @@ description:
 
 category:           Shell scripting, Utils, Concurrency
 extra-source-files:
-  cabal.ghc982.project
-  cabal.ghc982.project.freeze
+  cabal.ghc9101.project
+  cabal.ghc9101.project.freeze
   cabal.project
   documentation/*.md
   examples/*.toml

@@ -2,20 +2,21 @@
 
 set -e
 
-shrun_vers="0.9.2"
-
 arch=$(uname -m)
 
 dir=$1
 
 mkdir -p bin
 
-suffix="_$shrun_vers-$arch-linux-static"
+suffix="_$SHRUN_VERS-$arch-linux-static"
 
 docker build \
   -t shrun_build:latest \
   -f "docker/$dir/Dockerfile" \
   -o docker_out \
+  --build-arg CABAL_VERS=$CABAL_VERS \
+  --build-arg CABAL_PROJ=$CABAL_PROJ \
+  --build-arg GHC_VERS=$GHC_VERS \
   --build-arg suffix=$suffix \
   .
 

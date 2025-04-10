@@ -13,6 +13,13 @@ on: # yamllint disable-line rule:truthy rule:comments
       - release
 
   workflow_dispatch:
+
+env:
+  CABAL_VERS: "3.12"
+  GHC_VERS: "9.10.1"
+  CABAL_PROJ: "cabal.ghc9101.project"
+  SHRUN_VERS: "0.9.2"
+
 jobs:
   cabal:
     strategy:
@@ -210,17 +217,20 @@ jobs:
 
           - name: "alpine_amd64"
             os: "ubuntu-24.04"
-            script: ".github/scripts/release_linux_static.sh"
+            script: ".github/scripts/release_linux.sh"
             script_args: "alpine_amd64"
 
           - name: "alpine_arm64v8"
             os: "ubuntu-24.04-arm"
-            script: ".github/scripts/release_linux_static.sh"
+            script: ".github/scripts/release_linux.sh"
             script_args: "alpine_arm64v8"
 
     runs-on: ${{ matrix.platform.os }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify env vars
+        run: .github/scripts/verify_env.sh
 
       - uses: docker/setup-docker-action@v4
         if: ${{ matrix.platform.name == 'alpine_amd64' || matrix.platform.name == 'alpine_arm64v8' }}
@@ -233,8 +243,8 @@ jobs:
       - uses: haskell-actions/setup@v2
         if: ${{ matrix.platform.name != 'alpine_amd64' && matrix.platform.name != 'alpine_arm64v8' }}
         with:
-          ghc-version: "9.10.1"
-          cabal-version: "3.12"
+          ghc-version: ${{ env.GHC_VERS }}
+          cabal-version: ${{ env.CABAL_VERS }}
 
       - name: Install binary
         shell: bash
