@@ -20,4 +20,9 @@
       - "Integration.Prelude"
 
 - ignore:
+    name: Use <$>
+    within:
+      - "Shrun.Configuration.Args.Parsing.TH"
+
+- ignore:
     name: "Avoid lambda using `infix`"

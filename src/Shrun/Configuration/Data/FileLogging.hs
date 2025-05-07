@@ -26,7 +26,6 @@ import Data.Word (Word16)
 import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile), die)
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
 import FileSystem.OsPath (encodeThrowM)
-import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -620,7 +619,7 @@ handleLogFileSize fileSizeMode fp = do
         . fmap (toDouble . unsafeConvertIntegral)
 
     toDouble :: Integer -> Double
-    toDouble = fromInteger
+    toDouble = fromZ
 {-# INLINEABLE handleLogFileSize #-}
 
 -- | Ensures the given path exists. If the path already exists and the file

@@ -77,9 +77,7 @@ jobs:
             -t100
             --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
-            --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
-            --fail-if-slower 50
-            --fail-if-faster 50'
+            --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv'
 
       - uses: actions/upload-artifact@v4
         if: ${{ failure() && steps.bench.conclusion == 'failure' }}

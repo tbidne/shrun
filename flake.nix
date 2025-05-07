@@ -88,9 +88,16 @@
             overrides =
               final: prev:
               {
-                dbus = prev.dbus_1_3_9;
-                network = prev.network_3_2_7_0;
+                dbus = prev.dbus_1_4_0;
                 path = hlib.dontCheck prev.path_0_9_6;
+
+                gitrev-typed = (
+                  final.callHackageDirect {
+                    pkg = "gitrev-typed";
+                    ver = "0.1";
+                    sha256 = "sha256-s7LEekR7NLe3CNhD/8uChnh50eGfaArrrtc5hoCtJ1A=";
+                  } { }
+                );
               }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
@@ -131,6 +138,13 @@
                 (hlib.dontCheck compiler.haskell-language-server)
                 pkgs.nixfmt-rfc-style
               ];
+              modifier =
+                drv:
+                drv.overrideAttrs (oldAttrs: {
+                  SHRUN_HASH = "${self.rev or self.dirtyRev}";
+                  SHRUN_MODIFIED = "${builtins.toString self.lastModified}";
+                  SHRUN_SHORT_HASH = "${self.shortRev or self.dirtyShortRev}";
+                });
             };
           stack-wrapped = pkgs.symlinkJoin {
             name = "stack";

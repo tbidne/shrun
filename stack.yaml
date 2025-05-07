@@ -22,7 +22,8 @@ ghc-options:
     -Wno-unticked-promoted-constructors
 extra-deps:
   - env-guard-0.2@sha256:99b89cde1ed6d599880dfbc72b2c9a75ced57b7800a70dcb57d3e3e89e42184c,1312
-  - text-display-0.0.5.2@sha256:6e6a5bf1c83dfa6c34692ed5d8ea87f1bd385984309b42c302f2156f4d82477b,2670
+  - gitrev-typed-0.1@sha256:905b696dec9c52486290cfef2d3156420de83f5b21bfb0821a37822f40ee1568,3783
+  - text-display-1.0.0.0@sha256:17d5a404f51ce40ba22327bdc6688fd239f66d0aa056b8d5cb83974d1dc706e5,2772
   - git: https://github.com/tbidne/algebra-simple.git
     commit: 37ec7127fbd0f591d4539e4bf72a0badd7569181
   - git: https://github.com/tbidne/bounds.git
@@ -30,9 +31,9 @@ extra-deps:
   - git: https://github.com/tbidne/exception-utils.git
     commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
   - git: https://github.com/tbidne/fs-utils.git
-    commit: 83472bc22a938db0d3b4c02a24a52bfca0484637
+    commit: 2389f7dbe5b94f65bd22088f4e5a5f6644caaade
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 3099ce03d0126f83aa84284d40f98d57fe01d9e0
+    commit: 9668e6b1924e91fff6bb8448ebbd8b0d2ddd8586
     subdirs:
       - lib/effects-async
       - lib/effects-env
@@ -50,4 +51,4 @@ extra-deps:
   - git: https://github.com/tbidne/si-bytes.git
     commit: baf98b6945e32fc48b2e31e72ab3abaa966c4115
   - git: https://github.com/tbidne/smart-math.git
-    commit: 86a707b4dbbbe87814d13424167876db641923a1
+    commit: acc3d79b82830397979f4be7b45266f5fc056cfb

@@ -23,6 +23,7 @@ for versions < 1.
 * Add `--file-log-mode rename`, that renames the requested log file if it
   already exists. E.g. `-f shrun.log` becomes `shrun (1).log`.
 * Add GHC 9.12 support.
+* Added git revision info in `--help` and `--version`.
 
 ## [0.9.1] -- 2024-07-27
 ### Changed

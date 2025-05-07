@@ -8,7 +8,6 @@ where
 
 import Data.Bits (toIntegralSized)
 import Data.Word (Word16)
-import GHC.Num (Num (fromInteger))
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as U
@@ -27,7 +26,7 @@ instance Default NotifyTimeout where
   def = NotifyTimeoutSeconds 10
 
 instance FromInteger NotifyTimeout where
-  fromZ = NotifyTimeoutSeconds . fromInteger
+  fromZ = NotifyTimeoutSeconds . fromZ
 
 -- DecodeTOML instance does not reuse parseNotifyTimeout as we want to
 -- enforce the integer type.
