@@ -1,5 +1,5 @@
 # build and test
-FROM amd64/alpine AS build-stage
+FROM amd64/alpine:3.21 AS build-stage
 LABEL stage=build-stage
 
 ARG CABAL_PROJ

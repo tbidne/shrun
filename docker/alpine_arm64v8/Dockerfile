@@ -1,5 +1,5 @@
 # build and test
-FROM arm64v8/alpine AS build-stage
+FROM arm64v8/alpine:3.21 AS build-stage
 LABEL stage=build-stage
 
 ARG CABAL_PROJ
