@@ -1,4 +1,4 @@
-index-state: 2025-05-07T00:06:40Z
+index-state: 2025-06-03T21:29:34Z
 
 packages:
   .
@@ -50,7 +50,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 9668e6b1924e91fff6bb8448ebbd8b0d2ddd8586
+    tag: 750049e9d9afc1b7acf3b19e4adcd3cd37033b0a
     subdir:
       lib/effects-async
       lib/effects-env
@@ -81,3 +81,5 @@ source-repository-package
 
 if impl(ghc >= 9.12.1) && impl(ghc <9.13)
   allow-newer: dbus:template-haskell
+
+allow-newer: tasty:optparse-applicative

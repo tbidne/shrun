@@ -24,6 +24,7 @@ for versions < 1.
   already exists. E.g. `-f shrun.log` becomes `shrun (1).log`.
 * Add GHC 9.12 support.
 * Added git revision info in `--help` and `--version`.
+* Added groups to `--help` options.
 
 ## [0.9.1] -- 2024-07-27
 ### Changed

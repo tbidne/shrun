@@ -23,6 +23,7 @@ ghc-options:
 extra-deps:
   - env-guard-0.2@sha256:99b89cde1ed6d599880dfbc72b2c9a75ced57b7800a70dcb57d3e3e89e42184c,1312
   - gitrev-typed-0.1@sha256:905b696dec9c52486290cfef2d3156420de83f5b21bfb0821a37822f40ee1568,3783
+  - optparse-applicative-0.19.0.0@sha256:0b47b3ff7eb4a855b5f7d401690365fc62a32057374927ce0d478b620996222d,5813
   - text-display-1.0.0.0@sha256:17d5a404f51ce40ba22327bdc6688fd239f66d0aa056b8d5cb83974d1dc706e5,2772
   - git: https://github.com/tbidne/algebra-simple.git
     commit: 37ec7127fbd0f591d4539e4bf72a0badd7569181
@@ -33,7 +34,7 @@ extra-deps:
   - git: https://github.com/tbidne/fs-utils.git
     commit: 2389f7dbe5b94f65bd22088f4e5a5f6644caaade
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 9668e6b1924e91fff6bb8448ebbd8b0d2ddd8586
+    commit: 750049e9d9afc1b7acf3b19e4adcd3cd37033b0a
     subdirs:
       - lib/effects-async
       - lib/effects-env
@@ -52,3 +53,6 @@ extra-deps:
     commit: baf98b6945e32fc48b2e31e72ab3abaa966c4115
   - git: https://github.com/tbidne/smart-math.git
     commit: acc3d79b82830397979f4be7b45266f5fc056cfb
+allow-newer: true
+allow-newer-deps:
+  - tasty

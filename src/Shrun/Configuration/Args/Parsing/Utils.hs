@@ -2,6 +2,7 @@ module Shrun.Configuration.Args.Parsing.Utils
   ( withDisabledParser,
     withDisabledParserOpts,
     mkHelp,
+    mkHelpNoLine,
     autoStripUnderscores,
   )
 where
@@ -71,6 +72,12 @@ mkHelp :: String -> OA.Mod f a
 mkHelp =
   OA.helpDoc
     . fmap (<> Pretty.hardline)
+    . Chunk.unChunk
+    . Chunk.paragraph
+
+mkHelpNoLine :: String -> OA.Mod f a
+mkHelpNoLine =
+  OA.helpDoc
     . Chunk.unChunk
     . Chunk.paragraph
 

@@ -91,6 +91,33 @@
                 dbus = prev.dbus_1_4_0;
                 path = hlib.dontCheck prev.path_0_9_6;
 
+                # optparse jailbreaks
+                cabal-add = hlib.doJailbreak prev.cabal-add;
+                fourmolu = hlib.doJailbreak prev.fourmolu;
+                hspec-golden = hlib.doJailbreak prev.hspec-golden;
+                ormolu = hlib.doJailbreak prev.ormolu;
+                stan = hlib.doJailbreak prev.stan;
+                tasty = hlib.doJailbreak prev.tasty;
+                tasty-quickcheck = hlib.doJailbreak prev.tasty-quickcheck;
+                tasty-rerun = hlib.doJailbreak prev.tasty-rerun;
+                trial-optparse-applicative = hlib.doJailbreak prev.trial-optparse-applicative;
+
+                # FIXME: Dev shell caching is terribly because I guess everything
+                # uses optparse ugh. So we should wait until optparse 19 is the
+                # default in nixpkgs i.e. stackage (nightly? or lts?).
+
+                # Hopefully this is in the next nixpkgs merge (not at the time
+                # of this comment):
+                #
+                #  https://github.com/NixOS/nixpkgs/pull/413046
+                optparse-applicative = (
+                  final.callHackageDirect {
+                    pkg = "optparse-applicative";
+                    ver = "0.19.0.0";
+                    sha256 = "sha256-dhqvRILfdbpYPMxC+WpAyO0KUfq2nLopGk1NdSN2SDM=";
+                  } { }
+                );
+
                 gitrev-typed = (
                   final.callHackageDirect {
                     pkg = "gitrev-typed";
