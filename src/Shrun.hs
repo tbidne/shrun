@@ -12,6 +12,8 @@ import Data.HashSet qualified as Set
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
+import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
+import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
 import Shrun.Configuration.Data.Core.Timeout (Timeout (MkTimeout))
 import Shrun.Configuration.Data.FileLogging
@@ -45,6 +47,7 @@ import Shrun.IO
     tryCommandLogging,
   )
 import Shrun.Logging qualified as Logging
+import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Formatting qualified as LogFmt
 import Shrun.Logging.MonadRegionLogger
   ( MonadRegionLogger
@@ -56,7 +59,8 @@ import Shrun.Logging.MonadRegionLogger
       ),
   )
 import Shrun.Logging.Types
-  ( FileLog,
+  ( ConsoleLog,
+    FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
     LogLevel
       ( LevelError,
@@ -69,8 +73,10 @@ import Shrun.Logging.Types
     LogMode (LogModeFinish, LogModeSet),
     LogRegion (LogNoRegion, LogRegion),
   )
+import Shrun.Logging.Types qualified as Types
 import Shrun.Notify qualified as Notify
-import Shrun.Notify.MonadNotify (MonadNotify)
+import Shrun.Notify.MonadNotify (MonadNotify, NotifyMessage)
+import Shrun.Notify.MonadNotify qualified as MonadNotify
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
@@ -173,26 +179,12 @@ runCommand ::
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
   commonLogging <- asks getCommonLogging
-  (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
+  (consoleLogging, consoleQueue) <- asks (getConsoleLogging @env @(Region m))
 
-  let timerFormat = consoleLogging ^. #timerFormat
-      (urgency, msg', lvl, timeElapsed) = case cmdResult of
-        -- see NOTE: [Text Line Concatentation] for how we combine the
-        -- multiple texts back into a single err.
-        CommandFailure t (MkStderr errs) ->
-          let errMsg = ShrunText.concat errs
-           in (Critical, ": " <> errMsg, LevelError, t)
-        CommandSuccess t -> (Normal, "", LevelSuccess, t)
-      timeMsg = TimerFormat.formatRelativeTime timerFormat timeElapsed <> msg'
+  let (urgency, consoleLog, mkFileLog, notifyMsg) =
+        mkResultData commonLogging consoleLogging cmd cmdResult
 
-  withRegion Linear $ \r ->
-    Logging.putRegionLog r
-      $ MkLog
-        { cmd = Just cmd,
-          msg = timeMsg,
-          lvl,
-          mode = LogModeFinish
-        }
+  putCommandFinalLog consoleQueue consoleLog mkFileLog
 
   let commandNameTrunc = consoleLogging ^. #commandNameTrunc
       keyHide = commonLogging ^. #keyHide
@@ -201,10 +193,114 @@ runCommand cmd = do
   -- Sent off notif if NotifyAll or NotifyCommand is set
   cfg <- asks getNotifyConfig
   case cfg ^? (_Just % #action) of
-    Just NotifyAll -> Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
-    Just NotifyCommand -> Notify.sendNotif (formattedCmd <> " Finished") timeMsg urgency
+    Just NotifyAll ->
+      Notify.sendNotif (MonadNotify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
+    Just NotifyCommand ->
+      Notify.sendNotif (MonadNotify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
     _ -> pure ()
 {-# INLINEABLE runCommand #-}
+
+-- | Prints the final log from the command (i.e. success/error message).
+-- Has different log depending on the output (i.e. if we should log
+-- multiple lines).
+putCommandFinalLog ::
+  forall m env.
+  ( HasCallStack,
+    HasFileLogging env,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m
+  ) =>
+  TBQueue (LogRegion (Region m)) ->
+  ConsoleLog ->
+  (FileLoggingEnv -> m FileLog) ->
+  m ()
+putCommandFinalLog consoleQueue consoleLog mkFileLog = do
+  withRegion Linear $ \r -> writeTBQueueA consoleQueue (LogRegion mode r consoleLog)
+
+  mFileLogging <- asks getFileLogging
+  for_ mFileLogging $ \fl -> do
+    fileLog <- mkFileLog fl
+    Logging.logToFileQueue fl fileLog
+  where
+    mode = LogModeFinish
+{-# INLINEABLE putCommandFinalLog #-}
+
+-- | All of the command result data needed for final log.
+type CommandResultData m =
+  Tuple4
+    -- Urgency level for notifs
+    UrgencyLevel
+    -- Console log
+    ConsoleLog
+    -- File log, if active
+    (FileLoggingEnv -> m FileLog)
+    -- Notif body
+    NotifyMessage
+
+-- | Gets log data from CommandResult.
+mkResultData ::
+  forall m.
+  (MonadTime m) =>
+  CommonLoggingEnv ->
+  ConsoleLoggingEnv ->
+  CommandP1 ->
+  CommandResult ->
+  CommandResultData m
+mkResultData commonLogging consoleLogging cmd cmdResult =
+  (urgency, consoleLog, mMkFileLog, notifyMsg)
+  where
+    timerFormat = consoleLogging ^. #timerFormat
+    keyHide = commonLogging ^. #keyHide
+
+    (urgency, lvl, rt, messages) = case cmdResult of
+      CommandFailure t (MkStderr []) -> (Critical, LevelError, t, ["<no error message>"])
+      CommandFailure t (MkStderr errs) -> (Critical, LevelError, t, errs)
+      CommandSuccess t -> (Normal, LevelSuccess, t, [])
+
+    timeMsg = TimerFormat.formatRelativeTime timerFormat rt
+    notifyMsg = Notify.formatNotifyMessage timeMsg messages
+
+    (consoleLog, mMkFileLog) = case messages of
+      -- 1. No message (success). Just print out the time.
+      [] ->
+        let log =
+              MkLog
+                { cmd = Just cmd,
+                  msg = Types.fromUnlined timeMsg,
+                  lvl,
+                  mode
+                }
+         in ( Formatting.formatConsoleLog keyHide consoleLogging log,
+              \fl -> Formatting.formatFileLog keyHide fl log
+            )
+      -- 2. Exactly one message. Print normally.
+      [m] ->
+        let log =
+              MkLog
+                { cmd = Just cmd,
+                  msg = Types.fromUnlined $ timeMsg <> ": " <> m,
+                  lvl,
+                  mode
+                }
+         in ( Formatting.formatConsoleLog keyHide consoleLogging log,
+              \fl -> Formatting.formatFileLog keyHide fl log
+            )
+      -- Received multiple messages (lines). Use custom formatters.
+      (m : ms) ->
+        let logs =
+              (timeMsg :| m : ms) <&> \msg ->
+                MkLog
+                  { cmd = Just cmd,
+                    msg = Types.fromUnlined msg,
+                    lvl,
+                    mode
+                  }
+         in ( Formatting.formatFinalConsoleLogs keyHide consoleLogging logs,
+              \fl -> Formatting.formatFinalFileLogs keyHide fl logs
+            )
+
+    mode = LogModeFinish
 
 printFinalResult ::
   forall m env e b.
@@ -235,9 +331,9 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
         fatalLog =
           MkLog
             { cmd = Nothing,
-              msg = errMsg,
+              msg = Types.fromUnlined errMsg,
               lvl = LevelFatal,
-              mode = LogModeFinish
+              mode
             }
     Logging.putRegionLog r fatalLog
 
@@ -252,23 +348,27 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
       finalLog =
         MkLog
           { cmd = Nothing,
-            msg = totalTimeTxt,
+            msg = Types.fromUnlined totalTimeTxt,
             lvl = LevelFinished,
-            mode = LogModeFinish
+            mode
           }
 
   -- Send off a 'finished' notification
   anyError <- readTVarA =<< asks getAnyError
   let urgency = if anyError then Critical else Normal
 
+  let notifyBody = Notify.formatNotifyMessage totalTimeTxt []
+
   -- Sent off notif if NotifyAll or NotifyFinal is set
   cfg <- asks getNotifyConfig
   case cfg ^? (_Just % #action) of
-    Just NotifyAll -> Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
-    Just NotifyFinal -> Notify.sendNotif "Shrun Finished" totalTimeTxt urgency
+    Just NotifyAll -> Notify.sendNotif "Shrun Finished" notifyBody urgency
+    Just NotifyFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
     _ -> pure ()
 
   Logging.putRegionLog r finalLog
+  where
+    mode = LogModeFinish
 {-# INLINEABLE printFinalResult #-}
 
 counter ::
@@ -313,9 +413,11 @@ logCounter ::
   Natural ->
   m ()
 logCounter region elapsed = do
-  timerFormat <- asks (view (_1 % #timerFormat) . getConsoleLogging @_ @(Region m))
+  (consoleLogging, queue) <- asks (getConsoleLogging @_ @(Region m))
 
-  let msg = TimerFormat.formatSeconds timerFormat elapsed
+  keyHide <- asks (view #keyHide . getCommonLogging)
+  let timerFormat = consoleLogging ^. #timerFormat
+      msg = Types.fromUnlined $ TimerFormat.formatSeconds timerFormat elapsed
       lg =
         MkLog
           { cmd = Nothing,
@@ -323,7 +425,9 @@ logCounter region elapsed = do
             lvl = LevelTimer,
             mode = LogModeSet
           }
-  Logging.regionLogToConsoleQueue region lg
+      formatted = Formatting.formatConsoleLog keyHide consoleLogging lg
+      regionLog = LogRegion LogModeSet region formatted
+  Logging.regionLogToConsoleQueue queue regionLog
 {-# INLINEABLE logCounter #-}
 
 keepRunning ::
@@ -367,7 +471,7 @@ keepRunning region timer mto = do
       Logging.putRegionLog region
         $ MkLog
           { cmd = Nothing,
-            msg = "Timed out, cancelling remaining commands: " <> unfinishedCmds,
+            msg = Types.fromUnlined $ "Timed out, cancelling remaining commands: " <> unfinishedCmds,
             lvl = LevelWarn,
             mode = LogModeFinish
           }

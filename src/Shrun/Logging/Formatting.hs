@@ -4,6 +4,10 @@ module Shrun.Logging.Formatting
     formatConsoleLog,
     formatFileLog,
 
+    -- ** Final logs
+    formatFinalConsoleLogs,
+    formatFinalFileLogs,
+
     -- * Low-level
     logToColor,
     logToPrefix,
@@ -20,6 +24,7 @@ module Shrun.Logging.Formatting
   )
 where
 
+import Data.Foldable qualified as F
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
@@ -38,7 +43,7 @@ import Shrun.Configuration.Data.Truncation
     Truncation (MkTruncation),
   )
 import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
-import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Types
   ( Log,
@@ -51,7 +56,9 @@ import Shrun.Logging.Types
         LevelTimer,
         LevelWarn
       ),
+    LogMessage,
   )
+import Shrun.Logging.Types qualified as Types
 import Shrun.Logging.Types.Internal
   ( ConsoleLog (UnsafeConsoleLog),
     FileLog (UnsafeFileLog),
@@ -90,6 +97,30 @@ formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
         keyHide
         log
 
+-- | Like 'formatConsoleLog', but for multiple logs. Concatenates all
+-- together with a newline.
+formatFinalConsoleLogs ::
+  KeyHideSwitch ->
+  ConsoleLoggingEnv ->
+  NonEmpty Log ->
+  ConsoleLog
+formatFinalConsoleLogs keyHide consoleLogging =
+  UnsafeConsoleLog
+    . T.intercalate "\n"
+    . F.toList
+    . fmap mkLine
+  where
+    mkLine log =
+      let t =
+            coreFormatting
+              ((,Nothing) <$> consoleLogging ^. #lineTrunc)
+              (consoleLogging ^. #commandNameTrunc)
+              False
+              (consoleLogging ^. #stripControl)
+              keyHide
+              log
+       in P.color (logToColor log) t
+
 maybeApply :: (a -> b -> b) -> Maybe a -> b -> b
 maybeApply = maybe id
 
@@ -125,6 +156,44 @@ formatFileLog keyHide fileLogging log = do
 
   pure $ UnsafeFileLog withTimestamp
 {-# INLINEABLE formatFileLog #-}
+
+-- | Like 'formatFileLog', but for multiple logs. Concatenates all
+-- together.
+formatFinalFileLogs ::
+  ( HasCallStack,
+    MonadTime m
+  ) =>
+  KeyHideSwitch ->
+  FileLoggingEnv ->
+  NonEmpty Log ->
+  m FileLog
+formatFinalFileLogs keyHide fileLogging logs = do
+  currTime <- getSystemTimeString
+  let timestamp = brackets False (pack currTime)
+      timestampLen = T.length timestamp
+
+      mkLine =
+        coreFormatting
+          ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
+          (fileLogging ^. #commandNameTrunc)
+          False
+          (fileLogging ^. #stripControl)
+          keyHide
+
+      withTimestamp line =
+        mconcat
+          [ timestamp,
+            line,
+            "\n"
+          ]
+
+  pure
+    . UnsafeFileLog
+    . mconcat
+    . F.toList
+    . fmap (withTimestamp . mkLine)
+    $ logs
+{-# INLINEABLE formatFinalFileLogs #-}
 
 -- | Core formatting, shared by console and file logs. Basic idea:
 --
@@ -170,7 +239,7 @@ coreFormatting
   stripControl
   keyHide
   log =
-    concatWithLineTrunc mLineTrunc prefix (msgStripped ^. #unUnlinedText)
+    concatWithLineTrunc mLineTrunc prefix (msgStripped ^. #unLogMessage)
     where
       -- prefix is something like "[Success] " or "[Command][some cmd] ".
       -- Notice this does not include ANSI codes or a timestamp.
@@ -190,7 +259,7 @@ coreFormatting
       msgStripControlled = stripChars (log ^. #msg) stripControl
       msgStripped =
         if stripLeading
-          then ShrunText.reallyUnsafeMap T.stripStart msgStripControlled
+          then Types.unsafeMapLogMessage T.stripStart msgStripControlled
           else msgStripControlled
 
       logPrefix = logToPrefix log
@@ -274,11 +343,15 @@ displayCmd (MkCommandP _ cmd) _ = formatCommandText cmd
 -- * 'StripControlAll': All control chars.
 -- * 'StripControlSmart': Ansi control chars.
 -- * 'StripControlNone': Nothing.
-stripChars :: UnlinedText -> StripControl t -> UnlinedText
-stripChars txt = \case
-  StripControlAll -> Utils.stripControlAll txt
-  StripControlNone -> txt
-  StripControlSmart -> Utils.stripControlSmart txt
+stripChars :: LogMessage -> StripControl t -> LogMessage
+stripChars txt =
+  \case
+    StripControlAll -> Utils.stripControlAll txt'
+    StripControlNone -> txt'
+    StripControlSmart -> Utils.stripControlSmart txt'
+    >>> Types.fromUnlined
+  where
+    txt' = UnsafeUnlinedText $ txt ^. #unLogMessage
 {-# INLINE stripChars #-}
 
 -- | Surrounds text with brackets, appending a space if the boolean is 'True'.

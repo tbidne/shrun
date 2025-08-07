@@ -3,8 +3,13 @@
 -- | Misc tests
 module Functional.Miscellaneous (specs) where
 
+import DBus.Notify (UrgencyLevel (Critical))
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
+import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout (NotifyTimeoutSeconds))
+import Shrun.Notify.MonadNotify
+  ( ShrunNote (MkShrunNote, body, summary, timeout, urgency),
+  )
 import Test.Shrun.Verifier (ExpectedText)
 import Test.Shrun.Verifier qualified as V
 
@@ -20,7 +25,7 @@ specs testArgs =
     testsParams :: List ReadStrategyTestParams
     testsParams =
       [ splitNewlineLogs,
-        spaceErrorLogs,
+        formatErrorLogs testArgs,
         stripControlAlwaysCmdNames,
         reportsStderr,
         slowOutputBroken,
@@ -54,22 +59,40 @@ splitNewlineLogs =
       [ withCommandPrefix printedCmd "line one line two"
       ]
 
-spaceErrorLogs :: ReadStrategyTestParams
-spaceErrorLogs =
-  ReadStrategyTestParametricSimple
-    "Error Log with newlines is spaced"
-    runExitFailure
-    args
-    (\results -> V.verifyExpectedUnexpected results expected unexpected)
-  where
-    args =
-      withNoConfig
-        [ "--console-log-command",
-          "sleep 1 && echo 'abc\n  def' && sleep 1 && exit 1"
-        ]
+-- FIXME: Test file logs and notifications here.
 
-    -- Verifying final 'abc\n  def' log is translated to 'abc  def' in the final
-    -- error msg. Breakdown:
+formatErrorLogs :: IO TestArgs -> ReadStrategyTestParams
+formatErrorLogs testArgs =
+  ReadStrategyTestParametricSetup
+    "Error Log with newlines is preserved"
+    runAllExitFailure
+    ( \_ -> do
+        outFile <- (</> [osp|file-log-errors.log|]) . view #tmpDir <$> testArgs
+        let outFileStr = unsafeDecode outFile
+            args =
+              withNoConfig
+                [ "--file-log",
+                  outFileStr,
+                  "--notify-action",
+                  "all",
+                  "--notify-system",
+                  notifySystemArg,
+                  "--console-log-command",
+                  "sleep 1 && echo 'abc\n  def' && sleep 1 && exit 1"
+                ]
+        pure (args, outFile)
+    )
+    ( \((resultsConsole, notes), outFile) -> do
+        V.verifyExpectedUnexpected resultsConsole expectedConsole unexpected
+
+        fileResults <- readLogFile outFile
+        V.verifyExpectedUnexpected fileResults expectedFile unexpected
+
+        expectedNotes @=? notes
+    )
+  where
+    -- Verifying how final 'abc\n  def' log is translated in the final error
+    -- msg. Breakdown:
     --
     -- - In command names, newlines are converted to spaces, so 'abc\n  def'
     --   'abc   def'.
@@ -77,15 +100,39 @@ spaceErrorLogs =
     -- - In command logs, newlines are split across separate logs. Hence
     --   'abc' and '  def'.
     --
-    -- - In the final error message, it appears newlines are just stripped?
-    --   Should probably be the same as command names.
-    expected =
-      [ withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "2 seconds: abc   def",
-        withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "abc",
-        withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "def"
+    -- - In the final error message, newlines are preserved.
+    expectedCommon =
+      [ withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "2 seconds",
+        withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "abc",
+        withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "  def"
       ]
+    expectedConsole =
+      expectedCommon
+        ++ [ withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "abc",
+             withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "def"
+           ]
+    expectedFile =
+      expectedCommon
+        ++ [ withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "abc",
+             withCommandPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" "  def"
+           ]
     unexpected =
       [ withErrorPrefix "sleep 1 && echo 'abc def' && sleep 1 && exit 1" <> "2 seconds: abcdef"
+      ]
+
+    expectedNotes =
+      [ MkShrunNote
+          { body = "2 seconds",
+            summary = "Shrun Finished",
+            timeout = NotifyTimeoutSeconds 10,
+            urgency = Critical
+          },
+        MkShrunNote
+          { body = "2 seconds\nabc\n  def",
+            summary = "[sleep 1 && echo 'abc   def' && sleep 1 && exit 1]  Finished",
+            timeout = NotifyTimeoutSeconds 10,
+            urgency = Critical
+          }
       ]
 
 -- NOTE: This used to be in Examples (subsequently Examples.ConsoleLogging),

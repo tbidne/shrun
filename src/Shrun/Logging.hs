@@ -22,17 +22,17 @@ module Shrun.Logging
   )
 where
 
-import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Env.Types
   ( HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
   )
-import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
+import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types
-  ( Log,
+  ( FileLog,
+    Log,
     LogRegion (LogRegion),
   )
 import Shrun.Prelude
@@ -41,6 +41,7 @@ import Shrun.Prelude
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
 putRegionLog ::
+  forall m env.
   ( HasCallStack,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
@@ -60,46 +61,39 @@ putRegionLog region lg = do
 
   let keyHide = commonLogging ^. #keyHide
 
-  regionLogToConsoleQueue region lg
-  for_ mFileLogging (\fl -> logToFileQueue keyHide fl lg)
+  (consoleLogging, queue) <- asks (getConsoleLogging @_ @(Region m))
+
+  let formatted = Formatting.formatConsoleLog keyHide consoleLogging lg
+      regionLog = LogRegion (lg ^. #mode) region formatted
+
+  regionLogToConsoleQueue queue regionLog
+  for_ mFileLogging $ \fl -> do
+    fileLog <- Formatting.formatFileLog keyHide fl lg
+    logToFileQueue fl fileLog
 {-# INLINEABLE putRegionLog #-}
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    MonadReader env m,
     MonadSTM m
   ) =>
   -- | Region.
-  Region m ->
+  TBQueue (LogRegion (Region m)) ->
   -- | Log to send.
-  Log ->
+  LogRegion (Region m) ->
   m ()
-regionLogToConsoleQueue region log = do
-  keyHide <- asks (view #keyHide . getCommonLogging)
-  (consoleLogging, queue) <- asks getConsoleLogging
-
-  let formatted = formatConsoleLog keyHide consoleLogging log
-
-  writeTBQueueA queue (LogRegion (log ^. #mode) region formatted)
+regionLogToConsoleQueue = writeTBQueueA
 {-# INLINEABLE regionLogToConsoleQueue #-}
 
 -- | Writes the log to the file queue.
 logToFileQueue ::
   ( HasCallStack,
-    MonadSTM m,
-    MonadTime m
+    MonadSTM m
   ) =>
-  -- | How to display the command.
-  KeyHideSwitch ->
   -- | FileLogging config.
   FileLoggingEnv ->
   -- | Log to send.
-  Log ->
+  FileLog ->
   m ()
-logToFileQueue keyHide fileLogging log = do
-  formatted <- formatFileLog keyHide fileLogging log
-  writeTBQueueA (fileLogging ^. #file % #queue) formatted
+logToFileQueue fileLogging = writeTBQueueA (fileLogging ^. #file % #queue)
 {-# INLINEABLE logToFileQueue #-}

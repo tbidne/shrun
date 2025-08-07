@@ -61,6 +61,7 @@ import Shrun.Logging.Types
     LogMode (LogModeSet),
     LogRegion (LogRegion),
   )
+import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 
@@ -536,7 +537,7 @@ writeLogHelper logFn cmd lastReadRef handleResult messages = do
     logFn
       $ MkLog
         { cmd = Just cmd,
-          msg,
+          msg = Types.fromUnlined msg,
           lvl = LevelCommand,
           mode = LogModeSet
         }

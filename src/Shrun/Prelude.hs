@@ -47,7 +47,9 @@ module Shrun.Prelude
     -- * Debug Utils
     todo,
     traceFile,
+    traceFileA,
     traceFileLine,
+    traceFileLineA,
 
     -- * Prelude exports
     module X,
@@ -114,6 +116,7 @@ import Data.Bytes as X
     _MkBytes,
   )
 import Data.Char as X (Char)
+import Data.Coerce as X (coerce)
 import Data.Either as X (Either (Left, Right))
 import Data.Eq as X (Eq ((/=), (==)))
 import Data.Foldable as X
@@ -428,8 +431,14 @@ traceFile path txt x = writeFn `seq` x
     io = appendFileUtf8 (OsPath.unsafeEncode path) txt
     writeFn = unsafePerformIO io
 
+traceFileA :: (Applicative f) => FilePath -> Text -> f ()
+traceFileA f t = traceFile f t (pure ())
+
 traceFileLine :: FilePath -> Text -> a -> a
 traceFileLine path txt = traceFile path (txt <> "\n")
+
+traceFileLineA :: (Applicative f) => FilePath -> Text -> f ()
+traceFileLineA f t = traceFileLine f t (pure ())
 
 setUncaughtExceptionHandlerDisplay :: IO ()
 setUncaughtExceptionHandlerDisplay =

@@ -18,9 +18,11 @@ where
 import Hedgehog.Gen qualified as HGen
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
+import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel,
+    LogMessage (UnsafeLogMessage),
     LogMode,
   )
 import Unit.Generators qualified as PGens
@@ -35,7 +37,7 @@ genLog = do
   pure
     $ MkLog
       { cmd,
-        msg,
+        msg = coerce msg,
         lvl,
         mode
       }
@@ -49,7 +51,7 @@ genLogWithCmd = do
   pure
     $ MkLog
       { cmd,
-        msg,
+        msg = coerce msg,
         lvl,
         mode
       }
@@ -63,7 +65,7 @@ genLogWithCmdKey = do
   pure
     $ MkLog
       { cmd,
-        msg,
+        msg = coerce msg,
         lvl,
         mode
       }
@@ -76,7 +78,7 @@ genLogNoCmd = do
   pure
     $ MkLog
       { cmd = Nothing,
-        msg,
+        msg = coerce msg,
         lvl,
         mode
       }

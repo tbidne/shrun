@@ -4,6 +4,8 @@
 module Shrun.Notify.MonadNotify
   ( MonadNotify (..),
     ShrunNote (..),
+    NotifyMessage (..),
+    fromUnlined,
     NotifyException (..),
     exitFailureToStderr,
   )
@@ -20,10 +22,27 @@ import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout)
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Prelude
 
+newtype NotifyMessage = UnsafeNotifyMessage {unNotifyMessage :: Text}
+  deriving stock (Eq, Show)
+  deriving newtype (IsString)
+
+instance
+  ( k ~ A_Getter,
+    a ~ Text,
+    b ~ Text
+  ) =>
+  LabelOptic "unNotifyMessage" k NotifyMessage NotifyMessage a b
+  where
+  labelOptic = to (\(UnsafeNotifyMessage x) -> x)
+  {-# INLINE labelOptic #-}
+
+fromUnlined :: UnlinedText -> NotifyMessage
+fromUnlined = UnsafeNotifyMessage . view #unUnlinedText
+
 -- | Holds notification data.
 data ShrunNote = MkShrunNote
-  { body :: UnlinedText,
-    summary :: UnlinedText,
+  { body :: NotifyMessage,
+    summary :: NotifyMessage,
     timeout :: NotifyTimeout,
     urgency :: UrgencyLevel
   }
@@ -31,8 +50,8 @@ data ShrunNote = MkShrunNote
 
 instance
   ( k ~ A_Lens,
-    a ~ UnlinedText,
-    b ~ UnlinedText
+    a ~ NotifyMessage,
+    b ~ NotifyMessage
   ) =>
   LabelOptic "body" k ShrunNote ShrunNote a b
   where
@@ -46,8 +65,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ UnlinedText,
-    b ~ UnlinedText
+    a ~ NotifyMessage,
+    b ~ NotifyMessage
   ) =>
   LabelOptic "summary" k ShrunNote ShrunNote a b
   where

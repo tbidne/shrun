@@ -18,6 +18,7 @@ for versions < 1.
 ## [Unreleased]
 ### Changed
 * Updated blessed GHC to 9.10.1.
+* Improve final command log formatting with newlines.
 
 ### Added
 * Add `--file-log-mode rename`, that renames the requested log file if it

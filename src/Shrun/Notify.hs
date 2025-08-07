@@ -1,10 +1,12 @@
 -- | Module for sending notifications.
 module Shrun.Notify
   ( sendNotif,
+    formatNotifyMessage,
   )
 where
 
 import DBus.Notify (UrgencyLevel)
+import Data.Text qualified as T
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommonLogging,
@@ -22,11 +24,14 @@ import Shrun.Logging.Types
     LogLevel (LevelError),
     LogMode (LogModeFinish),
   )
+import Shrun.Logging.Types qualified as Types
 import Shrun.Notify.MonadNotify
   ( MonadNotify (notify),
+    NotifyMessage (UnsafeNotifyMessage),
     ShrunNote (MkShrunNote, body, summary, timeout, urgency),
   )
 import Shrun.Prelude
+import Shrun.Utils qualified as U
 
 -- | Sends a notification if they are enabled (linux only). Logs any failed
 -- sends.
@@ -44,9 +49,9 @@ sendNotif ::
     MonadTime m
   ) =>
   -- | Notif summary
-  UnlinedText ->
+  NotifyMessage ->
   -- | Notif body
-  UnlinedText ->
+  NotifyMessage ->
   -- | Notif urgency
   UrgencyLevel ->
   m ()
@@ -66,7 +71,8 @@ sendNotif summary body urgency = do
         $ MkLog
           { cmd = Nothing,
             msg =
-              "Could not send notification: "
+              Types.fromUnlined
+                $ "Could not send notification: "
                 <> ShrunText.fromTextReplace (pack (displayException ex)),
             lvl = LevelError,
             mode = LogModeFinish
@@ -79,3 +85,11 @@ sendNotif summary body urgency = do
           urgency,
           timeout
         }
+
+formatNotifyMessage :: UnlinedText -> [UnlinedText] -> NotifyMessage
+formatNotifyMessage timeTxt messages =
+  UnsafeNotifyMessage
+    . T.intercalate "\n"
+    . fmap (view #unUnlinedText . U.stripControlAll)
+    $ timeTxt
+    : messages

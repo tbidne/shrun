@@ -33,6 +33,7 @@ module Functional.Prelude
     runNotes,
     runException,
     runExitFailure,
+    runAllExitFailure,
 
     -- ** Read strategies
     ReadStrategyTestParams (..),
@@ -232,6 +233,9 @@ runExitFailure :: List String -> IO (List ResultText)
 runExitFailure =
   fmap fst
     . runMaybeException (ExJust $ Proxy @ExitCode)
+
+runAllExitFailure :: List String -> IO (Tuple2 (List ResultText) (List ShrunNote))
+runAllExitFailure = runMaybeException (ExJust $ Proxy @ExitCode)
 
 -- | Like 'runException', except it expects an exception.
 runException ::

@@ -4,6 +4,9 @@
 module Shrun.Logging.Types
   ( -- * Basic Types
     Log (..),
+    LogMessage (..),
+    fromUnlined,
+    unsafeMapLogMessage,
     LogMode (..),
     LogLevel (..),
 
@@ -47,13 +50,33 @@ data LogRegion r
   | -- | Log without region.
     LogNoRegion ConsoleLog
 
+newtype LogMessage = UnsafeLogMessage Text
+  deriving stock (Eq, Show)
+  deriving newtype (IsString)
+
+instance
+  ( k ~ A_Getter,
+    a ~ Text,
+    b ~ Text
+  ) =>
+  LabelOptic "unLogMessage" k LogMessage LogMessage a b
+  where
+  labelOptic = to (\(UnsafeLogMessage t) -> t)
+  {-# INLINE labelOptic #-}
+
+fromUnlined :: UnlinedText -> LogMessage
+fromUnlined = UnsafeLogMessage . view #unUnlinedText
+
+unsafeMapLogMessage :: (Text -> Text) -> LogMessage -> LogMessage
+unsafeMapLogMessage f (UnsafeLogMessage m) = UnsafeLogMessage (f m)
+
 -- | Captures the relevant information concerning a specific log
 -- (i.e. command, text, level, and mode).
 data Log = MkLog
   { -- | Optional command that produced this log.
     cmd :: Maybe CommandP1,
     -- | The 'Text' for a given log.
-    msg :: UnlinedText,
+    msg :: LogMessage,
     -- | The 'LogLevel' for a given log.
     lvl :: LogLevel,
     -- | The 'LogMode' for a given log.
@@ -78,8 +101,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ UnlinedText,
-    b ~ UnlinedText
+    a ~ LogMessage,
+    b ~ LogMessage
   ) =>
   LabelOptic "msg" k Log Log a b
   where

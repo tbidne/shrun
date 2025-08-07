@@ -73,7 +73,7 @@ data ReadStrategyTestParams where
     String ->
     -- | Test runner
     (List String -> IO a) ->
-    -- | Args setup.  The argument is an OsPath verison of the read-startegy
+    -- | Args setup. The argument is an OsPath verison of the read-startegy
     -- type i.e. block, buffer, or default. We use this for creating unique
     -- paths i.e. we do not want two read-strategy tests to use the same
     -- path when creating log files.

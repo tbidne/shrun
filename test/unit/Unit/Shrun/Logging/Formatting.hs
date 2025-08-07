@@ -59,8 +59,6 @@ import Shrun.Configuration.Data.StripControl
       ),
   )
 import Shrun.Data.Command (CommandP (MkCommandP, command, key))
-import Shrun.Data.Text (UnlinedText)
-import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
@@ -104,11 +102,12 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
-        -- NOTE: Convoluted, so here's an explanation. The msg <> suffix is
-        -- an UnlinedText. In order for it to match the expectation, it needs
-        -- to go through the usual process i.e. strip. Then we need to
-        -- eliminate to Text, to compare against the result.
-        expected = (prefix <> (stripUnlined (log ^. #msg) <> suffix)) ^. #unUnlinedText
+        -- NOTE: Need to perform the same stripping to match the result.
+        expected =
+          prefix
+            <> T.stripStart (log ^. (#msg % #unLogMessage))
+            <> suffix
+
         result = fmt log ^. #unConsoleLog
     expected === result
   where
@@ -124,9 +123,6 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
         "\ESC[91m[Fatal] "
       ]
     suffixes = L.repeat "\ESC[0m"
-
-    stripUnlined :: UnlinedText -> UnlinedText
-    stripUnlined = ShrunText.reallyUnsafeMap T.stripStart
 
 testFormatsCLCmdKey :: TestTree
 testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ do
@@ -154,7 +150,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText cmdKey ^. #unUnlinedText,
               "] ",
-              T.stripStart (log ^. #msg % #unUnlinedText),
+              T.stripStart (log ^. #msg % #unLogMessage),
               suffix
             ]
         resultKeyHideOff = fmtKeyHideOff log ^. #unConsoleLog
@@ -164,7 +160,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.stripStart (log ^. #msg % #unUnlinedText),
+              T.stripStart (log ^. #msg % #unLogMessage),
               suffix
             ]
         resultKeyHideOn = fmtKeyHideOn log ^. #unConsoleLog
@@ -210,7 +206,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              T.stripStart (log ^. #msg % #unUnlinedText),
+              T.stripStart (log ^. #msg % #unLogMessage),
               suffix
             ]
         result = fmt log ^. #unConsoleLog
@@ -330,7 +326,7 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
-        expected = prefix <> (log ^. #msg % #unUnlinedText) <> suffix
+        expected = prefix <> (log ^. #msg % #unLogMessage) <> suffix
         result = fmt log
     expected === result
   where
@@ -375,7 +371,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText cmdKey ^. #unUnlinedText,
               "] ",
-              log ^. #msg % #unUnlinedText,
+              log ^. #msg % #unLogMessage,
               suffix
             ]
         resultKeyHideOff = fmtKeyHideOff log
@@ -385,7 +381,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              log ^. #msg % #unUnlinedText,
+              log ^. #msg % #unLogMessage,
               suffix
             ]
         resultKeyHideOn = fmtKeyHideOn log
@@ -432,7 +428,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
               "] ",
-              log ^. #msg % #unUnlinedText,
+              log ^. #msg % #unLogMessage,
               suffix
             ]
         result = fmt log
@@ -572,21 +568,27 @@ stripCharsTests =
 
 stripNone :: TestTree
 stripNone =
-  testCase "StripControlNone should only replace newlines" $ do
+  testCase "StripControlNone should strip nothing" $ do
     "" @=? stripNone' ""
-    "   \ESC[ foo \ESC[A  bar \n baz \t  " @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
+    -- NOTE: Previously this test said '"StripControlNone should
+    -- "StripControlNone should strip nothing".
+    --
+    -- That was actually mistaken, as StripControlNone in fact did nothing.
+    -- The only reason newlines were stripped was due to the underlying type
+    -- being UnlineText, whose IsString impl stripped them. But this doesn't
+    -- actually have anything to do w/ stripChars.
+    --
+    -- Now that the type is a LogMessage w/ a different IsString, we correctly
+    -- show that newlines are preserved.
+    " \n \ESC[ foo \ESC[A  bar \n baz \t  " @=? stripNone' " \n \ESC[ foo \ESC[A  bar \n baz \t  "
   where
     stripNone' = flip Formatting.stripChars StripControlNone
-
--- NOTE: For the below instances, the RHS is UnlinedText, so it uses its
--- IsString instance. That instance replaces newlines with whitespace, hence,
--- for instance, " \n " transforming to 3 spaces "   ".
 
 stripAll :: TestTree
 stripAll =
   testCase "StripControlAll should strip all control" $ do
     "" @=? stripAll' ""
-    "   oo    bar   baz   " @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
+    "  oo    bar  baz   " @=? stripAll' " \n \ESC[ foo \ESC[A \ESC[K  bar \n baz \t  "
   where
     stripAll' = flip Formatting.stripChars StripControlAll
 
@@ -594,6 +596,6 @@ stripSmart :: TestTree
 stripSmart =
   testCase "StripControlSmart should strip some control" $ do
     "" @=? stripSmart' ""
-    "    foo \ESC[m   bar   baz   " @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
+    "   foo \ESC[m   bar  baz   " @=? stripSmart' " \n \ESC[G foo \ESC[m \ESC[X  bar \n baz \t  "
   where
     stripSmart' = flip Formatting.stripChars StripControlSmart
