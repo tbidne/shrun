@@ -5,8 +5,8 @@ module Shrun.Logging.Formatting
     formatFileLog,
 
     -- ** Final logs
-    formatFinalConsoleLogs,
-    formatFinalFileLogs,
+    formatConsoleMultiLineLogs,
+    formatFileMultiLineLogs,
 
     -- * Low-level
     logToColor,
@@ -99,12 +99,12 @@ formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
 
 -- | Like 'formatConsoleLog', but for multiple logs. Concatenates all
 -- together with a newline.
-formatFinalConsoleLogs ::
+formatConsoleMultiLineLogs ::
   KeyHideSwitch ->
   ConsoleLoggingEnv ->
   NonEmpty Log ->
   ConsoleLog
-formatFinalConsoleLogs keyHide consoleLogging =
+formatConsoleMultiLineLogs keyHide consoleLogging =
   UnsafeConsoleLog
     . T.intercalate "\n"
     . F.toList
@@ -159,7 +159,7 @@ formatFileLog keyHide fileLogging log = do
 
 -- | Like 'formatFileLog', but for multiple logs. Concatenates all
 -- together.
-formatFinalFileLogs ::
+formatFileMultiLineLogs ::
   ( HasCallStack,
     MonadTime m
   ) =>
@@ -167,7 +167,7 @@ formatFinalFileLogs ::
   FileLoggingEnv ->
   NonEmpty Log ->
   m FileLog
-formatFinalFileLogs keyHide fileLogging logs = do
+formatFileMultiLineLogs keyHide fileLogging logs = do
   currTime <- getSystemTimeString
   let timestamp = brackets False (pack currTime)
       timestampLen = T.length timestamp
@@ -193,7 +193,7 @@ formatFinalFileLogs keyHide fileLogging logs = do
     . F.toList
     . fmap (withTimestamp . mkLine)
     $ logs
-{-# INLINEABLE formatFinalFileLogs #-}
+{-# INLINEABLE formatFileMultiLineLogs #-}
 
 -- | Core formatting, shared by console and file logs. Basic idea:
 --

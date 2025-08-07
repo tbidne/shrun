@@ -297,8 +297,8 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
                     lvl,
                     mode
                   }
-         in ( Formatting.formatFinalConsoleLogs keyHide consoleLogging logs,
-              \fl -> Formatting.formatFinalFileLogs keyHide fl logs
+         in ( Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs,
+              \fl -> Formatting.formatFileMultiLineLogs keyHide fl logs
             )
 
     mode = LogModeFinish
