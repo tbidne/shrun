@@ -73,13 +73,12 @@ jobs:
         run: |
           cabal bench ${{ matrix.ghc.proj-file }} --benchmark-options '
             +RTS -T -RTS
-            -t100
+            -t200
             --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
             --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv'
 
       - uses: actions/upload-artifact@v4
-        if: ${{ failure() && steps.bench.conclusion == 'failure' }}
         id: bench-upload
         with:
           # Unique because we only run the benchmarks on ubuntu
@@ -87,6 +86,7 @@ jobs:
           path: |
             benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
             benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
+          retention-days: 1
 
   merge-benchmarks:
     runs-on: "ubuntu-latest"
@@ -99,6 +99,7 @@ jobs:
           name: bench-artifacts
           pattern: bench-artifacts-*
           delete-merged: true
+          retention-days: 1
 
   stack:
     strategy:
