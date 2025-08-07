@@ -5,7 +5,6 @@ LABEL stage=build-stage
 ARG CABAL_PROJ
 ARG CABAL_VERS
 ARG GHC_VERS
-ARG suffix
 
 RUN mkdir -p /opt/shrun
 ADD . /opt/shrun
@@ -55,7 +54,7 @@ cd /opt/shrun
 arch=$(uname -m)
 
 cabal update
-cabal install --installdir bin/ --program-suffix $suffix --enable-executable-static --enable-executable-stripping exe:shrun --project-file $CABAL_PROJ --ghc-options -Werror
+export SHRUN_HOME=$(pwd); cabal install --installdir bin/ --enable-executable-static --enable-executable-stripping exe:shrun --project-file $CABAL_PROJ --ghc-options -Werror
 
 echo "*** Copy binary ***"
 
