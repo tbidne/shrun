@@ -278,6 +278,7 @@ test-suite functional
 
   build-depends:
     , base
+    , effects-async
     , effects-fs
     , env-guard
     , fdo-notify

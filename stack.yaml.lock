@@ -55,15 +55,15 @@ packages:
     commit: b7ca541cfdd8564bcebe5d38456fe7abf77885b8
     git: https://github.com/tbidne/bounds.git
 - completed:
-    commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
+    commit: 0929797ddb5d5326b175f1d3e96646d8095ad475
     git: https://github.com/tbidne/exception-utils.git
     name: exception-utils
     pantry-tree:
-      sha256: 7f2b5295921647e923acf2a01756b3e37b5aef3e0ae4c265f6c2815cde0e76cb
+      sha256: 6d29a0aaf4066d65c6439b9b11d44ef7d1cc9234f5684e88e832c95e3d090036
       size: 1032
     version: '0.1'
   original:
-    commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
+    commit: 0929797ddb5d5326b175f1d3e96646d8095ad475
     git: https://github.com/tbidne/exception-utils.git
 - completed:
     commit: 2389f7dbe5b94f65bd22088f4e5a5f6644caaade

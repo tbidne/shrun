@@ -34,6 +34,7 @@ module Functional.Prelude
     runException,
     runExitFailure,
     runAllExitFailure,
+    runCancelled,
 
     -- ** Read strategies
     ReadStrategyTestParams (..),
@@ -52,6 +53,8 @@ module Functional.Prelude
     withCommandPrefix,
     withSuccessPrefix,
     withErrorPrefix,
+    withWarnPrefix,
+    withFatalPrefix,
     withTimerPrefix,
     withTimeoutPrefix,
     withFinishedPrefix,
@@ -68,6 +71,7 @@ where
 
 import Data.Text qualified as T
 import Data.Typeable (typeRep)
+import Effects.Concurrent.Async qualified as Async
 import FileSystem.OsPath as X (combineFilePaths, unsafeDecode)
 import Functional.ReadStrategyTest
   ( ReadStrategyTestParams
@@ -328,6 +332,38 @@ runMaybeException mException argList = do
       for_ logs (putStrLn . unpack)
       putStrLn ""
 
+-- | Runs shrun potentially catching an expected exception.
+runCancelled ::
+  Natural ->
+  List String ->
+  IO (List ResultText, List ShrunNote)
+runCancelled secToSleep argList = do
+  ls <- newIORef []
+  shrunNotes <- newIORef []
+
+  let action = do
+        withArgs argList $ Env.withEnv $ \env -> do
+          let funcEnv =
+                MkFuncEnv
+                  { coreEnv = env,
+                    logs = ls,
+                    shrunNotes
+                  }
+
+          SR.runShellT SR.shrun funcEnv
+
+  Async.withAsync action $ \async -> do
+    sleep secToSleep
+    Async.cancel async
+
+  readRefs ls shrunNotes
+  where
+    readRefs ::
+      IORef (List Text) ->
+      IORef (List ShrunNote) ->
+      IO (List ResultText, List ShrunNote)
+    readRefs ls ns = ((,) . fmap MkResultText <$> readIORef ls) <*> readIORef ns
+
 commandPrefix :: (IsString s) => s
 commandPrefix = "[Command]"
 
@@ -354,6 +390,14 @@ withSuccessPrefix txt = "[Success][" <> txt <> "] "
 -- | Expected error text.
 withErrorPrefix :: (IsString s, Semigroup s) => s -> s
 withErrorPrefix cmd = "[Error][" <> cmd <> "] "
+
+-- | Expected error text.
+withWarnPrefix :: (IsString s, Semigroup s) => s -> s
+withWarnPrefix = ("[Warn] " <>)
+
+-- | Expected error text.
+withFatalPrefix :: (IsString s, Semigroup s) => s -> s
+withFatalPrefix = ("[Fatal] " <>)
 
 -- | Expected timing text.
 withTimerPrefix :: (Semigroup a, IsString a) => a -> a

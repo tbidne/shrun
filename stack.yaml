@@ -30,7 +30,7 @@ extra-deps:
   - git: https://github.com/tbidne/bounds.git
     commit: b7ca541cfdd8564bcebe5d38456fe7abf77885b8
   - git: https://github.com/tbidne/exception-utils.git
-    commit: e28b28ae3bc90a0336abf69eff28369b790f4e13
+    commit: 0929797ddb5d5326b175f1d3e96646d8095ad475
   - git: https://github.com/tbidne/fs-utils.git
     commit: 2389f7dbe5b94f65bd22088f4e5a5f6644caaade
   - git: https://github.com/tbidne/monad-effects.git

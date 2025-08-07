@@ -7,10 +7,10 @@ module Shrun
   )
 where
 
+import Control.Exception.Utils qualified as Ex.Utils
 import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Data.HashSet qualified as Set
 import Effects.Concurrent.Async qualified as Async
-import Effects.Concurrent.Thread as X (microsleep, sleep)
 import Effects.Time (TimeSpec, withTiming)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
@@ -40,6 +40,7 @@ import Shrun.Configuration.Env.Types
     setAnyErrorTrue,
   )
 import Shrun.Data.Command (CommandP1)
+import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.IO
   ( CommandResult (CommandFailure, CommandSuccess),
@@ -109,7 +110,7 @@ shrun ::
   ) =>
   -- | .
   m ()
-shrun = displayRegions $ do
+shrun = displayRegions $ flip Ex.Utils.onAsyncException teardown $ do
   mFileLogging <- asks getFileLogging
   (_, consoleQueue) <- asks getConsoleLogging
 
@@ -356,8 +357,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   -- Send off a 'finished' notification
   anyError <- readTVarA =<< asks getAnyError
   let urgency = if anyError then Critical else Normal
-
-  let notifyBody = Notify.formatNotifyMessage totalTimeTxt []
+      notifyBody = Notify.formatNotifyMessage totalTimeTxt []
 
   -- Sent off notif if NotifyAll or NotifyFinal is set
   cfg <- asks getNotifyConfig
@@ -451,33 +451,51 @@ keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      keyHide <- asks (view #keyHide . getCommonLogging)
-      allCmds <- asks getCommands
-      completedCommandsTVar <- asks getCompletedCommands
-      completedCommands <- readTVarA completedCommandsTVar
-
-      -- update anyError
-      setAnyErrorTrue
-
-      let completedCommandsSet = Set.fromList $ toList completedCommands
-          allCmdsSet = Set.fromList $ toList allCmds
-          incompleteCmds = Set.difference allCmdsSet completedCommandsSet
-          toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
-
-          unfinishedCmds =
-            ShrunText.intercalate ", "
-              $ foldl' toTxtList [] incompleteCmds
-
-      Logging.putRegionLog region
-        $ MkLog
-          { cmd = Nothing,
-            msg = Types.fromUnlined $ "Timed out, cancelling remaining commands: " <> unfinishedCmds,
-            lvl = LevelWarn,
-            mode = LogModeFinish
-          }
+      log <- cancelRunningCommands "Timed out"
+      Logging.putRegionLog region log
       pure False
     else pure True
 {-# INLINEABLE keepRunning #-}
+
+-- | Cancels running commands, returns a message to log.
+cancelRunningCommands ::
+  forall m env.
+  ( HasAnyError env,
+    HasCallStack,
+    HasCommands env,
+    HasCommonLogging env,
+    MonadIORef m,
+    MonadReader env m,
+    MonadSTM m
+  ) =>
+  UnlinedText ->
+  m Log
+cancelRunningCommands prefix = do
+  keyHide <- asks (view #keyHide . getCommonLogging)
+  allCmds <- asks getCommands
+  completedCommandsTVar <- asks getCompletedCommands
+  completedCommands <- readTVarA completedCommandsTVar
+
+  -- update anyError
+  setAnyErrorTrue
+
+  let completedCommandsSet = Set.fromList $ toList completedCommands
+      allCmdsSet = Set.fromList $ toList allCmds
+      incompleteCmds = Set.difference allCmdsSet completedCommandsSet
+      toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
+
+      unfinishedCmds =
+        ShrunText.intercalate ", "
+          $ foldl' toTxtList [] incompleteCmds
+
+  pure
+    $ MkLog
+      { cmd = Nothing,
+        msg = Types.fromUnlined $ prefix <> ", cancelling remaining commands: " <> unfinishedCmds,
+        lvl = LevelWarn,
+        mode = LogModeFinish
+      }
+{-# INLINEABLE cancelRunningCommands #-}
 
 timedOut :: Natural -> Maybe Timeout -> Bool
 timedOut _ Nothing = False
@@ -546,3 +564,62 @@ atomicReadWrite ::
 atomicReadWrite queue logAction =
   mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction
 {-# INLINEABLE atomicReadWrite #-}
+
+-- | Cancels running commands and prints a final log message about going
+-- down. Intended to be used when shrun has been cancelled.
+teardown ::
+  forall m env.
+  ( HasAnyError env,
+    HasCallStack,
+    HasCommands env,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
+    HasNotifyConfig env,
+    MonadIORef m,
+    MonadHandleWriter m,
+    MonadNotify m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m,
+    MonadTime m
+  ) =>
+  m ()
+teardown = withRegion Linear $ \r -> do
+  commonLogging <- asks getCommonLogging
+  (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
+  mFileLogging <- asks getFileLogging
+  let keyHide = commonLogging ^. #keyHide
+      errMsg = "Received cancel"
+      fatalLog =
+        MkLog
+          { cmd = Nothing,
+            msg = Types.fromUnlined errMsg,
+            lvl = LevelFatal,
+            mode = LogModeFinish
+          }
+
+      fatalConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging fatalLog
+
+  cancelLog <- cancelRunningCommands errMsg
+  let cancelConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging cancelLog
+
+  withRegion Linear $ \r2 -> logRegion LogModeFinish r2 (cancelConsoleLog ^. #unConsoleLog)
+
+  logRegion LogModeFinish r (fatalConsoleLog ^. #unConsoleLog)
+
+  let notifyBody = Notify.formatNotifyMessage errMsg []
+      urgency = Critical
+
+  cfg <- asks getNotifyConfig
+  case cfg ^? (_Just % #action) of
+    -- If notifcations are on at all, send one
+    Just _ -> Notify.sendNotif notifyBody "" urgency
+    _ -> pure ()
+
+  for_ mFileLogging $ \fl -> do
+    cancelFileLog <- Formatting.formatFileLog keyHide fl cancelLog
+    fatalFileLog <- Formatting.formatFileLog keyHide fl fatalLog
+    logFile (fl ^. #file % #handle) cancelFileLog
+    logFile (fl ^. #file % #handle) fatalFileLog
+{-# INLINEABLE teardown #-}

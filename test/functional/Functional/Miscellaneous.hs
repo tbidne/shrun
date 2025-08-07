@@ -28,6 +28,7 @@ specs testArgs =
         formatErrorLogs testArgs,
         stripControlAlwaysCmdNames,
         reportsStderr,
+        isCancelled testArgs,
         slowOutputBroken,
         formatsFileLogs testArgs
       ]
@@ -58,8 +59,6 @@ splitNewlineLogs =
     unexpected =
       [ withCommandPrefix printedCmd "line one line two"
       ]
-
--- FIXME: Test file logs and notifications here.
 
 formatErrorLogs :: IO TestArgs -> ReadStrategyTestParams
 formatErrorLogs testArgs =
@@ -130,6 +129,50 @@ formatErrorLogs testArgs =
         MkShrunNote
           { body = "2 seconds\nabc\n  def",
             summary = "[sleep 1 && echo 'abc   def' && sleep 1 && exit 1]  Finished",
+            timeout = NotifyTimeoutSeconds 10,
+            urgency = Critical
+          }
+      ]
+
+isCancelled :: IO TestArgs -> ReadStrategyTestParams
+isCancelled testArgs =
+  ReadStrategyTestParametricSetup
+    "Shrun is cancelled"
+    (runCancelled 2)
+    ( \_ -> do
+        outFile <- (</> [osp|cancelled.log|]) . view #tmpDir <$> testArgs
+        let outFileStr = unsafeDecode outFile
+            args =
+              withNoConfig
+                [ "--file-log",
+                  outFileStr,
+                  "--notify-action",
+                  "all",
+                  "--notify-system",
+                  notifySystemArg,
+                  "--console-log-command",
+                  "sleep 5"
+                ]
+        pure (args, outFile)
+    )
+    ( \((resultsConsole, notes), outFile) -> do
+        V.verifyExpected resultsConsole expected
+
+        fileResults <- readLogFile outFile
+        V.verifyExpected fileResults expected
+
+        expectedNotes @=? notes
+    )
+  where
+    expected =
+      [ withWarnPrefix "Received cancel, cancelling remaining commands: sleep 5",
+        withFatalPrefix "Received cancel"
+      ]
+
+    expectedNotes =
+      [ MkShrunNote
+          { body = "",
+            summary = "Received cancel",
             timeout = NotifyTimeoutSeconds 10,
             urgency = Critical
           }

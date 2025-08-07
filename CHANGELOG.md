@@ -19,6 +19,7 @@ for versions < 1.
 ### Changed
 * Updated blessed GHC to 9.10.1.
 * Improve final command log formatting with newlines.
+* Improve logs for when shrun is cancelled (e.g. CTRL-C).
 
 ### Added
 * Add `--file-log-mode rename`, that renames the requested log file if it

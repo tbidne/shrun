@@ -40,7 +40,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/exception-utils.git
-    tag: e28b28ae3bc90a0336abf69eff28369b790f4e13
+    tag: 0929797ddb5d5326b175f1d3e96646d8095ad475
 
 source-repository-package
     type: git

@@ -11,7 +11,6 @@ where
 
 import Data.ByteString.Lazy qualified as BSL
 import Data.Time.Relative (RelativeTime)
-import Effects.Concurrent.Thread (microsleep)
 import Effects.Process.Typed (ProcessConfig)
 import Effects.Process.Typed qualified as P
 import Effects.Time (MonadTime (getMonotonicTime), withTiming)

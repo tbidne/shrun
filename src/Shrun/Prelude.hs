@@ -94,6 +94,7 @@ import Control.Monad.Catch as X
     catch,
     finally,
     mask,
+    onException,
     throwM,
     try,
   )
@@ -174,7 +175,7 @@ import Effects.Concurrent.STM as X
     writeTBQueueA,
     writeTVarA,
   )
-import Effects.Concurrent.Thread as X (MonadThread)
+import Effects.Concurrent.Thread as X (MonadThread, microsleep, sleep)
 import Effects.FileSystem.FileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,
