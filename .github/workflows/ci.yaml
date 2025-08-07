@@ -5,6 +5,7 @@ on: # yamllint disable-line rule:truthy rule:comments
     branches:
       - main
       - release
+      - release-test
 
   pull_request:
     branches:
@@ -21,6 +22,7 @@ env:
 
 jobs:
   cabal:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -102,6 +104,7 @@ jobs:
           retention-days: 1
 
   stack:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -127,6 +130,7 @@ jobs:
         run: stack test --ghc-options -Werror
 
   nix:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -150,6 +154,7 @@ jobs:
   # Leaving it for osx as that provides some value, and at least we can
   # test linux notifications manually.
   notify-tests:
+    if: false
     strategy:
       fail-fast: false
       matrix:
@@ -172,6 +177,7 @@ jobs:
             -c bash -c '.github/scripts/notify_tests.sh'
 
   lint:
+    if: false
     runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
@@ -192,8 +198,8 @@ jobs:
           nix run .#lint
 
   release:
-    needs: [cabal, stack, nix, notify-tests, lint]
-    if: github.ref == 'refs/heads/release'
+    #needs: [cabal, stack, nix, notify-tests, lint]
+    if: github.ref == 'refs/heads/release-test'
     strategy:
       fail-fast: false
       matrix:
@@ -253,7 +259,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-artifacts-${{ matrix.platform.name }}
-          path: bin
+          path: shrun*.zip
           retention-days: 1
 
   merge-releases:

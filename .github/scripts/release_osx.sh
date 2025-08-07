@@ -14,19 +14,18 @@ if [[ $arch == 'arm64' ]]; then
   arch="aarch64"
 fi
 
-# x86_64-osx on macos-12/13, aarch64-osx on macos-14/15
-cabal_build_dir="$arch-osx"
-
 mkdir -p bin
 
-suffix="_$SHRUN_VERS-$arch-macos_$apple_vers-darwin"
+suffix="$SHRUN_VERS-$arch-macos_$apple_vers"
 
-cabal update
-cabal install exe:shrun --installdir bin/ --program-suffix $suffix --project-file $CABAL_PROJ --ghc-options -Werror
+export SHRUN_HOME=$(pwd); cabal install exe:shrun --installdir bin/ --project-file $CABAL_PROJ --ghc-options -Werror
 
 echo "*** Testing exe ***"
-./bin/shrun$suffix --version
+./bin/shrun --version
 
 echo "*** Computing sha256 ***"
-sha256sum ./bin/shrun$suffix > ./bin/shrun$suffix.sha256
-cat ./bin/shrun$suffix.sha256
+sha256sum ./bin/shrun > ./bin/shrun.sha256
+cat ./bin/shrun.sha256
+
+# -j needed to keep structure flat
+zip "shrun_$suffix.zip" -j ./bin/*

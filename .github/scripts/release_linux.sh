@@ -8,7 +8,7 @@ dir=$1
 
 mkdir -p bin
 
-suffix="_$SHRUN_VERS-$arch-linux-static"
+suffix="$SHRUN_VERS-$arch-linux-static"
 
 docker build \
   -t shrun_build:latest \
@@ -17,14 +17,16 @@ docker build \
   --build-arg CABAL_VERS=$CABAL_VERS \
   --build-arg CABAL_PROJ=$CABAL_PROJ \
   --build-arg GHC_VERS=$GHC_VERS \
-  --build-arg suffix=$suffix \
   .
 
-cp docker_out/shrun_* bin/
+cp docker_out/shrun bin/
 
 echo "*** Testing exe ***"
-./bin/shrun$suffix --version
+./bin/shrun --version
 
 echo "*** Computing sha256 ***"
-sha256sum ./bin/shrun$suffix > ./bin/shrun$suffix.sha256
-cat ./bin/shrun$suffix.sha256
+sha256sum ./bin/shrun > ./bin/shrun.sha256
+cat ./bin/shrun.sha256
+
+# -j needed to keep structure flat
+zip "shrun_$suffix.zip" -j ./bin/*
