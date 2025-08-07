@@ -346,12 +346,15 @@ displayCmd (MkCommandP _ cmd) _ = formatCommandText cmd
 stripChars :: LogMessage -> StripControl t -> LogMessage
 stripChars txt =
   \case
-    StripControlAll -> Utils.stripControlAll txt'
-    StripControlNone -> txt'
-    StripControlSmart -> Utils.stripControlSmart txt'
-    >>> Types.fromUnlined
-  where
-    txt' = UnsafeUnlinedText $ txt ^. #unLogMessage
+    -- Coerce is needed as stripControl operators on UnlinedText. Originally
+    -- this was convenient as our log was UnlinedText, but now it is
+    -- LogMessage.
+    --
+    -- This shouldn't be a problem, though arguably stripControls should just
+    -- take Text.
+    StripControlAll -> coerce Utils.stripControlAll txt
+    StripControlNone -> txt
+    StripControlSmart -> coerce Utils.stripControlSmart txt
 {-# INLINE stripChars #-}
 
 -- | Surrounds text with brackets, appending a space if the boolean is 'True'.
