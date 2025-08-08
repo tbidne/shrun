@@ -239,7 +239,7 @@ coreFormatting
   stripControl
   keyHide
   log =
-    concatWithLineTrunc mLineTrunc prefix (msgStripped ^. #unLogMessage)
+    concatWithLineTrunc mLineTrunc prefix (coerce msgStripped)
     where
       -- prefix is something like "[Success] " or "[Command][some cmd] ".
       -- Notice this does not include ANSI codes or a timestamp.
@@ -253,7 +253,7 @@ coreFormatting
                   cmd
            in mconcat
                 [ brackets False logPrefix,
-                  cmd' ^. #unUnlinedText
+                  coerce cmd'
                 ]
 
       msgStripControlled = stripChars (log ^. #msg) stripControl
@@ -280,7 +280,7 @@ formatCommand keyHide commandNameTrunc com =
     truncateNameFn =
       maybeApply
         Utils.truncateIfNeeded
-        (commandNameTrunc ^? (_Just % #unTruncation))
+        (coerce $ commandNameTrunc ^? _Just)
 
 -- | Replace newlines with whitespace before stripping, so any strings
 -- separated by newlines do not get smashed together.

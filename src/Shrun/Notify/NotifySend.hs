@@ -17,6 +17,7 @@ import Shrun.Configuration.Data.Notify.Timeout
 import Shrun.Notify.MonadNotify
   ( NotifyException (MkNotifyException),
     ShrunNote,
+    NotifyMessage (UnsafeNotifyMessage),
     exitFailureToStderr,
   )
 import Shrun.Prelude
@@ -67,8 +68,8 @@ shrunToNotifySend shrunNote = txt
     --
     -- only required escaping the summary, but we do the same to the body out
     -- of paranoia.
-    summary = Utils.escapeDoubleQuotes $ shrunNote ^. #summary % #unNotifyMessage
-    body = Utils.escapeDoubleQuotes $ shrunNote ^. #body % #unNotifyMessage
+    summary = Utils.escapeDoubleQuotes $ coerce $ shrunNote ^. #summary
+    body = Utils.escapeDoubleQuotes $ coerce $ shrunNote ^. #body
 
     ulToNS Low = " --urgency low "
     ulToNS Normal = " --urgency normal "

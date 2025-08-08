@@ -22,6 +22,7 @@ import Shrun.Configuration.Data.CommandLogging
         ReportReadErrorsOn
       ),
   )
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy
       ( ReadBlock,
@@ -63,6 +64,8 @@ import Shrun.Logging.Types
 import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import Shrun.Configuration.Data.CommandLogging.PollInterval (
+  PollInterval (MkPollInterval))
 
 -- | Newtype wrapper for stderr.
 newtype Stderr = MkStderr {unStderr :: List UnlinedText}
@@ -309,13 +312,13 @@ streamOutput logFn cmd p = do
       reportReadErrors = commandLogging ^. #reportReadErrors
 
       pollInterval :: Natural
-      pollInterval = commandLogging ^. (#pollInterval % #unPollInterval)
+      pollInterval = coerce $ commandLogging ^. #pollInterval
 
       sleepFn :: m ()
       sleepFn = when (pollInterval /= 0) (microsleep pollInterval)
 
       blockSize :: Int
-      blockSize = commandLogging ^. (#readSize % #unReadSize % _MkBytes)
+      blockSize = coerce $ commandLogging ^. #readSize
 
       readStrategy = commandLogging ^. #readStrategy
 

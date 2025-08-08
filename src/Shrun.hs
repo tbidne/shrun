@@ -48,6 +48,8 @@ import Shrun.IO
     tryCommandLogging,
   )
 import Shrun.Logging qualified as Logging
+import Shrun.Logging.Types.Internal (ConsoleLog (UnsafeConsoleLog),
+  FileLog (UnsafeFileLog))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Formatting qualified as LogFmt
 import Shrun.Logging.MonadRegionLogger
@@ -60,9 +62,7 @@ import Shrun.Logging.MonadRegionLogger
       ),
   )
 import Shrun.Logging.Types
-  ( ConsoleLog,
-    FileLog,
-    Log (MkLog, cmd, lvl, mode, msg),
+  ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel
       ( LevelError,
         LevelFatal,
@@ -521,8 +521,8 @@ printConsoleLog ::
   ) =>
   LogRegion (Region m) ->
   m ()
-printConsoleLog (LogNoRegion consoleLog) = logGlobal (consoleLog ^. #unConsoleLog)
-printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unConsoleLog)
+printConsoleLog (LogNoRegion consoleLog) = logGlobal (coerce consoleLog)
+printConsoleLog (LogRegion m r consoleLog) = logRegion m r (coerce consoleLog)
 {-# INLINEABLE printConsoleLog #-}
 
 pollQueueToFile ::
@@ -545,7 +545,7 @@ pollQueueToFile fileLogging = do
 {-# INLINEABLE pollQueueToFile #-}
 
 logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
-logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
+logFile h = (\t -> hPutUtf8 h t *> hFlush h) . coerce
 {-# INLINEABLE logFile #-}
 
 -- | Reads from a queue and applies the function, if we receive a value.
@@ -604,9 +604,9 @@ teardown = withRegion Linear $ \r -> do
   cancelLog <- cancelRunningCommands errMsg
   let cancelConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging cancelLog
 
-  withRegion Linear $ \r2 -> logRegion LogModeFinish r2 (cancelConsoleLog ^. #unConsoleLog)
+  withRegion Linear $ \r2 -> logRegion LogModeFinish r2 (coerce cancelConsoleLog)
 
-  logRegion LogModeFinish r (fatalConsoleLog ^. #unConsoleLog)
+  logRegion LogModeFinish r (coerce fatalConsoleLog)
 
   let notifyBody = Notify.formatNotifyMessage errMsg []
       urgency = Critical

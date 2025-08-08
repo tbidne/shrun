@@ -22,7 +22,7 @@ import Shrun.Configuration.Data.CommandLogging
       ),
   )
 import Shrun.Configuration.Data.CommandLogging qualified as CommandLogging
-import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
+import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval (MkPollInterval))
 import Shrun.Configuration.Data.CommandLogging.PollInterval qualified as PollInterval
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize)
 import Shrun.Configuration.Data.CommandLogging.ReadSize qualified as ReadSize
@@ -124,7 +124,7 @@ pollIntervalParser = Utils.withDisabledParser mainParser "command-log-poll-inter
         . T.chunksOf 3
         . T.reverse
         . showt
-        . view #unPollInterval
+        . coerce @_ @Natural
 
 readSizeParser :: Parser (WithDisabled ReadSize)
 readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"

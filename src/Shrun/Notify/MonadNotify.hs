@@ -19,7 +19,7 @@ import Shrun.Configuration.Data.Notify.System
     displayNotifySystem,
   )
 import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout)
-import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Prelude
 
 newtype NotifyMessage = UnsafeNotifyMessage {unNotifyMessage :: Text}
@@ -37,7 +37,7 @@ instance
   {-# INLINE labelOptic #-}
 
 fromUnlined :: UnlinedText -> NotifyMessage
-fromUnlined = UnsafeNotifyMessage . view #unUnlinedText
+fromUnlined = coerce
 
 -- | Holds notification data.
 data ShrunNote = MkShrunNote

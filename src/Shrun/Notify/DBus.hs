@@ -17,7 +17,8 @@ import Shrun.Configuration.Data.Notify.Timeout
         NotifyTimeoutSeconds
       ),
   )
-import Shrun.Notify.MonadNotify (NotifyException (MkNotifyException), ShrunNote)
+import Shrun.Notify.MonadNotify (NotifyException (MkNotifyException), ShrunNote,
+  NotifyMessage (UnsafeNotifyMessage),)
 import Shrun.Prelude
 
 -- | Effect for DBus.
@@ -57,8 +58,8 @@ shrunToDBus :: ShrunNote -> Note
 shrunToDBus shrunNote =
   DBusN.Note
     { appName = "Shrun",
-      summary = unpack $ shrunNote ^. #summary % #unNotifyMessage,
-      body = Just . DBusN.Text . T.unpack $ shrunNote ^. #body % #unNotifyMessage,
+      summary = unpack $ coerce $ shrunNote ^. #summary,
+      body = Just . DBusN.Text . T.unpack $ coerce $ shrunNote ^. #body,
       appImage = Nothing,
       hints = [Urgency (shrunNote ^. #urgency)],
       expiry,

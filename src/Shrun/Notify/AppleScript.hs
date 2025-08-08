@@ -10,6 +10,7 @@ import Shrun.Configuration.Data.Notify.System (NotifySystemP (AppleScript))
 import Shrun.Notify.MonadNotify
   ( NotifyException (MkNotifyException),
     ShrunNote,
+    NotifyMessage (UnsafeNotifyMessage),
     exitFailureToStderr,
   )
 import Shrun.Prelude
@@ -38,10 +39,10 @@ shrunToAppleScript shrunNote = txt
     txt =
       mconcat
         [ "osascript -e 'display notification ",
-          withDoubleQuotes (shrunNote ^. #body % #unNotifyMessage),
+          withDoubleQuotes (coerce $ shrunNote ^. #body),
           " with title \"Shrun\" ",
           " subtitle ",
-          withDoubleQuotes (shrunNote ^. #summary % #unNotifyMessage),
+          withDoubleQuotes (coerce $ shrunNote ^. #summary),
           "'"
         ]
 

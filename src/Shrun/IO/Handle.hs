@@ -24,9 +24,11 @@ import Effects.FileSystem.HandleReader
 import Effects.Time (MonadTime (getMonotonicTime))
 import GHC.Real (RealFrac (floor))
 import Shrun.Configuration.Data.CommandLogging
-import Shrun.Data.Text (UnlinedText)
+    ( BufferLength(MkBufferLength), BufferTimeout(MkBufferTimeout) )
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Configuration.Data.Core.Timeout (Timeout (MkTimeout))
 
 -- | Result from reading a handle. The ordering is based on:
 --
@@ -301,7 +303,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
     bufferExceedsLength t = tLen > bufLen
       where
         tLen = ShrunText.length t
-        bufLen = bufferLength ^. #unBufferLength
+        bufLen = coerce bufferLength
 
     bufferExceedsTime :: m Bool
     bufferExceedsTime = do
@@ -312,7 +314,8 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
 
       pure $ diffTime > bufTimeout
       where
-        bufTimeout = bufferTimeout ^. #unBufferTimeout % #unTimeout
+        bufTimeout :: Natural
+        bufTimeout = coerce bufferTimeout
 
     resetPrevReadRef' = resetPrevReadRef prevReadRef
 
