@@ -8,7 +8,7 @@ dir=$1
 
 mkdir -p bin
 
-suffix="$SHRUN_VERS-$arch-linux-static"
+suffix="$SHRUN_VERS-$arch-linux"
 
 docker build \
   -t shrun_build:latest \
