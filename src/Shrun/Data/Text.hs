@@ -56,11 +56,11 @@ instance
 
 -- | Creates a list of 'UnlinedText'.
 fromText :: Text -> List UnlinedText
-fromText = fmap UnsafeUnlinedText . T.lines
+fromText = coerce T.lines
 
 -- | Requires input text to be non-empty to be safe.
 unsafeFromTextNE :: (HasCallStack) => Text -> NonEmpty UnlinedText
-unsafeFromTextNE = fmap UnsafeUnlinedText . unsafeListToNE . T.lines
+unsafeFromTextNE = coerce (unsafeListToNE . T.lines)
 
 -- | Creates a single 'UnlinedText' by replacing newlines with
 -- whitespace.
@@ -88,23 +88,20 @@ unsafeUnlinedText txt =
 -- 2. Even if we special case to avoid 1, newlines probably won't look good
 --    in the final output.
 toText :: List UnlinedText -> Text
-toText = T.intercalate " " . fmap (view #unUnlinedText)
+toText = coerce (T.intercalate " ")
 
 -- | Concats via 'toText'.
 concat :: List UnlinedText -> UnlinedText
 concat = UnsafeUnlinedText . toText
 
 intercalate :: UnlinedText -> List UnlinedText -> UnlinedText
-intercalate (UnsafeUnlinedText d) =
-  UnsafeUnlinedText
-    . T.intercalate d
-    . fmap (view #unUnlinedText)
+intercalate = coerce T.intercalate
 
 -- | Lifts a 'Text' function to 'UnlinedText'. Very unsafe in that we do not
 -- check for errors i.e. if the parameter function introduces any newlines,
 -- then this will silently succeed. This exists for performance.
 reallyUnsafeMap :: (Text -> Text) -> UnlinedText -> UnlinedText
-reallyUnsafeMap f (UnsafeUnlinedText t) = UnsafeUnlinedText (f t)
+reallyUnsafeMap = coerce
 
 length :: UnlinedText -> Int
-length (UnsafeUnlinedText t) = T.length t
+length = coerce T.length

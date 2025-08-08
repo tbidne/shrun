@@ -20,7 +20,7 @@ module Shrun.Logging.Types
 where
 
 import Shrun.Data.Command (CommandP1)
-import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging.Types.Internal
   ( ConsoleLog,
     FileLog,
@@ -65,7 +65,7 @@ instance
   {-# INLINE labelOptic #-}
 
 fromUnlined :: UnlinedText -> LogMessage
-fromUnlined = UnsafeLogMessage . view #unUnlinedText
+fromUnlined = coerce
 
 unsafeMapLogMessage :: (Text -> Text) -> LogMessage -> LogMessage
 unsafeMapLogMessage f (UnsafeLogMessage m) = UnsafeLogMessage (f m)
