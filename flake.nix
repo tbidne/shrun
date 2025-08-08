@@ -83,7 +83,7 @@
       perSystem =
         { pkgs, system, ... }:
         let
-          ghc-version = "ghc9101";
+          ghc-version = "ghc9102";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides =
               final: prev:
@@ -92,6 +92,8 @@
                 path = hlib.dontCheck prev.path_0_9_6;
 
                 # optparse jailbreaks
+                # TODO: Once below overrides no longer necessary, see which of
+                # these (and cabal.project allow-newer) we can remove.
                 cabal-add = hlib.doJailbreak prev.cabal-add;
                 fourmolu = hlib.doJailbreak prev.fourmolu;
                 hspec-golden = hlib.doJailbreak prev.hspec-golden;
