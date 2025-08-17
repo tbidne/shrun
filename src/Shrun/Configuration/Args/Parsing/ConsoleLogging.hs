@@ -140,7 +140,7 @@ stripControlParser =
         ]
 
 timerFormatParser :: Parser (WithDisabled TimerFormat)
-timerFormatParser = Utils.withDisabledParser mainParser "console-log-timer-format"
+timerFormatParser = Utils.withDisabledParserNoLine mainParser "console-log-timer-format"
   where
     mainParser =
       OA.optional

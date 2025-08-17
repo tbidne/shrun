@@ -21,7 +21,7 @@ commonLoggingParser :: Parser CommonLoggingArgs
 commonLoggingParser = MkCommonLoggingP <$> keyHideParser
 
 keyHideParser :: Parser (WithDisabled KeyHideSwitch)
-keyHideParser = Utils.withDisabledParser mainParser "common-log-key-hide"
+keyHideParser = Utils.withDisabledParserNoLine mainParser "common-log-key-hide"
   where
     mainParser =
       OA.optional

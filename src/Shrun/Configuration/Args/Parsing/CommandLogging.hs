@@ -149,7 +149,7 @@ readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"
         ]
 
 readStrategyParser :: Parser (WithDisabled ReadStrategy)
-readStrategyParser = Utils.withDisabledParser mainParser "command-log-read-strategy"
+readStrategyParser = Utils.withDisabledParserNoLine mainParser "command-log-read-strategy"
   where
     mainParser =
       OA.optional

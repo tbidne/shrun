@@ -144,7 +144,7 @@ lineTruncParser = Utils.withDisabledParser mainParser "file-log-line-trunc"
 
 fileLogStripControlParser :: Parser (WithDisabled FileLogStripControl)
 fileLogStripControlParser =
-  Utils.withDisabledParser mainParser "file-log-strip-control"
+  Utils.withDisabledParserNoLine mainParser "file-log-strip-control"
   where
     mainParser =
       OA.optional

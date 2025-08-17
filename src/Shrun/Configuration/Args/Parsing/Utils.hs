@@ -1,5 +1,6 @@
 module Shrun.Configuration.Args.Parsing.Utils
   ( withDisabledParser,
+    withDisabledParserNoLine,
     withDisabledParserOpts,
     mkHelp,
     mkHelpNoLine,
@@ -35,6 +36,19 @@ withDisabledParser mainParser name =
   where
     helpTxt = "Disables --" ++ name ++ "."
     opts = mkHelp helpTxt
+
+-- | Adds a '--no-x' switch to the parser.
+withDisabledParserNoLine ::
+  -- | Main parser.
+  Parser (Maybe a) ->
+  -- | Name for this option, to be used in disabled switch name.
+  String ->
+  Parser (WithDisabled a)
+withDisabledParserNoLine mainParser name =
+  withDisabledParserOpts opts mainParser name
+  where
+    helpTxt = "Disables --" ++ name ++ "."
+    opts = mkHelpNoLine helpTxt
 
 -- | Like 'withDisabledParser', except it also takes an arg for the disabled
 -- switch options.

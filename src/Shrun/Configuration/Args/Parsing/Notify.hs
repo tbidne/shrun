@@ -70,7 +70,7 @@ notifySystemParser = Utils.withDisabledParser mainParser "notify-system"
         ]
 
 notifyTimeoutParser :: Parser (WithDisabled NotifyTimeout)
-notifyTimeoutParser = Utils.withDisabledParser mainParser "notify-timeout"
+notifyTimeoutParser = Utils.withDisabledParserNoLine mainParser "notify-timeout"
   where
     mainParser =
       OA.optional
