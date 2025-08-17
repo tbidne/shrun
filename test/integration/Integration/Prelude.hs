@@ -4,7 +4,6 @@
 module Integration.Prelude
   ( module X,
     TestArgs (..),
-    getExampleConfig,
     getExampleConfigOS,
     getIntConfig,
     getIntConfigOS,
@@ -83,16 +82,13 @@ instance
 
 -- | Retrieves file path from the examples directory, potentially appending
 -- the os onto the filename (e.g. osx).
-getExampleConfigOS :: FilePath -> FilePath
-getExampleConfigOS fileName =
-  concatDirs ["examples", osExt fileName]
-    <> ".toml"
+getExampleConfigOS :: FilePath
 
--- | Retrieves file path from the examples directory.
-getExampleConfig :: FilePath -> FilePath
-getExampleConfig fileName =
-  concatDirs ["examples", fileName]
-    <> ".toml"
+#if OSX
+getExampleConfigOS = concatDirs ["test", "functional", "example_osx.toml"]
+#else
+getExampleConfigOS = concatDirs ["examples", "config.toml"]
+#endif
 
 -- | Retrieves file path from the integration directory, potentially appending
 -- the os onto the filename (e.g. osx).

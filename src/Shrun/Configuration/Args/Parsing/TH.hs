@@ -3,11 +3,13 @@
 
 module Shrun.Configuration.Args.Parsing.TH
   ( gitData,
+    defaultToml,
   )
 where
 
 import Control.Applicative (liftA3)
 import Data.Bifunctor (Bifunctor (first))
+import Data.Text qualified as T
 import Data.Time.Clock.POSIX (POSIXTime)
 import Data.Time.Clock.POSIX qualified as PosixTime
 import Data.Time.Format qualified as Fmt
@@ -22,6 +24,9 @@ import FileSystem.OsString (OsString, osstr)
 import FileSystem.OsString qualified as FS.OsString
 import GHC.Num (Num (fromInteger))
 import Language.Haskell.TH (Code, Q)
+import Language.Haskell.TH.Syntax (Lift (liftTyped))
+import Language.Haskell.TH.Syntax qualified as TH
+import Shrun.Configuration.Data.Notify.System qualified as System
 import Shrun.Prelude
 import System.OsString qualified as OsString
 import Text.Read qualified as TR
@@ -135,3 +140,31 @@ displayUnixTime var unixTimeOsStr = do
           value = Just unixTimeOsStr,
           reason = FS.OsString.encodeLenient str
         }
+
+defaultToml :: Code Q Text
+defaultToml = liftIOToTH $ do
+  contents <- readFileUtf8ThrowM [ospPathSep|examples/config.toml|]
+  pure
+    . T.unlines
+    . fmap prependComment
+    . T.lines
+    . replaceSys
+    $ contents
+  where
+    prependComment l =
+      if T.null l
+        then l
+        else "# " <> l
+
+    replaceSys =
+      T.replace
+        "system = \"notify-send\""
+        ("system = \"" <> System.defNotifySystemStr <> "\"")
+
+-- | Binds an IO action to TH.
+bindIOToTH :: (HasCallStack, Lift b) => ((HasCallStack) => a -> IO b) -> a -> Code Q b
+bindIOToTH f x = TH.bindCode (TH.runIO (f x)) liftTyped
+
+-- | Lifts an IO action to TH.
+liftIOToTH :: (HasCallStack, Lift a) => IO a -> Code Q a
+liftIOToTH m = bindIOToTH (const m) ()

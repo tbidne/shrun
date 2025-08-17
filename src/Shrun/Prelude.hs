@@ -225,7 +225,7 @@ import Effects.System.Terminal as X
     putTextLn,
   )
 import Effects.Time as X (MonadTime)
-import FileSystem.OsPath as X (OsPath, decodeLenient, osp, (</>))
+import FileSystem.OsPath as X (OsPath, decodeLenient, osp, ospPathSep, (</>))
 import FileSystem.OsPath qualified as OsPath
 import FileSystem.UTF8 as X (decodeUtf8)
 import GHC.Enum as X (Bounded (maxBound, minBound), Enum (toEnum))

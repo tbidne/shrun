@@ -28,6 +28,7 @@ extra-source-files:
   examples/demo.gif
   LICENSE
   README.md
+  test/functional/*.toml
   test/functional/scripts/*.sh
   test/integration/toml/*.toml
   test/integration/toml/osx/*.toml

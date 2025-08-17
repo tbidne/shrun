@@ -15,6 +15,7 @@ module Shrun.Configuration.Data.Notify.System
     displayNotifySystem,
     DBusF,
     mergeNotifySystem,
+    defNotifySystemStr,
 
     -- * Exceptions
     OsxNotifySystemMismatch (..),
@@ -150,3 +151,6 @@ data LinuxNotifySystemMismatch = LinuxNotifySystemMismatchAppleScript
 instance Exception LinuxNotifySystemMismatch where
   displayException LinuxNotifySystemMismatchAppleScript =
     "Detected linux, but AppleScript is only available on osx!"
+
+defNotifySystemStr :: Text
+defNotifySystemStr = displayNotifySystem @_ @ConfigPhaseArgs def

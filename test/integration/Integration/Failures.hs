@@ -172,12 +172,14 @@ osxNotifyConfigError = testCase "OSX with linux notify config throws exception" 
   logsRef <- newIORef []
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
-  let args = ["-c", getExampleConfig "config", "cmd"]
+  let args = ["-c", p, "cmd"]
   result <- runCaptureError @OsxNotifySystemMismatch args logsRef
 
   case result of
     Just ex -> exContains "Detected osx, but NotifySend is only available on linux!" ex
     Nothing -> assertFailure "Expected exception"
+  where
+    p = decodeLenient $ [ospPathSep|examples/config.toml|]
 
 osxDBusError :: TestTree
 osxDBusError = testCase "OSX with dbus throws exception" $ do
@@ -210,12 +212,14 @@ linuxNotifyConfigError = testCase "Linux with osx notify config throws exception
   logsRef <- newIORef []
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
-  let args = ["-c", getExampleConfig "config_osx", "cmd"]
+  let args = ["-c", p, "cmd"]
   result <- runCaptureError @LinuxNotifySystemMismatch args logsRef
 
   case result of
     Just ex -> exContains "Detected linux, but AppleScript is only available on osx!" ex
     Nothing -> assertFailure "Expected exception"
+  where
+    p = decodeLenient $ [ospPathSep|test/functional/example_osx.toml|]
 
 linuxAppleScriptError :: TestTree
 linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do

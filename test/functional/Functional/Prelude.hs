@@ -425,7 +425,7 @@ withNoConfig as =
 
 configPath :: String
 #if OSX
-configPath = "examples" `cfp` "config_osx.toml"
+configPath = "test" `cfp` "functional" `cfp` "example_osx.toml"
 #else
 configPath = "examples" `cfp` "config.toml"
 #endif

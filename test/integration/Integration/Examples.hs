@@ -86,8 +86,7 @@ specs :: TestTree
 specs =
   testGroup
     "Examples"
-    [ examplesConfig,
-      examplesDefault
+    [ examplesConfig
     ]
 
 examplesConfig :: TestTree
@@ -102,7 +101,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
     [] === logs
   where
     desc = "examples/config.toml is valid"
-    args = ["-c", getExampleConfigOS "config", "cmd1"]
+    args = ["-c", getExampleConfigOS, "cmd1"]
     expected =
       MkMergedConfig
         { coreConfig =
@@ -141,18 +140,3 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
               },
           commands = MkCommandP (Just "cmd1") "echo \"command one\"" :<|| []
         }
-
-examplesDefault :: TestTree
-examplesDefault = testPropertyNamed desc "examplesDefault"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
-
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
-  where
-    desc = "examples/default.toml is valid"
-    args = ["-c", getExampleConfig "default", "cmd"]
-    expected = defaultConfig

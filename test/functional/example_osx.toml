@@ -1,3 +1,6 @@
+# This is a copy of examples/config.toml, with notify.system changed to
+# apple-script. It exists for the functional tests.
+
 # All keys are optional. The default descriptions describes what happens
 # when the key is omitted.
 
