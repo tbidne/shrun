@@ -9,10 +9,10 @@ module Shrun.IO
   )
 where
 
-import Data.ByteString.Lazy qualified as BSL
 import Data.Time.Relative (RelativeTime)
-import Effects.Process.Typed (ProcessConfig)
-import Effects.Process.Typed qualified as P
+import Effects.FileSystem.HandleWriter qualified as HW
+import Effects.System.Process (ProcessHandle)
+import Effects.System.Process qualified as P
 import Effects.Time (MonadTime (getMonotonicTime), withTiming)
 import Shrun.Configuration.Data.CommandLogging
   ( BufferLength,
@@ -85,17 +85,17 @@ data CommandResult
 shExitCode ::
   ( HasCallStack,
     HasInit env,
-    MonadReader env m,
-    MonadTypedProcess m
+    MonadProcess m,
+    MonadReader env m
   ) =>
   CommandP1 ->
   m (ExitCode, Stderr)
 shExitCode cmd = do
   process <- commandToProcess cmd <$> asks getInit
-  (exitCode, _stdout, stderr) <- P.readProcess process
+  (exitCode, _stdout, stderr) <- P.readCreateProcessWithExitCode process ""
   pure (exitCode, wrap (MkStderr . ShrunText.fromText) stderr)
   where
-    wrap f = f . decodeUtf8Lenient . BSL.toStrict
+    wrap f = f . pack
 {-# INLINEABLE shExitCode #-}
 
 -- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
@@ -103,8 +103,8 @@ shExitCode cmd = do
 tryShExitCode ::
   ( HasCallStack,
     HasInit env,
-    MonadReader env m,
-    MonadTypedProcess m
+    MonadProcess m,
+    MonadReader env m
   ) =>
   CommandP1 ->
   m (Maybe Stderr)
@@ -127,14 +127,15 @@ tryCommandLogging ::
     HasConsoleLogging env (Region m),
     HasFileLogging env,
     MonadHandleReader m,
+    MonadHandleWriter m,
     MonadIORef m,
+    MonadProcess m,
     MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
     MonadThread m,
-    MonadTime m,
-    MonadTypedProcess m
+    MonadTime m
   ) =>
   -- | Command to run.
   CommandP1 ->
@@ -162,8 +163,7 @@ tryCommandLogging command = do
   (consoleLogging, consoleLogQueue) <- asks getConsoleLogging
   mFileLogging <- asks getFileLogging
   let keyHide = commonLogging ^. #keyHide
-
-  let cmdFn = case (consoleLogging ^. #commandLogging, mFileLogging) of
+      cmdFn = case (consoleLogging ^. #commandLogging, mFileLogging) of
         -- 1. No CommandLogging and no FileLogging: No streaming at all.
         (ConsoleLogCmdOff, Nothing) -> tryShExitCode
         -- 3. CommandLogging but no FileLogging. Stream.
@@ -234,12 +234,13 @@ tryCommandStream ::
     HasCallStack,
     HasCommandLogging env,
     MonadHandleReader m,
+    MonadHandleWriter m,
     MonadIORef m,
     MonadMask m,
+    MonadProcess m,
     MonadReader env m,
     MonadThread m,
-    MonadTime m,
-    MonadTypedProcess m
+    MonadTime m
   ) =>
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->
@@ -249,31 +250,76 @@ tryCommandStream ::
   -- with an error, even if the error message itself is blank.
   m (Maybe Stderr)
 tryCommandStream logFn cmd = do
-  let initToConfig :: Maybe Text -> ProcessConfig () Handle Handle
-      initToConfig =
-        P.setStderr P.createPipe
-          . P.setStdout P.createPipe
-          . commandToProcess cmd
+  (recvOutH, sendOutH) <- P.createPipe
+  HW.hSetBuffering recvOutH HW.NoBuffering
+  HW.hSetBuffering sendOutH HW.NoBuffering
+
+  (recvErrH, sendErrH) <- P.createPipe
+  HW.hSetBuffering recvErrH HW.NoBuffering
+  HW.hSetBuffering sendErrH HW.NoBuffering
+
+  -- NOTE: [process vs. typed-process]
+  --
+  -- We previously switched from typed-process to process. This came with
+  -- some improvements (ByteString output rather than String, more robust
+  -- wrt handle output). We now switch back. Why?
+  --
+  -- We encountered a bug where SIGINT only promptly killed shrun + subcommands
+  -- when command logging was active. That is, consider the following steps:
+  --
+  -- 1. Run 'shrun "sleep 15"
+  -- 3. Run 'ps aux | grep sleep' to get shrun's pid.
+  -- 2. In a separate terminal, run 'kill -2 <shrun_pid>
+  --
+  -- We should see shrun exit immediately with a cancellation message,
+  -- and a subsequent 'ps aux | grep sleep' should show no running processes.
+  --
+  -- Unfortunately, this only worked when command logging was active.
+  -- In particular, the exception was blocked until the sleep subcommand
+  -- finished (15 seconds), so nothing was actually cancelled. The reason
+  -- has something to do with typed-process's readProcess not respecting
+  -- async exceptions. There are a few suspicious bug reports:
+  --
+  -- - https://github.com/fpco/typed-process/issues/32
+  -- - https://github.com/fpco/typed-process/issues/38
+  -- - https://github.com/fpco/typed-process/issues/69
+  --
+  -- More generally, investigation revealed that typed-process uses
+  -- unliftio's bracket and friends i.e uninterruptibleMask is involved.
+  -- While I am unsure of the exact nature of the bug, I am not surprised
+  -- async exceptions are going wrong in the presence of uninterruptibleMask.
+  --
+  -- Happily, process does _not_ appear to have this bug, and I believe
+  -- unliftio's / safe-exception's choice of uninterruptibleMask is the
+  -- wrong one regardless, thus I generally try to avoid them on principle.
+  -- Hence this is an easy switch.
+  --
+  -- The switch from ByteString to String is sad, but perhaps this can be
+  -- improved when process receives OsString support.
+  let initToConfig :: Maybe Text -> CreateProcess
+      initToConfig mInit =
+        (commandToProcess cmd mInit)
+          { P.std_out = P.UseHandle sendOutH,
+            P.std_in = P.Inherit,
+            P.std_err = P.UseHandle sendErrH,
+            P.cwd = Nothing,
+            -- We are possibly trying to read from these after the process
+            -- closes (e.g. an error), so it is important they are not
+            -- closed automatically!
+            P.close_fds = False
+          }
 
   procConfig <- initToConfig <$> asks getInit
 
-  (exitCode, finalData) <-
-    P.withProcessWait procConfig (streamOutput logFn cmd)
+  (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
+    streamOutput logFn cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
     ExitFailure _ -> Just $ readHandleResultToStderr finalData
 {-# INLINEABLE tryCommandStream #-}
 
--- NOTE: This was an attempt to set the buffering so that we could use
--- hGetLine. Unfortunately that failed, see Note
--- [Blocking / Streaming output]. Leaving this here as documentation.
---
---  where
---    -- copy of P.createPipe except we set the buffering
---    createPipe' = P.mkPipeStreamSpec $ \_ h -> do
---      hSetBuffering h NoBuffering
---      pure (h, hClose h)
+type ProcessParams = Tuple3 Handle Handle ProcessHandle
 
 streamOutput ::
   forall m env.
@@ -282,20 +328,20 @@ streamOutput ::
     MonadCatch m,
     MonadHandleReader m,
     MonadIORef m,
+    MonadProcess m,
     MonadReader env m,
     MonadThread m,
-    MonadTime m,
-    MonadTypedProcess m
+    MonadTime m
   ) =>
   -- | Function to apply to streamed logs.
   (Log -> m ()) ->
   -- | Command that was run.
   CommandP1 ->
-  -- | Process handle.
-  Process () Handle Handle ->
+  -- | Running process params.
+  ProcessParams ->
   -- | Exit code along w/ any leftover data.
   m (ExitCode, ReadHandleResult)
-streamOutput logFn cmd p = do
+streamOutput logFn cmd processParams = do
   -- NOTE: [Saving final error message]
   --
   -- We want to save the final error message if it exists, so that we can
@@ -334,9 +380,6 @@ streamOutput logFn cmd p = do
           bufferLength
           bufferTimeout
 
-      outHandle = P.getStdout p
-      errHandle = P.getStderr p
-
   -- - lastReadXRef: The result of the last read for handle X.
   --
   -- - prevReadXRef: Whatever was leftover from the last read for handle X.
@@ -365,7 +408,7 @@ streamOutput logFn cmd p = do
     -- a delay helps keep the CPU reasonable.
     sleepFn
 
-    P.getExitCode p
+    P.getProcessExitCode processHandle
 
   -- These are the final reads while the process was running.
   lastReadOut <- readIORef lastReadOutRef
@@ -417,6 +460,8 @@ streamOutput logFn cmd p = do
           ]
 
   pure (exitCode, finalData)
+  where
+    (outHandle, errHandle, processHandle) = processParams
 {-# INLINEABLE streamOutput #-}
 
 -- | Create params for reading from the handle.

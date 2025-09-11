@@ -45,24 +45,24 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/fs-utils.git
-    tag: 2389f7dbe5b94f65bd22088f4e5a5f6644caaade
+    tag: 26136275027fd827574c5004ebd11b659d7abdab
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 750049e9d9afc1b7acf3b19e4adcd3cd37033b0a
+    tag: 4ead4daa45bf2011b8c38663a746455957b316f0
     subdir:
       lib/effects-async
       lib/effects-env
       lib/effects-fs
       lib/effects-ioref
       lib/effects-optparse
+      lib/effects-process
       lib/effects-stm
       lib/effects-time
       lib/effects-terminal
       lib/effects-thread
-      lib/effects-typed-process
-      lib/effects-unix-compat
+      lib/effects-unix
 
 source-repository-package
     type: git

@@ -159,7 +159,7 @@ readHandleRaw ::
 readHandleRaw blockSize handle = do
   -- The "nothingIfReady" check and reading step both need to go in the try as
   -- the former can also throw.
-  trySync readHandle' <&> \case
+  tryMySync readHandle' <&> \case
     -- unsafeFromTextNE safe because input text is non-empty
     Left ex -> Left $ ShrunText.unsafeFromTextNE $ "HandleException: " <> displayExceptiont ex
     Right x -> x

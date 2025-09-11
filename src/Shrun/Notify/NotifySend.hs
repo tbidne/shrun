@@ -6,7 +6,7 @@ where
 
 import DBus.Notify (UrgencyLevel (Critical, Low, Normal))
 import Data.Text qualified as T
-import Effects.Process.Typed qualified as P
+import Effects.System.Process qualified as P
 import Shrun.Configuration.Data.Notify.System (NotifySystemP (NotifySend))
 import Shrun.Configuration.Data.Notify.Timeout
   ( NotifyTimeout
@@ -24,18 +24,18 @@ import Shrun.Utils qualified as Utils
 
 notifyNotifySend ::
   ( HasCallStack,
-    MonadTypedProcess m
+    MonadProcess m
   ) =>
   ShrunNote ->
   m (Maybe NotifyException)
 notifyNotifySend note =
   notify (shrunToNotifySend note) <<&>> \stderr ->
-    MkNotifyException note NotifySend (decodeUtf8Lenient stderr)
+    MkNotifyException note NotifySend stderr
   where
-    notify :: (HasCallStack, MonadTypedProcess m) => Text -> m (Maybe ByteString)
+    notify :: (HasCallStack, MonadProcess m) => Text -> m (Maybe Text)
     notify =
       fmap exitFailureToStderr
-        . P.readProcessStderr
+        . (`P.readCreateProcessWithExitCode` "")
         . P.shell
         . T.unpack
 {-# INLINEABLE notifyNotifySend #-}

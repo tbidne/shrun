@@ -32,21 +32,21 @@ extra-deps:
   - git: https://github.com/tbidne/exception-utils.git
     commit: 0929797ddb5d5326b175f1d3e96646d8095ad475
   - git: https://github.com/tbidne/fs-utils.git
-    commit: 2389f7dbe5b94f65bd22088f4e5a5f6644caaade
+    commit: 26136275027fd827574c5004ebd11b659d7abdab
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 750049e9d9afc1b7acf3b19e4adcd3cd37033b0a
+    commit: 4ead4daa45bf2011b8c38663a746455957b316f0
     subdirs:
       - lib/effects-async
       - lib/effects-env
       - lib/effects-fs
       - lib/effects-ioref
       - lib/effects-optparse
+      - lib/effects-process
       - lib/effects-stm
       - lib/effects-time
       - lib/effects-terminal
       - lib/effects-thread
-      - lib/effects-typed-process
-      - lib/effects-unix-compat
+      - lib/effects-unix
   - git: https://github.com/tbidne/relative-time.git
     commit: b6ea05272e3031cede2cbc7e8b7898ef93d6a2a6
   - git: https://github.com/tbidne/si-bytes.git

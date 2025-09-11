@@ -28,7 +28,6 @@ module Shrun.Prelude
     unsafeConvertIntegral,
     neToList,
     unsafeListToNE,
-    setUncaughtExceptionHandlerDisplay,
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
@@ -51,6 +50,13 @@ module Shrun.Prelude
     traceFileLine,
     traceFileLineA,
 
+    -- * Exceptions
+    TermException (..),
+    tryMySync,
+    onMyAsync,
+    isMyAsync,
+    isTermException,
+
     -- * Prelude exports
     module X,
   )
@@ -66,15 +72,15 @@ import Control.Applicative as X
 import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
 import Control.Exception as X
-  ( Exception (displayException, fromException),
+  ( Exception (displayException, fromException, toException),
     SomeException,
   )
 import Control.Exception.Utils as X
   ( TextException,
-    catchSync,
     exitFailure,
-    trySync,
+    throwText,
   )
+import Control.Exception.Utils qualified as Ex.Utils
 import Control.Monad as X
   ( Monad ((>>=)),
     forever,
@@ -98,6 +104,7 @@ import Control.Monad.Catch as X
     throwM,
     try,
   )
+import Control.Monad.Catch.Pure qualified as C
 import Control.Monad.Fail as X (MonadFail (fail))
 import Control.Monad.IO.Class as X (MonadIO (liftIO))
 import Control.Monad.Reader as X
@@ -136,7 +143,6 @@ import Data.Functor as X
   )
 import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
-import GHC.Conc.Sync (setUncaughtExceptionHandler)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.List as X (List, filter, replicate, zip, (++))
 #else
@@ -215,8 +221,9 @@ import Effects.IORef as X
       ),
   )
 import Effects.Optparse as X (MonadOptparse (execParser))
-import Effects.Process.Typed as X (MonadTypedProcess, Process)
 import Effects.System.Environment as X (MonadEnv (withArgs))
+import Effects.System.Posix.Signals as X (MonadPosixSignals)
+import Effects.System.Process as X (CreateProcess, MonadProcess)
 import Effects.System.Terminal as X
   ( MonadTerminal,
     putStr,
@@ -225,9 +232,16 @@ import Effects.System.Terminal as X
     putTextLn,
   )
 import Effects.Time as X (MonadTime)
-import FileSystem.OsPath as X (OsPath, decodeLenient, osp, ospPathSep, (</>))
+import FileSystem.OsPath as X
+  ( OsPath,
+    decodeLenient,
+    encodeThrowM,
+    osp,
+    ospPathSep,
+    (</>),
+  )
 import FileSystem.OsPath qualified as OsPath
-import FileSystem.UTF8 as X (decodeUtf8)
+import FileSystem.UTF8 as X (decodeUtf8, decodeUtf8ThrowM)
 import GHC.Enum as X (Bounded (maxBound, minBound), Enum (toEnum))
 import GHC.Err as X (error, undefined)
 import GHC.Exception (errorCallWithCallStackException)
@@ -239,7 +253,7 @@ import GHC.Natural as X (Natural)
 import GHC.Num as X (Num ((*), (+), (-)))
 import GHC.Real as X (Integral, truncate)
 import GHC.Show as X (Show (show, showsPrec))
-import GHC.Stack as X (HasCallStack)
+import GHC.Stack as X (HasCallStack, withFrozenCallStack)
 import Optics.Core as X
   ( A_Getter,
     A_Lens,
@@ -441,16 +455,6 @@ traceFileLine path txt = traceFile path (txt <> "\n")
 traceFileLineA :: (Applicative f) => FilePath -> Text -> f ()
 traceFileLineA f t = traceFileLine f t (pure ())
 
-setUncaughtExceptionHandlerDisplay :: IO ()
-setUncaughtExceptionHandlerDisplay =
-  setUncaughtExceptionHandler printExceptExitCode
-  where
-    printExceptExitCode ex = case fromException ex of
-      Just ExitSuccess -> pure ()
-      -- for command failures
-      Just (ExitFailure _) -> pure ()
-      Nothing -> putStrLn $ displayException ex
-
 onJust :: b -> Maybe a -> (a -> b) -> b
 onJust x m f = maybe x f m
 
@@ -484,3 +488,33 @@ instance Traversable EitherString where
 
 instance MonadFail EitherString where
   fail = EitherLeft
+
+-- | TermException is explicitly for when the current process is cancelled
+-- (SIGTERM on posix). We use a separate type so that we can distinguish it
+-- from potentially other ThreadKilleds that might be sent (e.g. bugs).
+data TermException = MkTermException
+  deriving stock (Show)
+
+instance Exception TermException where
+  displayException _ = "Received terminated signal"
+
+-- We want our TermException to be considered Async for the purposes of our
+-- handlers since it morally is (spawned by an outside signal). Hence
+-- these should be used over the usual trySync, thus always in scope.
+tryMySync :: (HasCallStack, MonadCatch m) => m a -> m (Either SomeException a)
+tryMySync = Ex.Utils.tryIf (not . isMyAsync)
+
+onMyAsync :: (HasCallStack, MonadCatch m) => m a -> m b -> m a
+onMyAsync action handler = withFrozenCallStack catchAsync action $ \e -> do
+  void $ C.try @_ @SomeException handler
+  throwM e
+  where
+    catchAsync = Ex.Utils.catchIf @_ @SomeException isMyAsync
+
+isMyAsync :: (Exception e) => e -> Bool
+isMyAsync e = Ex.Utils.isAsyncException e || isTermException e
+
+isTermException :: (Exception e) => e -> Bool
+isTermException e = case fromException (toException e) of
+  Just MkTermException -> True
+  Nothing -> False

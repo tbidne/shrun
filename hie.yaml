@@ -3,19 +3,30 @@ cradle:
   cabal:
     - path: "./src"
       component: "lib:shrun"
+
     - path: "./test/verifier"
       component: "shrun:lib:shrun-verifier"
+
     - path: "./app/Main.hs"
       component: "shrun:exe:shrun"
+
     - path: "./test/unit"
       component: "shrun:test:unit"
+
     - path: "./test/integration"
       component: "shrun:test:integration"
+
     - path: "./test/functional"
       component: "shrun:test:functional"
+
     - path: "./test/notify"
       component: "shrun:test:notify"
+
+    - path: "./test/terminate"
+      component: "shrun:test:terminate"
+
     - path: "./benchmarks/Main.hs"
       component: "shrun:bench:benchmarks"
+
     - path: "./benchmarks/Bench/Prelude.hs"
       component: "shrun:bench:benchmarks"

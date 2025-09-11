@@ -5,7 +5,7 @@ module Shrun.Notify.AppleScript
 where
 
 import Data.Text qualified as T
-import Effects.Process.Typed qualified as P
+import Effects.System.Process qualified as P
 import Shrun.Configuration.Data.Notify.System (NotifySystemP (AppleScript))
 import Shrun.Notify.MonadNotify
   ( NotifyException (MkNotifyException),
@@ -16,18 +16,20 @@ import Shrun.Prelude
 
 notifyAppleScript ::
   ( HasCallStack,
-    MonadTypedProcess m
+    MonadProcess m
   ) =>
   ShrunNote ->
   m (Maybe NotifyException)
 notifyAppleScript note =
   notify (shrunToAppleScript note) <<&>> \stderr ->
-    MkNotifyException note AppleScript (decodeUtf8Lenient stderr)
+    MkNotifyException note AppleScript stderr
   where
-    notify :: (HasCallStack, MonadTypedProcess m) => Text -> m (Maybe ByteString)
+    notify :: (HasCallStack, MonadProcess m) => Text -> m (Maybe Text)
     notify =
+      -- TODO: It would be nice to use process's Osstring interface, if it
+      -- gets one.
       fmap exitFailureToStderr
-        . P.readProcessStderr
+        . (`P.readCreateProcessWithExitCode` "")
         . P.shell
         . T.unpack
 {-# INLINEABLE notifyAppleScript #-}

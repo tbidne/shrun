@@ -12,7 +12,6 @@ module Shrun.Notify.MonadNotify
 where
 
 import DBus.Notify (UrgencyLevel)
-import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as T
 import Shrun.Configuration.Data.Notify.System
   ( NotifySystemMerged,
@@ -129,7 +128,7 @@ class (Monad m) => MonadNotify m where
 
 -- | Maps (ExitCode, stderr) to Just stderr, if the exit code is
 -- ExitFailure.
-exitFailureToStderr :: (ExitCode, BSL.ByteString) -> Maybe ByteString
-exitFailureToStderr (ex, stderr) = case ex of
+exitFailureToStderr :: (ExitCode, String, String) -> Maybe Text
+exitFailureToStderr (ex, _, stderr) = case ex of
   ExitSuccess -> Nothing
-  ExitFailure _ -> Just (BSL.toStrict stderr)
+  ExitFailure _ -> Just (pack stderr)

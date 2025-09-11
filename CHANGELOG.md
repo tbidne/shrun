@@ -28,6 +28,12 @@ for versions < 1.
 * Added git revision info in `--help` and `--version`.
 * Added groups to `--help` options.
 
+### Fixed
+* Previously, shrun and subcommands would only be properly killed by
+  external SIGINT (i.e. kill -2, not CTRL-C) when command logging was active.
+  This is now fixed so that 'kill -2' unconditionally kills shrun.
+* SIGTERM (kill -15) now properly kills subcommands.
+
 ## [0.9.1] -- 2024-07-27
 ### Changed
 * Updated blessed GHC to 9.8.2.

@@ -33,10 +33,13 @@ jobs:
             proj-file: "--project-file cabal.ghc9101.project"
           - vers: "9.12.1"
             proj-file: ""
-        os:
-          - "macos-latest"
-          - "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
+        platform:
+          - os: "macos-latest"
+            test-terminate: "command"
+          - os: "ubuntu-latest"
+            test-terminate: "shrun"
+    name: "cabal (${{ matrix.ghc.vers }}, ${{ matrix.platform.os }})"
+    runs-on: ${{ matrix.platform.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -67,16 +70,21 @@ jobs:
           cabal test ${{ matrix.ghc.proj-file }} functional \
             --test-options '--read-strategy all'
 
+      - name: Terminate Tests
+        shell: bash
+        run: |
+          TEST_TERMINATE=${{ matrix.platform.test-terminate }} cabal test ${{ matrix.ghc.proj-file }} terminate
+
       - name: Benchmarks
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.platform.os == 'ubuntu-latest' }}
         id: bench
         run: |
           cabal bench ${{ matrix.ghc.proj-file }} --benchmark-options '
             +RTS -T -RTS
             -t200
-            --csv benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
-            --svg benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
-            --baseline benchmarks/baseline_${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv'
+            --csv benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv
+            --svg benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.svg
+            --baseline benchmarks/baseline_${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv'
 
       - uses: actions/upload-artifact@v4
         id: bench-upload
@@ -84,8 +92,8 @@ jobs:
           # Unique because we only run the benchmarks on ubuntu
           name: bench-artifacts-${{ matrix.ghc.vers }}
           path: |
-            benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.csv
-            benchmarks/${{ matrix.os }}_${{ matrix.ghc.vers }}_ci.svg
+            benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv
+            benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.svg
           retention-days: 1
 
   merge-benchmarks:

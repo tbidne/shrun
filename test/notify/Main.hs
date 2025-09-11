@@ -41,13 +41,13 @@ import Test.Tasty.HUnit (assertFailure, testCase)
 
 -- | Entry point for functional tests.
 main :: IO ()
-main = guardOrElse' "NOTIFY_TESTS" ExpectEnvSet runTests dontRun
+main = guardOrElse' "TEST_NOTIFY" ExpectEnvSet runTests dontRun
   where
     runTests = do
       setUncaughtExceptionHandler (putStrLn . displayException)
       defaultMain tests
 
-    dontRun = putStrLn "*** Notify tests disabled. Enable with NOTIFY_TESTS=1 ***"
+    dontRun = putStrLn "*** Notify tests disabled. Enable with TEST_NOTIFY=1 ***"
 
 tests :: TestTree
 tests = do
@@ -167,7 +167,7 @@ runShrun args = do
   consoleQueue <- newTBQueueA 1
   logsRef <- newIORef []
   eSomeEx <-
-    trySync
+    tryMySync
       $ withArgs
         args
         ( withEnv

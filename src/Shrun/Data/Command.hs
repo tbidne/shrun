@@ -12,8 +12,7 @@ where
 import Data.Hashable (Hashable)
 import Data.String (IsString (fromString))
 import Data.Text qualified as T
-import Effects.Process.Typed (ProcessConfig)
-import Effects.Process.Typed qualified as P
+import Effects.System.Process qualified as P
 import Shrun.Prelude
 
 -- $setup
@@ -86,7 +85,7 @@ commandToShell = T.unpack . view #command
 
 -- Transforms a command into a 'ProcessConfig'.
 --
-commandToProcess :: CommandP1 -> Maybe Text -> ProcessConfig () () ()
+commandToProcess :: CommandP1 -> Maybe Text -> CreateProcess
 commandToProcess command =
   P.shell
     . commandToShell

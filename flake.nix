@@ -141,12 +141,12 @@
                 "effects-fs"
                 "effects-ioref"
                 "effects-optparse"
+                "effects-process"
                 "effects-stm"
                 "effects-terminal"
                 "effects-thread"
                 "effects-time"
-                "effects-typed-process"
-                "effects-unix-compat"
+                "effects-unix"
               ];
           };
           hlib = pkgs.haskell.lib;
@@ -195,7 +195,7 @@
             notifyTests = pkgs.mkShell {
               buildInputs = nix-hs-utils.mkBuildTools compilerPkgs;
               shellHook = ''
-                export NOTIFY_TESTS=1
+                export TEST_NOTIFY=1
               '';
             };
 

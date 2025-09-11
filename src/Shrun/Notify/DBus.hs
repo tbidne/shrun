@@ -32,7 +32,7 @@ instance MonadDBus IO where
   connectSession = DBusC.connectSession
 
   notify client note =
-    trySync (DBusN.notify client note) <&> \case
+    tryMySync (DBusN.notify client note) <&> \case
       Left err -> Just err
       Right _ -> Nothing
 

@@ -278,14 +278,14 @@ runMaybeException mException argList = do
   case mException of
     -- 1. Not expecting an exception
     ExNothing -> do
-      trySync action >>= \case
+      tryMySync action >>= \case
         -- 1.1: Received an exception: print logs and rethrow
         Left ex -> printLogsReThrow ex ls
         -- 1.2: No exception, return logs/notes
         Right _ -> readRefs ls shrunNotes
     -- 2. Expecting exception e
     ExJust @e proxy ->
-      trySync action >>= \case
+      tryMySync action >>= \case
         -- 2.1: Received no exception: print logs and die
         Right _ -> do
           printLogs ls

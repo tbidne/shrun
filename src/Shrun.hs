@@ -4,12 +4,14 @@ module Shrun
   ( ShellT,
     runShellT,
     shrun,
+    TermException (..),
   )
 where
 
-import Control.Exception.Utils qualified as Ex.Utils
 import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Effects.Concurrent.Async qualified as Async
+import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
+import Effects.System.Posix.Signals qualified as Signals
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
@@ -42,6 +44,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
+import Shrun.Data.Text qualified as Text
 import Shrun.IO
   ( CommandResult (CommandFailure, CommandSuccess),
     Stderr (MkStderr),
@@ -81,6 +84,7 @@ import Shrun.Notify.MonadNotify qualified as MonadNotify
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
+import System.Posix.Signals qualified as Posix
 
 -- | Entry point
 shrun ::
@@ -99,9 +103,10 @@ shrun ::
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
-    MonadNotify m,
-    MonadTypedProcess m,
     MonadMask m,
+    MonadNotify m,
+    MonadPosixSignals m,
+    MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -112,7 +117,11 @@ shrun ::
   m ()
 shrun = do
   startTime <- Time.getMonotonicTime
-  displayRegions $ flip Ex.Utils.onAsyncException (teardown startTime) $ do
+  displayRegions $ flip onMyAsync (teardown startTime) $ do
+    mainTid <- myThreadId
+
+    handleTerminate mainTid
+
     mFileLogging <- asks getFileLogging
     (_, consoleQueue) <- asks getConsoleLogging
 
@@ -151,7 +160,7 @@ shrun = do
       let actions = Async.mapConcurrently_ runCommand cmds
           actionsWithTimer = Async.race_ actions counter
 
-      result <- trySync actionsWithTimer
+      result <- tryMySync actionsWithTimer
       endTime <- Time.getMonotonicTime
       printFinalResult (Time.fromSeconds $ endTime - startTime) result
 {-# INLINEABLE shrun #-}
@@ -168,10 +177,11 @@ runCommand ::
     HasFileLogging env,
     HasNotifyConfig env,
     MonadHandleReader m,
+    MonadHandleWriter m,
     MonadIORef m,
     MonadMask m,
     MonadNotify m,
-    MonadTypedProcess m,
+    MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -339,22 +349,19 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
               lvl = LevelFatal,
               mode
             }
+
     Logging.putRegionLog r fatalLog
 
     -- update anyError
     setAnyErrorTrue
 
-  timerFormat <- asks (view (_1 % #timerFormat) . getConsoleLogging @_ @(Region m))
-  let totalTimeTxt =
-        TimerFormat.formatRelativeTime
-          timerFormat
-          (Utils.timeSpecToRelTime totalTime)
-      finalLog =
+  totalTimeTxt <- formatTimeSpec totalTime
+  let finalLog =
         MkLog
           { cmd = Nothing,
             msg = Types.fromUnlined totalTimeTxt,
             lvl = LevelFinished,
-            mode
+            mode = LogModeFinish
           }
 
   -- Send off a 'finished' notification
@@ -593,3 +600,53 @@ teardown startTime = do
     logFile (fl ^. #file % #handle) cancelFileLog
     logFile (fl ^. #file % #handle) finalFileLog
 {-# INLINEABLE teardown #-}
+
+-- | Installs a handler for SIGTERM, so shrun can be cancelled with kill -15.
+-- The signal is logged then rethrown to the main thread as TermException,
+-- which ensures that cleanup is handled normally (i.e. subcommands killed).
+-- By default, subthreads are __not__ killed when the RTS handles SIGTERM.
+handleTerminate ::
+  forall m env.
+  ( HasCallStack,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
+    MonadHandleWriter m,
+    MonadPosixSignals m,
+    MonadRegionLogger m,
+    MonadReader env m,
+    MonadThread m,
+    MonadTime m
+  ) =>
+  ThreadId ->
+  m ()
+handleTerminate tid = do
+  commonLogging <- asks getCommonLogging
+  (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
+  mFileLogging <- asks getFileLogging
+
+  let handler = Signals.CatchInfo $ \si -> do
+        let keyHide = commonLogging ^. #keyHide
+            errMsg =
+              "Received terminate signal: "
+                <> Text.unsafeUnlinedText (showt (Posix.siginfoSignal si))
+            baseLog =
+              MkLog
+                { cmd = Nothing,
+                  msg = Types.fromUnlined errMsg,
+                  lvl = LevelFatal,
+                  mode = LogModeFinish
+                }
+
+        let consoleLog = Formatting.formatConsoleLog keyHide consoleLogging baseLog
+        withRegion Linear $ \r -> logRegion LogModeFinish r (consoleLog ^. #unConsoleLog)
+
+        for_ mFileLogging $ \fl -> do
+          fileLog <- Formatting.formatFileLog keyHide fl baseLog
+          logFile (fl ^. #file % #handle) fileLog
+
+        -- Need to throw exception to main thread since this handler is run
+        -- in a different thread.
+        throwTo tid MkTermException
+
+  void $ Signals.installHandler Posix.sigTERM handler Nothing

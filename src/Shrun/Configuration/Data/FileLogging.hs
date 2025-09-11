@@ -25,7 +25,6 @@ import Data.Text qualified as T
 import Data.Word (Word16)
 import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile), die)
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
-import FileSystem.OsPath (encodeThrowM)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
