@@ -9,9 +9,9 @@ where
 
 import Control.Exception.Utils qualified as Ex.Utils
 import DBus.Notify (UrgencyLevel (Critical, Normal))
-import Data.HashSet qualified as Set
 import Effects.Concurrent.Async qualified as Async
-import Effects.Time (TimeSpec, withTiming)
+import Effects.Time (TimeSpec)
+import Effects.Time qualified as Time
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
@@ -30,7 +30,7 @@ import Shrun.Configuration.Data.Notify.Action
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
     HasCommandLogging,
-    HasCommands (getCommands, getCompletedCommands),
+    HasCommands (getCommands),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -110,30 +110,32 @@ shrun ::
   ) =>
   -- | .
   m ()
-shrun = displayRegions $ flip Ex.Utils.onAsyncException teardown $ do
-  mFileLogging <- asks getFileLogging
-  (_, consoleQueue) <- asks getConsoleLogging
+shrun = do
+  startTime <- Time.getMonotonicTime
+  displayRegions $ flip Ex.Utils.onAsyncException (teardown startTime) $ do
+    mFileLogging <- asks getFileLogging
+    (_, consoleQueue) <- asks getConsoleLogging
 
-  -- always start console logger
-  Async.withAsync (pollQueueToConsole consoleQueue) $ \consoleLogger -> do
-    -- run commands, running file logger if requested
-    maybe
-      runCommands
-      runWithFileLogging
-      mFileLogging
+    -- always start console logger
+    Async.withAsync (pollQueueToConsole consoleQueue) $ \consoleLogger -> do
+      -- run commands, running file logger if requested
+      maybe
+        (runCommands startTime)
+        (runWithFileLogging startTime)
+        mFileLogging
 
-    -- cancel consoleLogger, print remaining logs
-    Async.cancel consoleLogger
-    flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
+      -- cancel consoleLogger, print remaining logs
+      Async.cancel consoleLogger
+      flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
 
-    -- if any processes have failed, exit with an error
-    anyError <- readTVarA =<< asks getAnyError
-    when anyError exitFailure
+      -- if any processes have failed, exit with an error
+      anyError <- readTVarA =<< asks getAnyError
+      when anyError exitFailure
   where
-    runWithFileLogging :: (HasCallStack) => FileLoggingEnv -> m ()
-    runWithFileLogging fileLogging =
+    runWithFileLogging :: (HasCallStack) => Double -> FileLoggingEnv -> m ()
+    runWithFileLogging startTime fileLogging =
       Async.withAsync (pollQueueToFile fileLogging) $ \fileLoggerThread -> do
-        runCommands
+        runCommands startTime
 
         Async.cancel fileLoggerThread
 
@@ -143,14 +145,15 @@ shrun = displayRegions $ flip Ex.Utils.onAsyncException teardown $ do
       where
         MkFileLogOpened h fileQueue = fileLogging ^. #file
 
-    runCommands :: (HasCallStack) => m ()
-    runCommands = do
+    runCommands :: (HasCallStack) => Double -> m ()
+    runCommands startTime = do
       cmds <- asks getCommands
       let actions = Async.mapConcurrently_ runCommand cmds
           actionsWithTimer = Async.race_ actions counter
 
-      (totalTime, result) <- withTiming $ trySync actionsWithTimer
-      printFinalResult totalTime result
+      result <- trySync actionsWithTimer
+      endTime <- Time.getMonotonicTime
+      printFinalResult (Time.fromSeconds $ endTime - startTime) result
 {-# INLINEABLE shrun #-}
 
 runCommand ::
@@ -371,6 +374,21 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
     mode = LogModeFinish
 {-# INLINEABLE printFinalResult #-}
 
+formatTimeSpec ::
+  forall env m.
+  ( HasConsoleLogging env (Region m),
+    MonadReader env m
+  ) =>
+  TimeSpec ->
+  m UnlinedText
+formatTimeSpec totalTime = do
+  timerFormat <- asks (view (_1 % #timerFormat) . getConsoleLogging @_ @(Region m))
+  pure
+    $ TimerFormat.formatRelativeTime
+      timerFormat
+      (Utils.timeSpecToRelTime totalTime)
+{-# INLINEABLE formatTimeSpec #-}
+
 counter ::
   ( HasAnyError env,
     HasCallStack,
@@ -451,51 +469,11 @@ keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      log <- cancelRunningCommands "Timed out"
+      log <- Logging.mkCancelLog LevelWarn "Timed out"
       Logging.putRegionLog region log
       pure False
     else pure True
 {-# INLINEABLE keepRunning #-}
-
--- | Cancels running commands, returns a message to log.
-cancelRunningCommands ::
-  forall m env.
-  ( HasAnyError env,
-    HasCallStack,
-    HasCommands env,
-    HasCommonLogging env,
-    MonadIORef m,
-    MonadReader env m,
-    MonadSTM m
-  ) =>
-  UnlinedText ->
-  m Log
-cancelRunningCommands prefix = do
-  keyHide <- asks (view #keyHide . getCommonLogging)
-  allCmds <- asks getCommands
-  completedCommandsTVar <- asks getCompletedCommands
-  completedCommands <- readTVarA completedCommandsTVar
-
-  -- update anyError
-  setAnyErrorTrue
-
-  let completedCommandsSet = Set.fromList $ toList completedCommands
-      allCmdsSet = Set.fromList $ toList allCmds
-      incompleteCmds = Set.difference allCmdsSet completedCommandsSet
-      toTxtList acc cmd = LogFmt.displayCmd cmd keyHide : acc
-
-      unfinishedCmds =
-        ShrunText.intercalate ", "
-          $ foldl' toTxtList [] incompleteCmds
-
-  pure
-    $ MkLog
-      { cmd = Nothing,
-        msg = Types.fromUnlined $ prefix <> ", cancelling remaining commands: " <> unfinishedCmds,
-        lvl = LevelWarn,
-        mode = LogModeFinish
-      }
-{-# INLINEABLE cancelRunningCommands #-}
 
 timedOut :: Natural -> Maybe Timeout -> Bool
 timedOut _ Nothing = False
@@ -512,7 +490,7 @@ pollQueueToConsole ::
   m void
 pollQueueToConsole queue = do
   -- NOTE: Same masking behavior as pollQueueToFile.
-  forever $ atomicReadWrite queue printConsoleLog
+  forever $ Utils.atomicReadWrite queue printConsoleLog
 {-# INLINEABLE pollQueueToConsole #-}
 
 printConsoleLog ::
@@ -539,7 +517,7 @@ pollQueueToFile fileLogging = do
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
     -- Hence the mask.
-    atomicReadWrite queue (logFile h)
+    Utils.atomicReadWrite queue (logFile h)
   where
     MkFileLogOpened h queue = fileLogging ^. #file
 {-# INLINEABLE pollQueueToFile #-}
@@ -547,23 +525,6 @@ pollQueueToFile fileLogging = do
 logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 {-# INLINEABLE logFile #-}
-
--- | Reads from a queue and applies the function, if we receive a value.
--- Atomic in the sense that if a read is successful, then we will apply the
--- given function, even if an async exception is raised.
-atomicReadWrite ::
-  ( HasCallStack,
-    MonadMask m,
-    MonadSTM m
-  ) =>
-  -- | Queue from which to read.
-  TBQueue a ->
-  -- | Function to apply.
-  (a -> m b) ->
-  m ()
-atomicReadWrite queue logAction =
-  mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction
-{-# INLINEABLE atomicReadWrite #-}
 
 -- | Cancels running commands and prints a final log message about going
 -- down. Intended to be used when shrun has been cancelled.
@@ -584,42 +545,51 @@ teardown ::
     MonadSTM m,
     MonadTime m
   ) =>
+  Double ->
   m ()
-teardown = withRegion Linear $ \r -> do
+teardown startTime = do
+  endTime <- Time.getMonotonicTime
+  let totalTime = Time.fromSeconds $ endTime - startTime
+  timeFormatted <- formatTimeSpec totalTime
+
   commonLogging <- asks getCommonLogging
   (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
   mFileLogging <- asks getFileLogging
   let keyHide = commonLogging ^. #keyHide
-      errMsg = "Received cancel"
-      fatalLog =
+      cancelTasksMsg = "Received cancel"
+      finalErrMsg = cancelTasksMsg <> " after running for: " <> timeFormatted
+
+  -- 1. Send message about cancelling commands.
+  cancelLog <- Logging.mkCancelLog LevelFatal cancelTasksMsg
+  let cancelConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging cancelLog
+
+  withRegion Linear $ \r -> logRegion LogModeFinish r (cancelConsoleLog ^. #unConsoleLog)
+
+  let notifyBody = Notify.formatNotifyMessage finalErrMsg []
+
+  -- 2. Send finished message.
+  let finalLog =
         MkLog
           { cmd = Nothing,
-            msg = Types.fromUnlined errMsg,
-            lvl = LevelFatal,
+            msg = Types.fromUnlined finalErrMsg,
+            lvl = LevelFinished,
             mode = LogModeFinish
           }
 
-      fatalConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging fatalLog
+      finalConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging finalLog
+  withRegion Linear $ \r -> logRegion LogModeFinish r (finalConsoleLog ^. #unConsoleLog)
 
-  cancelLog <- cancelRunningCommands errMsg
-  let cancelConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging cancelLog
-
-  withRegion Linear $ \r2 -> logRegion LogModeFinish r2 (cancelConsoleLog ^. #unConsoleLog)
-
-  logRegion LogModeFinish r (fatalConsoleLog ^. #unConsoleLog)
-
-  let notifyBody = Notify.formatNotifyMessage errMsg []
-      urgency = Critical
-
+  -- 3. Send notification
   cfg <- asks getNotifyConfig
   case cfg ^? (_Just % #action) of
     -- If notifcations are on at all, send one
-    Just _ -> Notify.sendNotif notifyBody "" urgency
+    Just _ -> Notify.sendNotif notifyBody "" Critical
     _ -> pure ()
 
+  -- 4. Send above logs to file.
   for_ mFileLogging $ \fl -> do
     cancelFileLog <- Formatting.formatFileLog keyHide fl cancelLog
-    fatalFileLog <- Formatting.formatFileLog keyHide fl fatalLog
+    finalFileLog <- Formatting.formatFileLog keyHide fl finalLog
     logFile (fl ^. #file % #handle) cancelFileLog
-    logFile (fl ^. #file % #handle) fatalFileLog
+    logFile (fl ^. #file % #handle) finalFileLog
 {-# INLINEABLE teardown #-}

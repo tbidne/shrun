@@ -4,6 +4,7 @@
 module Functional.Miscellaneous (specs) where
 
 import DBus.Notify (UrgencyLevel (Critical))
+import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout (NotifyTimeoutSeconds))
@@ -161,22 +162,30 @@ isCancelled testArgs =
         fileResults <- readLogFile outFile
         V.verifyExpected fileResults expected
 
-        expectedNotes @=? notes
+        case notes of
+          [n] -> do
+            "" @=? n ^. #body
+
+            let summary = n ^. (#summary % #unNotifyMessage)
+                err = "Unexpected summary: " ++ unpack summary
+
+            assertBool err $ expectedBody `T.isPrefixOf` summary
+
+            NotifyTimeoutSeconds 10 @=? n ^. #timeout
+            Critical @=? n ^. #urgency
+          other ->
+            assertFailure
+              $ "Expected exactly one note, received: "
+              ++ show other
     )
   where
     expected =
-      [ withWarnPrefix "Received cancel, cancelling remaining commands: sleep 5",
-        withFatalPrefix "Received cancel"
+      [ withFatalPrefix "Received cancel, cancelling remaining commands: sleep 5",
+        withFinishedPrefix expectedBody
       ]
 
-    expectedNotes =
-      [ MkShrunNote
-          { body = "",
-            summary = "Received cancel",
-            timeout = NotifyTimeoutSeconds 10,
-            urgency = Critical
-          }
-      ]
+    expectedBody :: (IsString s) => s
+    expectedBody = "Received cancel after running for"
 
 -- NOTE: This used to be in Examples (subsequently Examples.ConsoleLogging),
 -- as it fit in alongside the other tests. However, we prefer those tests to

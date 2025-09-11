@@ -19,21 +19,33 @@ module Shrun.Logging
     putRegionLog,
     regionLogToConsoleQueue,
     logToFileQueue,
+
+    -- * Misc
+    mkCancelLog,
   )
 where
 
+import Data.HashSet qualified as Set
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Env.Types
-  ( HasCommonLogging (getCommonLogging),
+  ( HasAnyError,
+    HasCommands (getCommands, getCompletedCommands),
+    HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
+    setAnyErrorTrue,
   )
+import Shrun.Data.Text (UnlinedText)
+import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types
   ( FileLog,
-    Log,
+    Log (MkLog, cmd, lvl, mode, msg),
+    LogLevel,
+    LogMode (LogModeFinish),
     LogRegion (LogRegion),
+    fromUnlined,
   )
 import Shrun.Prelude
 
@@ -97,3 +109,46 @@ logToFileQueue ::
   m ()
 logToFileQueue fileLogging = writeTBQueueA (fileLogging ^. #file % #queue)
 {-# INLINEABLE logToFileQueue #-}
+
+-- | Sets anyError to True, returns formatted log for cancelled commands.
+-- Does not actually cancel any commands itself; that is handled by
+-- async (race_).
+mkCancelLog ::
+  forall m env.
+  ( HasAnyError env,
+    HasCallStack,
+    HasCommands env,
+    HasCommonLogging env,
+    MonadIORef m,
+    MonadReader env m,
+    MonadSTM m
+  ) =>
+  LogLevel ->
+  UnlinedText ->
+  m Log
+mkCancelLog lvl prefix = do
+  keyHide <- asks (view #keyHide . getCommonLogging)
+  allCmds <- asks getCommands
+  completedCommandsTVar <- asks getCompletedCommands
+  completedCommands <- readTVarA completedCommandsTVar
+
+  -- update anyError
+  setAnyErrorTrue
+
+  let completedCommandsSet = Set.fromList $ toList completedCommands
+      allCmdsSet = Set.fromList $ toList allCmds
+      incompleteCmds = Set.difference allCmdsSet completedCommandsSet
+      toTxtList acc cmd = Formatting.displayCmd cmd keyHide : acc
+
+      unfinishedCmds =
+        ShrunText.intercalate ", "
+          $ foldl' toTxtList [] incompleteCmds
+
+  pure
+    $ MkLog
+      { cmd = Nothing,
+        msg = fromUnlined $ prefix <> ", cancelling remaining commands: " <> unfinishedCmds,
+        lvl,
+        mode = LogModeFinish
+      }
+{-# INLINEABLE mkCancelLog #-}

@@ -15,6 +15,7 @@ module Shrun.Utils
     foldMap1,
 
     -- * Misc Utils
+    atomicReadWrite,
     fmtUnrecognizedError,
     parseByteText,
     whileM_,
@@ -344,3 +345,20 @@ fmtUnrecognizedError fieldName validVals badValue =
       validVals,
       "."
     ]
+
+-- | Reads from a queue and applies the function, if we receive a value.
+-- Atomic in the sense that if a read is successful, then we will apply the
+-- given function, even if an async exception is raised.
+atomicReadWrite ::
+  ( HasCallStack,
+    MonadMask m,
+    MonadSTM m
+  ) =>
+  -- | Queue from which to read.
+  TBQueue a ->
+  -- | Function to apply.
+  (a -> m b) ->
+  m ()
+atomicReadWrite queue logAction =
+  mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction
+{-# INLINEABLE atomicReadWrite #-}

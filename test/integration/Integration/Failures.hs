@@ -219,7 +219,7 @@ linuxNotifyConfigError = testCase "Linux with osx notify config throws exception
     Just ex -> exContains "Detected linux, but AppleScript is only available on osx!" ex
     Nothing -> assertFailure "Expected exception"
   where
-    p = decodeLenient $ [ospPathSep|test/functional/example_osx.toml|]
+    p = decodeLenient [ospPathSep|test/functional/example_osx.toml|]
 
 linuxAppleScriptError :: TestTree
 linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
