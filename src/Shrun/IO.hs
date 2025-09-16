@@ -9,11 +9,18 @@ module Shrun.IO
   )
 where
 
+import Control.Monad.Catch qualified as C
 import Data.Time.Relative (RelativeTime)
+import Effects.Concurrent.Thread qualified as Thread
 import Effects.FileSystem.HandleWriter qualified as HW
 import Effects.System.Process (ProcessHandle)
 import Effects.System.Process qualified as P
 import Effects.Time (MonadTime (getMonotonicTime), withTiming)
+import Foreign.C (Errno (Errno), ePIPE)
+import GHC.IO.Exception
+  ( IOErrorType (ResourceVanished),
+    IOException (IOError, ioe_errno, ioe_type),
+  )
 import Shrun.Configuration.Data.CommandLogging
   ( BufferLength,
     BufferTimeout,
@@ -311,7 +318,7 @@ tryCommandStream logFn cmd = do
 
   procConfig <- initToConfig <$> asks getInit
 
-  (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
+  (exitCode, finalData) <- withCreateProcessGroup procConfig $ \_ _ _ ph -> do
     streamOutput logFn cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
@@ -586,3 +593,65 @@ writeLogHelper logFn cmd lastReadRef handleResult messages = do
           mode = LogModeSet
         }
 {-# INLINEABLE writeLogHelper #-}
+
+withCreateProcessGroup ::
+  ( HasCallStack,
+    MonadHandleWriter m,
+    MonadMask m,
+    MonadProcess m,
+    MonadThread m
+  ) =>
+  CreateProcess ->
+  (Maybe Handle -> Maybe Handle -> Maybe Handle -> ProcessHandle -> m a) ->
+  m a
+withCreateProcessGroup c action =
+  bracket
+    (P.createProcess c)
+    cleanupProcessGroup
+    (\(m_in, m_out, m_err, ph) -> action m_in m_out m_err ph)
+{-# INLINEABLE withCreateProcessGroup #-}
+
+-- | This is like process's cleanupGroup with one exception: This function
+-- calls interruptProcessGroupOf rather than terminateProcess. The motivation
+-- is to better kill child processes in the event of an exception i.e.
+-- /bin/sh starts command 'cmd1' and the main thread receives SIGTERM.
+-- We would like to cancel all of shrun, '/bin/sh', and 'cmd1', but
+-- terminateProcess fails to kill 'cmd1' on linux CI.
+--
+-- interruptProcessGroupOf seems to be more reliable. See the following
+-- issue: https://github.com/haskell/process/issues/115.
+cleanupProcessGroup ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadThread m
+  ) =>
+  (Maybe Handle, Maybe Handle, Maybe Handle, ProcessHandle) ->
+  m ()
+cleanupProcessGroup
+  ( mb_stdin,
+    mb_stdout,
+    mb_stderr,
+    ph
+    ) = do
+    P.interruptProcessGroupOf ph
+    maybe (pure ()) (ignoreSigPipe . hClose) mb_stdin
+    maybe (pure ()) hClose mb_stdout
+    maybe (pure ()) hClose mb_stderr
+    -- NOTE: The delegation from the upstream function is commented out, as
+    -- it would be difficult to add to our MonadProcess API, as it uses
+    -- internal functions. Thankfully, it should be completely irrelevant,
+    -- as delegation is set to false here.
+    -- TODO: Need forkIO I guess.
+    _ <- Thread.forkM (P.waitForProcess ph *> pure ())
+    pure ()
+
+ignoreSigPipe :: (HasCallStack, MonadCatch m) => m () -> m ()
+ignoreSigPipe = C.handle $ \e -> case e of
+  IOError
+    { ioe_type = ResourceVanished,
+      ioe_errno = Just ioe
+    }
+      | Errno ioe == ePIPE -> pure ()
+  _ -> throwM e
