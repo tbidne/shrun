@@ -60,18 +60,22 @@ main = do
             <> "'"
 
 tests :: SuiteParams -> TestTree
-tests params = do
+tests sp =
   testGroup
     "Terminate Tests"
-    [ testSigtermTerminatesCommands params,
-      testSigintTerminatesCommands params
+    [ runTest sp (MkTestParams {commandLogging, signalType})
+    | commandLogging <- universe,
+      signalType <- universe
     ]
+  where
+    universe :: (Bounded a, Enum a) => [a]
+    universe = [minBound .. maxBound]
 
-testSigtermTerminatesCommands :: SuiteParams -> TestTree
-testSigtermTerminatesCommands sp = testCase desc $ do
-  bracket (testSetup sp) testTeardown $ \shrunPid -> do
+runTest :: SuiteParams -> TestParams -> TestTree
+runTest sp tp = testCase desc $ do
+  bracket (testSetup sp tp) testTeardown $ \shrunPid -> do
     -- 1. Kill shrun, give it time to clean up.
-    terminateShrunPid shrunPid True
+    killPid (tp ^. #signalType) shrunPid True
     sleep 2
     -- 2. Get the output, assert processes have been killed.
     output <- runPs
@@ -112,38 +116,21 @@ testSigtermTerminatesCommands sp = testCase desc $ do
       VerifyCancelShrun -> pure ()
       VerifyCancelCommand -> assertNotExists "sleep" output
   where
-    desc = "SIGINT terminates commands"
+    desc =
+      mconcat
+        [ sigTypeStr,
+          " terminates shrun ",
+          cmdLoggingStr
+        ]
 
-    assertNotExists :: Text -> [Text] -> IO ()
-    assertNotExists t o = do
-      putStrLn $ "*** Asserting that '" ++ unpack t ++ "' is not found ***"
-      let found = L.any (foundLine t) o
-      when found $ do
-        assertFailure
-          $ mconcat
-            [ "Found '",
-              unpack t,
-              "' in process output: ",
-              tlinesToStr o
-            ]
+    cmdLoggingStr =
+      if tp ^. #commandLogging
+        then "with --command-logging"
+        else "without --command-logging"
 
-    foundLine t l =
-      t
-        `T.isInfixOf` l
-        && not ("grep" `T.isInfixOf` l)
-
-testSigintTerminatesCommands :: SuiteParams -> TestTree
-testSigintTerminatesCommands sp = testCase desc $ do
-  bracket (testSetup sp) testTeardown $ \shrunPid -> do
-    terminateShrunPid2 shrunPid True
-    sleep 2
-    output <- runPs
-    assertNotExists "shrun" output
-    case sp ^. #verifyCancel of
-      VerifyCancelShrun -> pure ()
-      VerifyCancelCommand -> assertNotExists "sleep" output
-  where
-    desc = "SIGTERM terminates commands"
+    sigTypeStr = case tp ^. #signalType of
+      SignalTypeSIGINT -> "SIGINT"
+      SignalTypeSIGTERM -> "SIGTERM"
 
     assertNotExists :: Text -> [Text] -> IO ()
     assertNotExists t o = do
@@ -233,27 +220,31 @@ findShrunPid ls = do
 
     containsSh = T.isInfixOf "/bin/sh"
 
-terminateShrunPid :: Int -> Bool -> IO ()
-terminateShrunPid i failIfNone = runProcessOrDie killCmd
+killPid :: SignalType -> Int -> Bool -> IO ()
+killPid sigType pid failIfNone = runProcessOrDie killCmd
   where
     killCmd =
-      if failIfNone
-        then "kill -15 " ++ show i
-        else "kill -15 " ++ show i ++ " || true"
+      mkKill
+        <> if failIfNone
+          then ""
+          else " || true"
 
-terminateShrunPid2 :: Int -> Bool -> IO ()
-terminateShrunPid2 i failIfNone = runProcessOrDie killCmd
-  where
-    killCmd =
-      if failIfNone
-        then "kill -2 " ++ show i
-        else "kill -2 " ++ show i ++ " || true"
+    mkKill =
+      mconcat
+        [ "kill",
+          signalStr,
+          show pid
+        ]
+
+    signalStr = case sigType of
+      SignalTypeSIGINT -> " -2 "
+      SignalTypeSIGTERM -> " -15 "
 
 killShrunName :: IO ()
 killShrunName = void . runProcess $ "pkill -15 shrun || true"
 
-runShrun :: SuiteParams -> IO ()
-runShrun sp = do
+runShrun :: SuiteParams -> TestParams -> IO ()
+runShrun sp tp = do
   async <- Async.async io
   -- Link so that an an unexpected exception kills the test. However,
   -- the expectation is that we exit with a specific ExitFailure, so we test
@@ -302,7 +293,11 @@ runShrun sp = do
 
     testDir = sp ^. #testDir
     exePath = unsafeDecode $ testDir </> [osp|shrun|]
-    args = ["--no-config", "sleep 77"]
+
+    args =
+      if tp ^. #commandLogging
+        then ["--no-config", "--console-log-command", "sleep 77"]
+        else ["--no-config", "sleep 77"]
 
 runProcess :: String -> IO (ExitCode, String, String)
 runProcess txt = do
@@ -350,8 +345,8 @@ psLineToPid line =
 -- testSetup/testTeardown is for individual test setup i.e. run and kill
 -- shrun process.
 
-testSetup :: SuiteParams -> IO Int
-testSetup sp = do
+testSetup :: SuiteParams -> TestParams -> IO Int
+testSetup sp tp = do
   -- Slightly convoluted. We want to:
   --
   --   1. Run shrun and make sure it matches expectations.
@@ -361,7 +356,7 @@ testSetup sp = do
   -- where shrun has launched but we have no pid to then cancel it.
   -- Thus we surround this logic w/ onException which kills the process by
   -- name.
-  runShrun sp
+  runShrun sp tp
   sleep 2
   let getPid = do
         output1 <- runPs
@@ -382,7 +377,10 @@ testSetup sp = do
   getPid `onException` killShrunName
 
 testTeardown :: Int -> IO ()
-testTeardown shrunPid = terminateShrunPid shrunPid False
+testTeardown shrunPid = do
+  killPid SignalTypeSIGTERM shrunPid False
+  -- Kill leftover sleeps so tests do not interfere.
+  runProcessOrDie "pkill -15 sleep || true"
 
 installShrun :: OsPath -> IO ()
 installShrun d = runProcessOrDie cmd
@@ -398,6 +396,41 @@ installShrun d = runProcessOrDie cmd
         ]
 
     dStr = unsafeDecode d
+
+data SignalType
+  = SignalTypeSIGINT
+  | SignalTypeSIGTERM
+  deriving stock (Bounded, Enum)
+
+-- | TestParams is used for individual tests.
+data TestParams = MkTestParams
+  { commandLogging :: Bool,
+    signalType :: SignalType
+  }
+
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "commandLogging" k TestParams TestParams a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkTestParams a1 a2) ->
+        fmap
+          (\b -> MkTestParams b a2)
+          (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ SignalType, b ~ SignalType) =>
+  LabelOptic "signalType" k TestParams TestParams a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkTestParams a1 a2) ->
+        fmap
+          (MkTestParams a1)
+          (f a2)
+  {-# INLINE labelOptic #-}
 
 -- setup/teardown is for overall suite setup i.e. install the shrun exe
 -- to the temp directory.
@@ -451,53 +484,7 @@ setup verifyCancel = do
       }
 
 teardown :: SuiteParams -> IO ()
-teardown sp = do
-  -- NOTE: I used to have logic to delete the original shrun binary,
-  -- which is installed to something like:
-  --
-  --   .local/state/cabal/store/ghc-9.10.1-0348/shrun-<rest>
-  --
-  -- before being copied/symlinked to the --installdir. Unfortunately,
-  -- cabal does not seem to like this on subsequent runs with
-  -- --install-method=copy, as it does not rebuild the exe, instead dying
-  -- when looking for the binary to copy. Hence I no longer attempt to do
-  -- this.
-  --
-  -- I am leaving this code for now as it may be useful in the future.
-  --
-  -- mExePath <- getSymbolicLinkSource (cwd </> [osp|shrun|])
-  -- for_ mExePath $ \exePath -> do
-  --   putStrLn $ "Deleting exe: " ++ show exePath
-  --   PW.removeFile exePath
-  PW.removePathForciblyIfExists_ $ sp ^. #testDir
-
--- getSymbolicLinkSource :: OsPath -> IO (Maybe OsPath)
--- getSymbolicLinkSource p = do
---   exists <- PR.doesPathExist p
---   if exists
---     then do
---       let cmd = "readlink -f " ++ unsafeDecode p
---       (ec, out, err) <- runProcess cmd
---       case ec of
---         ExitSuccess -> do
---           let out' =
---                 unpack
---                   . T.strip
---                   . pack
---                   $ out
---           Just <$> encodeThrowM out'
---         ExitFailure _ ->
---           assertFailure
---             $ mconcat
---               [ "Failed running '",
---                 cmd,
---                 ". Stdout: '",
---                 out,
---                 "', stderr: '",
---                 err,
---                 "'"
---               ]
---     else pure Nothing
+teardown sp = PW.removePathForciblyIfExists_ $ sp ^. #testDir
 
 displayCmd :: String -> List String -> String
 displayCmd cmd args =
