@@ -260,9 +260,9 @@ tryCommandStream logFn cmd = do
 
   -- NOTE: [process vs. typed-process]
   --
-  -- We previously switched from typed-process to process. This came with
+  -- We previously switched from process to typed-process. This came with
   -- some improvements (ByteString output rather than String, more robust
-  -- wrt handle output). We now switch back. Why?
+  -- wrt handle output). We now switch back to process. Why?
   --
   -- We encountered a bug where SIGINT only promptly killed shrun + subcommands
   -- when command logging was active. That is, consider the following steps:
