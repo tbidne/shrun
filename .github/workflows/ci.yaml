@@ -5,6 +5,7 @@ on: # yamllint disable-line rule:truthy rule:comments
     branches:
       - main
       - release
+      - term2
 
   pull_request:
     branches:
