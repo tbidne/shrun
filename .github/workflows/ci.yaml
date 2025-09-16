@@ -38,7 +38,7 @@ jobs:
           - os: "macos-latest"
             test-terminate: "command"
           - os: "ubuntu-latest"
-            test-terminate: "shrun"
+            test-terminate: "command"
     name: "cabal (${{ matrix.ghc.vers }}, ${{ matrix.platform.os }})"
     runs-on: ${{ matrix.platform.os }}
     steps:
