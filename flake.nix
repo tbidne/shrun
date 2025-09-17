@@ -83,41 +83,19 @@
       perSystem =
         { pkgs, system, ... }:
         let
-          ghc-version = "ghc9101";
+          ghc-version = "ghc9122";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides =
               final: prev:
               {
-                dbus = prev.dbus_1_4_0;
-                path = hlib.dontCheck prev.path_0_9_6;
-
-                # optparse jailbreaks
-                cabal-add = hlib.doJailbreak prev.cabal-add;
+                Cabal-syntax_3_10_3_0 = hlib.doJailbreak prev.Cabal-syntax_3_10_3_0;
+                dbus = prev.dbus_1_4_1;
+                # TODO: Remove on next nixpkgs, where env-guard does not
+                # depend on doctest.
+                env-guard = hlib.dontCheck prev.env-guard;
+                extensions = hlib.doJailbreak prev.extensions;
                 fourmolu = hlib.doJailbreak prev.fourmolu;
-                hspec-golden = hlib.doJailbreak prev.hspec-golden;
-                ormolu = hlib.doJailbreak prev.ormolu;
-                stan = hlib.doJailbreak prev.stan;
-                tasty = hlib.doJailbreak prev.tasty;
-                tasty-quickcheck = hlib.doJailbreak prev.tasty-quickcheck;
-                tasty-rerun = hlib.doJailbreak prev.tasty-rerun;
-                trial-optparse-applicative = hlib.doJailbreak prev.trial-optparse-applicative;
-
-                # FIXME: Dev shell caching is terribly because I guess everything
-                # uses optparse ugh. So we should wait until optparse 19 is the
-                # default in nixpkgs i.e. stackage (nightly? or lts?).
-
-                # Hopefully this is in the next nixpkgs merge (not at the time
-                # of this comment):
-                #
-                #  https://github.com/NixOS/nixpkgs/pull/413046
-                optparse-applicative = (
-                  final.callHackageDirect {
-                    pkg = "optparse-applicative";
-                    ver = "0.19.0.0";
-                    sha256 = "sha256-dhqvRILfdbpYPMxC+WpAyO0KUfq2nLopGk1NdSN2SDM=";
-                  } { }
-                );
-
+                # TODO: Remove next nixpkgs update.
                 gitrev-typed = (
                   final.callHackageDirect {
                     pkg = "gitrev-typed";
@@ -125,6 +103,16 @@
                     sha256 = "sha256-s7LEekR7NLe3CNhD/8uChnh50eGfaArrrtc5hoCtJ1A=";
                   } { }
                 );
+                hie-bios = hlib.doJailbreak prev.hie-bios;
+                hspec-golden = hlib.doJailbreak prev.hspec-golden;
+                ormolu = hlib.doJailbreak prev.ormolu;
+                # TODO: Would be great to be able to remove this (when it's
+                # the default in nixpkgs) as overriding forces a rebuild of
+                # many packages, hence makes the dev shell slow.
+                optparse-applicative = prev.optparse-applicative_0_19_0_0;
+                path = hlib.dontCheck prev.path_0_9_6;
+                stylish-haskell = hlib.doJailbreak prev.stylish-haskell;
+                tasty-quickcheck = hlib.doJailbreak prev.tasty-quickcheck;
               }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
@@ -218,12 +206,12 @@
 
             lint = nix-hs-utils.mergeApps {
               apps = [
-                #(nix-hs-utils.lint (compilerPkgs // pkgsMkDrv))
+                (nix-hs-utils.lint (compilerPkgs // pkgsMkDrv))
                 (nix-hs-utils.lint-yaml pkgsMkDrv)
               ];
             };
 
-            #lint-refactor = nix-hs-utils.lint-refactor compilerPkgs;
+            lint-refactor = nix-hs-utils.lint-refactor compilerPkgs;
           };
         };
       systems = [

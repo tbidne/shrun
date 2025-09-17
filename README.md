@@ -94,7 +94,7 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
-The current "blessed" version is `ghc-9.10.1`.
+The current "blessed" version is `ghc-9.12.2`.
 
 ### Build Shrun
 
