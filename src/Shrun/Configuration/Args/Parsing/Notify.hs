@@ -82,7 +82,7 @@ notifyTimeoutParser = Utils.withDisabledParserNoLine mainParser "notify-timeout"
           ]
     helpTxt =
       mconcat
-        [ "When to timeout success notifications. Defaults to 10 seconds.",
+        [ "When to timeout success notifications. Defaults to 10 seconds. ",
           "Note that the underlying notification system may not support ",
           "timeouts."
         ]
