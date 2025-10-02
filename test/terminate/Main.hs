@@ -37,9 +37,7 @@ main :: IO ()
 main = do
   Env.lookupEnv "TEST_TERMINATE" >>= \case
     Nothing -> dontRun
-    Just v -> do
-      c <- strToCancelled (pack v)
-      guardOrElse' "TEST_TERMINATE" ExpectEnvSet (runTests c) dontRun
+    Just v -> strToCancelled (pack v) >>= runTests
   where
     runTests c = bracket (setup c) cleanup $ \params -> do
       defaultMain (tests params)
