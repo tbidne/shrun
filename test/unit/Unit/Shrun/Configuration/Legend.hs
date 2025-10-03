@@ -10,6 +10,7 @@ import Data.HashSet qualified as Set
 import Data.Text qualified as T
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
+import Shrun.Command.Types (CommandP (MkCommandP))
 import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
     DuplicateKeyError (MkDuplicateKeyError),
@@ -18,7 +19,6 @@ import Shrun.Configuration.Legend
     translateCommands,
   )
 import Shrun.Configuration.Toml.Legend (KeyVal, unsafeKeyVal)
-import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Utils (unsafeListToNESeq)
 import Unit.Prelude
 

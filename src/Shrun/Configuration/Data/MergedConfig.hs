@@ -6,9 +6,9 @@ module Shrun.Configuration.Data.MergedConfig
   )
 where
 
+import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.Core (CoreConfigMerged)
 import Shrun.Configuration.Data.Core qualified as CoreConfig
-import Shrun.Data.Command (CommandP1)
 import Shrun.Prelude
 
 -- | Merged Args + Toml

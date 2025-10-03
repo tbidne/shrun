@@ -19,7 +19,7 @@ module Shrun.Logging.Types
   )
 where
 
-import Shrun.Data.Command (CommandP1)
+import Shrun.Command.Types (CommandP1)
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Logging.Types.Internal
   ( ConsoleLog,

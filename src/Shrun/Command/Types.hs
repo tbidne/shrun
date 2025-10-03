@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides the 'Command' wrapper for commands.
-module Shrun.Data.Command
+module Shrun.Command.Types
   ( CommandP (..),
     CommandP1,
     CommandP2,

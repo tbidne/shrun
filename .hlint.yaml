@@ -12,7 +12,7 @@
       - "Shrun.Configuration.Data.Notify"
       - "Shrun.Configuration.Env.Types"
       - "Shrun.Configuration.Toml"
-      - "Shrun.Data.Command"
+      - "Shrun.Command.Types"
       - "Shrun.Logging.Types"
       - "Shrun.Notify.MonadNotify"
       - "Functional.Prelude"

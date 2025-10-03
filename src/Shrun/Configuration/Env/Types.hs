@@ -20,6 +20,7 @@ module Shrun.Configuration.Env.Types
   )
 where
 
+import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConfigPhase (ConfigPhase (ConfigPhaseEnv))
@@ -28,7 +29,6 @@ import Shrun.Configuration.Data.Core (CoreConfigP)
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Data.Notify (NotifyEnv)
-import Shrun.Data.Command (CommandP1)
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
 

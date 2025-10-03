@@ -16,8 +16,8 @@ module Unit.Shrun.Logging.Generators
 where
 
 import Hedgehog.Gen qualified as HGen
+import Shrun.Command.Types (CommandP (MkCommandP), CommandP1)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
-import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
