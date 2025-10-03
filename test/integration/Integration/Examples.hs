@@ -141,5 +141,5 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                         timeout = NotifyTimeoutNever
                       }
               },
-          commands = MkCommandP (Just "cmd1") "echo \"command one\"" :<|| []
+          commands = MkCommandP 0 (Just "cmd1") "echo \"command one\"" :<|| []
         }

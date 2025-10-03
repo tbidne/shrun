@@ -227,7 +227,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                         timeout = NotifyTimeoutNever
                       }
               },
-          commands = MkCommandP (Just "cmd1") "echo \"command one\"" :<|| []
+          commands = MkCommandP 0 (Just "cmd1") "echo \"command one\"" :<|| []
         }
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
@@ -340,7 +340,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                         timeout = NotifyTimeoutSeconds 10
                       }
               },
-          commands = "cmd" :<|| []
+          commands = MkCommandP 0 Nothing "cmd" :<|| []
         }
 
 cliOverridesConfigFileCmdLog :: TestTree

@@ -21,6 +21,7 @@ import Data.Text.Lazy.Builder qualified as LTBuilder
 import Shrun.Command.Types (CommandP (MkCommandP), CommandP1)
 import Shrun.Configuration.Toml.Legend (KeyVal (MkKeyVal), LegendMap)
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- $setup
 -- >>> import Shrun.Prelude
@@ -92,17 +93,20 @@ instance Exception CyclicKeyError where
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq CommandP1)
-translateCommands mp ts = join <$> traverse (lineToCommands mp) ts
+translateCommands mp = fmap (idxCmds . join) . traverse (lineToCommands mp)
+  where
+    idxCmds :: NESeq (Natural -> CommandP1) -> NESeq CommandP1
+    idxCmds = fmap (\(idx, mkCmd) -> mkCmd idx) . Utils.indexNat
 
-lineToCommands :: LegendMap -> Text -> Either CyclicKeyError (NESeq CommandP1)
+lineToCommands :: LegendMap -> Text -> Either CyclicKeyError (NESeq (Natural -> CommandP1))
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
     -- we have traversed so far, e.g., a -> b -> c
-    go :: Maybe Text -> HashSet Text -> Builder -> Text -> Either CyclicKeyError (NESeq CommandP1)
+    go :: Maybe Text -> HashSet Text -> Builder -> Text -> Either CyclicKeyError (NESeq (Natural -> CommandP1))
     go prevKey foundKeys path line = case Map.lookup line mp of
       -- The line isn't a key, return it.
-      Nothing -> Right $ NESeq.singleton (MkCommandP prevKey line)
+      Nothing -> Right $ NESeq.singleton (\idx -> MkCommandP idx prevKey line)
       -- The line is a key, check for cycles and recursively
       -- call.
       Just val -> case maybeCyclicVal of
