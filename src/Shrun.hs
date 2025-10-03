@@ -15,6 +15,7 @@ import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
+import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
@@ -42,7 +43,6 @@ import Shrun.Configuration.Env.Types
     HasTimeout (getTimeout),
     setAnyErrorTrue,
   )
-import Shrun.Data.Command (CommandP1)
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Data.Text qualified as Text

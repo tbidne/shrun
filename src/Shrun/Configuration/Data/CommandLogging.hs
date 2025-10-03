@@ -31,6 +31,7 @@ module Shrun.Configuration.Data.CommandLogging
   )
 where
 
+import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize)
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
@@ -55,7 +56,6 @@ import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<.>?), (<>?), (<?>?))
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
-import Shrun.Data.Command (CommandP1)
 import Shrun.Prelude
 
 newtype BufferLength = MkBufferLength Int

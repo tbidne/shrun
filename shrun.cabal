@@ -69,6 +69,7 @@ library
   autogen-modules: Paths_shrun
   exposed-modules:
     Shrun
+    Shrun.Command.Types
     Shrun.Configuration
     Shrun.Configuration.Args
     Shrun.Configuration.Args.Parsing
@@ -109,7 +110,6 @@ library
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
     Shrun.Configuration.Toml.Legend
-    Shrun.Data.Command
     Shrun.Data.Text
     Shrun.IO
     Shrun.IO.Handle

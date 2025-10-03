@@ -14,6 +14,7 @@ import Effects.FileSystem.HandleWriter qualified as HW
 import Effects.System.Process (ProcessHandle)
 import Effects.System.Process qualified as P
 import Effects.Time (MonadTime (getMonotonicTime), withTiming)
+import Shrun.Command.Types (CommandP1, commandToProcess)
 import Shrun.Configuration.Data.CommandLogging
   ( BufferLength,
     BufferTimeout,
@@ -48,7 +49,6 @@ import Shrun.Configuration.Env.Types
     prependCompletedCommand,
     setAnyErrorTrue,
   )
-import Shrun.Data.Command (CommandP1, commandToProcess)
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.IO.Handle

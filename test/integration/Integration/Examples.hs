@@ -13,6 +13,7 @@ import Integration.Utils
     notifySystemOSNotifySend,
     runConfigIO,
   )
+import Shrun.Command.Types (CommandP (MkCommandP))
 import Shrun.Configuration.Data.CommandLogging
   ( CommandLoggingP
       ( MkCommandLoggingP,
@@ -82,7 +83,6 @@ import Shrun.Configuration.Data.Notify.Timeout
   ( NotifyTimeout (NotifyTimeoutNever),
   )
 import Shrun.Configuration.Data.StripControl (StripControl (StripControlSmart))
-import Shrun.Data.Command (CommandP (MkCommandP))
 
 specs :: TestTree
 specs =

@@ -14,6 +14,7 @@ module Shrun.Configuration.Data.Core
   )
 where
 
+import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingP, mergeCommandLogging)
 import Shrun.Configuration.Data.CommandLogging qualified as CommandLogging
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingP, mergeCommonLogging)
@@ -36,7 +37,6 @@ import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.WithDisabled ((<?>?))
 import Shrun.Configuration.Default (Default (def))
-import Shrun.Data.Command (CommandP1)
 import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Prelude
 

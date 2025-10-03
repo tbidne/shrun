@@ -9,7 +9,7 @@ module Shrun.Configuration.Data.CommandLogging.ReadStrategy
   )
 where
 
-import Shrun.Data.Command (CommandP1)
+import Shrun.Command.Types (CommandP1)
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 

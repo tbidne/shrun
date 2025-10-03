@@ -13,6 +13,7 @@ import Effects.Time
     MonadTime (getMonotonicTime, getSystemZonedTime),
     ZonedTime (ZonedTime),
   )
+import Shrun.Command.Types (CommandP (MkCommandP, command, key))
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch
       ( KeyHideOff,
@@ -58,7 +59,6 @@ import Shrun.Configuration.Data.StripControl
         StripControlSmart
       ),
   )
-import Shrun.Data.Command (CommandP (MkCommandP, command, key))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),

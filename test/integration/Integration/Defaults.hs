@@ -18,6 +18,7 @@ import Integration.Utils
     (^=@),
     (^?=@),
   )
+import Shrun.Command.Types (CommandP (MkCommandP))
 import Shrun.Configuration.Data.CommandLogging
   ( CommandLoggingP
       ( MkCommandLoggingP,
@@ -132,7 +133,6 @@ import Shrun.Configuration.Data.StripControl
         StripControlSmart
       ),
   )
-import Shrun.Data.Command (CommandP (MkCommandP))
 import Test.Tasty.Hedgehog (testProperty)
 
 specs :: IO TestArgs -> TestTree

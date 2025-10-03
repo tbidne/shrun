@@ -3,6 +3,7 @@ module Shrun.Configuration
   )
 where
 
+import Shrun.Command.Types (CommandP (MkCommandP))
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Core (mergeCoreConfig)
 import Shrun.Configuration.Data.MergedConfig
@@ -14,7 +15,6 @@ import Shrun.Configuration.Data.MergedConfig
   )
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
-import Shrun.Data.Command (CommandP (MkCommandP))
 import Shrun.Prelude
 
 -- | Merges Args and Toml together, filling in necessary defaults and

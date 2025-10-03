@@ -28,6 +28,7 @@ import Data.Foldable qualified as F
 import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
+import Shrun.Command.Types (CommandP (MkCommandP), CommandP1)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOff),
   )
@@ -43,7 +44,6 @@ import Shrun.Configuration.Data.Truncation
       ),
     Truncation (MkTruncation),
   )
-import Shrun.Data.Command (CommandP (MkCommandP), CommandP1)
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Types

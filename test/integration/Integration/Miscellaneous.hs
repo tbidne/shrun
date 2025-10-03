@@ -14,6 +14,7 @@ import Integration.Utils
     (^=@),
     (^?=@),
   )
+import Shrun.Command.Types (CommandP (MkCommandP))
 import Shrun.Configuration qualified as Configuration
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
@@ -32,7 +33,6 @@ import Shrun.Configuration.Data.MergedConfig qualified as Merged
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Env (withEnv)
 import Shrun.Configuration.Toml (Toml)
-import Shrun.Data.Command (CommandP (MkCommandP))
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
