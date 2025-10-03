@@ -47,6 +47,7 @@ import Effects.System.Terminal
     Window (Window),
   )
 import Integration.Prelude as X
+import Shrun.Command.Types (CommandP (MkCommandP))
 import Shrun.Configuration.Data.MergedConfig (MergedConfig, defaultMergedConfig)
 import Shrun.Configuration.Data.Notify.System (NotifySystemMerged)
 import Shrun.Configuration.Data.Notify.System qualified as Notify.System
@@ -244,7 +245,7 @@ makeMergedConfig args toIO = do
 -- | Convenience for tests expecting a default config. The test should
 -- pass a single command 'cmd'.
 defaultConfig :: MergedConfig
-defaultConfig = defaultMergedConfig $ NESeq.singleton "cmd"
+defaultConfig = defaultMergedConfig $ NESeq.singleton (MkCommandP 0 Nothing "cmd")
 
 notifySystemOSDBus :: NotifySystemMerged
 #if OSX

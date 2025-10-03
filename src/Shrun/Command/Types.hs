@@ -10,7 +10,6 @@ module Shrun.Command.Types
 where
 
 import Data.Hashable (Hashable)
-import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Effects.System.Process qualified as P
 import Shrun.Prelude
@@ -22,16 +21,39 @@ data CommandPhase
   = CommandPhase1
   | CommandPhase2
 
--- | Wrapper for shell commands.
+-- | Wrapper for shell commands. Eq/Ord is based on the numeric index.
 type CommandP :: CommandPhase -> Type
 data CommandP p = MkCommandP
-  { -- | The key name for the command, for display purposes.
+  { -- | NonNegative index for the command.
+    index :: Natural,
+    -- | The key name for the command, for display purposes.
     key :: Maybe Text,
     -- | The shell command to run.
     command :: Text
   }
-  deriving stock (Eq, Generic, Show)
+  deriving stock (Generic, Show)
   deriving anyclass (Hashable)
+
+instance Eq (CommandP p) where
+  x == y = x ^. #index == y ^. #index
+
+instance Ord (CommandP p) where
+  x <= y = x ^. #index <= y ^. #index
+
+instance
+  ( k ~ A_Lens,
+    a ~ Natural,
+    b ~ Natural
+  ) =>
+  LabelOptic "index" k (CommandP p) (CommandP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkCommandP a1 a2 a3) ->
+        fmap
+          (\b -> MkCommandP b a2 a3)
+          (f a1)
+  {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Lens,
@@ -42,10 +64,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCommandP a1 a2) ->
+      $ \f (MkCommandP a1 a2 a3) ->
         fmap
-          (\b -> MkCommandP b a2)
-          (f a1)
+          (\b -> MkCommandP a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -57,14 +79,11 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCommandP a1 a2) ->
+      $ \f (MkCommandP a1 a2 a3) ->
         fmap
-          (\b -> MkCommandP a1 b)
-          (f a2)
+          (\b -> MkCommandP a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}
-
-instance IsString (CommandP CommandPhase1) where
-  fromString = MkCommandP Nothing . T.pack
 
 -- | Phase1 commands.
 type CommandP1 = CommandP CommandPhase1

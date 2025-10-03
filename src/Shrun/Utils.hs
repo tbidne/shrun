@@ -24,12 +24,14 @@ module Shrun.Utils
     unsafeListToNESeq,
     (∸),
     readStripUnderscores,
+    indexNat,
   )
 where
 
-import Data.Bytes (Conversion (convert_), SomeSize, parse)
+import Data.Bytes (Conversion (convert_), SomeSize, parse, toZ)
 import Data.Char (isControl, isLetter)
 import Data.Either (either)
+import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
@@ -362,3 +364,10 @@ atomicReadWrite ::
 atomicReadWrite queue logAction =
   mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction
 {-# INLINEABLE atomicReadWrite #-}
+
+indexNat :: NESeq a -> NESeq (Natural, a)
+indexNat (x :<|| xs) = (0, x) :<|| ys
+  where
+    ys = Seq.zip (Seq.fromList [1 .. len]) xs
+
+    len = fromZ $ toZ $ length xs

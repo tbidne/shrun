@@ -13,7 +13,7 @@ import Effects.Time
     MonadTime (getMonotonicTime, getSystemZonedTime),
     ZonedTime (ZonedTime),
   )
-import Shrun.Command.Types (CommandP (MkCommandP, command, key))
+import Shrun.Command.Types (CommandP (MkCommandP, command, index, key))
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch
       ( KeyHideOff,
@@ -133,7 +133,8 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
 
   let cmd =
         MkCommandP
-          { key = Just cmdKey,
+          { index = 0,
+            key = Just cmdKey,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
@@ -193,7 +194,8 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
 
   let cmd =
         MkCommandP
-          { key = Nothing,
+          { index = 0,
+            key = Nothing,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
@@ -241,7 +243,7 @@ testFormatsCLCommandNameTrunc = testCase desc $ do
   where
     baseLog =
       MkLog
-        { cmd = Just (MkCommandP (Just "some long key") "an even longer command"),
+        { cmd = Just (MkCommandP 0 (Just "some long key") "an even longer command"),
           lvl = LevelSuccess,
           msg = "msg len 10",
           mode = LogModeSet
@@ -264,7 +266,7 @@ testFormatsCLLineTrunc = testCase desc $ do
   let logCmd =
         set'
           #cmd
-          (Just $ MkCommandP (Just "key") "some cmd")
+          (Just $ MkCommandP 0 (Just "key") "some cmd")
           (set' #lvl LevelFinished baseLog)
 
   "\ESC[94m[Finished][key] msg len 10\ESC[0m" @=? fmt 26 logCmd ^. #unConsoleLog
@@ -289,7 +291,7 @@ testFormatsCLLineTrunc = testCase desc $ do
 testFormatsCLSpecs :: TestTree
 testFormatsCLSpecs = testCase "Specific specs" $ do
   let l1 = MkLog (Just cmd1) "" LevelCommand LogModeSet
-      cmd1 = MkCommandP (Just "") "!\n!"
+      cmd1 = MkCommandP 0 (Just "") "!\n!"
 
       expectedKeyHideOn1 = "\ESC[97m[Command][! !] \ESC[0m"
       resultKeyHideOn1 = fmtKeyHideOn l1 ^. #unConsoleLog
@@ -356,7 +358,8 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
 
   let cmd =
         MkCommandP
-          { key = Just cmdKey,
+          { index = 0,
+            key = Just cmdKey,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
@@ -418,7 +421,8 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
 
   let cmd =
         MkCommandP
-          { key = Nothing,
+          { index = 0,
+            key = Nothing,
             command
           }
       baseLog' = set' #cmd (Just cmd) baseLog
@@ -467,7 +471,7 @@ testFormatsFLCommandNameTrunc = testCase desc $ do
   where
     baseLog =
       MkLog
-        { cmd = Just (MkCommandP (Just "some long key") "an even longer command"),
+        { cmd = Just (MkCommandP 0 (Just "some long key") "an even longer command"),
           lvl = LevelSuccess,
           msg = "msg len 10",
           mode = LogModeSet
@@ -490,7 +494,7 @@ testFormatsFLLineTrunc = testCase desc $ do
   let logCmd =
         set'
           #cmd
-          (Just $ MkCommandP (Just "key") "some cmd")
+          (Just $ MkCommandP 0 (Just "key") "some cmd")
           (set' #lvl LevelFinished baseLog)
 
   sysTimeNE <> "[Finished][key] msg len 10\n" @=? fmt 47 logCmd

@@ -96,7 +96,14 @@ genCommand :: Gen CommandP1
 genCommand = HGen.choice [genCommandWithKey, genCommandNoKey]
 
 genCommandWithKey :: Gen CommandP1
-genCommandWithKey = MkCommandP <$> fmap Just PGens.genText <*> PGens.genText
+genCommandWithKey =
+  MkCommandP
+    <$> PGens.genNonNegative
+    <*> fmap Just PGens.genText
+    <*> PGens.genText
 
 genCommandNoKey :: Gen CommandP1
-genCommandNoKey = MkCommandP Nothing <$> PGens.genText
+genCommandNoKey =
+  (\idx cmd -> MkCommandP idx Nothing cmd)
+    <$> PGens.genNonNegative
+    <*> PGens.genText

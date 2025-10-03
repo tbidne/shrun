@@ -196,9 +196,9 @@ usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
     desc = "Uses recursive command from example"
     args = ["multi1"]
     cmds =
-      MkCommandP (Just "m1") "m1val"
-        :<|| [ "m2",
-               "m3"
+      MkCommandP 0 (Just "m1") "m1val"
+        :<|| [ MkCommandP 1 Nothing "m2",
+               MkCommandP 2 Nothing "m3"
              ]
     expected = [#commands ^=@ cmds]
 
@@ -217,10 +217,10 @@ usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd"
     args = ["-c", getExampleConfigOS, "all", "echo cat"]
 
     cmds =
-      MkCommandP (Just "cmd1") "echo \"command one\""
-        :<|| [ MkCommandP (Just "cmd4") "command four",
-               "echo hi",
-               "echo cat"
+      MkCommandP 0 (Just "cmd1") "echo \"command one\""
+        :<|| [ MkCommandP 1 (Just "cmd4") "command four",
+               MkCommandP 2 Nothing "echo hi",
+               MkCommandP 3 Nothing "echo cat"
              ]
     expected = [#commands ^=@ cmds]
 
@@ -308,7 +308,7 @@ testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs"
   $ property
   $ do
     let expected = Merged.defaultMergedConfig cmds
-        args = Args.defaultArgs cmds
+        args = Args.defaultArgs cmdsTxt
         toml = def @Toml
 
     resultNoToml <- runTermIO $ Configuration.mergeConfig args Nothing
@@ -319,5 +319,8 @@ testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs"
   where
     desc = "defaultMergedConfig === merge defaultArgs defaultToml"
 
-    cmds :: (IsString a) => NESeq a
-    cmds = NESeq.singleton "cmd"
+    cmds :: NESeq (CommandP p)
+    cmds = NESeq.singleton (MkCommandP 0 Nothing "cmd")
+
+    cmdsTxt :: NESeq Text
+    cmdsTxt = NESeq.singleton "cmd"

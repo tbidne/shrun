@@ -219,6 +219,7 @@ test-suite unit
     , containers
     , effects-time
     , hedgehog              >=1.0.2   && <1.8
+    , nonempty-containers
     , optparse-applicative
     , shrun
     , si-bytes

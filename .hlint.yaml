@@ -5,6 +5,7 @@
     within:
       - "Shrun.Configuration.Args.Parsing"
       - "Shrun.Configuration.Data.CommandLogging"
+      - "Shrun.Configuration.Data.CommonLogging"
       - "Shrun.Configuration.Data.ConsoleLogging"
       - "Shrun.Configuration.Data.Core"
       - "Shrun.Configuration.Data.FileLogging"

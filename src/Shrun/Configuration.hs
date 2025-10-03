@@ -16,6 +16,7 @@ import Shrun.Configuration.Data.MergedConfig
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 
 -- | Merges Args and Toml together, filling in necessary defaults and
 -- doing some light processing.
@@ -40,7 +41,7 @@ mergeConfig ::
 mergeConfig args mToml = do
   case mToml of
     Nothing -> do
-      let commands = MkCommandP Nothing <$> cmdsText
+      let commands = mkCmd <$> cmdsTextIndexed
 
       coreConfig <-
         mergeCoreConfig
@@ -55,7 +56,7 @@ mergeConfig args mToml = do
           }
     (Just toml) -> do
       commands <- case toml ^. #legend of
-        Nothing -> pure $ MkCommandP Nothing <$> cmdsText
+        Nothing -> pure $ mkCmd <$> cmdsTextIndexed
         Just aliases -> case Legend.linesToMap aliases of
           Right mp -> case Legend.translateCommands mp cmdsText of
             Right cmds -> pure cmds
@@ -75,4 +76,8 @@ mergeConfig args mToml = do
           }
   where
     cmdsText = args ^. #commands
+
+    cmdsTextIndexed = Utils.indexNat (args ^. #commands)
+
+    mkCmd (i, t) = MkCommandP i Nothing t
 {-# INLINEABLE mergeConfig #-}

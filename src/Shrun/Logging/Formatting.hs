@@ -28,7 +28,7 @@ import Data.Foldable qualified as F
 import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
-import Shrun.Command.Types (CommandP (MkCommandP), CommandP1)
+import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOff),
   )
@@ -368,8 +368,9 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
 -- >>> displayCmd (MkCommandP (Just "long") "some long command") KeyHideOff
 -- "long"
 displayCmd :: CommandP1 -> KeyHideSwitch -> UnlinedText
-displayCmd (MkCommandP (Just key) _) KeyHideOff = formatCommandText key
-displayCmd (MkCommandP _ cmd) _ = formatCommandText cmd
+displayCmd cmd kh = case (cmd ^. #key, kh) of
+  (Just key, KeyHideOff) -> formatCommandText key
+  _ -> formatCommandText (cmd ^. #command)
 
 -- | Applies the given 'StripControl' to the 'Text'.
 --
