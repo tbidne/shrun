@@ -160,14 +160,14 @@ library
     , si-bytes              ^>=0.1
     , template-haskell      >=2.17.0.0  && <2.24
     , text                  >=1.2.3.2   && <2.2
-    , time                  >=1.9.3     && <1.15
-    , toml-reader           >=0.2.0.0   && <0.3.0.0
+    , time                  >=1.9.3     && <1.16
+    , toml-reader           >=0.2.0.0   && <0.4
     , unix                  >=2.7.2.2   && <2.9
     , unordered-containers  ^>=0.2.9.0
 
   -- For tuple syntax
   if impl(ghc >=9.10.1)
-    build-depends: ghc-experimental >=0.1.0.0 && <9.1202.0
+    build-depends: ghc-experimental >=0.1.0.0 && <9.1203.0
 
   hs-source-dirs:  src
 
@@ -218,7 +218,7 @@ test-suite unit
     , base
     , containers
     , effects-time
-    , hedgehog              >=1.0.2   && <1.6
+    , hedgehog              >=1.0.2   && <1.8
     , optparse-applicative
     , shrun
     , si-bytes
@@ -226,7 +226,7 @@ test-suite unit
     , tasty-hedgehog        >=1.2.0.0 && <1.5
     , tasty-hunit
     , text
-    , time                  >=1.9.3   && <1.15
+    , time
     , unordered-containers
 
   hs-source-dirs: test/unit
