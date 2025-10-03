@@ -13,8 +13,48 @@ tests =
   where
     testsParams :: List ReadStrategyTestParams
     testsParams =
-      [ keyHideOn,
+      [ debugOn,
+        debugOff,
+        keyHideOn,
         keyHideOff
+      ]
+
+debugOn :: ReadStrategyTestParams
+debugOn =
+  ReadStrategyTestParametricSimple
+    "Runs debug example with --common-log-debug"
+    run
+    args
+    (\results -> V.verifyExpected results expected)
+  where
+    args =
+      withBaseArgs
+        [ "--common-log-debug",
+          "sleep 2"
+        ]
+    expected =
+      [ withDebugPrefix "sleep 2" "Command: 'ShellCommand \". examples/bashrc && sleep 2\"'",
+        withSuccessPrefix "sleep 2"
+      ]
+
+debugOff :: ReadStrategyTestParams
+debugOff =
+  ReadStrategyTestParametricSimple
+    "Runs debug example with --no-common-log-debug"
+    run
+    args
+    (\results -> V.verifyExpectedUnexpected results expected unexpected)
+  where
+    args =
+      withBaseArgs
+        [ "--no-common-log-debug",
+          "sleep 2"
+        ]
+    expected =
+      [ withSuccessPrefix "sleep 2"
+      ]
+    unexpected =
+      [ withDebugPrefix "sleep 2" "Command: 'ShellCommand \". examples/bashrc && sleep 2\"'"
       ]
 
 keyHideOn :: ReadStrategyTestParams

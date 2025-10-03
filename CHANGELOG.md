@@ -27,6 +27,7 @@ for versions < 1.
 * Add GHC 9.12 support.
 * Added git revision info in `--help` and `--version`.
 * Added groups to `--help` options.
+* Added `--common-log-debug` option.
 
 ### Fixed
 * Previously, shrun and subcommands would only be properly killed by

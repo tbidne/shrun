@@ -63,6 +63,8 @@ legend = [
 
 # Common logging configuation.
 [common-log]
+# Enables additional debug logs.
+debug = false
 # By default (key-hide = false), logs will refer to the key name, as defined in
 # legend section. If set to true, logs will instead reference the literal
 # command.

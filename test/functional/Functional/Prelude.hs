@@ -44,6 +44,7 @@ module Functional.Prelude
     -- * Expectations
 
     -- ** Text
+    debugPrefix,
     commandPrefix,
     timerPrefix,
     timeoutPrefix,
@@ -51,6 +52,7 @@ module Functional.Prelude
 
     -- ** Prefixes
     withCommandPrefix,
+    withDebugPrefix,
     withSuccessPrefix,
     withErrorPrefix,
     withWarnPrefix,
@@ -364,6 +366,9 @@ runCancelled secToSleep argList = do
       IO (List ResultText, List ShrunNote)
     readRefs ls ns = ((,) . fmap MkResultText <$> readIORef ls) <*> readIORef ns
 
+debugPrefix :: (IsString s) => s
+debugPrefix = "[Debug]"
+
 commandPrefix :: (IsString s) => s
 commandPrefix = "[Command]"
 
@@ -378,6 +383,10 @@ timeoutPrefix = "[Warn] Timed out, cancelling remaining commands: "
 -- | Expected finished prefix.
 finishedPrefix :: (IsString s) => s
 finishedPrefix = "[Finished] "
+
+-- | Expected command text.
+withDebugPrefix :: (IsString s, Semigroup s) => s -> s -> s
+withDebugPrefix cmd txt = debugPrefix <> "[" <> cmd <> "] " <> txt
 
 -- | Expected command text.
 withCommandPrefix :: (IsString s, Semigroup s) => s -> s -> s

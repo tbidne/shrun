@@ -1,6 +1,9 @@
 -- | Tests for Shrun.Args
 module Unit.Shrun.Configuration.Args.Parsing.CommonLogging (tests) where
 
+import Shrun.Configuration.Data.CommonLogging
+  ( Debug (MkDebug),
+  )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOn),
   )
@@ -12,8 +15,33 @@ tests :: TestTree
 tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.CommonLogging"
-    [ keyHideTests
+    [ debugTests,
+      keyHideTests
     ]
+
+debugTests :: TestTree
+debugTests =
+  testGroup
+    "--common-log-debug"
+    [ testDebug,
+      testNoDebug
+    ]
+
+testDebug :: TestTree
+testDebug =
+  testPropertyNamed "Parses --common-log-debug" "testDebug"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--common-log-debug", "command"]
+    expected = U.updateDefCoreArgs (#commonLogging % #debug) (MkDebug True)
+
+testNoDebug :: TestTree
+testNoDebug =
+  testPropertyNamed "Parses --no-common-log-debug" "testNoDebug"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--no-common-log-debug", "command"]
+    expected = U.disableDefCoreArgs (#commonLogging % #debug)
 
 keyHideTests :: TestTree
 keyHideTests =

@@ -18,6 +18,7 @@ legend = [
 ]
 
 [common-log]
+debug = true
 key-hide = true
 
 [command-log]

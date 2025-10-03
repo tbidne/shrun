@@ -34,8 +34,10 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingP
       ( MkCommonLoggingP,
+        debug,
         keyHide
       ),
+    Debug (MkDebug),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOff),
@@ -110,7 +112,8 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 init = Just ". examples/bashrc",
                 commonLogging =
                   MkCommonLoggingP
-                    { keyHide = KeyHideOff
+                    { debug = MkDebug False,
+                      keyHide = KeyHideOff
                     },
                 consoleLogging =
                   MkConsoleLoggingP

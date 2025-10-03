@@ -7,6 +7,7 @@
     - [Timeout](#timeout)
   - [Logging](#logging)
     - [Common Logging](#common-logging)
+      - [Debug](#debug)
       - [Key Hide](#key-hide)
     - [Command Logging](#command-logging)
       - [Buffer Length](#buffer-length)
@@ -136,6 +137,21 @@ vs.
 ### Common Logging
 
 This is general logging config.
+
+#### Debug
+
+**Arg:** `--common-log-debug`
+
+**Description:** Enables additional debug logs.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --common-log-debug "sleep 2"</span>
+<span style="color:">[Debug][sleep 2] Command: 'ShellCommand "sleep 2"'</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+</pre>
 
 #### Key Hide
 

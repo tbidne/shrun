@@ -10,6 +10,7 @@ import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingArgs,
     CommonLoggingP (MkCommonLoggingP),
+    Debug (MkDebug),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOn),
@@ -18,7 +19,21 @@ import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
 commonLoggingParser :: Parser CommonLoggingArgs
-commonLoggingParser = MkCommonLoggingP <$> keyHideParser
+commonLoggingParser = MkCommonLoggingP <$> debugParser <*> keyHideParser
+
+debugParser :: Parser (WithDisabled Debug)
+debugParser = Utils.withDisabledParser mainParser "common-log-debug"
+  where
+    mainParser =
+      OA.optional
+        $ OA.flag'
+          (MkDebug True)
+          ( mconcat
+              [ OA.long "common-log-debug",
+                Utils.mkHelp helpTxt
+              ]
+          )
+    helpTxt = "Enables additional debug logging."
 
 keyHideParser :: Parser (WithDisabled KeyHideSwitch)
 keyHideParser = Utils.withDisabledParserNoLine mainParser "common-log-key-hide"

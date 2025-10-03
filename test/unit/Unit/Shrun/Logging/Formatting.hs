@@ -114,7 +114,8 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
     desc = "Formats with no command"
     lvls = [minBound .. maxBound]
     prefixes =
-      [ "\ESC[97m[Command] ",
+      [ "\ESC[97m[Debug] ",
+        "\ESC[97m[Command] ",
         "\ESC[94m[Finished] ",
         "\ESC[96m[Timer] ",
         "\ESC[92m[Success] ",
@@ -171,7 +172,8 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
     desc = "Formats with command and key"
     lvls = [minBound .. maxBound]
     prefixes =
-      [ "\ESC[97m[Command][",
+      [ "\ESC[97m[Debug][",
+        "\ESC[97m[Command][",
         "\ESC[94m[Finished][",
         "\ESC[96m[Timer][",
         "\ESC[92m[Success][",
@@ -216,7 +218,8 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
     desc = "Formats with command but no key"
     lvls = [minBound .. maxBound]
     prefixes =
-      [ "\ESC[97m[Command][",
+      [ "\ESC[97m[Debug][",
+        "\ESC[97m[Command][",
         "\ESC[94m[Finished][",
         "\ESC[96m[Timer][",
         "\ESC[92m[Success][",
@@ -334,7 +337,8 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
     lvls = [minBound .. maxBound]
     prefixes =
       (sysTimeNE <>)
-        <$> [ "[Command] ",
+        <$> [ "[Debug] ",
+              "[Command] ",
               "[Finished] ",
               "[Timer] ",
               "[Success] ",
@@ -393,7 +397,8 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
     lvls = [minBound .. maxBound]
     prefixes =
       (sysTimeNE <>)
-        <$> [ "[Command][",
+        <$> [ "[Debug][",
+              "[Command][",
               "[Finished][",
               "[Timer][",
               "[Success][",
@@ -439,7 +444,8 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
     lvls = [minBound .. maxBound]
     prefixes =
       (sysTimeNE <>)
-        <$> [ "[Command][",
+        <$> [ "[Debug][",
+              "[Command][",
               "[Finished][",
               "[Timer][",
               "[Success][",

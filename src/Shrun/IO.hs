@@ -28,6 +28,9 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
         ReadBlockLineBuffer
       ),
   )
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch (KeyHideOff),
+  )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch
       ( ConsoleLogCmdOff,
@@ -84,14 +87,24 @@ data CommandResult
 -- | Runs the command, returns ('ExitCode', 'Stderr')
 shExitCode ::
   ( HasCallStack,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
     HasInit env,
     MonadProcess m,
-    MonadReader env m
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m
   ) =>
   CommandP1 ->
   m (ExitCode, Stderr)
 shExitCode cmd = do
   process <- commandToProcess cmd <$> asks getInit
+
+  logDebugCmd cmd process $ \region log -> do
+    (consoleLogging, consoleLogQueue) <- asks getConsoleLogging
+    let formatted = formatConsoleLog KeyHideOff consoleLogging log
+    writeTBQueueA consoleLogQueue (LogRegion (log ^. #mode) region formatted)
+
   (exitCode, _stdout, stderr) <- P.readCreateProcessWithExitCode process ""
   pure (exitCode, wrap (MkStderr . ShrunText.fromText) stderr)
   where
@@ -102,9 +115,13 @@ shExitCode cmd = do
 -- 'Right' 'Stdout' otherwise.
 tryShExitCode ::
   ( HasCallStack,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
     HasInit env,
     MonadProcess m,
-    MonadReader env m
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m
   ) =>
   CommandP1 ->
   m (Maybe Stderr)
@@ -163,35 +180,48 @@ tryCommandLogging command = do
   (consoleLogging, consoleLogQueue) <- asks getConsoleLogging
   mFileLogging <- asks getFileLogging
   let keyHide = commonLogging ^. #keyHide
+      -- In general, our loggers take an optional region (for debugging) and
+      -- a log, and send it off to the console / file queues, depending on
+      -- the queue. Debugging gets its own queue because we do not want it
+      -- to be overridden by command logs.
       cmdFn = case (consoleLogging ^. #commandLogging, mFileLogging) of
         -- 1. No CommandLogging and no FileLogging: No streaming at all.
         (ConsoleLogCmdOff, Nothing) -> tryShExitCode
         -- 3. CommandLogging but no FileLogging. Stream.
         (ConsoleLogCmdOn, Nothing) -> \cmd ->
-          withRegion Linear $ \region -> do
-            let logFn = logConsole keyHide consoleLogQueue region consoleLogging
+          withRegion Linear $ \cmdRegion -> do
+            let logFn mRegion log =
+                  let region = fromMaybe cmdRegion mRegion
+                   in logConsole keyHide consoleLogQueue region consoleLogging log
 
-            logFn hello
+            logFn Nothing hello
 
             tryCommandStream logFn cmd
         -- 3. No CommandLogging but FileLogging: Stream (to file) but no console
         --    region.
         (ConsoleLogCmdOff, Just fileLogging) -> \cmd -> do
-          let logFn :: Log -> m ()
-              logFn = logFile keyHide fileLogging
+          let logFn :: Maybe (Region m) -> Log -> m ()
+              logFn mRegion log = do
+                -- Even if cmdLogging is off, we still want to send debug
+                -- logs, if enabled.
+                for_ mRegion $ \region ->
+                  logConsole keyHide consoleLogQueue region consoleLogging log
 
-          logFn hello
+                logFile keyHide fileLogging log
+
+          logFn Nothing hello
 
           tryCommandStream logFn cmd
         -- 4. CommandLogging and FileLogging: Stream (to both) and create console
         --    region.
         (ConsoleLogCmdOn, Just fileLogging) -> \cmd ->
-          withRegion Linear $ \region -> do
-            let logFn log = do
+          withRegion Linear $ \cmdRegion -> do
+            let logFn mRegion log = do
+                  let region = fromMaybe cmdRegion mRegion
                   logConsole keyHide consoleLogQueue region consoleLogging log
                   logFile keyHide fileLogging log
 
-            logFn hello
+            logFn Nothing hello
 
             tryCommandStream logFn cmd
 
@@ -233,17 +263,19 @@ tryCommandStream ::
   ( HasInit env,
     HasCallStack,
     HasCommandLogging env,
+    HasCommonLogging env,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
     MonadMask m,
     MonadProcess m,
     MonadReader env m,
+    MonadRegionLogger m,
     MonadThread m,
     MonadTime m
   ) =>
   -- | Function to apply to streamed logs.
-  (Log -> m ()) ->
+  (Maybe (Region m) -> Log -> m ()) ->
   -- | Command to run.
   CommandP1 ->
   -- | Error, if any. Note that this will be 'Just' iff the command exited
@@ -310,9 +342,10 @@ tryCommandStream logFn cmd = do
           }
 
   procConfig <- initToConfig <$> asks getInit
+  logDebugCmd cmd procConfig (logFn . Just)
 
   (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
-    streamOutput logFn cmd (recvOutH, recvErrH, ph)
+    streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
     ExitSuccess -> Nothing
@@ -586,3 +619,29 @@ writeLogHelper logFn cmd lastReadRef handleResult messages = do
           mode = LogModeSet
         }
 {-# INLINEABLE writeLogHelper #-}
+
+logDebugCmd ::
+  ( HasCommonLogging r,
+    MonadReader r m,
+    MonadRegionLogger m
+  ) =>
+  CommandP1 ->
+  CreateProcess ->
+  (Region m -> Log -> m ()) ->
+  m ()
+logDebugCmd cmd procConfig logFn = do
+  commonLogging <- asks getCommonLogging
+  when (commonLogging ^. #debug % #unDebug) $ do
+    let cs = show $ P.cmdspec procConfig
+        lg =
+          MkLog
+            { cmd = Just cmd,
+              msg =
+                Types.fromUnlined
+                  $ "Command: '"
+                  <> ShrunText.fromTextReplace (pack cs)
+                  <> "'",
+              lvl = Types.LevelDebug,
+              mode = Types.LogModeFinish
+            }
+    withRegion Linear $ \r -> logFn r lg

@@ -35,7 +35,8 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy (ReadBlock, ReadBlockLineBuffer),
   )
 import Shrun.Configuration.Data.CommonLogging
-  ( CommonLoggingP (MkCommonLoggingP, keyHide),
+  ( CommonLoggingP (MkCommonLoggingP, debug, keyHide),
+    Debug (MkDebug),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch
@@ -184,7 +185,8 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                 init = Just ". some file",
                 commonLogging =
                   MkCommonLoggingP
-                    { keyHide = KeyHideOn
+                    { debug = MkDebug True,
+                      keyHide = KeyHideOn
                     },
                 consoleLogging =
                   MkConsoleLoggingP
@@ -260,6 +262,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "--file-log-line-trunc",
         "180",
         "--console-log-command",
+        "--common-log-debug",
         "--common-log-key-hide",
         "--command-log-buffer-length",
         "40",
@@ -295,7 +298,8 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                 init = Just ". another file",
                 commonLogging =
                   MkCommonLoggingP
-                    { keyHide = KeyHideOn
+                    { debug = MkDebug True,
+                      keyHide = KeyHideOn
                     },
                 consoleLogging =
                   MkConsoleLoggingP
@@ -533,6 +537,8 @@ noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
         "--console-log-timer-format",
         "prose_full",
         "--no-console-log-timer-format",
+        "--common-log-debug",
+        "--no-common-log-debug",
         "--common-log-key-hide",
         "--no-common-log-key-hide",
         "--console-log-command-name-trunc",

@@ -34,7 +34,8 @@ import Shrun.Prelude
 
 -- | Determines the logging level.
 data LogLevel
-  = LevelCommand
+  = LevelDebug
+  | LevelCommand
   | LevelFinished
   | LevelTimer
   | LevelSuccess
