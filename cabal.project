@@ -50,7 +50,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 4ead4daa45bf2011b8c38663a746455957b316f0
+    tag: e81fc96ef672d511c45cb7acca9e424791dee04b
     subdir:
       lib/effects-async
       lib/effects-env
@@ -77,7 +77,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: acc3d79b82830397979f4be7b45266f5fc056cfb
+    tag: 4e10a4134f825ba825113955bb97be7f7e28ad6e
 
 if impl(ghc >= 9.12.1) && impl(ghc <9.13)
   allow-newer: dbus:template-haskell

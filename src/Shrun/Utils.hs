@@ -21,25 +21,22 @@ module Shrun.Utils
     whileM_,
     whenLeft,
     untilJust,
-    unsafeListToNESeq,
     (∸),
     readStripUnderscores,
-    indexNat,
+    indexPos,
   )
 where
 
-import Data.Bytes (Conversion (convert_), SomeSize, parse, toZ)
+import Data.Bytes (Conversion (convert_), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Either (either)
 import Data.Sequence qualified as Seq
-import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.Time (TimeSpec, diffTimeSpec)
-import GHC.Exts (IsList (fromList))
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude
@@ -292,12 +289,6 @@ untilJust m = go
         Just x -> pure x
 {-# INLINEABLE untilJust #-}
 
-{- HLINT ignore unsafeListToNESeq "Redundant bracket" -}
-
-unsafeListToNESeq :: (HasCallStack) => List a -> NESeq a
-unsafeListToNESeq [] = error "[Shrun.Utils]: empty list"
-unsafeListToNESeq xs = NESeq.fromList $ fromList xs
-
 -- | Escape double quotes in strings.
 escapeDoubleQuotes :: Text -> Text
 escapeDoubleQuotes = TL.toStrict . TLB.toLazyText . T.foldl' go ""
@@ -365,9 +356,9 @@ atomicReadWrite queue logAction =
   mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction
 {-# INLINEABLE atomicReadWrite #-}
 
-indexNat :: NESeq a -> NESeq (Natural, a)
-indexNat (x :<|| xs) = (0, x) :<|| ys
+indexPos :: NESeq a -> NESeq (Positive Int, a)
+indexPos (x :<|| xs) = (one, x) :<|| ys
   where
-    ys = Seq.zip (Seq.fromList [1 .. len]) xs
+    ys = Seq.zip (unsafePositive <$> Seq.fromList [2 .. len]) xs
 
-    len = fromZ $ toZ $ length xs
+    len = length xs + 1

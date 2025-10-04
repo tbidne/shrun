@@ -21,7 +21,6 @@ module Shrun.Data.Text
   )
 where
 
-import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Shrun.Prelude hiding (length)
 

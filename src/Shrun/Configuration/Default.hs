@@ -13,3 +13,6 @@ class Default a where
 
 instance Default (Maybe a) where
   def = Nothing
+
+instance Default [a] where
+  def = []

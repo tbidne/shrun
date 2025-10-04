@@ -33,7 +33,7 @@ commandLogOn =
     "Runs commandLog example with --console-log-command"
     run
     args
-    (`V.verifyExpected` expected)
+    (`V.verifyExpectedN` expected)
   where
     args =
       withNoConfig
@@ -41,7 +41,7 @@ commandLogOn =
           "for i in 1 2; do echo hi; sleep 1; done"
         ]
     expected =
-      [ withCommandPrefix "for i in 1 2; do echo hi; sleep 1; done" "hi"
+      [ (2, withCommandPrefix "for i in 1 2; do echo hi; sleep 1; done" "hi")
       ]
 
 commandLogOnDefault :: ReadStrategyTestParams
@@ -81,7 +81,7 @@ commandNameTruncN =
     "Runs --console-log-command-name-trunc 10 example"
     run
     args
-    (`V.verifyExpected` expected)
+    (`V.verifyExpectedN` expected)
   where
     args =
       withNoConfig
@@ -91,8 +91,8 @@ commandNameTruncN =
           "for i in 1 2 3; do echo hi; sleep 1; done"
         ]
     expected =
-      [ withCommandPrefix "for i i..." "hi",
-        withSuccessPrefix "for i i..."
+      [ (3, withCommandPrefix "for i i..." "hi"),
+        (1, withSuccessPrefix "for i i...")
       ]
 
 commandLogLineTruncN :: ReadStrategyTestParams
@@ -101,7 +101,7 @@ commandLogLineTruncN =
     "Runs --console-log-line-trunc 80 example"
     run
     args
-    (`V.verifyExpected` expected)
+    (`V.verifyExpectedN` expected)
   where
     args =
       withNoConfig
@@ -111,7 +111,7 @@ commandLogLineTruncN =
           "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"
         ]
     expected =
-      [ "[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ..."
+      [ (2, "[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...")
       ]
 
 stripControlAll :: ReadStrategyTestParams

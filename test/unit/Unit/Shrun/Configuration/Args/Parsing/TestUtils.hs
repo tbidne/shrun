@@ -2,6 +2,7 @@ module Unit.Shrun.Configuration.Args.Parsing.TestUtils
   ( -- * Verification
     verifyResult,
     verifyFailure,
+    verifyFailureString,
 
     -- * Utils
     execParserUnit,
@@ -17,6 +18,7 @@ module Unit.Shrun.Configuration.Args.Parsing.TestUtils
 where
 
 import Data.Sequence qualified as Seq
+import Data.Text qualified as T
 import Options.Applicative (ParserPrefs, ParserResult)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args qualified as Args
@@ -31,6 +33,8 @@ execParserUnit = OA.execParserPure prefs parserInfoArgs
 verifyResult :: List String -> Maybe Args -> Property
 verifyResult argList expected = withTests 1 $ property $ do
   let parseResult = execParserUnit argList
+
+  annotateShow argList
 
   result <- case parseResult of
     OA.Success x -> pure $ Just x
@@ -48,6 +52,19 @@ verifyFailure argList = withTests 1 $ property $ do
   case parseResult of
     OA.Success _ -> failure
     OA.Failure _ -> pure ()
+    OA.CompletionInvoked _ -> failure
+
+verifyFailureString :: List String -> Text -> Property
+verifyFailureString argList expected = withTests 1 $ property $ do
+  let parseResult = execParserUnit argList
+
+  case parseResult of
+    OA.Success _ -> failure
+    OA.Failure f -> do
+      let (errStr, _) = OA.renderFailure f ""
+      annotate (unpack expected)
+      annotate errStr
+      assert (expected `T.isPrefixOf` pack errStr)
     OA.CompletionInvoked _ -> failure
 
 prefs :: ParserPrefs

@@ -3,7 +3,7 @@ module Shrun.Configuration
   )
 where
 
-import Shrun.Command.Types (CommandP (MkCommandP))
+import Shrun.Command.Types (CommandP (MkCommandP), fromPositive)
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Core (mergeCoreConfig)
 import Shrun.Configuration.Data.MergedConfig
@@ -77,7 +77,7 @@ mergeConfig args mToml = do
   where
     cmdsText = args ^. #commands
 
-    cmdsTextIndexed = Utils.indexNat (args ^. #commands)
+    cmdsTextIndexed = Utils.indexPos (args ^. #commands)
 
-    mkCmd (i, t) = MkCommandP i Nothing t
+    mkCmd (i, t) = MkCommandP (fromPositive i) Nothing t
 {-# INLINEABLE mergeConfig #-}

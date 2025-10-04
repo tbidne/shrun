@@ -10,6 +10,7 @@ module Shrun.Configuration.Data.WithDisabled
     toBool,
     fromWithDisabled,
     fromDefault,
+    fromMonoid,
 
     -- * Operators
     -- $operators
@@ -137,6 +138,9 @@ fromWithDisabled x _ = x
 -- | Eliminates 'WithDisabled' via its 'Default' instance.
 fromDefault :: (Default a) => WithDisabled a -> a
 fromDefault = fromWithDisabled def
+
+fromMonoid :: (Monoid a) => WithDisabled a -> a
+fromMonoid = fromWithDisabled mempty
 
 -- $operators
 --

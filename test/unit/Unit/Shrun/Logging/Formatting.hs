@@ -121,7 +121,8 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
         "\ESC[92m[Success] ",
         "\ESC[93m[Warn] ",
         "\ESC[91m[Error] ",
-        "\ESC[91m[Fatal] "
+        "\ESC[91m[Fatal] ",
+        "\ESC[91m[Killed] "
       ]
     suffixes = L.repeat "\ESC[0m"
 
@@ -133,7 +134,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
 
   let cmd =
         MkCommandP
-          { index = 0,
+          { index = mkIdx 1,
             key = Just cmdKey,
             command
           }
@@ -180,7 +181,8 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
         "\ESC[92m[Success][",
         "\ESC[93m[Warn][",
         "\ESC[91m[Error][",
-        "\ESC[91m[Fatal]["
+        "\ESC[91m[Fatal][",
+        "\ESC[91m[Killed]["
       ]
     suffixes = L.repeat "\ESC[0m"
 
@@ -194,7 +196,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
 
   let cmd =
         MkCommandP
-          { index = 0,
+          { index = mkIdx 1,
             key = Nothing,
             command
           }
@@ -227,7 +229,8 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
         "\ESC[92m[Success][",
         "\ESC[93m[Warn][",
         "\ESC[91m[Error][",
-        "\ESC[91m[Fatal]["
+        "\ESC[91m[Fatal][",
+        "\ESC[91m[Killed]["
       ]
     suffixes = L.repeat "\ESC[0m"
 
@@ -243,7 +246,7 @@ testFormatsCLCommandNameTrunc = testCase desc $ do
   where
     baseLog =
       MkLog
-        { cmd = Just (MkCommandP 0 (Just "some long key") "an even longer command"),
+        { cmd = Just (MkCommandP (mkIdx 1) (Just "some long key") "an even longer command"),
           lvl = LevelSuccess,
           msg = "msg len 10",
           mode = LogModeSet
@@ -266,7 +269,7 @@ testFormatsCLLineTrunc = testCase desc $ do
   let logCmd =
         set'
           #cmd
-          (Just $ MkCommandP 0 (Just "key") "some cmd")
+          (Just $ MkCommandP (mkIdx 1) (Just "key") "some cmd")
           (set' #lvl LevelFinished baseLog)
 
   "\ESC[94m[Finished][key] msg len 10\ESC[0m" @=? fmt 26 logCmd ^. #unConsoleLog
@@ -291,7 +294,7 @@ testFormatsCLLineTrunc = testCase desc $ do
 testFormatsCLSpecs :: TestTree
 testFormatsCLSpecs = testCase "Specific specs" $ do
   let l1 = MkLog (Just cmd1) "" LevelCommand LogModeSet
-      cmd1 = MkCommandP 0 (Just "") "!\n!"
+      cmd1 = MkCommandP (mkIdx 1) (Just "") "!\n!"
 
       expectedKeyHideOn1 = "\ESC[97m[Command][! !] \ESC[0m"
       resultKeyHideOn1 = fmtKeyHideOn l1 ^. #unConsoleLog
@@ -346,7 +349,8 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
               "[Success] ",
               "[Warn] ",
               "[Error] ",
-              "[Fatal] "
+              "[Fatal] ",
+              "[Killed] "
             ]
     suffixes = L.repeat "\n"
 
@@ -358,7 +362,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
 
   let cmd =
         MkCommandP
-          { index = 0,
+          { index = mkIdx 1,
             key = Just cmdKey,
             command
           }
@@ -407,7 +411,8 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
               "[Success][",
               "[Warn][",
               "[Error][",
-              "[Fatal]["
+              "[Fatal][",
+              "[Killed]["
             ]
     suffixes = L.repeat "\n"
 
@@ -421,7 +426,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
 
   let cmd =
         MkCommandP
-          { index = 0,
+          { index = mkIdx 1,
             key = Nothing,
             command
           }
@@ -455,7 +460,8 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
               "[Success][",
               "[Warn][",
               "[Error][",
-              "[Fatal]["
+              "[Fatal][",
+              "[Killed]["
             ]
     suffixes = L.repeat "\n"
 
@@ -471,7 +477,7 @@ testFormatsFLCommandNameTrunc = testCase desc $ do
   where
     baseLog =
       MkLog
-        { cmd = Just (MkCommandP 0 (Just "some long key") "an even longer command"),
+        { cmd = Just (MkCommandP (mkIdx 1) (Just "some long key") "an even longer command"),
           lvl = LevelSuccess,
           msg = "msg len 10",
           mode = LogModeSet
@@ -494,7 +500,7 @@ testFormatsFLLineTrunc = testCase desc $ do
   let logCmd =
         set'
           #cmd
-          (Just $ MkCommandP 0 (Just "key") "some cmd")
+          (Just $ MkCommandP (mkIdx 1) (Just "key") "some cmd")
           (set' #lvl LevelFinished baseLog)
 
   sysTimeNE <> "[Finished][key] msg len 10\n" @=? fmt 47 logCmd

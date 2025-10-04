@@ -18,7 +18,7 @@ specs :: IO TestArgs -> TestTree
 specs testArgs =
   testGroup
     "Miscellaneous"
-    (readStrategyDefaultTests testArgs : readStrategyTests)
+    (readStrategyDefaultTests testArgs : otherTests ++ readStrategyTests)
   where
     readStrategyTests =
       multiTestReadStrategy testsParams
@@ -32,6 +32,11 @@ specs testArgs =
         isCancelled testArgs,
         slowOutputBroken,
         formatsFileLogs testArgs
+      ]
+
+    otherTests =
+      [ cancelSequential testArgs,
+        timeoutSequential testArgs
       ]
 
 splitNewlineLogs :: ReadStrategyTestParams
@@ -180,12 +185,148 @@ isCancelled testArgs =
     )
   where
     expected =
-      [ withFatalPrefix "Received cancel, cancelling remaining commands: sleep 5",
-        withFinishedPrefix expectedBody
+      [ runningPrefix,
+        "  - sleep 5",
+        withKilledPrefix expectedBody
       ]
 
     expectedBody :: (IsString s) => s
     expectedBody = "Received cancel after running for"
+
+-- NOTE:
+--
+-- cancelSequential and timeoutSequential _are_ parametric wrt to
+-- read strategy, but they involve multiple commands w/ file logs, so we
+-- can only use the 'block' read strategy, hence cannot be
+-- ReadStrategyTestParams.
+--
+-- Essentially, we can choose one of the following:
+--
+--   1. Test file logs.
+--   2. Test read strategy.
+--
+-- As these tests have nothing to do with read strategy, we choose 1.
+
+cancelSequential :: IO TestArgs -> TestTree
+cancelSequential testArgs = testCase desc $ do
+  outFile <- (</> [osp|cancelSequential.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = unsafeDecode outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--notify-action",
+            "all",
+            "--notify-system",
+            notifySystemArg,
+            "--console-log-command",
+            "--command-graph",
+            "1 -> 3, 3 -> 4",
+            "sleep 4",
+            "sleep 8",
+            "sleep 3",
+            "sleep 5"
+          ]
+
+  (resultsConsole, notes) <- runCancelled 2 args
+
+  V.verifyExpected resultsConsole expected
+
+  fileResults <- readLogFile outFile
+  V.verifyExpected fileResults expected
+
+  case notes of
+    [n] -> do
+      "" @=? n ^. #body
+
+      let summary = n ^. (#summary % #unNotifyMessage)
+          err = "Unexpected summary: " ++ unpack summary
+
+      assertBool err $ expectedBody `T.isPrefixOf` summary
+
+      NotifyTimeoutSeconds 10 @=? n ^. #timeout
+      Critical @=? n ^. #urgency
+    other ->
+      assertFailure
+        $ "Expected exactly one note, received: "
+        ++ show other
+  where
+    desc = "Shrun is cancelled with sequential tasks"
+
+    -- NOTE: [Cancelled tasks Warn vs. Fatal]
+    --
+    -- These are virtually identical to timeoutSequential, the difference
+    -- being warn vs. fatal.
+    expected =
+      [ waitingPrefix,
+        "  - sleep 3",
+        "  - sleep 5",
+        runningPrefix,
+        "  - sleep 4",
+        "  - sleep 8",
+        withKilledPrefix expectedBody
+      ]
+
+    expectedBody :: (IsString s) => s
+    expectedBody = "Received cancel after running for"
+
+timeoutSequential :: IO TestArgs -> TestTree
+timeoutSequential testArgs = testCase desc $ do
+  outFile <- (</> [osp|timeoutSequential.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = unsafeDecode outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--notify-action",
+            "all",
+            "--notify-system",
+            notifySystemArg,
+            "--console-log-command",
+            "--command-graph",
+            "1 -> 3, 3 -> 4",
+            "sleep 4",
+            "sleep 8",
+            "sleep 3",
+            "sleep 5",
+            "-t",
+            "2"
+          ]
+  (resultsConsole, notes) <- runAllExitFailure args
+  V.verifyExpected resultsConsole expected
+
+  fileResults <- readLogFile outFile
+  V.verifyExpected fileResults expected
+
+  case notes of
+    [n] -> do
+      "3 seconds" @=? n ^. #body
+
+      let summary = n ^. (#summary % #unNotifyMessage)
+          err = "Unexpected summary: " ++ unpack summary
+
+      assertBool err $ "Shrun Finished" `T.isPrefixOf` summary
+
+      NotifyTimeoutSeconds 10 @=? n ^. #timeout
+      Critical @=? n ^. #urgency
+    other ->
+      assertFailure
+        $ "Expected exactly one note, received: "
+        ++ show other
+  where
+    desc = "Shrun times out with sequential tasks"
+
+    -- see NOTE: [Cancelled tasks Warn vs. Fatal]
+    expected =
+      [ waitingPrefix,
+        "  - sleep 3",
+        "  - sleep 5",
+        runningPrefix,
+        "  - sleep 4",
+        "  - sleep 8",
+        timedOut,
+        withFinishedPrefix "3 seconds"
+      ]
 
 -- NOTE: This used to be in Examples (subsequently Examples.ConsoleLogging),
 -- as it fit in alongside the other tests. However, we prefer those tests to
@@ -308,10 +449,11 @@ formatsFileLogs testArgs =
         pure (args, outFile)
     )
     ( \(resultsConsole, outFile) -> do
-        V.verifyExpected resultsConsole blockConsoleExpected
+        V.verifyExpectedN resultsConsole blockConsoleExpected
 
         resultsFile <- readLogFile outFile
-        V.verifyExpected resultsFile blockFileExpected
+        V.verifyExpectedN resultsFile blockFileExpected
+        pure ()
     )
     ( \(resultsConsole, outFile) -> do
         V.verifyExpected resultsConsole bufferConsoleExpected
@@ -323,52 +465,63 @@ formatsFileLogs testArgs =
     cmd :: (IsString a, Semigroup a) => a
     cmd = appendScriptsHome "formatting.sh"
 
+    -- NOTE: [Expected line counts]
+    --
+    -- The below expectations are a bit weird. In general, we expect each line
+    -- exactly once. However, we see some lines several times. For instance,
+    -- the expectation with no additional output (withCommandPrefix cmd "")
+    -- is found on every single line, since it's always a prefix. Hence we
+    -- need to expect 22.
+    --
+    -- It's wasteful to check it multiple times, as we do here, but it makes
+    -- the test easier to understand, so we leave it.
+
     blockConsoleExpected =
-      [ withCommandPrefix cmd "Starting",
-        withCommandPrefix cmd "A tit",
-        withCommandPrefix cmd "le",
-        withCommandPrefix cmd "",
-        withCommandPrefix cmd "A hea",
-        withCommandPrefix cmd "der",
-        withCommandPrefix cmd "",
-        withCommandPrefix cmd "-",
-        withCommandPrefix cmd "Runni",
-        withCommandPrefix cmd "ng ta",
-        withCommandPrefix cmd "sk A",
-        withCommandPrefix cmd "",
-        withCommandPrefix cmd "OK",
-        withCommandPrefix cmd "",
-        withCommandPrefix cmd "- R",
-        withCommandPrefix cmd "unnin",
-        withCommandPrefix cmd "g tas",
-        withCommandPrefix cmd "k B",
-        withCommandPrefix cmd "",
-        withCommandPrefix cmd "FAIL",
-        withCommandPrefix cmd "Finis"
+      [ (01, withCommandPrefix cmd "Starting"),
+        (01, withCommandPrefix cmd "A tit"),
+        (01, withCommandPrefix cmd "le"),
+        (22, withCommandPrefix cmd ""),
+        (01, withCommandPrefix cmd "A hea"),
+        (01, withCommandPrefix cmd "der"),
+        (22, withCommandPrefix cmd ""),
+        (02, withCommandPrefix cmd "-"),
+        (01, withCommandPrefix cmd "Runni"),
+        (01, withCommandPrefix cmd "ng ta"),
+        (01, withCommandPrefix cmd "sk A"),
+        (22, withCommandPrefix cmd ""),
+        (01, withCommandPrefix cmd "OK"),
+        (22, withCommandPrefix cmd ""),
+        (01, withCommandPrefix cmd "- R"),
+        (01, withCommandPrefix cmd "unnin"),
+        (01, withCommandPrefix cmd "g tas"),
+        (01, withCommandPrefix cmd "k B"),
+        (22, withCommandPrefix cmd ""),
+        (01, withCommandPrefix cmd "FAIL"),
+        (01, withCommandPrefix cmd "Finis")
       ]
 
     blockFileExpected =
-      [ withCommandPrefix cmd "Starting",
-        withCommandPrefix cmd "A tit",
-        withCommandPrefix cmd "le",
-        withCommandPrefix cmd "  ",
-        withCommandPrefix cmd "A hea",
-        withCommandPrefix cmd "der",
-        withCommandPrefix cmd " ",
-        withCommandPrefix cmd "   - ",
-        withCommandPrefix cmd "Runni",
-        withCommandPrefix cmd "ng ta",
-        withCommandPrefix cmd "sk A ",
-        withCommandPrefix cmd "  ",
-        withCommandPrefix cmd "OK",
-        withCommandPrefix cmd "  ",
-        withCommandPrefix cmd "  - R",
-        withCommandPrefix cmd "unnin",
-        withCommandPrefix cmd "g tas",
-        withCommandPrefix cmd "k B  ",
-        withCommandPrefix cmd " ",
-        withCommandPrefix cmd "FAIL",
-        withCommandPrefix cmd "Finis"
+      [ (1, withCommandPrefix cmd "Starting"),
+        (1, withCommandPrefix cmd "A tit"),
+        (1, withCommandPrefix cmd "le"),
+        (5, withCommandPrefix cmd "  "),
+        (1, withCommandPrefix cmd "A hea"),
+        (1, withCommandPrefix cmd "der"),
+        (7, withCommandPrefix cmd " "),
+        (1, withCommandPrefix cmd "   - "),
+        (1, withCommandPrefix cmd "Runni"),
+        (1, withCommandPrefix cmd "ng ta"),
+        (1, withCommandPrefix cmd "sk A "),
+        (5, withCommandPrefix cmd "  "),
+        (1, withCommandPrefix cmd "OK"),
+        (5, withCommandPrefix cmd "  "),
+        (1, withCommandPrefix cmd "  - R"),
+        (1, withCommandPrefix cmd "unnin"),
+        (1, withCommandPrefix cmd "g tas"),
+        (1, withCommandPrefix cmd "k B  "),
+        (7, withCommandPrefix cmd " "),
+        (1, withCommandPrefix cmd "FAIL"),
+        (1, withCommandPrefix cmd "Finis")
       ]
 
     bufferConsoleExpected =

@@ -9,6 +9,7 @@
       - "Shrun.Configuration.Data.ConsoleLogging"
       - "Shrun.Configuration.Data.Core"
       - "Shrun.Configuration.Data.FileLogging"
+      - "Shrun.Configuration.Data.Graph"
       - "Shrun.Configuration.Data.MergedConfig"
       - "Shrun.Configuration.Data.Notify"
       - "Shrun.Configuration.Env.Types"
@@ -27,3 +28,11 @@
 
 - ignore:
     name: "Avoid lambda using `infix`"
+
+- ignore:
+    name: "Use newTMVarIO"
+
+- ignore:
+    name: "Replace case with maybe"
+    within:
+      - "Shrun.Configuration.Args.Parsing.Graph"

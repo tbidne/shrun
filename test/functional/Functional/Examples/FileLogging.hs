@@ -49,7 +49,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
   V.verifyExpected resultsConsole expectedConsole
 
   resultsFile <- readLogFile outFile
-  V.verifyExpected resultsFile expectedFile
+  V.verifyExpectedN resultsFile expectedFile
   where
     expectedConsole =
       [ withErrorPrefix "bad",
@@ -58,8 +58,8 @@ fileLog testArgs = testCase "Runs file-log example" $ do
         finishedPrefix
       ]
     expectedFile =
-      expectedConsole
-        ++ [ withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi"
+      zip [1, 1 ..] expectedConsole
+        ++ [ (3, withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi")
            ]
 
 fileLogCommandNameTruncN :: IO TestArgs -> ReadStrategyTestParams
@@ -85,7 +85,7 @@ fileLogCommandNameTruncN testArgs =
         V.verifyExpected resultsConsole expectedConsole
 
         resultsFile <- readLogFile outFile
-        V.verifyExpected resultsFile expectedFile
+        V.verifyExpectedN resultsFile expectedFile
     )
   where
     expectedConsole =
@@ -93,8 +93,8 @@ fileLogCommandNameTruncN testArgs =
         withFinishedPrefix "3 seconds"
       ]
     expectedFile =
-      [ withCommandPrefix "for i i..." "hi",
-        withFinishedPrefix "3 seconds"
+      [ (3, withCommandPrefix "for i i..." "hi"),
+        (1, withFinishedPrefix "3 seconds")
       ]
 
 fileLogDeleteOnSuccess :: IO TestArgs -> ReadStrategyTestParams
@@ -257,7 +257,7 @@ fileLogModeAppend testArgs =
         exists <- doesFileExist log
         assertBool ("File should exist: " <> decodeLenient log) exists
         resultsFile <- readLogFile log
-        V.verifyExpected resultsFile expectedConsole
+        V.verifyExpectedN resultsFile expectedFile
 
         -- because we are appending 3 lines to the file 3 times
         9 @=? length resultsFile
@@ -275,6 +275,7 @@ fileLogModeAppend testArgs =
       [ withSuccessPrefix "sleep 2",
         finishedPrefix
       ]
+    expectedFile = zip [3, 3] expectedConsole
 
 fileLogModeRename :: IO TestArgs -> ReadStrategyTestParams
 fileLogModeRename testArgs =

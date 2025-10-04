@@ -618,7 +618,7 @@ handleLogFileSize fileSizeMode fp = do
         . fmap (toDouble . unsafeConvertIntegral)
 
     toDouble :: Integer -> Double
-    toDouble = fromZ
+    toDouble = fromℤ
 {-# INLINEABLE handleLogFileSize #-}
 
 -- | Ensures the given path exists. If the path already exists and the file

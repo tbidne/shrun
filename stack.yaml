@@ -34,7 +34,7 @@ extra-deps:
   - git: https://github.com/tbidne/fs-utils.git
     commit: 26136275027fd827574c5004ebd11b659d7abdab
   - git: https://github.com/tbidne/monad-effects.git
-    commit: 4ead4daa45bf2011b8c38663a746455957b316f0
+    commit: e81fc96ef672d511c45cb7acca9e424791dee04b
     subdirs:
       - lib/effects-async
       - lib/effects-env
@@ -52,7 +52,7 @@ extra-deps:
   - git: https://github.com/tbidne/si-bytes.git
     commit: baf98b6945e32fc48b2e31e72ab3abaa966c4115
   - git: https://github.com/tbidne/smart-math.git
-    commit: acc3d79b82830397979f4be7b45266f5fc056cfb
+    commit: 4e10a4134f825ba825113955bb97be7f7e28ad6e
 allow-newer: true
 allow-newer-deps:
   - tasty

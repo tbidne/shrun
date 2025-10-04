@@ -11,12 +11,17 @@ module Unit.Shrun.Logging.Generators
     genLogMode,
 
     -- * Misc
+    genCommand,
     genKeyHide,
   )
 where
 
 import Hedgehog.Gen qualified as HGen
-import Shrun.Command.Types (CommandP (MkCommandP), CommandP1)
+import Shrun.Command.Types
+  ( CommandP (MkCommandP),
+    CommandP1,
+    fromPositive,
+  )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging.Types
@@ -98,12 +103,12 @@ genCommand = HGen.choice [genCommandWithKey, genCommandNoKey]
 genCommandWithKey :: Gen CommandP1
 genCommandWithKey =
   MkCommandP
-    <$> PGens.genNonNegative
+    <$> fmap fromPositive PGens.genPositive
     <*> fmap Just PGens.genText
     <*> PGens.genText
 
 genCommandNoKey :: Gen CommandP1
 genCommandNoKey =
-  (\idx cmd -> MkCommandP idx Nothing cmd)
-    <$> PGens.genNonNegative
+  (\idx cmd -> MkCommandP (fromPositive idx) Nothing cmd)
+    <$> PGens.genPositive
     <*> PGens.genText

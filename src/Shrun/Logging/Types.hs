@@ -42,6 +42,7 @@ data LogLevel
   | LevelWarn
   | LevelError
   | LevelFatal
+  | LevelKilled
   deriving stock (Bounded, Enum, Eq, Show)
 
 -- | 'ConsoleLog' with possible region.

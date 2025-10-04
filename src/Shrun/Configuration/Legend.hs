@@ -12,13 +12,16 @@ module Shrun.Configuration.Legend
 where
 
 import Data.HashMap.Strict qualified as Map
-import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
-import Shrun.Command.Types (CommandP (MkCommandP), CommandP1)
+import Shrun.Command.Types
+  ( CommandP (MkCommandP),
+    CommandP1,
+    fromPositive,
+  )
 import Shrun.Configuration.Toml.Legend (KeyVal (MkKeyVal), LegendMap)
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
@@ -95,18 +98,18 @@ instance Exception CyclicKeyError where
 translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq CommandP1)
 translateCommands mp = fmap (idxCmds . join) . traverse (lineToCommands mp)
   where
-    idxCmds :: NESeq (Natural -> CommandP1) -> NESeq CommandP1
-    idxCmds = fmap (\(idx, mkCmd) -> mkCmd idx) . Utils.indexNat
+    idxCmds :: NESeq (Positive Int -> CommandP1) -> NESeq CommandP1
+    idxCmds = fmap (\(idx, mkCmd) -> mkCmd idx) . Utils.indexPos
 
-lineToCommands :: LegendMap -> Text -> Either CyclicKeyError (NESeq (Natural -> CommandP1))
+lineToCommands :: LegendMap -> Text -> Either CyclicKeyError (NESeq (Positive Int -> CommandP1))
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
     -- we have traversed so far, e.g., a -> b -> c
-    go :: Maybe Text -> HashSet Text -> Builder -> Text -> Either CyclicKeyError (NESeq (Natural -> CommandP1))
+    go :: Maybe Text -> HashSet Text -> Builder -> Text -> Either CyclicKeyError (NESeq (Positive Int -> CommandP1))
     go prevKey foundKeys path line = case Map.lookup line mp of
       -- The line isn't a key, return it.
-      Nothing -> Right $ NESeq.singleton (\idx -> MkCommandP idx prevKey line)
+      Nothing -> Right $ NESeq.singleton (\idx -> MkCommandP (fromPositive idx) prevKey line)
       -- The line is a key, check for cycles and recursively
       -- call.
       Just val -> case maybeCyclicVal of

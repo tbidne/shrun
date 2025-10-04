@@ -54,6 +54,7 @@ import Shrun.Logging.Types
         LevelError,
         LevelFatal,
         LevelFinished,
+        LevelKilled,
         LevelSuccess,
         LevelTimer,
         LevelWarn
@@ -422,6 +423,7 @@ levelToColor LevelSuccess = Green
 levelToColor LevelWarn = Yellow
 levelToColor LevelError = Red
 levelToColor LevelFatal = Red
+levelToColor LevelKilled = Red
 
 -- | Maps 'LogLevel' to \'Prefix\'.
 levelToPrefix :: LogLevel -> Text
@@ -433,3 +435,4 @@ levelToPrefix LevelSuccess = "Success"
 levelToPrefix LevelWarn = "Warn"
 levelToPrefix LevelError = "Error"
 levelToPrefix LevelFatal = "Fatal"
+levelToPrefix LevelKilled = "Killed"

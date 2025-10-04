@@ -16,6 +16,12 @@ the first _two_ components (e.g. `0.9` in `0.9.1`), and PVP has no exception
 for versions < 1.
 
 ## [Unreleased]
+### Added
+* Added `--command-graph` option. This _should_ be backwards-compatible, but
+  as the command internals have significantly changed, it is given a major
+  release.
+
+## [Unreleased]
 ### Changed
 * Updated blessed GHC to 9.10.1.
 * Improve final command log formatting with newlines.

@@ -17,35 +17,44 @@
 module Shrun.Logging
   ( -- * Writing logs
     putRegionLog,
+    putRegionMultiLog,
     regionLogToConsoleQueue,
     logToFileQueue,
 
     -- * Misc
-    mkCancelLog,
+    mkUnfinishedCmdLogs,
+    logFile,
   )
 where
 
-import Data.HashSet qualified as Set
+import Data.List.NonEmpty qualified as NE
+import Data.Set qualified as Set
+import Shrun.Command.Types
+  ( CommandP1,
+    CommandStatus
+      ( CommandFailure,
+        CommandRunning,
+        CommandSuccess,
+        CommandWaiting
+      ),
+  )
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Env.Types
-  ( HasAnyError,
-    HasCommands (getCommands, getCompletedCommands),
+  ( HasCommands (getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
-    setAnyErrorTrue,
   )
 import Shrun.Data.Text (UnlinedText)
-import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types
   ( FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel,
+    LogLevel (LevelWarn),
+    LogMessage (UnsafeLogMessage),
     LogMode (LogModeFinish),
     LogRegion (LogRegion),
-    fromUnlined,
   )
 import Shrun.Prelude
 
@@ -73,7 +82,7 @@ putRegionLog region lg = do
 
   let keyHide = commonLogging ^. #keyHide
 
-  (consoleLogging, queue) <- asks (getConsoleLogging @_ @(Region m))
+  (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
 
   let formatted = Formatting.formatConsoleLog keyHide consoleLogging lg
       regionLog = LogRegion (lg ^. #mode) region formatted
@@ -83,6 +92,43 @@ putRegionLog region lg = do
     fileLog <- Formatting.formatFileLog keyHide fl lg
     logToFileQueue fl fileLog
 {-# INLINEABLE putRegionLog #-}
+
+-- | Unconditionally writes a log to the console queue. Conditionally
+-- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
+-- present.
+putRegionMultiLog ::
+  forall m env.
+  ( HasCallStack,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
+    MonadReader env m,
+    MonadSTM m,
+    MonadTime m
+  ) =>
+  -- | Region.
+  Region m ->
+  -- | Log to send.
+  NonEmpty Log ->
+  m ()
+putRegionMultiLog region logs = do
+  commonLogging <- asks getCommonLogging
+  mFileLogging <- asks getFileLogging
+
+  let keyHide = commonLogging ^. #keyHide
+
+  (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
+
+  let formatted = Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
+      regionLog = LogRegion mode region formatted
+
+  regionLogToConsoleQueue queue regionLog
+  for_ mFileLogging $ \fl -> do
+    fileLog <- Formatting.formatFileMultiLineLogs keyHide fl logs
+    logToFileQueue fl fileLog
+  where
+    mode = NE.head logs ^. #mode
+{-# INLINEABLE putRegionMultiLog #-}
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
@@ -110,45 +156,63 @@ logToFileQueue ::
 logToFileQueue fileLogging = writeTBQueueA (fileLogging ^. #file % #queue)
 {-# INLINEABLE logToFileQueue #-}
 
--- | Sets anyError to True, returns formatted log for cancelled commands.
+-- | Returns formatted log for unfinished commands (waiting and running).
 -- Does not actually cancel any commands itself; that is handled by
 -- async (race_).
-mkCancelLog ::
+--
+-- Returns "multi logs", as each command is rendered on a newline.
+-- Hence this should be used with the multi-line log options.
+mkUnfinishedCmdLogs ::
   forall m env.
-  ( HasAnyError env,
-    HasCallStack,
+  ( HasCallStack,
     HasCommands env,
     HasCommonLogging env,
     MonadIORef m,
     MonadReader env m,
     MonadSTM m
   ) =>
-  LogLevel ->
-  UnlinedText ->
-  m Log
-mkCancelLog lvl prefix = do
+  m (Tuple2 (Maybe (NonEmpty Log)) (Maybe (NonEmpty Log)))
+mkUnfinishedCmdLogs = do
   keyHide <- asks (view #keyHide . getCommonLogging)
-  allCmds <- asks getCommands
-  completedCommandsTVar <- asks getCompletedCommands
-  completedCommands <- readTVarA completedCommandsTVar
+  commandsStatusTVar <- asks getCommandStatus
+  commandsStatus <- readTVarA commandsStatusTVar
 
-  -- update anyError
-  setAnyErrorTrue
+  let (waiting, running) = foldl' go (Set.empty, Set.empty) commandsStatus
+      go acc@(ws, rs) (cmd, status) = case status of
+        CommandSuccess -> acc
+        CommandFailure () -> acc
+        CommandRunning () -> (ws, Set.insert cmd rs)
+        CommandWaiting () -> (Set.insert cmd ws, rs)
 
-  let completedCommandsSet = Set.fromList $ toList completedCommands
-      allCmdsSet = Set.fromList $ toList allCmds
-      incompleteCmds = Set.difference allCmdsSet completedCommandsSet
-      toTxtList acc cmd = Formatting.displayCmd cmd keyHide : acc
+      cmdToTxt cmd =
+        "- " <> Formatting.displayCmd cmd keyHide ^. #unUnlinedText
 
-      unfinishedCmds =
-        ShrunText.intercalate ", "
-          $ foldl' toTxtList [] incompleteCmds
+      mkLog :: Text -> Log
+      mkLog txt =
+        MkLog
+          { cmd = Nothing,
+            msg = UnsafeLogMessage txt,
+            lvl = LevelWarn,
+            mode = LogModeFinish
+          }
 
-  pure
-    $ MkLog
-      { cmd = Nothing,
-        msg = fromUnlined $ prefix <> ", cancelling remaining commands: " <> unfinishedCmds,
-        lvl,
-        mode = LogModeFinish
-      }
-{-# INLINEABLE mkCancelLog #-}
+      mkLogs :: UnlinedText -> Set CommandP1 -> Maybe (NonEmpty Log)
+      mkLogs pfx st =
+        if Set.null st
+          then Nothing
+          else
+            Just
+              $ mkLog (pfx ^. #unUnlinedText)
+              :| (mkLog . cmdToTxt <$> toList st)
+
+  pure (mkLogs waitingPrefix waiting, mkLogs runningPrefix running)
+  where
+    waitingPrefix = "Commands not started: "
+    runningPrefix = "Attempting to cancel: "
+{-# INLINEABLE mkUnfinishedCmdLogs #-}
+
+-- | Logs to a file. This function is /not/ thread-safe! Hence care must be
+-- taken to avoid it being called by multiple threads.
+logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
+logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
+{-# INLINEABLE logFile #-}

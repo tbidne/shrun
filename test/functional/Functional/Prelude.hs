@@ -45,10 +45,16 @@ module Functional.Prelude
 
     -- ** Text
     debugPrefix,
+    warnPrefix,
+    errorPrefix,
+    fatalPrefix,
     commandPrefix,
+    killedPrefix,
     timerPrefix,
-    timeoutPrefix,
     finishedPrefix,
+    waitingPrefix,
+    runningPrefix,
+    timedOut,
 
     -- ** Prefixes
     withCommandPrefix,
@@ -58,8 +64,8 @@ module Functional.Prelude
     withWarnPrefix,
     withFatalPrefix,
     withTimerPrefix,
-    withTimeoutPrefix,
     withFinishedPrefix,
+    withKilledPrefix,
 
     -- * Misc
     withBaseArgs,
@@ -89,7 +95,7 @@ import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
     HasCommandLogging (getCommandLogging),
-    HasCommands (getCommands, getCompletedCommands),
+    HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -103,6 +109,7 @@ import Shrun.Logging.MonadRegionLogger
         displayRegions,
         logGlobal,
         logRegion,
+        regionList,
         withRegion
       ),
   )
@@ -186,8 +193,8 @@ instance HasInit FuncEnv where
   getInit = getInit . view #coreEnv
 
 instance HasCommands FuncEnv where
-  getCommands = getCommands . view #coreEnv
-  getCompletedCommands = getCompletedCommands . view #coreEnv
+  getCommandDepGraph = getCommandDepGraph . view #coreEnv
+  getCommandStatus = getCommandStatus . view #coreEnv
 
 instance HasAnyError FuncEnv where
   getAnyError = getAnyError . view #coreEnv
@@ -219,6 +226,8 @@ instance MonadRegionLogger (ShellT FuncEnv IO) where
   withRegion _layout regionToShell = regionToShell ()
 
   displayRegions = id
+
+  regionList = atomically $ newTMVar []
 
 instance MonadNotify (ShellT FuncEnv IO) where
   notify note = do
@@ -372,13 +381,30 @@ debugPrefix = "[Debug]"
 commandPrefix :: (IsString s) => s
 commandPrefix = "[Command]"
 
+errorPrefix :: (IsString s) => s
+errorPrefix = "[Error]"
+
+fatalPrefix :: (IsString s) => s
+fatalPrefix = "[Fatal]"
+
 -- | Expected timer text.
 timerPrefix :: (IsString s) => s
-timerPrefix = "[Timer] "
+timerPrefix = "[Timer]"
 
--- | Expected timeout text.
-timeoutPrefix :: (IsString s) => s
-timeoutPrefix = "[Warn] Timed out, cancelling remaining commands: "
+warnPrefix :: (IsString s) => s
+warnPrefix = "[Warn]"
+
+killedPrefix :: (IsString s) => s
+killedPrefix = "[Killed]"
+
+runningPrefix :: (IsString s, Semigroup s) => s
+runningPrefix = warnPrefix <> " Attempting to cancel: "
+
+waitingPrefix :: (IsString s, Semigroup s) => s
+waitingPrefix = warnPrefix <> " Commands not started: "
+
+timedOut :: (IsString s, Semigroup s) => s
+timedOut = warnPrefix <> " Timed out"
 
 -- | Expected finished prefix.
 finishedPrefix :: (IsString s) => s
@@ -398,7 +424,7 @@ withSuccessPrefix txt = "[Success][" <> txt <> "] "
 
 -- | Expected error text.
 withErrorPrefix :: (IsString s, Semigroup s) => s -> s
-withErrorPrefix cmd = "[Error][" <> cmd <> "] "
+withErrorPrefix cmd = errorPrefix <> "[" <> cmd <> "] "
 
 -- | Expected error text.
 withWarnPrefix :: (IsString s, Semigroup s) => s -> s
@@ -410,14 +436,16 @@ withFatalPrefix = ("[Fatal] " <>)
 
 -- | Expected timing text.
 withTimerPrefix :: (Semigroup a, IsString a) => a -> a
-withTimerPrefix = (timerPrefix <>)
-
--- | Expected timing text.
-withTimeoutPrefix :: (Semigroup a, IsString a) => a -> a
-withTimeoutPrefix = (timeoutPrefix <>)
+withTimerPrefix s = timerPrefix <> " " <> s
 
 withFinishedPrefix :: (Semigroup s, IsString s) => s -> s
 withFinishedPrefix = (finishedPrefix <>)
+
+withKilledPrefix :: (Semigroup s, IsString s) => s -> s
+withKilledPrefix = withPrefix killedPrefix
+
+withPrefix :: (Semigroup a, IsString a) => a -> a -> a
+withPrefix pfx s = pfx <> " " <> s
 
 withBaseArgs :: List String -> List String
 withBaseArgs as =
