@@ -8,6 +8,7 @@
 - [What if a command needs sudo?](#what-if-a-command-needs-sudo)
 - [What if my command relies on interactive shell?](#what-if-my-command-relies-on-interactive-shell)
 - [Init vs. Legend?](#init-vs-legend)
+- [How do I run sequential commands?](#how-do-i-run-sequential-commands)
 - [Can file logging preserve formatting?](#can-file-logging-preserve-formatting)
 - [How do I set bash auto-completions?](#how-do-i-set-bash-auto-completions)
 
@@ -155,6 +156,91 @@ If, instead, you don't want the alias in `~/.bashrc` or you regularly run it wit
 > ```sh
 > $ shrun --init ". ~/.bashrc" -c config.toml all
 > ```
+
+## How do I run sequential commands?
+
+We sometimes want to run commands that depend on one another e.g. only run `cmd2` after `cmd1` successfully finishes. In bash, the usual pattern for this is `&&`: `cmd1 && cmd2`.
+
+As `shrun`'s original raison d'être was to run (independent) commands concurrently, such dependencies were not supported.
+
+```
+$ shrun cmd1 cmd2 # runs both concurrently, not what we want!
+```
+
+The workaround would be to use `&&` manually e.g. `shrun "comand_1 && comand_2"` or `shrun comand_1 && shrun comand_2`. This works, but it means we lose the benefits of having `shrun` manage individual commands (logging, notifications). It is especially annoying if we have several commands that can all be run concurrently except for one, which spoils the whole thing.
+
+The `--command-graph` option is introduced for this reason. It allows us to specify dependencies between commands via a numeric index, which is based on the command's left-to-right appearance in the CLI. For example, the above scenario would be run as:
+
+```sh
+$ shrun --command-graph "1 -> 2" cmd1 cmd2
+```
+
+This declares that the second command should be run only after the first command successfully finishes. If it fails, then the command will not be run at all.
+
+We allow arbitrarily many comma-separated dependencies, including:
+
+- Set syntax for "multi-edges": `{1,2} -> {3,4} <=> 1 -> 3, 1 -> 4, 2 -> 3, 2 -> 4`.
+- "Extended edges": `1 -> 4 -> 5 <=> 1 -> 4, 4 -> 5`.
+- Range syntax in sets: `{1, 3 .. 5} <=> {1,3,4,5}`.
+- Range syntax for extended-edges: `1..3 <=> 1 -> 2 -> 3`.
+
+For instance:
+
+```sh
+$ shrun --command-graph "{1,2..4} -> 7 .. 9 -> {10, 11}, 12 -> 13 -> 16" cmd1 cmd2 cmd3 ...
+
+# The above is equivalent to:
+$ shrun --command-graph "
+  1 -> 7, 2 -> 7, 3 -> 7, 4 -> 7,
+  7 -> 8, 8 -> 9,
+  9 -> 10, 9 -> 11,
+  12 -> 13, 13 -> 16" cmd1 cmd2 ...
+```
+
+This means:
+
+- Commands 1, 2, 3, 4, and 12 will start immediately.
+- Command 7 will start once 1, 2, 3, and 4 finish successfully.
+- Command 8 will start once 7 finishes successfully.
+- Command 9 will start once 8 finishes successfully.
+- Commands 10 and 11 will start once 9 finishes successfully.
+- Command 13 will start once 12 finishes successfully.
+- Command 16 will start once 13 finishes successfully.
+
+We also allow the literal `sequential`, which declares all commands will be run sequentially. That is,
+
+```sh
+$ shrun --command-graph sequential cmd1 cmd2 cmd3 ...
+```
+
+- Command 1 will start immediately.
+- Command 2 will start once 1 succeeds.
+- Command 3 will start once 2 succeeds.
+- ...
+
+> [!IMPORTANT]
+>
+> There are several nuances.
+>
+> - Index assignment happens _after_ alias expansion. For instance, if our
+>   config legend defines
+>
+>     ```toml
+>     legend = [ { key = 'all', val = ['cmd2', 'cmd3', 'cmd4'] } ]
+>     ```
+>
+>   then
+>
+>     ```sh
+>     $ shrun -c config.toml cmd1 all cmd5
+>     ```
+>
+>   the commands will be indexed as `cmd1` `cmd2` `cmd3` `cmd4` `cmd5`. Hence
+>   `--command-graph` indices need to be given in terms of the actual command,
+>   not any aliases.
+>
+> - Dependencies must be "well-behaved" e.g. all vertices must exist, be
+>   reachable, and there must be no cycles.
 
 ## Can file logging preserve formatting?
 

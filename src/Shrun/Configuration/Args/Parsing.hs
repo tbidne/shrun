@@ -12,7 +12,6 @@ module Shrun.Configuration.Args.Parsing
 where
 
 import Data.List qualified as L
-import Data.String (IsString (fromString))
 import Data.Text qualified as T
 import Data.Version (showVersion)
 import Effects.Optparse (validOsPath)
@@ -42,7 +41,6 @@ import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Core (CoreConfigArgs)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
-import Shrun.Utils qualified as U
 import System.Info qualified as Info
 
 -- | CLI args.
@@ -117,13 +115,20 @@ parserInfoArgs =
 
 argsParser :: Parser Args
 argsParser = do
-  MkArgs
-    <$> configParser
-    <*> Core.coreParser
-    <**> defaultConfig
-    <**> version
-    <**> OA.helper
-    <*> commandsParser
+  configPath <- configParser
+  coreConfig <-
+    Core.coreParser
+      <**> defaultConfig
+      <**> version
+      <**> OA.helper
+  commands <- commandsParser
+
+  pure
+    $ MkArgs
+      { configPath,
+        coreConfig,
+        commands
+      }
 
 version :: Parser (a -> a)
 version = OA.infoOption versLong (OA.long "version" <> OA.short 'v' <> OA.hidden)
@@ -198,7 +203,7 @@ configParser = Utils.withDisabledParser mainParser "config"
 
 commandsParser :: Parser (NESeq Text)
 commandsParser =
-  U.unsafeListToNESeq
+  unsafeListToNESeq
     <$> OA.some
       ( T.pack
           <$> OA.argument OA.str (OA.metavar "Commands...")

@@ -10,11 +10,13 @@ where
 
 import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Data.List qualified as L
+import Data.List.NonEmpty qualified as NE
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
+import Shrun.Command qualified as Command
 import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
@@ -34,7 +36,7 @@ import Shrun.Configuration.Data.Notify.Action
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
     HasCommandLogging,
-    HasCommands (getCommands),
+    HasCommands,
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -47,7 +49,7 @@ import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Data.Text qualified as Text
 import Shrun.IO
-  ( CommandResult (CommandFailure, CommandSuccess),
+  ( CommandResult (CommandResultFailure, CommandResultSuccess),
     Stderr (MkStderr),
     tryCommandLogging,
   )
@@ -71,6 +73,7 @@ import Shrun.Logging.Types
       ( LevelError,
         LevelFatal,
         LevelFinished,
+        LevelKilled,
         LevelSuccess,
         LevelTimer,
         LevelWarn
@@ -108,6 +111,7 @@ shrun ::
     MonadNotify m,
     MonadPosixSignals m,
     MonadProcess m,
+    MonadMVar m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -124,7 +128,7 @@ shrun = do
     handleTerminate mainTid
 
     mFileLogging <- asks getFileLogging
-    (_, consoleQueue) <- asks getConsoleLogging
+    (_, consoleQueue, _) <- asks getConsoleLogging
 
     -- always start console logger
     Async.withAsync (pollQueueToConsole consoleQueue) $ \consoleLogger -> do
@@ -150,15 +154,14 @@ shrun = do
         Async.cancel fileLoggerThread
 
         -- handle any remaining file logs
-        flushTBQueueA fileQueue >>= traverse_ (logFile h)
+        flushTBQueueA fileQueue >>= traverse_ (Logging.logFile h)
         hFlush h
       where
         MkFileLogOpened h fileQueue = fileLogging ^. #file
 
     runCommands :: (HasCallStack) => Double -> m ()
     runCommands startTime = do
-      cmds <- asks getCommands
-      let actions = Async.mapConcurrently_ runCommand cmds
+      let actions = Command.runCommands runCommand
           actionsWithTimer = Async.race_ actions counter
 
       result <- tryMySync actionsWithTimer
@@ -194,7 +197,7 @@ runCommand ::
 runCommand cmd = do
   cmdResult <- tryCommandLogging cmd
   commonLogging <- asks getCommonLogging
-  (consoleLogging, consoleQueue) <- asks (getConsoleLogging @env @(Region m))
+  (consoleLogging, consoleQueue, _) <- asks (getConsoleLogging @env @(Region m))
 
   let (urgency, consoleLog, mkFileLog, notifyMsg) =
         mkResultData commonLogging consoleLogging cmd cmdResult
@@ -269,9 +272,9 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
     keyHide = commonLogging ^. #keyHide
 
     (urgency, lvl, rt, messages) = case cmdResult of
-      CommandFailure t (MkStderr []) -> (Critical, LevelError, t, ["<no error message>"])
-      CommandFailure t (MkStderr errs) -> (Critical, LevelError, t, errs)
-      CommandSuccess t -> (Normal, LevelSuccess, t, [])
+      CommandResultFailure t (MkStderr []) -> (Critical, LevelError, t, ["<no error message>"])
+      CommandResultFailure t (MkStderr errs) -> (Critical, LevelError, t, errs)
+      CommandResultSuccess t -> (Normal, LevelSuccess, t, [])
 
     timeMsg = TimerFormat.formatRelativeTime timerFormat rt
     notifyMsg = Notify.formatNotifyMessage timeMsg messages
@@ -338,10 +341,12 @@ printFinalResult ::
   ( Exception e,
     HasAnyError env,
     HasCallStack,
+    HasCommands env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,
     HasNotifyConfig env,
+    MonadIORef m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -371,6 +376,11 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
     -- update anyError
     setAnyErrorTrue
+
+  -- print out any unfinished commands
+  (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
+  for_ mWaitingLog (Logging.putRegionMultiLog r)
+  for_ mRunningLog (Logging.putRegionMultiLog r)
 
   totalTimeTxt <- formatTimeSpec totalTime
   let finalLog =
@@ -414,9 +424,9 @@ formatTimeSpec totalTime = do
 {-# INLINEABLE formatTimeSpec #-}
 
 counter ::
+  forall env m.
   ( HasAnyError env,
     HasCallStack,
-    HasCommands env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,
@@ -435,6 +445,9 @@ counter = do
   -- the commands' in the console.
   microsleep 100_000
   withRegion Linear $ \r -> do
+    (_, _, regionVar) <- asks (getConsoleLogging @_ @(Region m))
+    writeIORef regionVar (Just r)
+
     timeout <- asks getTimeout
     timer <- newIORef 0
     Utils.whileM_ (keepRunning r timer timeout) $ do
@@ -455,7 +468,7 @@ logCounter ::
   Natural ->
   m ()
 logCounter region elapsed = do
-  (consoleLogging, queue) <- asks (getConsoleLogging @_ @(Region m))
+  (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
 
   keyHide <- asks (view #keyHide . getCommonLogging)
   let timerFormat = consoleLogging ^. #timerFormat
@@ -476,7 +489,6 @@ keepRunning ::
   forall m env.
   ( HasAnyError env,
     HasCallStack,
-    HasCommands env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     HasFileLogging env,
@@ -493,7 +505,15 @@ keepRunning region timer mto = do
   elapsed <- readIORef timer
   if timedOut elapsed mto
     then do
-      log <- Logging.mkCancelLog LevelWarn "Timed out"
+      -- update anyError
+      setAnyErrorTrue
+      let log =
+            MkLog
+              { cmd = Nothing,
+                msg = "Timed out",
+                lvl = LevelWarn,
+                mode = LogModeFinish
+              }
       Logging.putRegionLog region log
       pure False
     else pure True
@@ -541,14 +561,10 @@ pollQueueToFile fileLogging = do
     -- NOTE: Read+write needs to be atomic, otherwise we can lose logs
     -- (i.e. thread reads the log and is cancelled before it can write it).
     -- Hence the mask.
-    Utils.atomicReadWrite queue (logFile h)
+    Utils.atomicReadWrite queue (Logging.logFile h)
   where
     MkFileLogOpened h queue = fileLogging ^. #file
 {-# INLINEABLE pollQueueToFile #-}
-
-logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
-logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
-{-# INLINEABLE logFile #-}
 
 -- | Cancels running commands and prints a final log message about going
 -- down. Intended to be used when shrun has been cancelled.
@@ -577,17 +593,23 @@ teardown startTime = do
   timeFormatted <- formatTimeSpec totalTime
 
   commonLogging <- asks getCommonLogging
-  (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
+  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
   mFileLogging <- asks getFileLogging
   let keyHide = commonLogging ^. #keyHide
       cancelTasksMsg = "Received cancel"
       finalErrMsg = cancelTasksMsg <> " after running for: " <> timeFormatted
 
-  -- 1. Send message about cancelling commands.
-  cancelLog <- Logging.mkCancelLog LevelFatal cancelTasksMsg
-  let cancelConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging cancelLog
+  -- update anyError
+  setAnyErrorTrue
 
-  withRegion Linear $ \r -> logRegion LogModeFinish r (cancelConsoleLog ^. #unConsoleLog)
+  -- 1. Send message about cancelling commands.
+  let sendConsole log = do
+        let formatted = Formatting.formatConsoleMultiLineLogs keyHide consoleLogging log
+        withRegion Linear $ \r -> logRegion LogModeFinish r (formatted ^. #unConsoleLog)
+
+  (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
+  traverse_ sendConsole mWaitingLog
+  traverse_ sendConsole mRunningLog
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []
 
@@ -596,11 +618,16 @@ teardown startTime = do
         MkLog
           { cmd = Nothing,
             msg = Types.fromUnlined finalErrMsg,
-            lvl = LevelFinished,
+            lvl = LevelKilled,
             mode = LogModeFinish
           }
 
       finalConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging finalLog
+
+  -- NOTE: Manual logging because the logging queues have been shutdown at this
+  -- point. We must write to the console (logRegion) and file (logFile)
+  -- directly.
+
   withRegion Linear $ \r -> logRegion LogModeFinish r (finalConsoleLog ^. #unConsoleLog)
 
   -- 3. Send notification
@@ -612,10 +639,13 @@ teardown startTime = do
 
   -- 4. Send above logs to file.
   for_ mFileLogging $ \fl -> do
-    cancelFileLog <- Formatting.formatFileLog keyHide fl cancelLog
-    finalFileLog <- Formatting.formatFileLog keyHide fl finalLog
-    logFile (fl ^. #file % #handle) cancelFileLog
-    logFile (fl ^. #file % #handle) finalFileLog
+    let sendFile log = do
+          formatted <- Formatting.formatFileMultiLineLogs keyHide fl log
+          Logging.logFile (fl ^. #file % #handle) formatted
+
+    traverse_ sendFile mWaitingLog
+    traverse_ sendFile mRunningLog
+    sendFile (NE.singleton finalLog)
 {-# INLINEABLE teardown #-}
 
 -- | Installs a handler for SIGTERM, so shrun can be cancelled with kill -15.
@@ -639,7 +669,7 @@ handleTerminate ::
   m ()
 handleTerminate tid = do
   commonLogging <- asks getCommonLogging
-  (consoleLogging, _) <- asks (getConsoleLogging @env @(Region m))
+  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
   mFileLogging <- asks getFileLogging
 
   let handler = Signals.CatchInfo $ \si -> do
@@ -660,7 +690,7 @@ handleTerminate tid = do
 
         for_ mFileLogging $ \fl -> do
           fileLog <- Formatting.formatFileLog keyHide fl baseLog
-          logFile (fl ^. #file % #handle) fileLog
+          Logging.logFile (fl ^. #file % #handle) fileLog
 
         -- Need to throw exception to main thread since this handler is run
         -- in a different thread.

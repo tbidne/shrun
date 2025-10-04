@@ -8,6 +8,7 @@ module Integration.Prelude
     getIntConfig,
     getIntConfigOS,
     concatDirs,
+    mkIdx,
   )
 where
 
@@ -27,6 +28,7 @@ import Hedgehog as X
     withTests,
     (===),
   )
+import Shrun.Command.Types (CommandIndex, fromPositive)
 import Shrun.Prelude as X
 import Test.Tasty as X
   ( TestName,
@@ -112,3 +114,6 @@ osExt = (<> "_osx")
 #else
 osExt = id
 #endif
+
+mkIdx :: Int -> CommandIndex
+mkIdx = fromPositive . unsafePositive

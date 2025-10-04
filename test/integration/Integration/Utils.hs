@@ -245,7 +245,7 @@ makeMergedConfig args toIO = do
 -- | Convenience for tests expecting a default config. The test should
 -- pass a single command 'cmd'.
 defaultConfig :: MergedConfig
-defaultConfig = defaultMergedConfig $ NESeq.singleton (MkCommandP 0 Nothing "cmd")
+defaultConfig = defaultMergedConfig $ NESeq.singleton (MkCommandP (mkIdx 1) Nothing "cmd")
 
 notifySystemOSDBus :: NotifySystemMerged
 #if OSX

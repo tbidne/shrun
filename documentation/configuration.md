@@ -3,6 +3,7 @@
 ### Table of Contents
   - [Core Functionality](#core-functionality)
     - [Config](#config)
+    - [Command Graph](#command-graph)
     - [Init](#init)
     - [Timeout](#timeout)
   - [Logging](#logging)
@@ -94,6 +95,27 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 > [!CAUTION]
 > Duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
+
+### Command Graph
+
+**Arg:** `--command-graph (GRAPH_STR | sequential)`
+
+**Description:** Comma separated list, specifying command dependencies, based on their order. For instance, `--command-graph '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
+
+**Example:**
+
+<pre>
+<code># Normally, the 'sleep 1' command would start and finish first</code>
+<code><span style="color: #ff79c6">$</span><span> shrun --init --command-graph '1 -> 3, 2 -> 3' "sleep 2" "sleep 2" "sleep 1" "sleep 3"</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #69ff94">[Success][sleep 3] 3 seconds</span>
+<span style="color: #69ff94">[Success][sleep 1] 1 seconds</span>
+<span style="color: #d6acff">[Finished] 3 seconds</span></code>
+</pre>
+
+> [!CAUTION]
+> Dependencies must be "well-behaved" e.g. all vertices must exist, be reachable, and there must be no cycles.
 
 ### Init
 

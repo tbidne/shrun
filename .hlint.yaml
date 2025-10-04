@@ -10,3 +10,11 @@
 
 - ignore:
     name: "Avoid lambda using `infix`"
+
+- ignore:
+    name: "Use newTMVarIO"
+
+- ignore:
+    name: "Replace case with maybe"
+    within:
+      - "Shrun.Configuration.Args.Parsing.Graph"

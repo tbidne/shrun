@@ -13,9 +13,10 @@ module Shrun.Configuration.Env
   )
 where
 
-import Data.Sequence qualified as Seq
+import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import Shrun (runShellT, shrun)
+import Shrun.Command.Types (CommandStatus (CommandWaiting))
 import Shrun.Configuration (mergeConfig)
 import Shrun.Configuration.Args.Parsing
   ( parserInfoArgs,
@@ -32,7 +33,8 @@ import Shrun.Configuration.Env.Types
         commands,
         completedCommands,
         config,
-        consoleLogQueue
+        consoleLogQueue,
+        timerRegion
       ),
     HasConsoleLogging,
   )
@@ -59,6 +61,7 @@ makeEnvAndShrun ::
     MonadPosixSignals m,
     MonadProcess m,
     MonadMask m,
+    MonadMVar m,
     MonadSTM m,
     MonadRegionLogger m,
     MonadTerminal m,
@@ -78,6 +81,7 @@ withEnv ::
     MonadFileReader m,
     MonadFileWriter m,
     MonadHandleWriter m,
+    MonadIORef m,
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
@@ -142,6 +146,7 @@ fromMergedConfig ::
     MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
+    MonadIORef m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadSTM m,
@@ -152,9 +157,11 @@ fromMergedConfig ::
   (Env r -> m a) ->
   m a
 fromMergedConfig cfg onEnv = do
-  completedCommands <- newTVarA Seq.empty
+  completedCommands <- newTVarA (Map.fromList $ toList commandStatusInit)
+
   anyError <- newTVarA False
   consoleLogQueue <- newTBQueueA 1_000
+  timerRegion <- newIORef Nothing
 
   CoreConfig.withCoreEnv (cfg ^. #coreConfig) $ \coreConfigEnv -> do
     let env =
@@ -163,12 +170,19 @@ fromMergedConfig cfg onEnv = do
               anyError,
               completedCommands,
               consoleLogQueue,
-              commands
+              commands,
+              timerRegion
             }
 
     onEnv env
   where
     commands = cfg ^. #commands
+
+    commandStatusInit =
+      commands <&> \c ->
+        ( c ^. #index,
+          (c, CommandWaiting ())
+        )
 {-# INLINEABLE fromMergedConfig #-}
 
 getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath

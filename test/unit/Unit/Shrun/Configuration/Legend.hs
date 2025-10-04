@@ -5,13 +5,16 @@ module Unit.Shrun.Configuration.Legend (tests) where
 
 import Data.Functor.Identity (Identity)
 import Data.HashMap.Strict qualified as Map
-import Data.HashSet (HashSet)
 import Data.HashSet qualified as Set
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
-import Shrun.Command.Types (CommandP (MkCommandP), CommandP1)
+import Shrun.Command.Types
+  ( CommandP (MkCommandP),
+    CommandP1,
+    fromPositive,
+  )
 import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
     DuplicateKeyError (MkDuplicateKeyError),
@@ -20,7 +23,7 @@ import Shrun.Configuration.Legend
     translateCommands,
   )
 import Shrun.Configuration.Toml.Legend (KeyVal, unsafeKeyVal)
-import Shrun.Utils (indexNat, unsafeListToNESeq)
+import Shrun.Utils (indexPos)
 import Unit.Prelude
 
 -- | Entry point for Shrun.Legend.Internal property tests.
@@ -128,14 +131,14 @@ noCommandsMissing allKeys = void . traverse failIfMissing
 
 commandsIndexedOrder :: NESeq Text -> NESeq CommandP1 -> PropertyT IO ()
 commandsIndexedOrder origCmds finalCmds = do
-  for_ (indexNat (NESeq.zip origCmds finalCmds)) $ \(idx, (orig, final)) -> do
+  for_ (indexPos (NESeq.zip origCmds finalCmds)) $ \(idx, (orig, final)) -> do
     annotateShow idx
     annotateShow orig
     annotateShow final
 
     -- Verifies that final commands are all indexed according to a unique
-    -- nat in [0 .. numCmds]
-    idx === final ^. #index
+    -- nat in [1 .. numCmds + 1]
+    fromPositive idx === final ^. #index
 
     -- Relies on the fact that commands do not reference each other! We do
     -- allow keys, though, so we have to relax the check below.
@@ -205,13 +208,13 @@ translateSpecs =
 translateOneCmd :: TestTree
 translateOneCmd = testCase "Should translate one command" $ do
   let result = translateCommands legendMap ("one" :<|| [])
-      expected = Right (MkCommandP 0 (Just "one") "cmd1" :<|| [])
+      expected = Right (MkCommandP (mkIdx 1) (Just "one") "cmd1" :<|| [])
   expected @=? result
 
 returnsNonMapCmd :: TestTree
 returnsNonMapCmd = testCase "Should return non-map command" $ do
   let result = translateCommands legendMap ("other" :<|| [])
-      expected = Right (MkCommandP 0 Nothing "other" :<|| [])
+      expected = Right (MkCommandP (mkIdx 1) Nothing "other" :<|| [])
   expected @=? result
 
 returnsRecursiveCmds :: TestTree
@@ -219,9 +222,9 @@ returnsRecursiveCmds = testCase "Should return recursive commands" $ do
   let result = translateCommands legendMap ("all" :<|| [])
       expected =
         Right
-          $ MkCommandP 0 (Just "one") "cmd1"
-          :<|| [ MkCommandP 1 (Just "two") "cmd2",
-                 MkCommandP 2 Nothing "cmd3"
+          $ MkCommandP (mkIdx 1) (Just "one") "cmd1"
+          :<|| [ MkCommandP (mkIdx 2) (Just "two") "cmd2",
+                 MkCommandP (mkIdx 3) Nothing "cmd3"
                ]
   expected @=? result
 
@@ -230,17 +233,17 @@ returnsRecursiveAndOtherCmds = testCase "Should return recursive commands and ot
   let result = translateCommands legendMap ("all" :<|| ["other"])
       expected =
         Right
-          $ MkCommandP 0 (Just "one") "cmd1"
-          :<|| [ MkCommandP 1 (Just "two") "cmd2",
-                 MkCommandP 2 Nothing "cmd3",
-                 MkCommandP 3 Nothing "other"
+          $ MkCommandP (mkIdx 1) (Just "one") "cmd1"
+          :<|| [ MkCommandP (mkIdx 2) (Just "two") "cmd2",
+                 MkCommandP (mkIdx 3) Nothing "cmd3",
+                 MkCommandP (mkIdx 4) Nothing "other"
                ]
   expected @=? result
 
 noSplitNonKeyCmd :: TestTree
 noSplitNonKeyCmd = testCase "Should not split non-key commands" $ do
   let result = translateCommands legendMap ("echo ,," :<|| [])
-      expected = Right (MkCommandP 0 Nothing "echo ,," :<|| [])
+      expected = Right (MkCommandP (mkIdx 1) Nothing "echo ,," :<|| [])
   expected @=? result
 
 cycleCmdFail :: TestTree

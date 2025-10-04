@@ -6,7 +6,6 @@ module Unit.Shrun.Configuration.Data.WithDisabled
   )
 where
 
-import Data.Foldable (Foldable (foldMap))
 import Data.Monoid (Endo (Endo, appEndo))
 import Hedgehog.Gen qualified as G
 import Hedgehog.Range qualified as R

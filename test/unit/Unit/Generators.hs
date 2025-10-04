@@ -22,8 +22,8 @@ genNonNegative :: Gen Natural
 genNonNegative = Gen.integral (Range.constant 0 1_000_000)
 
 -- | Generates 'Positive' in [1, 1_000_000].
-genPositive :: Gen Natural
-genPositive = Gen.integral (Range.constant 1 1_000_000)
+genPositive :: Gen (Positive Int)
+genPositive = unsafePositive <$> Gen.integral (Range.constant 1 1_000_000)
 
 -- | Generates 'TimeSpec' where 'sec' and 'nsec' are random 'Int64'.
 genTimeSpec :: Gen TimeSpec

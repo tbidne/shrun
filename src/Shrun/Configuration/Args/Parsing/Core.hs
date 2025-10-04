@@ -10,12 +10,14 @@ import Shrun.Configuration.Args.Parsing.CommandLogging qualified as CommandLoggi
 import Shrun.Configuration.Args.Parsing.CommonLogging qualified as CommonLogging
 import Shrun.Configuration.Args.Parsing.ConsoleLogging qualified as ConsoleLogging
 import Shrun.Configuration.Args.Parsing.FileLogging qualified as FileLogging
+import Shrun.Configuration.Args.Parsing.Graph qualified as Graph
 import Shrun.Configuration.Args.Parsing.Notify qualified as Notify
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Core
   ( CoreConfigArgs,
     CoreConfigP
       ( MkCoreConfigP,
+        commandGraph,
         commandLogging,
         commonLogging,
         consoleLogging,
@@ -32,6 +34,7 @@ import Shrun.Prelude
 
 coreParser :: Parser CoreConfigArgs
 coreParser = do
+  commandGraph <- Graph.commandGraphParser
   init <- initParser
   timeout <- timeoutParser
 
@@ -47,7 +50,8 @@ coreParser = do
 
   pure
     $ MkCoreConfigP
-      { timeout,
+      { commandGraph,
+        timeout,
         init,
         commonLogging,
         consoleLogging,

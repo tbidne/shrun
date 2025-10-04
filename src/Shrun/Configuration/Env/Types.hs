@@ -4,7 +4,7 @@
 module Shrun.Configuration.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
-    prependCompletedCommand,
+    updateCommandStatus,
     HasCommandLogging (..),
     HasCommonLogging (..),
     HasConsoleLogging (..),
@@ -20,7 +20,13 @@ module Shrun.Configuration.Env.Types
   )
 where
 
-import Shrun.Command.Types (CommandP1)
+import Data.Map.Strict qualified as Map
+import Shrun.Command.Types
+  ( CommandIndex,
+    CommandP1,
+    CommandStatus,
+    CommandStatusData (CommandStatusUnit),
+  )
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConfigPhase (ConfigPhase (ConfigPhaseEnv))
@@ -28,15 +34,20 @@ import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.Core (CoreConfigP)
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
+import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Data.Notify (NotifyEnv)
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
 
 -- | The commands themselves.
 class HasCommands env where
-  getCommands :: env -> NESeq CommandP1
+  -- | Retrieves full command graph.
+  getCommandDepGraph :: env -> CommandGraph
 
-  getCompletedCommands :: env -> TVar (Seq CommandP1)
+  -- | Retrieves commands and their statuses.
+  getCommandStatus ::
+    env ->
+    TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit)))
 
 -- | Timeout, if any.
 class HasTimeout env where
@@ -53,7 +64,15 @@ class HasCommonLogging env where
   getCommonLogging :: env -> CommonLoggingEnv
 
 class HasConsoleLogging env r where
-  getConsoleLogging :: env -> Tuple2 ConsoleLoggingEnv (TBQueue (LogRegion r))
+  getConsoleLogging ::
+    env ->
+    Tuple3
+      -- Console logging config
+      ConsoleLoggingEnv
+      -- Console log region queue
+      (TBQueue (LogRegion r))
+      -- Console timer region
+      (IORef (Maybe r))
 
 class HasFileLogging env where
   getFileLogging :: env -> Maybe FileLoggingEnv
@@ -67,7 +86,9 @@ data Env r = MkEnv
   { config :: CoreConfigP ConfigPhaseEnv,
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
-    completedCommands :: TVar (Seq CommandP1),
+    --
+    -- The boolean indicates success/fail (used for command dependencies).
+    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))),
     -- | Console log queue.
     consoleLogQueue :: ~(TBQueue (LogRegion r)),
     -- | Holds the anyError flag, signaling if any command exited with an
@@ -75,7 +96,10 @@ data Env r = MkEnv
     anyError :: TVar Bool,
     -- | Holds notification environment.
     -- | Commands
-    commands :: NESeq CommandP1
+    commands :: NESeq CommandP1,
+    -- | Timer region. It's an IORef only because it is not initialized on
+    -- startup. Once it is set it is no longer mutated.
+    timerRegion :: IORef (Maybe r)
   }
 
 instance
@@ -87,24 +111,24 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkEnv b a2 a3 a4 a5)
+          (\b -> MkEnv b a2 a3 a4 a5 a6)
           (f a1)
   {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Lens,
-    a ~ TVar (Seq CommandP1),
-    b ~ TVar (Seq CommandP1)
+    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))),
+    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit)))
   ) =>
   LabelOptic "completedCommands" k (Env r) (Env r) a b
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkEnv a1 b a3 a4 a5)
+          (\b -> MkEnv a1 b a3 a4 a5 a6)
           (f a2)
   {-# INLINE labelOptic #-}
 
@@ -117,9 +141,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkEnv a1 a2 b a4 a5)
+          (\b -> MkEnv a1 a2 b a4 a5 a6)
           (f a3)
   {-# INLINE labelOptic #-}
 
@@ -132,9 +156,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 b a5)
+          (\b -> MkEnv a1 a2 a3 b a5 a6)
           (f a4)
   {-# INLINE labelOptic #-}
 
@@ -147,10 +171,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 a4 b)
+          (\b -> MkEnv a1 a2 a3 a4 b a6)
           (f a5)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ IORef (Maybe r),
+    b ~ IORef (Maybe r)
+  ) =>
+  LabelOptic "timerRegion" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 a4 a5 b)
+          (f a6)
   {-# INLINE labelOptic #-}
 
 instance HasTimeout (Env r) where
@@ -168,29 +207,32 @@ instance HasCommonLogging (Env r) where
 instance HasConsoleLogging (Env r) r where
   getConsoleLogging env =
     ( env ^. #config % #consoleLogging,
-      env ^. #consoleLogQueue
+      env ^. #consoleLogQueue,
+      env ^. #timerRegion
     )
 
 instance HasFileLogging (Env r) where
   getFileLogging = view (#config % #fileLogging)
 
 instance HasCommands (Env r) where
-  getCommands = view #commands
-  getCompletedCommands = view #completedCommands
+  getCommandDepGraph = view (#config % #commandGraph)
+
+  getCommandStatus = view #completedCommands
 
 -- | Prepends a completed command.
-prependCompletedCommand ::
+updateCommandStatus ::
   ( HasCallStack,
     HasCommands env,
     MonadReader env m,
     MonadSTM m
   ) =>
   CommandP1 ->
+  CommandStatus CommandStatusUnit ->
   m ()
-prependCompletedCommand command = do
-  completedCommands <- asks getCompletedCommands
-  modifyTVarA' completedCommands (command :<|)
-{-# INLINEABLE prependCompletedCommand #-}
+updateCommandStatus command result = do
+  completedCommands <- asks getCommandStatus
+  modifyTVarA' completedCommands (Map.insert (command ^. #index) (command, result))
+{-# INLINEABLE updateCommandStatus #-}
 
 instance HasAnyError (Env r) where
   getAnyError = view #anyError

@@ -1,6 +1,6 @@
 cabal-version:      2.4
 name:               shrun
-version:            0.9.2
+version:            0.10
 license:            MIT
 license-file:       LICENSE
 tested-with:        GHC ==9.6.7 || ==9.8.4 || ==9.10.2 || ==9.12.2
@@ -69,7 +69,9 @@ library
   autogen-modules: Paths_shrun
   exposed-modules:
     Shrun
+    Shrun.Command
     Shrun.Command.Types
+    Shrun.Command.Types.Internal
     Shrun.Configuration
     Shrun.Configuration.Args
     Shrun.Configuration.Args.Parsing
@@ -78,6 +80,7 @@ library
     Shrun.Configuration.Args.Parsing.ConsoleLogging
     Shrun.Configuration.Args.Parsing.Core
     Shrun.Configuration.Args.Parsing.FileLogging
+    Shrun.Configuration.Args.Parsing.Graph
     Shrun.Configuration.Args.Parsing.Notify
     Shrun.Configuration.Args.Parsing.TH
     Shrun.Configuration.Args.Parsing.Utils
@@ -96,6 +99,7 @@ library
     Shrun.Configuration.Data.FileLogging.FileMode
     Shrun.Configuration.Data.FileLogging.FilePathDefault
     Shrun.Configuration.Data.FileLogging.FileSizeMode
+    Shrun.Configuration.Data.Graph
     Shrun.Configuration.Data.MergedConfig
     Shrun.Configuration.Data.Notify
     Shrun.Configuration.Data.Notify.Action
@@ -128,6 +132,7 @@ library
     Shrun.Utils
 
   build-depends:
+    , algebra-simple        ^>=0.1
     , base                  >=4.17      && <4.22
     , bytestring            >=0.10.12   && <0.13
     , concurrent-output     ^>=1.10.7
@@ -150,6 +155,7 @@ library
     , filepath              >=1.4.100.1 && <1.6
     , gitrev-typed          ^>=0.1
     , hashable              >=1.3.0.0   && <1.6
+    , megaparsec            >=9.6.0     && <10
     , mtl                   >=2.2.1     && <2.4
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
@@ -158,6 +164,8 @@ library
     , pretty-terminal       ^>=0.1
     , relative-time         ^>=0.1
     , si-bytes              ^>=0.1
+    , smart-math            ^>=0.1
+    , stm                   ^>=2.5.0.0
     , template-haskell      >=2.17.0.0  && <2.24
     , text                  >=1.2.3.2   && <2.2
     , time                  >=1.9.3     && <1.16
@@ -165,6 +173,8 @@ library
     , unix                  >=2.7.2.2   && <2.9
     , unordered-containers  ^>=0.2.9.0
 
+  -- NOTE: megaparsec uses semvar, hence only the first component matters
+  -- for upper bounds.
   -- For tuple syntax
   if impl(ghc >=9.10.1)
     build-depends: ghc-experimental >=0.1.0.0 && <9.1203.0
@@ -207,6 +217,7 @@ test-suite unit
     Unit.Shrun.Configuration.Args.Parsing.Notify
     Unit.Shrun.Configuration.Args.Parsing.TestUtils
     Unit.Shrun.Configuration.Data.CommandLogging.ReadSize
+    Unit.Shrun.Configuration.Data.Graph
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
     Unit.Shrun.IO.Handle

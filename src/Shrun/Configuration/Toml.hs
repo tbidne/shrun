@@ -8,6 +8,7 @@ where
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
+        commandGraph,
         commandLogging,
         commonLogging,
         consoleLogging,
@@ -70,7 +71,8 @@ instance DecodeTOML Toml where
       $ MkToml
         { coreConfig =
             MkCoreConfigP
-              { timeout,
+              { commandGraph = (),
+                timeout,
                 init,
                 commonLogging,
                 commandLogging,

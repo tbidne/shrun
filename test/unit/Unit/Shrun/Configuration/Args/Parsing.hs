@@ -5,7 +5,6 @@ module Unit.Shrun.Configuration.Args.Parsing (tests) where
 
 import Data.Sequence qualified as Seq
 import Shrun.Configuration.Args (defaultArgs)
-import Shrun.Utils qualified as U
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.Core qualified as Core
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
@@ -88,4 +87,4 @@ testCommands =
   where
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) U.defArgs
-    cmds = U.unsafeListToNESeq ["one", "two", "three"]
+    cmds = unsafeListToNESeq ["one", "two", "three"]

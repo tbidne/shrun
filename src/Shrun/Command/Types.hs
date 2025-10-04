@@ -2,16 +2,30 @@
 
 -- | Provides the 'Command' wrapper for commands.
 module Shrun.Command.Types
-  ( CommandP (..),
+  ( -- * Command
+    CommandP (..),
     CommandP1,
     CommandP2,
     commandToProcess,
+
+    -- * Index
+    CommandIndex,
+    Internal.fromPositive,
+    Internal.toVertex,
+    Internal.fromVertex,
+    Internal.succ,
+
+    -- * Status
+    CommandStatus (..),
+    CommandStatusData (..),
+    mapCommandStatus,
   )
 where
 
-import Data.Hashable (Hashable)
 import Data.Text qualified as T
 import Effects.System.Process qualified as P
+import Shrun.Command.Types.Internal (CommandIndex)
+import Shrun.Command.Types.Internal qualified as Internal
 import Shrun.Prelude
 
 -- $setup
@@ -25,14 +39,13 @@ data CommandPhase
 type CommandP :: CommandPhase -> Type
 data CommandP p = MkCommandP
   { -- | NonNegative index for the command.
-    index :: Natural,
+    index :: CommandIndex,
     -- | The key name for the command, for display purposes.
     key :: Maybe Text,
     -- | The shell command to run.
     command :: Text
   }
   deriving stock (Generic, Show)
-  deriving anyclass (Hashable)
 
 instance Eq (CommandP p) where
   x == y = x ^. #index == y ^. #index
@@ -40,10 +53,13 @@ instance Eq (CommandP p) where
 instance Ord (CommandP p) where
   x <= y = x ^. #index <= y ^. #index
 
+instance Hashable (CommandP p) where
+  hashWithSalt i = hashWithSalt i . view #index
+
 instance
   ( k ~ A_Lens,
-    a ~ Natural,
-    b ~ Natural
+    a ~ CommandIndex,
+    b ~ CommandIndex
   ) =>
   LabelOptic "index" k (CommandP p) (CommandP p) a b
   where
@@ -109,3 +125,51 @@ commandToProcess command =
   P.shell
     . commandToShell
     . advancePhase command
+
+data CommandStatusData
+  = CommandStatusUnit
+  | CommandStatusVertex
+
+type family CommandStatusF a where
+  CommandStatusF CommandStatusUnit = ()
+  CommandStatusF CommandStatusVertex = Vertex
+
+-- | Represents the Command's status. The 'Semigroup' is intended to
+-- summarize dependency statuses for a command. For example:
+--
+-- - If some dependency d of e has failed, the overall status is failed.
+-- - Else if some d is still running, then the status is running.
+-- - Else if some d is still waiting, then the status is waiting.
+-- - Else if all ds must have succeeded.
+type CommandStatus :: CommandStatusData -> Type
+data CommandStatus a
+  = -- | The command ran successfully.
+    CommandSuccess
+  | -- | The command failed.
+    CommandFailure (CommandStatusF a)
+  | -- | The command is running.
+    CommandRunning (CommandStatusF a)
+  | -- | The command is waiting to run.
+    CommandWaiting (CommandStatusF a)
+
+instance Semigroup (CommandStatus a) where
+  CommandFailure v <> _ = CommandFailure v
+  _ <> CommandFailure v = CommandFailure v
+  CommandRunning v <> _ = CommandRunning v
+  _ <> CommandRunning v = CommandRunning v
+  CommandWaiting v <> _ = CommandWaiting v
+  _ <> CommandWaiting v = CommandWaiting v
+  CommandSuccess <> CommandSuccess = CommandSuccess
+
+instance Monoid (CommandStatus a) where
+  mempty = CommandSuccess
+
+mapCommandStatus ::
+  (CommandStatusF a -> CommandStatusF b) ->
+  CommandStatus a ->
+  CommandStatus b
+mapCommandStatus f = \case
+  CommandSuccess -> CommandSuccess
+  CommandFailure x -> CommandFailure (f x)
+  CommandRunning x -> CommandRunning (f x)
+  CommandWaiting x -> CommandWaiting (f x)

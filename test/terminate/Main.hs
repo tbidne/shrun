@@ -42,7 +42,7 @@ main = do
     runTests c = bracket (setup c) cleanup $ \params -> do
       defaultMain (tests params)
 
-    dontRun = putStrLn "*** Terminate tests disabled. Enable with TEST_TERMINATE=1 ***"
+    dontRun = putStrLn "*** Terminate tests disabled. Enable with TEST_TERMINATE=(command|shrun) ***"
 
     cleanup sp =
       guardOrElse'

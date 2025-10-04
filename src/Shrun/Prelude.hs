@@ -21,6 +21,7 @@ module Shrun.Prelude
     -- * Misc utilities
     EitherString (..),
     fromFoldable,
+    foldMapA,
     onJust,
     (<<$>>),
     (<<&>>),
@@ -28,6 +29,7 @@ module Shrun.Prelude
     unsafeConvertIntegral,
     neToList,
     unsafeListToNE,
+    unsafeListToNESeq,
 
     -- * 'Text' replacements for 'P.String' functions.
     showt,
@@ -65,18 +67,20 @@ where
 {- ORMOLU_ENABLE -}
 
 import Control.Applicative as X
-  ( Alternative (empty, (<|>)),
-    Applicative (liftA2, pure, (*>), (<*>)),
+  ( Alternative (empty, many, some, (<|>)),
+    Applicative (liftA2, pure, (*>), (<*), (<*>)),
+    asum,
     (<**>),
   )
 import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
+import Control.Concurrent.STM.TMVar as X (TMVar, newTMVar)
 import Control.Exception as X
   ( Exception (displayException, fromException, toException),
     SomeException,
   )
 import Control.Exception.Utils as X
-  ( StringException,
+  ( StringException (MkStringException),
     exitFailure,
     throwText,
   )
@@ -113,13 +117,12 @@ import Control.Monad.Reader as X
     asks,
   )
 import Control.Monad.Trans as X (MonadTrans (lift))
-import Data.Bifunctor as X (Bifunctor)
+import Data.Bifunctor as X (Bifunctor (bimap, first, second))
 import Data.Bits (Bits, toIntegralSized)
 import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
 import Data.Bytes as X
   ( Bytes (MkBytes),
-    FromInteger (fromZ),
     Size (B),
     _MkBytes,
   )
@@ -128,7 +131,7 @@ import Data.Coerce as X (coerce)
 import Data.Either as X (Either (Left, Right))
 import Data.Eq as X (Eq ((/=), (==)))
 import Data.Foldable as X
-  ( Foldable (fold, foldl', foldr, toList),
+  ( Foldable (fold, foldMap, foldl', foldr, toList),
     any,
     for_,
     length,
@@ -141,6 +144,10 @@ import Data.Functor as X
     (<$>),
     (<&>),
   )
+import Data.Graph as X (Graph, Vertex)
+import Data.HashMap.Strict as X (HashMap)
+import Data.HashSet as X (HashSet)
+import Data.Hashable as X (Hashable (hashWithSalt))
 import Data.Int as X (Int)
 import Data.Kind as X (Constraint, Type)
 #if MIN_VERSION_base(4, 20, 0)
@@ -149,14 +156,18 @@ import Data.List as X (List, filter, replicate, zip, (++))
 import Data.List as X (filter, replicate, zip, (++))
 #endif
 import Data.List.NonEmpty as X (NonEmpty ((:|)))
+import Data.List.NonEmpty qualified as NE
+import Data.Map.Strict as X (Map)
 import Data.Maybe as X (Maybe (Just, Nothing), fromMaybe, maybe)
-import Data.Monoid as X (Monoid (mconcat, mempty))
+import Data.Monoid as X (Ap (Ap, getAp), Monoid (mconcat, mempty))
 import Data.Ord as X (Ord ((<), (<=), (>), (>=)), Ordering)
 import Data.Proxy as X (Proxy (Proxy))
 import Data.Semigroup as X (Semigroup ((<>)))
 import Data.Sequence as X (Seq ((:<|), (:|>)))
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
-import Data.String as X (IsString, String)
+import Data.Sequence.NonEmpty qualified as NESeq
+import Data.Set as X (Set)
+import Data.String as X (IsString (fromString), String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
 import Data.Traversable as X (Traversable (sequenceA, traverse), for)
@@ -164,12 +175,11 @@ import Data.Tuple as X (fst, snd)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4)
 #endif
-import Data.List.NonEmpty qualified as NE
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Effects.Concurrent.Async as X (MonadAsync)
 import Effects.Concurrent.STM as X
-  ( MonadSTM,
+  ( MonadSTM (atomically),
     TBQueue,
     TVar,
     flushTBQueueA,
@@ -181,7 +191,13 @@ import Effects.Concurrent.STM as X
     writeTBQueueA,
     writeTVarA,
   )
-import Effects.Concurrent.Thread as X (MonadThread, microsleep, sleep)
+import Effects.Concurrent.Thread as X
+  ( MVar,
+    MonadMVar (newMVar, putMVar, tryTakeMVar),
+    MonadThread,
+    microsleep,
+    sleep,
+  )
 import Effects.FileSystem.FileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,
@@ -231,7 +247,7 @@ import Effects.System.Terminal as X
     putText,
     putTextLn,
   )
-import Effects.Time as X (MonadTime)
+import Effects.Time as X (MonadTime, withTiming)
 import FileSystem.OsPath as X
   ( OsPath,
     decodeLenient,
@@ -254,6 +270,18 @@ import GHC.Num as X (Num ((*), (+), (-)))
 import GHC.Real as X (Integral, truncate)
 import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack, withFrozenCallStack)
+import Numeric.Algebra as X
+  ( ASemigroup ((.+.)),
+    MMonoid (one),
+    MSemigroup,
+  )
+import Numeric.Convert.Integer as X
+  ( FromInteger (fromZ),
+    ToInteger (toZ),
+    fromℤ,
+    toℤ,
+  )
+import Numeric.Data.Positive as X (Positive (MkPositive), mkPositive, unsafePositive)
 import Optics.Core as X
   ( A_Getter,
     A_Lens,
@@ -389,6 +417,9 @@ neToList = NE.toList
 unsafeListToNE :: (HasCallStack) => List a -> NonEmpty a
 unsafeListToNE = NE.fromList
 
+unsafeListToNESeq :: (HasCallStack) => List a -> NESeq a
+unsafeListToNESeq = NESeq.fromList . NE.fromList
+
 -- | Like 'fromIntegral', except:
 --
 --   1. The conversion is only between integral types.
@@ -518,3 +549,6 @@ isTermException :: (Exception e) => e -> Bool
 isTermException e = case fromException (toException e) of
   Just MkTermException -> True
   Nothing -> False
+
+foldMapA :: (Applicative m, Foldable t, Monoid b) => (a -> m b) -> t a -> m b
+foldMapA f = getAp <$> foldMap (Ap . f)

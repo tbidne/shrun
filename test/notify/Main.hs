@@ -13,7 +13,7 @@ import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
     HasCommandLogging (getCommandLogging),
-    HasCommands (getCommands, getCompletedCommands),
+    HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -27,6 +27,7 @@ import Shrun.Logging.MonadRegionLogger
         displayRegions,
         logGlobal,
         logRegion,
+        regionList,
         withRegion
       ),
   )
@@ -119,8 +120,8 @@ instance HasAnyError NotifyEnv where
   getAnyError = getAnyError . (.unNotifyEnv)
 
 instance HasCommands NotifyEnv where
-  getCommands = getCommands . (.unNotifyEnv)
-  getCompletedCommands = getCompletedCommands . (.unNotifyEnv)
+  getCommandDepGraph = getCommandDepGraph . (.unNotifyEnv)
+  getCommandStatus = getCommandStatus . (.unNotifyEnv)
 
 instance HasCommandLogging NotifyEnv where
   getCommandLogging = getCommandLogging . (.unNotifyEnv)
@@ -158,6 +159,7 @@ instance MonadRegionLogger (ShellT NotifyEnv IO) where
   logRegion _ _ t = asks (.logsRef) >>= \ref -> modifyIORef' ref (t :)
   withRegion _ onRegion = onRegion ()
   displayRegions m = m
+  regionList = atomically $ newTMVar []
 
 runShrunNoConfig :: List String -> IO ()
 runShrunNoConfig = runShrun . ("--no-config" :)

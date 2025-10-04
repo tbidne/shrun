@@ -66,6 +66,7 @@ import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
+        commandGraph,
         commandLogging,
         commonLogging,
         consoleLogging,
@@ -107,6 +108,7 @@ import Shrun.Configuration.Data.FileLogging.FilePathDefault
 import Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode (FileSizeModeWarn),
   )
+import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
@@ -181,7 +183,8 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { timeout = Just 3_600,
+              { commandGraph = Graph.mkTrivialGraph commands,
+                timeout = Just 3_600,
                 init = Just ". some file",
                 commonLogging =
                   MkCommonLoggingP
@@ -212,7 +215,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                           MkFileLogInitP
                             { path = FPDefault,
                               mode = FileModeAppend,
-                              sizeMode = FileSizeModeWarn $ fromZ 50_000_000
+                              sizeMode = FileSizeModeWarn $ fromℤ 50_000_000
                             },
                         commandNameTrunc = Just 45,
                         lineTrunc = Just 200,
@@ -227,8 +230,9 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                         timeout = NotifyTimeoutNever
                       }
               },
-          commands = MkCommandP 0 (Just "cmd1") "echo \"command one\"" :<|| []
+          commands
         }
+    commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
 cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile"
@@ -294,7 +298,8 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { timeout = Just 10,
+              { commandGraph = Graph.mkTrivialGraph commands,
+                timeout = Just 10,
                 init = Just ". another file",
                 commonLogging =
                   MkCommonLoggingP
@@ -325,7 +330,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                           MkFileLogInitP
                             { path = FPManual logPath,
                               mode = FileModeAppend,
-                              sizeMode = FileSizeModeWarn $ fromZ 50_000_000
+                              sizeMode = FileSizeModeWarn $ fromℤ 50_000_000
                             },
                         commandNameTrunc = Just 35,
                         deleteOnSuccess = DeleteOnSuccessOn,
@@ -340,8 +345,9 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                         timeout = NotifyTimeoutSeconds 10
                       }
               },
-          commands = MkCommandP 0 Nothing "cmd" :<|| []
+          commands
         }
+    commands = MkCommandP (mkIdx 1) Nothing "cmd" :<|| []
 
 cliOverridesConfigFileCmdLog :: TestTree
 cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmdLog"

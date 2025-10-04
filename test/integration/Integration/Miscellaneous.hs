@@ -196,9 +196,9 @@ usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
     desc = "Uses recursive command from example"
     args = ["multi1"]
     cmds =
-      MkCommandP 0 (Just "m1") "m1val"
-        :<|| [ MkCommandP 1 Nothing "m2",
-               MkCommandP 2 Nothing "m3"
+      MkCommandP (mkIdx 1) (Just "m1") "m1val"
+        :<|| [ MkCommandP (mkIdx 2) Nothing "m2",
+               MkCommandP (mkIdx 3) Nothing "m3"
              ]
     expected = [#commands ^=@ cmds]
 
@@ -217,10 +217,10 @@ usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd"
     args = ["-c", getExampleConfigOS, "all", "echo cat"]
 
     cmds =
-      MkCommandP 0 (Just "cmd1") "echo \"command one\""
-        :<|| [ MkCommandP 1 (Just "cmd4") "command four",
-               MkCommandP 2 Nothing "echo hi",
-               MkCommandP 3 Nothing "echo cat"
+      MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\""
+        :<|| [ MkCommandP (mkIdx 2) (Just "cmd4") "command four",
+               MkCommandP (mkIdx 3) Nothing "echo hi",
+               MkCommandP (mkIdx 4) Nothing "echo cat"
              ]
     expected = [#commands ^=@ cmds]
 
@@ -320,7 +320,7 @@ testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs"
     desc = "defaultMergedConfig === merge defaultArgs defaultToml"
 
     cmds :: NESeq (CommandP p)
-    cmds = NESeq.singleton (MkCommandP 0 Nothing "cmd")
+    cmds = NESeq.singleton (MkCommandP (mkIdx 1) Nothing "cmd")
 
     cmdsTxt :: NESeq Text
     cmdsTxt = NESeq.singleton "cmd"

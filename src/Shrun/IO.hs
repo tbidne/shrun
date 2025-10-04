@@ -13,8 +13,12 @@ import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.HandleWriter qualified as HW
 import Effects.System.Process (ProcessHandle)
 import Effects.System.Process qualified as P
-import Effects.Time (MonadTime (getMonotonicTime), withTiming)
-import Shrun.Command.Types (CommandP1, commandToProcess)
+import Effects.Time (MonadTime (getMonotonicTime))
+import Shrun.Command.Types
+  ( CommandP1,
+    CommandStatus (CommandFailure, CommandRunning, CommandSuccess),
+    commandToProcess,
+  )
 import Shrun.Configuration.Data.CommandLogging
   ( BufferLength,
     BufferTimeout,
@@ -46,8 +50,8 @@ import Shrun.Configuration.Env.Types
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
     HasInit (getInit),
-    prependCompletedCommand,
     setAnyErrorTrue,
+    updateCommandStatus,
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
@@ -56,7 +60,13 @@ import Shrun.IO.Handle
   )
 import Shrun.IO.Handle qualified as Handle
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
+import Shrun.Logging.MonadRegionLogger
+  ( MonadRegionLogger
+      ( Region,
+        withRegion
+      ),
+    restoreTimerRegion,
+  )
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelCommand),
@@ -80,8 +90,8 @@ readHandleResultToStderr (ReadErrSuccess e1 e2) = MkStderr (neToList $ e1 <> e2)
 
 -- | Result of running a command.
 data CommandResult
-  = CommandSuccess RelativeTime
-  | CommandFailure RelativeTime Stderr
+  = CommandResultSuccess RelativeTime
+  | CommandResultFailure RelativeTime Stderr
   deriving stock (Eq, Show)
 
 -- | Runs the command, returns ('ExitCode', 'Stderr')
@@ -101,7 +111,7 @@ shExitCode cmd = do
   process <- commandToProcess cmd <$> asks getInit
 
   logDebugCmd cmd process $ \region log -> do
-    (consoleLogging, consoleLogQueue) <- asks getConsoleLogging
+    (consoleLogging, consoleLogQueue, _) <- asks getConsoleLogging
     let formatted = formatConsoleLog KeyHideOff consoleLogging log
     writeTBQueueA consoleLogQueue (LogRegion (log ^. #mode) region formatted)
 
@@ -163,7 +173,7 @@ tryCommandLogging command = do
   -- will take down the whole app. tryCommandStream and tryShExitCode should be
   -- total, but there are still a few functions here that can throw. To wit:
   --
-  -- - atomically: Used in prependCompletedCommand, setAnyErrorTrue,
+  -- - atomically: Used in updateCommandStatus, setAnyErrorTrue,
   --               writeTBQueueA.
   -- - getSystemTimeString: Used in formatFileLog.
   --
@@ -177,8 +187,27 @@ tryCommandLogging command = do
   -- the actual error so it can be fixed.
 
   commonLogging <- asks getCommonLogging
-  (consoleLogging, consoleLogQueue) <- asks getConsoleLogging
+  (consoleLogging, consoleLogQueue, timerRegion) <- asks getConsoleLogging
   mFileLogging <- asks getFileLogging
+
+  -- NOTE: [Restore Timer Region]
+  --
+  -- Generally, we want the timer region to be the last console region, but
+  -- sequential commands can screw with that. That is, if a sequential command
+  -- spawns --command-logs, those seem to be placed in a new region _after_
+  -- the timer log. That is not what we want.
+  --
+  -- To handle this, we call 'restoreTimerRegion' immediately after creating
+  -- the new region (two places below). This seems to work, though it feels
+  -- a bit shaky. We _could_ move this logic to the timer itself, which would
+  -- potentially restore it every second. That should be quite robust
+  -- (assuming the restore logic does what we want), but it's possibly
+  -- wasteful, since experience seems to show it's only these single command
+  -- logs that screw it up.
+  --
+  -- Hence for now, let's just do it the one time after commands are created.
+  -- If we have problems, consider moving it to the timer.
+
   let keyHide = commonLogging ^. #keyHide
       -- In general, our loggers take an optional region (for debugging) and
       -- a log, and send it off to the console / file queues, depending on
@@ -190,6 +219,7 @@ tryCommandLogging command = do
         -- 3. CommandLogging but no FileLogging. Stream.
         (ConsoleLogCmdOn, Nothing) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
+            restoreTimerRegion timerRegion
             let logFn mRegion log =
                   let region = fromMaybe cmdRegion mRegion
                    in logConsole keyHide consoleLogQueue region consoleLogging log
@@ -216,6 +246,7 @@ tryCommandLogging command = do
         --    region.
         (ConsoleLogCmdOn, Just fileLogging) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
+            restoreTimerRegion timerRegion
             let logFn mRegion log = do
                   let region = fromMaybe cmdRegion mRegion
                   logConsole keyHide consoleLogQueue region consoleLogging log
@@ -225,20 +256,21 @@ tryCommandLogging command = do
 
             tryCommandStream logFn cmd
 
+  updateCommandStatus command (CommandRunning ())
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
       -- update completed commands
-      prependCompletedCommand command
+      updateCommandStatus command CommandSuccess
 
-      pure $ CommandSuccess $ U.timeSpecToRelTime rt
+      pure $ CommandResultSuccess $ U.timeSpecToRelTime rt
     (rt, Just err) -> do
       -- update completed commands
-      prependCompletedCommand command
+      updateCommandStatus command (CommandFailure ())
 
       -- update anyError
       setAnyErrorTrue
 
-      pure $ CommandFailure (U.timeSpecToRelTime rt) err
+      pure $ CommandResultFailure (U.timeSpecToRelTime rt) err
   where
     logConsole keyHide consoleQueue region consoleLogging log = do
       let formatted = formatConsoleLog keyHide consoleLogging log

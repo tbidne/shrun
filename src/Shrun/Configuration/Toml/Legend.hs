@@ -9,7 +9,6 @@ module Shrun.Configuration.Toml.Legend
   )
 where
 
-import Data.HashMap.Strict (HashMap)
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
 import Shrun.Prelude

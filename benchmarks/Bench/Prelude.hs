@@ -24,6 +24,7 @@ import Shrun.Logging.MonadRegionLogger
         displayRegions,
         logGlobal,
         logRegion,
+        regionList,
         withRegion
       ),
   )
@@ -59,6 +60,8 @@ instance MonadRegionLogger (ShellT BenchEnv IO) where
   withRegion _layout regionToShell = regionToShell ()
 
   displayRegions = id
+
+  regionList = atomically $ newTMVar []
 
 instance MonadNotify (ShellT BenchEnv IO) where
   notify _ = pure Nothing
