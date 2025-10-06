@@ -180,12 +180,11 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
   currTime <- getSystemTimeString
   let timestamp = brackets False (pack currTime)
       timestampLen = T.length timestamp
-      timestampSpc = T.replicate timestampLen " "
 
       mkLine (prefixSpace, log) =
         let withTs =
               if prefixSpace
-                then withTimestampSpc
+                then withNoTimestamp
                 else withTimestamp
          in withTs
               $ coreFormatting
@@ -204,10 +203,9 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
             "\n"
           ]
 
-      withTimestampSpc line =
+      withNoTimestamp line =
         mconcat
-          [ timestampSpc,
-            line,
+          [ line,
             "\n"
           ]
 
@@ -235,11 +233,8 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
 --    truncation kicks in.
 coreFormatting ::
   -- | If true, the prefix is replaced with whitespace. This is for multiline,
-  -- final logs, where we want to do the normal prefix logic to calculate the
-  -- required indent, but replace it with whitespace for clarity (i.e. a
-  -- single command should be identificable by the prefix header).
-  --
-  -- Normal usage includes the prefix.
+  -- final logs, where we only want the prefix on the first line. Normal usage
+  -- includes the prefix.
   Bool ->
   -- | Optional line truncation. If we have some line truncation then there
   -- is a further optional "prefix length". This is so that file logging
@@ -291,7 +286,7 @@ coreFormatting
 
       finalPrefix =
         if spacePrefix
-          then T.replicate (T.length prefix) " "
+          then "  "
           else prefix
 
       msgStripControlled = stripChars (log ^. #msg) stripControl

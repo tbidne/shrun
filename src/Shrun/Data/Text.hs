@@ -16,6 +16,7 @@ module Shrun.Data.Text
     length,
     concat,
     intercalate,
+    isWhitespace,
     reallyUnsafeMap,
   )
 where
@@ -108,3 +109,6 @@ reallyUnsafeMap f (UnsafeUnlinedText t) = UnsafeUnlinedText (f t)
 
 length :: UnlinedText -> Int
 length (UnsafeUnlinedText t) = T.length t
+
+isWhitespace :: UnlinedText -> Bool
+isWhitespace = T.null . T.strip . view #unUnlinedText

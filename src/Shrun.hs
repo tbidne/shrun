@@ -9,6 +9,7 @@ module Shrun
 where
 
 import DBus.Notify (UrgencyLevel (Critical, Normal))
+import Data.List qualified as L
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
@@ -275,7 +276,23 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
     timeMsg = TimerFormat.formatRelativeTime timerFormat rt
     notifyMsg = Notify.formatNotifyMessage timeMsg messages
 
-    (consoleLog, mMkFileLog) = case messages of
+    -- NOTE: Strip leading and trailing "whitespace only" lines, as we do not
+    -- want them in the final logs. We do want internal whitespace.
+    --
+    -- Note that this whitespace originally comes from when Handle uses
+    -- 'ShrunText.fromText :: UnlinedText -> List UnlinedText', which removes
+    -- newlines but does nothing else i.e. whitespace is preserved.
+    --
+    -- We attempted stripping there, but that has other unwanted consequences,
+    -- like removing internal whitespace when we buffer logs. Hence we go
+    -- with the least invasive method that does what we want: strip them
+    -- from the final result here.
+    messages' =
+      L.dropWhileEnd Text.isWhitespace
+        . L.dropWhile Text.isWhitespace
+        $ messages
+
+    (consoleLog, mMkFileLog) = case messages' of
       -- 1. No message (success). Just print out the time.
       [] ->
         let log =
