@@ -103,8 +103,8 @@ formatErrorLogs testArgs =
     -- - In the final error message, newlines are preserved.
     expectedCommon =
       [ withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "2 seconds",
-        withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "abc",
-        withErrorPrefix "sleep 1 && echo 'abc   def' && sleep 1 && exit 1" <> "  def"
+        "                                                          abc",
+        "                                                            def"
       ]
     expectedConsole =
       expectedCommon

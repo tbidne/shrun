@@ -25,6 +25,7 @@ module Shrun.Logging.Formatting
 where
 
 import Data.Foldable qualified as F
+import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
@@ -91,6 +92,7 @@ formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
 
     line =
       coreFormatting
+        False
         ((,Nothing) <$> consoleLogging ^. #lineTrunc)
         (consoleLogging ^. #commandNameTrunc)
         True
@@ -110,10 +112,12 @@ formatConsoleMultiLineLogs keyHide consoleLogging =
     . T.intercalate "\n"
     . F.toList
     . fmap mkLine
+    . zipMultilineSpacePrefix
   where
-    mkLine log =
+    mkLine (prefixSpace, log) =
       let t =
             coreFormatting
+              prefixSpace
               ((,Nothing) <$> consoleLogging ^. #lineTrunc)
               (consoleLogging ^. #commandNameTrunc)
               False
@@ -141,6 +145,7 @@ formatFileLog keyHide fileLogging log = do
 
       line =
         coreFormatting
+          False
           ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
           (fileLogging ^. #commandNameTrunc)
           False
@@ -158,6 +163,9 @@ formatFileLog keyHide fileLogging log = do
   pure $ UnsafeFileLog withTimestamp
 {-# INLINEABLE formatFileLog #-}
 
+zipMultilineSpacePrefix :: NonEmpty a -> NonEmpty (Bool, a)
+zipMultilineSpacePrefix = NE.zip (False :| [True, True ..])
+
 -- | Like 'formatFileLog', but for multiple logs. Concatenates all
 -- together.
 formatFileMultiLineLogs ::
@@ -172,14 +180,22 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
   currTime <- getSystemTimeString
   let timestamp = brackets False (pack currTime)
       timestampLen = T.length timestamp
+      timestampSpc = T.replicate timestampLen " "
 
-      mkLine =
-        coreFormatting
-          ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
-          (fileLogging ^. #commandNameTrunc)
-          False
-          (fileLogging ^. #stripControl)
-          keyHide
+      mkLine (prefixSpace, log) =
+        let withTs =
+              if prefixSpace
+                then withTimestampSpc
+                else withTimestamp
+         in withTs
+              $ coreFormatting
+                prefixSpace
+                ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
+                (fileLogging ^. #commandNameTrunc)
+                False
+                (fileLogging ^. #stripControl)
+                keyHide
+                log
 
       withTimestamp line =
         mconcat
@@ -188,11 +204,19 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
             "\n"
           ]
 
+      withTimestampSpc line =
+        mconcat
+          [ timestampSpc,
+            line,
+            "\n"
+          ]
+
   pure
     . UnsafeFileLog
     . mconcat
     . F.toList
-    . fmap (withTimestamp . mkLine)
+    . fmap mkLine
+    . zipMultilineSpacePrefix
     $ logs
 {-# INLINEABLE formatFileMultiLineLogs #-}
 
@@ -210,6 +234,13 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
 --    line truncation is 15, then we only have 5 chars for the message before
 --    truncation kicks in.
 coreFormatting ::
+  -- | If true, the prefix is replaced with whitespace. This is for multiline,
+  -- final logs, where we want to do the normal prefix logic to calculate the
+  -- required indent, but replace it with whitespace for clarity (i.e. a
+  -- single command should be identificable by the prefix header).
+  --
+  -- Normal usage includes the prefix.
+  Bool ->
   -- | Optional line truncation. If we have some line truncation then there
   -- is a further optional "prefix length". This is so that file logging
   -- can pass in the timestamp length so it is taken into account
@@ -234,13 +265,14 @@ coreFormatting ::
   Log ->
   Text
 coreFormatting
+  spacePrefix
   mLineTrunc
   mCommandNameTrunc
   stripLeading
   stripControl
   keyHide
   log =
-    concatWithLineTrunc mLineTrunc prefix (msgStripped ^. #unLogMessage)
+    concatWithLineTrunc mLineTrunc finalPrefix (msgStripped ^. #unLogMessage)
     where
       -- prefix is something like "[Success] " or "[Command][some cmd] ".
       -- Notice this does not include ANSI codes or a timestamp.
@@ -256,6 +288,11 @@ coreFormatting
                 [ brackets False logPrefix,
                   cmd' ^. #unUnlinedText
                 ]
+
+      finalPrefix =
+        if spacePrefix
+          then T.replicate (T.length prefix) " "
+          else prefix
 
       msgStripControlled = stripChars (log ^. #msg) stripControl
       msgStripped =
