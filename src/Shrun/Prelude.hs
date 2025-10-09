@@ -76,7 +76,7 @@ import Control.Exception as X
     SomeException,
   )
 import Control.Exception.Utils as X
-  ( TextException,
+  ( StringException,
     exitFailure,
     throwText,
   )

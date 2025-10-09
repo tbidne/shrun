@@ -1,4 +1,4 @@
-index-state: 2025-06-03T21:29:34Z
+index-state: 2025-10-09T20:34:43Z
 
 packages:
   .
@@ -24,9 +24,6 @@ package shrun
 
 -- TODO: Remove Wno-deprecations once we are on GHC 9.10.
 
-optimization: 2
-test-show-details: direct
-
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
@@ -40,7 +37,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/exception-utils.git
-    tag: 0929797ddb5d5326b175f1d3e96646d8095ad475
+    tag: 61a9e06a26adcca70d565105a1508a16022435a2
 
 source-repository-package
     type: git
@@ -50,7 +47,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 4ead4daa45bf2011b8c38663a746455957b316f0
+    tag: 7e2fa052e7215c9bf71c3149b5382abcc882b819
     subdir:
       lib/effects-async
       lib/effects-env
@@ -67,7 +64,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/relative-time.git
-    tag: b6ea05272e3031cede2cbc7e8b7898ef93d6a2a6
+    tag: be79249b8909dba64d3b301025d4d684f46ec2a1
 
 source-repository-package
     type: git
@@ -77,9 +74,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: acc3d79b82830397979f4be7b45266f5fc056cfb
+    tag: 4e10a4134f825ba825113955bb97be7f7e28ad6e
 
-if impl(ghc >= 9.12.1) && impl(ghc <9.13)
-  allow-newer: dbus:template-haskell
-
-allow-newer: tasty:optparse-applicative
+optimization: 2
+test-show-details: direct
