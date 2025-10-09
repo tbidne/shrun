@@ -15,7 +15,7 @@ For those unfamiliar with PVP, it is essentially
 the first _two_ components (e.g. `0.9` in `0.9.1`), and PVP has no exception
 for versions < 1.
 
-## [Unreleased]
+## [0.9.2] -- 2025-10-10
 ### Changed
 * Updated blessed GHC to 9.12.2.
 * Improve final command log formatting with newlines.
@@ -269,7 +269,7 @@ for versions < 1.
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.9.1...main
+[0.9.2]: https://github.com/tbidne/shrun/compare/0.9.1...0.9.2
 [0.9.1]: https://github.com/tbidne/shrun/compare/0.9...0.9.1
 [0.9]: https://github.com/tbidne/shrun/compare/0.8.1...0.9
 [0.8.1]: https://github.com/tbidne/shrun/compare/0.8...0.8.1
