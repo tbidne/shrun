@@ -39,7 +39,7 @@
 
 ---
 
-`shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [config.toml](./examples/config.toml) for a description of the `toml` file.
+`shrun` can be configured by either CLI args or a `toml` config file. Most arguments exist in both formats -- where they have the same name -- though some exist only as CLI args. The following describes the CLI args. See [config.toml](../examples/config.toml) for a description of the `toml` file.
 
 > [!TIP]
 >
@@ -58,7 +58,7 @@
 
 **Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`. The `--no-config` option disables `--config` and the automatic XDG lookup.
 
-Examples can be found in [examples](./examples).
+Examples can be found in [examples](../examples).
 
 #### Legend
 
@@ -150,8 +150,11 @@ vs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --timeout 4 "sleep 2" "sleep 6" "sleep 8"</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
-<span style="color: #d3d38e">[Warn] Timed out, cancelling remaining commands: sleep 6, sleep 8</span>
-<span style="color: #d6acff">[Finished] 9 seconds</span></code>
+<span style="color: #d3d38e">[Warn] Timed out</span>
+<span style="color: #d3d38e">[Warn] Attempting to cancel:</span>
+<span style="color: #d3d38e">  - sleep 6</span>
+<span style="color: #d3d38e">  - sleep 8</span>
+<span style="color: #d6acff">[Finished] 5 seconds</span></code>
 </pre>
 
 ## Logging

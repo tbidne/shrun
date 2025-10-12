@@ -167,7 +167,7 @@ As `shrun`'s original raison d'être was to run (independent) commands concurren
 $ shrun cmd1 cmd2 # runs both concurrently, not what we want!
 ```
 
-The workaround would be to use `&&` manually e.g. `shrun "comand_1 && comand_2"` or `shrun comand_1 && shrun comand_2`. This works, but it means we lose the benefits of having `shrun` manage individual commands (logging, notifications). It is especially annoying if we have several commands that can all be run concurrently except for one, which spoils the whole thing.
+The workaround would be to use `&&` manually e.g. `shrun "cmd1 && cmd2"` or `shrun cmd1 && shrun cmd2`. This works, but it means we lose the benefits of having `shrun` manage individual commands (logging, notifications). It is especially annoying if we have several commands that can all be run concurrently except for one, which spoils the whole thing.
 
 The `--command-graph` option is introduced for this reason. It allows us to specify dependencies between commands via a numeric index, which is based on the command's left-to-right appearance in the CLI. For example, the above scenario would be run as:
 

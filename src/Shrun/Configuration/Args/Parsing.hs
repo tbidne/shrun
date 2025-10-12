@@ -33,6 +33,8 @@ import Options.Applicative
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
+import Options.Applicative.Help.Pretty (Doc)
+import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse))
 import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.Parsing.Core qualified as Core
@@ -110,8 +112,36 @@ parserInfoArgs =
                 "ignore both cli --console-log-command and toml console-log.command, ",
                 "ensuring the default behavior is used (i.e. no command logging)."
               ],
-          Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation."
+          Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation.",
+          Chunk.paragraph "Examples:",
+          mkExample
+            [ "# Runs cmd1, cmd2, cmd3 concurrently.",
+              "$ shrun cmd1 cmd2 cmd3"
+            ],
+          mkExample
+            [ "# Using --command-graph to specify command dependencies. Commands cmd1 and",
+              "# cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish",
+              "# successfully.",
+              "$ shrun --command-graph \"1 -> 3, 2 -> 3\" cmd1 cmd2 cmd3"
+            ],
+          mkExample
+            [ "# Using config file aliases i.e. runs 'npm run build', 'javac ...', and",
+              "# 'build_db.sh' concurrently.",
+              "#",
+              "# legend = [",
+              "#   { key = 'some_alias', val = [ 'frontend', 'backend', 'db' ] },",
+              "#   { key = 'frontend', val = 'npm run build' },",
+              "#   { key = 'backend', val = 'javac ...' },",
+              "#   { key = 'db', val = 'build_db.sh' },",
+              "# ]",
+              "$ shrun --config config.toml some_alias"
+            ]
         ]
+
+    mkExample :: [String] -> Chunk Doc
+    mkExample =
+      Chunk.vcatChunks
+        . fmap (fmap (Pretty.indent 2) . Chunk.stringChunk)
 
 argsParser :: Parser Args
 argsParser = do
