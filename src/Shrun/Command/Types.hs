@@ -8,17 +8,23 @@ module Shrun.Command.Types
     CommandP2,
     commandToProcess,
 
-    -- * Index
+    -- ** Index
     CommandIndex,
     Internal.fromPositive,
     Internal.toVertex,
     Internal.fromVertex,
     Internal.succ,
 
+    -- * Order
+    CommandOrd (..),
+
     -- * Status
     CommandStatus (..),
     CommandStatusData (..),
     mapCommandStatus,
+
+    -- * Misc
+    CommandPhase (..),
   )
 where
 
@@ -35,7 +41,8 @@ data CommandPhase
   = CommandPhase1
   | CommandPhase2
 
--- | Wrapper for shell commands. Eq/Ord is based on the numeric index.
+-- | Wrapper for shell commands. Whenever the CommandIndex order is important,
+-- see 'CommandOrd'.
 type CommandP :: CommandPhase -> Type
 data CommandP p = MkCommandP
   { -- | NonNegative index for the command.
@@ -45,16 +52,17 @@ data CommandP p = MkCommandP
     -- | The shell command to run.
     command :: Text
   }
-  deriving stock (Generic, Show)
+  deriving stock (Eq, Generic, Show)
 
-instance Eq (CommandP p) where
-  x == y = x ^. #index == y ^. #index
-
-instance Ord (CommandP p) where
-  x <= y = x ^. #index <= y ^. #index
-
-instance Hashable (CommandP p) where
-  hashWithSalt i = hashWithSalt i . view #index
+-- NOTE: We use standard Eq here and put the equivalence class Ord on a
+-- newtype (CommandOrd) because some of tests verify all CommandP fields
+-- match our expectations. Implementing Eq/Ord in terms of index would
+-- weaken tests and hide bugs (e.g. potential legend refactors had a bug
+-- with the key, but the tests missed this when Eq was determined by index).
+--
+-- We also intentionally do not implement Ord, as such uses should
+-- probably use CommandOrd, and we do not want to accidentally use the
+-- derived Ord.
 
 instance
   ( k ~ A_Lens,
@@ -173,3 +181,19 @@ mapCommandStatus f = \case
   CommandFailure x -> CommandFailure (f x)
   CommandRunning x -> CommandRunning (f x)
   CommandWaiting x -> CommandWaiting (f x)
+
+-- | Wraps 'CommandP' for the purposes of ordering by index.
+newtype CommandOrd p = MkCommandOrd (CommandP p)
+
+instance Eq (CommandOrd p) where
+  MkCommandOrd x == MkCommandOrd y = x ^. #index == y ^. #index
+
+instance Ord (CommandOrd p) where
+  MkCommandOrd x <= MkCommandOrd y = x ^. #index <= y ^. #index
+
+instance
+  (k ~ An_Iso, a ~ CommandP p, b ~ CommandP p) =>
+  LabelOptic "unCommandOrd" k (CommandOrd p) (CommandOrd p) a b
+  where
+  labelOptic = iso (\(MkCommandOrd x) -> x) MkCommandOrd
+  {-# INLINE labelOptic #-}

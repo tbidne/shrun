@@ -30,7 +30,8 @@ where
 import Data.List.NonEmpty qualified as NE
 import Data.Set qualified as Set
 import Shrun.Command.Types
-  ( CommandP1,
+  ( CommandOrd (MkCommandOrd),
+    CommandPhase (CommandPhase1),
     CommandStatus
       ( CommandFailure,
         CommandRunning,
@@ -181,11 +182,12 @@ mkUnfinishedCmdLogs = do
       go acc@(ws, rs) (cmd, status) = case status of
         CommandSuccess -> acc
         CommandFailure () -> acc
-        CommandRunning () -> (ws, Set.insert cmd rs)
-        CommandWaiting () -> (Set.insert cmd ws, rs)
+        CommandRunning () -> (ws, Set.insert (MkCommandOrd cmd) rs)
+        CommandWaiting () -> (Set.insert (MkCommandOrd cmd) ws, rs)
 
+      cmdToTxt :: CommandOrd CommandPhase1 -> Text
       cmdToTxt cmd =
-        "- " <> Formatting.displayCmd cmd keyHide ^. #unUnlinedText
+        "- " <> Formatting.displayCmd (cmd ^. #unCommandOrd) keyHide ^. #unUnlinedText
 
       mkLog :: Text -> Log
       mkLog txt =
@@ -196,7 +198,7 @@ mkUnfinishedCmdLogs = do
             mode = LogModeFinish
           }
 
-      mkLogs :: UnlinedText -> Set CommandP1 -> Maybe (NonEmpty Log)
+      mkLogs :: UnlinedText -> Set (CommandOrd CommandPhase1) -> Maybe (NonEmpty Log)
       mkLogs pfx st =
         if Set.null st
           then Nothing

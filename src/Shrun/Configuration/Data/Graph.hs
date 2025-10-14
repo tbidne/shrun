@@ -25,6 +25,7 @@ import Data.Text qualified as T
 import GHC.Exts (IsList)
 import Shrun.Command.Types
   ( CommandIndex,
+    CommandOrd (MkCommandOrd),
     CommandP (MkCommandP),
     CommandP1,
   )
@@ -308,7 +309,7 @@ mkSequentialEdges =
   MkEdges
     . dropLast
     . fmap toEdge
-    . L.sort
+    . L.sortOn MkCommandOrd
     . toList
   where
     toEdge (MkCommandP idx _ _) = (idx, Command.Types.succ idx)
