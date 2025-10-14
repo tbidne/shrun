@@ -11,6 +11,7 @@ module Shrun.Command.Types
     -- ** Index
     CommandIndex,
     Internal.fromPositive,
+    Internal.unsafeFromInt,
     Internal.toVertex,
     Internal.fromVertex,
     Internal.succ,

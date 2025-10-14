@@ -163,7 +163,7 @@ import Data.Monoid as X (Ap (Ap, getAp), Monoid (mconcat, mempty))
 import Data.Ord as X (Ord ((<), (<=), (>), (>=)), Ordering)
 import Data.Proxy as X (Proxy (Proxy))
 import Data.Semigroup as X (Semigroup ((<>)))
-import Data.Sequence as X (Seq ((:<|), (:|>)))
+import Data.Sequence as X (Seq ((:<|), (:|>)), pattern Empty)
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Set as X (Set)

@@ -4,6 +4,7 @@
 module Shrun.Command.Types.Internal
   ( CommandIndex (..),
     fromPositive,
+    unsafeFromInt,
     toVertex,
     fromVertex,
     succ,
@@ -49,6 +50,9 @@ range (MkCommandIndex (MkPositive lower)) (MkCommandIndex (MkPositive upper)) =
 
 fromPositive :: Positive Int -> CommandIndex
 fromPositive = MkCommandIndex
+
+unsafeFromInt :: (HasCallStack) => Int -> CommandIndex
+unsafeFromInt = fromPositive . unsafePositive
 
 -- | Conversion to 'Vertex'.
 toVertex :: CommandIndex -> Vertex

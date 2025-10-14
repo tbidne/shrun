@@ -18,13 +18,13 @@ import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
 import Shrun.Command.Types
-  ( CommandP (MkCommandP),
+  ( CommandIndex,
+    CommandP (MkCommandP),
     CommandP1,
-    fromPositive,
+    unsafeFromInt,
   )
 import Shrun.Configuration.Toml.Legend (KeyVal (MkKeyVal), LegendMap)
 import Shrun.Prelude
-import Shrun.Utils qualified as Utils
 
 -- $setup
 -- >>> import Shrun.Prelude
@@ -96,26 +96,35 @@ instance Exception CyclicKeyError where
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq CommandP1)
-translateCommands mp = fmap (idxCmds . join) . traverse (lineToCommands mp)
-  where
-    idxCmds :: NESeq (Positive Int -> CommandP1) -> NESeq CommandP1
-    idxCmds = fmap (\(idx, mkCmd) -> mkCmd idx) . Utils.indexPos
+translateCommands mp = unLineAcc . mapAliases (lineToCommands mp) one
 
-lineToCommands :: LegendMap -> Text -> Either CyclicKeyError (NESeq (Positive Int -> CommandP1))
+newtype LineAcc = MkLineAcc (Either CyclicKeyError (NESeq CommandP1))
+  deriving stock (Show)
+
+unLineAcc :: LineAcc -> Either CyclicKeyError (NESeq CommandP1)
+unLineAcc (MkLineAcc x) = x
+
+instance Semigroup LineAcc where
+  MkLineAcc (Left err) <> _ = MkLineAcc (Left err)
+  MkLineAcc (Right xs) <> MkLineAcc y = case y of
+    Left err -> MkLineAcc $ Left err
+    Right ys -> MkLineAcc $ Right (xs <> ys)
+
+lineToCommands :: LegendMap -> Tuple2 CommandIndex Text -> LineAcc
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
     -- we have traversed so far, e.g., a -> b -> c
-    go :: Maybe Text -> HashSet Text -> Builder -> Text -> Either CyclicKeyError (NESeq (Positive Int -> CommandP1))
-    go prevKey foundKeys path line = case Map.lookup line mp of
+    go :: Maybe Text -> HashSet Text -> Builder -> Tuple2 CommandIndex Text -> LineAcc
+    go prevKey foundKeys path (startIdx, line) = case Map.lookup line mp of
       -- The line isn't a key, return it.
-      Nothing -> Right $ NESeq.singleton (\idx -> MkCommandP (fromPositive idx) prevKey line)
+      Nothing -> MkLineAcc $ Right $ NESeq.singleton (MkCommandP startIdx prevKey line)
       -- The line is a key, check for cycles and recursively
       -- call.
       Just val -> case maybeCyclicVal of
         Just cyclicVal ->
           let pathTxt = builderToPath path line cyclicVal
-           in Left $ MkCyclicKeyError pathTxt
+           in MkLineAcc $ Left $ MkCyclicKeyError pathTxt
         Nothing -> case val of
           -- NOTE: We have to split these cases up due to handling the prevKey
           -- differently. We want to pass along the key name (i.e. line)
@@ -131,8 +140,8 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           -- name, hence the output would be ambiguous. To prevent this, only
           -- pass the name in when it is guaranteed we have a unique
           -- key = val mapping.
-          (x :<|| IsEmpty) -> go (Just line) foundKeys' path' x
-          xs -> join <$> traverse (go Nothing foundKeys' path') xs
+          (x :<|| IsEmpty) -> go (Just line) foundKeys' path' (startIdx, x)
+          xs -> mapAliases (go Nothing foundKeys' path') startIdx xs
         where
           foundKeys' = Set.insert line foundKeys
           -- Detect if we have an intersection between previously found
@@ -145,6 +154,16 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           maybeCyclicVal = headMaybe $ Set.toList intersect
           path' = path <> LTBuilder.fromText line <> " -> "
           neToSet = Set.fromList . toList
+
+mapAliases :: (Tuple2 CommandIndex Text -> LineAcc) -> CommandIndex -> NESeq Text -> LineAcc
+mapAliases f = go
+  where
+    go idx (x :<|| Empty) = f (idx, x)
+    go idx (x :<|| y :<| ys) = case unLineAcc (f (idx, x)) of
+      Left err -> MkLineAcc $ Left err
+      Right cmds ->
+        let newStart = idx .+. unsafeFromInt (length cmds)
+         in MkLineAcc (Right cmds) <> go newStart (y :<|| ys)
 
 builderToPath :: Builder -> Text -> Text -> Text
 builderToPath path l v =
