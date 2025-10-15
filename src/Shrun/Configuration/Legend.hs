@@ -39,14 +39,15 @@ instance Exception DuplicateKeyError where
 
 -- | Attempts to parse the given ['KeyVal'] into 'LegendMap'.
 -- Duplicate keys are not allowed.
-linesToMap :: List KeyVal -> Either DuplicateKeyError LegendMap
-linesToMap = foldr f (Right Map.empty)
+linesToMap :: (HasCallStack, MonadThrow m) => List KeyVal -> m LegendMap
+linesToMap = foldr f (pure Map.empty)
   where
-    f (MkKeyVal k v) mp = join $ liftA2 insertPair (Right (k, v)) mp
-    insertPair (key, cmd) mp =
+    f (MkKeyVal k v) = insertPair (k, v)
+    insertPair (key, cmd) mMap = do
+      mp <- mMap
       case Map.lookup key mp of
-        Just _ -> Left $ MkDuplicateKeyError key
-        Nothing -> Right $ Map.insert key cmd mp
+        Just _ -> throwM $ MkDuplicateKeyError key
+        Nothing -> pure $ Map.insert key cmd mp
 
 newtype CyclicKeyError = MkCyclicKeyError Text
   deriving stock (Eq, Show)
@@ -95,36 +96,37 @@ instance Exception CyclicKeyError where
 --   in translateCommands m ("a" :<|| [])
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
-translateCommands :: LegendMap -> NESeq Text -> Either CyclicKeyError (NESeq CommandP1)
-translateCommands mp = unLineAcc . mapAliases (lineToCommands mp) one
+translateCommands ::
+  ( HasCallStack,
+    MonadThrow m
+  ) =>
+  LegendMap ->
+  NESeq Text ->
+  m (NESeq CommandP1)
+translateCommands mp = mapAliases (lineToCommands mp) one
 
-newtype LineAcc = MkLineAcc (Either CyclicKeyError (NESeq CommandP1))
-  deriving stock (Show)
-
-unLineAcc :: LineAcc -> Either CyclicKeyError (NESeq CommandP1)
-unLineAcc (MkLineAcc x) = x
-
-instance Semigroup LineAcc where
-  MkLineAcc (Left err) <> _ = MkLineAcc (Left err)
-  MkLineAcc (Right xs) <> MkLineAcc y = case y of
-    Left err -> MkLineAcc $ Left err
-    Right ys -> MkLineAcc $ Right (xs <> ys)
-
-lineToCommands :: LegendMap -> Tuple2 CommandIndex Text -> LineAcc
+lineToCommands ::
+  forall m.
+  ( HasCallStack,
+    MonadThrow m
+  ) =>
+  LegendMap ->
+  Tuple2 CommandIndex Text ->
+  m (NESeq CommandP1)
 lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
   where
     -- The stringbuilder path is a textual representation of the key path
     -- we have traversed so far, e.g., a -> b -> c
-    go :: Maybe Text -> HashSet Text -> Builder -> Tuple2 CommandIndex Text -> LineAcc
+    go :: Maybe Text -> HashSet Text -> Builder -> Tuple2 CommandIndex Text -> m (NESeq CommandP1)
     go prevKey foundKeys path (startIdx, line) = case Map.lookup line mp of
       -- The line isn't a key, return it.
-      Nothing -> MkLineAcc $ Right $ NESeq.singleton (MkCommandP startIdx prevKey line)
+      Nothing -> pure $ NESeq.singleton (MkCommandP startIdx prevKey line)
       -- The line is a key, check for cycles and recursively
       -- call.
       Just val -> case maybeCyclicVal of
         Just cyclicVal ->
           let pathTxt = builderToPath path line cyclicVal
-           in MkLineAcc $ Left $ MkCyclicKeyError pathTxt
+           in throwM $ MkCyclicKeyError pathTxt
         Nothing -> case val of
           -- NOTE: We have to split these cases up due to handling the prevKey
           -- differently. We want to pass along the key name (i.e. line)
@@ -155,15 +157,23 @@ lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
           path' = path <> LTBuilder.fromText line <> " -> "
           neToSet = Set.fromList . toList
 
-mapAliases :: (Tuple2 CommandIndex Text -> LineAcc) -> CommandIndex -> NESeq Text -> LineAcc
+mapAliases ::
+  ( HasCallStack,
+    MonadThrow m
+  ) =>
+  ( Tuple2 CommandIndex Text ->
+    m (NESeq CommandP1)
+  ) ->
+  CommandIndex ->
+  NESeq Text ->
+  m (NESeq CommandP1)
 mapAliases f = go
   where
     go idx (x :<|| Empty) = f (idx, x)
-    go idx (x :<|| y :<| ys) = case unLineAcc (f (idx, x)) of
-      Left err -> MkLineAcc $ Left err
-      Right cmds ->
-        let newStart = idx .+. unsafeFromInt (length cmds)
-         in MkLineAcc (Right cmds) <> go newStart (y :<|| ys)
+    go idx (x :<|| y :<| ys) = do
+      cmds <- f (idx, x)
+      let newStart = idx .+. unsafeFromInt (length cmds)
+      (cmds <>) <$> go newStart (y :<|| ys)
 
 builderToPath :: Builder -> Text -> Text -> Text
 builderToPath path l v =

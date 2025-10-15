@@ -63,12 +63,9 @@ mergeConfig args mToml = do
     (Just toml) -> do
       commands <- case toml ^. #legend of
         Nothing -> pure (mkCmd <$> cmdsTextIndexed)
-        Just aliases -> case Legend.linesToMap aliases of
-          Right mp ->
-            case Legend.translateCommands mp cmdsText of
-              Right cmds -> pure cmds
-              Left err -> throwM err
-          Left err -> throwM err
+        Just aliases -> do
+          mp <- Legend.linesToMap aliases
+          Legend.translateCommands mp cmdsText
 
       coreConfig <-
         mergeCoreConfig

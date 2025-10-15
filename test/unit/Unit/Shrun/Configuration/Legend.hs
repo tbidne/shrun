@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE OverloadedLists #-}
 
 -- | Tests for Shrun.Configuration.Legend.
@@ -19,9 +20,8 @@ import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
     DuplicateKeyError (MkDuplicateKeyError),
     LegendMap,
-    linesToMap,
-    translateCommands,
   )
+import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml.Legend (KeyVal, unsafeKeyVal)
 import Shrun.Utils (indexPos)
 import Unit.Prelude
@@ -39,18 +39,16 @@ tests =
 
 linesToMapSuccessProps :: TestTree
 linesToMapSuccessProps =
-  testPropertyNamed "linesToMap success props" "successProps"
-    $ property
-    $ do
-      commands <- forAll genGoodLines
-      let result = linesToMap commands
-      case result of
-        Left err -> do
-          footnoteShow err
-          failure
-        Right legend -> do
-          annotate "Unique keys in original list should match legend"
-          verifySize commands legend
+  testProp "linesToMap success props" "successProps" $ do
+    commands <- forAll genGoodLines
+    let result = Legend.linesToMap commands
+    case result of
+      Left err -> do
+        footnoteShow err
+        failure
+      Right legend -> do
+        annotate "Unique keys in original list should match legend"
+        verifySize commands legend
 
 verifySize :: List KeyVal -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do
@@ -103,7 +101,7 @@ translateProps =
     $ do
       (legend, origCmds) <- forAll genLegendCommands
       let legendKeySet = Set.fromList $ Map.keys legend
-          maybeFinalCmds = translateCommands legend origCmds
+          maybeFinalCmds = Legend.translateCommands legend origCmds
 
       case maybeFinalCmds of
         Left err -> do
@@ -207,22 +205,21 @@ translateSpecs =
 
 translateOneCmd :: TestTree
 translateOneCmd = testCase "Should translate one command" $ do
-  let result = translateCommands legendMap ("one" :<|| [])
-      expected = Right (MkCommandP (mkIdx 1) (Just "one") "cmd1" :<|| [])
+  result <- translateCommandsSuccess legendMap ("one" :<|| [])
+  let expected = MkCommandP (mkIdx 1) (Just "one") "cmd1" :<|| []
   expected @=? result
 
 returnsNonMapCmd :: TestTree
 returnsNonMapCmd = testCase "Should return non-map command" $ do
-  let result = translateCommands legendMap ("other" :<|| [])
-      expected = Right (MkCommandP (mkIdx 1) Nothing "other" :<|| [])
+  result <- translateCommandsSuccess legendMap ("other" :<|| [])
+  let expected = MkCommandP (mkIdx 1) Nothing "other" :<|| []
   expected @=? result
 
 returnsRecursiveCmds :: TestTree
 returnsRecursiveCmds = testCase "Should return recursive commands" $ do
-  let result = translateCommands legendMap ("all" :<|| [])
-      expected =
-        Right
-          $ MkCommandP (mkIdx 1) (Just "one") "cmd1"
+  result <- translateCommandsSuccess legendMap ("all" :<|| [])
+  let expected =
+        MkCommandP (mkIdx 1) (Just "one") "cmd1"
           :<|| [ MkCommandP (mkIdx 2) (Just "two") "cmd2",
                  MkCommandP (mkIdx 3) Nothing "cmd3"
                ]
@@ -230,10 +227,9 @@ returnsRecursiveCmds = testCase "Should return recursive commands" $ do
 
 returnsRecursiveAndOtherCmds :: TestTree
 returnsRecursiveAndOtherCmds = testCase "Should return recursive commands and other" $ do
-  let result = translateCommands legendMap ("all" :<|| ["other"])
-      expected =
-        Right
-          $ MkCommandP (mkIdx 1) (Just "one") "cmd1"
+  result <- translateCommandsSuccess legendMap ("all" :<|| ["other"])
+  let expected =
+        MkCommandP (mkIdx 1) (Just "one") "cmd1"
           :<|| [ MkCommandP (mkIdx 2) (Just "two") "cmd2",
                  MkCommandP (mkIdx 3) Nothing "cmd3",
                  MkCommandP (mkIdx 4) Nothing "other"
@@ -242,14 +238,26 @@ returnsRecursiveAndOtherCmds = testCase "Should return recursive commands and ot
 
 noSplitNonKeyCmd :: TestTree
 noSplitNonKeyCmd = testCase "Should not split non-key commands" $ do
-  let result = translateCommands legendMap ("echo ,," :<|| [])
-      expected = Right (MkCommandP (mkIdx 1) Nothing "echo ,," :<|| [])
+  result <- translateCommandsSuccess legendMap ("echo ,," :<|| [])
+  let expected = MkCommandP (mkIdx 1) Nothing "echo ,," :<|| []
   expected @=? result
 
 cycleCmdFail :: TestTree
 cycleCmdFail = testCase "Should fail on cycle" $ do
-  let result = translateCommands cyclicLegend ("a" :<|| [])
-  Left (MkCyclicKeyError "a -> b -> c -> a") @=? result
+  result <- translateCommandsEx cyclicLegend ("a" :<|| [])
+  MkCyclicKeyError "a -> b -> c -> a" @=? result
+
+translateCommandsSuccess :: LegendMap -> NESeq Text -> IO (NESeq CommandP1)
+translateCommandsSuccess map cmds =
+  tryMySync (Legend.translateCommands map cmds) >>= \case
+    Left ex -> assertFailure $ "Unexpected exception: " ++ displayException ex
+    Right x -> pure x
+
+translateCommandsEx :: forall e. (Exception e) => LegendMap -> NESeq Text -> IO e
+translateCommandsEx map cmds =
+  try @_ @e (Legend.translateCommands map cmds) >>= \case
+    Left ex -> pure ex
+    Right x -> assertFailure $ "Unexpected success: " ++ show x
 
 legendMap :: LegendMap
 legendMap =
@@ -279,25 +287,23 @@ linesToMapSpecs =
 
 parseMapAndSkip :: TestTree
 parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
-  let result =
-        linesToMap
-          [ unsafeKeyVal "a" ["b", "k"],
-            unsafeKeyVal "b" ["c"]
+  result <-
+    Legend.linesToMap
+      [ unsafeKeyVal "a" ["b", "k"],
+        unsafeKeyVal "b" ["c"]
+      ]
+  let expected =
+        Map.fromList
+          [ ("a", "b" :<|| ["k"]),
+            ("b", "c" :<|| [])
           ]
-      expected =
-        Right
-          ( Map.fromList
-              [ ("a", "b" :<|| ["k"]),
-                ("b", "c" :<|| [])
-              ]
-          )
   expected @=? result
 
 duplicateKeysThrowErr :: TestTree
-duplicateKeysThrowErr =
-  testCase "Duplicate keys should throw error"
-    $ Left (MkDuplicateKeyError "a")
-    @=? linesToMap result
+duplicateKeysThrowErr = testCase "Duplicate keys should throw error" $ do
+  try (Legend.linesToMap result) >>= \case
+    Left (MkDuplicateKeyError s) -> "a" @=? s
+    Right x -> assertFailure $ "Unexpected success: " ++ show x
   where
     result =
       [ unsafeKeyVal "a" ["b"],
