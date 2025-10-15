@@ -21,8 +21,8 @@ import Shrun.Command.Types
   ( CommandIndex,
     CommandP (MkCommandP),
     CommandP1,
-    unsafeFromInt,
   )
+import Shrun.Command.Types qualified as CT
 import Shrun.Configuration.Toml.Legend (KeyVal (MkKeyVal), LegendMap)
 import Shrun.Prelude
 
@@ -97,83 +97,69 @@ instance Exception CyclicKeyError where
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 translateCommands ::
-  ( HasCallStack,
-    MonadThrow m
-  ) =>
-  LegendMap ->
-  NESeq Text ->
-  m (NESeq CommandP1)
-translateCommands mp = mapAliases (lineToCommands mp) one
-
-lineToCommands ::
   forall m.
   ( HasCallStack,
     MonadThrow m
   ) =>
   LegendMap ->
-  Tuple2 CommandIndex Text ->
+  NESeq Text ->
   m (NESeq CommandP1)
-lineToCommands mp = go Nothing Set.empty (LTBuilder.fromText "")
+translateCommands mp commands = do
+  go Nothing Set.empty (LTBuilder.fromText "") one commands
   where
     -- The stringbuilder path is a textual representation of the key path
     -- we have traversed so far, e.g., a -> b -> c
-    go :: Maybe Text -> HashSet Text -> Builder -> Tuple2 CommandIndex Text -> m (NESeq CommandP1)
-    go prevKey foundKeys path (startIdx, line) = case Map.lookup line mp of
-      -- The line isn't a key, return it.
-      Nothing -> pure $ NESeq.singleton (MkCommandP startIdx prevKey line)
-      -- The line is a key, check for cycles and recursively
-      -- call.
-      Just val -> case maybeCyclicVal of
-        Just cyclicVal ->
-          let pathTxt = builderToPath path line cyclicVal
-           in throwM $ MkCyclicKeyError pathTxt
-        Nothing -> case val of
-          -- NOTE: We have to split these cases up due to handling the prevKey
-          -- differently. We want to pass along the key name (i.e. line)
-          -- iff we have exactly one value i.e. key = val. We do _not_ want to
-          -- pass this in if we have a list i.e. key = [val1, val2, ...].
-          --
-          -- If we did, the command output would have:
-          --   [Success][all] N seconds
-          --   [Success][all] N seconds
-          --   ...
-          --
-          -- That is, we would have multiple commands sharing the same key
-          -- name, hence the output would be ambiguous. To prevent this, only
-          -- pass the name in when it is guaranteed we have a unique
-          -- key = val mapping.
-          (x :<|| IsEmpty) -> go (Just line) foundKeys' path' (startIdx, x)
-          xs -> mapAliases (go Nothing foundKeys' path') startIdx xs
-        where
-          foundKeys' = Set.insert line foundKeys
-          -- Detect if we have an intersection between previously found
-          -- keys and the values we just found. If so we have found a
-          -- cyclic error.
-          intersect = Set.intersection foundKeys (neToSet val)
-          -- If there are cycles then this should be `Just cyclicVal`
-          -- (this list should have at most one since we are detecting
-          -- the first cycle)
-          maybeCyclicVal = headMaybe $ Set.toList intersect
-          path' = path <> LTBuilder.fromText line <> " -> "
-          neToSet = Set.fromList . toList
-
-mapAliases ::
-  ( HasCallStack,
-    MonadThrow m
-  ) =>
-  ( Tuple2 CommandIndex Text ->
-    m (NESeq CommandP1)
-  ) ->
-  CommandIndex ->
-  NESeq Text ->
-  m (NESeq CommandP1)
-mapAliases f = go
-  where
-    go idx (x :<|| Empty) = f (idx, x)
-    go idx (x :<|| y :<| ys) = do
-      cmds <- f (idx, x)
-      let newStart = idx .+. unsafeFromInt (length cmds)
-      (cmds <>) <$> go newStart (y :<|| ys)
+    go :: Maybe Text -> HashSet Text -> Builder -> CommandIndex -> NESeq Text -> m (NESeq CommandP1)
+    go prevKey foundKeys path startIdx (line :<|| lines) = do
+      case Map.lookup line mp of
+        Nothing -> do
+          -- The line isn't a key. Make a singleton command and continue with the rest.
+          let s = NESeq.singleton (MkCommandP startIdx prevKey line)
+          case lines of
+            Empty -> pure s
+            l :<| ls -> (s <>) <$> go prevKey foundKeys path (CT.succ startIdx) (l :<|| ls)
+        -- The line is a key, check for cycles and recursively call.
+        Just val -> case maybeCyclicVal of
+          Just cyclicVal -> do
+            let pathTxt = builderToPath path line cyclicVal
+            throwM $ MkCyclicKeyError pathTxt
+          Nothing -> do
+            -- 1. Run on newly found commands.
+            --
+            -- NOTE: We have to split these cases up due to handling the prevKey
+            -- differently. We want to pass along the key name (i.e. line)
+            -- iff we have exactly one value i.e. key = val. We do _not_ want to
+            -- pass this in if we have a list i.e. key = [val1, val2, ...].
+            --
+            -- If we did, the command output would have:
+            --   [Success][all] N seconds
+            --   [Success][all] N seconds
+            --   ...
+            --
+            -- That is, we would have multiple commands sharing the same key
+            -- name, hence the output would be ambiguous. To prevent this, only
+            -- pass the name in when it is guaranteed we have a unique
+            -- key = val mapping.
+            let mPrevKey = if length val > 1 then Nothing else Just line
+            subCmds <- go mPrevKey foundKeys' path' startIdx val
+            -- 2. Run on the rest.
+            case lines of
+              Empty -> pure subCmds
+              l :<| ls -> do
+                let newIdx = startIdx .+. CT.unsafeFromInt (length subCmds)
+                (subCmds <>) <$> go prevKey foundKeys path newIdx (l :<|| ls)
+          where
+            foundKeys' = Set.insert line foundKeys
+            -- Detect if we have an intersection between previously found
+            -- keys and the values we just found. If so we have found a
+            -- cyclic error.
+            intersect = Set.intersection foundKeys (neToSet val)
+            -- If there are cycles then this should be `Just cyclicVal`
+            -- (this list should have at most one since we are detecting
+            -- the first cycle)
+            maybeCyclicVal = headMaybe $ Set.toList intersect
+            path' = path <> LTBuilder.fromText line <> " -> "
+            neToSet = Set.fromList . toList
 
 builderToPath :: Builder -> Text -> Text -> Text
 builderToPath path l v =
