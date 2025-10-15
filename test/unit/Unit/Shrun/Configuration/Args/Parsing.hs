@@ -7,6 +7,7 @@ import Data.Sequence qualified as Seq
 import Shrun.Configuration.Args (defaultArgs)
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.Core qualified as Core
+import Unit.Shrun.Configuration.Args.Parsing.Graph qualified as Graph
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 
 -- | Entry point for Shrun.Args specs.
@@ -16,6 +17,7 @@ tests =
     "Shrun.Configuration.Args.Parsing"
     [ defaultTests,
       configTests,
+      Graph.tests,
       Core.tests,
       commandTests
     ]

@@ -9,7 +9,8 @@ import Shrun.Configuration.Args.Parsing
       ( MkArgs,
         commands,
         configPath,
-        coreConfig
+        coreConfig,
+        edges
       ),
   )
 import Shrun.Configuration.Default (Default (def))
@@ -20,5 +21,6 @@ defaultArgs commands =
   MkArgs
     { configPath = mempty,
       coreConfig = def,
-      commands
+      commands,
+      edges = def
     }

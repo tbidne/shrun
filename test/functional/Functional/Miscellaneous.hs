@@ -18,7 +18,7 @@ specs :: IO TestArgs -> TestTree
 specs testArgs =
   testGroup
     "Miscellaneous"
-    (readStrategyDefaultTests testArgs : otherTests ++ readStrategyTests)
+    (readStrategyDefaultTests testArgs : readStrategyTests)
   where
     readStrategyTests =
       multiTestReadStrategy testsParams
@@ -32,11 +32,6 @@ specs testArgs =
         isCancelled testArgs,
         slowOutputBroken,
         formatsFileLogs testArgs
-      ]
-
-    otherTests =
-      [ cancelSequential testArgs,
-        timeoutSequential testArgs
       ]
 
 splitNewlineLogs :: ReadStrategyTestParams
@@ -192,141 +187,6 @@ isCancelled testArgs =
 
     expectedBody :: (IsString s) => s
     expectedBody = "Received cancel after running for"
-
--- NOTE:
---
--- cancelSequential and timeoutSequential _are_ parametric wrt to
--- read strategy, but they involve multiple commands w/ file logs, so we
--- can only use the 'block' read strategy, hence cannot be
--- ReadStrategyTestParams.
---
--- Essentially, we can choose one of the following:
---
---   1. Test file logs.
---   2. Test read strategy.
---
--- As these tests have nothing to do with read strategy, we choose 1.
-
-cancelSequential :: IO TestArgs -> TestTree
-cancelSequential testArgs = testCase desc $ do
-  outFile <- (</> [osp|cancelSequential.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--notify-action",
-            "all",
-            "--notify-system",
-            notifySystemArg,
-            "--console-log-command",
-            "--command-graph",
-            "1 -> 3, 3 -> 4",
-            "sleep 4",
-            "sleep 8",
-            "sleep 3",
-            "sleep 5"
-          ]
-
-  (resultsConsole, notes) <- runCancelled 2 args
-
-  V.verifyExpected resultsConsole expected
-
-  fileResults <- readLogFile outFile
-  V.verifyExpected fileResults expected
-
-  case notes of
-    [n] -> do
-      "" @=? n ^. #body
-
-      let summary = n ^. (#summary % #unNotifyMessage)
-          err = "Unexpected summary: " ++ unpack summary
-
-      assertBool err $ expectedBody `T.isPrefixOf` summary
-
-      NotifyTimeoutSeconds 10 @=? n ^. #timeout
-      Critical @=? n ^. #urgency
-    other ->
-      assertFailure
-        $ "Expected exactly one note, received: "
-        ++ show other
-  where
-    desc = "Shrun is cancelled with sequential tasks"
-
-    -- NOTE: [Cancelled tasks Warn vs. Fatal]
-    --
-    -- These are virtually identical to timeoutSequential, the difference
-    -- being warn vs. fatal.
-    expected =
-      [ waitingPrefix,
-        "  - sleep 3",
-        "  - sleep 5",
-        runningPrefix,
-        "  - sleep 4",
-        "  - sleep 8",
-        withKilledPrefix expectedBody
-      ]
-
-    expectedBody :: (IsString s) => s
-    expectedBody = "Received cancel after running for"
-
-timeoutSequential :: IO TestArgs -> TestTree
-timeoutSequential testArgs = testCase desc $ do
-  outFile <- (</> [osp|timeoutSequential.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--notify-action",
-            "all",
-            "--notify-system",
-            notifySystemArg,
-            "--console-log-command",
-            "--command-graph",
-            "1 -> 3, 3 -> 4",
-            "sleep 4",
-            "sleep 8",
-            "sleep 3",
-            "sleep 5",
-            "-t",
-            "2"
-          ]
-  (resultsConsole, notes) <- runAllExitFailure args
-  V.verifyExpected resultsConsole expected
-
-  fileResults <- readLogFile outFile
-  V.verifyExpected fileResults expected
-
-  case notes of
-    [n] -> do
-      "3 seconds" @=? n ^. #body
-
-      let summary = n ^. (#summary % #unNotifyMessage)
-          err = "Unexpected summary: " ++ unpack summary
-
-      assertBool err $ "Shrun Finished" `T.isPrefixOf` summary
-
-      NotifyTimeoutSeconds 10 @=? n ^. #timeout
-      Critical @=? n ^. #urgency
-    other ->
-      assertFailure
-        $ "Expected exactly one note, received: "
-        ++ show other
-  where
-    desc = "Shrun times out with sequential tasks"
-
-    -- see NOTE: [Cancelled tasks Warn vs. Fatal]
-    expected =
-      [ waitingPrefix,
-        "  - sleep 3",
-        "  - sleep 5",
-        runningPrefix,
-        "  - sleep 4",
-        "  - sleep 8",
-        timedOut,
-        withFinishedPrefix "3 seconds"
-      ]
 
 -- NOTE: This used to be in Examples (subsequently Examples.ConsoleLogging),
 -- as it fit in alongside the other tests. However, we prefer those tests to

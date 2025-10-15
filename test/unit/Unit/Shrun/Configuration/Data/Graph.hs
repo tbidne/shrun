@@ -13,7 +13,7 @@ import Shrun.Command.Types
     toVertex,
   )
 import Shrun.Configuration.Data.Graph
-  ( CommandGraphArgs (CommandGraphArgsEdges, CommandGraphArgsSequential),
+  ( EdgeArgs (EdgeArgsList, EdgeArgsSequential),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as CDG
@@ -146,7 +146,7 @@ testSequential = testProp desc "testSequential" $ do
   commands <- forAll genCmds
   -- Try/catch because exceptions screw with hedgehog's nice output.
   cdg <-
-    tryMySync (CDG.mkGraph CommandGraphArgsSequential commands) >>= \case
+    tryMySync (CDG.mkGraph EdgeArgsSequential commands) >>= \case
       Right cg -> pure cg
       Left ex -> do
         annotate $ "Exception creating graph: " ++ displayException ex
@@ -209,7 +209,7 @@ runFailure :: String -> [(Int, Int)] -> NESeq CommandP1 -> IO ()
 runFailure expected edgeInts cmds =
   -- Specifically catching the TextException to avoid callstacks for GHC 9.10.
   -- We may want to replace this with a specific exception at some point.
-  try (CDG.mkGraph (CommandGraphArgsEdges edges) cmds) >>= \case
+  try (CDG.mkGraph (EdgeArgsList edges) cmds) >>= \case
     Right g -> assertFailure $ "Expected failure, received success: " ++ show g
     Left (MkStringException str) -> expected @=? str
   where

@@ -38,9 +38,11 @@ import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse))
 import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.Parsing.Core qualified as Core
+import Shrun.Configuration.Args.Parsing.Graph qualified as Graph
 import Shrun.Configuration.Args.Parsing.TH qualified as TH
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Core (CoreConfigArgs)
+import Shrun.Configuration.Data.Graph (EdgeArgs)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 import System.Info qualified as Info
@@ -52,7 +54,9 @@ data Args = MkArgs
     -- | Core config.
     coreConfig :: CoreConfigArgs,
     -- | List of commands.
-    commands :: NESeq Text
+    commands :: NESeq Text,
+    -- | Command dependencies.
+    edges :: WithDisabled EdgeArgs
   }
   deriving stock (Eq, Show)
 
@@ -60,24 +64,32 @@ instance
   (k ~ A_Lens, a ~ WithDisabled OsPath, b ~ WithDisabled OsPath) =>
   LabelOptic "configPath" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3) ->
-    fmap (\b -> MkArgs b a2 a3) (f a1)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
+    fmap (\b -> MkArgs b a2 a3 a4) (f a1)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ CoreConfigArgs, b ~ CoreConfigArgs) =>
   LabelOptic "coreConfig" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3) ->
-    fmap (\b -> MkArgs a1 b a3) (f a2)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
+    fmap (\b -> MkArgs a1 b a3 a4) (f a2)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ NESeq Text, b ~ NESeq Text) =>
   LabelOptic "commands" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3) ->
-    fmap (\b -> MkArgs a1 a2 b) (f a3)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
+    fmap (\b -> MkArgs a1 a2 b a4) (f a3)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ WithDisabled EdgeArgs, b ~ WithDisabled EdgeArgs) =>
+  LabelOptic "edges" k Args Args a b
+  where
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
+    fmap (\b -> MkArgs a1 a2 a3 b) (f a4)
   {-# INLINE labelOptic #-}
 
 -- | 'ParserInfo' type for parsing 'Args'.
@@ -119,10 +131,10 @@ parserInfoArgs =
               "$ shrun cmd1 cmd2 cmd3"
             ],
           mkExample
-            [ "# Using --command-graph to specify command dependencies. Commands cmd1 and",
+            [ "# Using --edges to specify command dependencies. Commands cmd1 and",
               "# cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish",
               "# successfully.",
-              "$ shrun --command-graph \"1 -> 3, 2 -> 3\" cmd1 cmd2 cmd3"
+              "$ shrun --edges \"1 -> 3, 2 -> 3\" cmd1 cmd2 cmd3"
             ],
           mkExample
             [ "# Using config file aliases i.e. runs 'npm run build', 'javac ...', and",
@@ -151,13 +163,15 @@ argsParser = do
       <**> defaultConfig
       <**> version
       <**> OA.helper
+  edges <- Graph.edgesParser
   commands <- commandsParser
 
   pure
     $ MkArgs
       { configPath,
         coreConfig,
-        commands
+        commands,
+        edges
       }
 
 version :: Parser (a -> a)

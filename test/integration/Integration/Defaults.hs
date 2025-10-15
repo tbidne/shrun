@@ -66,7 +66,6 @@ import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        commandGraph,
         commandLogging,
         commonLogging,
         consoleLogging,
@@ -112,6 +111,7 @@ import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
+        commandGraph,
         commands,
         coreConfig
       ),
@@ -183,8 +183,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { commandGraph = Graph.mkTrivialGraph commands,
-                timeout = Just 3_600,
+              { timeout = Just 3_600,
                 init = Just ". some file",
                 commonLogging =
                   MkCommonLoggingP
@@ -230,6 +229,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                         timeout = NotifyTimeoutNever
                       }
               },
+          commandGraph = Graph.mkTrivialGraph commands,
           commands
         }
     commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []
@@ -298,8 +298,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { commandGraph = Graph.mkTrivialGraph commands,
-                timeout = Just 10,
+              { timeout = Just 10,
                 init = Just ". another file",
                 commonLogging =
                   MkCommonLoggingP
@@ -345,6 +344,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                         timeout = NotifyTimeoutSeconds 10
                       }
               },
+          commandGraph = Graph.mkTrivialGraph commands,
           commands
         }
     commands = MkCommandP (mkIdx 1) Nothing "cmd" :<|| []

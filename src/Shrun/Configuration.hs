@@ -6,13 +6,16 @@ where
 import Shrun.Command.Types (CommandP (MkCommandP), fromPositive)
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Core (mergeCoreConfig)
+import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
+        commandGraph,
         commands,
         coreConfig
       ),
   )
+import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Prelude
@@ -49,18 +52,22 @@ mergeConfig args mToml = do
           (args ^. #coreConfig)
           Nothing
 
+      commandGraph <- Graph.mkGraph cliEdgeArgs commands
+
       pure
         $ MkMergedConfig
           { coreConfig,
+            commandGraph,
             commands
           }
     (Just toml) -> do
       commands <- case toml ^. #legend of
-        Nothing -> pure $ mkCmd <$> cmdsTextIndexed
+        Nothing -> pure (mkCmd <$> cmdsTextIndexed)
         Just aliases -> case Legend.linesToMap aliases of
-          Right mp -> case Legend.translateCommands mp cmdsText of
-            Right cmds -> pure cmds
-            Left err -> throwM err
+          Right mp ->
+            case Legend.translateCommands mp cmdsText of
+              Right cmds -> pure cmds
+              Left err -> throwM err
           Left err -> throwM err
 
       coreConfig <-
@@ -69,9 +76,12 @@ mergeConfig args mToml = do
           (args ^. #coreConfig)
           (Just $ toml ^. #coreConfig)
 
+      commandGraph <- Graph.mkGraph cliEdgeArgs commands
+
       pure
         $ MkMergedConfig
           { coreConfig,
+            commandGraph,
             commands
           }
   where
@@ -80,4 +90,7 @@ mergeConfig args mToml = do
     cmdsTextIndexed = Utils.indexPos (args ^. #commands)
 
     mkCmd (i, t) = MkCommandP (fromPositive i) Nothing t
+
+    wEdgeArgs = args ^. #edges
+    cliEdgeArgs = WD.fromDefault wEdgeArgs
 {-# INLINEABLE mergeConfig #-}

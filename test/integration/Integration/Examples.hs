@@ -60,7 +60,6 @@ import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
 import Shrun.Configuration.Data.Core
   ( CoreConfigP
       ( MkCoreConfigP,
-        commandGraph,
         commandLogging,
         commonLogging,
         consoleLogging,
@@ -72,7 +71,7 @@ import Shrun.Configuration.Data.Core
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Data.MergedConfig
-  ( MergedConfig (MkMergedConfig, commands, coreConfig),
+  ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
   )
 import Shrun.Configuration.Data.Notify
   ( NotifyP (MkNotifyP, action, system, timeout),
@@ -110,8 +109,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { commandGraph = Graph.mkTrivialGraph commands,
-                timeout = Just 20,
+              { timeout = Just 20,
                 init = Just ". examples/bashrc",
                 commonLogging =
                   MkCommonLoggingP
@@ -144,6 +142,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                         timeout = NotifyTimeoutNever
                       }
               },
+          commandGraph = Graph.mkTrivialGraph commands,
           commands
         }
     commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []

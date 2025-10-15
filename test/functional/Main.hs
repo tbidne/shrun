@@ -7,6 +7,7 @@ import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
 import Functional.Buffering qualified as Buffering
 import Functional.Examples qualified as Examples
+import Functional.Graph qualified as Graph
 import Functional.Miscellaneous qualified as Miscellaneous
 import Functional.Notify qualified as Notify
 import Functional.Prelude
@@ -40,6 +41,7 @@ specs args = do
   testGroup
     "Functional Tests"
     [ Examples.specs args,
+      Graph.tests args,
       Buffering.specs,
       Miscellaneous.specs args,
       Notify.specs

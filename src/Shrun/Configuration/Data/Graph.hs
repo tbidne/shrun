@@ -2,7 +2,7 @@
 
 module Shrun.Configuration.Data.Graph
   ( -- * Args
-    CommandGraphArgs (..),
+    EdgeArgs (..),
     Edges (..),
 
     -- * Graph
@@ -44,7 +44,7 @@ import Shrun.Prelude
 
 type CommandGraphF :: ConfigPhase -> Type
 type family CommandGraphF p where
-  CommandGraphF ConfigPhaseArgs = WithDisabled CommandGraphArgs
+  CommandGraphF ConfigPhaseArgs = WithDisabled EdgeArgs
   CommandGraphF ConfigPhaseToml = ()
   CommandGraphF ConfigPhaseMerged = CommandGraph
   CommandGraphF ConfigPhaseEnv = CommandGraph
@@ -52,15 +52,15 @@ type family CommandGraphF p where
 -- | CLI command graph. The default instance is a "trivial graph", in the
 -- sense that all commands are root nodes without any edges, hence normal
 -- behavior.
-data CommandGraphArgs
+data EdgeArgs
   = -- | Sequential i.e. a linear graph.
-    CommandGraphArgsSequential
+    EdgeArgsSequential
   | -- | Explicit edges.
-    CommandGraphArgsEdges Edges
+    EdgeArgsList Edges
   deriving stock (Eq, Show)
 
-instance Default CommandGraphArgs where
-  def = CommandGraphArgsEdges def
+instance Default EdgeArgs where
+  def = EdgeArgsList def
 
 -- | Dependency edges are supplied by the user on the CLI.
 newtype Edges = MkEdges {unEdges :: List (Tuple2 CommandIndex CommandIndex)}
@@ -105,7 +105,7 @@ mkGraph ::
   ( HasCallStack,
     MonadThrow m
   ) =>
-  CommandGraphArgs ->
+  EdgeArgs ->
   NESeq CommandP1 ->
   m CommandGraph
 mkGraph cdgArgs cmds = do
@@ -148,8 +148,8 @@ mkGraph cdgArgs cmds = do
   pure cdg
   where
     edges = case cdgArgs of
-      CommandGraphArgsEdges es -> es
-      CommandGraphArgsSequential -> mkSequentialEdges cmds
+      EdgeArgsList es -> es
+      EdgeArgsSequential -> mkSequentialEdges cmds
 
     (graph, fromV, idxToV) = G.graphFromEdges cmdEdges
 

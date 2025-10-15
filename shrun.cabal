@@ -214,6 +214,7 @@ test-suite unit
     Unit.Shrun.Configuration.Args.Parsing.ConsoleLogging
     Unit.Shrun.Configuration.Args.Parsing.Core
     Unit.Shrun.Configuration.Args.Parsing.FileLogging
+    Unit.Shrun.Configuration.Args.Parsing.Graph
     Unit.Shrun.Configuration.Args.Parsing.Notify
     Unit.Shrun.Configuration.Args.Parsing.TestUtils
     Unit.Shrun.Configuration.Data.CommandLogging.ReadSize
@@ -285,6 +286,7 @@ test-suite functional
     Functional.Examples.Core
     Functional.Examples.FileLogging
     Functional.Examples.Notify
+    Functional.Graph
     Functional.Miscellaneous
     Functional.Notify
     Functional.Prelude

@@ -1,7 +1,8 @@
 {-# LANGUAGE MonadComprehensions #-}
 
 module Shrun.Configuration.Args.Parsing.Graph
-  ( commandGraphParser,
+  ( edgesParser,
+    parseEdges,
   )
 where
 
@@ -13,9 +14,9 @@ import Options.Applicative qualified as OA
 import Shrun.Command.Types.Internal (CommandIndex (MkCommandIndex), range)
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Graph
-  ( CommandGraphArgs
-      ( CommandGraphArgsEdges,
-        CommandGraphArgsSequential
+  ( EdgeArgs
+      ( EdgeArgsList,
+        EdgeArgsSequential
       ),
     Edges (MkEdges),
   )
@@ -32,15 +33,15 @@ import Text.Megaparsec.Char qualified as MPC
 import Text.Megaparsec.Char.Lexer qualified as Lex
 import Text.Read qualified as TR
 
-commandGraphParser :: Parser (WithDisabled CommandGraphArgs)
-commandGraphParser = Utils.withDisabledParser mainParser "command-graph"
+edgesParser :: Parser (WithDisabled EdgeArgs)
+edgesParser = Utils.withDisabledParser mainParser "edges"
   where
     mainParser =
       OA.optional
         $ OA.option
           readEdges
           ( mconcat
-              [ OA.long "command-graph",
+              [ OA.long "edges",
                 Utils.mkHelp mainHelpTxt,
                 OA.metavar "(GRAPH_STR | sequential)"
               ]
@@ -48,25 +49,31 @@ commandGraphParser = Utils.withDisabledParser mainParser "command-graph"
     mainHelpTxt =
       mconcat
         [ "Comma separated list, specifying command dependencies, based on ",
-          "their order. For instance, --command-graph '1 -> 3, 2 -> 3' ",
+          "their order. For instance, --edges '1 -> 3, 2 -> 3' ",
           "will require commands 1 and 2 to complete before 3 is run. The ",
           "literal 'sequential' will run all commands sequentially."
         ]
 
-readEdges :: ReadM CommandGraphArgs
+readEdges :: ReadM EdgeArgs
 readEdges = do
   txt <- OA.str
+  case parseEdges txt of
+    Left err -> fail err
+    Right cga -> pure cga
+
+parseEdges :: Text -> Either String EdgeArgs
+parseEdges txt = do
   let stripped = T.stripStart txt
   if T.null stripped
-    then fail $ "Received empty input: '" ++ unpack txt ++ "'"
+    then Left $ "Received empty input: '" ++ unpack txt ++ "'"
     else case MP.parse (MP.try parseSequential <|> parseExtendedEdges) "" stripped of
-      Left err -> fail $ MP.errorBundlePretty err
+      Left err -> Left $ MP.errorBundlePretty err
       Right cga -> pure cga
 
 type MParser a = Parsec FatalError Text a
 
-parseSequential :: MParser CommandGraphArgs
-parseSequential = MPC.string "sequential" $> CommandGraphArgsSequential
+parseSequential :: MParser EdgeArgs
+parseSequential = MPC.string "sequential" $> EdgeArgsSequential
 
 -- | Parses at least one (extended-)edge. Examples with the edge results:
 --
@@ -88,16 +95,16 @@ parseSequential = MPC.string "sequential" $> CommandGraphArgsSequential
 --   - (4, 5)
 --   - (4, 6)
 -- @
-parseExtendedEdges :: MParser CommandGraphArgs
+parseExtendedEdges :: MParser EdgeArgs
 parseExtendedEdges = do
-  -- NOTE: If the user specifies --command-graph we require that there is at
+  -- NOTE: If the user specifies --edges we require that there is at
   -- least one edge (or 'sequential'). Note that this is _not_ reflected in
   -- the type, as we use the edges monoid instance (empty list) to reflect
   -- the normal case: No edges means all commands are run concurrently.
   e1 <- parseOneExtendedEdge
   -- zero or more ', <edge>'
   es <- many (parseComma *> parseOneExtendedEdge)
-  pure $ CommandGraphArgsEdges $ MkEdges $ join (toList e1 : fmap toList es)
+  pure $ EdgeArgsList $ MkEdges $ join (toList e1 : fmap toList es)
 
 -- | A single graph token.
 data GraphToken

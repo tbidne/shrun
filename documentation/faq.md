@@ -169,10 +169,10 @@ $ shrun cmd1 cmd2 # runs both concurrently, not what we want!
 
 The workaround would be to use `&&` manually e.g. `shrun "cmd1 && cmd2"` or `shrun cmd1 && shrun cmd2`. This works, but it means we lose the benefits of having `shrun` manage individual commands (logging, notifications). It is especially annoying if we have several commands that can all be run concurrently except for one, which spoils the whole thing.
 
-The `--command-graph` option is introduced for this reason. It allows us to specify dependencies between commands via a numeric index, which is based on the command's left-to-right appearance in the CLI. For example, the above scenario would be run as:
+The `--edges` option is introduced for this reason. It allows us to specify dependencies between commands via a numeric index, which is based on the command's left-to-right appearance in the CLI. For example, the above scenario would be run as:
 
 ```sh
-$ shrun --command-graph "1 -> 2" cmd1 cmd2
+$ shrun --edges "1 -> 2" cmd1 cmd2
 ```
 
 This declares that the second command should be run only after the first command successfully finishes. If it fails, then the command will not be run at all.
@@ -187,10 +187,10 @@ We allow arbitrarily many comma-separated dependencies, including:
 For instance:
 
 ```sh
-$ shrun --command-graph "{1,2..4} -> 7 .. 9 -> {10, 11}, 12 -> 13 -> 16" cmd1 cmd2 cmd3 ...
+$ shrun --edges "{1,2..4} -> 7 .. 9 -> {10, 11}, 12 -> 13 -> 16" cmd1 cmd2 cmd3 ...
 
 # The above is equivalent to:
-$ shrun --command-graph "
+$ shrun --edges "
   1 -> 7, 2 -> 7, 3 -> 7, 4 -> 7,
   7 -> 8, 8 -> 9,
   9 -> 10, 9 -> 11,
@@ -210,7 +210,7 @@ This means:
 We also allow the literal `sequential`, which declares all commands will be run sequentially. That is,
 
 ```sh
-$ shrun --command-graph sequential cmd1 cmd2 cmd3 ...
+$ shrun --edges sequential cmd1 cmd2 cmd3 ...
 ```
 
 - Command 1 will start immediately.
@@ -236,7 +236,7 @@ $ shrun --command-graph sequential cmd1 cmd2 cmd3 ...
 >     ```
 >
 >   the commands will be indexed as `cmd1` `cmd2` `cmd3` `cmd4` `cmd5`. Hence
->   `--command-graph` indices need to be given in terms of the actual command,
+>   `--edges` indices need to be given in terms of the actual command,
 >   not any aliases.
 >
 > - Dependencies must be "well-behaved" e.g. all vertices must exist, be

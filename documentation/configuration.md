@@ -98,15 +98,15 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 ### Command Graph
 
-**Arg:** `--command-graph (GRAPH_STR | sequential)`
+**Arg:** `--edges (GRAPH_STR | sequential)`
 
-**Description:** Comma separated list, specifying command dependencies, based on their order. For instance, `--command-graph '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
+**Description:** Comma separated list, specifying command dependencies, based on their order. For instance, `--edges '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
 
 **Example:**
 
 <pre>
 <code># Normally, the 'sleep 1' command would start and finish first</code>
-<code><span style="color: #ff79c6">$</span><span> shrun --init --command-graph '1 -> 3, 2 -> 3' "sleep 2" "sleep 2" "sleep 1" "sleep 3"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --init --edges '1 -> 3, 2 -> 3' "sleep 2" "sleep 2" "sleep 1" "sleep 3"</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #69ff94">[Success][sleep 3] 3 seconds</span>

@@ -94,6 +94,8 @@ data Env r = MkEnv
     -- | Holds the anyError flag, signaling if any command exited with an
     -- error.
     anyError :: TVar Bool,
+    -- | Command graph.
+    commandGraph :: CommandGraph,
     -- | Holds notification environment.
     -- | Commands
     commands :: NESeq CommandP1,
@@ -111,9 +113,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkEnv b a2 a3 a4 a5 a6)
+          (\b -> MkEnv b a2 a3 a4 a5 a6 a7)
           (f a1)
   {-# INLINE labelOptic #-}
 
@@ -126,9 +128,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkEnv a1 b a3 a4 a5 a6)
+          (\b -> MkEnv a1 b a3 a4 a5 a6 a7)
           (f a2)
   {-# INLINE labelOptic #-}
 
@@ -141,9 +143,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkEnv a1 a2 b a4 a5 a6)
+          (\b -> MkEnv a1 a2 b a4 a5 a6 a7)
           (f a3)
   {-# INLINE labelOptic #-}
 
@@ -156,10 +158,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 b a5 a6)
+          (\b -> MkEnv a1 a2 a3 b a5 a6 a7)
           (f a4)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ CommandGraph,
+    b ~ CommandGraph
+  ) =>
+  LabelOptic "commandGraph" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 a4 b a6 a7)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 instance
@@ -171,10 +188,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 a4 b a6)
-          (f a5)
+          (\b -> MkEnv a1 a2 a3 a4 a5 b a7)
+          (f a6)
   {-# INLINE labelOptic #-}
 
 instance
@@ -186,10 +203,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 a4 a5 b)
-          (f a6)
+          (\b -> MkEnv a1 a2 a3 a4 a5 a6 b)
+          (f a7)
   {-# INLINE labelOptic #-}
 
 instance HasTimeout (Env r) where
@@ -215,7 +232,7 @@ instance HasFileLogging (Env r) where
   getFileLogging = view (#config % #fileLogging)
 
 instance HasCommands (Env r) where
-  getCommandDepGraph = view (#config % #commandGraph)
+  getCommandDepGraph = view #commandGraph
 
   getCommandStatus = view #completedCommands
 

@@ -30,6 +30,7 @@ import Shrun.Configuration.Env.Types
   ( Env
       ( MkEnv,
         anyError,
+        commandGraph,
         commands,
         completedCommands,
         config,
@@ -170,6 +171,7 @@ fromMergedConfig cfg onEnv = do
               anyError,
               completedCommands,
               consoleLogQueue,
+              commandGraph,
               commands,
               timerRegion
             }
@@ -177,6 +179,7 @@ fromMergedConfig cfg onEnv = do
     onEnv env
   where
     commands = cfg ^. #commands
+    commandGraph = cfg ^. #commandGraph
 
     commandStatusInit =
       commands <&> \c ->
