@@ -163,8 +163,6 @@ translateMap mp initKey = do
   (cmds, edges, _) <- go Nothing Set.empty (LTBuilder.fromText "") one commands
   pure (cmds, Graph.sortEdges edges)
   where
-    -- The stringbuilder path is a textual representation of the key path
-    -- we have traversed so far, e.g., a -> b -> c
     go ::
       -- Previous key, for handling the key on the Command.
       Maybe Text ->
@@ -176,7 +174,7 @@ translateMap mp initKey = do
       -- Starting index for the next command.
       CommandIndex ->
       -- List to process: tuple of (command or alias) text, along with
-      -- _original_ index, for repaining any edges that reference this text,
+      -- _original_ index, for repairing any edges that reference this text,
       -- after alias expansion changes the indexes.
       NESeq (Tuple2 CommandIndex Text) ->
       -- Accumulator of (NESeq CommandP1, Edges, Map Idx (Idx, Idx)). We
