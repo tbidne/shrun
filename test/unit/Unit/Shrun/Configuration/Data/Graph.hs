@@ -205,7 +205,7 @@ testSequential = testProp desc "testSequential" $ do
   where
     desc = "Creates sequenced indexes"
 
-runFailure :: String -> [(Int, Int)] -> NESeq CommandP1 -> IO ()
+runFailure :: String -> Seq (Int, Int) -> NESeq CommandP1 -> IO ()
 runFailure expected edgeInts cmds =
   -- Specifically catching the TextException to avoid callstacks for GHC 9.10.
   -- We may want to replace this with a specific exception at some point.

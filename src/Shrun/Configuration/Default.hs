@@ -16,3 +16,6 @@ instance Default (Maybe a) where
 
 instance Default [a] where
   def = []
+
+instance Default (Seq a) where
+  def = Empty

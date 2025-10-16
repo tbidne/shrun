@@ -4,6 +4,7 @@ module Shrun.Configuration.Data.Graph
   ( -- * Args
     EdgeArgs (..),
     Edges (..),
+    Edge,
 
     -- * Graph
     CommandGraph (..),
@@ -20,6 +21,7 @@ import Data.HashMap.Strict qualified as HMap
 import Data.HashSet qualified as HSet
 import Data.List qualified as L
 import Data.Sequence qualified as Seq
+import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Set qualified as Set
 import Data.Text qualified as T
 import GHC.Exts (IsList)
@@ -62,15 +64,18 @@ data EdgeArgs
 instance Default EdgeArgs where
   def = EdgeArgsList def
 
+--- | An edge between two indices.
+type Edge = Tuple2 CommandIndex CommandIndex
+
 -- | Dependency edges are supplied by the user on the CLI.
-newtype Edges = MkEdges {unEdges :: List (Tuple2 CommandIndex CommandIndex)}
+newtype Edges = MkEdges {unEdges :: Seq Edge}
   deriving newtype (Default, IsList, Monoid, Semigroup)
   deriving stock (Eq, Show)
 
 instance
   ( k ~ An_Iso,
-    a ~ List (Tuple2 CommandIndex CommandIndex),
-    b ~ List (Tuple2 CommandIndex CommandIndex)
+    a ~ Seq Edge,
+    b ~ Seq Edge
   ) =>
   LabelOptic "unEdges" k Edges Edges a b
   where
@@ -172,7 +177,7 @@ mkGraph cdgArgs cmds = do
     (edgeMap, nonRoots) =
       foldl' mkEdgeMap (HMap.empty, Set.empty) (edges ^. #unEdges)
 
-    mkEdgeMap :: EdgeAcc -> Tuple2 CommandIndex CommandIndex -> EdgeAcc
+    mkEdgeMap :: EdgeAcc -> Edge -> EdgeAcc
     mkEdgeMap (mp, nr) (s, d) = case HMap.lookup s mp of
       Nothing -> (HMap.insert s [d] mp, Set.insert d nr)
       Just es -> (HMap.insert s (d : es) mp, Set.insert d nr)
@@ -309,14 +314,14 @@ mkSequentialEdges =
   MkEdges
     . dropLast
     . fmap toEdge
-    . L.sortOn MkCommandOrd
-    . toList
+    . Seq.sortOn MkCommandOrd
+    . NESeq.toSeq
   where
     toEdge (MkCommandP idx _ _) = (idx, Command.Types.succ idx)
 
-    dropLast [] = []
-    dropLast [_] = []
-    dropLast (x : ys) = x : dropLast ys
+    dropLast Empty = Empty
+    dropLast (_ :<| Empty) = Empty
+    dropLast (x :<| ys) = x :<| dropLast ys
 
 instance
   ( k ~ A_Lens,

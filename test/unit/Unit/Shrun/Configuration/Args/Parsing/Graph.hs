@@ -132,7 +132,7 @@ testCommandGraphComplex =
           (9, 11)
         ]
 
-mkEdges :: List (Tuple2 Int Int) -> EdgeArgs
+mkEdges :: Seq (Tuple2 Int Int) -> EdgeArgs
 mkEdges =
   EdgeArgsList
     . MkEdges

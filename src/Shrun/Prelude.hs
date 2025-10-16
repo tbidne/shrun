@@ -28,6 +28,8 @@ module Shrun.Prelude
     convertIntegral,
     unsafeConvertIntegral,
     neToList,
+    listToSeq,
+    neseqToSeq,
     unsafeListToNE,
     unsafeListToNESeq,
 
@@ -164,6 +166,7 @@ import Data.Ord as X (Ord ((<), (<=), (>), (>=)), Ordering)
 import Data.Proxy as X (Proxy (Proxy))
 import Data.Semigroup as X (Semigroup ((<>)))
 import Data.Sequence as X (Seq ((:<|), (:|>)), pattern Empty)
+import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Set as X (Set)
@@ -414,11 +417,17 @@ type Tuple4 = (,,,)
 neToList :: NonEmpty a -> List a
 neToList = NE.toList
 
+neseqToSeq :: NESeq a -> Seq a
+neseqToSeq = NESeq.toSeq
+
 unsafeListToNE :: (HasCallStack) => List a -> NonEmpty a
 unsafeListToNE = NE.fromList
 
 unsafeListToNESeq :: (HasCallStack) => List a -> NESeq a
 unsafeListToNESeq = NESeq.fromList . NE.fromList
+
+listToSeq :: List a -> Seq a
+listToSeq = Seq.fromList
 
 -- | Like 'fromIntegral', except:
 --

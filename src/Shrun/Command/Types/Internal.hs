@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Internal module. Take care as usage can violate invariants.
@@ -35,10 +36,10 @@ instance
 succ :: CommandIndex -> CommandIndex
 succ = (.+. one)
 
-range :: CommandIndex -> CommandIndex -> Either String (NonEmpty CommandIndex)
+range :: CommandIndex -> CommandIndex -> Either String (NESeq CommandIndex)
 range (MkCommandIndex (MkPositive lower)) (MkCommandIndex (MkPositive upper)) =
   if lower <= upper
-    then Right $ MkCommandIndex . unsafePositive <$> lower :| [lower + 1 .. upper]
+    then Right $ MkCommandIndex . unsafePositive <$> lower :<|| [lower + 1 .. upper]
     else
       Left
         $ mconcat

@@ -7,14 +7,15 @@ module Shrun.Configuration.Args.Parsing.Graph
 where
 
 import Data.Char qualified as Ch
-import Data.List.NonEmpty qualified as NE
+import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Options.Applicative (Parser, ReadM)
 import Options.Applicative qualified as OA
 import Shrun.Command.Types.Internal (CommandIndex (MkCommandIndex), range)
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Graph
-  ( EdgeArgs
+  ( Edge,
+    EdgeArgs
       ( EdgeArgsList,
         EdgeArgsSequential
       ),
@@ -104,7 +105,7 @@ parseExtendedEdges = do
   e1 <- parseOneExtendedEdge
   -- zero or more ', <edge>'
   es <- many (parseComma *> parseOneExtendedEdge)
-  pure $ EdgeArgsList $ MkEdges $ join (toList e1 : fmap toList es)
+  pure $ EdgeArgsList $ MkEdges $ join (neseqToSeq e1 :<| fmap neseqToSeq (listToSeq es))
 
 -- | A single graph token.
 data GraphToken
@@ -114,13 +115,10 @@ data GraphToken
     -- - '1'
     -- - '{1}
     -- - '{1, 3..5}'
-    GraphIndices (NonEmpty CommandIndex)
+    GraphIndices (NESeq CommandIndex)
   | -- | An arrow between edges i.e. '->'
     GraphArrow
   deriving stock (Show)
-
--- | An edge between two indices.
-type Edge = Tuple2 CommandIndex CommandIndex
 
 -- | Parses one (possibly extended) edge. That is, we allow > 1 arrows i.e.
 --
@@ -130,7 +128,7 @@ type Edge = Tuple2 CommandIndex CommandIndex
 -- @
 --
 -- where @<indices>@ can be either a single index or an index set.
-parseOneExtendedEdge :: MParser (NonEmpty Edge)
+parseOneExtendedEdge :: MParser (NESeq Edge)
 parseOneExtendedEdge = lexeme $ do
   -- Some index (set) e.g. '1', '{1,3..5}', '2..4'.
   node <- parseNode
@@ -139,21 +137,21 @@ parseOneExtendedEdge = lexeme $ do
   -- can actually be self-contained, if it is an arrow range
   -- (e.g. '1..3').
   nodes <- many parseEdgeDest
-  let tokens = toList node ++ (nodes >>= toList)
+  let tokens = neseqToSeq node <> (listToSeq nodes >>= neseqToSeq)
   mkEdges tokens >>= \case
-    [] -> fail "Empty edges"
-    (e : es) -> pure $ e :| es
+    Empty -> fail "Empty edges"
+    (e :<| es) -> pure $ e :<|| es
   where
     -- Create edges between consecutive token sets.
-    mkEdges :: List GraphToken -> MParser (List Edge)
+    mkEdges :: Seq GraphToken -> MParser (Seq Edge)
     mkEdges tokens = go tokens
       where
-        go :: List GraphToken -> MParser (List Edge)
+        go :: Seq GraphToken -> MParser (Seq Edge)
         -- A single node: fine, presumably the end.
-        go [GraphIndices _] = pure []
+        go (GraphIndices _ :<| Empty) = pure Empty
         -- source -> dest; make edge(s).
-        go (GraphIndices s : GraphArrow : GraphIndices d : rest) =
-          (toList (cartProd s d) ++) <$> go (GraphIndices d : rest)
+        go (GraphIndices s :<| GraphArrow :<| GraphIndices d :<| rest) =
+          (neseqToSeq (cartProd s d) <>) <$> go (GraphIndices d :<| rest)
         go rest =
           fail
             $ mconcat
@@ -163,13 +161,14 @@ parseOneExtendedEdge = lexeme $ do
                 render tokens
               ]
 
-    cartProd :: NonEmpty CommandIndex -> NonEmpty CommandIndex -> NonEmpty Edge
+    cartProd :: NESeq CommandIndex -> NESeq CommandIndex -> NESeq Edge
     cartProd srcs dests = [(s, d) | s <- srcs, d <- dests]
 
-    render :: List GraphToken -> String
+    render :: Seq GraphToken -> String
     render =
       unpack
         . T.intercalate " "
+        . toList
         . fmap renderToken
 
     renderToken GraphArrow = "->"
@@ -182,10 +181,10 @@ parseOneExtendedEdge = lexeme $ do
         . toList
 
 -- | Parses an "edge destination" i.e. a leading arrow and node: "-> <node>".
-parseEdgeDest :: MParser (NonEmpty GraphToken)
+parseEdgeDest :: MParser (NESeq GraphToken)
 parseEdgeDest = do
   arrow <- parseArrow
-  (\(t :| ts) -> arrow :| (t : ts)) <$> parseNode
+  (\(t :<|| ts) -> arrow :<|| (t :<| ts)) <$> parseNode
 
 -- | Parses an arrow token.
 parseArrow :: MParser GraphToken
@@ -199,13 +198,13 @@ parseArrow = lexeme $ MPC.string "->" $> GraphArrow
 --   - "{2, 4..6}"" => {2, 4, 5, 6}
 --   - "1..3"       => 1 -> 2 -> 3
 -- @
-parseNode :: MParser (NonEmpty GraphToken)
+parseNode :: MParser (NESeq GraphToken)
 parseNode = do
   runFatalErrors
     pDef
-    [ NE.singleton <$> parseIndexSet,
+    [ NESeq.singleton <$> parseIndexSet,
       parseArrowRange,
-      NE.singleton . GraphIndices . NE.singleton <$> parseOneIndex
+      NESeq.singleton . GraphIndices . NESeq.singleton <$> parseOneIndex
     ]
   where
     pDef =
@@ -229,21 +228,21 @@ parseIndexSet = lexeme $ do
   k <- parseElem
   ks <- many (parseComma *> parseElem)
   MPC.char '}'
-  pure (GraphIndices $ join $ k :| ks)
+  pure (GraphIndices $ join $ k :<|| listToSeq ks)
   where
-    parseElem = lexeme $ runFatalError parseRange (NE.singleton <$> parseOneIndex)
+    parseElem = lexeme $ runFatalError parseRange (NESeq.singleton <$> parseOneIndex)
 
 -- | Parses an "arrow range" i.e. a range that represents an extended edge.
 --
 -- @
 --   "1..3" <=> "1 -> 2 -> 3"
 -- @
-parseArrowRange :: MParser (NonEmpty GraphToken)
+parseArrowRange :: MParser (NESeq GraphToken)
 parseArrowRange = toTokens <$> parseRange
   where
     toTokens =
-      NE.intersperse GraphArrow
-        . fmap (GraphIndices . NE.singleton)
+      NESeq.intersperse GraphArrow
+        . fmap (GraphIndices . NESeq.singleton)
 
 -- | Parse "1..3". Note that this is intended as an alias for two situations:
 --
@@ -259,7 +258,7 @@ parseArrowRange = toTokens <$> parseRange
 -- @
 --
 -- But this would conflict with 2, hence it is disallowed.
-parseRange :: MParser (NonEmpty CommandIndex)
+parseRange :: MParser (NESeq CommandIndex)
 parseRange = lexeme $ do
   l <- parseOneIndex
   lexeme $ MPC.string ".."
