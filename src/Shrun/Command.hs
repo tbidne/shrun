@@ -70,6 +70,7 @@ runCommands runner = do
   let roots = cdg ^. #roots
   vtxSemMap <- mkVertexSemMap cdg
   Async.mapConcurrently_ (runCommand runner debug cdg completedCmds vtxSemMap) roots
+{-# INLINEABLE runCommands #-}
 
 -- | Builds a map for each Vertex -> MVar. This ensures that we only start
 -- each command at most once.
@@ -82,6 +83,7 @@ mkVertexSemMap cdg = do
   pure $ Map.fromList vs
   where
     vertices = G.vertices $ cdg ^. #graph
+{-# INLINEABLE mkVertexSemMap #-}
 
 runCommand ::
   forall m env.
@@ -196,6 +198,7 @@ runCommand runner debug cdg completedCmds vtxSemMap = go Nothing
         ]
 
     fromV = cdg ^. #fromV
+{-# INLINEABLE runCommand #-}
 
 getPredecessorsStatus ::
   forall m.
@@ -225,6 +228,7 @@ getPredecessorsStatus cdg completedCmdsRef v = do
   foldMapA toResult predecessors
   where
     predecessors = findPredecessors cdg v
+{-# INLINEABLE getPredecessorsStatus #-}
 
 findPredecessors :: CommandGraph -> Vertex -> List Vertex
 findPredecessors cdg v =
@@ -303,3 +307,4 @@ logNoRun cdg lvl mPrevVertex msgFn mDepVertex vertex = do
         . Command.Types.fromVertex
 
     fromV = cdg ^. #fromV
+{-# INLINEABLE logNoRun #-}

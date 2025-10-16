@@ -20,6 +20,9 @@ tests testArgs =
       testCommandGraphFailure testArgs,
       testCommandGraphBlockedFailure testArgs,
       testCommandGraphSequential testArgs,
+      testCommandGraphLegend testArgs,
+      testCommandGraphLegendAndEdge testArgs,
+      testCommandGraphLegendEdgeFailure,
       cancelSequential testArgs,
       timeoutSequential testArgs
     ]
@@ -273,6 +276,111 @@ testCommandGraphSequential testArgs = testCase "Runs with --edges sequential" $ 
         withSuccessPrefix "sleep 3",
         withSuccessPrefix "sleep 4"
       ]
+
+testCommandGraphLegend :: IO TestArgs -> TestTree
+testCommandGraphLegend testArgs = testCase "Runs with --legend edges" $ do
+  outFile <- (</> [osp|testCommandGraphLegend.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = unsafeDecode outFile
+      args =
+        [ "-c",
+          "test/functional/config.toml",
+          "--file-log",
+          outFileStr,
+          "sleep 0",
+          "edges1",
+          "sleep 14",
+          "edges2"
+        ]
+
+  (ts, resultsConsole) <- withTiming $ run args
+
+  V.verifyExpectedOrder resultsConsole expected
+
+  resultsFile <- readLogFile outFile
+  V.verifyExpectedOrder resultsFile expected
+
+  let seconds = ts ^. #sec
+
+  assertBool (show seconds ++ " > 13") $ seconds > 13
+  assertBool (show seconds ++ " < 15") $ seconds < 15
+  where
+    expected =
+      [ withSuccessPrefix "sleep 0",
+        withSuccessPrefix "e11",
+        withSuccessPrefix "e21",
+        withSuccessPrefix "e121",
+        withSuccessPrefix "e22",
+        withSuccessPrefix "e122",
+        withSuccessPrefix "e23",
+        withSuccessPrefix "e131",
+        withSuccessPrefix "e132",
+        withSuccessPrefix "e133",
+        withSuccessPrefix "e14",
+        withSuccessPrefix "sleep 14"
+      ]
+
+testCommandGraphLegendAndEdge :: IO TestArgs -> TestTree
+testCommandGraphLegendAndEdge testArgs = testCase desc $ do
+  outFile <- (</> [osp|testCommandGraphLegendAndEdge.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = unsafeDecode outFile
+      args =
+        [ "-c",
+          "test/functional/config.toml",
+          "--file-log",
+          outFileStr,
+          "--edges",
+          "1 -> 3, 2 -> 4",
+          "sleep 0",
+          "edges1",
+          "sleep 14",
+          "edges2"
+        ]
+
+  (ts, resultsConsole) <- withTiming $ run args
+
+  V.verifyExpectedOrder resultsConsole expected
+
+  resultsFile <- readLogFile outFile
+  V.verifyExpectedOrder resultsFile expected
+
+  let seconds = ts ^. #sec
+
+  assertBool (show seconds ++ " > 18") $ seconds > 18
+  assertBool (show seconds ++ " < 20") $ seconds < 20
+  where
+    desc = "Runs with --edges and legend edges"
+
+    -- Same as the previous example, except the e2s are after the e1s.
+    -- Hence the e2s are moved to the end. Hopefully this is still
+    -- deterministic (have not verified).
+    expected =
+      [ withSuccessPrefix "sleep 0",
+        withSuccessPrefix "e11",
+        withSuccessPrefix "e121",
+        withSuccessPrefix "e122",
+        withSuccessPrefix "e131",
+        withSuccessPrefix "e132",
+        withSuccessPrefix "e133",
+        withSuccessPrefix "e14",
+        withSuccessPrefix "sleep 14",
+        withSuccessPrefix "e21",
+        withSuccessPrefix "e22",
+        withSuccessPrefix "e23"
+      ]
+
+testCommandGraphLegendEdgeFailure :: TestTree
+testCommandGraphLegendEdgeFailure = testCase desc $ do
+  let args =
+        [ "-c",
+          "test/functional/config.toml",
+          "bad_edge"
+        ]
+
+  (_, ex) <- runExceptionE @StringException args
+
+  "Index '3' in edge '1 -> 3' is out-of-bounds." @=? displayException ex
+  where
+    desc = "Runs with legend edges failure"
 
 -- NOTE:
 --

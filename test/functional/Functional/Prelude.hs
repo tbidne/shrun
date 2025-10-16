@@ -32,6 +32,7 @@ module Functional.Prelude
     run,
     runNotes,
     runException,
+    runExceptionE,
     runExitFailure,
     runAllExitFailure,
     runCancelled,
@@ -77,6 +78,7 @@ module Functional.Prelude
   )
 where
 
+import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Typeable (typeRep)
 import Effects.Concurrent.Async qualified as Async
@@ -325,7 +327,7 @@ runMaybeException mException argList = do
       IORef (List Text) ->
       IORef (List ShrunNote) ->
       IO (List ResultText, List ShrunNote)
-    readRefs ls ns = ((,) . fmap MkResultText <$> readIORef ls) <*> readIORef ns
+    readRefs ls ns = ((,) . fmap MkResultText . L.reverse <$> readIORef ls) <*> readIORef ns
 
     printLogsReThrow :: (Exception e) => e -> IORef (List Text) -> IO void
     printLogsReThrow ex ls = do
@@ -333,6 +335,66 @@ runMaybeException mException argList = do
 
       -- rethrow
       throwM ex
+
+    printLogs :: IORef (List Text) -> IO ()
+    printLogs ls = do
+      logs <- readIORef ls
+
+      putStrLn "\n*** LOGS ***\n"
+
+      for_ logs (putStrLn . unpack)
+      putStrLn ""
+
+-- | Runs shrun potentially catching an expected exception.
+runExceptionE ::
+  forall e.
+  (Exception e) =>
+  List String ->
+  IO (List ResultText, e)
+runExceptionE argList = do
+  ls <- newIORef []
+  shrunNotes <- newIORef []
+
+  let action = do
+        withArgs argList $ Env.withEnv $ \env -> do
+          let funcEnv =
+                MkFuncEnv
+                  { coreEnv = env,
+                    logs = ls,
+                    shrunNotes
+                  }
+
+          SR.runShellT SR.shrun funcEnv
+
+  tryMySync action >>= \case
+    -- 2.1: Received no exception: print logs and die
+    Right _ -> do
+      printLogs ls
+      error
+        $ mconcat
+          [ "Expected exception <",
+            show (typeRep @_ @e Proxy),
+            ">, received none"
+          ]
+    Left someEx -> do
+      case fromException @e someEx of
+        -- 2.2: Received exception e: return logs/notes
+        Just e -> (,e) <$> readRef ls
+        -- 2.3: Received some other exception: print logs and die
+        Nothing -> do
+          printLogs ls
+          error
+            $ mconcat
+              [ "Expected exception <",
+                show (typeRep @_ @e Proxy),
+                ">, but received another: ",
+                displayException someEx
+              ]
+  where
+    readRef ::
+      IORef (List Text) ->
+      IO (List ResultText)
+    readRef ls = fmap MkResultText . L.reverse <$> readIORef ls
 
     printLogs :: IORef (List Text) -> IO ()
     printLogs ls = do

@@ -11,11 +11,13 @@ module Test.Shrun.Verifier
     -- * Verifying functions
     verifyExpected,
     verifyExpectedN,
+    verifyExpectedOrder,
     verifyUnexpected,
     verifyExpectedUnexpected,
   )
 where
 
+import Control.Monad (void, when)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.List (List)
 #else
@@ -76,6 +78,42 @@ verifyExpectedUnexpected results allExpected allUnexpected =
     findUnexpected unexpected acc = findOneUnexpected results unexpected *> acc
     allUnexpectedNotFound = foldr findUnexpected (pure ()) allUnexpected
 
+-- | Verifies that the expected text occurs exactly once, in the given order.
+verifyExpectedOrder ::
+  List ResultText ->
+  List ExpectedText ->
+  Assertion
+verifyExpectedOrder results = void . allExpectedFound ("<none>", -1)
+  where
+    findExpected :: ExpectedText -> (ExpectedText, Int) -> IO (ExpectedText, Int)
+    findExpected expected@(MkExpectedText e) acc = do
+      let (MkExpectedText prevExpected, prevIdx) = acc
+      newIdx <- findOneExpectedIdx results expected
+
+      when (prevIdx >= newIdx) $ do
+        assertFailure $
+          mconcat
+            [ "Expected text <",
+              T.unpack e,
+              "> -- found at index ",
+              show newIdx,
+              " -- is <= the index ",
+              show prevIdx,
+              " for the previously found \n<",
+              T.unpack prevExpected,
+              ">, in output: \n<",
+              formatResults results,
+              ">"
+            ]
+
+      pure (expected, newIdx)
+
+    -- Direct recursion to make order more explicit.
+    allExpectedFound _ [] = pure ()
+    allExpectedFound acc (e : es) = do
+      newAcc <- findExpected e acc
+      allExpectedFound newAcc es
+
 findOneExpected :: List ResultText -> ExpectedText -> Assertion
 findOneExpected results = findOneExpectedN results . (1,)
 
@@ -104,6 +142,48 @@ findOneExpectedN results (numExpected, MkExpectedText expected) = do
       if expected `T.isInfixOf` result
         then acc + 1
         else acc
+
+findOneExpectedIdx :: List ResultText -> ExpectedText -> IO Int
+findOneExpectedIdx results (MkExpectedText expected) = do
+  let (_, mFoundIdx) = go (0, Nothing) results
+
+  case mFoundIdx of
+    Nothing ->
+      assertFailure $
+        mconcat
+          [ "Did not find expected text <",
+            T.unpack expected,
+            "> in output: \n<",
+            formatResults results,
+            ">"
+          ]
+    Just (foundIdx, numHits) ->
+      if numHits == 1
+        then pure foundIdx
+        else
+          assertFailure $
+            mconcat
+              [ "Expected text <",
+                T.unpack expected,
+                "> 1 time, found ",
+                show numHits,
+                " in output: \n<",
+                formatResults results,
+                ">"
+              ]
+  where
+    -- Explicit recursion for clear order.
+    go acc [] = acc
+    go acc (r : rs) = go (searchT r acc) rs
+
+    searchT :: ResultText -> (Int, Maybe (Int, Int)) -> (Int, Maybe (Int, Int))
+    searchT (MkResultText result) (!idx, mFoundIdx) =
+      if expected `T.isInfixOf` result
+        then (idx + 1, addHit idx mFoundIdx)
+        else (idx + 1, mFoundIdx)
+
+    addHit idx Nothing = Just (idx, 1)
+    addHit _ (Just (idx, numHits)) = Just (idx, numHits + 1)
 
 findOneUnexpected :: List ResultText -> UnexpectedText -> Assertion
 findOneUnexpected results (MkUnexpectedText unexpected) = do

@@ -6,6 +6,7 @@ where
 import Shrun.Command.Types (CommandP (MkCommandP), fromPositive)
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Core (mergeCoreConfig)
+import Shrun.Configuration.Data.Graph (EdgeArgs (EdgeArgsList))
 import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
@@ -15,7 +16,15 @@ import Shrun.Configuration.Data.MergedConfig
         coreConfig
       ),
   )
+import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled
+      ( Disabled,
+        With,
+        Without
+      ),
+  )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Prelude
@@ -52,6 +61,7 @@ mergeConfig args mToml = do
           (args ^. #coreConfig)
           Nothing
 
+      -- 1. No toml config; make the command graph from the CLI arg.
       commandGraph <- Graph.mkGraph cliEdgeArgs commands
 
       pure
@@ -61,11 +71,25 @@ mergeConfig args mToml = do
             commands
           }
     (Just toml) -> do
-      commands <- case toml ^. #legend of
-        Nothing -> pure (mkCmd <$> cmdsTextIndexed)
+      (commands, ea) <- case toml ^. #legend of
+        Nothing -> pure (mkCmd <$> cmdsTextIndexed, cliEdgeArgs)
         Just aliases -> do
-          mp <- Legend.linesToMap aliases
-          Legend.translateCommands mp cmdsText
+          -- 3. We have a legend. Need to combine CLI and legend
+          --    edges config. See NOTE: [CLI and Legend Edges]
+          legendMap <- Legend.linesToMap aliases
+          cmdEdges <- case wEdgeArgs of
+            -- 3.1. We also have CLI edges; pass it in.
+            With ea -> Legend.translateCommands legendMap cmdsText (Just ea)
+            -- 3.2 No CLI legend; compute toml edges as normal.
+            Without -> Legend.translateCommands legendMap cmdsText Nothing
+            -- 3.3 Edges disabled; not only do we have no edges to pass
+            -- in, we must also disable the toml edges. We do this
+            -- but overwriting whatever was computed with 'def',
+            -- below.
+            Disabled -> do
+              (cmds, _) <- Legend.translateCommands legendMap cmdsText Nothing
+              pure (cmds, def)
+          pure $ second EdgeArgsList cmdEdges
 
       coreConfig <-
         mergeCoreConfig
@@ -73,7 +97,7 @@ mergeConfig args mToml = do
           (args ^. #coreConfig)
           (Just $ toml ^. #coreConfig)
 
-      commandGraph <- Graph.mkGraph cliEdgeArgs commands
+      commandGraph <- Graph.mkGraph ea commands
 
       pure
         $ MkMergedConfig

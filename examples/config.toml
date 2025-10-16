@@ -48,6 +48,10 @@ legend = [
   # runs 3, 4 and echo
   { key = 'all', val = ['cmd3', 'cmd4', 'echo hi'] },
 
+  # We can include edges here too. This means c3 will only start after c1
+  # successfully finishes. The same is true for c4 and c2.
+  { key = 'some_aliases', val = ["c1", "c2", "c3", "c4"], edges = "1 -> 3, 2 -> 4" },
+
   # Bad Examples
 
   # duplicates will cause an error when reading this file.

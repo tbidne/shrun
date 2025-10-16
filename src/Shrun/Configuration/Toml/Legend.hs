@@ -11,10 +11,12 @@ where
 
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
+import Shrun.Configuration.Args.Parsing.Graph (parseEdges)
+import Shrun.Configuration.Data.Graph (EdgeArgs)
 import Shrun.Prelude
 
 -- | Alias for our legend map.
-type LegendMap = HashMap Text (NESeq Text)
+type LegendMap = HashMap Text (Tuple2 (NESeq Text) (Maybe EdgeArgs))
 
 -- | Holds a map key/val pair. The maintained invariants are:
 --
@@ -22,16 +24,27 @@ type LegendMap = HashMap Text (NESeq Text)
 -- * @val@ is non-empty.
 -- * all @v_i@ in @val@ are non-empty.
 data KeyVal = UnsafeKeyVal
-  { key :: Text,
+  { edges :: Maybe EdgeArgs,
+    key :: Text,
     val :: NESeq Text
   }
   deriving stock (Eq, Show)
 
 -- | Unidirectional pattern synonym for 'KeyVal'.
-pattern MkKeyVal :: Text -> NESeq Text -> KeyVal
-pattern MkKeyVal k v <- UnsafeKeyVal k v
+pattern MkKeyVal :: Maybe EdgeArgs -> Text -> NESeq Text -> KeyVal
+pattern MkKeyVal es k v <- UnsafeKeyVal es k v
 
 {-# COMPLETE MkKeyVal #-}
+
+instance
+  ( k ~ A_Getter,
+    a ~ Maybe EdgeArgs,
+    b ~ Maybe EdgeArgs
+  ) =>
+  LabelOptic "edges" k KeyVal KeyVal a b
+  where
+  labelOptic = to (\(UnsafeKeyVal es _ _) -> es)
+  {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Getter,
@@ -40,7 +53,7 @@ instance
   ) =>
   LabelOptic "key" k KeyVal KeyVal a b
   where
-  labelOptic = to (\(UnsafeKeyVal k _) -> k)
+  labelOptic = to (\(UnsafeKeyVal _ k _) -> k)
   {-# INLINE labelOptic #-}
 
 instance
@@ -50,13 +63,14 @@ instance
   ) =>
   LabelOptic "val" k KeyVal KeyVal a b
   where
-  labelOptic = to (\(UnsafeKeyVal _ v) -> v)
+  labelOptic = to (\(UnsafeKeyVal _ _ v) -> v)
   {-# INLINE labelOptic #-}
 
 instance DecodeTOML KeyVal where
   tomlDecoder =
     UnsafeKeyVal
-      <$> decodeKey
+      <$> decodeEdges
+      <*> decodeKey
       <*> decodeVal
 
 -- | Smart constructor for 'KeyVal'. Given @UnsafeKeyVal key vals@, all
@@ -65,19 +79,28 @@ instance DecodeTOML KeyVal where
 -- * @key@ is non-empty.
 -- * @vals@ is non-empty.
 -- * all @v_i@ in @vals@ are non-empty.
-mkKeyVal :: Text -> List Text -> Maybe KeyVal
-mkKeyVal "" _ = Nothing
-mkKeyVal _ [] = Nothing
-mkKeyVal k vals = UnsafeKeyVal k <$> NESeq.nonEmptySeq (Seq.fromList vals)
+mkKeyVal :: Maybe EdgeArgs -> Text -> List Text -> Maybe KeyVal
+mkKeyVal _ "" _ = Nothing
+mkKeyVal _ _ [] = Nothing
+mkKeyVal es k vals = UnsafeKeyVal es k <$> NESeq.nonEmptySeq (Seq.fromList vals)
 
 {- HLINT ignore unsafeKeyVal "Redundant bracket" -}
 
 -- | Variant of 'UnsafeKeyVal' that throws an error on failures.
-unsafeKeyVal :: (HasCallStack) => Text -> List Text -> KeyVal
-unsafeKeyVal "" _ = error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty key"
-unsafeKeyVal k vals = case mkKeyVal k vals of
+unsafeKeyVal :: (HasCallStack) => Maybe EdgeArgs -> Text -> List Text -> KeyVal
+unsafeKeyVal _ "" _ = error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty key"
+unsafeKeyVal es k vals = case mkKeyVal es k vals of
   Just kv -> kv
   Nothing -> error "[Shrun.Configuration.Toml.Legend.unsafeKeyVal]: empty val"
+
+decodeEdges :: Decoder (Maybe EdgeArgs)
+decodeEdges = getFieldOptWith d "edges"
+  where
+    d = do
+      txt <- tomlDecoder
+      case parseEdges txt of
+        Left err -> fail err
+        Right x -> pure x
 
 decodeKey :: Decoder Text
 decodeKey = getFieldWith decodeNonEmptyText "key"

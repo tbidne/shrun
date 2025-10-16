@@ -89,16 +89,17 @@ $ shrun cmd1 cmd2 cmd3
 # successfully.
 $ shrun --edges "1 -> 3, 2 -> 3" cmd1 cmd2 cmd3
 
-# Using config file aliases i.e. runs 'npm run build', 'javac ...', and
-# 'build_db.sh' concurrently.
+# Using config file aliases i.e. builds frontend, backend, and db, then
+# runs deploy if those tasks completed successfully.
 #
 # legend = [
-#   { key = 'some_alias', val = [ 'frontend', 'backend', 'db' ] },
+#   { key = 'build_app', val = [ 'frontend', 'backend', 'db', 'deploy' ], edges = '{1..3} -> 4' },
 #   { key = 'frontend', val = 'npm run build' },
 #   { key = 'backend', val = 'javac ...' },
-#   { key = 'db', val = 'build_db.sh' },
+#   { key = 'db', val = 'db.sh' },
+#   { key = 'deploy', val = 'deploy.sh' },
 # ]
-$ shrun --config config.toml some_alias
+$ shrun --config config.toml build_app
 ```
 
 # Installation

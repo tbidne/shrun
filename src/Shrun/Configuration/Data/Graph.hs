@@ -4,15 +4,13 @@ module Shrun.Configuration.Data.Graph
   ( -- * Args
     EdgeArgs (..),
     Edges (..),
+    sortEdges,
     Edge,
 
     -- * Graph
     CommandGraph (..),
     mkGraph,
     mkTrivialGraph,
-
-    -- * Misc
-    CommandGraphF,
   )
 where
 
@@ -24,7 +22,8 @@ import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Set qualified as Set
 import Data.Text qualified as T
-import GHC.Exts (IsList)
+import GHC.Exts (IsList (Item))
+import GHC.Exts qualified as Exts
 import Shrun.Command.Types
   ( CommandIndex,
     CommandOrd (MkCommandOrd),
@@ -32,24 +31,8 @@ import Shrun.Command.Types
     CommandP1,
   )
 import Shrun.Command.Types qualified as Command.Types
-import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase
-      ( ConfigPhaseArgs,
-        ConfigPhaseEnv,
-        ConfigPhaseMerged,
-        ConfigPhaseToml
-      ),
-  )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
-
-type CommandGraphF :: ConfigPhase -> Type
-type family CommandGraphF p where
-  CommandGraphF ConfigPhaseArgs = WithDisabled EdgeArgs
-  CommandGraphF ConfigPhaseToml = ()
-  CommandGraphF ConfigPhaseMerged = CommandGraph
-  CommandGraphF ConfigPhaseEnv = CommandGraph
 
 -- | CLI command graph. The default instance is a "trivial graph", in the
 -- sense that all commands are root nodes without any edges, hence normal
@@ -64,13 +47,27 @@ data EdgeArgs
 instance Default EdgeArgs where
   def = EdgeArgsList def
 
---- | An edge between two indices.
+instance IsList EdgeArgs where
+  type Item EdgeArgs = Edge
+
+  fromList = EdgeArgsList . Exts.fromList
+
+  toList (EdgeArgsList xs) = Exts.toList xs
+  toList EdgeArgsSequential = error "Called toList on EdgeArgsSequential"
+
+-- | An edge between two indices.
 type Edge = Tuple2 CommandIndex CommandIndex
 
 -- | Dependency edges are supplied by the user on the CLI.
 newtype Edges = MkEdges {unEdges :: Seq Edge}
   deriving newtype (Default, IsList, Monoid, Semigroup)
   deriving stock (Eq, Show)
+
+sortEdges :: Edges -> Edges
+sortEdges =
+  MkEdges
+    . Seq.sort
+    . view #unEdges
 
 instance
   ( k ~ An_Iso,

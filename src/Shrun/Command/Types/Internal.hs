@@ -9,6 +9,7 @@ module Shrun.Command.Types.Internal
     toVertex,
     fromVertex,
     succ,
+    addNN,
     range,
   )
 where
@@ -23,6 +24,11 @@ newtype CommandIndex = MkCommandIndex {unCommandIndex :: Positive Int}
   deriving stock (Show)
   deriving newtype (ASemigroup, Eq, Hashable, MSemigroup, MMonoid, Ord)
 
+instance Enum CommandIndex where
+  toEnum = unsafeFromInt
+
+  fromEnum = view (#unCommandIndex % #unPositive)
+
 instance
   ( k ~ An_Iso,
     a ~ Positive Int,
@@ -35,6 +41,11 @@ instance
 
 succ :: CommandIndex -> CommandIndex
 succ = (.+. one)
+
+addNN :: CommandIndex -> NonNegative Int -> CommandIndex
+addNN idx = MkCommandIndex . unsafePositive . (i +) . view #unNonNegative
+  where
+    i = idx ^. #unCommandIndex % #unPositive
 
 range :: CommandIndex -> CommandIndex -> Either String (NESeq CommandIndex)
 range (MkCommandIndex (MkPositive lower)) (MkCommandIndex (MkPositive upper)) =

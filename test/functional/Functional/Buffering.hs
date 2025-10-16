@@ -1,7 +1,6 @@
 -- | Functional test for command log buffering.
 module Functional.Buffering (specs) where
 
-import Data.List qualified as L
 import Data.Text qualified as T
 import Functional.Prelude
 import Test.Shrun.Verifier (ExpectedText (MkExpectedText), ResultText)
@@ -25,9 +24,8 @@ logsNoBuffer =
     run
     args
     ( \results -> do
-        let results' = L.reverse results
-        assertLogsEq expectedOrdered results'
-        V.verifyExpected results' (MkExpectedText <$> allExpected)
+        assertLogsEq expectedOrdered results
+        V.verifyExpected results (MkExpectedText <$> allExpected)
     )
   where
     -- NOTE: [Bash brace loop interpolation]

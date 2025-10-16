@@ -210,34 +210,53 @@ This means:
 We also allow the literal `sequential`, which declares all commands will be run sequentially. That is,
 
 ```sh
-$ shrun --edges sequential cmd1 cmd2 cmd3 ...
+$ shrun --edges sequential cmd1 cmd2 cmd3 ... cmdn
+
+# The above is equivalent to:
+$ shrun --edges "1 .. n" cmd1 cmd2 cmd3 ... cmdn
 ```
 
 - Command 1 will start immediately.
 - Command 2 will start once 1 succeeds.
 - Command 3 will start once 2 succeeds.
 - ...
+- Command n will start once n-1 succeeds.
 
 > [!IMPORTANT]
 >
 > There are several nuances.
 >
-> - Index assignment happens _after_ alias expansion. For instance, if our
->   config legend defines
+> - Edges respect aliases. That is, suppose we have
 >
 >     ```toml
->     legend = [ { key = 'all', val = ['cmd2', 'cmd3', 'cmd4'] } ]
+>     legend = [ { key = 'all', val = ['cmd2', 'cmd3', 'cmd4'], edges = '1 -> 3' } ]
 >     ```
 >
->   then
+>   Then
 >
 >     ```sh
->     $ shrun -c config.toml cmd1 all cmd5
+>     $ shrun -c config.toml cmd1 all cmd5 --edges "1 -> 2, 2 -> 3"
 >     ```
 >
->   the commands will be indexed as `cmd1` `cmd2` `cmd3` `cmd4` `cmd5`. Hence
->   `--edges` indices need to be given in terms of the actual command,
->   not any aliases.
+>   will be expanded to
+>
+>     ```sh
+>     cmd1 cmd2 cmd3 cmd4 cmd5
+>     ```
+>
+>   and the edges will therefore be
+>
+>     ```sh
+>     # Original '1 -> 2' edge i.e. "cmd1" -> "all"
+>     1 -> 2, 1 -> 3, 1 -> 4,
+>     # all's '1 -> 3' edge i.e. "cmd2 -> cmd4"
+>     2 -> 4,
+>     # Original '2 -> 3' edge i.e. "all" -> "cmd5"
+>     2 -> 5, 3 -> 5, 4 -> 5
+>     ```
+>
+>   That is, edges are mapped based on alias expansion, and if an edge refers
+>   to an alias, it is taken to refer to _every_ command in that alias.
 >
 > - Dependencies must be "well-behaved" e.g. all vertices must exist, be
 >   reachable, and there must be no cycles.

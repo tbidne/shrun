@@ -15,6 +15,7 @@ module Shrun.Command.Types
     Internal.toVertex,
     Internal.fromVertex,
     Internal.succ,
+    Internal.addNN,
 
     -- * Order
     CommandOrd (..),

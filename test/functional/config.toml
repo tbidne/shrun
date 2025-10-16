@@ -3,5 +3,48 @@ legend = [
   { key = 'one', val = 'sleep 1 && echo 1' },
   { key = 'long', val = 'sleep 2 && echo long' },
   { key = 'bad', val = 'some nonsense' },
-  { key = 'both', val = ['one', 'long'] }
+  { key = 'both', val = ['one', 'long'] },
+
+  # Edge tests. Times chosen so that the order is deterministic. The comments
+  # describe the time at which the command will finish, in seconds.
+  #
+  #        1       2
+  # t=3 (e11 -> e121)
+  { key = "e121", val = 'echo e121 && sleep 2' },
+  #        1       2       2
+  # t=5 (e11 -> e121 -> e122)
+  { key = "e122", val = 'echo e122 && sleep 2' },
+
+  # t=7 (immediate)
+  { key = "e131", val = 'echo e131 && sleep 7' },
+  # t=9 (immediate)
+  { key = "e132", val = 'echo e132 && sleep 9' },
+  #          7       4
+  # t=11 (e131 -> e133)
+  { key = "e133", val = 'echo e133 && sleep 4' },
+
+  # t=1 (immediate)
+  { key = "e11", val = 'echo e11 && sleep 1' },
+  #     (e11 -> e12)
+  { key = "e12", val = ['e121', 'e122'], edges = "1 -> 2" },
+  #     (immediate)
+  { key = "e13", val = ['e131', 'e132', 'e133'], edges = "1 -> 3" },
+  #        11      2
+  # t=13 (e13 -> e14)
+  { key = "e14", val = 'echo e15 && sleep 2' },
+
+  # t=2 (immediate)
+  { key = "e21", val = 'echo e21 && sleep 2' },
+  #        2      2
+  # t=4 (e21 -> e22)
+  { key = "e22", val = 'echo e22 && sleep 2' },
+  #        2      2
+  # t=6 (e22 -> e23)
+  { key = "e23", val = 'echo e23 && sleep 2' },
+
+  { key = 'edges1', val = ["e11", "e12", "e13", "e14"], edges = "1 -> 2, 3 -> 4" },
+  { key = 'edges2', val = ["e21", "e22", "e23"], edges = "1 .. 3" },
+
+  # bad edge
+  { key = 'bad_edge', val = ['a1', 'a2'], edges = "1 -> 2, 1 -> 3"}
 ]

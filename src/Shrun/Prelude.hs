@@ -261,7 +261,7 @@ import FileSystem.OsPath as X
   )
 import FileSystem.OsPath qualified as OsPath
 import FileSystem.UTF8 as X (decodeUtf8, decodeUtf8ThrowM)
-import GHC.Enum as X (Bounded (maxBound, minBound), Enum (toEnum))
+import GHC.Enum as X (Bounded (maxBound, minBound), Enum (fromEnum, toEnum))
 import GHC.Err as X (error, undefined)
 import GHC.Exception (errorCallWithCallStackException)
 import GHC.Exts (RuntimeRep, TYPE, raise#)
@@ -284,7 +284,16 @@ import Numeric.Convert.Integer as X
     fromℤ,
     toℤ,
   )
-import Numeric.Data.Positive as X (Positive (MkPositive), mkPositive, unsafePositive)
+import Numeric.Data.NonNegative as X
+  ( NonNegative (MkNonNegative),
+    mkNonNegative,
+    unsafeNonNegative,
+  )
+import Numeric.Data.Positive as X
+  ( Positive (MkPositive),
+    mkPositive,
+    unsafePositive,
+  )
 import Optics.Core as X
   ( A_Getter,
     A_Lens,
