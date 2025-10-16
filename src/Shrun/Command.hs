@@ -65,11 +65,11 @@ runCommands ::
   m ()
 runCommands runner = do
   cdg <- asks getCommandDepGraph
-  completedCmds <- asks getCommandStatus
+  commandStatuses <- asks getCommandStatus
   debug <- asks (view #debug . getCommonLogging)
   let roots = cdg ^. #roots
   vtxSemMap <- mkVertexSemMap cdg
-  Async.mapConcurrently_ (runCommand runner debug cdg completedCmds vtxSemMap) roots
+  Async.mapConcurrently_ (runCommand runner debug cdg commandStatuses vtxSemMap) roots
 {-# INLINEABLE runCommands #-}
 
 -- | Builds a map for each Vertex -> MVar. This ensures that we only start
@@ -105,7 +105,7 @@ runCommand ::
   Debug ->
   -- | Command dependency graph.
   CommandGraph ->
-  -- | Completed commands ref.
+  -- | Command status ref.
   TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))) ->
   -- | Vertex semaphore map, for preventing the same command being kicked off
   -- by multiple commands.
@@ -113,10 +113,10 @@ runCommand ::
   -- | Vertex to run.
   Vertex ->
   m ()
-runCommand runner debug cdg completedCmds vtxSemMap = go Nothing
+runCommand runner debug cdg commandStatuses vtxSemMap = go Nothing
   where
     go prevVertex vertex = do
-      status <- getPredecessorsStatus cdg completedCmds vertex
+      status <- getPredecessorsStatus cdg commandStatuses vertex
       case status of
         CommandWaiting depV ->
           when (debug ^. #unDebug) $ do
@@ -151,7 +151,7 @@ runCommand runner debug cdg completedCmds vtxSemMap = go Nothing
               --
               -- Normally, our logic blocks multiple sends like this by
               -- abandoning the attempt if any attempts are still running.
-              -- When both finish simultaneous, however, this won't work.
+              -- When both finish simultaneously, however, this won't work.
               --
               -- Hence we have a map Vertex -> MVar, and the task can only
               -- start if it can retrieve the MVar. If the MVar is empty,
@@ -210,13 +210,13 @@ getPredecessorsStatus ::
   TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))) ->
   Vertex ->
   m (CommandStatus CommandStatusVertex)
-getPredecessorsStatus cdg completedCmdsRef v = do
-  completedCmds <- readTVarA completedCmdsRef
+getPredecessorsStatus cdg commandStatusesRef v = do
+  commandStatuses <- readTVarA commandStatusesRef
 
   let toResult :: Vertex -> m (CommandStatus CommandStatusVertex)
       toResult p =
         let idx = Command.Types.fromVertex p
-         in case Map.lookup (Command.Types.fromVertex p) completedCmds of
+         in case Map.lookup (Command.Types.fromVertex p) commandStatuses of
               Nothing ->
                 throwText
                   $ mconcat
