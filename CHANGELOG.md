@@ -17,9 +17,11 @@ for versions < 1.
 
 ## [Unreleased]
 ### Added
-* Added `--edges` option. This _should_ be backwards-compatible, but
-  as the command internals have significantly changed, it is given a major
-  release.
+* Added `--edges` (toml: legend `edges`) option for declaring dependencies
+  between commands e.g. `shrun cmd1 cmd2 --edges "1 -> 2"` means `cmd2` will
+  run only once `cmd1` successfully finishes. This _should_ be
+  backwards-compatible, but as the command internals have significantly
+  changed, it is given a major release.
 
 ## [0.9.2] -- 2025-10-10
 ### Changed

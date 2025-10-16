@@ -3,7 +3,7 @@
 ### Table of Contents
   - [Core Functionality](#core-functionality)
     - [Config](#config)
-    - [Command Graph](#command-graph)
+    - [Edges](#edges)
     - [Init](#init)
     - [Timeout](#timeout)
   - [Logging](#logging)
@@ -96,9 +96,9 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 > [!CAUTION]
 > Duplicate keys will cause a parse error to be thrown when loading. Cyclic keys are also disallowed, though these will only throw if you actually try to execute one (i.e. merely having cyclic definitions in the legend will not throw an error).
 
-### Command Graph
+### Edges
 
-**Arg:** `--edges (GRAPH_STR | sequential)`
+**Arg:** `--edges (EDGES_STR | sequential)`
 
 **Description:** Comma separated list, specifying command dependencies, based on their order. For instance, `--edges '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
 
@@ -114,8 +114,8 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 <span style="color: #d6acff">[Finished] 3 seconds</span></code>
 </pre>
 
-> [!CAUTION]
-> Dependencies must be "well-behaved" e.g. all vertices must exist, be reachable, and there must be no cycles.
+> [!TIP]
+> See the [faq](./faq.md#how-do-i-run-sequential-commands) for more.
 
 ### Init
 
