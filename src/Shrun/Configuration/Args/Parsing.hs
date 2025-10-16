@@ -158,13 +158,13 @@ parserInfoArgs =
 
 argsParser :: Parser Args
 argsParser = do
-  configPath <- configParser
+  -- defaultConfig in between configPath and edges for alphabetical order.
+  configPath <- configParser <**> defaultConfig
+  edges <- Graph.edgesParser
   coreConfig <-
     Core.coreParser
-      <**> defaultConfig
       <**> version
       <**> OA.helper
-  edges <- Graph.edgesParser
   commands <- commandsParser
 
   pure

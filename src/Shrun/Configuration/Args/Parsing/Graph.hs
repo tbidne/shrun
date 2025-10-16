@@ -44,7 +44,7 @@ edgesParser = Utils.withDisabledParser mainParser "edges"
           ( mconcat
               [ OA.long "edges",
                 Utils.mkHelp mainHelpTxt,
-                OA.metavar "(GRAPH_STR | sequential)"
+                OA.metavar "(EDGES_STR | sequential)"
               ]
           )
     mainHelpTxt =
