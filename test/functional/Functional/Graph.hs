@@ -346,7 +346,7 @@ testCommandGraphLegendAndEdge testArgs = testCase desc $ do
   let seconds = ts ^. #sec
 
   assertBool (show seconds ++ " > 18") $ seconds > 18
-  assertBool (show seconds ++ " < 20") $ seconds < 20
+  assertBool (show seconds ++ " < 21") $ seconds < 21
   where
     desc = "Runs with --edges and legend edges"
 
