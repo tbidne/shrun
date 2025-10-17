@@ -334,6 +334,32 @@ runFatalError p1 p2 =
 hasFatalError :: ParseError Text FatalError -> Maybe (Set (ErrorFancy FatalError))
 hasFatalError = \case
   FancyError _ errSet ->
+    -- NOTE: We can improve this from a linear search to O(log n) by making
+    -- FatalError's Eq trivial (always True), and doing a lookup for
+    -- 'MkFatalError ""'. This function would then return Bool instead of
+    -- the error, and 'runFatalError' would return 'p1' instead of
+    -- restoring the error (unnecessary regardless).
+    --
+    -- This has a slight change on the test output e.g. the error
+    --
+    --    option --edges: 1:6:
+    --      |
+    --    1 | 1 -> 3..2
+    --      |      ^
+    --   Bad range. Expected 3 <= 2
+    --
+    -- Becomes
+    --
+    --    option --edges: 1:10:
+    --      |
+    --    1 | 1 -> 3..2
+    --      |          ^
+    --   Bad range. Expected 3 <= 2
+    --
+    -- i.e. the caret indicates that the range was consumed. This is
+    -- probably what we want anyway, though we put it off for now as this
+    -- "optimization" is likely useless (errSet has max size 1, anyway),
+    -- and reducing Eq/Ord may be undesirable for other reasons.
     if any k errSet
       then Just errSet
       else Nothing
