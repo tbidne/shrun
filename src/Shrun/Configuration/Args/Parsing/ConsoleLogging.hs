@@ -135,8 +135,7 @@ stripControlParser =
           " untouched. The default 'smart' attempts to strip",
           " only the control chars that affect layout (e.g. cursor movements) and",
           " leaves others unaffected (e.g. colors). This has the potential",
-          " to be the 'prettiest' though it is possible to miss some chars.",
-          " This option is experimental and subject to change."
+          " to be the 'prettiest' though it is possible to miss some chars."
         ]
 
 timerFormatParser :: Parser (WithDisabled TimerFormat)

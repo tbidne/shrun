@@ -382,7 +382,7 @@ vs.
 * Simple formatting is left intact.
 * The layout should not be damaged.
 
-Though it is possible to miss some chars. This option is experimental and subject to change.
+Though it is possible to miss some chars.
 
 **Example:**
 

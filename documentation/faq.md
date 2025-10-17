@@ -241,6 +241,9 @@ $ shrun --edges "1 .. n" cmd1 cmd2 cmd3 ... cmdn
 >   will be expanded to
 >
 >     ```sh
+>                all
+>            ┌────┴────┐
+>      (1)  (2)  (3)  (4)  (5)
 >     cmd1 cmd2 cmd3 cmd4 cmd5
 >     ```
 >
@@ -319,11 +322,11 @@ The `block-line-buffer` strategy is the primary solution to these problems, and 
 With that out of the way, we can now justify the default behavior.
 
 - When we have exactly one command and/or `file-logging` is disabled, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it can lead to nonsense file logs when there are multiple commands.
-- Otherwise (multiple command and `file-logging` enabled), we use the `block` strategy.
+- Otherwise (multiple commands and `file-logging` enabled), we use the `block` strategy.
 
 > [!TIP]
 >
-> There is little reason to explicitly set `--read-strategy block-line-buffer` manually, as the only cases that is permissible (single command and/or file-logging is disabled), `shrun` will automatically choose that strategy. Thus the only reason is to be explicit.
+> There is little reason to explicitly set `--read-strategy block-line-buffer` manually, as the only cases where it is permissible (single command and/or file-logging is disabled), `shrun` will automatically choose that strategy. Thus the only reason is to be explicit.
 
 There are various other tweaks one can try if the file log formatting is still damaged e.g. increasing `--command-log-buffer-(length|timeout)` and/or `--command-log-read-size`. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the description above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless, so it is likely not a good solution.
 

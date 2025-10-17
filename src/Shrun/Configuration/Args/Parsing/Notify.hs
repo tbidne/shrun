@@ -66,7 +66,7 @@ notifySystemParser = Utils.withDisabledParser mainParser "notify-system"
     helpTxt =
       mconcat
         [ "The system used for sending notifications. 'dbus' and 'notify-send' ",
-          "available on linux, whereas 'apple-script' is available for osx."
+          "are available on linux, whereas 'apple-script' is available for osx."
         ]
 
 notifyTimeoutParser :: Parser (WithDisabled NotifyTimeout)
