@@ -86,25 +86,25 @@ instance Exception CyclicKeyError where
 -- >>> :set -XOverloadedLists
 -- >>> :{
 --   let m = Map.fromList
---         [ ("cmd1", "one" :<|| []),
---           ("cmd2", "two" :<|| []),
---           ("all", "cmd1" :<|| ["cmd2","other"])
+--         [ ("cmd1", ("one" :<|| [], Nothing)),
+--           ("cmd2", ("two" :<|| [], Nothing)),
+--           ("all", ("cmd1" :<|| ["cmd2","other"], Nothing))
 --         ]
---       cmds = translateCommands m ("all" :<|| ["blah"])
---   in (fmap . fmap) (view #command) cmds
+--       k = (fmap . first) (fmap (view #command))
+--   in k $ translateCommands m ("all" :<|| ["blah"]) Nothing
 -- :}
--- Right (fromList ("one" :| ["two","other","blah"]))
+-- (fromList ("one" :| ["two","other","blah"]),MkEdges {unEdges = fromList []})
 --
 -- Note: If -- when looking up a line -- we detect a cycle, then a 'CyclicKeyError'
 -- will be returned.
 --
 -- >>> :{
 --   let m = Map.fromList
---         [ ("a", "b" :<|| []),
---           ("b", "c" :<|| []),
---           ("c", "a" :<|| [])
+--         [ ("a", ("b" :<|| [], Nothing)),
+--           ("b", ("c" :<|| [], Nothing)),
+--           ("c", ("a" :<|| [], Nothing))
 --         ]
---   in translateCommands m ("a" :<|| [])
+--   in try @_ @CyclicKeyError $ translateCommands m ("a" :<|| []) Nothing
 -- :}
 -- Left (MkCyclicKeyError "a -> b -> c -> a")
 translateCommands ::
@@ -255,7 +255,7 @@ translateMap mp initKey = do
               Nothing -> pure def
               Just EdgeArgsSequential ->
                 -- If our graph is sequential, make an edge list (sequential
-                -- edges for original values), then repait it.
+                -- edges for original values), then repair it.
                 repairEdges (mkSequentialEdges vals) subCmdIdxMap
               Just (EdgeArgsList es) -> repairEdges es subCmdIdxMap
 

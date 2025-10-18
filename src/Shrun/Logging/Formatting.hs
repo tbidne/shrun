@@ -44,7 +44,7 @@ import Shrun.Configuration.Data.Truncation
       ),
     Truncation (MkTruncation),
   )
-import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
+import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Types
   ( Log,
@@ -320,8 +320,7 @@ formatCommand keyHide commandNameTrunc com =
 -- separated by newlines do not get smashed together.
 formatCommandText :: Text -> UnlinedText
 formatCommandText =
-  ShrunText.reallyUnsafeMap T.strip
-    . Utils.stripControlAll
+  ShrunText.reallyUnsafeMap (T.strip . Utils.stripControlAll)
     . ShrunText.fromTextReplace
 
 -- | Combines a prefix @p@ and msg @m@ with possible line truncation. If no
@@ -357,16 +356,23 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
 -- | Pretty show for 'Command'. If the command has a key, and 'KeyHideSwitch' is
 -- 'KeyHideOff' then we return the key. Otherwise we return the command itself.
 --
--- >>> displayCmd (MkCommandP Nothing "some long command") KeyHideOn
+-- >>> import Shrun.Command.Types (CommandP (MkCommandP), unsafeFromInt)
+-- >>> import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOff, KeyHideOn))
+--
+-- >>> let idx = unsafeFromInt 1
+-- >>> let mkCmd = MkCommandP idx
+-- >>> let fmt k cmd kh = view #unUnlinedText $ displayCmd (mkCmd k cmd) kh
+--
+-- >>> fmt Nothing "some long command" KeyHideOn
 -- "some long command"
 --
--- >>> displayCmd (MkCommandP Nothing "some long command") KeyHideOff
+-- >>> fmt Nothing "some long command" KeyHideOff
 -- "some long command"
 --
--- >>> displayCmd (MkCommandP (Just "long") "some long command") KeyHideOn
+-- >>> fmt (Just "long") "some long command" KeyHideOn
 -- "some long command"
 --
--- >>> displayCmd (MkCommandP (Just "long") "some long command") KeyHideOff
+-- >>> fmt (Just "long") "some long command" KeyHideOff
 -- "long"
 displayCmd :: CommandP1 -> KeyHideSwitch -> UnlinedText
 displayCmd cmd kh = case (cmd ^. #key, kh) of
@@ -384,9 +390,6 @@ stripChars txt =
     -- Coerce is needed as stripControl operators on UnlinedText. Originally
     -- this was convenient as our log was UnlinedText, but now it is
     -- LogMessage.
-    --
-    -- This shouldn't be a problem, though arguably stripControls should just
-    -- take Text.
     StripControlAll -> coerce Utils.stripControlAll txt
     StripControlNone -> txt
     StripControlSmart -> coerce Utils.stripControlSmart txt

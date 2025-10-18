@@ -84,13 +84,18 @@ emptyText =
     "" @=? U.stripControlAll ""
     "" @=? U.stripControlSmart ""
 
+-- NOTE: These functions rely on the IsString instance for Text. Previously
+-- the input was UnlinedText, and its IsString replaces newlines with
+-- white space. Once the input was changed to Text, that changed the tests
+-- here, but the actual function semantics remained the same.
+
 allControlStripped :: TestTree
 allControlStripped =
   testCase "All control sequences are stripped" $ do
     "" @=? U.stripControlAll "\ESC[A"
     "foo" @=? U.stripControlAll "foo\ESC[A"
     "bar" @=? U.stripControlAll "\ESC[Abar"
-    " foobar baz " @=? U.stripControlAll "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
+    " foobarbaz " @=? U.stripControlAll "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
 
 someControlStripped :: TestTree
 someControlStripped =
@@ -98,7 +103,7 @@ someControlStripped =
     "" @=? U.stripControlSmart "\ESC[A"
     "foo" @=? U.stripControlSmart "foo\ESC[A"
     "bar" @=? U.stripControlSmart "\ESC[Abar"
-    " foobar\ESC[1m baz " @=? U.stripControlSmart "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
+    " foobar\ESC[1mbaz " @=? U.stripControlSmart "\t foo\ESC[Abar\ESC[1m\n\ESC[0Kbaz \v"
     "\ESC[0mfoo" @=? U.stripControlSmart "\ESC[0mfoo"
     "foo\ESC[0mbar" @=? U.stripControlSmart "foo\ESC[0mbar"
 

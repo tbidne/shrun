@@ -155,8 +155,8 @@ testReadStrategyFailure testArgs = testCase desc $ do
     expectedErr =
       mconcat
         [ "The --command-log-read-strategy 'block-line-buffer' strategy was ",
-          "specified, however, it is only valid when there is exactly one ",
-          "command."
+          "specified, however, it is invalid when there are multiple commands ",
+          "and file-logging is enabled."
         ]
 
 #if OSX

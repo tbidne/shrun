@@ -57,6 +57,19 @@ jobs:
       - name: Compile
         run: cabal build ${{ matrix.ghc.proj-file }} lib:shrun
 
+      - name: Doctests
+        if: ${{ matrix.ghc == '9.6.7'
+          || matrix.ghc == '9.8.4'
+          || matrix.ghc == '9.10.2'
+          || matrix.ghc == '9.12.2'
+          }}
+        run: |
+          echo "*** Installing doctest ***"
+          cabal install --ignore-project doctest --flag cabal-doctest
+
+          echo "*** Running doctest ***"
+          cabal doctest lib:unicode-grapheme
+
       - name: Unit Tests
         run: |
           cabal test ${{ matrix.ghc.proj-file }} unit \

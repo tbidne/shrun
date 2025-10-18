@@ -37,8 +37,6 @@ import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.Time (TimeSpec, diffTimeSpec)
-import Shrun.Data.Text (UnlinedText)
-import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude
 import Text.Read (Read)
 import Text.Read qualified as TR
@@ -150,7 +148,7 @@ truncateIfNeeded n txt
 --
 -- >>> stripControlAll "foo\ESC[0;3Abar \n baz"
 -- "foobar  baz"
-stripControlAll :: UnlinedText -> UnlinedText
+stripControlAll :: Text -> Text
 stripControlAll =
   -- The ansi stripping must come first. For example, if we strip control
   -- chars from "\ESC[0;3mfoo" we get "0;3mfoo", and then stripAnsiAll will
@@ -159,7 +157,7 @@ stripControlAll =
   --
   -- By performing stripAnsiAll first, we remove entire ansi sequences,
   -- then remove other control chars (e.g. newlines, tabs).
-  ShrunText.reallyUnsafeMap (T.filter (not . isControl) . stripAnsiAll)
+  T.filter (not . isControl) . stripAnsiAll
 
 -- | Strips control chars, including most ansi escape sequences. We leave
 -- behind SGR ansi escape sequences e.g. text coloring. See
@@ -172,12 +170,12 @@ stripControlAll =
 --
 -- >>> stripControlSmart "foo\ESC[0;3mbar \n baz"
 -- "foo\ESC[0;3mbar  baz"
-stripControlSmart :: UnlinedText -> UnlinedText
+stripControlSmart :: Text -> Text
 stripControlSmart =
   -- Like 'stripControlAll', we need to handle the ansi sequences first.
   -- Because we actually leave some sequences behind, we need to be more
   -- surgical removing the rest of the control chars (e.g. newline, tabs).
-  ShrunText.reallyUnsafeMap (T.filter ctrlToFilter . stripAnsiControl)
+  T.filter ctrlToFilter . stripAnsiControl
   where
     -- stripAnsiControl should be handling all \ESC sequences, so we should
     -- be safe to ignore these, accomplishing our goal of preserving the SGR

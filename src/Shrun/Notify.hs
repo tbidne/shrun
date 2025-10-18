@@ -90,6 +90,6 @@ formatNotifyMessage :: UnlinedText -> [UnlinedText] -> NotifyMessage
 formatNotifyMessage timeTxt messages =
   UnsafeNotifyMessage
     . T.intercalate "\n"
-    . fmap (view #unUnlinedText . U.stripControlAll)
+    . fmap (U.stripControlAll . view #unUnlinedText)
     $ timeTxt
     : messages
