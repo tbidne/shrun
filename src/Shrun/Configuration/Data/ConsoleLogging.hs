@@ -42,31 +42,23 @@ import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
 -- | Switch for command logging in console logs.
-data ConsoleLogCmdSwitch
-  = ConsoleLogCmdOff
-  | ConsoleLogCmdOn
+newtype ConsoleLogCmdSwitch = MkConsoleLogCmdSwitch Bool
   deriving stock (Eq, Show)
 
 instance Default ConsoleLogCmdSwitch where
-  def = ConsoleLogCmdOff
+  def = MkConsoleLogCmdSwitch False
 
 instance
-  ( k ~ An_Iso,
-    a ~ Bool,
-    b ~ Bool
-  ) =>
+  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
   LabelOptic
-    "boolIso"
+    "unConsoleLogCmdSwitch"
     k
     ConsoleLogCmdSwitch
     ConsoleLogCmdSwitch
     a
     b
   where
-  labelOptic =
-    iso
-      (\cases ConsoleLogCmdOn -> True; ConsoleLogCmdOff -> False)
-      (\cases True -> ConsoleLogCmdOn; False -> ConsoleLogCmdOff)
+  labelOptic = iso (\(MkConsoleLogCmdSwitch b) -> b) MkConsoleLogCmdSwitch
 
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
@@ -212,7 +204,7 @@ mergeConsoleLogging args mToml = do
     $ MkConsoleLoggingP
       { commandLogging =
           WD.fromDefault
-            ( review #boolIso
+            ( MkConsoleLogCmdSwitch
                 <$> argsCommandLogging
                 <>? (toml ^. #commandLogging)
             ),

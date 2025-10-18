@@ -29,7 +29,7 @@ import Shrun.Configuration.Data.CommandLogging
         readStrategy,
         reportReadErrors
       ),
-    ReportReadErrorsSwitch (ReportReadErrorsOff, ReportReadErrorsOn),
+    ReportReadErrorsSwitch (MkReportReadErrorsSwitch),
   )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
@@ -46,7 +46,7 @@ import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
       ),
   )
 import Shrun.Configuration.Data.ConsoleLogging
-  ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
+  ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
     ConsoleLoggingP
       ( MkConsoleLoggingP,
         commandLogging,
@@ -76,7 +76,7 @@ import Shrun.Configuration.Data.Core
       ),
   )
 import Shrun.Configuration.Data.FileLogging
-  ( DeleteOnSuccessSwitch (DeleteOnSuccessOff, DeleteOnSuccessOn),
+  ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
     FileLogInitP
       ( MkFileLogInitP,
         mode,
@@ -192,7 +192,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                     },
                 consoleLogging =
                   MkConsoleLoggingP
-                    { commandLogging = ConsoleLogCmdOn,
+                    { commandLogging = MkConsoleLogCmdSwitch True,
                       commandNameTrunc = Just 80,
                       lineTrunc = Just 150,
                       stripControl = StripControlAll,
@@ -205,7 +205,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                       pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 20,
                       readStrategy = ReadBlockLineBuffer,
-                      reportReadErrors = ReportReadErrorsOn
+                      reportReadErrors = MkReportReadErrorsSwitch True
                     },
                 fileLogging =
                   Just
@@ -218,7 +218,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                             },
                         commandNameTrunc = Just 45,
                         lineTrunc = Just 200,
-                        deleteOnSuccess = DeleteOnSuccessOff,
+                        deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                         stripControl = StripControlNone
                       },
                 notify =
@@ -307,7 +307,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                     },
                 consoleLogging =
                   MkConsoleLoggingP
-                    { commandLogging = ConsoleLogCmdOn,
+                    { commandLogging = MkConsoleLogCmdSwitch True,
                       commandNameTrunc = Just 10,
                       lineTrunc = Just 60,
                       stripControl = StripControlNone,
@@ -320,7 +320,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                       pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 512,
                       readStrategy = ReadBlock,
-                      reportReadErrors = ReportReadErrorsOn
+                      reportReadErrors = MkReportReadErrorsSwitch True
                     },
                 fileLogging =
                   Just
@@ -332,7 +332,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                               sizeMode = FileSizeModeWarn $ fromℤ 50_000_000
                             },
                         commandNameTrunc = Just 35,
-                        deleteOnSuccess = DeleteOnSuccessOn,
+                        deleteOnSuccess = MkDeleteOnSuccessSwitch True,
                         lineTrunc = Just 180,
                         stripControl = StripControlNone
                       },
@@ -408,7 +408,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
 
     expected =
       [ #coreConfig % #fileLogging %? #commandNameTrunc ^?=@ Just (Just 55),
-        #coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just DeleteOnSuccessOn,
+        #coreConfig % #fileLogging %? #deleteOnSuccess % #unDeleteOnSuccessSwitch ^?=@ Just True,
         #coreConfig % #fileLogging %? #lineTrunc ^?=@ Just (Just 180),
         #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
         #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeWrite,

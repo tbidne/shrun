@@ -110,31 +110,23 @@ parseBufferTimeout getNat getTxt =
 {-# INLINEABLE parseBufferTimeout #-}
 
 -- | Switch for logging read errors
-data ReportReadErrorsSwitch
-  = ReportReadErrorsOff
-  | ReportReadErrorsOn
+newtype ReportReadErrorsSwitch = MkReportReadErrorsSwitch Bool
   deriving stock (Eq, Show)
 
 instance Default ReportReadErrorsSwitch where
-  def = ReportReadErrorsOff
+  def = MkReportReadErrorsSwitch False
 
 instance
-  ( k ~ An_Iso,
-    a ~ Bool,
-    b ~ Bool
-  ) =>
+  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
   LabelOptic
-    "boolIso"
+    "unReportReadErrorsSwitch"
     k
     ReportReadErrorsSwitch
     ReportReadErrorsSwitch
     a
     b
   where
-  labelOptic =
-    iso
-      (\cases ReportReadErrorsOn -> True; ReportReadErrorsOff -> False)
-      (\cases True -> ReportReadErrorsOn; False -> ReportReadErrorsOff)
+  labelOptic = iso (\(MkReportReadErrorsSwitch b) -> b) MkReportReadErrorsSwitch
   {-# INLINE labelOptic #-}
 
 -- | Holds config related to (console and file) command logging.
@@ -313,7 +305,7 @@ mergeCommandLogging fileLogging cmds args mToml = do
           (args ^. #readSize) <.>? (toml ^. #readSize),
         reportReadErrors =
           WD.fromDefault
-            ( review #boolIso
+            ( MkReportReadErrorsSwitch
                 <$> argsReportReadErrors
                 <>? (toml ^. #reportReadErrors)
             )

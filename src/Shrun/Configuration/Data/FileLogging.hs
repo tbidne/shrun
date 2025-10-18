@@ -78,31 +78,23 @@ import Shrun.Prelude
 import System.OsPath qualified as OsPath
 
 -- | Switch for deleting the log file upon success.
-data DeleteOnSuccessSwitch
-  = DeleteOnSuccessOff
-  | DeleteOnSuccessOn
+newtype DeleteOnSuccessSwitch = MkDeleteOnSuccessSwitch Bool
   deriving stock (Eq, Show)
 
 instance Default DeleteOnSuccessSwitch where
-  def = DeleteOnSuccessOff
+  def = MkDeleteOnSuccessSwitch False
 
 instance
-  ( k ~ An_Iso,
-    a ~ Bool,
-    b ~ Bool
-  ) =>
+  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
   LabelOptic
-    "boolIso"
+    "unDeleteOnSuccessSwitch"
     k
     DeleteOnSuccessSwitch
     DeleteOnSuccessSwitch
     a
     b
   where
-  labelOptic =
-    iso
-      (\cases DeleteOnSuccessOn -> True; DeleteOnSuccessOff -> False)
-      (\cases True -> DeleteOnSuccessOn; False -> DeleteOnSuccessOff)
+  labelOptic = iso (\(MkDeleteOnSuccessSwitch b) -> b) MkDeleteOnSuccessSwitch
   {-# INLINE labelOptic #-}
 
 -- NOTE: [Args vs. Toml mandatory fields]
@@ -430,7 +422,7 @@ mergeFileLogging args mToml = for mPath $ \path -> do
           (args ^. #commandNameTrunc) <?>? (toml ^. #commandNameTrunc),
         deleteOnSuccess =
           WD.fromDefault
-            ( review #boolIso
+            ( MkDeleteOnSuccessSwitch
                 <$> argsDeleteOnSuccess
                 <>? (toml ^. #deleteOnSuccess)
             ),
@@ -570,7 +562,7 @@ withMLogging (Just fileLogging) onLogging = do
   -- If the above command succeeded and deleteOnSuccess is true, delete the
   -- log file. Otherwise we will not reach here due to withBinaryFile
   -- rethrowing an exception, so the file will not be deleted.
-  when (fileLogging ^. #deleteOnSuccess % #boolIso)
+  when (fileLogging ^. #deleteOnSuccess % #unDeleteOnSuccessSwitch)
     $ removeFileIfExists_ uniqFp
 
   pure result

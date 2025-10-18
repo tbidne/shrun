@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns #-}
+
 -- | Provides the low-level `IO` functions for running shell commands.
 module Shrun.IO
   ( -- * Types
@@ -22,10 +24,7 @@ import Shrun.Command.Types
 import Shrun.Configuration.Data.CommandLogging
   ( BufferLength,
     BufferTimeout,
-    ReportReadErrorsSwitch
-      ( ReportReadErrorsOff,
-        ReportReadErrorsOn
-      ),
+    ReportReadErrorsSwitch,
   )
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy
@@ -35,12 +34,6 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOff),
-  )
-import Shrun.Configuration.Data.ConsoleLogging
-  ( ConsoleLogCmdSwitch
-      ( ConsoleLogCmdOff,
-        ConsoleLogCmdOn
-      ),
   )
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
@@ -209,15 +202,16 @@ tryCommandLogging command = do
   -- If we have problems, consider moving it to the timer.
 
   let keyHide = commonLogging ^. #keyHide
+      consoleLogSwitch = consoleLogging ^. #commandLogging % #unConsoleLogCmdSwitch
       -- In general, our loggers take an optional region (for debugging) and
       -- a log, and send it off to the console / file queues, depending on
       -- the queue. Debugging gets its own queue because we do not want it
       -- to be overridden by command logs.
-      cmdFn = case (consoleLogging ^. #commandLogging, mFileLogging) of
+      cmdFn = case (consoleLogSwitch, mFileLogging) of
         -- 1. No CommandLogging and no FileLogging: No streaming at all.
-        (ConsoleLogCmdOff, Nothing) -> tryShExitCode
+        (False, Nothing) -> tryShExitCode
         -- 3. CommandLogging but no FileLogging. Stream.
-        (ConsoleLogCmdOn, Nothing) -> \cmd ->
+        (True, Nothing) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
             restoreTimerRegion timerRegion
             let logFn mRegion log =
@@ -229,7 +223,7 @@ tryCommandLogging command = do
             tryCommandStream logFn cmd
         -- 3. No CommandLogging but FileLogging: Stream (to file) but no console
         --    region.
-        (ConsoleLogCmdOff, Just fileLogging) -> \cmd -> do
+        (False, Just fileLogging) -> \cmd -> do
           let logFn :: Maybe (Region m) -> Log -> m ()
               logFn mRegion log = do
                 -- Even if cmdLogging is off, we still want to send debug
@@ -244,7 +238,7 @@ tryCommandLogging command = do
           tryCommandStream logFn cmd
         -- 4. CommandLogging and FileLogging: Stream (to both) and create console
         --    region.
-        (ConsoleLogCmdOn, Just fileLogging) -> \cmd ->
+        (True, Just fileLogging) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
             restoreTimerRegion timerRegion
             let logFn mRegion log = do
@@ -619,15 +613,23 @@ writeLog ::
   IORef ReadHandleResult ->
   ReadHandleResult ->
   m ()
-writeLog _ _ _ _ ReadNoData = pure ()
-writeLog _ ReportReadErrorsOff _ _ (ReadErr _) = pure ()
-writeLog logFn ReportReadErrorsOn cmd lastReadRef r@(ReadErr messages) =
-  writeLogHelper logFn cmd lastReadRef r messages
-writeLog logFn reportReadErrors cmd lastReadRef r@(ReadErrSuccess errs successes) = do
-  when (reportReadErrors == ReportReadErrorsOn) $ writeLogHelper logFn cmd lastReadRef r errs
-  writeLogHelper logFn cmd lastReadRef r successes
-writeLog logFn _ cmd lastReadRef r@(ReadSuccess messages) =
-  writeLogHelper logFn cmd lastReadRef r messages
+writeLog = \cases
+  -- 1. No data: Do nothing.
+  _ _ _ _ ReadNoData -> pure ()
+  -- 2. ReadErr but ReadErrors is off: Do nothing.
+  _ (getReadErrors -> False) _ _ (ReadErr _) -> pure ()
+  -- 3. ReadErr and ReadErrors is on: Log it.
+  logFn (getReadErrors -> True) cmd lastReadRef r@(ReadErr messages) ->
+    writeLogHelper logFn cmd lastReadRef r messages
+  -- 4. Log success and potentially errors.
+  logFn reportReadErrors cmd lastReadRef r@(ReadErrSuccess errs successes) -> do
+    when (getReadErrors reportReadErrors) $ writeLogHelper logFn cmd lastReadRef r errs
+    writeLogHelper logFn cmd lastReadRef r successes
+  -- 5. Log successes.
+  logFn _ cmd lastReadRef r@(ReadSuccess messages) ->
+    writeLogHelper logFn cmd lastReadRef r messages
+  where
+    getReadErrors = view #unReportReadErrorsSwitch
 {-# INLINEABLE writeLog #-}
 
 writeLogHelper ::

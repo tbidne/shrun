@@ -20,9 +20,6 @@ import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy (ReadBlockLineBuffer),
   )
-import Shrun.Configuration.Data.FileLogging
-  ( DeleteOnSuccessSwitch (DeleteOnSuccessOn),
-  )
 import Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode (FileModeRename),
   )
@@ -274,7 +271,7 @@ testFileLogDeleteOnSuccess = testPropertyNamed desc "testFileLogDeleteOnSuccess"
     desc = "delete-on-success reads true"
     args = ["-c", getIntConfig "basic-file-log", "cmd"]
 
-    expected = [#coreConfig % #fileLogging %? #deleteOnSuccess ^?=@ Just DeleteOnSuccessOn]
+    expected = [#coreConfig % #fileLogging %? #deleteOnSuccess % #unDeleteOnSuccessSwitch ^?=@ Just True]
 
 testReadBlockLineBufferReadStrategy :: TestTree
 testReadBlockLineBufferReadStrategy = testPropertyNamed desc "testReadBlockLineBufferReadStrategy"

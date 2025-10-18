@@ -24,7 +24,7 @@ import Shrun.Configuration.Data.CommandLogging
         readStrategy,
         reportReadErrors
       ),
-    ReportReadErrorsSwitch (ReportReadErrorsOff),
+    ReportReadErrorsSwitch (MkReportReadErrorsSwitch),
   )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
@@ -44,7 +44,7 @@ import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (KeyHideOff),
   )
 import Shrun.Configuration.Data.ConsoleLogging
-  ( ConsoleLogCmdSwitch (ConsoleLogCmdOn),
+  ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
     ConsoleLoggingP
       ( MkConsoleLoggingP,
         commandLogging,
@@ -118,7 +118,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                     },
                 consoleLogging =
                   MkConsoleLoggingP
-                    { commandLogging = ConsoleLogCmdOn,
+                    { commandLogging = MkConsoleLogCmdSwitch True,
                       commandNameTrunc = Just 80,
                       lineTrunc = Just 150,
                       stripControl = StripControlSmart,
@@ -131,7 +131,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                       pollInterval = 100,
                       readSize = MkReadSize $ MkBytes 1_000_000,
                       readStrategy = ReadBlock,
-                      reportReadErrors = ReportReadErrorsOff
+                      reportReadErrors = MkReportReadErrorsSwitch False
                     },
                 fileLogging = Nothing,
                 notify =

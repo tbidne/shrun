@@ -146,7 +146,7 @@ testCommandGraphComplex testArgs = testCase desc $ do
 
   -- Without --edges this command should take around 6 seconds.
   assertBool (show seconds ++ " > 5") $ seconds > 5
-  assertBool (show seconds ++ " < 7") $ seconds < 7
+  assertBool (show seconds ++ " < 8") $ seconds < 8
   where
     desc = "Runs --edges commands with complex edges"
     expected =

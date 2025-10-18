@@ -21,7 +21,7 @@ import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
       ),
   )
 import Shrun.Configuration.Data.ConsoleLogging
-  ( ConsoleLogCmdSwitch (ConsoleLogCmdOff),
+  ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
     ConsoleLoggingEnv,
     ConsoleLoggingP
       ( MkConsoleLoggingP,
@@ -36,7 +36,7 @@ import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
   ( TimerFormat (ProseCompact),
   )
 import Shrun.Configuration.Data.FileLogging
-  ( DeleteOnSuccessSwitch (DeleteOnSuccessOff),
+  ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
     FileLogOpened
       ( MkFileLogOpened,
         handle,
@@ -305,7 +305,7 @@ testFormatsCLSpecs = testCase "Specific specs" $ do
 baseConsoleLoggingEnv :: ConsoleLoggingEnv
 baseConsoleLoggingEnv =
   MkConsoleLoggingP
-    { commandLogging = ConsoleLogCmdOff,
+    { commandLogging = MkConsoleLogCmdSwitch False,
       commandNameTrunc = Nothing,
       lineTrunc = Nothing,
       stripControl = StripControlNone,
@@ -564,7 +564,7 @@ baseFileLoggingEnv =
           },
       commandNameTrunc = Nothing,
       lineTrunc = Nothing,
-      deleteOnSuccess = DeleteOnSuccessOff,
+      deleteOnSuccess = MkDeleteOnSuccessSwitch False,
       stripControl = StripControlNone
     }
   where
