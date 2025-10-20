@@ -50,18 +50,18 @@ import System.Info qualified as Info
 -- | CLI args.
 data Args = MkArgs
   { -- | Optional config file.
-    configPath :: WithDisabled OsPath,
+    configPath :: Maybe (WithDisabled OsPath),
     -- | Core config.
     coreConfig :: CoreConfigArgs,
     -- | List of commands.
     commands :: NESeq Text,
     -- | Command dependencies.
-    edges :: WithDisabled EdgeArgs
+    edges :: Maybe (WithDisabled EdgeArgs)
   }
   deriving stock (Eq, Show)
 
 instance
-  (k ~ A_Lens, a ~ WithDisabled OsPath, b ~ WithDisabled OsPath) =>
+  (k ~ A_Lens, a ~ Maybe (WithDisabled OsPath), b ~ Maybe (WithDisabled OsPath)) =>
   LabelOptic "configPath" k Args Args a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
@@ -85,7 +85,7 @@ instance
   {-# INLINE labelOptic #-}
 
 instance
-  (k ~ A_Lens, a ~ WithDisabled EdgeArgs, b ~ WithDisabled EdgeArgs) =>
+  (k ~ A_Lens, a ~ Maybe (WithDisabled EdgeArgs), b ~ Maybe (WithDisabled EdgeArgs)) =>
   LabelOptic "edges" k Args Args a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
@@ -118,11 +118,10 @@ parserInfoArgs =
               ],
           Chunk.paragraph
             $ mconcat
-              [ "In general, each option --foo has a --no-foo variant that ",
-                "disables cli and toml configuration for that field. For ",
-                "example, the --no-console-log-command option will instruct shrun to ",
-                "ignore both cli --console-log-command and toml console-log.command, ",
-                "ensuring the default behavior is used (i.e. no command logging)."
+              [ "Some options allow an 'off' value, which disables toml ",
+                "configuration for that field. For ",
+                "example, '--console-log-command off' will disable ",
+                "command logging, regardless of the toml settings."
               ],
           Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation.",
           Chunk.paragraph "Examples:",
@@ -225,26 +224,25 @@ defaultConfig =
   where
     help = "Writes a default config.toml file to stdout."
 
-configParser :: Parser (WithDisabled OsPath)
-configParser = Utils.withDisabledParser mainParser "config"
+configParser :: Parser (Maybe (WithDisabled OsPath))
+configParser =
+  Utils.mWithDisabledParser
+    validOsPath
+    opts
+    "PATH"
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          validOsPath
-          ( mconcat
-              [ OA.long "config",
-                OA.short 'c',
-                Utils.mkHelp mainHelpTxt,
-                OA.metavar "PATH"
-              ]
-          )
+    opts =
+      [ OA.long "config",
+        OA.short 'c',
+        Utils.mkHelp mainHelpTxt
+      ]
+
     mainHelpTxt =
       mconcat
         [ "Path to TOML config file. If this argument is not given ",
           "we automatically look in the XDG config directory ",
-          "e.g. ~/.config/shrun/config.toml. The --no-config option disables ",
-          "--config and the automatic XDG lookup."
+          "e.g. ~/.config/shrun/config.toml. The string 'off' disables ",
+          "the automatic XDG lookup."
         ]
 
 commandsParser :: Parser (NESeq Text)

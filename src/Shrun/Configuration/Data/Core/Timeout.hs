@@ -10,6 +10,8 @@ module Shrun.Configuration.Data.Core.Timeout
 where
 
 import Data.Time.Relative qualified as RT
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled))
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
@@ -18,7 +20,7 @@ newtype Timeout = MkTimeout
   { unTimeout :: Natural
   }
   deriving stock (Eq, Ord, Show)
-  deriving (Num) via Natural
+  deriving (FromInteger, Num) via Natural
 
 instance
   (k ~ An_Iso, a ~ Natural, b ~ Natural) =>
@@ -28,8 +30,10 @@ instance
   {-# INLINE labelOptic #-}
 
 instance DecodeTOML Timeout where
-  tomlDecoder =
-    parseTimeout tomlDecoder tomlDecoder
+  tomlDecoder = parseTimeout tomlDecoder tomlDecoder
+
+instance Default (WithDisabled Timeout) where
+  def = Disabled
 
 -- NOTE: [CLI vs. Toml Types]
 --
@@ -58,4 +62,4 @@ parseTimeoutStr txt = case RT.fromString str of
 {-# INLINEABLE parseTimeoutStr #-}
 
 timeoutStr :: String
-timeoutStr = "(NATURAL | STRING)"
+timeoutStr = "NATURAL | STRING"

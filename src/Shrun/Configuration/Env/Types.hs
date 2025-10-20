@@ -36,6 +36,7 @@ import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Data.Notify (NotifyEnv)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
 
@@ -51,7 +52,7 @@ class HasCommands env where
 
 -- | Timeout, if any.
 class HasTimeout env where
-  getTimeout :: env -> Maybe Timeout
+  getTimeout :: env -> WithDisabled Timeout
 
 -- | Init, if any.
 class HasInit env where

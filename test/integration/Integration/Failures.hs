@@ -144,7 +144,8 @@ testReadStrategyFailure testArgs = testCase desc $ do
   where
     desc = "Read strategy block-line-buffer w/ multiple commands and file-logging throws error"
     args fp =
-      [ "--no-config",
+      [ "--config",
+        "off",
         "--command-log-read-strategy",
         "block-line-buffer",
         "--file-log",

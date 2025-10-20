@@ -1,9 +1,11 @@
 module Shrun.Configuration.Default
   ( Default (..),
+    fromMaybe,
+    (<.>),
   )
 where
 
-import Shrun.Prelude
+import Shrun.Prelude hiding (fromMaybe)
 
 -- | For types with a default value. In general, instances should be "simple"
 -- i.e. no instances for aggregate TTG types (e.g. FileLogging) as complexity
@@ -19,3 +21,13 @@ instance Default [a] where
 
 instance Default (Seq a) where
   def = Empty
+
+fromMaybe :: (Default a) => Maybe a -> a
+fromMaybe (Just x) = x
+fromMaybe Nothing = def
+
+-- | Like '(<>?)' except we extract a result via 'fromDefault'.
+(<.>) :: (Default a) => Maybe a -> Maybe a -> a
+x <.> y = fromMaybe (x <|> y)
+
+infixr 6 <.>

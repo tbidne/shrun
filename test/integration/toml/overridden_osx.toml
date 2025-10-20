@@ -1,34 +1,27 @@
-# These values can all be overridden by CLI args, so that we can test
-# CLI's supremacy.
-#
-# We need a separate file from config.toml since some of those values cannot
-# be overridden (e.g. cmd = true cannot be overriden from cli)
+# These values are intended to be overridden by the CLI. In general, all
+# options can be overridden, but here we test specifically options that are
+# booleans or support the "off" string.
 
-timeout = "1h"
 init = "blah"
 
 [common-log]
-key-hide = false
+key-hide = true
 
 [command-log]
-poll-interval = 100
-read-size = "50 b"
+report-read-errors = true
 
 [console-log]
 command = true
 command-name-trunc = 80
 line-trunc = 150
-strip-control = "all"
-timer-format = "digital_full"
 
 [file-log]
 path = "default"
 command-name-trunc = 20
 delete-on-success = true
 line-trunc = 200
-mode = "append"
 
 [notify]
 system = "apple-script"
 action = "command"
-timeout = "never"
+timeout = "off"

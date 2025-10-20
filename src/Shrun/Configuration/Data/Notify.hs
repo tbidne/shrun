@@ -40,12 +40,11 @@ import Shrun.Configuration.Data.Notify.Timeout
   ( NotifyTimeout,
   )
 import Shrun.Configuration.Data.WithDisabled
-  ( WithDisabled (Disabled, With, Without),
-    (<.>?),
-    (<>?),
+  ( WithDisabled (Disabled, With),
+    (<|?|>),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Configuration.Default (Default, def)
+import Shrun.Configuration.Default (Default, def, (<.>))
 import Shrun.Notify.DBus (MonadDBus (connectSession))
 import Shrun.Prelude
 
@@ -54,8 +53,8 @@ import Shrun.Prelude
 -- | Notify action is mandatory if we are running notifications.
 type NotifyActionF :: ConfigPhase -> Type
 type family NotifyActionF p where
-  NotifyActionF ConfigPhaseArgs = WithDisabled NotifyAction
-  NotifyActionF ConfigPhaseToml = NotifyAction
+  NotifyActionF ConfigPhaseArgs = Maybe (WithDisabled NotifyAction)
+  NotifyActionF ConfigPhaseToml = Maybe (WithDisabled NotifyAction)
   NotifyActionF ConfigPhaseMerged = NotifyAction
   NotifyActionF ConfigPhaseEnv = NotifyAction
 
@@ -152,22 +151,17 @@ mergeNotifyLogging ::
 mergeNotifyLogging args mToml =
   mAction <&> \action ->
     let toml :: NotifyToml
-        toml = fromMaybe (defaultNotifyToml action) mToml
+        toml = fromMaybe defaultNotifyToml mToml
      in MkNotifyP
           { action,
             system =
               mergeNotifySystem (args ^. #system) (toml ^. #system),
             timeout =
-              (args ^. #timeout) <.>? (toml ^. #timeout)
+              (args ^. #timeout) <.> (toml ^. #timeout)
           }
   where
-    mAction = case (args ^. #action, mToml) of
-      -- 1. Logging globally disabled
-      (Disabled, _) -> Nothing
-      -- 2. No Args and no Toml
-      (Without, Nothing) -> Nothing
-      (With p, _) -> Just p
-      (_, Just toml) -> Just $ toml ^. #action
+    mAction :: Maybe NotifyAction
+    mAction = args ^. #action <|?|> (mToml ^? _Just % #action % _Just)
 
 instance DecodeTOML NotifyToml where
   tomlDecoder =
@@ -219,10 +213,10 @@ mkNotify notifyToml systemP2 =
       timeout = notifyToml ^. #timeout
     }
 
-defaultNotifyToml :: NotifyAction -> NotifyToml
-defaultNotifyToml action =
+defaultNotifyToml :: NotifyToml
+defaultNotifyToml =
   MkNotifyP
     { system = Nothing,
-      action = action,
+      action = Nothing,
       timeout = Nothing
     }

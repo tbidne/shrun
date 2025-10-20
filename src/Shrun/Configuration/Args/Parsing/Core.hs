@@ -56,20 +56,18 @@ coreParser = do
         notify
       }
 
-timeoutParser :: Parser (WithDisabled Timeout)
-timeoutParser = Utils.withDisabledParser mainParser "timeout"
+timeoutParser :: Parser (Maybe (WithDisabled Timeout))
+timeoutParser =
+  Utils.mWithDisabledParser
+    (Timeout.parseTimeout Utils.autoStripUnderscores OA.str)
+    opts
+    Timeout.timeoutStr
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          (Timeout.parseTimeout Utils.autoStripUnderscores OA.str)
-          ( mconcat
-              [ OA.long "timeout",
-                OA.short 't',
-                Utils.mkHelp helpTxt,
-                OA.metavar Timeout.timeoutStr
-              ]
-          )
+    opts =
+      [ OA.long "timeout",
+        OA.short 't',
+        Utils.mkHelp helpTxt
+      ]
     helpTxt =
       mconcat
         [ "Non-negative integer setting a timeout. Can either be a raw number ",
@@ -77,18 +75,18 @@ timeoutParser = Utils.withDisabledParser mainParser "timeout"
           "2h3s. Defaults to no timeout."
         ]
 
-initParser :: Parser (WithDisabled Text)
-initParser = Utils.withDisabledParser mainParser "init"
+initParser :: Parser (Maybe (WithDisabled Text))
+initParser =
+  Utils.mWithDisabledParser
+    OA.str
+    opts
+    "STRING"
   where
-    mainParser =
-      OA.optional
-        $ OA.option OA.str
-        $ mconcat
-          [ OA.long "init",
-            OA.short 'i',
-            Utils.mkHelp helpTxt,
-            OA.metavar "STRING"
-          ]
+    opts =
+      [ OA.long "init",
+        OA.short 'i',
+        Utils.mkHelp helpTxt
+      ]
     helpTxt =
       mconcat
         [ "If given, init is run before each command. That is, ",

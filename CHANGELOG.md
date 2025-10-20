@@ -16,12 +16,54 @@ the first _two_ components (e.g. `0.9` in `0.9.1`), and PVP has no exception
 for versions < 1.
 
 ## [Unreleased]
+### Changed
+* Extensive CLI/toml option changes wrt disabling `--no-x`, aiming for
+  the following principles:
+
+  * CLI can always override toml.
+  * CLI should match toml as closely as possible.
+  * CLI options should be as "self-contained" as possible i.e. prefer a single
+    option with multiple values, vs. multiple unitary options.
+
+  To wit:
+
+  * All `--no-x` options have been removed.
+
+  * Options that were previously switches (e.g. `--console-log-command` and
+  `--no-console-log-command`) are now boolean options i.e. they take
+  `on`/`off`. These are:
+
+    * `--common-log-debug`.
+    * `--common-log-key-hide`.
+    * `--console-log-command`.
+    * `--file-log-delete-on-success`.
+
+  * Options where `--no-x` was the only way to disable the toml now take the
+    string `off` for this purpose. E.g.`--edges off` now disables
+    toml edges. These are:
+
+    * `--config`
+    * `--console-log-command-name-trunc`
+    * `--console-log-line-trunc`
+    * `--edges`
+    * `--file-log`
+    * `--file-log-command-name-trunc`
+    * `--file-log-line-trunc`
+    * `--init`
+    * `--notify-action`
+
+  * Toml `file-log.path` and `notify.action` are no longer mandatory for those
+    tables to be valid (though they must be given by at least one of the
+    CLI or toml).
+
+  * `--file-log-size-mode`'s `nothing` value renamed to `off`.
+
+  * `--timeout` and `--notify-timeout`'s `never` value renamed to `off`.
+
 ### Added
 * Added `--edges` (toml: legend `edges`) option for declaring dependencies
   between commands e.g. `shrun cmd1 cmd2 --edges "1 -> 2"` means `cmd2` will
-  run only once `cmd1` successfully finishes. This _should_ be
-  backwards-compatible, but as the command internals have significantly
-  changed, it is given a major release.
+  run only once `cmd1` successfully finishes.
 
 ## [0.9.2] -- 2025-10-10
 ### Changed

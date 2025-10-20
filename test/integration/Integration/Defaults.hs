@@ -40,10 +40,7 @@ import Shrun.Configuration.Data.CommonLogging
     Debug (MkDebug),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch
-      ( KeyHideOff,
-        KeyHideOn
-      ),
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
@@ -135,6 +132,7 @@ import Shrun.Configuration.Data.StripControl
         StripControlSmart
       ),
   )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
 import Test.Tasty.Hedgehog (testProperty)
 
 specs :: IO TestArgs -> TestTree
@@ -148,8 +146,7 @@ specs testArgs =
       cliOverridesConfigFileFileLog,
       fileLogStripControlDefaultsAll,
       ignoresDefaultConfigFile,
-      noXOverridesToml,
-      noXOverridesArgs
+      cliDisabledToml
     ]
 
 defaultEnv :: TestTree
@@ -183,12 +180,12 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { timeout = Just 3_600,
+              { timeout = With 3_600,
                 init = Just ". some file",
                 commonLogging =
                   MkCommonLoggingP
                     { debug = MkDebug True,
-                      keyHide = KeyHideOn
+                      keyHide = MkKeyHideSwitch True
                     },
                 consoleLogging =
                   MkConsoleLoggingP
@@ -201,7 +198,7 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
                 commandLogging =
                   MkCommandLoggingP
                     { bufferLength = 20,
-                      bufferTimeout = 60,
+                      bufferTimeout = fromℤ 60,
                       pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 20,
                       readStrategy = ReadBlockLineBuffer,
@@ -259,15 +256,19 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "--file-log",
         logPath,
         "--file-log-strip-control",
-        "none",
+        "off",
         "--file-log-command-name-trunc",
         "35",
         "--file-log-delete-on-success",
+        "on",
         "--file-log-line-trunc",
         "180",
         "--console-log-command",
+        "on",
         "--common-log-debug",
+        "on",
         "--common-log-key-hide",
+        "on",
         "--command-log-buffer-length",
         "40",
         "--command-log-buffer-timeout",
@@ -279,6 +280,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "--command-log-read-strategy",
         "block",
         "--command-log-report-read-errors",
+        "on",
         "--console-log-timer-format",
         "digital_compact",
         "--console-log-command-name-trunc",
@@ -286,7 +288,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
         "--console-log-line-trunc",
         "60",
         "--console-log-strip-control",
-        "none",
+        "off",
         "--notify-action",
         "final",
         "--notify-timeout",
@@ -298,12 +300,12 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { timeout = Just 10,
+              { timeout = With 10,
                 init = Just ". another file",
                 commonLogging =
                   MkCommonLoggingP
                     { debug = MkDebug True,
-                      keyHide = KeyHideOn
+                      keyHide = MkKeyHideSwitch True
                     },
                 consoleLogging =
                   MkConsoleLoggingP
@@ -316,7 +318,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                 commandLogging =
                   MkCommandLoggingP
                     { bufferLength = 40,
-                      bufferTimeout = 80,
+                      bufferTimeout = fromℤ 80,
                       pollInterval = 127,
                       readSize = MkReadSize $ MkBytes 512,
                       readStrategy = ReadBlock,
@@ -328,7 +330,7 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
                       { file =
                           MkFileLogInitP
                             { path = FPManual logPath,
-                              mode = FileModeAppend,
+                              mode = FileModeWrite,
                               sizeMode = FileSizeModeWarn $ fromℤ 50_000_000
                             },
                         commandNameTrunc = Just 35,
@@ -368,7 +370,7 @@ cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmd
         "--console-log-line-trunc",
         "60",
         "--console-log-strip-control",
-        "none",
+        "off",
         "cmd"
       ]
     expected =
@@ -395,6 +397,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         "--file-log-command-name-trunc",
         "55",
         "--file-log-delete-on-success",
+        "on",
         "--file-log-line-trunc",
         "180",
         "--file-log-mode",
@@ -456,16 +459,16 @@ ignoresDefaultConfigFile = testPropertyNamed desc "ignoresDefaultConfigFile"
   $ property
   $ do
     logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertEq ["--no-config", "cmd"] (`runConfigIO` logsRef) expected
+    makeConfigAndAssertEq ["--config", "off", "cmd"] (`runConfigIO` logsRef) expected
 
     logs <- liftIO $ readIORef logsRef
     [] === logs
   where
-    desc = "--no-config should ignore config file"
+    desc = "--config off should ignore config file"
     expected = defaultConfig
 
-noXOverridesToml :: TestTree
-noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
+cliDisabledToml :: TestTree
+cliDisabledToml = testPropertyNamed desc "cliDisabledToml"
   $ withTests 1
   $ property
   $ do
@@ -476,103 +479,28 @@ noXOverridesToml = testPropertyNamed desc "noXOverridesToml"
     logs <- liftIO $ readIORef logsRef
     [] === logs
   where
-    desc = "--no-x disables toml options"
+    desc = "cli disables toml options"
     args =
-      [ "--config",
-        getIntConfigOS "overridden",
-        "--no-timeout",
-        "--no-init",
-        "--no-common-log-key-hide",
-        "--no-command-log-buffer-length",
-        "--no-command-log-buffer-timeout",
-        "--no-command-log-poll-interval",
-        "--no-command-log-read-size",
-        "--no-command-log-read-strategy",
-        "--no-command-log-report-read-errors",
-        "--no-console-log-timer-format",
-        "--no-console-log-command-name-trunc",
-        "--no-console-log-command",
-        "--no-console-log-strip-control",
-        "--no-console-log-line-trunc",
-        "--no-file-log",
-        "--no-file-log-strip-control",
-        "--no-notify-action",
-        "--no-notify-system",
-        "--no-notify-timeout",
-        "cmd"
-      ]
-    expected = defaultConfig
-
-noXOverridesArgs :: TestTree
-noXOverridesArgs = testPropertyNamed desc "noXOverridesArgs"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-
-    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
-
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
-  where
-    desc = "--no-x disables args"
-    args =
-      [ "--timeout",
-        "5",
-        "--no-timeout",
-        "--init",
-        "blah",
-        "--no-init",
-        "--command-log-buffer-length",
-        "555",
-        "--no-command-log-buffer-length",
-        "--command-log-buffer-timeout",
-        "444",
-        "--no-command-log-buffer-timeout",
-        "--command-log-poll-interval",
-        "555",
-        "--no-command-log-poll-interval",
-        "--command-log-read-size",
-        "512 b",
-        "--no-command-log-read-size",
-        "--command-log-read-strategy",
-        "block-line-buffer",
-        "--no-command-log-read-strategy",
-        "--command-log-report-read-errors",
-        "--no-command-log-report-read-errors",
-        "--console-log-timer-format",
-        "prose_full",
-        "--no-console-log-timer-format",
-        "--common-log-debug",
-        "--no-common-log-debug",
+      [ "--command-log-report-read-errors",
+        "off",
         "--common-log-key-hide",
-        "--no-common-log-key-hide",
-        "--console-log-command-name-trunc",
-        "80",
-        "--no-console-log-command-name-trunc",
+        "off",
+        "--config",
+        getIntConfigOS "overridden",
         "--console-log-command",
-        "--no-console-log-command",
-        "--console-log-strip-control",
-        "all",
-        "--no-console-log-strip-control",
+        "off",
+        "--console-log-command-name-trunc",
+        "off",
         "--console-log-line-trunc",
-        "100",
-        "--no-console-log-line-trunc",
+        "off",
+        "--init",
+        "off",
         "--file-log",
-        "path",
-        "--no-file-log",
-        "--file-log-strip-control",
-        "all",
-        "--no-file-log-strip-control",
+        "off",
+        "--edges",
+        "off",
         "--notify-action",
-        "command",
-        "--no-notify-action",
-        "--notify-system",
-        "dbus",
-        "--no-notify-system",
-        "--notify-timeout",
-        "never",
-        "--no-notify-timeout",
+        "off",
         "cmd"
       ]
     expected = defaultConfig

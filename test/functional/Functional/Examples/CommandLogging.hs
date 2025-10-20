@@ -46,6 +46,7 @@ readSize =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--command-log-read-size",
           "5b",
           "--command-log-poll-interval",
@@ -81,6 +82,7 @@ bufferLengthSplit testArgs =
                 [ "--file-log",
                   outFileStr,
                   "--console-log-command",
+                  "on",
                   "--command-log-buffer-length",
                   "1",
                   cmd
@@ -116,6 +118,7 @@ bufferLengthUnsplit testArgs =
                 [ "--file-log",
                   outFileStr,
                   "--console-log-command",
+                  "on",
                   "--command-log-buffer-length",
                   "3",
                   cmd
@@ -161,6 +164,7 @@ bufferTimeoutSplit testArgs =
                 [ "--file-log",
                   outFileStr,
                   "--console-log-command",
+                  "on",
                   "--command-log-buffer-timeout",
                   "1",
                   cmd
@@ -196,6 +200,7 @@ bufferTimeoutUnsplit testArgs =
                 [ "--file-log",
                   outFileStr,
                   "--console-log-command",
+                  "on",
                   "--command-log-buffer-timeout",
                   "2",
                   cmd

@@ -175,7 +175,7 @@ logFileNothing testArgs = testPropertyNamed desc "logFileNothing"
       [ "-f",
         fp,
         "--file-log-size-mode",
-        "nothing",
+        "off",
         "cmd"
       ]
 

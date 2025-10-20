@@ -33,6 +33,7 @@ import Shrun.Configuration.Data.Notify.Action
         NotifyFinal
       ),
   )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
     HasCommandLogging,
@@ -499,7 +500,7 @@ keepRunning ::
   ) =>
   Region m ->
   IORef Natural ->
-  Maybe Timeout ->
+  WithDisabled Timeout ->
   m Bool
 keepRunning region timer mto = do
   elapsed <- readIORef timer
@@ -519,9 +520,9 @@ keepRunning region timer mto = do
     else pure True
 {-# INLINEABLE keepRunning #-}
 
-timedOut :: Natural -> Maybe Timeout -> Bool
-timedOut _ Nothing = False
-timedOut timer (Just (MkTimeout t)) = timer > t
+timedOut :: Natural -> WithDisabled Timeout -> Bool
+timedOut _ Disabled = False
+timedOut timer (With (MkTimeout t)) = timer > t
 
 pollQueueToConsole ::
   ( HasCallStack,

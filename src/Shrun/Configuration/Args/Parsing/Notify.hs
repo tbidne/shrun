@@ -33,17 +33,18 @@ notifyParser = do
         timeout
       }
 
-notifyActionParser :: Parser (WithDisabled NotifyAction)
-notifyActionParser = Utils.withDisabledParser mainParser "notify-action"
+notifyActionParser :: Parser (Maybe (WithDisabled NotifyAction))
+notifyActionParser =
+  Utils.mWithDisabledParser
+    (OA.str >>= Action.parseNotifyAction)
+    opts
+    Action.notifyActionStr
   where
-    mainParser =
-      OA.optional
-        $ OA.option (Action.parseNotifyAction OA.str)
-        $ mconcat
-          [ OA.long "notify-action",
-            Utils.mkHelp helpTxt,
-            OA.metavar Action.notifyActionStr
-          ]
+    opts =
+      [ OA.long "notify-action",
+        Utils.mkHelp helpTxt
+      ]
+
     helpTxt =
       mconcat
         [ "Sends notifications for various actions. 'Final' sends off a ",
@@ -52,8 +53,8 @@ notifyActionParser = Utils.withDisabledParser mainParser "notify-action"
           "'command'."
         ]
 
-notifySystemParser :: Parser (WithDisabled NotifySystemArgs)
-notifySystemParser = Utils.withDisabledParser mainParser "notify-system"
+notifySystemParser :: Parser (Maybe NotifySystemArgs)
+notifySystemParser = mainParser
   where
     mainParser =
       OA.optional
@@ -69,15 +70,15 @@ notifySystemParser = Utils.withDisabledParser mainParser "notify-system"
           "are available on linux, whereas 'apple-script' is available for osx."
         ]
 
-notifyTimeoutParser :: Parser (WithDisabled NotifyTimeout)
-notifyTimeoutParser = Utils.withDisabledParserNoLine mainParser "notify-timeout"
+notifyTimeoutParser :: Parser (Maybe NotifyTimeout)
+notifyTimeoutParser = mainParser
   where
     mainParser =
       OA.optional
         $ OA.option (Timeout.parseNotifyTimeout OA.str)
         $ mconcat
           [ OA.long "notify-timeout",
-            Utils.mkHelp helpTxt,
+            Utils.mkHelpNoLine helpTxt,
             OA.metavar Timeout.notifyTimeoutStr
           ]
     helpTxt =

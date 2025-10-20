@@ -16,8 +16,7 @@ import Effects.Time
 import Shrun.Command.Types (CommandP (MkCommandP, command, index, key))
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch
-      ( KeyHideOff,
-        KeyHideOn
+      ( MkKeyHideSwitch
       ),
   )
 import Shrun.Configuration.Data.ConsoleLogging
@@ -140,8 +139,8 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmtKeyHideOff = Formatting.formatConsoleLog KeyHideOff baseConsoleLoggingEnv
-      fmtKeyHideOn = Formatting.formatConsoleLog KeyHideOn baseConsoleLoggingEnv
+  let fmtKeyHideOff = Formatting.formatConsoleLog (MkKeyHideSwitch False) baseConsoleLoggingEnv
+      fmtKeyHideOn = Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -254,8 +253,8 @@ testFormatsCLCommandNameTrunc = testCase desc $ do
     desc = "Formats with cmd name truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = Formatting.formatConsoleLog KeyHideOff (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
-    fmtKh n = Formatting.formatConsoleLog KeyHideOn (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmt n = Formatting.formatConsoleLog (MkKeyHideSwitch False) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
+    fmtKh n = Formatting.formatConsoleLog (MkKeyHideSwitch True) (set' #commandNameTrunc (Just n) baseConsoleLoggingEnv)
 
 testFormatsCLLineTrunc :: TestTree
 testFormatsCLLineTrunc = testCase desc $ do
@@ -288,8 +287,8 @@ testFormatsCLLineTrunc = testCase desc $ do
     desc = "Formats with line truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = Formatting.formatConsoleLog KeyHideOff (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
-    fmtKh n = Formatting.formatConsoleLog KeyHideOn (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
+    fmt n = Formatting.formatConsoleLog (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
+    fmtKh n = Formatting.formatConsoleLog (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseConsoleLoggingEnv)
 
 testFormatsCLSpecs :: TestTree
 testFormatsCLSpecs = testCase "Specific specs" $ do
@@ -300,7 +299,7 @@ testFormatsCLSpecs = testCase "Specific specs" $ do
       resultKeyHideOn1 = fmtKeyHideOn l1 ^. #unConsoleLog
   expectedKeyHideOn1 @=? resultKeyHideOn1
   where
-    fmtKeyHideOn = Formatting.formatConsoleLog KeyHideOn baseConsoleLoggingEnv
+    fmtKeyHideOn = Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
 
 baseConsoleLoggingEnv :: ConsoleLoggingEnv
 baseConsoleLoggingEnv =
@@ -368,8 +367,8 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmtKeyHideOff = runFormatFileLog KeyHideOff baseFileLoggingEnv
-      fmtKeyHideOn = runFormatFileLog KeyHideOn baseFileLoggingEnv
+  let fmtKeyHideOff = runFormatFileLog (MkKeyHideSwitch False) baseFileLoggingEnv
+      fmtKeyHideOn = runFormatFileLog (MkKeyHideSwitch True) baseFileLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -485,8 +484,8 @@ testFormatsFLCommandNameTrunc = testCase desc $ do
     desc = "Formats with cmd name truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = runFormatFileLog KeyHideOff (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
-    fmtKh n = runFormatFileLog KeyHideOn (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
+    fmt n = runFormatFileLog (MkKeyHideSwitch False) (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
+    fmtKh n = runFormatFileLog (MkKeyHideSwitch True) (set' #commandNameTrunc (Just n) baseFileLoggingEnv)
 
 testFormatsFLLineTrunc :: TestTree
 testFormatsFLLineTrunc = testCase desc $ do
@@ -519,8 +518,8 @@ testFormatsFLLineTrunc = testCase desc $ do
     desc = "Formats with line truncation"
     -- key hide has no effect other than using the key over the cmd, which
     -- could have a different length, of course
-    fmt n = runFormatFileLog KeyHideOff (set' #lineTrunc (Just n) baseFileLoggingEnv)
-    fmtKh n = runFormatFileLog KeyHideOn (set' #lineTrunc (Just n) baseFileLoggingEnv)
+    fmt n = runFormatFileLog (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseFileLoggingEnv)
+    fmtKh n = runFormatFileLog (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseFileLoggingEnv)
 
 runFormatFileLog :: KeyHideSwitch -> FileLoggingEnv -> Log -> Text
 runFormatFileLog keyHide env log =

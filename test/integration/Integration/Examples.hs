@@ -41,7 +41,7 @@ import Shrun.Configuration.Data.CommonLogging
     Debug (MkDebug),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch (KeyHideOff),
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
 import Shrun.Configuration.Data.ConsoleLogging
   ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
@@ -84,6 +84,7 @@ import Shrun.Configuration.Data.Notify.Timeout
   ( NotifyTimeout (NotifyTimeoutNever),
   )
 import Shrun.Configuration.Data.StripControl (StripControl (StripControlSmart))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
 
 specs :: TestTree
 specs =
@@ -109,12 +110,12 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
       MkMergedConfig
         { coreConfig =
             MkCoreConfigP
-              { timeout = Just 20,
+              { timeout = With 20,
                 init = Just ". examples/bashrc",
                 commonLogging =
                   MkCommonLoggingP
                     { debug = MkDebug False,
-                      keyHide = KeyHideOff
+                      keyHide = MkKeyHideSwitch False
                     },
                 consoleLogging =
                   MkConsoleLoggingP
@@ -127,7 +128,7 @@ examplesConfig = testPropertyNamed desc "examplesConfig"
                 commandLogging =
                   MkCommandLoggingP
                     { bufferLength = 2000,
-                      bufferTimeout = 60,
+                      bufferTimeout = fromℤ 60,
                       pollInterval = 100,
                       readSize = MkReadSize $ MkBytes 1_000_000,
                       readStrategy = ReadBlock,

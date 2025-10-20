@@ -43,7 +43,7 @@
 
 > [!TIP]
 >
-> In general, each option `--foo` has a `--no-foo` variant that disables CLI and toml configuration for that field. For example, the `--no-console-log-command` option will instruct `shrun` to ignore both CLI `--console-log-command` and toml `console-log.command`, ensuring the default behavior is used (i.e. no command logging).
+> Some options allow an `off` value, which disables toml configuration for that field. For example, `--console-log-command off` will disable command logging, regardless of the toml settings.
 
 > [!NOTE]
 >
@@ -54,9 +54,9 @@
 
 ### Config
 
-**Arg:** `-c, --config PATH`
+**Arg:** `-c, --config (PATH | off)`
 
-**Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`. The `--no-config` option disables `--config` and the automatic XDG lookup.
+**Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`. The `off` option disables the automatic XDG lookup.
 
 Examples can be found in [examples](../examples).
 
@@ -98,7 +98,7 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 ### Edges
 
-**Arg:** `--edges (EDGES_STR | sequential)`
+**Arg:** `--edges (EDGES_STR | sequential | off)`
 
 **Description:** Comma separated list, specifying command dependencies, based on their order. For instance, `--edges '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
 
@@ -119,7 +119,7 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 ### Init
 
-**Arg:** `-i,--init STRING`
+**Arg:** `-i,--init (STRING | off)`
 
 **Description:** If given, `init` is run before each command. That is, `shrun --init "some logic" foo bar` is equivalent to `shrun "some logic && foo" "some logic && bar"`.
 
@@ -141,9 +141,9 @@ vs.
 
 ### Timeout
 
-**Arg:** `-t, --timeout (NATURAL | STRING)`
+**Arg:** `-t, --timeout (NATURAL | STRING | off)`
 
-**Description:** The provided timeout must be either a raw integer (interpreted as seconds), or a "time string" e.g. `1d2m3h4s`, `3h20s`. All integers must be non-negative. If the timeout is reached, then all remaining commands will be cancelled.
+**Description:** Non-negative integer setting a timeout. Can either be a raw number (interpreted as seconds), or a "time string" e.g. `1d2h3m4s` or `2h3s`. Defaults to no timeout.
 
 **Example:**
 
@@ -165,7 +165,7 @@ This is general logging config.
 
 #### Debug
 
-**Arg:** `--common-log-debug`
+**Arg:** `--common-log-debug (on | off)`
 
 **Description:** Enables additional debug logs.
 
@@ -180,7 +180,7 @@ This is general logging config.
 
 #### Key Hide
 
-**Arg:** `--common-log-key-hide`
+**Arg:** `--common-log-key-hide (on | off)`
 
 **Description:** By default, we display the key name from the legend file over the actual command that was run, if the former exists. This flag instead shows the literal command. Commands without keys are unaffected.
 
@@ -208,7 +208,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 #### Buffer Length
 
-**Arg:** `--command-log-buffer-length`
+**Arg:** `--command-log-buffer-length NATURAL`
 
 **Description:** Max text length held by the log buffer, used in conjunction with `--command-log-read-strategy block-line-buffer`. Defaults to 1,000 characters.
 
@@ -225,7 +225,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 #### Buffer Timeout
 
-**Arg:** `--command-log-buffer-timeout`
+**Arg:** `--command-log-buffer-timeout (NATURAL | STRING)`
 
 **Description:** Max time the log buffer will hold a log before flushing it, used in conjunction with `--command-log-read-strategy block-line-buffer`. Defaults to 30 seconds.
 
@@ -314,7 +314,7 @@ Config related to console logs.
 
 #### Command Log
 
-**Arg:** `--console-log-command`
+**Arg:** `--console-log-command (on | off)`
 
 **Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is shown at a given time.
 
@@ -343,7 +343,7 @@ vs.
 
 #### Command Name Truncation
 
-**Arg:** `--console-log-command-name-trunc NATURAL`
+**Arg:** `--console-log-command-name-trunc (NATURAL | off)`
 
 **Description:** Non-negative integer that limits the length of commands/key-names in the console logs. Defaults to no truncation.
 
@@ -357,7 +357,7 @@ vs.
 
 #### Line Truncation
 
-**Arg:** `--console-log-line-trunc (NATURAL | detect)`
+**Arg:** `--console-log-line-trunc (NATURAL | detect | off)`
 
 **Description:** Non-negative integer that limits the length of console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation.
 
@@ -375,9 +375,9 @@ vs.
 
 #### Strip Control
 
-**Arg:** `--console-log-strip-control (all | smart | none)`
+**Arg:** `--console-log-strip-control (all | smart | off)`
 
-**Description:** Control characters can wreak layout havoc, thus we include this option. `all` strips all such chars. `none` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
+**Description:** Control characters can wreak layout havoc, thus we include this option. `all` strips all such chars. `off` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
 
 * Simple formatting is left intact.
 * The layout should not be damaged.
@@ -443,7 +443,7 @@ Config related to file logs.
 
 #### File Log
 
-**Arg:** `-f, --file-log (default | PATH)`
+**Arg:** `-f, --file-log (default | PATH | off)`
 
 **Description**: If a path is supplied, all logs will additionally be written to the supplied file. Furthermore, command logs will be written to the file irrespective of [`--console-log-command`](#command-log). Console logging is unaffected. This can be useful for investigating command failures. If the string `default` is given, then we write to the XDG state directory e.g. `~/.local/state/shrun/shrun.log`.
 
@@ -471,7 +471,7 @@ Config related to file logs.
 
 #### File Command Name Truncation
 
-**Arg:** `--file-log-command-name-trunc NATURAL`
+**Arg:** `--file-log-command-name-trunc (NATURAL | off)`
 
 **Description:** Like [`--console-log-command-name-trunc`](#command-name-truncation), but for `--file-logs`.
 
@@ -495,7 +495,7 @@ Config related to file logs.
 
 #### File Delete On Success
 
-**Arg:** `--file-log-delete-on-success`
+**Arg:** `--file-log-delete-on-success (on | off)`
 
 **Description:** If `--file-log` is active, deletes the file on a successful exit. Does not delete the file if shrun exited via failure.
 
@@ -532,7 +532,7 @@ vs.
 
 #### File Line Truncation
 
-**Arg:** `--file-log-line-trunc`
+**Arg:** `--file-log-line-trunc (NATURAL | detect | off)`
 
 **Description:** Like [`--console-log-line-trunc`](#line-truncation), but for file logs.
 
@@ -560,9 +560,9 @@ vs.
 
 #### File Log Size Mode
 
-**Arg:** `--file-log-size-mode (warn BYTES | delete BYTES | nothing)`
+**Arg:** `--file-log-size-mode (warn BYTES | delete BYTES | off)`
 
-**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `BYTES` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`. Can be disabled with "nothing".
+**Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `BYTES` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`.
 
 **Exmaple:**
 
@@ -581,7 +581,7 @@ vs.
 
 #### File Log Strip Control
 
-**Arg:** `--file-log-strip-control (all | smart | none)`
+**Arg:** `--file-log-strip-control (all | smart | off)`
 
 **Description**: `--console-log-strip-control` for file logs created with `--file-log`. Defaults to all.
 
@@ -591,7 +591,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify Action
 
-**Arg:** `--notify-action (final | command | all)`
+**Arg:** `--notify-action (final | command | all | off)`
 
 **Description:** Sends notifications for various actions. `final` sends off a notification when `shrun` itself finishes whereas `command` sends one off each time a command finishes. `all` implies `final` and `command`.
 
@@ -615,14 +615,14 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify Timeout
 
-**Arg:** `--notify-timeout (never | NAT)`
+**Arg:** `--notify-timeout (NATURAL | off)`
 
 **Description:** When to timeout success notifications. Defaults to 10 seconds.
 
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-timeout never "sleep 5"</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-timeout off "sleep 5"</span></code>
 </pre>
 
 > [!NOTE]

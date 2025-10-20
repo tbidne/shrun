@@ -31,7 +31,7 @@ notifyActionTests =
     [ testActionFinal,
       testActionCommand,
       testActionAll,
-      testNoAction
+      testActionDisabled
     ]
 
 testActionFinal :: TestTree
@@ -41,7 +41,7 @@ testActionFinal =
   where
     desc = "Parses --notify-action final"
     argList = ["--notify-action", "final", "command"]
-    expected = updateDefNotifyArgs #action NotifyFinal
+    expected = updateDefNotifyArgsWD #action NotifyFinal
 
 testActionCommand :: TestTree
 testActionCommand =
@@ -50,7 +50,7 @@ testActionCommand =
   where
     desc = "Parses --notify-action command"
     argList = ["--notify-action", "command", "command"]
-    expected = updateDefNotifyArgs #action NotifyCommand
+    expected = updateDefNotifyArgsWD #action NotifyCommand
 
 testActionAll :: TestTree
 testActionAll =
@@ -59,14 +59,14 @@ testActionAll =
   where
     desc = "Parses --notify-action all"
     argList = ["--notify-action", "all", "command"]
-    expected = updateDefNotifyArgs #action NotifyAll
+    expected = updateDefNotifyArgsWD #action NotifyAll
 
-testNoAction :: TestTree
-testNoAction =
-  testPropertyNamed "Parses --no-notify-action" "testNoAction"
+testActionDisabled :: TestTree
+testActionDisabled =
+  testPropertyNamed "Parses --notify-action off" "testActionDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-notify-action", "command"]
+    argList = ["--notify-action", "off", "command"]
     expected = U.disableDefCoreArgs (#notify % #action)
 
 notifySystemTests :: TestTree
@@ -75,7 +75,6 @@ notifySystemTests =
     "--notify-system"
     [ testSystemDBus,
       testSystemNotifySend,
-      testNoSystem,
       testSystemAppleScript
     ]
 
@@ -106,22 +105,13 @@ testSystemAppleScript =
     argList = ["--notify-system", "apple-script", "command"]
     expected = updateDefNotifyArgs #system AppleScript
 
-testNoSystem :: TestTree
-testNoSystem =
-  testPropertyNamed "Parses --no-notify-system" "testNoSystem"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-notify-system", "command"]
-    expected = U.disableDefCoreArgs (#notify % #system)
-
 notifyTimeoutTests :: TestTree
 notifyTimeoutTests =
   testGroup
     "--notify-timeout"
     [ testTimeoutSeconds,
       testTimeoutSecondsUnderscores,
-      testTimeoutNever,
-      testNoTimeout
+      testTimeoutDisabled
     ]
 
 testTimeoutSeconds :: TestTree
@@ -142,29 +132,31 @@ testTimeoutSecondsUnderscores =
     argList = ["--notify-timeout", "5_000", "command"]
     expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 5_000)
 
-testTimeoutNever :: TestTree
-testTimeoutNever =
-  testPropertyNamed desc "testTimeoutNever"
+testTimeoutDisabled :: TestTree
+testTimeoutDisabled =
+  testPropertyNamed desc "testTimeoutDisabled"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --notify-timeout never"
-    argList = ["--notify-timeout", "never", "command"]
+    desc = "Parses --notify-timeout off"
+    argList = ["--notify-timeout", "off", "command"]
     expected = updateDefNotifyArgs #timeout NotifyTimeoutNever
 
-testNoTimeout :: TestTree
-testNoTimeout =
-  testPropertyNamed "Parses --no-notify-timeout" "testNoTimeout"
-    $ U.verifyResult argList expected
+updateDefNotifyArgsWD ::
+  forall a.
+  Lens' NotifyArgs (Maybe (WithDisabled a)) ->
+  a ->
+  Maybe Args
+updateDefNotifyArgsWD l x = (l' ?~ With x) U.defArgs
   where
-    argList = ["--no-notify-timeout", "command"]
-    expected = U.disableDefCoreArgs (#notify % #timeout)
+    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
+    l' = _Just % #coreConfig % #notify % l
 
 updateDefNotifyArgs ::
   forall a.
-  Lens' NotifyArgs (WithDisabled a) ->
+  Lens' NotifyArgs (Maybe a) ->
   a ->
   Maybe Args
-updateDefNotifyArgs l x = (l' .~ With x) U.defArgs
+updateDefNotifyArgs l x = (l' ?~ x) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' :: AffineTraversal' (Maybe Args) (Maybe a)
     l' = _Just % #coreConfig % #notify % l

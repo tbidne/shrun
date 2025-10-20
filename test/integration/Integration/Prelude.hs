@@ -24,6 +24,7 @@ import Hedgehog as X
     annotate,
     annotateShow,
     assert,
+    failure,
     property,
     withTests,
     (===),

@@ -29,13 +29,13 @@ main = bracket setup teardown runBenchmarks
         ]
 
 basicLogs :: Benchmark
-basicLogs = bgroup "Basic Logging" (runLoops ["--no-config"])
+basicLogs = bgroup "Basic Logging" (runLoops ["--config", "off"])
 
 commandLogs :: Benchmark
-commandLogs = bgroup "Command Logging" (runLoops ["--console-log-command", "--no-config"])
+commandLogs = bgroup "Command Logging" (runLoops ["--console-log-command", "on", "--config", "off"])
 
 fileLogs :: OsPath -> Benchmark
-fileLogs testDir = bgroup "File Logging" (runLoops ["-f", unsafeDecode fp, "--no-config"])
+fileLogs testDir = bgroup "File Logging" (runLoops ["-f", unsafeDecode fp, "--config", "off"])
   where
     fp = testDir </> [osp|bench.log|]
 

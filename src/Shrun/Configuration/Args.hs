@@ -19,7 +19,7 @@ import Shrun.Prelude
 defaultArgs :: NESeq Text -> Args
 defaultArgs commands =
   MkArgs
-    { configPath = mempty,
+    { configPath = Nothing,
       coreConfig = def,
       commands,
       edges = def

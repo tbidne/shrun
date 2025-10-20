@@ -33,7 +33,7 @@ import Shrun.Notify.MonadNotify
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 
--- | Sends a notification if they are enabled (linux only). Logs any failed
+-- | Sends a notification if they are With (linux only). Logs any failed
 -- sends.
 sendNotif ::
   ( HasAnyError env,

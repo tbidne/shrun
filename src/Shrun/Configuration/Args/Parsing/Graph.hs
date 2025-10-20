@@ -34,19 +34,17 @@ import Text.Megaparsec.Char qualified as MPC
 import Text.Megaparsec.Char.Lexer qualified as Lex
 import Text.Read qualified as TR
 
-edgesParser :: Parser (WithDisabled EdgeArgs)
-edgesParser = Utils.withDisabledParser mainParser "edges"
+edgesParser :: Parser (Maybe (WithDisabled EdgeArgs))
+edgesParser =
+  Utils.mWithDisabledParser
+    readEdges
+    opts
+    "EDGES_STR | sequential"
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          readEdges
-          ( mconcat
-              [ OA.long "edges",
-                Utils.mkHelp mainHelpTxt,
-                OA.metavar "(EDGES_STR | sequential)"
-              ]
-          )
+    opts =
+      [ OA.long "edges",
+        Utils.mkHelp mainHelpTxt
+      ]
     mainHelpTxt =
       mconcat
         [ "Comma separated list, specifying command dependencies, based on ",

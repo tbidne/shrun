@@ -22,8 +22,8 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
+    ConfigPhaseDisabledMaybeF,
     ConfigPhaseF,
-    ConfigPhaseMaybeF,
     LineTruncF,
     SwitchF,
   )
@@ -36,9 +36,8 @@ import Shrun.Configuration.Data.Truncation
     decodeCommandNameTrunc,
     decodeLineTrunc,
   )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<.>?), (<>?), (<?>?))
-import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Data.WithDisabled ((<|?|>))
+import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Prelude
 
 -- | Switch for command logging in console logs.
@@ -63,10 +62,10 @@ instance
 -- | Holds command logging config.
 type ConsoleLoggingP :: ConfigPhase -> Type
 data ConsoleLoggingP p = MkConsoleLoggingP
-  { -- | Whether command logging is enabled.
+  { -- | Whether command logging is With.
     commandLogging :: SwitchF p ConsoleLogCmdSwitch,
     -- | Command name truncation.
-    commandNameTrunc :: ConfigPhaseMaybeF p (Truncation TruncCommandName),
+    commandNameTrunc :: ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName),
     -- | Line truncation.
     lineTrunc :: LineTruncF p,
     -- | Strip control.
@@ -92,8 +91,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ ConfigPhaseMaybeF p (Truncation TruncCommandName),
-    b ~ ConfigPhaseMaybeF p (Truncation TruncCommandName)
+    a ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName),
+    b ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)
   ) =>
   LabelOptic "commandNameTrunc" k (ConsoleLoggingP p) (ConsoleLoggingP p) a b
   where
@@ -172,7 +171,7 @@ deriving stock instance Show (ConsoleLoggingP ConfigPhaseMerged)
 
 instance
   ( Default (SwitchF p ConsoleLogCmdSwitch),
-    Default (ConfigPhaseMaybeF p (Truncation TruncCommandName)),
+    Default (ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)),
     Default (LineTruncF p),
     Default (ConfigPhaseF p ConsoleLogStripControl),
     Default (ConfigPhaseF p TimerFormat)
@@ -198,28 +197,22 @@ mergeConsoleLogging ::
   m ConsoleLoggingMerged
 mergeConsoleLogging args mToml = do
   lineTrunc <-
-    configToLineTrunc $ (args ^. #lineTrunc) <>? (toml ^. #lineTrunc)
+    configToLineTrunc $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
 
   pure
     $ MkConsoleLoggingP
       { commandLogging =
-          WD.fromDefault
-            ( MkConsoleLogCmdSwitch
-                <$> argsCommandLogging
-                <>? (toml ^. #commandLogging)
-            ),
-        commandNameTrunc = (args ^. #commandNameTrunc) <?>? (toml ^. #commandNameTrunc),
+          args
+            ^. #commandLogging
+            <.> (toml ^. #commandLogging),
+        commandNameTrunc = (args ^. #commandNameTrunc) <|?|> (toml ^. #commandNameTrunc),
         lineTrunc,
         stripControl =
-          (args ^. #stripControl) <.>? (toml ^. #stripControl),
+          (args ^. #stripControl) <.> (toml ^. #stripControl),
         timerFormat =
-          (args ^. #timerFormat) <.>? (toml ^. #timerFormat)
+          (args ^. #timerFormat) <.> (toml ^. #timerFormat)
       }
   where
-    -- Convert WithDisabled () -> WithDisabled Bool for below operation.
-    argsCommandLogging :: WithDisabled Bool
-    argsCommandLogging = args ^. #commandLogging $> True
-
     toml = fromMaybe def mToml
 {-# INLINEABLE mergeConsoleLogging #-}
 
@@ -232,8 +225,9 @@ instance DecodeTOML ConsoleLoggingToml where
       <*> decodeStripControl
       <*> decodeTimerFormat
 
-decodeCommandLogging :: Decoder (Maybe Bool)
-decodeCommandLogging = getFieldOptWith tomlDecoder "command"
+decodeCommandLogging :: Decoder (Maybe ConsoleLogCmdSwitch)
+decodeCommandLogging =
+  fmap MkConsoleLogCmdSwitch <$> getFieldOptWith tomlDecoder "command"
 
 decodeStripControl :: Decoder (Maybe ConsoleLogStripControl)
 decodeStripControl = getFieldOptWith tomlDecoder "strip-control"

@@ -26,7 +26,7 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
-    ConfigPhaseMaybeF,
+    ConfigPhaseDisabledMaybeF,
   )
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingP, mergeConsoleLogging)
 import Shrun.Configuration.Data.ConsoleLogging qualified as ConsoleLogging
@@ -35,8 +35,8 @@ import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
 import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
-import Shrun.Configuration.Data.WithDisabled ((<?>?))
-import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<|?|>))
+import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Prelude
 
@@ -58,13 +58,19 @@ type family TomlOptF p a where
   TomlOptF ConfigPhaseMerged a = a
   TomlOptF ConfigPhaseEnv a = a
 
+type family TimeoutF a where
+  TimeoutF ConfigPhaseArgs = Maybe (WithDisabled Timeout)
+  TimeoutF ConfigPhaseToml = Maybe (WithDisabled Timeout)
+  TimeoutF ConfigPhaseMerged = WithDisabled Timeout
+  TimeoutF ConfigPhaseEnv = WithDisabled Timeout
+
 -- | Holds core configuration data.
 type CoreConfigP :: ConfigPhase -> Type
 data CoreConfigP p = MkCoreConfigP
   { -- | Shell logic to run before each command.
-    init :: ConfigPhaseMaybeF p Text,
+    init :: ConfigPhaseDisabledMaybeF p Text,
     -- | Timeout.
-    timeout :: ConfigPhaseMaybeF p Timeout,
+    timeout :: TimeoutF p,
     -- | Holds common logging config.
     commonLogging :: TomlOptF p (CommonLoggingP p),
     -- | Command log config.
@@ -79,8 +85,8 @@ data CoreConfigP p = MkCoreConfigP
 
 instance
   ( k ~ A_Lens,
-    a ~ ConfigPhaseMaybeF p Text,
-    b ~ ConfigPhaseMaybeF p Text
+    a ~ ConfigPhaseDisabledMaybeF p Text,
+    b ~ ConfigPhaseDisabledMaybeF p Text
   ) =>
   LabelOptic "init" k (CoreConfigP p) (CoreConfigP p) a b
   where
@@ -94,8 +100,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ ConfigPhaseMaybeF p Timeout,
-    b ~ ConfigPhaseMaybeF p Timeout
+    a ~ TimeoutF p,
+    b ~ TimeoutF p
   ) =>
   LabelOptic "timeout" k (CoreConfigP p) (CoreConfigP p) a b
   where
@@ -231,8 +237,8 @@ mergeCoreConfig cmds args mToml = do
 
   pure
     $ MkCoreConfigP
-      { timeout = (args ^. #timeout) <?>? (toml ^. #timeout),
-        init = (args ^. #init) <?>? (toml ^. #init),
+      { timeout = (args ^. #timeout) <.> (toml ^. #timeout),
+        init = (args ^. #init) <|?|> (toml ^. #init),
         commonLogging =
           mergeCommonLogging
             (args ^. #commonLogging)

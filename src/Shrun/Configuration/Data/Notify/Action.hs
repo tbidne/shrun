@@ -20,23 +20,22 @@ data NotifyAction
   deriving stock (Eq, Show)
 
 instance DecodeTOML NotifyAction where
-  tomlDecoder = parseNotifyAction tomlDecoder
+  tomlDecoder = tomlDecoder >>= parseNotifyAction
 
 -- | Parses 'NotifyAction'.
-parseNotifyAction :: (MonadFail m) => m Text -> m NotifyAction
-parseNotifyAction getTxt =
-  getTxt >>= \case
-    "final" -> pure NotifyFinal
-    "command" -> pure NotifyCommand
-    "all" -> pure NotifyAll
-    bad ->
-      fail
-        $ Utils.fmtUnrecognizedError
-          "notify action"
-          notifyActionStr
-          (unpack bad)
+parseNotifyAction :: (MonadFail m) => Text -> m NotifyAction
+parseNotifyAction = \case
+  "final" -> pure NotifyFinal
+  "command" -> pure NotifyCommand
+  "all" -> pure NotifyAll
+  bad ->
+    fail
+      $ Utils.fmtUnrecognizedError
+        "notify action"
+        notifyActionStr
+        (unpack bad)
 {-# INLINEABLE parseNotifyAction #-}
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
-notifyActionStr = "(final | command | all)"
+notifyActionStr = "final | command | all"

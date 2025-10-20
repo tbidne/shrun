@@ -8,7 +8,8 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.ConsoleLogging
-  ( ConsoleLoggingArgs,
+  ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
+    ConsoleLoggingArgs,
     ConsoleLoggingP
       ( MkConsoleLoggingP,
         commandLogging,
@@ -48,22 +49,9 @@ consoleLoggingParser = do
         timerFormat
       }
 
-commandLoggingParser :: Parser (WithDisabled ())
-commandLoggingParser = Utils.withDisabledParser mainParser "console-log-command"
+commandLoggingParser :: Parser (Maybe ConsoleLogCmdSwitch)
+commandLoggingParser = Utils.switchParser MkConsoleLogCmdSwitch "console-log-command" helpTxt
   where
-    switchParser =
-      OA.switch
-        ( mconcat
-            [ OA.long "console-log-command",
-              Utils.mkHelp helpTxt
-            ]
-        )
-    mainParser = do
-      b <- switchParser
-      pure
-        $ if b
-          then Just ()
-          else Nothing
     helpTxt =
       mconcat
         [ "The default behavior is to swallow logs for the commands ",
@@ -72,38 +60,34 @@ commandLoggingParser = Utils.withDisabledParser mainParser "console-log-command"
           "is show at a given time."
         ]
 
-commandNameTruncParser :: Parser (WithDisabled (Truncation TruncCommandName))
-commandNameTruncParser = Utils.withDisabledParser mainParser "console-log-command-name-trunc"
+commandNameTruncParser :: Parser (Maybe (WithDisabled (Truncation TruncCommandName)))
+commandNameTruncParser =
+  Utils.mWithDisabledParser
+    (Trunc.parseTruncation Utils.autoStripUnderscores)
+    opts
+    "NATURAL"
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          (Trunc.parseTruncation Utils.autoStripUnderscores)
-          ( mconcat
-              [ OA.long "console-log-command-name-trunc",
-                Utils.mkHelp helpTxt,
-                OA.metavar "NATURAL"
-              ]
-          )
+    opts =
+      [ OA.long "console-log-command-name-trunc",
+        Utils.mkHelp helpTxt
+      ]
     helpTxt =
       mconcat
         [ "Non-negative integer that limits the length of commands/key-names ",
           "in the console logs. Defaults to no truncation."
         ]
 
-lineTruncParser :: Parser (WithDisabled LineTruncation)
-lineTruncParser = Utils.withDisabledParser mainParser "console-log-line-trunc"
+lineTruncParser :: Parser (Maybe (WithDisabled LineTruncation))
+lineTruncParser =
+  Utils.mWithDisabledParser
+    (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
+    opts
+    Trunc.lineTruncStr
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
-          ( mconcat
-              [ OA.long "console-log-line-trunc",
-                Utils.mkHelp helpTxt,
-                OA.metavar Trunc.lineTruncStr
-              ]
-          )
+    opts =
+      [ OA.long "console-log-line-trunc",
+        Utils.mkHelp helpTxt
+      ]
     helpTxt =
       mconcat
         [ "Non-negative integer that limits the length of console logs. Can ",
@@ -113,9 +97,8 @@ lineTruncParser = Utils.withDisabledParser mainParser "console-log-line-trunc"
           "total length but are never truncated."
         ]
 
-stripControlParser :: Parser (WithDisabled ConsoleLogStripControl)
-stripControlParser =
-  Utils.withDisabledParser mainParser "console-log-strip-control"
+stripControlParser :: Parser (Maybe ConsoleLogStripControl)
+stripControlParser = mainParser
   where
     mainParser =
       OA.optional
@@ -131,22 +114,22 @@ stripControlParser =
       mconcat
         [ "Control characters can wreak layout havoc, thus we include this",
           " option. 'all' strips all",
-          " such chars. 'none' does nothing i.e. all chars are left",
+          " such chars. 'off' does nothing i.e. all chars are left",
           " untouched. The default 'smart' attempts to strip",
           " only the control chars that affect layout (e.g. cursor movements) and",
           " leaves others unaffected (e.g. colors). This has the potential",
           " to be the 'prettiest' though it is possible to miss some chars."
         ]
 
-timerFormatParser :: Parser (WithDisabled TimerFormat)
-timerFormatParser = Utils.withDisabledParserNoLine mainParser "console-log-timer-format"
+timerFormatParser :: Parser (Maybe TimerFormat)
+timerFormatParser = mainParser
   where
     mainParser =
       OA.optional
         $ OA.option (TimerFormat.parseTimerFormat OA.str)
         $ mconcat
           [ OA.long "console-log-timer-format",
-            Utils.mkHelp helpTxt,
+            Utils.mkHelpNoLine helpTxt,
             OA.metavar TimerFormat.timerFormatStr
           ]
     helpTxt =

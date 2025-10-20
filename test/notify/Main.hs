@@ -77,6 +77,7 @@ notifySendHandlesLegendQuotes = testCase "notify-send handles legend quotes" $ d
   where
     args =
       [ "--common-log-key-hide",
+        "on",
         "--notify-action",
         "all",
         "--notify-system",
@@ -162,7 +163,7 @@ instance MonadRegionLogger (ShellT NotifyEnv IO) where
   regionList = atomically $ newTMVar []
 
 runShrunNoConfig :: List String -> IO ()
-runShrunNoConfig = runShrun . ("--no-config" :)
+runShrunNoConfig = runShrun . (["--config", "off"] ++)
 
 runShrun :: List String -> IO ()
 runShrun args = do

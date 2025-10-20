@@ -7,8 +7,10 @@ module Unit.Shrun.Configuration.Args.Parsing.TestUtils
     -- * Utils
     execParserUnit,
     updateDefArgs,
+    updateDefArgsWD,
     disableDefArgs,
     updateDefCoreArgs,
+    updateDefCoreArgsWD,
     disableDefCoreArgs,
 
     -- * Defaults
@@ -78,38 +80,58 @@ defArgs = Just $ Args.defaultArgs defCommand
 
 updateDefArgs ::
   forall a.
+  Lens' Args (Maybe a) ->
+  a ->
+  Maybe Args
+updateDefArgs l x = (l' ?~ x) defArgs
+  where
+    l' :: AffineTraversal' (Maybe Args) (Maybe a)
+    l' = _Just % l
+
+updateDefArgsWD ::
+  forall a.
   Lens' Args (WithDisabled a) ->
   a ->
   Maybe Args
-updateDefArgs l x = (l' .~ With x) defArgs
+updateDefArgsWD l x = (l' .~ With x) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
     l' = _Just % l
 
 disableDefArgs ::
   forall a.
-  Lens' Args (WithDisabled a) ->
+  Lens' Args (Maybe (WithDisabled a)) ->
   Maybe Args
-disableDefArgs l = (l' .~ Disabled) defArgs
+disableDefArgs l = (l' ?~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
     l' = _Just % l
 
 updateDefCoreArgs ::
   forall a.
+  Lens' CoreConfigArgs (Maybe a) ->
+  a ->
+  Maybe Args
+updateDefCoreArgs l x = (l' ?~ x) defArgs
+  where
+    l' :: AffineTraversal' (Maybe Args) (Maybe a)
+    l' = _Just % #coreConfig % l
+
+updateDefCoreArgsWD ::
+  forall a.
   Lens' CoreConfigArgs (WithDisabled a) ->
   a ->
   Maybe Args
-updateDefCoreArgs l x = (l' .~ With x) defArgs
+updateDefCoreArgsWD l x = (l' .~ With x) defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
     l' = _Just % #coreConfig % l
 
 disableDefCoreArgs ::
   forall a.
-  Lens' CoreConfigArgs (WithDisabled a) ->
+  Lens' CoreConfigArgs (Maybe (WithDisabled a)) ->
   Maybe Args
-disableDefCoreArgs l = (l' .~ Disabled) defArgs
+disableDefCoreArgs l = (l' ?~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
     l' = _Just % #coreConfig % l

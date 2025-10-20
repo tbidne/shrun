@@ -30,7 +30,7 @@ import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
 import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch (KeyHideOff),
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
@@ -357,26 +357,26 @@ concatWithLineTrunc (Just (MkTruncation lineTrunc, mPrefixLen)) prefix msg =
 -- 'KeyHideOff' then we return the key. Otherwise we return the command itself.
 --
 -- >>> import Shrun.Command.Types (CommandP (MkCommandP), unsafeFromInt)
--- >>> import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (KeyHideOff, KeyHideOn))
+-- >>> import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch (MkKeyHideSwitch))
 --
 -- >>> let idx = unsafeFromInt 1
 -- >>> let mkCmd = MkCommandP idx
 -- >>> let fmt k cmd kh = view #unUnlinedText $ displayCmd (mkCmd k cmd) kh
 --
--- >>> fmt Nothing "some long command" KeyHideOn
+-- >>> fmt Nothing "some long command" (MkKeyHideSwitch true)
 -- "some long command"
 --
--- >>> fmt Nothing "some long command" KeyHideOff
+-- >>> fmt Nothing "some long command" (MkKeyHideSwitch false)
 -- "some long command"
 --
--- >>> fmt (Just "long") "some long command" KeyHideOn
+-- >>> fmt (Just "long") "some long command" (MkKeyHideSwitch true)
 -- "some long command"
 --
--- >>> fmt (Just "long") "some long command" KeyHideOff
+-- >>> fmt (Just "long") "some long command" (MkKeyHideSwitch false)
 -- "long"
 displayCmd :: CommandP1 -> KeyHideSwitch -> UnlinedText
 displayCmd cmd kh = case (cmd ^. #key, kh) of
-  (Just key, KeyHideOff) -> formatCommandText key
+  (Just key, MkKeyHideSwitch False) -> formatCommandText key
   _ -> formatCommandText (cmd ^. #command)
 
 -- | Applies the given 'StripControl' to the 'Text'.

@@ -39,6 +39,7 @@ logsNoBuffer =
       -- change anything, but it makes the output slightly clearer.
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--console-log-strip-control=all",
           "--console-log-command-name-trunc=15",
           "sleep 0.5 ; for i in 0.5 1.5 2.5 3.5; do echo \"$i\"; sleep 1; done"

@@ -6,7 +6,7 @@ module Shrun.Configuration.Data.ConfigPhase
     -- * Type families
     ConfigPhaseF,
     ConfigPhaseMaybeF,
-    ConfigPhaseEnvF,
+    ConfigPhaseDisabledMaybeF,
     LineTruncF,
     SwitchF,
   )
@@ -38,7 +38,7 @@ data ConfigPhase
 -- - Merged: Definite
 type ConfigPhaseF :: ConfigPhase -> Type -> Type
 type family ConfigPhaseF p a where
-  ConfigPhaseF ConfigPhaseArgs a = WithDisabled a
+  ConfigPhaseF ConfigPhaseArgs a = Maybe a
   ConfigPhaseF ConfigPhaseToml a = Maybe a
   ConfigPhaseF ConfigPhaseMerged a = a
   ConfigPhaseF ConfigPhaseEnv a = a
@@ -50,42 +50,37 @@ type family ConfigPhaseF p a where
 -- - Merged: Maybe
 type ConfigPhaseMaybeF :: ConfigPhase -> Type -> Type
 type family ConfigPhaseMaybeF p a where
-  ConfigPhaseMaybeF ConfigPhaseArgs a = WithDisabled a
+  ConfigPhaseMaybeF ConfigPhaseArgs a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseToml a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseMerged a = Maybe a
   ConfigPhaseMaybeF ConfigPhaseEnv a = Maybe a
 
--- | General type family representing:
---
--- - Args: Maybe w/ disable flag
--- - Toml: Maybe
--- - Merged: Maybe
--- - Env: Definite
-type ConfigPhaseEnvF :: ConfigPhase -> Type -> Type
-type family ConfigPhaseEnvF p a where
-  ConfigPhaseEnvF ConfigPhaseArgs a = WithDisabled a
-  ConfigPhaseEnvF ConfigPhaseToml a = Maybe a
-  ConfigPhaseEnvF ConfigPhaseMerged a = Maybe a
-  ConfigPhaseEnvF ConfigPhaseEnv a = a
+type ConfigPhaseDisabledMaybeF :: ConfigPhase -> Type -> Type
+type family ConfigPhaseDisabledMaybeF p a where
+  ConfigPhaseDisabledMaybeF ConfigPhaseArgs a = Maybe (WithDisabled a)
+  ConfigPhaseDisabledMaybeF ConfigPhaseToml a = Maybe (WithDisabled a)
+  ConfigPhaseDisabledMaybeF ConfigPhaseMerged a = Maybe a
+  ConfigPhaseDisabledMaybeF ConfigPhaseEnv a = Maybe a
 
 -- | General type family representing a boolean switch for a type @t@ that
--- is isomorphic to Bool:
+-- is isomorphic to Bool. Args and Toml distinguish explicit false
+-- (Just 'false') vs. not given (Nothing).
 --
--- - Args: WithDisabled () (isomorphic to Disabled | Bool)
--- - Toml: Maybe Bool
+-- - Args: Maybe t
+-- - Toml: Maybe t
 -- - Merged: t
 -- - Env: t
 type SwitchF :: ConfigPhase -> Type -> Type
 type family SwitchF p t where
-  SwitchF ConfigPhaseArgs _ = WithDisabled ()
-  SwitchF ConfigPhaseToml _ = Maybe Bool
+  SwitchF ConfigPhaseArgs t = Maybe t
+  SwitchF ConfigPhaseToml t = Maybe t
   SwitchF ConfigPhaseMerged t = t
   SwitchF ConfigPhaseEnv t = t
 
 -- | Line truncation is truly optional, the default being none.
 type LineTruncF :: ConfigPhase -> Type
 type family LineTruncF p where
-  LineTruncF ConfigPhaseArgs = WithDisabled LineTruncation
-  LineTruncF ConfigPhaseToml = Maybe LineTruncation
+  LineTruncF ConfigPhaseArgs = Maybe (WithDisabled LineTruncation)
+  LineTruncF ConfigPhaseToml = Maybe (WithDisabled LineTruncation)
   LineTruncF ConfigPhaseMerged = Maybe (Truncation TruncLine)
   LineTruncF ConfigPhaseEnv = Maybe (Truncation TruncLine)

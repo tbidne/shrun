@@ -5,6 +5,7 @@ module Unit.Shrun.Configuration.Args.Parsing (tests) where
 
 import Data.Sequence qualified as Seq
 import Shrun.Configuration.Args (defaultArgs)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.Core qualified as Core
 import Unit.Shrun.Configuration.Args.Parsing.Graph qualified as Graph
@@ -42,7 +43,7 @@ configTests =
     "--config"
     [ testConfigShort,
       testConfig,
-      testNoConfig
+      testConfigDisabled
     ]
 
 testConfigShort :: TestTree
@@ -51,7 +52,7 @@ testConfigShort =
     $ U.verifyResult argList expected
   where
     argList = ["-c./path/config.toml", "command"]
-    expected = U.updateDefArgs #configPath [osp|./path/config.toml|]
+    expected = U.updateDefArgs #configPath (With [osp|./path/config.toml|])
 
 testConfig :: TestTree
 testConfig =
@@ -59,14 +60,14 @@ testConfig =
     $ U.verifyResult argList expected
   where
     argList = ["--config=./path/config.toml", "command"]
-    expected = U.updateDefArgs #configPath [osp|./path/config.toml|]
+    expected = U.updateDefArgs #configPath (With [osp|./path/config.toml|])
 
-testNoConfig :: TestTree
-testNoConfig =
-  testPropertyNamed "Parses --no-config" "testNoConfig"
+testConfigDisabled :: TestTree
+testConfigDisabled =
+  testPropertyNamed "Parses --config off" "testConfigDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-config", "command"]
+    argList = ["--config", "off", "command"]
     expected = U.disableDefArgs #configPath
 
 commandTests :: TestTree

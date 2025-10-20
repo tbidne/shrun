@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (..),
   )
@@ -8,19 +10,19 @@ import Shrun.Prelude
 
 -- | Type for determining if we use the command's key
 -- for display, rather than the key itself.
-data KeyHideSwitch
-  = -- | Display the command's key, if it exists, rather
-    -- than the key itself.
-    KeyHideOff
-  | -- | Display the command itself, not the key.
-    KeyHideOn
-  deriving stock (Bounded, Enum, Eq, Ord, Show)
+newtype KeyHideSwitch = MkKeyHideSwitch Bool
+  deriving stock (Bounded, Eq, Ord, Show)
+  deriving newtype (Enum)
 
 instance DecodeTOML KeyHideSwitch where
-  tomlDecoder =
-    tomlDecoder <&> \case
-      True -> KeyHideOn
-      False -> KeyHideOff
+  tomlDecoder = MkKeyHideSwitch <$> tomlDecoder
 
 instance Default KeyHideSwitch where
-  def = KeyHideOff
+  def = MkKeyHideSwitch False
+
+instance
+  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
+  LabelOptic "unKeyHideSwitch" k KeyHideSwitch KeyHideSwitch a b
+  where
+  labelOptic = iso (\(MkKeyHideSwitch b) -> b) MkKeyHideSwitch
+  {-# INLINE labelOptic #-}

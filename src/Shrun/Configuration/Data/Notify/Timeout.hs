@@ -33,14 +33,14 @@ instance FromInteger NotifyTimeout where
 
 instance DecodeTOML NotifyTimeout where
   tomlDecoder = makeDecoder $ \case
-    String "never" -> pure NotifyTimeoutNever
+    String "off" -> pure NotifyTimeoutNever
     String bad -> invalidValue strErr (String bad)
     Integer i -> case toIntegralSized i of
       Just i' -> pure $ NotifyTimeoutSeconds i'
       Nothing -> invalidValue (tooLargeErr Nothing) (Integer i)
     badTy -> typeMismatch badTy
     where
-      strErr = "Unexpected timeout. Only valid string is 'never'."
+      strErr = "Unexpected timeout. Only valid string is 'off'."
 
 tooLargeErr :: Maybe Integer -> Text
 tooLargeErr Nothing = "Timeout integer too large. Max is: " <> showt maxW16
@@ -59,7 +59,7 @@ maxW16 = maxBound
 parseNotifyTimeout :: (MonadFail m) => m Text -> m NotifyTimeout
 parseNotifyTimeout getTxt =
   getTxt >>= \case
-    "never" -> pure NotifyTimeoutNever
+    "off" -> pure NotifyTimeoutNever
     other -> case U.readStripUnderscores @_ @Integer other of
       Just nInt -> case toIntegralSized nInt of
         Just nW16 -> pure $ NotifyTimeoutSeconds nW16
@@ -74,4 +74,4 @@ parseNotifyTimeout getTxt =
 
 -- | Available 'NotifyTimeout' strings.
 notifyTimeoutStr :: (IsString a) => a
-notifyTimeoutStr = "(never | NATURAL)"
+notifyTimeoutStr = "(NATURAL | off)"

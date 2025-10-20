@@ -55,7 +55,7 @@ notifyActionFinal = testCase "Runs --notify-action final" $ do
       ]
 
 notifyTimeoutNever :: TestTree
-notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
+notifyTimeoutNever = testCase "Runs --notify-timeout off" $ do
   results <- runNotes args
   expected @=? results
   where
@@ -66,7 +66,7 @@ notifyTimeoutNever = testCase "Runs --notify-timeout never" $ do
           "--notify-action",
           "all",
           "--notify-timeout",
-          "never",
+          "off",
           "sleep 2",
           "sleep 3"
         ]

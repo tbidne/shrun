@@ -31,7 +31,7 @@ instance DecodeTOML FileSizeMode where
 parseFileSizeMode :: (MonadFail m) => m Text -> m FileSizeMode
 parseFileSizeMode getTxt = do
   txt <- getTxt
-  if txt == "nothing"
+  if txt == "off"
     then pure FileSizeModeNothing
     else do
       let (m, byteTxt) = T.break Ch.isSpace txt
@@ -56,4 +56,4 @@ instance Default FileSizeMode where
       defBytes = MkBytes 50
 
 fileSizeModeStr :: String
-fileSizeModeStr = "(warn BYTES | delete BYTES | nothing)"
+fileSizeModeStr = "(warn BYTES | delete BYTES | off)"

@@ -39,7 +39,8 @@ parseStripControl :: (MonadFail m) => m Text -> m (StripControl t)
 parseStripControl getTxt =
   getTxt >>= \case
     "all" -> pure StripControlAll
-    "none" -> pure StripControlNone
+    -- "off" over "none" just for consistency with other options.
+    "off" -> pure StripControlNone
     "smart" -> pure StripControlSmart
     bad ->
       fail
@@ -55,4 +56,4 @@ instance Default FileLogStripControl where
   def = StripControlAll
 
 stripControlStr :: String
-stripControlStr = "(all | none | smart)"
+stripControlStr = "(all | smart | off)"

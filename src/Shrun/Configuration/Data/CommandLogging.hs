@@ -53,9 +53,7 @@ import Shrun.Configuration.Data.ConfigPhase
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
-import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<.>?), (<>?), (<?>?))
-import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Prelude
 
 newtype BufferLength = MkBufferLength Int
@@ -85,7 +83,7 @@ parseBufferLength getNat = do
 
 newtype BufferTimeout = MkBufferTimeout Timeout
   deriving stock (Eq, Show)
-  deriving (Num) via Natural
+  deriving newtype (FromInteger)
 
 instance
   (k ~ An_Iso, a ~ Timeout, b ~ Timeout) =>
@@ -290,31 +288,23 @@ mergeCommandLogging ::
 mergeCommandLogging fileLogging cmds args mToml = do
   readStrategy <-
     guardReadStrategy
-      ((args ^. #readStrategy) <?>? (toml ^. #readStrategy))
+      ((args ^. #readStrategy) <|> (toml ^. #readStrategy))
 
   pure
     $ MkCommandLoggingP
       { bufferLength =
-          (args ^. #bufferLength) <.>? (toml ^. #bufferLength),
+          (args ^. #bufferLength) <.> (toml ^. #bufferLength),
         bufferTimeout =
-          (args ^. #bufferTimeout) <.>? (toml ^. #bufferTimeout),
+          (args ^. #bufferTimeout) <.> (toml ^. #bufferTimeout),
         pollInterval =
-          (args ^. #pollInterval) <.>? (toml ^. #pollInterval),
+          (args ^. #pollInterval) <.> (toml ^. #pollInterval),
         readStrategy,
         readSize =
-          (args ^. #readSize) <.>? (toml ^. #readSize),
+          (args ^. #readSize) <.> (toml ^. #readSize),
         reportReadErrors =
-          WD.fromDefault
-            ( MkReportReadErrorsSwitch
-                <$> argsReportReadErrors
-                <>? (toml ^. #reportReadErrors)
-            )
+          args ^. #reportReadErrors <.> (toml ^. #reportReadErrors)
       }
   where
-    -- Convert WithDisabled () -> WithDisabled Bool for below operation.
-    argsReportReadErrors :: WithDisabled Bool
-    argsReportReadErrors = args ^. #reportReadErrors $> True
-
     toml = fromMaybe def mToml
 
     -- In general we want to let the user pick or pick a good default, but
@@ -356,8 +346,9 @@ decodeReadSize = getFieldOptWith tomlDecoder "read-size"
 decodeReadStrategy :: Decoder (Maybe ReadStrategy)
 decodeReadStrategy = getFieldOptWith tomlDecoder "read-strategy"
 
-decodeReportReadErrors :: Decoder (Maybe Bool)
-decodeReportReadErrors = getFieldOptWith tomlDecoder "report-read-errors"
+decodeReportReadErrors :: Decoder (Maybe ReportReadErrorsSwitch)
+decodeReportReadErrors =
+  fmap MkReportReadErrorsSwitch <$> getFieldOptWith tomlDecoder "report-read-errors"
 
 -- | Creates env version from merged. Requires commands because we pick
 -- the read strategy based on the number of commands.

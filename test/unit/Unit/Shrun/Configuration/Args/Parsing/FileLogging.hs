@@ -4,7 +4,7 @@
 module Unit.Shrun.Configuration.Args.Parsing.FileLogging (tests) where
 
 import Shrun.Configuration.Args (Args)
-import Shrun.Configuration.Data.FileLogging (FileLoggingArgs)
+import Shrun.Configuration.Data.FileLogging (DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch), FileLoggingArgs)
 import Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode (FileModeAppend, FileModeRename, FileModeWrite),
   )
@@ -52,7 +52,7 @@ fileLoggingTests =
       testFileLogShortDefault,
       testFileLogShortEmptyFails,
       testFileLogEmptyFails,
-      parseNoFileLog
+      parseFileLogDisabled
     ]
 
 testFileLogShort :: TestTree
@@ -61,7 +61,7 @@ testFileLogShort =
     $ U.verifyResult argList expected
   where
     argList = ["-flogfile", "command"]
-    expected = updateDefFileLogArgs (#file % #path) (FPManual [osp|logfile|])
+    expected = updateDefFileLogArgsWD (#file % #path) (FPManual [osp|logfile|])
 
 testFileLog :: TestTree
 testFileLog =
@@ -70,7 +70,7 @@ testFileLog =
   where
     desc = "Parses --file-log"
     argList = ["--file-log=logfile", "command"]
-    expected = updateDefFileLogArgs (#file % #path) (FPManual [osp|logfile|])
+    expected = updateDefFileLogArgsWD (#file % #path) (FPManual [osp|logfile|])
 
 testFileLogDefault :: TestTree
 testFileLogDefault =
@@ -79,7 +79,7 @@ testFileLogDefault =
   where
     desc = "Parses --file-log default"
     argList = ["--file-log", "default", "command"]
-    expected = updateDefFileLogArgs (#file % #path) FPDefault
+    expected = updateDefFileLogArgsWD (#file % #path) FPDefault
 
 testFileLogShortDefault :: TestTree
 testFileLogShortDefault =
@@ -87,7 +87,7 @@ testFileLogShortDefault =
     $ U.verifyResult argList expected
   where
     argList = ["-f", "default", "command"]
-    expected = updateDefFileLogArgs (#file % #path) FPDefault
+    expected = updateDefFileLogArgsWD (#file % #path) FPDefault
 
 testFileLogShortEmptyFails :: TestTree
 testFileLogShortEmptyFails =
@@ -105,12 +105,12 @@ testFileLogEmptyFails =
     desc = "Parses empty --file-log as failure"
     argList = ["--file-log=", "command"]
 
-parseNoFileLog :: TestTree
-parseNoFileLog =
-  testPropertyNamed "Parse --no-file-log" "parseNoFileLog"
+parseFileLogDisabled :: TestTree
+parseFileLogDisabled =
+  testPropertyNamed "Parse --file-log off" "parseFileLogDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-file-log", "command"]
+    argList = ["--file-log", "off", "command"]
     expected = U.disableDefCoreArgs (#fileLogging % #file % #path)
 
 commandNameTruncTests :: TestTree
@@ -119,7 +119,7 @@ commandNameTruncTests =
     "--file-log-command-name-trunc"
     [ testCommandNameTrunc,
       testCommandNameTruncUnderscores,
-      testNoCommandNameTrunc
+      testCommandNameTruncDisabled
     ]
 
 testCommandNameTrunc :: TestTree
@@ -130,7 +130,7 @@ testCommandNameTrunc =
     $ U.verifyResult argList expected
   where
     argList = ["--file-log-command-name-trunc", "15", "command"]
-    expected = updateDefFileLogArgs #commandNameTrunc 15
+    expected = updateDefFileLogArgsWD #commandNameTrunc 15
 
 testCommandNameTruncUnderscores :: TestTree
 testCommandNameTruncUnderscores =
@@ -140,43 +140,43 @@ testCommandNameTruncUnderscores =
     $ U.verifyResult argList expected
   where
     argList = ["--file-log-command-name-trunc", "12_500", "command"]
-    expected = updateDefFileLogArgs #commandNameTrunc 12_500
+    expected = updateDefFileLogArgsWD #commandNameTrunc 12_500
 
-testNoCommandNameTrunc :: TestTree
-testNoCommandNameTrunc =
-  testPropertyNamed "Parses --no-file-log-command-name-trunc" "testNoCommandNameTrunc"
+testCommandNameTruncDisabled :: TestTree
+testCommandNameTruncDisabled =
+  testPropertyNamed "Parses --file-log-command-name-trunc off" "testCommandNameTruncDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-file-log-command-name-trunc", "command"]
-    expected = disableDefFileLogArgs #commandNameTrunc
+    argList = ["--file-log-command-name-trunc", "off", "command"]
+    expected = disableDefFileLogArgsWD #commandNameTrunc
 
 deleteOnSuccessTests :: TestTree
 deleteOnSuccessTests =
   testGroup
     "--file-log-delete-on-success"
     [ testDeleteOnSuccess,
-      testNoDeleteOnSuccess
+      testDeleteOnSuccessFalse
     ]
 
 testDeleteOnSuccess :: TestTree
 testDeleteOnSuccess =
   testPropertyNamed
-    "Parses --file-log-delete-on-success"
+    "Parses --file-log-delete-on-success true"
     "testDeleteOnSuccess"
     $ U.verifyResult argList expected
   where
-    argList = ["--file-log-delete-on-success", "command"]
-    expected = updateDefFileLogArgs #deleteOnSuccess ()
+    argList = ["--file-log-delete-on-success", "on", "command"]
+    expected = updateDefFileLogArgs #deleteOnSuccess (MkDeleteOnSuccessSwitch True)
 
-testNoDeleteOnSuccess :: TestTree
-testNoDeleteOnSuccess =
+testDeleteOnSuccessFalse :: TestTree
+testDeleteOnSuccessFalse =
   testPropertyNamed
-    "Parses --no-file-log-delete-on-success"
+    "Parses --file-log-delete-on-success false"
     "testDeleteOnSuccess"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-file-log-delete-on-success", "command"]
-    expected = U.disableDefCoreArgs (#fileLogging % #deleteOnSuccess)
+    argList = ["--file-log-delete-on-success", "off", "command"]
+    expected = updateDefFileLogArgs #deleteOnSuccess (MkDeleteOnSuccessSwitch False)
 
 lineTruncTests :: TestTree
 lineTruncTests =
@@ -185,7 +185,7 @@ lineTruncTests =
     [ testLineTrunc,
       testLineTruncUnderscores,
       testLineTruncDetect,
-      testNoLineTrunc
+      testLineTruncDisabled
     ]
 
 testLineTrunc :: TestTree
@@ -196,7 +196,7 @@ testLineTrunc =
     $ U.verifyResult argList expected
   where
     argList = ["--file-log-line-trunc", "15", "command"]
-    expected = updateDefFileLogArgs #lineTrunc (Undetected 15)
+    expected = updateDefFileLogArgsWD #lineTrunc (Undetected 15)
 
 testLineTruncUnderscores :: TestTree
 testLineTruncUnderscores =
@@ -206,7 +206,7 @@ testLineTruncUnderscores =
     $ U.verifyResult argList expected
   where
     argList = ["--file-log-line-trunc", "1_50", "command"]
-    expected = updateDefFileLogArgs #lineTrunc (Undetected 150)
+    expected = updateDefFileLogArgsWD #lineTrunc (Undetected 150)
 
 testLineTruncDetect :: TestTree
 testLineTruncDetect =
@@ -215,15 +215,15 @@ testLineTruncDetect =
   where
     desc = "Parses --file-log-line-trunc detect"
     argList = ["--file-log-line-trunc", "detect", "command"]
-    expected = updateDefFileLogArgs #lineTrunc Detected
+    expected = updateDefFileLogArgsWD #lineTrunc Detected
 
-testNoLineTrunc :: TestTree
-testNoLineTrunc =
-  testPropertyNamed "Parses --no-file-log-line-trunc" "testNoLineTrunc"
+testLineTruncDisabled :: TestTree
+testLineTruncDisabled =
+  testPropertyNamed "Parses --file-log-line-trunc off" "testLineTruncDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-file-log-line-trunc", "command"]
-    expected = disableDefFileLogArgs #lineTrunc
+    argList = ["--file-log-line-trunc", "off", "command"]
+    expected = disableDefFileLogArgsWD #lineTrunc
 
 modeTests :: TestTree
 modeTests =
@@ -231,8 +231,7 @@ modeTests =
     "--file-log-mode"
     [ testModeAppend,
       testModeRename,
-      testModeWrite,
-      testNoMode
+      testModeWrite
     ]
 
 testModeAppend :: TestTree
@@ -262,22 +261,13 @@ testModeWrite =
     argList = ["--file-log-mode", "write", "command"]
     expected = updateDefFileLogArgs (#file % #mode) FileModeWrite
 
-testNoMode :: TestTree
-testNoMode =
-  testPropertyNamed "Parse --no-file-log-mode" "testNoMode"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-file-log-mode", "command"]
-    expected = U.disableDefCoreArgs (#fileLogging % #file % #mode)
-
 stripControlTests :: TestTree
 stripControlTests =
   testGroup
     "--file-log-strip-control"
     [ testStripControlAll,
       testStripControlNone,
-      testStripControlSmart,
-      testNoStripControl
+      testStripControlSmart
     ]
 
 testStripControlAll :: TestTree
@@ -294,8 +284,8 @@ testStripControlNone =
   testPropertyNamed desc "testStripControlNone"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --file-log-strip-control none"
-    argList = ["--file-log-strip-control", "none", "command"]
+    desc = "Parses --file-log-strip-control off"
+    argList = ["--file-log-strip-control", "off", "command"]
     expected = updateDefFileLogArgs #stripControl StripControlNone
 
 testStripControlSmart :: TestTree
@@ -307,23 +297,13 @@ testStripControlSmart =
     argList = ["--file-log-strip-control", "smart", "command"]
     expected = updateDefFileLogArgs #stripControl StripControlSmart
 
-testNoStripControl :: TestTree
-testNoStripControl =
-  testPropertyNamed desc "testNoStripControl"
-    $ U.verifyResult argList expected
-  where
-    desc = "Parses --no-file-log-strip-control"
-    argList = ["--no-file-log-strip-control", "command"]
-    expected = U.disableDefCoreArgs (#fileLogging % #stripControl)
-
 sizeModeTests :: TestTree
 sizeModeTests =
   testGroup
     "--file-log-size-mode"
     [ testSizeModeWarn,
       testSizeModeDelete,
-      testSizeModeNothing,
-      testNoSizeMode
+      testSizeModeDisabled
     ]
 
 testSizeModeWarn :: TestTree
@@ -350,41 +330,43 @@ testSizeModeDelete =
         (#file % #sizeMode)
         (FileSizeModeDelete $ MkBytes 2_400)
 
-testSizeModeNothing :: TestTree
-testSizeModeNothing =
-  testPropertyNamed desc "testSizeModeNothing"
+testSizeModeDisabled :: TestTree
+testSizeModeDisabled =
+  testPropertyNamed desc "testSizeModeDisabled"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --file-log-size-mode nothing"
-    argList = ["--file-log-size-mode", "nothing", "command"]
+    desc = "Parses --file-log-size-mode off"
+    argList = ["--file-log-size-mode", "off", "command"]
     expected =
       updateDefFileLogArgs
         (#file % #sizeMode)
         FileSizeModeNothing
 
-testNoSizeMode :: TestTree
-testNoSizeMode =
-  testPropertyNamed "Parses --no-file-log-size-mode" "testNoSizeMode"
-    $ U.verifyResult argList expected
+updateDefFileLogArgsWD ::
+  forall a.
+  Lens' FileLoggingArgs (Maybe (WithDisabled a)) ->
+  a ->
+  Maybe Args
+updateDefFileLogArgsWD l x = (l' ?~ With x) U.defArgs
   where
-    argList = ["--no-file-log-size-mode", "command"]
-    expected = U.disableDefCoreArgs (#fileLogging % #file % #sizeMode)
+    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
+    l' = _Just % #coreConfig % #fileLogging % l
 
 updateDefFileLogArgs ::
   forall a.
-  Lens' FileLoggingArgs (WithDisabled a) ->
+  Lens' FileLoggingArgs (Maybe a) ->
   a ->
   Maybe Args
-updateDefFileLogArgs l x = (l' .~ With x) U.defArgs
+updateDefFileLogArgs l x = (l' ?~ x) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' :: AffineTraversal' (Maybe Args) (Maybe a)
     l' = _Just % #coreConfig % #fileLogging % l
 
-disableDefFileLogArgs ::
+disableDefFileLogArgsWD ::
   forall a.
-  Lens' FileLoggingArgs (WithDisabled a) ->
+  Lens' FileLoggingArgs (Maybe (WithDisabled a)) ->
   Maybe Args
-disableDefFileLogArgs l = (l' .~ Disabled) U.defArgs
+disableDefFileLogArgsWD l = (l' ?~ Disabled) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
     l' = _Just % #coreConfig % #fileLogging % l

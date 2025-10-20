@@ -10,6 +10,7 @@ import Shrun.Configuration.Data.Graph
       ),
     Edges (MkEdges),
   )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 
@@ -132,9 +133,10 @@ testCommandGraphComplex =
           (9, 11)
         ]
 
-mkEdges :: Seq (Tuple2 Int Int) -> EdgeArgs
+mkEdges :: Seq (Tuple2 Int Int) -> WithDisabled EdgeArgs
 mkEdges =
-  EdgeArgsList
+  With
+    . EdgeArgsList
     . MkEdges
     . fmap (bimap mkIdx mkIdx)
 
@@ -144,7 +146,7 @@ testCommandGraphSequential =
     $ U.verifyResult argList expected
   where
     argList = ["--edges", "sequential", "command"]
-    expected = U.updateDefArgs #edges EdgeArgsSequential
+    expected = U.updateDefArgs #edges (With EdgeArgsSequential)
 
 testCommandGraphEmptyFail :: TestTree
 testCommandGraphEmptyFail =

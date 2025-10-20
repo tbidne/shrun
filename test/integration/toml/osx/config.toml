@@ -41,9 +41,9 @@ path = "default"
 command-name-trunc = 45
 line-trunc = 200
 mode = "append"
-strip-control = "none"
+strip-control = "off"
 
 [notify]
 system = "apple-script"
 action = "all"
-timeout = "never"
+timeout = "off"

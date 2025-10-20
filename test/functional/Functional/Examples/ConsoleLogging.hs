@@ -38,6 +38,7 @@ commandLogOn =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "for i in 1 2; do echo hi; sleep 1; done"
         ]
     expected =
@@ -55,6 +56,7 @@ commandLogOnDefault =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "for i in 1 2; do sleep 1; done"
         ]
     expected =
@@ -86,6 +88,7 @@ commandNameTruncN =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--console-log-command-name-trunc",
           "10",
           "for i in 1 2 3; do echo hi; sleep 1; done"
@@ -106,6 +109,7 @@ commandLogLineTruncN =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--console-log-line-trunc",
           "80",
           "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"
@@ -125,6 +129,7 @@ stripControlAll =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--console-log-command-name-trunc",
           "10",
           "--console-log-strip-control",
@@ -149,10 +154,11 @@ stripControlNone =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--console-log-command-name-trunc",
           "10",
           "--console-log-strip-control",
-          "none",
+          "off",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
         ]
     expected =
@@ -170,6 +176,7 @@ stripControlSmart =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--console-log-command-name-trunc",
           "10",
           "--console-log-strip-control=smart",

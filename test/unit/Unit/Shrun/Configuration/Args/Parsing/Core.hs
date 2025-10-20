@@ -2,6 +2,7 @@
 
 module Unit.Shrun.Configuration.Args.Parsing.Core (tests) where
 
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.CommandLogging qualified as CommandLogging
 import Unit.Shrun.Configuration.Args.Parsing.CommonLogging qualified as CommonLogging
@@ -34,7 +35,7 @@ timeoutTests =
       testTimeoutString,
       testTimeoutWordFail,
       testTimeoutNegativeFail,
-      testNoTimeout
+      testTimeoutDisabled
     ]
 
 testTimeoutShort :: TestTree
@@ -43,7 +44,7 @@ testTimeoutShort =
     $ U.verifyResult argList expected
   where
     argList = ["-t7", "command"]
-    expected = U.updateDefCoreArgs #timeout 7
+    expected = U.updateDefCoreArgs #timeout (With 7)
 
 testTimeout :: TestTree
 testTimeout =
@@ -51,7 +52,7 @@ testTimeout =
     $ U.verifyResult argList expected
   where
     argList = ["--timeout=7", "command"]
-    expected = U.updateDefCoreArgs #timeout 7
+    expected = U.updateDefCoreArgs #timeout (With 7)
 
 testTimeoutUnderscores :: TestTree
 testTimeoutUnderscores =
@@ -59,7 +60,7 @@ testTimeoutUnderscores =
     $ U.verifyResult argList expected
   where
     argList = ["--timeout=1_000", "command"]
-    expected = U.updateDefCoreArgs #timeout 1_000
+    expected = U.updateDefCoreArgs #timeout (With 1_000)
 
 testTimeoutStringShort :: TestTree
 testTimeoutStringShort =
@@ -67,7 +68,7 @@ testTimeoutStringShort =
     $ U.verifyResult argList expected
   where
     argList = ["-t2h4s", "command"]
-    expected = U.updateDefCoreArgs #timeout 7204
+    expected = U.updateDefCoreArgs #timeout (With 7204)
 
 testTimeoutString :: TestTree
 testTimeoutString =
@@ -75,7 +76,7 @@ testTimeoutString =
     $ U.verifyResult argList expected
   where
     argList = ["--timeout=1d2h3m4s", "command"]
-    expected = U.updateDefCoreArgs #timeout 93784
+    expected = U.updateDefCoreArgs #timeout (With 93784)
 
 testTimeoutWordFail :: TestTree
 testTimeoutWordFail =
@@ -91,13 +92,13 @@ testTimeoutNegativeFail =
   where
     argList = ["--timeout=-7", "command"]
 
-testNoTimeout :: TestTree
-testNoTimeout =
-  testPropertyNamed "Parses --no-timeout" "testNoTimeout"
+testTimeoutDisabled :: TestTree
+testTimeoutDisabled =
+  testPropertyNamed "Parses --timeout off" "testTimeoutDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-timeout", "command"]
-    expected = U.disableDefCoreArgs #timeout
+    argList = ["--timeout", "off", "command"]
+    expected = U.updateDefCoreArgs #timeout Disabled
 
 initTests :: TestTree
 initTests =
@@ -106,7 +107,7 @@ initTests =
     [ testInitShort,
       testInit1,
       testInit2,
-      parseNoInit
+      parseInitDisabled
     ]
 
 testInitShort :: TestTree
@@ -115,7 +116,7 @@ testInitShort =
     $ U.verifyResult argList expected
   where
     argList = ["-i. ~/.bashrc", "command"]
-    expected = U.updateDefCoreArgs #init ". ~/.bashrc"
+    expected = U.updateDefCoreArgs #init (With ". ~/.bashrc")
 
 testInit1 :: TestTree
 testInit1 =
@@ -123,7 +124,7 @@ testInit1 =
     $ U.verifyResult argList expected
   where
     argList = ["--init=. ~/.bashrc", "command"]
-    expected = U.updateDefCoreArgs #init ". ~/.bashrc"
+    expected = U.updateDefCoreArgs #init (With ". ~/.bashrc")
 
 testInit2 :: TestTree
 testInit2 =
@@ -131,12 +132,12 @@ testInit2 =
     $ U.verifyResult argList expected
   where
     argList = ["--init", ". ~/.bashrc", "command"]
-    expected = U.updateDefCoreArgs #init ". ~/.bashrc"
+    expected = U.updateDefCoreArgs #init (With ". ~/.bashrc")
 
-parseNoInit :: TestTree
-parseNoInit =
-  testPropertyNamed "Parses --no-init" "parseNoInit"
+parseInitDisabled :: TestTree
+parseInitDisabled =
+  testPropertyNamed "Parses --init off" "parseInitDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-init", "command"]
+    argList = ["--init", "off", "command"]
     expected = U.disableDefCoreArgs #init

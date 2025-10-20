@@ -518,7 +518,8 @@ withBaseArgs as =
 
 withNoConfig :: List String -> List String
 withNoConfig as =
-  [ "--no-config"
+  [ "--config",
+    "off"
   ]
     <> as
 

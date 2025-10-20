@@ -8,7 +8,8 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.FileLogging
-  ( FileLogInitP
+  ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
+    FileLogInitP
       ( MkFileLogInitP,
         mode,
         path,
@@ -65,20 +66,18 @@ fileLoggingParser = do
         stripControl
       }
 
-fileLogParser :: Parser (WithDisabled FilePathDefault)
-fileLogParser = Utils.withDisabledParser mainParser "file-log"
+fileLogParser :: Parser (Maybe (WithDisabled FilePathDefault))
+fileLogParser =
+  Utils.mWithDisabledParser
+    (OA.str >>= FilePathDefault.parseFilePathDefault)
+    opts
+    "default | PATH"
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          (FilePathDefault.parseFilePathDefault OA.str)
-          ( mconcat
-              [ OA.long "file-log",
-                OA.short 'f',
-                Utils.mkHelp helpTxt,
-                OA.metavar "(default | PATH)"
-              ]
-          )
+    opts =
+      [ OA.long "file-log",
+        OA.short 'f',
+        Utils.mkHelp helpTxt
+      ]
     helpTxt =
       mconcat
         [ "If a path is supplied, all logs will additionally be written to ",
@@ -89,62 +88,44 @@ fileLogParser = Utils.withDisabledParser mainParser "file-log"
           "directory e.g. ~/.local/state/shrun/shrun.log."
         ]
 
-fileLogCommandNameTruncParser :: Parser (WithDisabled (Truncation TruncCommandName))
+fileLogCommandNameTruncParser :: Parser (Maybe (WithDisabled (Truncation TruncCommandName)))
 fileLogCommandNameTruncParser =
-  Utils.withDisabledParser mainParser "file-log-command-name-trunc"
+  Utils.mWithDisabledParser
+    (Trunc.parseTruncation Utils.autoStripUnderscores)
+    opts
+    "NATURAL"
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          (Trunc.parseTruncation Utils.autoStripUnderscores)
-          ( mconcat
-              [ OA.long "file-log-command-name-trunc",
-                Utils.mkHelp helpTxt,
-                OA.metavar "NATURAL"
-              ]
-          )
+    opts =
+      [ OA.long "file-log-command-name-trunc",
+        Utils.mkHelp helpTxt
+      ]
     helpTxt = "Like --console-log-command-name-trunc, but for --file-logs."
 
-deleteOnSuccessParser :: Parser (WithDisabled ())
-deleteOnSuccessParser = Utils.withDisabledParser mainParser "file-log-delete-on-success"
+deleteOnSuccessParser :: Parser (Maybe DeleteOnSuccessSwitch)
+deleteOnSuccessParser =
+  Utils.switchParser MkDeleteOnSuccessSwitch "file-log-delete-on-success" helpTxt
   where
-    switchParser =
-      OA.switch
-        ( mconcat
-            [ OA.long "file-log-delete-on-success",
-              Utils.mkHelp helpTxt
-            ]
-        )
-    mainParser = do
-      b <- switchParser
-      pure
-        $ if b
-          then Just ()
-          else Nothing
     helpTxt =
       mconcat
         [ "If --file-log is active, deletes the file on a successful exit. ",
           "Does not delete the file if shrun exited via failure."
         ]
 
-lineTruncParser :: Parser (WithDisabled LineTruncation)
-lineTruncParser = Utils.withDisabledParser mainParser "file-log-line-trunc"
+lineTruncParser :: Parser (Maybe (WithDisabled LineTruncation))
+lineTruncParser =
+  Utils.mWithDisabledParser
+    (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
+    opts
+    Trunc.lineTruncStr
   where
-    mainParser =
-      OA.optional
-        $ OA.option
-          (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
-          ( mconcat
-              [ OA.long "file-log-line-trunc",
-                Utils.mkHelp helpTxt,
-                OA.metavar Trunc.lineTruncStr
-              ]
-          )
+    opts =
+      [ OA.long "file-log-line-trunc",
+        Utils.mkHelp helpTxt
+      ]
     helpTxt = "Like --console-log-line-trunc, but for --file-log."
 
-fileLogStripControlParser :: Parser (WithDisabled FileLogStripControl)
-fileLogStripControlParser =
-  Utils.withDisabledParserNoLine mainParser "file-log-strip-control"
+fileLogStripControlParser :: Parser (Maybe FileLogStripControl)
+fileLogStripControlParser = mainParser
   where
     mainParser =
       OA.optional
@@ -152,7 +133,7 @@ fileLogStripControlParser =
           (StripControl.parseStripControl OA.str)
           ( mconcat
               [ OA.long "file-log-strip-control",
-                Utils.mkHelp helpTxt,
+                Utils.mkHelpNoLine helpTxt,
                 OA.metavar StripControl.stripControlStr
               ]
           )
@@ -162,8 +143,8 @@ fileLogStripControlParser =
           "Defaults to all."
         ]
 
-fileLogModeParser :: Parser (WithDisabled FileMode)
-fileLogModeParser = Utils.withDisabledParser mainParser "file-log-mode"
+fileLogModeParser :: Parser (Maybe FileMode)
+fileLogModeParser = mainParser
   where
     mainParser =
       OA.optional
@@ -182,8 +163,8 @@ fileLogModeParser = Utils.withDisabledParser mainParser "file-log-mode"
           "e.g. '-f shrun.log' will become 'shrun (1).log'."
         ]
 
-fileLogSizeModeParser :: Parser (WithDisabled FileSizeMode)
-fileLogSizeModeParser = Utils.withDisabledParser mainParser "file-log-size-mode"
+fileLogSizeModeParser :: Parser (Maybe FileSizeMode)
+fileLogSizeModeParser = mainParser
   where
     mainParser =
       OA.optional

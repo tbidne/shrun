@@ -30,6 +30,7 @@ debugOn =
     args =
       withBaseArgs
         [ "--common-log-debug",
+          "on",
           "sleep 2"
         ]
     expected =
@@ -40,14 +41,15 @@ debugOn =
 debugOff :: ReadStrategyTestParams
 debugOff =
   ReadStrategyTestParametricSimple
-    "Runs debug example with --no-common-log-debug"
+    "Runs debug example with --common-log-debug false"
     run
     args
     (\results -> V.verifyExpectedUnexpected results expected unexpected)
   where
     args =
       withBaseArgs
-        [ "--no-common-log-debug",
+        [ "--common-log-debug",
+          "off",
           "sleep 2"
         ]
     expected =
@@ -68,6 +70,7 @@ keyHideOn =
     args =
       withBaseArgs
         [ "--common-log-key-hide",
+          "on",
           "some-key"
         ]
     expected =

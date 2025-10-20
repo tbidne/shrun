@@ -23,10 +23,9 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
-    ConfigPhaseF,
+    SwitchF,
   )
-import Shrun.Configuration.Data.WithDisabled ((<.>?))
-import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Prelude
 
 newtype Debug = MkDebug {unDebug :: Bool}
@@ -49,13 +48,13 @@ instance DecodeTOML Debug where
 type CommonLoggingP :: ConfigPhase -> Type
 data CommonLoggingP p = MkCommonLoggingP
   { -- | Whether debug logs are on.
-    debug :: ConfigPhaseF p Debug,
+    debug :: SwitchF p Debug,
     -- | Whether to display command by (key) name or command.
-    keyHide :: ConfigPhaseF p KeyHideSwitch
+    keyHide :: SwitchF p KeyHideSwitch
   }
 
 instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p Debug, b ~ ConfigPhaseF p Debug) =>
+  (k ~ A_Lens, a ~ SwitchF p Debug, b ~ SwitchF p Debug) =>
   LabelOptic "debug" k (CommonLoggingP p) (CommonLoggingP p) a b
   where
   labelOptic =
@@ -66,7 +65,7 @@ instance
   {-# INLINE labelOptic #-}
 
 instance
-  (k ~ A_Lens, a ~ ConfigPhaseF p KeyHideSwitch, b ~ ConfigPhaseF p KeyHideSwitch) =>
+  (k ~ A_Lens, a ~ SwitchF p KeyHideSwitch, b ~ SwitchF p KeyHideSwitch) =>
   LabelOptic "keyHide" k (CommonLoggingP p) (CommonLoggingP p) a b
   where
   labelOptic =
@@ -97,7 +96,7 @@ deriving stock instance Eq (CommonLoggingP ConfigPhaseMerged)
 deriving stock instance Show (CommonLoggingP ConfigPhaseMerged)
 
 instance
-  (Default (ConfigPhaseF p Debug), Default (ConfigPhaseF p KeyHideSwitch)) =>
+  (Default (SwitchF p Debug), Default (SwitchF p KeyHideSwitch)) =>
   Default (CommonLoggingP p)
   where
   def = MkCommonLoggingP def def
@@ -110,9 +109,9 @@ mergeCommonLogging ::
 mergeCommonLogging args mToml =
   MkCommonLoggingP
     { debug =
-        (args ^. #debug) <.>? (toml ^. #debug),
+        (args ^. #debug) <.> (toml ^. #debug),
       keyHide =
-        (args ^. #keyHide) <.>? (toml ^. #keyHide)
+        (args ^. #keyHide) <.> (toml ^. #keyHide)
     }
   where
     toml = fromMaybe def mToml

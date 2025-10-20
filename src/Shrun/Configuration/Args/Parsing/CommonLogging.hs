@@ -5,7 +5,6 @@ module Shrun.Configuration.Args.Parsing.CommonLogging
 where
 
 import Options.Applicative (Parser)
-import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.CommonLogging
   ( CommonLoggingArgs,
@@ -13,40 +12,21 @@ import Shrun.Configuration.Data.CommonLogging
     Debug (MkDebug),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch (KeyHideOn),
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
 commonLoggingParser :: Parser CommonLoggingArgs
 commonLoggingParser = MkCommonLoggingP <$> debugParser <*> keyHideParser
 
-debugParser :: Parser (WithDisabled Debug)
-debugParser = Utils.withDisabledParser mainParser "common-log-debug"
+debugParser :: Parser (Maybe Debug)
+debugParser = Utils.switchParser MkDebug "common-log-debug" helpTxt
   where
-    mainParser =
-      OA.optional
-        $ OA.flag'
-          (MkDebug True)
-          ( mconcat
-              [ OA.long "common-log-debug",
-                Utils.mkHelp helpTxt
-              ]
-          )
     helpTxt = "Enables additional debug logging."
 
-keyHideParser :: Parser (WithDisabled KeyHideSwitch)
-keyHideParser = Utils.withDisabledParserNoLine mainParser "common-log-key-hide"
+keyHideParser :: Parser (Maybe KeyHideSwitch)
+keyHideParser = Utils.switchParserNoLine MkKeyHideSwitch "common-log-key-hide" helpTxt
   where
-    mainParser =
-      OA.optional
-        $ OA.flag'
-          KeyHideOn
-          ( mconcat
-              [ OA.long "common-log-key-hide",
-                Utils.mkHelp helpTxt
-              ]
-          )
     helpTxt =
       mconcat
         [ "By default, we display the key name from the legend over the ",

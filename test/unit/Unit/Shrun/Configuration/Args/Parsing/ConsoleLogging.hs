@@ -1,5 +1,6 @@
 module Unit.Shrun.Configuration.Args.Parsing.ConsoleLogging (tests) where
 
+import Shrun.Configuration.Data.ConsoleLogging (ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch))
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat
   ( TimerFormat
       ( DigitalCompact,
@@ -17,7 +18,7 @@ import Shrun.Configuration.Data.Truncation
         Undetected
       ),
   )
-import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
 
@@ -37,7 +38,7 @@ commandLoggingTests =
   testGroup
     "--console-log-command"
     [ testCommandLogging,
-      testNoCommandLogging
+      testCommandLoggingFalse
     ]
 
 testCommandLogging :: TestTree
@@ -45,24 +46,24 @@ testCommandLogging =
   testPropertyNamed desc "testCommandLogging"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --console-log-command"
-    argList = ["--console-log-command", "command"]
+    desc = "Parses --console-log-command true"
+    argList = ["--console-log-command", "on", "command"]
     expected =
       set'
         (_Just % #coreConfig % #consoleLogging % #commandLogging)
-        (With ())
+        (Just $ MkConsoleLogCmdSwitch True)
         U.defArgs
 
-testNoCommandLogging :: TestTree
-testNoCommandLogging =
-  testPropertyNamed "Parses --no-console-log-command" "testNoCommandLogging"
+testCommandLoggingFalse :: TestTree
+testCommandLoggingFalse =
+  testPropertyNamed "Parses --console-log-command true" "testNoCommandLogging"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-console-log-command", "command"]
+    argList = ["--console-log-command", "off", "command"]
     expected =
       set'
         (_Just % #coreConfig % #consoleLogging % #commandLogging)
-        Disabled
+        (Just $ MkConsoleLogCmdSwitch False)
         U.defArgs
 
 stripControlTests :: TestTree
@@ -70,9 +71,8 @@ stripControlTests =
   testGroup
     "--console-log-strip-control"
     [ testStripControlAll,
-      testStripControlNone,
-      testStripControlSmart,
-      testNoStripControl
+      testStripControlDisabled,
+      testStripControlSmart
     ]
 
 testStripControlAll :: TestTree
@@ -87,13 +87,13 @@ testStripControlAll =
         (#consoleLogging % #stripControl)
         StripControlAll
 
-testStripControlNone :: TestTree
-testStripControlNone =
-  testPropertyNamed desc "testStripControlNone"
+testStripControlDisabled :: TestTree
+testStripControlDisabled =
+  testPropertyNamed desc "testStripControlDisabled"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --console-log-strip-control=None"
-    argList = ["--console-log-strip-control=none", "command"]
+    desc = "Parses --console-log-strip-control=off"
+    argList = ["--console-log-strip-control=off", "command"]
     expected =
       U.updateDefCoreArgs
         (#consoleLogging % #stripControl)
@@ -111,22 +111,13 @@ testStripControlSmart =
         (#consoleLogging % #stripControl)
         StripControlSmart
 
-testNoStripControl :: TestTree
-testNoStripControl =
-  testPropertyNamed desc "testNoStripControl"
-    $ U.verifyResult argList expected
-  where
-    desc = "Parses --no-console-log-strip-control"
-    argList = ["--no-console-log-strip-control", "command"]
-    expected = U.disableDefCoreArgs (#consoleLogging % #stripControl)
-
 commandNameTruncTests :: TestTree
 commandNameTruncTests =
   testGroup
     "--console-log-command-name-trunc"
     [ testCommandNameTrunc,
       testCommandNameTruncUnderscores,
-      testNoCommandNameTrunc
+      testCommandNameTruncDisabled
     ]
 
 testCommandNameTrunc :: TestTree
@@ -137,7 +128,7 @@ testCommandNameTrunc =
     $ U.verifyResult argList expected
   where
     argList = ["--console-log-command-name-trunc", "15", "command"]
-    expected = U.updateDefCoreArgs (#consoleLogging % #commandNameTrunc) 15
+    expected = U.updateDefCoreArgs (#consoleLogging % #commandNameTrunc) (With 15)
 
 testCommandNameTruncUnderscores :: TestTree
 testCommandNameTruncUnderscores =
@@ -147,16 +138,16 @@ testCommandNameTruncUnderscores =
     $ U.verifyResult argList expected
   where
     argList = ["--console-log-command-name-trunc", "12_500", "command"]
-    expected = U.updateDefCoreArgs (#consoleLogging % #commandNameTrunc) 12_500
+    expected = U.updateDefCoreArgs (#consoleLogging % #commandNameTrunc) (With 12_500)
 
-testNoCommandNameTrunc :: TestTree
-testNoCommandNameTrunc =
+testCommandNameTruncDisabled :: TestTree
+testCommandNameTruncDisabled =
   testPropertyNamed
-    "Parses --no-console-log-command-name-trunc"
-    "testNoCommandNameTrunc"
+    "Parses --console-log-command-name-trunc off"
+    "testCommandNameTruncDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-console-log-command-name-trunc", "command"]
+    argList = ["--console-log-command-name-trunc", "off", "command"]
     expected = U.disableDefCoreArgs (#consoleLogging % #commandNameTrunc)
 
 lineTruncTests :: TestTree
@@ -166,7 +157,7 @@ lineTruncTests =
     [ testLineTrunc,
       testLineTruncUnderscores,
       testLineTruncDetect,
-      testNoLineTrunc
+      testLineTruncDisabled
     ]
 
 testLineTrunc :: TestTree
@@ -180,7 +171,7 @@ testLineTrunc =
     expected =
       U.updateDefCoreArgs
         (#consoleLogging % #lineTrunc)
-        (Undetected 15)
+        (With $ Undetected 15)
 
 testLineTruncUnderscores :: TestTree
 testLineTruncUnderscores =
@@ -193,7 +184,7 @@ testLineTruncUnderscores =
     expected =
       U.updateDefCoreArgs
         (#consoleLogging % #lineTrunc)
-        (Undetected 150)
+        (With $ Undetected 150)
 
 testLineTruncDetect :: TestTree
 testLineTruncDetect =
@@ -202,14 +193,15 @@ testLineTruncDetect =
   where
     desc = "Parses --console-log-line-trunc detect"
     argList = ["--console-log-line-trunc", "detect", "command"]
-    expected = U.updateDefCoreArgs (#consoleLogging % #lineTrunc) Detected
+    expected =
+      U.updateDefCoreArgs (#consoleLogging % #lineTrunc) (With Detected)
 
-testNoLineTrunc :: TestTree
-testNoLineTrunc =
-  testPropertyNamed "Parses --no-console-log-line-trunc" "testNoLineTrunc"
+testLineTruncDisabled :: TestTree
+testLineTruncDisabled =
+  testPropertyNamed "Parses --console-log-line-trunc off" "testNoLineTrunc"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-console-log-line-trunc", "command"]
+    argList = ["--console-log-line-trunc", "off", "command"]
     expected = U.disableDefCoreArgs (#consoleLogging % #lineTrunc)
 
 timerFormatTests :: TestTree
@@ -219,8 +211,7 @@ timerFormatTests =
     [ testTimerFormatDigitalCompact,
       testTimerFormatDigitalFull,
       testTimerFormatProseCompact,
-      testTimerFormatProseFull,
-      testNoTimerFormat
+      testTimerFormatProseFull
     ]
 
 testTimerFormatDigitalCompact :: TestTree
@@ -260,11 +251,3 @@ testTimerFormatProseFull =
     desc = "Parses --console-log-timer-format prose_full"
     argList = ["--console-log-timer-format", "prose_full", "command"]
     expected = U.updateDefCoreArgs (#consoleLogging % #timerFormat) ProseFull
-
-testNoTimerFormat :: TestTree
-testNoTimerFormat =
-  testPropertyNamed "Parses --no-console-log-timer-format" "testNoTimerFormat"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-console-log-timer-format", "command"]
-    expected = U.disableDefCoreArgs (#consoleLogging % #timerFormat)

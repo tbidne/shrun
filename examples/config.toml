@@ -136,7 +136,7 @@ line-trunc = 150
 # control characters (e.g. newlines, ansi escape sequences). This option
 # attempts to mitigate these issues. The choices are:
 #
-# 1. "none": All output is left untouched i.e. any control chars will remain.
+# 1. "off": All output is left untouched i.e. any control chars will remain.
 # 2. "all": All control chars and ansi sequences are stripped.
 # 3. "smart" (default): An attempt is made to leave ansi sequences that merely
 #    affect text formatting (e.g. colors, emphasis), while stripping everything
@@ -180,7 +180,7 @@ timer-format = "prose_compact"
 # Sets a threshold for the file log size, upon which we either print a
 # warning or delete the file, if it is exceeded. Format is value and units
 # e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning at
-# 50 mb. Can be disabled with "nothing".
+# 50 mb.
 #size-mode = "warn 1 g"
 
 # Like command-log.strip-control, but for file logs. Defaults to all.
@@ -188,7 +188,7 @@ timer-format = "prose_compact"
 
 # If enabled, sends off notifications when commands/shrun complete.
 [notify]
-# Mandatory, turns on notifications.
+# Turns on notifications.
 #
 # "final" -> sends off a notification when all commands finish
 # "command" -> sends off a notification when each command finishes.
@@ -201,10 +201,10 @@ system = "notify-send"
 
 # Sets the timeout for non-error notifications. Defaults to 10
 #
-# "never" -> notifications never time out.
+# "off" -> notifications never time out.
 # <natural> -> non-error notifications time out in <natural> seconds.
 #
 # Note that this is subject to the whims of the underlying notification
 # system e.g. some systems ignore timeout args (notify-send), and others
 # require that error notifications never time out (FDO notification spec).
-timeout = "never"
+timeout = "off"

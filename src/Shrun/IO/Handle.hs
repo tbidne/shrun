@@ -24,6 +24,9 @@ import Effects.FileSystem.HandleReader
 import Effects.Time (MonadTime (getMonotonicTime))
 import GHC.Real (RealFrac (floor))
 import Shrun.Configuration.Data.CommandLogging
+  ( BufferLength,
+    BufferTimeout,
+  )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude

@@ -83,7 +83,7 @@ runTest sp tp = testCase desc $ do
     -- also check commands (sleep). This is due to linux CI not behaving.
     -- On CI ubuntu, the ps output look like:
     --
-    -- - runner     92458  0.2  0.0 1074605888 14984 ?    Sl   22:01   0:00 /tmp/shrun/test/terminate/shrun --no-config sleep 77
+    -- - runner     92458  0.2  0.0 1074605888 14984 ?    Sl   22:01   0:00 /tmp/shrun/test/terminate/shrun --config off sleep 77
     -- - runner     92469  0.0  0.0   2804  1620 ?        S    22:01   0:00 /bin/sh -c sleep 77
     -- - runner     92470  0.0  0.0   6116  1856 ?        S    22:01   0:00 sleep 77
     -- - runner     92473  0.0  0.0   2804  1748 ?        S    22:01   0:00 /bin/sh -c ps aux | grep "sleep 77"
@@ -91,7 +91,7 @@ runTest sp tp = testCase desc $ do
     --
     -- Hence we have 3 processes we care about:
     --
-    -- - ./shrun --no-config sleep 77
+    -- - ./shrun --config off sleep 77
     -- - ./bin/sh -c sleep 77
     -- - sleep 77
     --
@@ -294,8 +294,8 @@ runShrun sp tp = do
 
     args =
       if tp ^. #commandLogging
-        then ["--no-config", "--console-log-command", "sleep 77"]
-        else ["--no-config", "sleep 77"]
+        then ["--config", "off", "--console-log-command", "on", "sleep 77"]
+        else ["--config", "off", "sleep 77"]
 
 runProcess :: String -> IO (ExitCode, String, String)
 runProcess txt = do

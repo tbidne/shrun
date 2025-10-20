@@ -236,11 +236,16 @@ makeMergedConfig ::
   (forall x. m x -> IO x) ->
   PropertyT IO MergedConfig
 makeMergedConfig args toIO = do
-  result <- liftIO $ toIO $ withArgs args Env.getMergedConfig
+  eResult <- tryMySync $ liftIO $ toIO $ withArgs args Env.getMergedConfig
 
   annotateShow args
 
-  pure result
+  case eResult of
+    Left ex -> do
+      annotate $ displayException ex
+      failure
+    Right result -> do
+      pure result
 
 -- | Convenience for tests expecting a default config. The test should
 -- pass a single command 'cmd'.

@@ -32,8 +32,8 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseMerged,
         ConfigPhaseToml
       ),
+    ConfigPhaseDisabledMaybeF,
     ConfigPhaseF,
-    ConfigPhaseMaybeF,
     LineTruncF,
     SwitchF,
   )
@@ -65,14 +65,8 @@ import Shrun.Configuration.Data.Truncation
     decodeCommandNameTrunc,
     decodeLineTrunc,
   )
-import Shrun.Configuration.Data.WithDisabled
-  ( WithDisabled (Disabled, With, Without),
-    (<.>?),
-    (<>?),
-    (<?>?),
-  )
-import Shrun.Configuration.Data.WithDisabled qualified as WD
-import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<|?|>))
+import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
 import System.OsPath qualified as OsPath
@@ -118,8 +112,8 @@ instance
 -- it must be present if file logging is active.
 type FileLogPathF :: ConfigPhase -> Type
 type family FileLogPathF p where
-  FileLogPathF ConfigPhaseArgs = WithDisabled FilePathDefault
-  FileLogPathF ConfigPhaseToml = FilePathDefault
+  FileLogPathF ConfigPhaseArgs = Maybe (WithDisabled FilePathDefault)
+  FileLogPathF ConfigPhaseToml = Maybe (WithDisabled FilePathDefault)
   FileLogPathF ConfigPhaseMerged = FilePathDefault
 
 -- | Initial file log params, for usage before we create the final Env.
@@ -211,8 +205,8 @@ instance DecodeTOML FileLogInitToml where
       <*> decodeFileLogMode
       <*> decodeFileLogSizeMode
 
-decodeFileLogging :: Decoder FilePathDefault
-decodeFileLogging = getFieldWith tomlDecoder "path"
+decodeFileLogging :: Decoder (Maybe (WithDisabled FilePathDefault))
+decodeFileLogging = getFieldOptWith tomlDecoder "path"
 
 decodeFileLogMode :: Decoder (Maybe FileMode)
 decodeFileLogMode = getFieldOptWith tomlDecoder "mode"
@@ -271,7 +265,7 @@ data FileLoggingP p = MkFileLoggingP
   { -- | File-related params.
     file :: FileLogFileF p,
     -- | The max number of command characters to display in the file logs.
-    commandNameTrunc :: ConfigPhaseMaybeF p (Truncation TruncCommandName),
+    commandNameTrunc :: ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName),
     -- | If active, deletes the log file upon success.
     deleteOnSuccess :: SwitchF p DeleteOnSuccessSwitch,
     -- | Determines to what extent we should remove control characters
@@ -298,8 +292,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ ConfigPhaseMaybeF p (Truncation TruncCommandName),
-    b ~ ConfigPhaseMaybeF p (Truncation TruncCommandName)
+    a ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName),
+    b ~ ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)
   ) =>
   LabelOptic "commandNameTrunc" k (FileLoggingP p) (FileLoggingP p) a b
   where
@@ -378,7 +372,7 @@ deriving stock instance Show (FileLoggingP ConfigPhaseMerged)
 
 instance
   ( Default (FileLogFileF p),
-    Default (ConfigPhaseMaybeF p (Truncation TruncCommandName)),
+    Default (ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)),
     Default (SwitchF p DeleteOnSuccessSwitch),
     Default (LineTruncF p),
     Default (ConfigPhaseF p FileLogStripControl)
@@ -403,10 +397,10 @@ mergeFileLogging ::
   Maybe FileLoggingToml ->
   m (Maybe FileLoggingMerged)
 mergeFileLogging args mToml = for mPath $ \path -> do
-  let toml = fromMaybe (defaultToml path) mToml
+  let toml = fromMaybe defaultToml mToml
 
   lineTrunc <-
-    configToLineTrunc $ (args ^. #lineTrunc) <>? (toml ^. #lineTrunc)
+    configToLineTrunc $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
 
   pure
     $ MkFileLoggingP
@@ -414,27 +408,21 @@ mergeFileLogging args mToml = for mPath $ \path -> do
           MkFileLogInitP
             { path,
               mode =
-                (args ^. #file % #mode) <.>? (toml ^. #file % #mode),
+                (args ^. #file % #mode) <.> (toml ^. #file % #mode),
               sizeMode =
-                (args ^. #file % #sizeMode) <.>? (toml ^. #file % #sizeMode)
+                (args ^. #file % #sizeMode) <.> (toml ^. #file % #sizeMode)
             },
         commandNameTrunc =
-          (args ^. #commandNameTrunc) <?>? (toml ^. #commandNameTrunc),
+          (args ^. #commandNameTrunc) <|?|> (toml ^. #commandNameTrunc),
         deleteOnSuccess =
-          WD.fromDefault
-            ( MkDeleteOnSuccessSwitch
-                <$> argsDeleteOnSuccess
-                <>? (toml ^. #deleteOnSuccess)
-            ),
+          args
+            ^. #deleteOnSuccess
+            <.> (toml ^. #deleteOnSuccess),
         lineTrunc,
         stripControl =
-          (args ^. #stripControl) <.>? (toml ^. #stripControl)
+          (args ^. #stripControl) <.> (toml ^. #stripControl)
       }
   where
-    -- Convert WithDisabled () -> WithDisabled Bool for below operation.
-    argsDeleteOnSuccess :: WithDisabled Bool
-    argsDeleteOnSuccess = args ^. #deleteOnSuccess $> True
-
     -- NOTE: [Config two-part pattern matching]
     --
     -- Why do we pattern match here and in the main body of mergeFileLogging,
@@ -456,13 +444,8 @@ mergeFileLogging args mToml = for mPath $ \path -> do
     -- since it is already quite wordy, readability suffers. It is easier to
     -- reduce the pattern matching down to a "go no-go" switch first, then
     -- make the fileLogging based on that.
-    mPath = case (args ^. #file % #path, mToml) of
-      -- 1. Logging globally disabled
-      (Disabled, _) -> Nothing
-      -- 2. No Args and no Toml
-      (Without, Nothing) -> Nothing
-      (With p, _) -> Just p
-      (_, Just toml) -> Just $ toml ^. #file % #path
+    mPath :: Maybe FilePathDefault
+    mPath = args ^. #file % #path <|?|> (mToml ^? _Just % #file % #path % _Just)
 {-# INLINEABLE mergeFileLogging #-}
 
 instance DecodeTOML FileLoggingToml where
@@ -474,8 +457,9 @@ instance DecodeTOML FileLoggingToml where
       <*> decodeLineTrunc
       <*> decodeFileLogStripControl
 
-decodeFileDeleteOnSuccess :: Decoder (Maybe Bool)
-decodeFileDeleteOnSuccess = getFieldOptWith tomlDecoder "delete-on-success"
+decodeFileDeleteOnSuccess :: Decoder (Maybe DeleteOnSuccessSwitch)
+decodeFileDeleteOnSuccess =
+  fmap MkDeleteOnSuccessSwitch <$> getFieldOptWith tomlDecoder "delete-on-success"
 
 decodeFileLogStripControl :: Decoder (Maybe FileLogStripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "strip-control"
@@ -669,12 +653,12 @@ getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgState = getXdgState [osp|shrun|]
 {-# INLINEABLE getShrunXdgState #-}
 
-defaultToml :: FilePathDefault -> FileLoggingToml
-defaultToml path =
+defaultToml :: FileLoggingToml
+defaultToml =
   MkFileLoggingP
     { file =
         MkFileLogInitP
-          { path,
+          { path = Nothing,
             mode = Nothing,
             sizeMode = Nothing
           },

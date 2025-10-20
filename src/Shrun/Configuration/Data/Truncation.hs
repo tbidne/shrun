@@ -17,12 +17,6 @@ where
 
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.WithDisabled
-  ( WithDisabled
-      ( Disabled,
-        With,
-        Without
-      ),
-  )
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
@@ -100,12 +94,12 @@ parseDetected getTxt =
 {-# INLINEABLE parseDetected #-}
 
 lineTruncStr :: String
-lineTruncStr = "(NATURAL | detect)"
+lineTruncStr = "NATURAL | detect"
 
-decodeCommandNameTrunc :: Decoder (Maybe (Truncation TruncCommandName))
+decodeCommandNameTrunc :: Decoder (Maybe (WithDisabled (Truncation TruncCommandName)))
 decodeCommandNameTrunc = getFieldOptWith tomlDecoder "command-name-trunc"
 
-decodeLineTrunc :: Decoder (Maybe LineTruncation)
+decodeLineTrunc :: Decoder (Maybe (WithDisabled LineTruncation))
 decodeLineTrunc = getFieldOptWith tomlDecoder "line-trunc"
 
 -- | Maps line trunc config to actual value.
@@ -113,14 +107,13 @@ configToLineTrunc ::
   ( HasCallStack,
     MonadTerminal m
   ) =>
-  WithDisabled LineTruncation ->
+  Maybe LineTruncation ->
   m (Maybe (Truncation TruncLine))
-configToLineTrunc Disabled = pure Nothing
-configToLineTrunc Without = pure Nothing
-configToLineTrunc (With Detected) =
+configToLineTrunc Nothing = pure Nothing
+configToLineTrunc (Just Detected) =
   -- We subtract one because otherwise we can fill the entire terminal with a
   -- log, which will automatically add a newline. The point of this option is
   -- to avoid multiple lines, hence the subtraction.
   Just . MkTruncation . (\x -> x - 1) <$> getTerminalWidth
-configToLineTrunc (With (Undetected x)) = pure $ Just x
+configToLineTrunc (Just (Undetected x)) = pure $ Just x
 {-# INLINEABLE configToLineTrunc #-}

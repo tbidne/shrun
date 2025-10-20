@@ -19,6 +19,7 @@ import Shrun.Configuration.Data.Core
     CoreConfigToml,
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
+import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Toml.Legend (KeyVal)
 import Shrun.Prelude
@@ -81,10 +82,10 @@ instance DecodeTOML Toml where
           legend
         }
 
-decodeTimeout :: Decoder (Maybe Timeout)
+decodeTimeout :: Decoder (Maybe (WithDisabled Timeout))
 decodeTimeout = getFieldOptWith tomlDecoder "timeout"
 
-decodeInit :: Decoder (Maybe Text)
+decodeInit :: Decoder (Maybe (WithDisabled Text))
 decodeInit = getFieldOptWith tomlDecoder "init"
 
 decodeLegend :: Decoder (Maybe (List KeyVal))

@@ -32,9 +32,6 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseToml
       ),
   )
-import Shrun.Configuration.Data.WithDisabled
-  ( WithDisabled (Disabled, With, Without),
-  )
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
@@ -79,16 +76,15 @@ deriving stock instance Show NotifySystemMerged
 
 -- | "Merges" notify systems.
 mergeNotifySystem ::
-  WithDisabled NotifySystemArgs ->
+  Maybe NotifySystemArgs ->
   Maybe NotifySystemToml ->
   NotifySystemMerged
 mergeNotifySystem mArgs mToml =
   case mArgs of
-    Disabled -> def
-    With (DBus ()) -> DBus ()
-    With NotifySend -> NotifySend
-    With AppleScript -> AppleScript
-    Without -> case mToml of
+    Just (DBus ()) -> DBus ()
+    Just NotifySend -> NotifySend
+    Just AppleScript -> AppleScript
+    Nothing -> case mToml of
       Just (DBus ()) -> DBus ()
       Just NotifySend -> NotifySend
       Just AppleScript -> AppleScript

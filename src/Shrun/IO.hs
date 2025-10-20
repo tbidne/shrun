@@ -33,7 +33,7 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
       ),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch (KeyHideOff),
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
@@ -105,7 +105,7 @@ shExitCode cmd = do
 
   logDebugCmd cmd process $ \region log -> do
     (consoleLogging, consoleLogQueue, _) <- asks getConsoleLogging
-    let formatted = formatConsoleLog KeyHideOff consoleLogging log
+    let formatted = formatConsoleLog (MkKeyHideSwitch False) consoleLogging log
     writeTBQueueA consoleLogQueue (LogRegion (log ^. #mode) region formatted)
 
   (exitCode, _stdout, stderr) <- P.readCreateProcessWithExitCode process ""

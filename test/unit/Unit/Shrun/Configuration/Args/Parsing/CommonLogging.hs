@@ -5,7 +5,7 @@ import Shrun.Configuration.Data.CommonLogging
   ( Debug (MkDebug),
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch (KeyHideOn),
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
@@ -24,45 +24,45 @@ debugTests =
   testGroup
     "--common-log-debug"
     [ testDebug,
-      testNoDebug
+      testDebugFalse
     ]
 
 testDebug :: TestTree
 testDebug =
-  testPropertyNamed "Parses --common-log-debug" "testDebug"
+  testPropertyNamed "Parses --common-log-debug true" "testDebug"
     $ U.verifyResult argList expected
   where
-    argList = ["--common-log-debug", "command"]
+    argList = ["--common-log-debug", "on", "command"]
     expected = U.updateDefCoreArgs (#commonLogging % #debug) (MkDebug True)
 
-testNoDebug :: TestTree
-testNoDebug =
-  testPropertyNamed "Parses --no-common-log-debug" "testNoDebug"
+testDebugFalse :: TestTree
+testDebugFalse =
+  testPropertyNamed "Parses --common-log-debug false" "testDebugFalse"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-common-log-debug", "command"]
-    expected = U.disableDefCoreArgs (#commonLogging % #debug)
+    argList = ["--common-log-debug", "off", "command"]
+    expected = U.updateDefCoreArgs (#commonLogging % #debug) (MkDebug False)
 
 keyHideTests :: TestTree
 keyHideTests =
   testGroup
     "--common-log-key-hide"
     [ testKeyHide,
-      testNoKeyHide
+      testKeyHideFalse
     ]
 
 testKeyHide :: TestTree
 testKeyHide =
-  testPropertyNamed "Parses --common-log-key-hide" "testKeyHide"
+  testPropertyNamed "Parses --common-log-key-hide true" "testKeyHide"
     $ U.verifyResult argList expected
   where
-    argList = ["--common-log-key-hide", "command"]
-    expected = U.updateDefCoreArgs (#commonLogging % #keyHide) KeyHideOn
+    argList = ["--common-log-key-hide", "on", "command"]
+    expected = U.updateDefCoreArgs (#commonLogging % #keyHide) (MkKeyHideSwitch True)
 
-testNoKeyHide :: TestTree
-testNoKeyHide =
-  testPropertyNamed "Parses --no-common-log-key-hide" "testNoKeyHide"
+testKeyHideFalse :: TestTree
+testKeyHideFalse =
+  testPropertyNamed "Parses --common-log-key-hide false" "testKeyHideFalse"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-common-log-key-hide", "command"]
-    expected = U.disableDefCoreArgs (#commonLogging % #keyHide)
+    argList = ["--common-log-key-hide", "off", "command"]
+    expected = U.updateDefCoreArgs (#commonLogging % #keyHide) (MkKeyHideSwitch False)

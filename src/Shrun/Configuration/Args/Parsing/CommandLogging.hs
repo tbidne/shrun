@@ -20,6 +20,7 @@ import Shrun.Configuration.Data.CommandLogging
         readStrategy,
         reportReadErrors
       ),
+    ReportReadErrorsSwitch (MkReportReadErrorsSwitch),
   )
 import Shrun.Configuration.Data.CommandLogging qualified as CommandLogging
 import Shrun.Configuration.Data.CommandLogging.PollInterval (PollInterval)
@@ -29,7 +30,6 @@ import Shrun.Configuration.Data.CommandLogging.ReadSize qualified as ReadSize
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy (ReadStrategy)
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy qualified as ReadStrategy
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
-import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
@@ -52,8 +52,8 @@ commandLoggingParser = do
         reportReadErrors
       }
 
-bufferLengthParser :: Parser (WithDisabled BufferLength)
-bufferLengthParser = Utils.withDisabledParser mainParser "command-log-buffer-length"
+bufferLengthParser :: Parser (Maybe BufferLength)
+bufferLengthParser = mainParser
   where
     mainParser =
       OA.optional
@@ -72,8 +72,8 @@ bufferLengthParser = Utils.withDisabledParser mainParser "command-log-buffer-len
           "1,000 characters."
         ]
 
-bufferTimeoutParser :: Parser (WithDisabled BufferTimeout)
-bufferTimeoutParser = Utils.withDisabledParser mainParser "command-log-buffer-timeout"
+bufferTimeoutParser :: Parser (Maybe BufferTimeout)
+bufferTimeoutParser = mainParser
   where
     mainParser =
       OA.optional
@@ -92,8 +92,8 @@ bufferTimeoutParser = Utils.withDisabledParser mainParser "command-log-buffer-ti
           "block-line-buffer. Defaults to 30 seconds."
         ]
 
-pollIntervalParser :: Parser (WithDisabled PollInterval)
-pollIntervalParser = Utils.withDisabledParser mainParser "command-log-poll-interval"
+pollIntervalParser :: Parser (Maybe PollInterval)
+pollIntervalParser = mainParser
   where
     mainParser =
       OA.optional
@@ -126,8 +126,8 @@ pollIntervalParser = Utils.withDisabledParser mainParser "command-log-poll-inter
         . showt
         . view #unPollInterval
 
-readSizeParser :: Parser (WithDisabled ReadSize)
-readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"
+readSizeParser :: Parser (Maybe ReadSize)
+readSizeParser = mainParser
   where
     mainParser =
       OA.optional
@@ -148,15 +148,15 @@ readSizeParser = Utils.withDisabledParser mainParser "command-log-read-size"
           "broken across lines. The default is '16 kb'."
         ]
 
-readStrategyParser :: Parser (WithDisabled ReadStrategy)
-readStrategyParser = Utils.withDisabledParserNoLine mainParser "command-log-read-strategy"
+readStrategyParser :: Parser (Maybe ReadStrategy)
+readStrategyParser = mainParser
   where
     mainParser =
       OA.optional
         $ OA.option (ReadStrategy.parseReadStrategy OA.str)
         $ mconcat
           [ OA.long "command-log-read-strategy",
-            Utils.mkHelp helpTxt,
+            Utils.mkHelpNoLine helpTxt,
             OA.metavar ReadStrategy.readStrategyStr
           ]
     helpTxt =
@@ -169,25 +169,12 @@ readStrategyParser = Utils.withDisabledParserNoLine mainParser "command-log-read
           "'block'. This option explicitly sets the strategy."
         ]
 
-reportReadErrorsParser :: Parser (WithDisabled ())
+reportReadErrorsParser :: Parser (Maybe ReportReadErrorsSwitch)
 reportReadErrorsParser =
-  Utils.withDisabledParserOpts
+  Utils.switchParserOpts
     OA.internal
-    mainParser
+    MkReportReadErrorsSwitch
     "command-log-report-read-errors"
+    helpTxt
   where
-    switchParser =
-      OA.switch
-        ( mconcat
-            [ OA.long "command-log-report-read-errors",
-              OA.internal,
-              Utils.mkHelp helpTxt
-            ]
-        )
-    mainParser = do
-      b <- switchParser
-      pure
-        $ if b
-          then Just ()
-          else Nothing
     helpTxt = "If active, logs read errors when streaming commands."

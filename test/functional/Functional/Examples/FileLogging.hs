@@ -110,6 +110,7 @@ fileLogDeleteOnSuccess testArgs =
                 [ "--file-log",
                   outFileStr,
                   "--file-log-delete-on-success",
+                  "on",
                   "sleep 2"
                 ]
         pure (args, outFile)
@@ -136,6 +137,7 @@ fileLogDeleteOnSuccessFail testArgs = testCase "Runs file-log-delete-on-success 
           [ "--file-log",
             outFileStr,
             "--file-log-delete-on-success",
+            "on",
             "bad",
             "sleep 2"
           ]
@@ -418,7 +420,7 @@ fileLogStripControlNone testArgs =
                 [ "--file-log",
                   outFileStr,
                   "--file-log-strip-control",
-                  "none",
+                  "off",
                   "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
                 ]
         pure (args, outFile)

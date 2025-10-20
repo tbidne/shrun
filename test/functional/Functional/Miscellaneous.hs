@@ -45,6 +45,7 @@ splitNewlineLogs =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "sleep 1 && echo 'line one\nline two' && sleep 2"
         ]
 
@@ -78,6 +79,7 @@ formatErrorLogs testArgs =
                   "--notify-system",
                   notifySystemArg,
                   "--console-log-command",
+                  "on",
                   "sleep 1 && echo 'abc\n  def' && sleep 1 && exit 1"
                 ]
         pure (args, outFile)
@@ -152,6 +154,7 @@ isCancelled testArgs =
                   "--notify-system",
                   notifySystemArg,
                   "--console-log-command",
+                  "on",
                   "sleep 5"
                 ]
         pure (args, outFile)
@@ -203,8 +206,9 @@ stripControlAlwaysCmdNames =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           "--console-log-strip-control",
-          "none",
+          "off",
           "printf ' foo \ESC[35m hello \ESC[3D bye '; sleep 2"
         ]
     -- i.e. ansi codes are not being stripped (because =none), yet they are
@@ -230,6 +234,7 @@ reportsStderr =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           scriptPath
         ]
 
@@ -266,6 +271,7 @@ slowOutputBroken =
     args =
       withNoConfig
         [ "--console-log-command",
+          "on",
           scriptPath
         ]
 
@@ -301,6 +307,7 @@ formatsFileLogs testArgs =
                 [ "--file-log",
                   outFileStr,
                   "--console-log-command",
+                  "on",
                   "--command-log-read-size",
                   "5b", -- intentionally using a low size to test buffering
                   cmd
@@ -418,6 +425,7 @@ testReadStrategyMultiCmdsFileBlock testArgs = testCase desc $ do
           [ "--file-log",
             outFileStr,
             "--console-log-command",
+            "on",
             "--command-log-read-size",
             "2b",
             readStrategyDefaultCmd,
@@ -446,6 +454,7 @@ testReadStrategyMultiCmdsBuffer = testCase desc $ do
   let args =
         withNoConfig
           [ "--console-log-command",
+            "on",
             "--command-log-read-size",
             "2b",
             readStrategyDefaultCmd,
@@ -472,6 +481,7 @@ testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
           [ "--file-log",
             outFileStr,
             "--console-log-command",
+            "on",
             "--command-log-read-size",
             "2b",
             readStrategyDefaultCmd

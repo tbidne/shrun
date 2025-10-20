@@ -1,6 +1,9 @@
 module Unit.Shrun.Configuration.Args.Parsing.CommandLogging (tests) where
 
 import GHC.Real (fromIntegral)
+import Shrun.Configuration.Data.CommandLogging
+  ( ReportReadErrorsSwitch (MkReportReadErrorsSwitch),
+  )
 import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy (ReadBlock, ReadBlockLineBuffer),
@@ -26,8 +29,7 @@ bufferLengthTests =
   testGroup
     "--command-log-buffer-length"
     [ testBufferLength,
-      testBufferLengthOverflow,
-      testNoBufferLength
+      testBufferLengthOverflow
     ]
 
 testBufferLength :: TestTree
@@ -51,21 +53,12 @@ testBufferLengthOverflow =
     maxIntIncArg = show maxIntInc ++ " b"
     argList = ["--command-log-buffer-length", maxIntIncArg, "command"]
 
-testNoBufferLength :: TestTree
-testNoBufferLength =
-  testPropertyNamed "Parses --no-command-log-buffer-length" "testNoBufferLength"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-command-log-buffer-length", "command"]
-    expected = U.disableDefCoreArgs (#commandLogging % #bufferLength)
-
 bufferTimeoutTests :: TestTree
 bufferTimeoutTests =
   testGroup
     "--command-log-buffer-timeout"
     [ testBufferTimeout,
-      testBufferTimeoutString,
-      testNoBufferTimeout
+      testBufferTimeoutString
     ]
 
 testBufferTimeout :: TestTree
@@ -76,7 +69,7 @@ testBufferTimeout =
     $ U.verifyResult argList expected
   where
     argList = ["--command-log-buffer-timeout", "2_000", "command"]
-    expected = U.updateDefCoreArgs (#commandLogging % #bufferTimeout) 2_000
+    expected = U.updateDefCoreArgs (#commandLogging % #bufferTimeout) (fromℤ 2_000)
 
 testBufferTimeoutString :: TestTree
 testBufferTimeoutString =
@@ -86,23 +79,14 @@ testBufferTimeoutString =
     $ U.verifyResult argList expected
   where
     argList = ["--command-log-buffer-timeout", "1d2h3m4s", "command"]
-    expected = U.updateDefCoreArgs (#commandLogging % #bufferTimeout) 93784
-
-testNoBufferTimeout :: TestTree
-testNoBufferTimeout =
-  testPropertyNamed "Parses --no-command-log-buffer-timeout" "testNoBufferTimeout"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-command-log-buffer-timeout", "command"]
-    expected = U.disableDefCoreArgs (#commandLogging % #bufferTimeout)
+    expected = U.updateDefCoreArgs (#commandLogging % #bufferTimeout) (fromℤ 93784)
 
 pollIntervalTests :: TestTree
 pollIntervalTests =
   testGroup
     "--command-log-poll-interval"
     [ testPollInterval,
-      testPollIntervalUnderscores,
-      testNoPollInterval
+      testPollIntervalUnderscores
     ]
 
 testPollInterval :: TestTree
@@ -123,21 +107,12 @@ testPollIntervalUnderscores =
     argList = ["--command-log-poll-interval", "1_000_000", "command"]
     expected = U.updateDefCoreArgs (#commandLogging % #pollInterval) 1_000_000
 
-testNoPollInterval :: TestTree
-testNoPollInterval =
-  testPropertyNamed "Parses --no-command-log-poll-interval" "testNoPollInterval"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-command-log-poll-interval", "command"]
-    expected = U.disableDefCoreArgs (#commandLogging % #pollInterval)
-
 readSizeTests :: TestTree
 readSizeTests =
   testGroup
     "--command-log-read-size"
     [ testReadSize,
-      testReadSizeOverflow,
-      testNoReadSize
+      testReadSizeOverflow
     ]
 
 testReadSize :: TestTree
@@ -161,21 +136,12 @@ testReadSizeOverflow =
     maxIntIncArg = show maxIntInc ++ " b"
     argList = ["--command-log-read-size", maxIntIncArg, "command"]
 
-testNoReadSize :: TestTree
-testNoReadSize =
-  testPropertyNamed "Parses --no-command-log-read-size" "testNoReadSize"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-command-log-read-size", "command"]
-    expected = U.disableDefCoreArgs (#commandLogging % #readSize)
-
 readStrategyTests :: TestTree
 readStrategyTests =
   testGroup
     "--command-log-read-strategy"
     [ testReadStrategyBlock,
-      testReadStrategyBlockBufferLine,
-      testNoReadStrategy
+      testReadStrategyBlockBufferLine
     ]
 
 testReadStrategyBlock :: TestTree
@@ -198,40 +164,36 @@ testReadStrategyBlockBufferLine =
     argList = ["--command-log-read-strategy", "block-line-buffer", "command"]
     expected = U.updateDefCoreArgs (#commandLogging % #readStrategy) ReadBlockLineBuffer
 
-testNoReadStrategy :: TestTree
-testNoReadStrategy =
-  testPropertyNamed
-    "Parses --no-command-log-read-strategy"
-    "testReadStrategyBlockBufferLine"
-    $ U.verifyResult argList expected
-  where
-    argList = ["--no-command-log-read-strategy", "command"]
-    expected = U.disableDefCoreArgs (#commandLogging % #readStrategy)
-
 reportReadErrorsTests :: TestTree
 reportReadErrorsTests =
   testGroup
     "--command-log-report-read-errors"
     [ testReportReadErrors,
-      testNoReportReadErrors
+      testReportReadErrorsFalse
     ]
 
 testReportReadErrors :: TestTree
 testReportReadErrors =
   testPropertyNamed
-    "Parses --command-log-report-read-errors"
+    "Parses --command-log-report-read-errors true"
     "testReportReadErrors"
     $ U.verifyResult argList expected
   where
-    argList = ["--command-log-report-read-errors", "command"]
-    expected = U.updateDefCoreArgs (#commandLogging % #reportReadErrors) ()
+    argList = ["--command-log-report-read-errors", "on", "command"]
+    expected =
+      U.updateDefCoreArgs
+        (#commandLogging % #reportReadErrors)
+        (MkReportReadErrorsSwitch True)
 
-testNoReportReadErrors :: TestTree
-testNoReportReadErrors =
+testReportReadErrorsFalse :: TestTree
+testReportReadErrorsFalse =
   testPropertyNamed
-    "Parses --no-command-log-report-read-errors"
-    "testNoReportReadErrors"
+    "Parses --command-log-report-read-errors false"
+    "testReportReadErrorsFalse"
     $ U.verifyResult argList expected
   where
-    argList = ["--no-command-log-report-read-errors", "command"]
-    expected = U.disableDefCoreArgs (#commandLogging % #reportReadErrors)
+    argList = ["--command-log-report-read-errors", "off", "command"]
+    expected =
+      U.updateDefCoreArgs
+        (#commandLogging % #reportReadErrors)
+        (MkReportReadErrorsSwitch False)

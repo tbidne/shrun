@@ -16,12 +16,11 @@ data FilePathDefault
   deriving stock (Eq, Show)
 
 instance DecodeTOML FilePathDefault where
-  tomlDecoder = parseFilePathDefault tomlDecoder
+  tomlDecoder = tomlDecoder >>= parseFilePathDefault
 
-parseFilePathDefault :: (MonadFail m) => m Text -> m FilePathDefault
-parseFilePathDefault getTxt =
-  getTxt >>= \case
-    "default" -> pure FPDefault
-    "" -> fail "Empty path given for --file-log"
-    other -> FPManual <$> OsPath.encodeFail (T.unpack other)
+parseFilePathDefault :: (MonadFail m) => Text -> m FilePathDefault
+parseFilePathDefault = \case
+  "default" -> pure FPDefault
+  "" -> fail "Empty path given for --file-log"
+  other -> FPManual <$> OsPath.encodeFail (T.unpack other)
 {-# INLINEABLE parseFilePathDefault #-}

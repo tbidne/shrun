@@ -17,14 +17,11 @@ import Shrun.Configuration.Data.MergedConfig
       ),
   )
 import Shrun.Configuration.Data.WithDisabled
-  ( WithDisabled
-      ( Disabled,
-        With,
-        Without
-      ),
+  ( WithDisabled (Disabled, With),
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Default qualified as D
 import Shrun.Configuration.Legend qualified as Legend
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Prelude
@@ -79,14 +76,14 @@ mergeConfig args mToml = do
           legendMap <- Legend.linesToMap aliases
           cmdEdges <- case wEdgeArgs of
             -- 3.1. We also have CLI edges; pass it in.
-            With ea -> Legend.translateCommands legendMap cmdsText (Just ea)
+            Just (With ea) -> Legend.translateCommands legendMap cmdsText (Just ea)
             -- 3.2 No CLI legend; compute toml edges as normal.
-            Without -> Legend.translateCommands legendMap cmdsText Nothing
+            Nothing -> Legend.translateCommands legendMap cmdsText Nothing
             -- 3.3 Edges disabled; not only do we have no edges to pass
             -- in, we must also disable the toml edges. We do this
             -- but overwriting whatever was computed with 'def',
             -- below.
-            Disabled -> do
+            Just Disabled -> do
               (cmds, _) <- Legend.translateCommands legendMap cmdsText Nothing
               pure (cmds, def)
           pure $ second EdgeArgsList cmdEdges
@@ -113,5 +110,5 @@ mergeConfig args mToml = do
     mkCmd (i, t) = MkCommandP (fromPositive i) Nothing t
 
     wEdgeArgs = args ^. #edges
-    cliEdgeArgs = WD.fromDefault wEdgeArgs
+    cliEdgeArgs = D.fromMaybe (wEdgeArgs >>= WD.toMaybe)
 {-# INLINEABLE mergeConfig #-}
