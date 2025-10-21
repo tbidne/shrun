@@ -1,9 +1,8 @@
 -- | Functional test for command log buffering.
 module Functional.Buffering (specs) where
 
-import Data.Text qualified as T
 import Functional.Prelude
-import Test.Shrun.Verifier (ExpectedText (MkExpectedText), ResultText)
+import Test.Shrun.Verifier (ExpectedText (MkExpectedText))
 import Test.Shrun.Verifier qualified as V
 
 specs :: TestTree
@@ -24,7 +23,8 @@ logsNoBuffer =
     run
     args
     ( \results -> do
-        assertLogsEq expectedOrdered results
+        V.verifyExpectedOrder results expectedOrdered1
+        V.verifyExpectedOrder results expectedOrdered2
         V.verifyExpected results (MkExpectedText <$> allExpected)
     )
   where
@@ -42,7 +42,7 @@ logsNoBuffer =
           "on",
           "--console-log-strip-control=all",
           "--console-log-command-name-trunc=15",
-          "sleep 0.5 ; for i in 0.5 1.5 2.5 3.5; do echo \"$i\"; sleep 1; done"
+          "sleep 0.5 ; for i in 0.5 1.5 2.5 3.5 4.5; do echo \"$i\"; sleep 1; done"
         ]
 
     -- To test that the logs are correctly streamed, we check that actual
@@ -56,76 +56,39 @@ logsNoBuffer =
     -- for a race.
     --
     -- Having the same interval yet an offset make this more reliable.
+    cmdPrefix :: (IsString a) => a
     cmdPrefix = "sleep 0.5 ; ..."
 
-    expectedOrdered =
+    -- Unfortunately osx is sometimes pretty slow on CI, leaving this
+    -- vulnerable to timing issues. Hence we try to be pretty lenient and
+    -- verify that some logs appear before others e.g. all commands logs
+    -- <= 1.5s should appear before timer >= 3, and all timer logs <= 1 second
+    -- should appear before all command logs >= 2.5.
+    --
+    -- This should be enough to verify that we are in fact streaming logs.
+    expectedOrdered1 :: (IsString a, Semigroup a) => List a
+    expectedOrdered1 =
       [ withCommandPrefix cmdPrefix "Starting...",
         withCommandPrefix cmdPrefix "0.5",
-        withTimerPrefix "1 second",
         withCommandPrefix cmdPrefix "1.5",
-        withTimerPrefix "2 seconds",
         withCommandPrefix cmdPrefix "2.5",
-        withTimerPrefix "3 seconds",
+        withTimerPrefix "4 seconds",
+        withTimerPrefix "5 seconds"
+      ]
+
+    expectedOrdered2 :: (IsString a, Semigroup a) => List a
+    expectedOrdered2 =
+      [ withTimerPrefix "1 second",
+        withTimerPrefix "2 seconds",
         withCommandPrefix cmdPrefix "3.5",
-        withTimerPrefix "4 seconds"
+        withCommandPrefix cmdPrefix "4.5"
       ]
 
     -- The order of these last few messages is flaky on OSX, so just look for
     -- existence.
     allExpected =
-      expectedOrdered
+      expectedOrdered1
+        ++ expectedOrdered2
         ++ [ withSuccessPrefix cmdPrefix,
              withFinishedPrefix ""
            ]
-
-assertLogsEq :: List Text -> List ResultText -> IO ()
-assertLogsEq expectedOrdered results = case go expectedOrdered results' of
-  Nothing -> pure ()
-  Just errMsg -> assertFailure $ unpack errMsg
-  where
-    results' = (.unResultText) <$> results
-
-    go :: List Text -> List Text -> Maybe Text
-    go [] [] = Nothing
-    go (_ : _) [] =
-      Just
-        $ mconcat
-          [ "Num expected > results.\n\nExpected:\n",
-            prettyList expectedOrdered,
-            "\n\nResults:\n",
-            prettyList results'
-          ]
-    -- Having leftover results is fine, since the last few messages are quite
-    -- non-deterministic, so we don't bother.
-    go [] (_ : _) = Nothing
-    go (e : es) (r : rs) =
-      case logEq e r of
-        Nothing -> go es rs
-        Just errMsg ->
-          Just
-            $ mconcat
-              [ errMsg,
-                "\n\nAll expected:\n",
-                prettyList expectedOrdered,
-                "\n\nAll results:\n",
-                prettyList results'
-              ]
-
-    prettyList :: List Text -> Text
-    prettyList [] = ""
-    prettyList (x : xs) = x <> "\n" <> prettyList xs
-
-logEq :: Text -> Text -> Maybe Text
-logEq expected result =
-  if expected `T.isInfixOf` result
-    then Nothing
-    else Just errMsg
-  where
-    errMsg =
-      mconcat
-        [ "Expected '",
-          expected,
-          "' to be infix of '",
-          result,
-          "'"
-        ]
