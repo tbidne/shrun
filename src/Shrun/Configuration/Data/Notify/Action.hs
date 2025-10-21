@@ -17,7 +17,7 @@ data NotifyAction
     NotifyCommand
   | -- | NotifyFinal and NotifyCommand.
     NotifyAll
-  deriving stock (Eq, Show)
+  deriving stock (Bounded, Enum, Eq, Show)
 
 instance DecodeTOML NotifyAction where
   tomlDecoder = tomlDecoder >>= parseNotifyAction

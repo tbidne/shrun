@@ -74,6 +74,7 @@ import System.OsPath qualified as OsPath
 -- | Switch for deleting the log file upon success.
 newtype DeleteOnSuccessSwitch = MkDeleteOnSuccessSwitch Bool
   deriving stock (Eq, Show)
+  deriving newtype (Bounded, Enum)
 
 instance Default DeleteOnSuccessSwitch where
   def = MkDeleteOnSuccessSwitch False
@@ -171,6 +172,22 @@ instance
           (f a3)
   {-# INLINE labelOptic #-}
 
+instance Semigroup FileLogInitToml where
+  l <> r =
+    MkFileLogInitP
+      { path = l ^. #path <|> r ^. #path,
+        mode = l ^. #mode <|> r ^. #mode,
+        sizeMode = l ^. #sizeMode <|> r ^. #sizeMode
+      }
+
+instance Monoid FileLogInitToml where
+  mempty =
+    MkFileLogInitP
+      { path = Nothing,
+        mode = Nothing,
+        sizeMode = Nothing
+      }
+
 type FileLogInitArgs = FileLogInitP ConfigPhaseArgs
 
 type FileLogInitToml = FileLogInitP ConfigPhaseToml
@@ -193,9 +210,9 @@ deriving stock instance Show FileLogInitMerged
 instance Default FileLogInitArgs where
   def =
     MkFileLogInitP
-      { path = def,
-        mode = def,
-        sizeMode = def
+      { path = Nothing,
+        mode = Nothing,
+        sizeMode = Nothing
       }
 
 instance DecodeTOML FileLogInitToml where
@@ -350,6 +367,26 @@ instance
           (f a5)
   {-# INLINE labelOptic #-}
 
+instance Semigroup FileLoggingToml where
+  l <> r =
+    MkFileLoggingP
+      { file = l ^. #file <> r ^. #file,
+        commandNameTrunc = l ^. #commandNameTrunc <|> r ^. #commandNameTrunc,
+        deleteOnSuccess = l ^. #deleteOnSuccess <|> r ^. #deleteOnSuccess,
+        lineTrunc = l ^. #lineTrunc <|> r ^. #lineTrunc,
+        stripControl = l ^. #stripControl <|> r ^. #stripControl
+      }
+
+instance Monoid FileLoggingToml where
+  mempty =
+    MkFileLoggingP
+      { file = mempty,
+        commandNameTrunc = Nothing,
+        deleteOnSuccess = Nothing,
+        lineTrunc = Nothing,
+        stripControl = Nothing
+      }
+
 type FileLoggingArgs = FileLoggingP ConfigPhaseArgs
 
 type FileLoggingToml = FileLoggingP ConfigPhaseToml
@@ -370,22 +407,14 @@ deriving stock instance Eq (FileLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (FileLoggingP ConfigPhaseMerged)
 
-instance
-  ( Default (FileLogFileF p),
-    Default (ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)),
-    Default (SwitchF p DeleteOnSuccessSwitch),
-    Default (LineTruncF p),
-    Default (ConfigPhaseF p FileLogStripControl)
-  ) =>
-  Default (FileLoggingP p)
-  where
+instance Default FileLoggingArgs where
   def =
     MkFileLoggingP
       { file = def,
-        commandNameTrunc = def,
-        deleteOnSuccess = def,
-        lineTrunc = def,
-        stripControl = def
+        commandNameTrunc = Nothing,
+        deleteOnSuccess = Nothing,
+        lineTrunc = Nothing,
+        stripControl = Nothing
       }
 
 -- | Merges args and toml configs.

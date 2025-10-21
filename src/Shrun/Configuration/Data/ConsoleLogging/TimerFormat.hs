@@ -35,7 +35,7 @@ data TimerFormat
   | DigitalFull
   | ProseCompact
   | ProseFull
-  deriving stock (Eq, Show)
+  deriving stock (Bounded, Enum, Eq, Show)
 
 instance DecodeTOML TimerFormat where
   tomlDecoder = parseTimerFormat tomlDecoder

@@ -33,7 +33,6 @@ import Shrun.Configuration.Data.Graph
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
-import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Toml.Legend (KeyVal (MkKeyVal), LegendMap)
 import Shrun.Prelude
 
@@ -50,7 +49,7 @@ instance Exception DuplicateKeyError where
 
 -- | Attempts to parse the given ['KeyVal'] into 'LegendMap'.
 -- Duplicate keys are not allowed.
-linesToMap :: (HasCallStack, MonadThrow m) => List KeyVal -> m LegendMap
+linesToMap :: (HasCallStack, MonadThrow m) => Seq KeyVal -> m LegendMap
 linesToMap = foldr f (pure Map.empty)
   where
     f (MkKeyVal es k v) = insertPair (k, (v, es))
@@ -188,7 +187,7 @@ translateMap mp initKey = do
           -- The line isn't a key. Make a singleton command and continue with the rest.
           let cmds = NESeq.singleton (MkCommandP startIdx prevKey line)
               -- The new index is just the single startIdx.
-              allData = (cmds, def, Map.singleton origIdx (startIdx, startIdx))
+              allData = (cmds, mempty, Map.singleton origIdx (startIdx, startIdx))
           case lines of
             Empty -> pure allData
             l :<| ls -> (allData <>) <$> go prevKey foundKeys path (CT.succ startIdx) (l :<|| ls)
@@ -252,7 +251,7 @@ translateMap mp initKey = do
 
             -- Repair the edges.
             repairedEdges <- case mEdges of
-              Nothing -> pure def
+              Nothing -> pure mempty
               Just EdgeArgsSequential ->
                 -- If our graph is sequential, make an edge list (sequential
                 -- edges for original values), then repair it.

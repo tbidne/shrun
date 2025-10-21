@@ -1,0 +1,22 @@
+timeout = 87
+
+legend = [
+  { key = 'cfg1_1', val = 'cfg1 val 1' },
+  { key = 'cfg2_1', val = 'cfg1 val 2' },
+]
+
+[command-log]
+poll-interval = 100
+
+[console-log]
+command = false
+command-name-trunc = 100
+delete-on-success = false
+timer-format = 'digital_compact'
+
+[file-log]
+path = 'cfg2 file'
+command-name-trunc = 45
+line-trunc = 200
+mode = 'append'
+strip-control = 'off'

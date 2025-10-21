@@ -13,6 +13,7 @@ module Shrun.Configuration.Env
   )
 where
 
+import Data.List qualified as L
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as T
 import Shrun (runShellT, shrun)
@@ -37,6 +38,8 @@ import Shrun.Configuration.Env.Types
       ),
     HasConsoleLogging,
   )
+import Shrun.Configuration.Toml (Toml)
+import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Prelude
@@ -106,39 +109,86 @@ getMergedConfig ::
 getMergedConfig = do
   args <- execParser parserInfoArgs
 
-  mTomlConfig <-
-    case args ^. #configPath of
-      -- 1. If noConfig is true then we ignore all toml config
-      Just Disabled -> pure Nothing
-      -- 2. noConfig is false and toml config not set: try reading from
-      --    default location. If it does not exist that's fine, just print
-      --    a message. If it does, try to read it and throw any errors
-      --    (e.g. file errors, toml errors).
-      Nothing -> do
+  let argsTomls = args ^. #configPath
+
+  tomls <- do
+    -- If our configs list contains /any/ Disabled, then the xdg config
+    -- will be ignored, as it is the implicit first element. Hence we guard
+    -- against it to save an unnecessary lookup.
+    if containsDisabled argsTomls
+      then pure argsTomls
+      else do
         configDir <- getShrunXdgConfig
         let path = configDir </> [osp|config.toml|]
         b <- doesFileExist path
+        -- If xdg config exists, add it to the list. Otherwise just use args.
         if b
-          then Just <$> readConfig path
+          then pure (With path : argsTomls)
           else do
             putTextLn
               ( "No default config found at: '"
                   <> T.pack (decodeLenient path)
                   <> "'"
               )
-            pure Nothing
-      -- 3. noConfig is false and toml config explicitly set: try reading
-      --    (all errors rethrown)
-      Just (With f) -> readConfig f
+            pure argsTomls
 
-  mergeConfig args mTomlConfig
+  mergeTomls tomls >>= mergeConfig args
   where
-    readConfig fp = do
-      contents <- readFileUtf8ThrowM fp
-      case decode contents of
-        Right cfg -> pure cfg
-        Left tomlErr -> throwM tomlErr
+    containsDisabled = L.elem Disabled
 {-# INLINEABLE getMergedConfig #-}
+
+-- | Merges several toml files together.
+--
+-- NOTE: [Toml order]
+--
+-- @
+--   xdg, t1, t2, ..., tn
+-- @
+--
+-- Where the xdg is the first toml (if it exists), and the rest are given
+-- on the CLI. We want the semantics to favor the RHS when there are conflicts.
+-- In particular, if some @tk == disabled@, we want all @ti, i < k@ to be
+-- disabled.
+--
+-- Hence we reverse the list to
+--
+-- @
+-- tn, ..., t2, t1, xdg
+-- @
+--
+-- Then drop everything after finding a disabled config. Note that we do
+-- /not/ restore the original order (i.e. reverse again). Why? Because our
+-- semigroups are left-biased, and we want @tk@ to override @ti@ whenever
+-- @i < k@. Hence we can leave the reverse order and foldr.
+mergeTomls ::
+  forall m.
+  ( HasCallStack,
+    MonadFileReader m,
+    MonadThrow m
+  ) =>
+  List (WithDisabled OsPath) ->
+  m Toml
+mergeTomls =
+  fmap Toml.mergeTomls
+    . traverse readConfig
+    . dropAfterDisabled
+    . L.reverse
+  where
+    dropAfterDisabled [] = []
+    dropAfterDisabled (Disabled : _) = []
+    dropAfterDisabled (With f : fs) = f : dropAfterDisabled fs
+
+readConfig ::
+  ( HasCallStack,
+    MonadFileReader m,
+    MonadThrow m
+  ) =>
+  OsPath -> m Toml
+readConfig fp = do
+  contents <- readFileUtf8ThrowM fp
+  case decode contents of
+    Right cfg -> pure cfg
+    Left tomlErr -> throwM tomlErr
 
 fromMergedConfig ::
   ( HasCallStack,

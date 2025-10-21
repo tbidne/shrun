@@ -114,6 +114,22 @@ instance
           (f a3)
   {-# INLINE labelOptic #-}
 
+instance Semigroup NotifyToml where
+  l <> r =
+    MkNotifyP
+      { action = l ^. #action <|> r ^. #action,
+        system = l ^. #system <|> r ^. #system,
+        timeout = l ^. #timeout <|> r ^. #timeout
+      }
+
+instance Monoid NotifyToml where
+  mempty =
+    MkNotifyP
+      { action = Nothing,
+        system = Nothing,
+        timeout = Nothing
+      }
+
 type NotifyArgs = NotifyP ConfigPhaseArgs
 
 type NotifyToml = NotifyP ConfigPhaseToml
@@ -138,9 +154,9 @@ deriving stock instance Show (NotifyP ConfigPhaseMerged)
 instance Default NotifyArgs where
   def =
     MkNotifyP
-      { system = def,
-        action = def,
-        timeout = def
+      { system = Nothing,
+        action = Nothing,
+        timeout = Nothing
       }
 
 -- | Merges args and toml configs.

@@ -1,0 +1,11 @@
+init = 'cfg3 init'
+
+legend = [
+  { key = 'cfg3_1', val = 'cfg3 val 1' },
+  { key = 'cfg3_2', val = 'cfg3 val 2' },
+]
+
+[file-log]
+path = 'cfg3 file'
+line-trunc = 300
+strip-control = 'smart'

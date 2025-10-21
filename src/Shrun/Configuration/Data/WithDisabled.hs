@@ -32,6 +32,23 @@ data WithDisabled a
     Disabled
   deriving stock (Eq, Functor, Show)
 
+instance Applicative WithDisabled where
+  pure = With
+
+  Disabled <*> _ = Disabled
+  _ <*> Disabled = Disabled
+  With f <*> With x = With (f x)
+
+-- We have an Alternative instance because we want one like Maybe that is
+-- left-biased. We leave Semigroup/Monoid alone for now as there is no
+-- need unless we want to also use the type variable in some way.
+
+instance Alternative WithDisabled where
+  empty = Disabled
+
+  With x <|> _ = With x
+  Disabled <|> y = y
+
 instance (DecodeTOML a) => DecodeTOML (WithDisabled a) where
   tomlDecoder = parseText <|> With <$> tomlDecoder
     where

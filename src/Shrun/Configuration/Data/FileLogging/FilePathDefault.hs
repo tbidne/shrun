@@ -2,6 +2,8 @@
 module Shrun.Configuration.Data.FileLogging.FilePathDefault
   ( FilePathDefault (..),
     parseFilePathDefault,
+    _FPDefault,
+    _FPManual,
   )
 where
 
@@ -24,3 +26,23 @@ parseFilePathDefault = \case
   "" -> fail "Empty path given for --file-log"
   other -> FPManual <$> OsPath.encodeFail (T.unpack other)
 {-# INLINEABLE parseFilePathDefault #-}
+
+_FPDefault :: Prism' FilePathDefault ()
+_FPDefault =
+  prism
+    (const FPDefault)
+    ( \case
+        FPDefault -> Right ()
+        FPManual p -> Left (FPManual p)
+    )
+{-# INLINE _FPDefault #-}
+
+_FPManual :: Prism' FilePathDefault OsPath
+_FPManual =
+  prism
+    FPManual
+    ( \case
+        FPManual p -> Right p
+        FPDefault -> Left FPDefault
+    )
+{-# INLINE _FPManual #-}

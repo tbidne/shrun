@@ -29,7 +29,7 @@ debugTests =
 
 testDebug :: TestTree
 testDebug =
-  testPropertyNamed "Parses --common-log-debug true" "testDebug"
+  testPropertyNamed "Parses --common-log-debug on" "testDebug"
     $ U.verifyResult argList expected
   where
     argList = ["--common-log-debug", "on", "command"]
@@ -53,7 +53,7 @@ keyHideTests =
 
 testKeyHide :: TestTree
 testKeyHide =
-  testPropertyNamed "Parses --common-log-key-hide true" "testKeyHide"
+  testPropertyNamed "Parses --common-log-key-hide on" "testKeyHide"
     $ U.verifyResult argList expected
   where
     argList = ["--common-log-key-hide", "on", "command"]

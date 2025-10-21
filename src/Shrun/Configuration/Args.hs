@@ -19,8 +19,8 @@ import Shrun.Prelude
 defaultArgs :: NESeq Text -> Args
 defaultArgs commands =
   MkArgs
-    { configPath = Nothing,
+    { configPath = [],
       coreConfig = def,
       commands,
-      edges = def
+      edges = Nothing
     }

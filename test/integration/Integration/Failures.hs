@@ -26,6 +26,7 @@ specs testArgs =
     "Failures"
     ( [ missingConfig,
         duplicateKeys,
+        duplicateKeysOverride,
         emptyKey,
         emptyValue,
         cyclicKeys,
@@ -67,6 +68,29 @@ duplicateKeys = testCase "Duplicate keys throws exception" $ do
 
   logs <- readIORef logsRef
   logs @=? []
+
+duplicateKeysOverride :: TestTree
+duplicateKeysOverride = testCase "Duplicate keys throws exception with override" $ do
+  logsRef <- newIORef []
+  result <- runCaptureError args logsRef
+
+  -- Tests that even though duplicate-keys2.toml "fixes" the
+  -- duplicate key error in duplicate-keys.toml, it has its own key failure.
+  case result of
+    Just (MkDuplicateKeyError k) ->
+      "key2" @=? k
+    Nothing -> assertFailure "Expected exception"
+
+  logs <- readIORef logsRef
+  logs @=? []
+  where
+    args =
+      [ "-c",
+        getIntConfig "duplicate-keys",
+        "-c",
+        getIntConfig "duplicate-keys2",
+        "cmd"
+      ]
 
 emptyKey :: TestTree
 emptyKey = testCase "Empty key throws exception" $ do

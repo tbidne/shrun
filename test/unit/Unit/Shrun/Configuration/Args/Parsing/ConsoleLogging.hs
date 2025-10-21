@@ -46,7 +46,7 @@ testCommandLogging =
   testPropertyNamed desc "testCommandLogging"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --console-log-command true"
+    desc = "Parses --console-log-command on"
     argList = ["--console-log-command", "on", "command"]
     expected =
       set'
@@ -56,7 +56,7 @@ testCommandLogging =
 
 testCommandLoggingFalse :: TestTree
 testCommandLoggingFalse =
-  testPropertyNamed "Parses --console-log-command true" "testNoCommandLogging"
+  testPropertyNamed "Parses --console-log-command on" "testNoCommandLogging"
     $ U.verifyResult argList expected
   where
     argList = ["--console-log-command", "off", "command"]

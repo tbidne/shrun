@@ -10,7 +10,6 @@ module Shrun.Configuration.Data.Core
     -- * Functions
     mergeCoreConfig,
     withCoreEnv,
-    defaultCoreConfigMerged,
   )
 where
 
@@ -188,6 +187,30 @@ instance
           (f a7)
   {-# INLINE labelOptic #-}
 
+instance Semigroup CoreConfigToml where
+  l <> r =
+    MkCoreConfigP
+      { init = l ^. #init <|> r ^. #init,
+        timeout = l ^. #timeout <|> r ^. #timeout,
+        commonLogging = l ^. #commonLogging <> r ^. #commonLogging,
+        commandLogging = l ^. #commandLogging <> r ^. #commandLogging,
+        consoleLogging = l ^. #consoleLogging <> r ^. #consoleLogging,
+        fileLogging = l ^. #fileLogging <> r ^. #fileLogging,
+        notify = l ^. #notify <> r ^. #notify
+      }
+
+instance Monoid CoreConfigToml where
+  mempty =
+    MkCoreConfigP
+      { init = Nothing,
+        timeout = Nothing,
+        commonLogging = Nothing,
+        commandLogging = Nothing,
+        consoleLogging = Nothing,
+        fileLogging = Nothing,
+        notify = Nothing
+      }
+
 type CoreConfigArgs = CoreConfigP ConfigPhaseArgs
 
 type CoreConfigToml = CoreConfigP ConfigPhaseToml
@@ -215,9 +238,9 @@ mergeCoreConfig ::
   ) =>
   NESeq CommandP1 ->
   CoreConfigArgs ->
-  Maybe CoreConfigToml ->
+  CoreConfigToml ->
   m CoreConfigMerged
-mergeCoreConfig cmds args mToml = do
+mergeCoreConfig cmds args toml = do
   consoleLogging <-
     mergeConsoleLogging
       (args ^. #consoleLogging)
@@ -251,8 +274,6 @@ mergeCoreConfig cmds args mToml = do
             (args ^. #notify)
             (toml ^. #notify)
       }
-  where
-    toml = fromMaybe def mToml
 {-# INLINEABLE mergeCoreConfig #-}
 
 -- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
@@ -292,40 +313,11 @@ withCoreEnv merged onCoreConfigEnv = do
 instance Default (CoreConfigP ConfigPhaseArgs) where
   def =
     MkCoreConfigP
-      { init = def,
-        timeout = def,
+      { init = Nothing,
+        timeout = Nothing,
         commonLogging = def,
         commandLogging = def,
         consoleLogging = def,
         fileLogging = def,
         notify = def
       }
-
-instance Default (CoreConfigP ConfigPhaseToml) where
-  def =
-    MkCoreConfigP
-      { init = def,
-        timeout = def,
-        commonLogging = def,
-        commandLogging = def,
-        consoleLogging = def,
-        fileLogging = def,
-        notify = def
-      }
-
-defaultCoreConfigMerged :: NESeq CommandP1 -> CoreConfigP ConfigPhaseMerged
-defaultCoreConfigMerged cmds =
-  MkCoreConfigP
-    { init = def,
-      timeout = def,
-      commonLogging = def,
-      commandLogging =
-        CommandLogging.defaultCommandLoggingMerged
-          (is _Just fileLogging)
-          cmds,
-      consoleLogging = def,
-      fileLogging,
-      notify = def
-    }
-  where
-    fileLogging = def

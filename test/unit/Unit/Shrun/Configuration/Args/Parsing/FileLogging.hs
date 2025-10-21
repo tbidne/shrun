@@ -161,7 +161,7 @@ deleteOnSuccessTests =
 testDeleteOnSuccess :: TestTree
 testDeleteOnSuccess =
   testPropertyNamed
-    "Parses --file-log-delete-on-success true"
+    "Parses --file-log-delete-on-success on"
     "testDeleteOnSuccess"
     $ U.verifyResult argList expected
   where

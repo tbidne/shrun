@@ -43,6 +43,7 @@ import Shrun.Prelude
 -- | Switch for command logging in console logs.
 newtype ConsoleLogCmdSwitch = MkConsoleLogCmdSwitch Bool
   deriving stock (Eq, Show)
+  deriving newtype (Bounded, Enum)
 
 instance Default ConsoleLogCmdSwitch where
   def = MkConsoleLogCmdSwitch False
@@ -149,6 +150,26 @@ instance
           (f a5)
   {-# INLINE labelOptic #-}
 
+instance Semigroup ConsoleLoggingToml where
+  l <> r =
+    MkConsoleLoggingP
+      { commandLogging = l ^. #commandLogging <|> r ^. #commandLogging,
+        commandNameTrunc = l ^. #commandNameTrunc <|> r ^. #commandNameTrunc,
+        lineTrunc = l ^. #lineTrunc <|> r ^. #lineTrunc,
+        stripControl = l ^. #stripControl <|> r ^. #stripControl,
+        timerFormat = l ^. #timerFormat <|> r ^. #timerFormat
+      }
+
+instance Monoid ConsoleLoggingToml where
+  mempty =
+    MkConsoleLoggingP
+      { commandLogging = Nothing,
+        commandNameTrunc = Nothing,
+        lineTrunc = Nothing,
+        stripControl = Nothing,
+        timerFormat = Nothing
+      }
+
 type ConsoleLoggingArgs = ConsoleLoggingP ConfigPhaseArgs
 
 type ConsoleLoggingToml = ConsoleLoggingP ConfigPhaseToml
@@ -169,22 +190,14 @@ deriving stock instance Eq (ConsoleLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (ConsoleLoggingP ConfigPhaseMerged)
 
-instance
-  ( Default (SwitchF p ConsoleLogCmdSwitch),
-    Default (ConfigPhaseDisabledMaybeF p (Truncation TruncCommandName)),
-    Default (LineTruncF p),
-    Default (ConfigPhaseF p ConsoleLogStripControl),
-    Default (ConfigPhaseF p TimerFormat)
-  ) =>
-  Default (ConsoleLoggingP p)
-  where
+instance Default ConsoleLoggingArgs where
   def =
     MkConsoleLoggingP
-      { commandLogging = def,
-        commandNameTrunc = def,
-        lineTrunc = def,
-        stripControl = def,
-        timerFormat = def
+      { commandLogging = Nothing,
+        commandNameTrunc = Nothing,
+        lineTrunc = Nothing,
+        stripControl = Nothing,
+        timerFormat = Nothing
       }
 
 -- | Merges args and toml configs.
@@ -213,7 +226,7 @@ mergeConsoleLogging args mToml = do
           (args ^. #timerFormat) <.> (toml ^. #timerFormat)
       }
   where
-    toml = fromMaybe def mToml
+    toml = fromMaybe mempty mToml
 {-# INLINEABLE mergeConsoleLogging #-}
 
 instance DecodeTOML ConsoleLoggingToml where

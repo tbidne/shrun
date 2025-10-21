@@ -511,9 +511,10 @@ withPrefix pfx s = pfx <> " " <> s
 
 withBaseArgs :: List String -> List String
 withBaseArgs as =
-  [ "-c",
-    configPath
-  ]
+  withNoConfig
+    $ [ "-c",
+        configPath
+      ]
     <> as
 
 withNoConfig :: List String -> List String

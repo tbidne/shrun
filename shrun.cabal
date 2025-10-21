@@ -221,6 +221,7 @@ test-suite unit
     Unit.Shrun.Configuration.Data.Graph
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
+    Unit.Shrun.Configuration.Toml
     Unit.Shrun.IO.Handle
     Unit.Shrun.Logging.Formatting
     Unit.Shrun.Logging.Generators

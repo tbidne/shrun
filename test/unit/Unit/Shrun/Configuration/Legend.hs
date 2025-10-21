@@ -21,7 +21,6 @@ import Shrun.Configuration.Data.Graph
   ( EdgeArgs (EdgeArgsSequential),
     Edges,
   )
-import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
     DuplicateKeyError (MkDuplicateKeyError),
@@ -56,10 +55,10 @@ linesToMapSuccessProps =
         annotate "Unique keys in original list should match legend"
         verifySize commands legend
 
-verifySize :: List KeyVal -> LegendMap -> PropertyT IO ()
+verifySize :: Seq KeyVal -> LegendMap -> PropertyT IO ()
 verifySize commands legend = do
   annotateShow commands
-  let numUniqueKeys = length $ Set.fromList (fmap (view #key) commands)
+  let numUniqueKeys = length $ (Set.fromList . toList) (fmap (view #key) commands)
       numLegendKeys = length $ Map.keys legend
 
   annotate $ "Commands: " <> show commands
@@ -68,12 +67,12 @@ verifySize commands legend = do
   annotate $ "numLegendKeys: " <> show numLegendKeys
   numLegendKeys === numUniqueKeys
 
-genGoodLines :: (MonadGen m) => m (List KeyVal)
+genGoodLines :: (MonadGen m) => m (Seq KeyVal)
 genGoodLines = do
   keyVals <- Gen.list range genGoodLine
   let (_, unique) = foldl' takeUnique (Set.empty, []) keyVals
 
-  Gen.shuffle unique
+  listToSeq <$> Gen.shuffle unique
   where
     range = Range.linearFrom 20 1 80
     takeUnique (foundKeys, newList) (MkGoodLine k v)
@@ -452,7 +451,7 @@ assertEdges xs ys = assertList showEdge (Exts.toList xs) (Exts.toList ys)
 legendMap :: LegendMap
 legendMap =
   Map.fromList
-    $ over' _2 (,def)
+    $ over' _2 (,Nothing)
     <$> [ ("one", "cmd1" :<|| []),
           ("two", "cmd2" :<|| []),
           ("three", "cmd3" :<|| []),
@@ -463,7 +462,7 @@ legendMap =
 cyclicLegend :: LegendMap
 cyclicLegend =
   Map.fromList
-    $ over' _2 (,def)
+    $ over' _2 (,Nothing)
     <$> [ ("a", "b" :<|| ["x"]),
           ("b", "c" :<|| ["x"]),
           ("c", "a" :<|| ["x"])
@@ -486,7 +485,7 @@ parseMapAndSkip = testCase "Should parse to map and skip comments" $ do
       ]
   let expected =
         Map.fromList
-          $ over' _2 (,def)
+          $ over' _2 (,Nothing)
           <$> [ ("a", "b" :<|| ["k"]),
                 ("b", "c" :<|| [])
               ]

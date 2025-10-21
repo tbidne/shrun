@@ -2,7 +2,6 @@
 
 module Functional.Examples.FileLogging (tests) where
 
-import FileSystem.OsPath (unsafeEncode)
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Test.Shrun.Verifier qualified as V

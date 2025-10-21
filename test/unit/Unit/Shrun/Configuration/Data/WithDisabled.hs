@@ -1,3 +1,8 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Alternative law, left identity" #-}
+{-# HLINT ignore "Alternative law, right identity" #-}
+
 module Unit.Shrun.Configuration.Data.WithDisabled
   ( tests,
   )
@@ -18,8 +23,44 @@ tests :: TestTree
 tests =
   testGroup
     "Shrun.Configuration.Data.WithDisabled"
-    [ testsFunctions
+    [ testLaws,
+      testsFunctions
     ]
+
+testLaws :: TestTree
+testLaws =
+  testGroup
+    "Alternative Laws"
+    [ testAssociativity,
+      testIdentity,
+      testLeftBias
+    ]
+
+testAssociativity :: TestTree
+testAssociativity = testPropertyNamed "Associativity" "testAssociativity" $ do
+  property $ do
+    x <- forAll genWD
+    y <- forAll genWD
+    z <- forAll genWD
+
+    ((x <|> y) <|> z) === (x <|> (y <|> z))
+
+testIdentity :: TestTree
+testIdentity = testPropertyNamed "Identity" "testIdentity" $ do
+  property $ do
+    x <- forAll genWD
+
+    x === (empty <|> x)
+    x === x <|> empty
+
+testLeftBias :: TestTree
+testLeftBias = testPropertyNamed "Left bias" "testLeftBias" $ do
+  property $ do
+    x <- forAll genWith
+    y <- forAll genWith
+
+    x === (x <|> y)
+    y === (y <|> x)
 
 testsFunctions :: TestTree
 testsFunctions =
@@ -38,6 +79,16 @@ testsToMaybe = testPropertyNamed desc name $ do
   where
     desc = "testsToMaybe"
     name = "toMaybe"
+
+genWD :: Gen (WithDisabled Int)
+genWD =
+  G.choice
+    [ genWith,
+      pure Disabled
+    ]
+
+genWith :: Gen (WithDisabled Int)
+genWith = With <$> genInt
 
 genInt :: Gen Int
 genInt = G.integral $ R.linearFrom 0 0 100

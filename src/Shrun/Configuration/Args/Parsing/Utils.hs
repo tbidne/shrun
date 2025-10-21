@@ -3,7 +3,9 @@ module Shrun.Configuration.Args.Parsing.Utils
     mkHelpNoLine,
 
     -- * Disabled parser
+    withDisabledParser,
     mWithDisabledParser,
+    withDisabledParserNoMetavar,
 
     -- * Switch parser
     switchParser,
@@ -57,15 +59,35 @@ mWithDisabledParser ::
   -- | Metavar string.
   String ->
   Parser (Maybe (WithDisabled a))
-mWithDisabledParser rdr opts mv = mainParser
+mWithDisabledParser rdr opts = OA.optional . withDisabledParser rdr opts
+
+-- | Constructs a parser for (WithDisabled a).
+withDisabledParser ::
+  -- | Reader for a.
+  ReadM a ->
+  -- | Modifier list e.g. option name, help text.
+  List (Mod OA.OptionFields (WithDisabled a)) ->
+  -- | Metavar string.
+  String ->
+  Parser (WithDisabled a)
+withDisabledParser rdr opts mv =
+  withDisabledParserNoMetavar rdr (OA.metavar metavar : opts)
+  where
+    metavar = "(" <> mv <> " | off)"
+
+-- | Constructs a parser for (Maybe (WithDisabled a)).
+withDisabledParserNoMetavar ::
+  -- | Reader for a.
+  ReadM a ->
+  -- | Modifier list e.g. option name, help text.
+  List (Mod OA.OptionFields (WithDisabled a)) ->
+  Parser (WithDisabled a)
+withDisabledParserNoMetavar rdr opts = mainParser
   where
     mainParser =
-      OA.optional
-        $ OA.option
-          reader
-          (mconcat $ OA.metavar metavar : opts)
-
-    metavar = "(" <> mv <> " | off)"
+      OA.option
+        reader
+        (mconcat opts)
 
     reader = do
       txt <- OA.str

@@ -8,19 +8,15 @@ where
 import Shrun.Prelude hiding (fromMaybe)
 
 -- | For types with a default value. In general, instances should be "simple"
--- i.e. no instances for aggregate TTG types (e.g. FileLogging) as complexity
--- jumps quickly.
+-- i.e. no instances for aggregate TTG types (e.g. FileLogging) except for
+-- CLI args, as complexity jumps quickly.
+--
+-- For the most part, types should only have instances for one of
+-- Default xor (Semigroup/Monoid or Alternative) i.e. if types /do/ support
+-- some sort of algebra, the latter is preferred. Default exists when
+-- no algebra is sensible.
 class Default a where
   def :: a
-
-instance Default (Maybe a) where
-  def = Nothing
-
-instance Default [a] where
-  def = []
-
-instance Default (Seq a) where
-  def = Empty
 
 fromMaybe :: (Default a) => Maybe a -> a
 fromMaybe (Just x) = x

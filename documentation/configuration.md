@@ -56,7 +56,7 @@
 
 **Arg:** `-c, --config (PATH | off)`
 
-**Description**: Path to TOML config file. If this argument is not given we automatically look in the XDG config directory e.g. `~/.config/shrun/config.toml`. The `off` option disables the automatic XDG lookup.
+**Description**: Path(s) to TOML config file(s). This argument can be given multiple times, in which case all keys are merged. When there is a conflict, the right-most config wins. The legends are also merged, with the same right-bias for conflicting keys. The string `off` disables all config files to its left. Finally, we also look in the the XDG config directory automatically e.g. `~/.config/shrun/config.toml`. This is considered the 'left-most' config, hence it is disabled by any `--config off` options.
 
 Examples can be found in [examples](../examples).
 

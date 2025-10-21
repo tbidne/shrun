@@ -1,0 +1,7 @@
+[[legend]]
+key = 'key1'
+val = 'val override'
+
+[[legend]]
+key = 'key2'
+val = 'val'

@@ -257,6 +257,7 @@ import FileSystem.OsPath as X
     encodeThrowM,
     osp,
     ospPathSep,
+    unsafeEncode,
     (</>),
   )
 import FileSystem.OsPath qualified as OsPath
@@ -309,6 +310,7 @@ import Optics.Core as X
     Lens,
     Lens',
     NoIx,
+    Optic,
     Optic',
     Prism,
     Prism',

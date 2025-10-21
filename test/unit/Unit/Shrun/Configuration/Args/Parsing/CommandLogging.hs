@@ -175,7 +175,7 @@ reportReadErrorsTests =
 testReportReadErrors :: TestTree
 testReportReadErrors =
   testPropertyNamed
-    "Parses --command-log-report-read-errors true"
+    "Parses --command-log-report-read-errors on"
     "testReportReadErrors"
     $ U.verifyResult argList expected
   where

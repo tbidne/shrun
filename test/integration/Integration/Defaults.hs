@@ -150,30 +150,24 @@ specs testArgs =
     ]
 
 defaultEnv :: TestTree
-defaultEnv = testPropertyNamed desc "defaultEnv"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
+defaultEnv = testProp1 desc "defaultEnv" $ do
+  logsRef <- liftIO $ newIORef []
 
-    makeConfigAndAssertEq ["cmd"] (`runNoConfigIO` logsRef) expected
+  expected <- liftIO defaultConfig
+  makeConfigAndAssertEq ["cmd"] (`runNoConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    ["No default config found at: './config.toml'"] === logs
+  logs <- liftIO $ readIORef logsRef
+  ["No default config found at: './config.toml'"] === logs
   where
     desc = "No arguments and empty config path should return default Env"
-    expected = defaultConfig
 
 usesDefaultConfigFile :: TestTree
-usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertEq ["cmd1"] (`runConfigIO` logsRef) expected
+usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertEq ["cmd1"] (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "No arguments should use config from default file"
     expected =
@@ -232,22 +226,21 @@ usesDefaultConfigFile = testPropertyNamed desc "usesDefaultConfigFile"
     commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []
 
 cliOverridesConfigFile :: IO TestArgs -> TestTree
-cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile"
-  $ withTests 1
-  $ property
-  $ do
-    logPath <- liftIO $ (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
-    logsRef <- liftIO $ newIORef []
-    let logPathStr = unsafeDecode logPath
+cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
+  logPath <- liftIO $ (</> [osp|cli-log|]) . view #workingTmpDir <$> testArgs
+  logsRef <- liftIO $ newIORef []
+  let logPathStr = unsafeDecode logPath
 
-    makeConfigAndAssertEq (args logPathStr) (`runConfigIO` logsRef) (expected logPath)
+  makeConfigAndAssertEq (args logPathStr) (`runConfigIO` logsRef) (expected logPath)
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "CLI args overrides config file"
     args logPath =
       [ "--config",
+        "off",
+        "--config",
         getIntConfigOS "overridden",
         "--timeout",
         "10",
@@ -352,16 +345,13 @@ cliOverridesConfigFile testArgs = testPropertyNamed desc "cliOverridesConfigFile
     commands = MkCommandP (mkIdx 1) Nothing "cmd" :<|| []
 
 cliOverridesConfigFileCmdLog :: TestTree
-cliOverridesConfigFileCmdLog = testPropertyNamed desc "cliOverridesConfigFileCmdLog"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
+cliOverridesConfigFileCmdLog = testProp1 desc "cliOverridesConfigFileCmdLog" $ do
+  logsRef <- liftIO $ newIORef []
 
-    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "CLI overrides config file command-log fields even when CLI --console-log-command is not specified"
     args =
@@ -419,20 +409,17 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
       ]
 
 fileLogStripControlDefaultsAll :: TestTree
-fileLogStripControlDefaultsAll = testPropertyNamed desc "fileLogStripControlDefaultsAll"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
+fileLogStripControlDefaultsAll = testProp1 desc "fileLogStripControlDefaultsAll" $ do
+  logsRef <- liftIO $ newIORef []
 
-    -- Test that no toml defaults to All
-    makeConfigAndAssertFieldEq args1 (`runNoConfigIO` logsRef) expected
+  -- Test that no toml defaults to All
+  makeConfigAndAssertFieldEq args1 (`runNoConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    ["No default config found at: './config.toml'"] === logs
+  logs <- liftIO $ readIORef logsRef
+  ["No default config found at: './config.toml'"] === logs
 
-    -- Test that with toml defaults to All
-    makeConfigAndAssertFieldEq args2 (`runNoConfigIO` logsRef) expected
+  -- Test that with toml defaults to All
+  makeConfigAndAssertFieldEq args2 (`runNoConfigIO` logsRef) expected
   where
     desc = "File log strip-control defaults to All"
     args1 =
@@ -454,36 +441,34 @@ fileLogStripControlDefaultsAll = testPropertyNamed desc "fileLogStripControlDefa
       ]
 
 ignoresDefaultConfigFile :: TestTree
-ignoresDefaultConfigFile = testPropertyNamed desc "ignoresDefaultConfigFile"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertEq ["--config", "off", "cmd"] (`runConfigIO` logsRef) expected
+ignoresDefaultConfigFile = testProp1 desc "ignoresDefaultConfigFile" $ do
+  logsRef <- liftIO $ newIORef []
+  expected <- liftIO defaultConfig
+  makeConfigAndAssertEq ["--config", "off", "cmd"] (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "--config off should ignore config file"
-    expected = defaultConfig
 
 cliDisabledToml :: TestTree
-cliDisabledToml = testPropertyNamed desc "cliDisabledToml"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
+cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
+  logsRef <- liftIO $ newIORef []
 
-    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
+  expected <- liftIO defaultConfig
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
-    desc = "cli disables toml options"
+    desc = "CLI disables toml options"
     args =
       [ "--command-log-report-read-errors",
         "off",
         "--common-log-key-hide",
+        "off",
+        "--config",
         "off",
         "--config",
         getIntConfigOS "overridden",
@@ -503,7 +488,6 @@ cliDisabledToml = testPropertyNamed desc "cliDisabledToml"
         "off",
         "cmd"
       ]
-    expected = defaultConfig
 
 notifySendArgs :: List String
 #if OSX

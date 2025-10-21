@@ -1,0 +1,19 @@
+init = 'cfg2 init'
+
+legend = [
+  { key = 'cfg2_1', val = 'cfg2 val 1' },
+  { key = 'cfg3_1', val = 'cfg2 val 2' },
+]
+
+[command-log]
+poll-interval = 130
+
+[console-log]
+command-name-trunc = 200
+delete-on-success = 'off'
+
+[file-log]
+command-name-trunc = 123
+line-trunc = 250
+mode = 'write'
+strip-control = 'off'

@@ -2,14 +2,12 @@
 
 module Shrun.Configuration.Data.MergedConfig
   ( MergedConfig (..),
-    defaultMergedConfig,
   )
 where
 
 import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.Core (CoreConfigMerged)
-import Shrun.Configuration.Data.Core qualified as CoreConfig
-import Shrun.Configuration.Data.Graph (CommandGraph, mkTrivialGraph)
+import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Prelude
 
 -- | Merged Args + Toml
@@ -67,11 +65,3 @@ instance
           (\b -> MkMergedConfig a1 a2 b)
           (f a3)
   {-# INLINE labelOptic #-}
-
-defaultMergedConfig :: NESeq CommandP1 -> MergedConfig
-defaultMergedConfig commands =
-  MkMergedConfig
-    { coreConfig = CoreConfig.defaultCoreConfigMerged commands,
-      commandGraph = mkTrivialGraph commands,
-      commands
-    }

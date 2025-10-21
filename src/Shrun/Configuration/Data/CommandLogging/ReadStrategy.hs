@@ -22,7 +22,7 @@ data ReadStrategy
     -- terminated) vs. "partial" (anything else) reads. We do this to make
     -- the file log output prettier.
     ReadBlockLineBuffer
-  deriving stock (Eq, Show)
+  deriving stock (Bounded, Enum, Eq, Show)
 
 instance DecodeTOML ReadStrategy where
   tomlDecoder = parseReadStrategy tomlDecoder

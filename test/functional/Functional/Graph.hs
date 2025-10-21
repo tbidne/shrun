@@ -288,15 +288,16 @@ testCommandGraphLegend testArgs = testCase "Runs with --legend edges" $ do
   outFile <- (</> [osp|testCommandGraphLegend.log|]) . view #tmpDir <$> testArgs
   let outFileStr = unsafeDecode outFile
       args =
-        [ "-c",
-          "test/functional/config.toml",
-          "--file-log",
-          outFileStr,
-          "sleep 0",
-          "edges1",
-          "sleep 14",
-          "edges2"
-        ]
+        withNoConfig
+          [ "-c",
+            "test/functional/config.toml",
+            "--file-log",
+            outFileStr,
+            "sleep 0",
+            "edges1",
+            "sleep 14",
+            "edges2"
+          ]
 
   (ts, resultsConsole) <- withTiming $ run args
 
@@ -330,17 +331,18 @@ testCommandGraphLegendAndEdge testArgs = testCase desc $ do
   outFile <- (</> [osp|testCommandGraphLegendAndEdge.log|]) . view #tmpDir <$> testArgs
   let outFileStr = unsafeDecode outFile
       args =
-        [ "-c",
-          "test/functional/config.toml",
-          "--file-log",
-          outFileStr,
-          "--edges",
-          "1 -> 3, 2 -> 4",
-          "sleep 0",
-          "edges1",
-          "sleep 14",
-          "edges2"
-        ]
+        withNoConfig
+          [ "-c",
+            "test/functional/config.toml",
+            "--file-log",
+            outFileStr,
+            "--edges",
+            "1 -> 3, 2 -> 4",
+            "sleep 0",
+            "edges1",
+            "sleep 14",
+            "edges2"
+          ]
 
   (ts, resultsConsole) <- withTiming $ run args
 
@@ -377,10 +379,11 @@ testCommandGraphLegendAndEdge testArgs = testCase desc $ do
 testCommandGraphLegendEdgeFailure :: TestTree
 testCommandGraphLegendEdgeFailure = testCase desc $ do
   let args =
-        [ "-c",
-          "test/functional/config.toml",
-          "bad_edge"
-        ]
+        withNoConfig
+          [ "-c",
+            "test/functional/config.toml",
+            "bad_edge"
+          ]
 
   (_, ex) <- runExceptionE @StringException args
 

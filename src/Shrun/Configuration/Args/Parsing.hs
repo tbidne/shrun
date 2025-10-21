@@ -50,7 +50,7 @@ import System.Info qualified as Info
 -- | CLI args.
 data Args = MkArgs
   { -- | Optional config file.
-    configPath :: Maybe (WithDisabled OsPath),
+    configPath :: List (WithDisabled OsPath),
     -- | Core config.
     coreConfig :: CoreConfigArgs,
     -- | List of commands.
@@ -61,7 +61,7 @@ data Args = MkArgs
   deriving stock (Eq, Show)
 
 instance
-  (k ~ A_Lens, a ~ Maybe (WithDisabled OsPath), b ~ Maybe (WithDisabled OsPath)) =>
+  (k ~ A_Lens, a ~ List (WithDisabled OsPath), b ~ List (WithDisabled OsPath)) =>
   LabelOptic "configPath" k Args Args a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
@@ -118,10 +118,9 @@ parserInfoArgs =
               ],
           Chunk.paragraph
             $ mconcat
-              [ "Some options allow an 'off' value, which disables toml ",
-                "configuration for that field. For ",
-                "example, '--console-log-command off' will disable ",
-                "command logging, regardless of the toml settings."
+              [ "CLI options override toml config so e.g. ",
+                "'--console-log-command off' will disable ",
+                "command logging, regardless of the toml's console-log.command."
               ],
           Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation.",
           Chunk.paragraph "Examples:",
@@ -224,25 +223,30 @@ defaultConfig =
   where
     help = "Writes a default config.toml file to stdout."
 
-configParser :: Parser (Maybe (WithDisabled OsPath))
+configParser :: Parser (List (WithDisabled OsPath))
 configParser =
-  Utils.mWithDisabledParser
-    validOsPath
-    opts
-    "PATH"
+  many
+    $ Utils.withDisabledParserNoMetavar
+      validOsPath
+      opts
   where
     opts =
       [ OA.long "config",
         OA.short 'c',
+        OA.metavar "(PATH | off)...",
         Utils.mkHelp mainHelpTxt
       ]
 
     mainHelpTxt =
       mconcat
-        [ "Path to TOML config file. If this argument is not given ",
-          "we automatically look in the XDG config directory ",
-          "e.g. ~/.config/shrun/config.toml. The string 'off' disables ",
-          "the automatic XDG lookup."
+        [ "Path(s) to TOML config file(s). This argument can be given multiple ",
+          "times, in which case all keys are merged. When there is a conflict, ",
+          "the right-most config wins. The legends are also merged, with ",
+          "the same right-bias for conflicting keys. The string 'off' ",
+          "disables all config files to its left. Finally, we also look in the ",
+          "the XDG config directory automatically e.g. ",
+          "~/.config/shrun/config.toml. This is considered the 'left-most' ",
+          "config, hence it is disabled by any '--config off' options."
         ]
 
 commandsParser :: Parser (NESeq Text)

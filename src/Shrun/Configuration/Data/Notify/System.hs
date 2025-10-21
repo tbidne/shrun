@@ -55,12 +55,26 @@ type NotifySystemEnv = NotifySystemP ConfigPhaseEnv
 -- | Notification systems.
 type NotifySystemP :: ConfigPhase -> Type
 data NotifySystemP p
-  = -- | Uses DBus.
+  = -- | Uses apple-script.
+    AppleScript
+  | -- | Uses DBus.
     DBus (DBusF p)
   | -- | Uses notify-send.
     NotifySend
-  | -- | Uses apple-script.
-    AppleScript
+
+instance Bounded NotifySystemToml where
+  minBound = AppleScript
+  maxBound = NotifySend
+
+instance Enum NotifySystemToml where
+  toEnum 0 = AppleScript
+  toEnum 1 = DBus ()
+  toEnum 2 = NotifySend
+  toEnum x = error $ "NotifySystemToml.toEnum: unrecognized " ++ show x
+
+  fromEnum AppleScript = 0
+  fromEnum (DBus ()) = 1
+  fromEnum NotifySend = 2
 
 deriving stock instance Eq NotifySystemArgs
 

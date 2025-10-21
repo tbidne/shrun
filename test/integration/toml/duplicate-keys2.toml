@@ -1,0 +1,11 @@
+[[legend]]
+key = 'key1'
+val = 'good'
+
+[[legend]]
+key = 'key2'
+val = 'val'
+
+[[legend]]
+key = 'key2'
+val = 'other'

@@ -4,32 +4,107 @@
 
 module Integration.Miscellaneous (specs) where
 
-import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Integration.Prelude
 import Integration.Utils
-  ( makeConfigAndAssertFieldEq,
+  ( makeConfigAndAssertEq,
+    makeConfigAndAssertFieldEq,
+    notifySystemOSDBus,
     runConfigIO,
     runNoConfigIO,
     (^=@),
     (^?=@),
   )
 import Shrun.Command.Types (CommandP (MkCommandP))
-import Shrun.Configuration qualified as Configuration
-import Shrun.Configuration.Args qualified as Args
+import Shrun.Configuration.Data.CommandLogging
+  ( CommandLoggingP
+      ( MkCommandLoggingP,
+        bufferLength,
+        bufferTimeout,
+        pollInterval,
+        readSize,
+        readStrategy,
+        reportReadErrors
+      ),
+    ReportReadErrorsSwitch (MkReportReadErrorsSwitch),
+  )
+import Shrun.Configuration.Data.CommandLogging.ReadSize (ReadSize (MkReadSize))
 import Shrun.Configuration.Data.CommandLogging.ReadStrategy
-  ( ReadStrategy (ReadBlockLineBuffer),
+  ( ReadStrategy
+      ( ReadBlock,
+        ReadBlockLineBuffer
+      ),
   )
-import Shrun.Configuration.Data.FileLogging.FileMode
-  ( FileMode (FileModeRename),
+import Shrun.Configuration.Data.CommonLogging
+  ( CommonLoggingP
+      ( MkCommonLoggingP,
+        debug,
+        keyHide
+      ),
+    Debug (MkDebug),
   )
-import Shrun.Configuration.Data.FileLogging.FileSizeMode
-  ( FileSizeMode (FileSizeModeNothing),
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
+  ( KeyHideSwitch (MkKeyHideSwitch),
   )
-import Shrun.Configuration.Data.MergedConfig qualified as Merged
-import Shrun.Configuration.Default (Default (def))
+import Shrun.Configuration.Data.ConsoleLogging
+  ( ConsoleLogCmdSwitch (MkConsoleLogCmdSwitch),
+    ConsoleLoggingP
+      ( MkConsoleLoggingP,
+        commandLogging,
+        commandNameTrunc,
+        lineTrunc,
+        stripControl,
+        timerFormat
+      ),
+  )
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat (DigitalCompact, ProseCompact))
+import Shrun.Configuration.Data.Core
+  ( CoreConfigP
+      ( MkCoreConfigP,
+        commandLogging,
+        commonLogging,
+        consoleLogging,
+        fileLogging,
+        init,
+        notify,
+        timeout
+      ),
+  )
+import Shrun.Configuration.Data.FileLogging
+  ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
+    FileLogInitP (MkFileLogInitP, mode, path, sizeMode),
+    FileLoggingP
+      ( MkFileLoggingP,
+        commandNameTrunc,
+        deleteOnSuccess,
+        file,
+        lineTrunc,
+        stripControl
+      ),
+  )
+import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeRename, FileModeWrite))
+import Shrun.Configuration.Data.FileLogging.FilePathDefault
+  ( FilePathDefault (FPManual),
+    _FPManual,
+  )
+import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode (FileSizeModeNothing, FileSizeModeWarn))
+import Shrun.Configuration.Data.Graph qualified as Graph
+import Shrun.Configuration.Data.MergedConfig
+  ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
+  )
+import Shrun.Configuration.Data.Notify
+  ( NotifyP (MkNotifyP, action, system, timeout),
+  )
+import Shrun.Configuration.Data.Notify.Action (NotifyAction (NotifyAll))
+import Shrun.Configuration.Data.Notify.Timeout
+  ( NotifyTimeout (NotifyTimeoutNever),
+  )
+import Shrun.Configuration.Data.StripControl (StripControl (StripControlAll, StripControlSmart))
+import Shrun.Configuration.Data.Truncation
+  ( Truncation (MkTruncation, unTruncation),
+  )
+import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Configuration.Toml (Toml)
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -44,41 +119,40 @@ specs testArgs =
       testFileLogDeleteOnSuccess,
       testFileSizeModeNothing,
       testReadBlockLineBufferReadStrategy,
-      testDefaultConfigs
+      testConfigsMerged,
+      testConfigsMergedDisabled,
+      testOverridesDuplicate
     ]
 
 logFileWarn :: IO TestArgs -> TestTree
-logFileWarn testArgs = testPropertyNamed desc "logFileWarn"
-  $ withTests 1
-  $ property
-  $ do
-    logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
-    logsRef <- liftIO $ newIORef []
-    let logsPathStr = unsafeDecode logPath
-        contents = T.replicate 1_500 "test "
+logFileWarn testArgs = testProp1 desc "logFileWarn" $ do
+  logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
+  logsRef <- liftIO $ newIORef []
+  let logsPathStr = unsafeDecode logPath
+      contents = T.replicate 1_500 "test "
 
-        run = liftIO $ do
-          writeFileUtf8 logPath contents
-          startSize <- getFileSize logPath
+      run = liftIO $ do
+        writeFileUtf8 logPath contents
+        startSize <- getFileSize logPath
 
-          flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
 
-          endSize <- getFileSize logPath
-          pure (startSize, endSize)
+        endSize <- getFileSize logPath
+        pure (startSize, endSize)
 
-    (startSize, endSize) <- run
+  (startSize, endSize) <- run
 
-    exists <- liftIO $ doesFileExist logPath
-    assert exists
+  exists <- liftIO $ doesFileExist logPath
+  assert exists
 
-    -- NOTE: [Log file unchanged]
-    --
-    -- In a real run this would be >=, but we are not actually running
-    -- shrun so the file should stay untouched.
-    endSize === startSize
+  -- NOTE: [Log file unchanged]
+  --
+  -- In a real run this would be >=, but we are not actually running
+  -- shrun so the file should stay untouched.
+  endSize === startSize
 
-    logs <- liftIO $ readIORef logsRef
-    [warning logsPathStr] === logs
+  logs <- liftIO $ readIORef logsRef
+  [warning logsPathStr] === logs
   where
     desc = "Large log file should print warning"
     warning fp =
@@ -97,32 +171,29 @@ logFileWarn testArgs = testPropertyNamed desc "logFileWarn"
       ]
 
 logFileDelete :: IO TestArgs -> TestTree
-logFileDelete testArgs = testPropertyNamed desc "logFileDelete"
-  $ withTests 1
-  $ property
-  $ do
-    logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
-    logsRef <- liftIO $ newIORef []
-    let logPathStr = unsafeDecode logPath
-        contents = T.replicate 1_500 "test "
+logFileDelete testArgs = testProp1 desc "logFileDelete" $ do
+  logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
+  logsRef <- liftIO $ newIORef []
+  let logPathStr = unsafeDecode logPath
+      contents = T.replicate 1_500 "test "
 
-        run = liftIO $ do
-          writeFileUtf8 logPath contents
+      run = liftIO $ do
+        writeFileUtf8 logPath contents
 
-          flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logPathStr) (withEnv pure)
 
-          getFileSize logPath
+        getFileSize logPath
 
-    endSize <- run
+  endSize <- run
 
-    exists <- liftIO $ doesFileExist logPath
-    assert exists
+  exists <- liftIO $ doesFileExist logPath
+  assert exists
 
-    -- file should have been deleted then recreated with a file size of 0.
-    0 === endSize
+  -- file should have been deleted then recreated with a file size of 0.
+  0 === endSize
 
-    logs <- liftIO $ readIORef logsRef
-    [warning logPathStr] === logs
+  logs <- liftIO $ readIORef logsRef
+  [warning logPathStr] === logs
   where
     desc = "Large log file should be deleted"
     warning fp =
@@ -141,34 +212,31 @@ logFileDelete testArgs = testPropertyNamed desc "logFileDelete"
       ]
 
 logFileNothing :: IO TestArgs -> TestTree
-logFileNothing testArgs = testPropertyNamed desc "logFileNothing"
-  $ withTests 1
-  $ property
-  $ do
-    logPath <- liftIO $ (</> [osp|large-file-nothing|]) . view #workingTmpDir <$> testArgs
-    logsRef <- liftIO $ newIORef []
-    let logsPathStr = unsafeDecode logPath
-        contents = T.replicate 1_500 "test "
+logFileNothing testArgs = testProp1 desc "logFileNothing" $ do
+  logPath <- liftIO $ (</> [osp|large-file-nothing|]) . view #workingTmpDir <$> testArgs
+  logsRef <- liftIO $ newIORef []
+  let logsPathStr = unsafeDecode logPath
+      contents = T.replicate 1_500 "test "
 
-        run = liftIO $ do
-          writeFileUtf8 logPath contents
-          startSize <- getFileSize logPath
+      run = liftIO $ do
+        writeFileUtf8 logPath contents
+        startSize <- getFileSize logPath
 
-          flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
+        flip runConfigIO logsRef $ withArgs (args logsPathStr) (withEnv pure)
 
-          endSize <- getFileSize logPath
-          pure (startSize, endSize)
+        endSize <- getFileSize logPath
+        pure (startSize, endSize)
 
-    (startSize, endSize) <- run
+  (startSize, endSize) <- run
 
-    exists <- liftIO $ doesFileExist logPath
-    assert exists
+  exists <- liftIO $ doesFileExist logPath
+  assert exists
 
-    -- see NOTE: [Log file unchanged]
-    endSize === startSize
+  -- see NOTE: [Log file unchanged]
+  endSize === startSize
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "Large log file should print warning"
     args fp =
@@ -180,15 +248,12 @@ logFileNothing testArgs = testPropertyNamed desc "logFileNothing"
       ]
 
 usesRecursiveCmdExample :: TestTree
-usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+usesRecursiveCmdExample = testProp1 desc "usesRecursiveCmdExample" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "Uses recursive command from example"
     args = ["multi1"]
@@ -200,15 +265,12 @@ usesRecursiveCmdExample = testPropertyNamed desc "usesRecursiveCmdExample"
     expected = [#commands ^=@ cmds]
 
 usesRecursiveCmd :: TestTree
-usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+usesRecursiveCmd = testProp1 desc "usesRecursiveCmd" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "Uses recursive commands"
     args = ["-c", getExampleConfigOS, "all", "echo cat"]
@@ -222,15 +284,12 @@ usesRecursiveCmd = testPropertyNamed desc "usesRecursiveCmd"
     expected = [#commands ^=@ cmds]
 
 lineTruncDetect :: TestTree
-lineTruncDetect = testPropertyNamed desc "lineTruncDetect"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+lineTruncDetect = testProp1 desc "lineTruncDetect" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    logs === []
+  logs <- liftIO $ readIORef logsRef
+  logs === []
   where
     desc = "lineTrunc reads 'detect' string from toml"
     args = ["-c", getIntConfig "misc", "cmd1"]
@@ -242,82 +301,234 @@ lineTruncDetect = testPropertyNamed desc "lineTruncDetect"
       ]
 
 testFileSizeModeNothing :: TestTree
-testFileSizeModeNothing = testPropertyNamed desc "testFileSizeModeNothing"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+testFileSizeModeNothing = testProp1 desc "testFileSizeModeNothing" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    logs === []
+  logs <- liftIO $ readIORef logsRef
+  logs === []
   where
     desc = "size-mode reads 'nothing'"
-    args = ["-c", getIntConfig "basic-file-log", "cmd"]
+    args = ["-c", "off", "-c", getIntConfig "basic-file-log", "cmd"]
 
     expected = [#coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just FileSizeModeNothing]
 
 testFileLogDeleteOnSuccess :: TestTree
-testFileLogDeleteOnSuccess = testPropertyNamed desc "testFileLogDeleteOnSuccess"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+testFileLogDeleteOnSuccess = testProp1 desc "testFileLogDeleteOnSuccess" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    logs === []
+  logs <- liftIO $ readIORef logsRef
+  logs === []
   where
     desc = "delete-on-success reads true"
-    args = ["-c", getIntConfig "basic-file-log", "cmd"]
+    args = ["-c", "off", "-c", getIntConfig "basic-file-log", "cmd"]
 
     expected = [#coreConfig % #fileLogging %? #deleteOnSuccess % #unDeleteOnSuccessSwitch ^?=@ Just True]
 
 testReadBlockLineBufferReadStrategy :: TestTree
-testReadBlockLineBufferReadStrategy = testPropertyNamed desc "testReadBlockLineBufferReadStrategy"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+testReadBlockLineBufferReadStrategy = testProp1 desc "testReadBlockLineBufferReadStrategy" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    logs === []
+  logs <- liftIO $ readIORef logsRef
+  logs === []
   where
     desc = "Read block-line-buffer read-strategy"
-    args = ["-c", getIntConfig "config", "cmd"]
+    args = ["-c", "off", "-c", getIntConfig "config", "cmd"]
 
     expected = [#coreConfig % #commandLogging % #readStrategy ^=@ ReadBlockLineBuffer]
 
-newtype TermIO a = MkTermIO (IO a)
-  deriving (Applicative, Functor, Monad, MonadThrow) via IO
+testConfigsMerged :: TestTree
+testConfigsMerged = testProp1 desc "testConfigsMerged" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertEq args (`runConfigIO` logsRef) expectedMultiConfig
 
-runTermIO :: (MonadIO m) => TermIO a -> m a
-runTermIO (MkTermIO a) = liftIO a
-
--- For MonadTerminal instance (used to get window size; shouldn't be used
--- in default configs)
-instance MonadTerminal TermIO
-
-testDefaultConfigs :: TestTree
-testDefaultConfigs = testPropertyNamed desc "testDefaultConfigs"
-  $ withTests 1
-  $ property
-  $ do
-    let expected = Merged.defaultMergedConfig cmds
-        args = Args.defaultArgs cmdsTxt
-        toml = def @Toml
-
-    resultNoToml <- runTermIO $ Configuration.mergeConfig args Nothing
-    resultMerge <- runTermIO $ Configuration.mergeConfig args $ Just toml
-
-    expected === resultNoToml
-    expected === resultMerge
+  logs <- liftIO $ readIORef logsRef
+  logs === []
   where
-    desc = "defaultMergedConfig === merge defaultArgs defaultToml"
+    desc = "Multiple toml files are merged"
 
-    cmds :: NESeq (CommandP p)
-    cmds = NESeq.singleton (MkCommandP (mkIdx 1) Nothing "cmd")
+    args =
+      [ "-c",
+        getIntConfig "cfg1",
+        "-c",
+        getIntConfig "cfg2",
+        "-c",
+        getIntConfig "cfg3"
+      ]
+        ++ multiTomlCommands
 
-    cmdsTxt :: NESeq Text
-    cmdsTxt = NESeq.singleton "cmd"
+testConfigsMergedDisabled :: TestTree
+testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  logs === []
+  where
+    desc = "Multiple toml files are merged with disabling"
+
+    args =
+      [ "-c",
+        getIntConfig "cfg1",
+        "-c",
+        "off",
+        "-c",
+        getIntConfig "cfg2",
+        "-c",
+        getIntConfig "cfg3"
+      ]
+        ++ multiTomlCommands
+
+    -- We disable xdg and cfg1. Hence this config should be similar to
+    -- expectedMultiConfig, but with some fields changed.
+    expected =
+      setMany' @List
+        [ -- commands
+          MkSomeSetter #commands commands,
+          MkSomeSetter #commandGraph (Graph.mkTrivialGraph commands),
+          -- core
+          MkSomeSetter (#coreConfig % #timeout) Disabled,
+          -- command logging
+          MkSomeSetter (#coreConfig % #commandLogging % #bufferLength) 1000,
+          MkSomeSetter (#coreConfig % #commandLogging % #bufferTimeout % #unBufferTimeout) 30,
+          MkSomeSetter (#coreConfig % #commandLogging % #readSize % #unReadSize % #unBytes) 16_000,
+          MkSomeSetter (#coreConfig % #commandLogging % #reportReadErrors % #unReportReadErrorsSwitch) False,
+          -- common logging
+          MkSomeSetter (#coreConfig % #commonLogging % #debug % #unDebug) False,
+          MkSomeSetter (#coreConfig % #commonLogging % #keyHide % #unKeyHideSwitch) False,
+          -- console logging
+          MkSomeSetter (#coreConfig % #consoleLogging % #lineTrunc) Nothing,
+          MkSomeSetter (#coreConfig % #consoleLogging % #stripControl) StripControlSmart,
+          MkSomeSetter (#coreConfig % #consoleLogging % #timerFormat) ProseCompact,
+          -- file logging
+          MkSomeSetter (#coreConfig % #fileLogging %? #file % #path % _FPManual) [osp|cfg3 file|],
+          -- notify
+          MkSomeSetter (#coreConfig % #notify) Nothing
+        ]
+        expectedMultiConfig
+
+    commands =
+      unsafeListToNESeq
+        [ MkCommandP (mkIdx 1) Nothing "cmd1",
+          MkCommandP (mkIdx 2) Nothing "cfg1_1",
+          MkCommandP (mkIdx 3) (Just "cfg2_1") "cfg2 val 1",
+          MkCommandP (mkIdx 4) (Just "cfg3_1") "cfg3 val 1",
+          MkCommandP (mkIdx 5) (Just "cfg3_2") "cfg3 val 2"
+        ]
+
+testOverridesDuplicate :: TestTree
+testOverridesDuplicate = testProp1 desc "testOverridesDuplicate" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  logs === []
+  where
+    desc = "Config overrides duplicates without error"
+
+    args =
+      [ "-c",
+        getIntConfig "duplicate-keys",
+        "-c",
+        getIntConfig "duplicate-keys-override",
+        "key1"
+      ]
+
+    expected =
+      [ #commands ^=@ unsafeListToNESeq [MkCommandP (mkIdx 1) (Just "key1") "val override"]
+      ]
+
+expectedMultiConfig :: MergedConfig
+expectedMultiConfig =
+  MkMergedConfig
+    { coreConfig =
+        MkCoreConfigP
+          { timeout = With 87,
+            init = Just "cfg3 init",
+            commonLogging =
+              MkCommonLoggingP
+                { debug = MkDebug True,
+                  keyHide = MkKeyHideSwitch True
+                },
+            consoleLogging =
+              MkConsoleLoggingP
+                { commandLogging = MkConsoleLogCmdSwitch False,
+                  commandNameTrunc = Just 200,
+                  lineTrunc = Just 150,
+                  stripControl = StripControlAll,
+                  timerFormat = DigitalCompact
+                },
+            commandLogging =
+              MkCommandLoggingP
+                { bufferLength = 20,
+                  bufferTimeout = fromℤ 60,
+                  pollInterval = 130,
+                  readSize = MkReadSize $ MkBytes 20,
+                  readStrategy = ReadBlock,
+                  reportReadErrors = MkReportReadErrorsSwitch True
+                },
+            fileLogging =
+              Just
+                $ MkFileLoggingP
+                  { file =
+                      MkFileLogInitP
+                        { path = FPManual [osp|cfg3 file|],
+                          mode = FileModeWrite,
+                          sizeMode = FileSizeModeWarn (MkBytes 50_000_000)
+                        },
+                    commandNameTrunc = Just $ MkTruncation {unTruncation = 123},
+                    deleteOnSuccess = MkDeleteOnSuccessSwitch False,
+                    lineTrunc = Just $ MkTruncation {unTruncation = 300},
+                    stripControl = StripControlSmart
+                  },
+            notify =
+              Just
+                $ MkNotifyP
+                  { action = NotifyAll,
+                    system = notifySystemOSDBus,
+                    timeout = NotifyTimeoutNever
+                  }
+          },
+      commandGraph = Graph.mkTrivialGraph commands,
+      commands
+    }
+  where
+    commands =
+      unsafeListToNESeq
+        [ MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"",
+          MkCommandP (mkIdx 2) (Just "cfg1_1") "cfg1 val 1",
+          MkCommandP (mkIdx 3) (Just "cfg2_1") "cfg2 val 1",
+          MkCommandP (mkIdx 4) (Just "cfg3_1") "cfg3 val 1",
+          MkCommandP (mkIdx 5) (Just "cfg3_2") "cfg3 val 2"
+        ]
+
+multiTomlCommands :: List String
+multiTomlCommands =
+  [ -- xdg
+    "cmd1",
+    -- cfg1, cfg2, cfg3
+    "cfg1_1",
+    "cfg2_1",
+    "cfg3_1",
+    "cfg3_2"
+  ]
+
+data SomeSetter p where
+  MkSomeSetter ::
+    forall p x k ix.
+    (Is k A_Setter) =>
+    Optic k ix p p x x ->
+    x ->
+    SomeSetter p
+
+-- | Targets some object using a list of optics and the new values.
+-- Equivalent to calling set' multiple times.
+setMany' ::
+  forall f p.
+  (Foldable f) =>
+  f (SomeSetter p) ->
+  p ->
+  p
+setMany' ls s = foldl' (\s' (MkSomeSetter l x) -> set' l x s') s ls

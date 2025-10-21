@@ -17,6 +17,16 @@ for versions < 1.
 
 ## [Unreleased]
 ### Changed
+* Allow `--config` to be specified multiple times. Multiple config files
+  can now be *merged* together i.e. keys are unioned, where the right-most
+  config takes precedence when there are conflicts. Legends are individually
+  merged with the same right-bias logic.
+
+  To overwrite a config file, use `off` e.g. `-c t1 -c off -c t2 -c t3`
+  (`t2` and `t3` will be merged; `t1` is ignored). The xdg config -- if it
+  exists -- is considered the left-most config, hence any `-c off` will
+  ignore it.
+
 * Extensive CLI/toml option changes wrt disabling `--no-x`, aiming for
   the following principles:
 

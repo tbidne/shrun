@@ -75,6 +75,20 @@ instance
         (f a2)
   {-# INLINE labelOptic #-}
 
+instance Semigroup CommonLoggingToml where
+  l <> r =
+    MkCommonLoggingP
+      { debug = l ^. #debug <|> r ^. #debug,
+        keyHide = l ^. #keyHide <|> r ^. #keyHide
+      }
+
+instance Monoid CommonLoggingToml where
+  mempty =
+    MkCommonLoggingP
+      { debug = Nothing,
+        keyHide = Nothing
+      }
+
 type CommonLoggingArgs = CommonLoggingP ConfigPhaseArgs
 
 type CommonLoggingToml = CommonLoggingP ConfigPhaseToml
@@ -95,11 +109,8 @@ deriving stock instance Eq (CommonLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (CommonLoggingP ConfigPhaseMerged)
 
-instance
-  (Default (SwitchF p Debug), Default (SwitchF p KeyHideSwitch)) =>
-  Default (CommonLoggingP p)
-  where
-  def = MkCommonLoggingP def def
+instance Default CommonLoggingArgs where
+  def = MkCommonLoggingP Nothing Nothing
 
 -- | Merges args and toml configs.
 mergeCommonLogging ::
@@ -114,7 +125,7 @@ mergeCommonLogging args mToml =
         (args ^. #keyHide) <.> (toml ^. #keyHide)
     }
   where
-    toml = fromMaybe def mToml
+    toml = fromMaybe mempty mToml
 
 instance DecodeTOML CommonLoggingToml where
   tomlDecoder =

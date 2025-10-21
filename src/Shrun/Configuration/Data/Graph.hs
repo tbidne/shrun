@@ -45,7 +45,7 @@ data EdgeArgs
   deriving stock (Eq, Show)
 
 instance Default EdgeArgs where
-  def = EdgeArgsList def
+  def = EdgeArgsList mempty
 
 instance IsList EdgeArgs where
   type Item EdgeArgs = Edge
@@ -60,7 +60,7 @@ type Edge = Tuple2 CommandIndex CommandIndex
 
 -- | Dependency edges are supplied by the user on the CLI.
 newtype Edges = MkEdges {unEdges :: Seq Edge}
-  deriving newtype (Default, IsList, Monoid, Semigroup)
+  deriving newtype (IsList, Monoid, Semigroup)
   deriving stock (Eq, Show)
 
 sortEdges :: Edges -> Edges

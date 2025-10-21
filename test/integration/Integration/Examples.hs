@@ -94,18 +94,15 @@ specs =
     ]
 
 examplesConfig :: TestTree
-examplesConfig = testPropertyNamed desc "examplesConfig"
-  $ withTests 1
-  $ property
-  $ do
-    logsRef <- liftIO $ newIORef []
-    makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
+examplesConfig = testProp1 desc "examplesConfig" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
-    logs <- liftIO $ readIORef logsRef
-    [] === logs
+  logs <- liftIO $ readIORef logsRef
+  [] === logs
   where
     desc = "examples/config.toml is valid"
-    args = ["-c", getExampleConfigOS, "cmd1"]
+    args = ["-c", "off", "-c", getExampleConfigOS, "cmd1"]
     expected =
       MkMergedConfig
         { coreConfig =

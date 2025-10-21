@@ -14,7 +14,7 @@ data FileMode
   = FileModeAppend
   | FileModeRename
   | FileModeWrite
-  deriving stock (Eq, Show)
+  deriving stock (Bounded, Enum, Eq, Show)
 
 instance DecodeTOML FileMode where
   tomlDecoder = parseFileMode tomlDecoder

@@ -110,6 +110,7 @@ parseBufferTimeout getNat getTxt =
 -- | Switch for logging read errors
 newtype ReportReadErrorsSwitch = MkReportReadErrorsSwitch Bool
   deriving stock (Eq, Show)
+  deriving newtype (Bounded, Enum)
 
 instance Default ReportReadErrorsSwitch where
   def = MkReportReadErrorsSwitch False
@@ -219,6 +220,28 @@ instance
           (f a6)
   {-# INLINE labelOptic #-}
 
+instance Semigroup CommandLoggingToml where
+  l <> r =
+    MkCommandLoggingP
+      { bufferLength = l ^. #bufferLength <|> r ^. #bufferLength,
+        bufferTimeout = l ^. #bufferTimeout <|> r ^. #bufferTimeout,
+        pollInterval = l ^. #pollInterval <|> r ^. #pollInterval,
+        readSize = l ^. #readSize <|> r ^. #readSize,
+        readStrategy = l ^. #readStrategy <|> r ^. #readStrategy,
+        reportReadErrors = l ^. #reportReadErrors <|> r ^. #reportReadErrors
+      }
+
+instance Monoid CommandLoggingToml where
+  mempty =
+    MkCommandLoggingP
+      { bufferLength = Nothing,
+        bufferTimeout = Nothing,
+        pollInterval = Nothing,
+        readSize = Nothing,
+        readStrategy = Nothing,
+        reportReadErrors = Nothing
+      }
+
 type CommandLoggingArgs = CommandLoggingP ConfigPhaseArgs
 
 type CommandLoggingToml = CommandLoggingP ConfigPhaseToml
@@ -239,26 +262,15 @@ deriving stock instance Eq (CommandLoggingP ConfigPhaseMerged)
 
 deriving stock instance Show (CommandLoggingP ConfigPhaseMerged)
 
-instance Default (CommandLoggingP ConfigPhaseArgs) where
+instance Default CommandLoggingArgs where
   def =
     MkCommandLoggingP
-      { bufferLength = def,
-        bufferTimeout = def,
-        pollInterval = def,
-        readStrategy = def,
-        readSize = def,
-        reportReadErrors = def
-      }
-
-instance Default (CommandLoggingP ConfigPhaseToml) where
-  def =
-    MkCommandLoggingP
-      { bufferLength = def,
-        bufferTimeout = def,
-        pollInterval = def,
-        readStrategy = def,
-        readSize = def,
-        reportReadErrors = def
+      { bufferLength = Nothing,
+        bufferTimeout = Nothing,
+        pollInterval = Nothing,
+        readStrategy = Nothing,
+        readSize = Nothing,
+        reportReadErrors = Nothing
       }
 
 defaultCommandLoggingMerged ::
@@ -305,7 +317,7 @@ mergeCommandLogging fileLogging cmds args mToml = do
           args ^. #reportReadErrors <.> (toml ^. #reportReadErrors)
       }
   where
-    toml = fromMaybe def mToml
+    toml = fromMaybe mempty mToml
 
     -- In general we want to let the user pick or pick a good default, but
     -- we need to verify ReadBlockLineBuffer strategy is okay if the user

@@ -9,18 +9,24 @@ module Integration.Prelude
     getIntConfigOS,
     concatDirs,
     mkIdx,
+
+    -- * Hedgehog
+    testProp,
+    testProp1,
+    testPropN,
   )
 where
 
 import FileSystem.OsPath as X
   ( combineFilePaths,
     unsafeDecode,
-    unsafeEncode,
     (</>!),
   )
 import Hedgehog as X
   ( Property,
+    PropertyName,
     PropertyT,
+    TestLimit,
     annotate,
     annotateShow,
     assert,
@@ -35,6 +41,7 @@ import Test.Tasty as X
   ( TestName,
     TestTree,
     defaultMain,
+    localOption,
     testGroup,
     withResource,
   )
@@ -45,7 +52,27 @@ import Test.Tasty.HUnit as X
     testCase,
     (@=?),
   )
-import Test.Tasty.Hedgehog as X (testPropertyNamed)
+import Test.Tasty.Hedgehog as X
+  ( HedgehogTestLimit (HedgehogTestLimit),
+    testPropertyNamed,
+  )
+
+-- | Concise alias for @testPropertyNamed . property@
+testProp :: TestName -> PropertyName -> PropertyT IO () -> TestTree
+testProp name desc = testPropertyNamed name desc . property
+
+-- | 'testProp' that only runs a single test. Used for when we'd really want
+-- HUnit's testCase, but with a better diff.
+testProp1 :: TestName -> PropertyName -> PropertyT IO () -> TestTree
+testProp1 = testPropN 1
+
+-- | 'testProp' that runs for specified N times.
+testPropN :: TestLimit -> TestName -> PropertyName -> PropertyT IO () -> TestTree
+testPropN numTests name desc =
+  -- NOTE: Have to use localOption here as it overrides withTests. That is,
+  -- hedgehog's withTests has NO effect here, so don't use it!
+  localOption (HedgehogTestLimit (Just numTests))
+    . testProp name desc
 
 data TestArgs = MkTestArgs
   { rootTmpDir :: OsPath,
