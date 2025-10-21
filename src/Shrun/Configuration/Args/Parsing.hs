@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -125,35 +126,46 @@ parserInfoArgs =
           Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation.",
           Chunk.paragraph "Examples:",
           mkExample
-            [ "# Runs cmd1, cmd2, cmd3 concurrently.",
+            [ "1. Runs cmd1, cmd2, cmd3 concurrently:",
+              "",
               "$ shrun cmd1 cmd2 cmd3"
             ],
           mkExample
-            [ "# Using --edges to specify command dependencies. Commands cmd1 and",
-              "# cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish",
-              "# successfully.",
+            [ "2. Uses --edges to specify command dependencies. Commands cmd1 and",
+              "cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish",
+              "successfully.",
+              "",
               "$ shrun --edges \"1 -> 3, 2 -> 3\" cmd1 cmd2 cmd3"
             ],
           mkExample
-            [ "# Using config file aliases i.e. builds frontend, backend, and db",
-              "# concurrently, then runs deploy if those tasks completed successfully.",
-              "#",
-              "# legend = [",
-              "#   { key = 'build_deploy_app', val = [ 'build_app', 'deploy' ], edges = '1 -> 2' },",
-              "#   { key = 'build_app', val = [ 'frontend', 'backend', 'db' ] },",
-              "#   { key = 'frontend', val = 'npm run build' },",
-              "#   { key = 'backend', val = 'javac ...' },",
-              "#   { key = 'db', val = 'db.sh' },",
-              "#   { key = 'deploy', val = 'deploy.sh' },",
-              "# ]",
+            [ "3. Uses config file aliases i.e. builds frontend, backend, and db",
+              "concurrently, then runs deploy if those tasks completed successfully.",
+              "",
+              "# config.toml",
+              "legend = [",
+              "  { key = 'build_deploy_app', val = [ 'build_app', 'deploy' ], edges = '1 -> 2' },",
+              "  { key = 'build_app', val = [ 'frontend', 'backend', 'db' ] },",
+              "  { key = 'frontend', val = 'npm run build' },",
+              "  { key = 'backend', val = 'javac ...' },",
+              "  { key = 'db', val = 'db.sh' },",
+              "  { key = 'deploy', val = 'deploy.sh' },",
+              "]",
+              "",
               "$ shrun --config config.toml build_deploy_app"
             ]
         ]
 
-    mkExample :: List String -> Chunk Doc
-    mkExample =
+    mkExample :: NonEmpty String -> Chunk Doc
+    mkExample (h :| xs) =
       Chunk.vcatChunks
-        . fmap (fmap (Pretty.indent 2) . Chunk.stringChunk)
+        . (\ys -> toChunk 2 h : ys)
+        . fmap (toChunk 5)
+        $ xs
+
+    toChunk _ "" = line
+    toChunk i other = fmap (Pretty.indent i) . Chunk.stringChunk $ other
+
+    line = Chunk (Just Pretty.softline)
 
 argsParser :: Parser Args
 argsParser = do

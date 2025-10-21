@@ -80,27 +80,31 @@ A running timer is provided, and stdout will be updated when a command finishes 
 
 ## Examples
 
-```sh
-# Runs cmd1, cmd2, cmd3 concurrently.
-$ shrun cmd1 cmd2 cmd3
+```
+1. Runs cmd1, cmd2, cmd3 concurrently.
 
-# Using --edges to specify command dependencies. Commands cmd1 and
-# cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish
-# successfully.
-$ shrun --edges "1 -> 3, 2 -> 3" cmd1 cmd2 cmd3
+   $ shrun cmd1 cmd2 cmd3
 
-# Using config file aliases i.e. builds frontend, backend, and db
-# concurrently, then runs deploy if those tasks completed successfully.
-#
-# legend = [
-#   { key = 'build_deploy_app', val = [ 'build_app', 'deploy' ], edges = '1 -> 2' },
-#   { key = 'build_app', val = [ 'frontend', 'backend', 'db' ] },
-#   { key = 'frontend', val = 'npm run build' },
-#   { key = 'backend', val = 'javac ...' },
-#   { key = 'db', val = 'db.sh' },
-#   { key = 'deploy', val = 'deploy.sh' },
-# ]
-$ shrun --config config.toml build_deploy_app
+2. Uses --edges to specify command dependencies. Commands cmd1 and
+   cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish
+   successfully.
+
+   $ shrun --edges "1 -> 3, 2 -> 3" cmd1 cmd2 cmd3
+
+3. Using config file aliases i.e. builds frontend, backend, and db
+   concurrently, then runs deploy if those tasks completed successfully.
+
+  # config.toml
+  legend = [
+    { key = 'build_deploy_app', val = [ 'build_app', 'deploy' ], edges = '1 -> 2' },
+    { key = 'build_app', val = [ 'frontend', 'backend', 'db' ] },
+    { key = 'frontend', val = 'npm run build' },
+    { key = 'backend', val = 'javac ...' },
+    { key = 'db', val = 'db.sh' },
+    { key = 'deploy', val = 'deploy.sh' },
+  ]
+
+  $ shrun --config config.toml build_deploy_app
 ```
 
 # Installation
