@@ -115,7 +115,7 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 ### Prerequisites
 
-* [`cabal 3.8+`](https://www.haskell.org/cabal/download.html)
+* [`cabal 3.12+`](https://www.haskell.org/cabal/download.html)
 * [`ghc 9.6 - 9.12`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
 
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).

@@ -4,26 +4,13 @@
 
 -- TODO:
 --
---   1. Once our cabal / cabal-fmt recognizes TypeAbstractions, add it to the
---      cabal file instead i.e.
---
---          if impl(ghc >=9.8.1)
---            default-extensions: TypeAbstractions
---
---   2. Once we only support GHC 9.8+, add it unconditionally to
---      default-extensions.
---
---   3. It would be nice if we could test that we do not receive any "extra"
+--   1. It would be nice if we could test that we do not receive any "extra"
 --      output e.g. "ExitFailure 1". To do this, though, we'd have to test
 --      with the exception logic, since the exception stuff happens _outside_
 --      of these tests i.e. exceptions are caught and the unwanted output will
 --      occur from the handler (set in Main.hs).
 --
---  4. Consider testing --help (would require some refactoring like 3 above).
-
-#if __GLASGOW_HASKELL__ >= 908
-{-# LANGUAGE TypeAbstractions #-}
-#endif
+--  42. Consider testing --help (would require some refactoring like 3 above).
 
 module Functional.Prelude
   ( module X,

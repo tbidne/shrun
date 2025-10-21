@@ -58,6 +58,10 @@ common common-lang
     StrictData
     TypeFamilies
 
+  -- TODO: Drop condition once GHC 9.6 dropped.
+  if impl(ghc >=9.8.1)
+    default-extensions: TypeAbstractions
+
   if os(osx)
     cpp-options: -DOSX
 
