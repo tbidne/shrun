@@ -88,8 +88,8 @@ decodeLegend = getFieldOptWith tomlDecoder "legend"
 -- | Note that our Semigroup is /not/ commutative, hence the order matters.
 -- In particular, mconcat is safe because it is foldr, hence respects the
 -- input order.
-mergeTomls :: List Toml -> Toml
-mergeTomls = mconcat
+mergeTomls :: Seq Toml -> Toml
+mergeTomls = mconcat . toList
 
 -- NOTE: [Toml Semigroup]
 --

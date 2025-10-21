@@ -50,7 +50,7 @@ import System.Info qualified as Info
 -- | CLI args.
 data Args = MkArgs
   { -- | Optional config file.
-    configPath :: List (WithDisabled OsPath),
+    configPaths :: Seq (WithDisabled OsPath),
     -- | Core config.
     coreConfig :: CoreConfigArgs,
     -- | List of commands.
@@ -61,8 +61,8 @@ data Args = MkArgs
   deriving stock (Eq, Show)
 
 instance
-  (k ~ A_Lens, a ~ List (WithDisabled OsPath), b ~ List (WithDisabled OsPath)) =>
-  LabelOptic "configPath" k Args Args a b
+  (k ~ A_Lens, a ~ Seq (WithDisabled OsPath), b ~ Seq (WithDisabled OsPath)) =>
+  LabelOptic "configPaths" k Args Args a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
     fmap (\b -> MkArgs b a2 a3 a4) (f a1)
@@ -150,7 +150,7 @@ parserInfoArgs =
             ]
         ]
 
-    mkExample :: [String] -> Chunk Doc
+    mkExample :: List String -> Chunk Doc
     mkExample =
       Chunk.vcatChunks
         . fmap (fmap (Pretty.indent 2) . Chunk.stringChunk)
@@ -158,7 +158,7 @@ parserInfoArgs =
 argsParser :: Parser Args
 argsParser = do
   -- defaultConfig in between configPath and edges for alphabetical order.
-  configPath <- configParser <**> defaultConfig
+  configPaths <- configParser <**> defaultConfig
   edges <- Graph.edgesParser
   coreConfig <-
     Core.coreParser
@@ -168,7 +168,7 @@ argsParser = do
 
   pure
     $ MkArgs
-      { configPath,
+      { configPaths,
         coreConfig,
         commands,
         edges
@@ -223,9 +223,10 @@ defaultConfig =
   where
     help = "Writes a default config.toml file to stdout."
 
-configParser :: Parser (List (WithDisabled OsPath))
+configParser :: Parser (Seq (WithDisabled OsPath))
 configParser =
-  many
+  fmap listToSeq
+    . many
     $ Utils.withDisabledParserNoMetavar
       validOsPath
       opts

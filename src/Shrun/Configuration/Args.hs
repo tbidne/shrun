@@ -8,7 +8,7 @@ import Shrun.Configuration.Args.Parsing
   ( Args
       ( MkArgs,
         commands,
-        configPath,
+        configPaths,
         coreConfig,
         edges
       ),
@@ -19,7 +19,7 @@ import Shrun.Prelude
 defaultArgs :: NESeq Text -> Args
 defaultArgs commands =
   MkArgs
-    { configPath = [],
+    { configPaths = Empty,
       coreConfig = def,
       commands,
       edges = Nothing

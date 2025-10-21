@@ -15,6 +15,7 @@ where
 
 import Data.List qualified as L
 import Data.Map.Strict qualified as Map
+import Data.Sequence qualified as Seq
 import Data.Text qualified as T
 import Shrun (runShellT, shrun)
 import Shrun.Command.Types (CommandStatus (CommandWaiting))
@@ -109,28 +110,28 @@ getMergedConfig ::
 getMergedConfig = do
   args <- execParser parserInfoArgs
 
-  let argsTomls = args ^. #configPath
+  let configPaths = args ^. #configPaths
 
   tomls <- do
     -- If our configs list contains /any/ Disabled, then the xdg config
     -- will be ignored, as it is the implicit first element. Hence we guard
     -- against it to save an unnecessary lookup.
-    if containsDisabled argsTomls
-      then pure argsTomls
+    if containsDisabled configPaths
+      then pure configPaths
       else do
         configDir <- getShrunXdgConfig
         let path = configDir </> [osp|config.toml|]
         b <- doesFileExist path
         -- If xdg config exists, add it to the list. Otherwise just use args.
         if b
-          then pure (With path : argsTomls)
+          then pure (With path :<| configPaths)
           else do
             putTextLn
               ( "No default config found at: '"
                   <> T.pack (decodeLenient path)
                   <> "'"
               )
-            pure argsTomls
+            pure configPaths
 
   mergeTomls tomls >>= mergeConfig args
   where
@@ -166,24 +167,25 @@ mergeTomls ::
     MonadFileReader m,
     MonadThrow m
   ) =>
-  List (WithDisabled OsPath) ->
+  Seq (WithDisabled OsPath) ->
   m Toml
 mergeTomls =
   fmap Toml.mergeTomls
     . traverse readConfig
     . dropAfterDisabled
-    . L.reverse
+    . Seq.reverse
   where
-    dropAfterDisabled [] = []
-    dropAfterDisabled (Disabled : _) = []
-    dropAfterDisabled (With f : fs) = f : dropAfterDisabled fs
+    dropAfterDisabled Empty = Empty
+    dropAfterDisabled (Disabled :<| _) = Empty
+    dropAfterDisabled (With f :<| fs) = f :<| dropAfterDisabled fs
 
 readConfig ::
   ( HasCallStack,
     MonadFileReader m,
     MonadThrow m
   ) =>
-  OsPath -> m Toml
+  OsPath ->
+  m Toml
 readConfig fp = do
   contents <- readFileUtf8ThrowM fp
   case decode contents of

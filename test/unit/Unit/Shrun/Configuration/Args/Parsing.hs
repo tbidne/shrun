@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 -- | Tests for Shrun.Args
@@ -43,7 +44,8 @@ configTests =
     "--config"
     [ testConfigShort,
       testConfig,
-      testConfigDisabled
+      testConfigDisabled,
+      testConfigMany
     ]
 
 testConfigShort :: TestTree
@@ -54,8 +56,8 @@ testConfigShort =
     argList = ["-c./path/config.toml", "command"]
     expected =
       set'
-        (_Just % #configPath)
-        [With [osp|./path/config.toml|]]
+        (_Just % #configPaths)
+        (Seq.singleton (With [osp|./path/config.toml|]))
         U.defArgs
 
 testConfig :: TestTree
@@ -66,7 +68,7 @@ testConfig =
     argList = ["--config=./path/config.toml", "command"]
     expected =
       set'
-        (_Just % #configPath)
+        (_Just % #configPaths)
         [With [osp|./path/config.toml|]]
         U.defArgs
 
@@ -76,7 +78,27 @@ testConfigDisabled =
     $ U.verifyResult argList expected
   where
     argList = ["--config", "off", "command"]
-    expected = set' (_Just % #configPath) [Disabled] U.defArgs
+    expected = set' (_Just % #configPaths) [Disabled] U.defArgs
+
+testConfigMany :: TestTree
+testConfigMany =
+  testPropertyNamed "Parses many --config" "testConfigMany"
+    $ U.verifyResult argList expected
+  where
+    argList =
+      [ "-c",
+        "./path/t1.toml",
+        "-c",
+        "off",
+        "-c",
+        "./path/t2.toml",
+        "command"
+      ]
+    expected =
+      set'
+        (_Just % #configPaths)
+        [With [osp|./path/t1.toml|], Disabled, With [osp|./path/t2.toml|]]
+        U.defArgs
 
 commandTests :: TestTree
 commandTests =
