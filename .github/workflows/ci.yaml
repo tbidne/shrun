@@ -80,7 +80,7 @@ jobs:
 
       - name: Functional Tests
         run: |
-          cabal test ${{ matrix.ghc.proj-file }} functional \
+          TEST_FUNCTIONAL=1 cabal test ${{ matrix.ghc.proj-file }} functional \
             --test-options '--read-strategy all'
 
       - name: Terminate Tests
@@ -146,7 +146,7 @@ jobs:
         run: stack build --ghc-options -Werror
 
       - name: Test
-        run: stack test --ghc-options -Werror
+        run: TEST_FUNCTIONAL=1 stack test --ghc-options -Werror
 
   nix:
     strategy:

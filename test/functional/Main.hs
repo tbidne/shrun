@@ -29,9 +29,14 @@ import Test.Tasty.Options (OptionDescription (Option))
 -- | Entry point for functional tests.
 main :: IO ()
 main = do
-  setUncaughtExceptionHandler (putStrLn . displayException)
-  Tasty.defaultMainWithIngredients ingredients $ Tasty.withResource setup teardown specs
+  guardOrElse' "TEST_FUNCTIONAL" ExpectEnvSet runTests dontRun
   where
+    runTests = do
+      setUncaughtExceptionHandler (putStrLn . displayException)
+      Tasty.defaultMainWithIngredients ingredients $ Tasty.withResource setup teardown specs
+
+    dontRun = putStrLn "*** Functional tests disabled. Enable with TEST_FUNCTIONAL=1 ***"
+
     ingredients =
       Tasty.includingOptions [Option @ReadStrategyOpt Proxy]
         : Tasty.defaultIngredients
