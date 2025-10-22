@@ -86,6 +86,7 @@ lineTruncParser =
   where
     opts =
       [ OA.long "console-log-line-trunc",
+        OA.completeWith ["detect"],
         Utils.mkHelp helpTxt
       ]
     helpTxt =
@@ -106,6 +107,7 @@ stripControlParser = mainParser
           (StripControl.parseStripControl OA.str)
           ( mconcat
               [ OA.long "console-log-strip-control",
+                OA.completeWith ["all", "smart", "off"],
                 Utils.mkHelp helpTxt,
                 OA.metavar StripControl.stripControlStr
               ]
@@ -129,6 +131,7 @@ timerFormatParser = mainParser
         $ OA.option (TimerFormat.parseTimerFormat OA.str)
         $ mconcat
           [ OA.long "console-log-timer-format",
+            OA.completeWith ["digital_compact", "digital_full", "prose_compact", "prose_full"],
             Utils.mkHelpNoLine helpTxt,
             OA.metavar TimerFormat.timerFormatStr
           ]

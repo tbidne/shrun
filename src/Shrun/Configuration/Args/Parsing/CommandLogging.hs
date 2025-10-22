@@ -156,6 +156,7 @@ readStrategyParser = mainParser
         $ OA.option (ReadStrategy.parseReadStrategy OA.str)
         $ mconcat
           [ OA.long "command-log-read-strategy",
+            OA.completeWith ["block", "block-line-buffer"],
             Utils.mkHelpNoLine helpTxt,
             OA.metavar ReadStrategy.readStrategyStr
           ]

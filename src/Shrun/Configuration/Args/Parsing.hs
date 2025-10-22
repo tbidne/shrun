@@ -239,7 +239,7 @@ configParser :: Parser (Seq (WithDisabled OsPath))
 configParser =
   fmap listToSeq
     . many
-    $ Utils.withDisabledParserNoMetavar
+    $ Utils.withDisabledParserNoOpts
       validOsPath
       opts
   where
@@ -247,6 +247,8 @@ configParser =
       [ OA.long "config",
         OA.short 'c',
         OA.metavar "(PATH | off)...",
+        OA.completer (Utils.fileCompleterSuffix ".toml"),
+        OA.completeWith ["off"],
         Utils.mkHelp mainHelpTxt
       ]
 

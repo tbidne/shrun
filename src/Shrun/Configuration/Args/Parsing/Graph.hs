@@ -43,6 +43,7 @@ edgesParser =
   where
     opts =
       [ OA.long "edges",
+        OA.completeWith ["sequential"],
         Utils.mkHelp mainHelpTxt
       ]
     mainHelpTxt =

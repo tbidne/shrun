@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 module Shrun.Configuration.Args.Parsing.Utils
   ( mkHelp,
     mkHelpNoLine,
@@ -5,21 +7,32 @@ module Shrun.Configuration.Args.Parsing.Utils
     -- * Disabled parser
     withDisabledParser,
     mWithDisabledParser,
-    withDisabledParserNoMetavar,
+    withDisabledParserNoOpts,
 
     -- * Switch parser
     switchParser,
     switchParserNoLine,
     switchParserOpts,
 
+    -- * Completers
+    fileCompleter,
+    fileCompleterSuffix,
+
     -- * Misc
     autoStripUnderscores,
   )
 where
 
+import Data.Either (fromRight)
+import Data.List qualified as L
+import Data.Sequence qualified as Seq
+import Effects.FileSystem.PathReader qualified as PR
+import Effects.System.Process qualified as P
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Options.Applicative.Builder (Mod, ReadM)
+import Options.Applicative.Builder.Completer (Completer)
+import Options.Applicative.Builder.Completer qualified as Completer
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
@@ -71,18 +84,23 @@ withDisabledParser ::
   String ->
   Parser (WithDisabled a)
 withDisabledParser rdr opts mv =
-  withDisabledParserNoMetavar rdr (OA.metavar metavar : opts)
+  withDisabledParserNoOpts rdr opts'
   where
     metavar = "(" <> mv <> " | off)"
 
+    opts' =
+      OA.completeWith ["off"]
+        : OA.metavar metavar
+        : opts
+
 -- | Constructs a parser for (Maybe (WithDisabled a)).
-withDisabledParserNoMetavar ::
+withDisabledParserNoOpts ::
   -- | Reader for a.
   ReadM a ->
   -- | Modifier list e.g. option name, help text.
   List (Mod OA.OptionFields (WithDisabled a)) ->
   Parser (WithDisabled a)
-withDisabledParserNoMetavar rdr opts = mainParser
+withDisabledParserNoOpts rdr opts = mainParser
   where
     mainParser =
       OA.option
@@ -124,6 +142,7 @@ switchParserHelper mkHelpFn opts cons name helpTxt = fmap cons <$> mainParser
               [ opts,
                 OA.long name,
                 OA.metavar "(on | off)",
+                OA.completeWith ["on", "off"],
                 mkHelpFn helpTxt
               ]
           )
@@ -139,3 +158,65 @@ switchParserHelper mkHelpFn opts cons name helpTxt = fmap cons <$> mainParser
                 unpack other,
                 "'"
               ]
+
+-- | File completer that tries compgen and gracefully falls back to
+-- ordinary IO.
+fileCompleter :: Completer
+fileCompleter = bashCompleter "file" <> actionFileFallback
+
+-- | 'fileCompleter' that filters on the given suffix.
+fileCompleterSuffix :: String -> Completer
+fileCompleterSuffix sfx =
+  bashCompleter compgenFilter
+    <> actionFileFallbackFilter strFilter
+  where
+    compgenFilter =
+      mconcat
+        [ "file -X '!*",
+          sfx,
+          "'"
+        ]
+
+    strFilter = L.isSuffixOf sfx
+
+-- | Haskell IO completer fallback for 'bashCompleter "file"' i.e. does not
+-- rely on compgen.
+actionFileFallback :: Completer
+actionFileFallback = actionFileFallbackFilter (const True)
+
+-- | 'actionFileFallback' that additionally applies the given filter.
+actionFileFallbackFilter :: (String -> Bool) -> Completer
+actionFileFallbackFilter pred = Completer.mkCompleter $ \word -> do
+  eFiles <- tryMySync $ do
+    cwd <- PR.getCurrentDirectory
+    PR.listDirectory cwd
+
+  let files = fromRight [] eFiles
+  fmap toList $ flip foldMapA files $ \p -> do
+    isFile <-
+      tryMySync (PR.doesFileExist p) <&> \case
+        Left _ -> False
+        Right b -> b
+
+    let pStr = decodeLenient p
+        matchesPat = word `L.isPrefixOf` pStr
+    pure
+      $ if isFile && matchesPat && pred pStr
+        then Seq.singleton pStr
+        else Empty
+
+-- | This is like optparse-applicative's bashComplete with one exception:
+-- This swallows stderr intentionally, to avoid cluttering the output.
+-- If compgen doesn't exist (e.g. nix develop), then OA will fail and print
+-- stderr, which is ugly.
+--
+-- By using readCreateProcessWithExitCode, we can swallow stderr. This
+-- also means we do not have to us try/catch or manually pass in 'bash -c',
+-- like OA.
+bashCompleter :: String -> Completer
+bashCompleter action = Completer.mkCompleter $ \word -> do
+  let cmd = L.unwords ["compgen", "-A", action, "--", Completer.requote word]
+  (ec, out, _err) <- P.readCreateProcessWithExitCode (P.shell cmd) ""
+  pure $ case ec of
+    ExitFailure _ -> []
+    ExitSuccess -> L.lines out

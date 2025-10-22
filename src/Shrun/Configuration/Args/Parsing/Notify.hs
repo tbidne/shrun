@@ -42,6 +42,7 @@ notifyActionParser =
   where
     opts =
       [ OA.long "notify-action",
+        OA.completeWith ["final", "command", "all"],
         Utils.mkHelp helpTxt
       ]
 
@@ -61,6 +62,7 @@ notifySystemParser = mainParser
         $ OA.option (System.parseNotifySystem OA.str)
         $ mconcat
           [ OA.long "notify-system",
+            OA.completeWith ["dbus", "notify-send", "apple-script"],
             Utils.mkHelp helpTxt,
             OA.metavar System.notifySystemStr
           ]

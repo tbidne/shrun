@@ -75,6 +75,7 @@ fileLogParser =
   where
     opts =
       [ OA.long "file-log",
+        OA.completeWith ["default"],
         OA.short 'f',
         Utils.mkHelp helpTxt
       ]
@@ -120,6 +121,7 @@ lineTruncParser =
   where
     opts =
       [ OA.long "file-log-line-trunc",
+        OA.completeWith ["detect"],
         Utils.mkHelp helpTxt
       ]
     helpTxt = "Like --console-log-line-trunc, but for --file-log."
@@ -133,6 +135,7 @@ fileLogStripControlParser = mainParser
           (StripControl.parseStripControl OA.str)
           ( mconcat
               [ OA.long "file-log-strip-control",
+                OA.completeWith ["all", "smart", "off"],
                 Utils.mkHelpNoLine helpTxt,
                 OA.metavar StripControl.stripControlStr
               ]
@@ -152,6 +155,7 @@ fileLogModeParser = mainParser
           (FileMode.parseFileMode OA.str)
           ( mconcat
               [ OA.long "file-log-mode",
+                OA.completeWith ["append", "rename", "write"],
                 Utils.mkHelp helpTxt,
                 OA.metavar FileMode.fileModeStr
               ]
@@ -172,6 +176,7 @@ fileLogSizeModeParser = mainParser
           (FileSizeMode.parseFileSizeMode OA.str)
           ( mconcat
               [ OA.long "file-log-size-mode",
+                OA.completeWith ["warn", "delete"],
                 Utils.mkHelp helpTxt,
                 OA.metavar FileSizeMode.fileSizeModeStr
               ]
