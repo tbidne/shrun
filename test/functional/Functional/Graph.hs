@@ -6,51 +6,31 @@ module Functional.Graph (tests) where
 import DBus.Notify (UrgencyLevel (Critical))
 import Data.Text qualified as T
 import Functional.Prelude
-import Functional.TestArgs (TestArgs)
 import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout (NotifyTimeoutSeconds))
 import Test.Shrun.Verifier qualified as V
 
-tests :: IO TestArgs -> TestTree
-tests testArgs =
+tests :: TestTree
+tests =
   testGroup
     "Command graph"
-    [ testCommandGraphSuccess testArgs,
-      testCommandGraphRunsAtMostOnce testArgs,
-      testCommandGraphComplex testArgs,
-      testCommandGraphFailure testArgs,
-      testCommandGraphBlockedFailure testArgs,
-      testCommandGraphSequential testArgs,
-      testCommandGraphLegend testArgs,
-      testCommandGraphLegendAndEdge testArgs,
+    [ testCommandGraphSuccess,
+      testCommandGraphRunsAtMostOnce,
+      testCommandGraphComplex,
+      testCommandGraphFailure,
+      testCommandGraphBlockedFailure,
+      testCommandGraphSequential,
+      testCommandGraphLegend,
+      testCommandGraphLegendAndEdge,
       testCommandGraphLegendEdgeFailure,
-      cancelSequential testArgs,
-      timeoutSequential testArgs
+      cancelSequential,
+      timeoutSequential
     ]
 
-testCommandGraphSuccess :: IO TestArgs -> TestTree
-testCommandGraphSuccess testArgs = testCase "Runs with --edges" $ do
-  outFile <- (</> [osp|testCommandGraphSuccess.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--edges",
-            "1 -> 3, 2 -> 3",
-            "--common-log-debug",
-            "on",
-            "sleep 3.5",
-            "sleep 2",
-            "sleep 3",
-            "sleep 4"
-          ]
-
+testCommandGraphSuccess :: TestTree
+testCommandGraphSuccess = testCase "Runs with --edges" $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpected resultsConsole expected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpected resultsFile expected
 
   let seconds = ts ^. #sec
 
@@ -58,6 +38,18 @@ testCommandGraphSuccess testArgs = testCase "Runs with --edges" $ do
   assertBool (show seconds ++ " > 5") $ seconds > 5
   assertBool (show seconds ++ " < 8") $ seconds < 8
   where
+    args =
+      withNoConfig
+        [ "--edges",
+          "1 -> 3, 2 -> 3",
+          "--common-log-debug",
+          "on",
+          "sleep 3.5",
+          "sleep 2",
+          "sleep 3",
+          "sleep 4"
+        ]
+
     expected =
       [ withSuccessPrefix "sleep 2",
         withSuccessPrefix "sleep 3",
@@ -66,39 +58,11 @@ testCommandGraphSuccess testArgs = testCase "Runs with --edges" $ do
         withDebugPrefix "sleep 2" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'."
       ]
 
-testCommandGraphRunsAtMostOnce :: IO TestArgs -> TestTree
-testCommandGraphRunsAtMostOnce testArgs = testCase desc $ do
-  outFile <- (</> [osp|testCommandGraphRunsAtMostOnce.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      -- Having three commands of the same duration gives us a pretty good
-      -- chance that all three threads will finish simultaneously and attempt
-      -- to kick off the 'sleep 3' command.
-      --
-      -- This is actually pretty reliable. Without the specific prevention
-      -- logic, this tends to spawn 3 'sleep 3' commands as expected, hence
-      -- fails.
-      --
-      -- See NOTE: [Command Race] for the logic.
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--edges",
-            "1 -> 4, 2 -> 4, 3 -> 4",
-            "--common-log-debug",
-            "on",
-            "sleep 2",
-            "sleep 2",
-            "sleep 2",
-            "sleep 3"
-          ]
-
+testCommandGraphRunsAtMostOnce :: TestTree
+testCommandGraphRunsAtMostOnce = testCase desc $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpectedN resultsConsole expected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpectedN resultsFile expected
 
   let seconds = ts ^. #sec
 
@@ -107,6 +71,28 @@ testCommandGraphRunsAtMostOnce testArgs = testCase desc $ do
   assertBool (show seconds ++ " < 8") $ seconds < 8
   where
     desc = "Runs --edges commands at most once"
+
+    -- Having three commands of the same duration gives us a pretty good
+    -- chance that all three threads will finish simultaneously and attempt
+    -- to kick off the 'sleep 3' command.
+    --
+    -- This is actually pretty reliable. Without the specific prevention
+    -- logic, this tends to spawn 3 'sleep 3' commands as expected, hence
+    -- fails.
+    --
+    -- See NOTE: [Command Race] for the logic.
+    args =
+      withNoConfig
+        [ "--edges",
+          "1 -> 4, 2 -> 4, 3 -> 4",
+          "--common-log-debug",
+          "on",
+          "sleep 2",
+          "sleep 2",
+          "sleep 2",
+          "sleep 3"
+        ]
+
     expected =
       [ -- 3 because we have 3 actual commands
         (3, withSuccessPrefix "sleep 2"),
@@ -114,35 +100,11 @@ testCommandGraphRunsAtMostOnce testArgs = testCase desc $ do
         (1, withSuccessPrefix "sleep 3")
       ]
 
-testCommandGraphComplex :: IO TestArgs -> TestTree
-testCommandGraphComplex testArgs = testCase desc $ do
-  outFile <- (</> [osp|testCommandGraphComplex.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--edges",
-            "{1,2} -> {3..5,6} -> 7 .. 9 -> {10, 11}",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1",
-            "sleep 1"
-          ]
-
+testCommandGraphComplex :: TestTree
+testCommandGraphComplex = testCase desc $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpectedN resultsConsole expected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpectedN resultsFile expected
 
   let seconds = ts ^. #sec
 
@@ -151,34 +113,33 @@ testCommandGraphComplex testArgs = testCase desc $ do
   assertBool (show seconds ++ " < 8") $ seconds < 8
   where
     desc = "Runs --edges commands with complex edges"
+
+    args =
+      withNoConfig
+        [ "--edges",
+          "{1,2} -> {3..5,6} -> 7 .. 9 -> {10, 11}",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1",
+          "sleep 1"
+        ]
+
     expected =
       [ (11, withSuccessPrefix "sleep 1")
       ]
 
-testCommandGraphFailure :: IO TestArgs -> TestTree
-testCommandGraphFailure testArgs = testCase "Runs with --edges failure" $ do
-  outFile <- (</> [osp|testCommandGraphFailure.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--edges",
-            "1 -> 3, 2 -> 3",
-            "--common-log-debug",
-            "on",
-            "sleep 3.5",
-            "sleep 2 && sdf",
-            "sleep 8",
-            "sleep 4"
-          ]
-
+testCommandGraphFailure :: TestTree
+testCommandGraphFailure = testCase "Runs with --edges failure" $ do
   (ts, resultsConsole) <- withTiming $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpectedUnexpected resultsFile expected unexpected
 
   let seconds = ts ^. #sec
 
@@ -186,6 +147,18 @@ testCommandGraphFailure testArgs = testCase "Runs with --edges failure" $ do
   assertBool (show seconds ++ " > 3") $ seconds > 3
   assertBool (show seconds ++ " < 5") $ seconds < 5
   where
+    args =
+      withNoConfig
+        [ "--edges",
+          "1 -> 3, 2 -> 3",
+          "--common-log-debug",
+          "on",
+          "sleep 3.5",
+          "sleep 2 && sdf",
+          "sleep 8",
+          "sleep 4"
+        ]
+
     expected =
       [ withSuccessPrefix "sleep 3.5",
         withSuccessPrefix "sleep 4",
@@ -197,30 +170,11 @@ testCommandGraphFailure testArgs = testCase "Runs with --edges failure" $ do
       [ withSuccessPrefix "sleep 2"
       ]
 
-testCommandGraphBlockedFailure :: IO TestArgs -> TestTree
-testCommandGraphBlockedFailure testArgs = testCase desc $ do
-  outFile <- (</> [osp|testCommandGraphFailure.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--edges",
-            "1 -> 3, 2 -> 3",
-            "--common-log-debug",
-            "on",
-            "sleep 3.5 && sdf",
-            "sleep 2",
-            "sleep 8",
-            "sleep 4"
-          ]
-
+testCommandGraphBlockedFailure :: TestTree
+testCommandGraphBlockedFailure = testCase desc $ do
   (ts, resultsConsole) <- withTiming $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpectedUnexpected resultsFile expected unexpected
 
   let seconds = ts ^. #sec
 
@@ -229,6 +183,19 @@ testCommandGraphBlockedFailure testArgs = testCase desc $ do
   assertBool (show seconds ++ " < 5") $ seconds < 5
   where
     desc = "Tests that command is blocked with eventual failure"
+
+    args =
+      withNoConfig
+        [ "--edges",
+          "1 -> 3, 2 -> 3",
+          "--common-log-debug",
+          "on",
+          "sleep 3.5 && sdf",
+          "sleep 2",
+          "sleep 8",
+          "sleep 4"
+        ]
+
     expected =
       [ withSuccessPrefix "sleep 2",
         withSuccessPrefix "sleep 4",
@@ -240,35 +207,11 @@ testCommandGraphBlockedFailure testArgs = testCase desc $ do
       [ withSuccessPrefix "sleep 3.5"
       ]
 
-testCommandGraphSequential :: IO TestArgs -> TestTree
-testCommandGraphSequential testArgs = testCase "Runs with --edges sequential" $ do
-  outFile <- (</> [osp|testCommandGraphSequential.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        -- We are not actually testing --console-log-command other than the
-        -- fact that it doesn't crash the program (i.e. the regionList logic
-        -- doesn't explode).
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--edges",
-            "sequential",
-            "--common-log-debug",
-            "on",
-            "--console-log-command",
-            "on",
-            "sleep 1",
-            "sleep 2",
-            "sleep 3",
-            "sleep 4"
-          ]
-
+testCommandGraphSequential :: TestTree
+testCommandGraphSequential = testCase "Runs with --edges sequential" $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpected resultsConsole expected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpected resultsFile expected
 
   let seconds = ts ^. #sec
 
@@ -276,6 +219,23 @@ testCommandGraphSequential testArgs = testCase "Runs with --edges sequential" $ 
   assertBool (show seconds ++ " > 9") $ seconds > 9
   assertBool (show seconds ++ " < 11") $ seconds < 11
   where
+    args =
+      -- We are not actually testing --console-log-command other than the
+      -- fact that it doesn't crash the program (i.e. the regionList logic
+      -- doesn't explode).
+      withNoConfig
+        [ "--edges",
+          "sequential",
+          "--common-log-debug",
+          "on",
+          "--console-log-command",
+          "on",
+          "sleep 1",
+          "sleep 2",
+          "sleep 3",
+          "sleep 4"
+        ]
+
     expected =
       [ withSuccessPrefix "sleep 1",
         withSuccessPrefix "sleep 2",
@@ -283,34 +243,27 @@ testCommandGraphSequential testArgs = testCase "Runs with --edges sequential" $ 
         withSuccessPrefix "sleep 4"
       ]
 
-testCommandGraphLegend :: IO TestArgs -> TestTree
-testCommandGraphLegend testArgs = testCase "Runs with --legend edges" $ do
-  outFile <- (</> [osp|testCommandGraphLegend.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "-c",
-            "test/functional/config.toml",
-            "--file-log",
-            outFileStr,
-            "sleep 0",
-            "edges1",
-            "sleep 14",
-            "edges2"
-          ]
-
+testCommandGraphLegend :: TestTree
+testCommandGraphLegend = testCase "Runs with --legend edges" $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpectedOrder resultsConsole expected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpectedOrder resultsFile expected
 
   let seconds = ts ^. #sec
 
   assertBool (show seconds ++ " > 13") $ seconds > 13
   assertBool (show seconds ++ " < 15") $ seconds < 15
   where
+    args =
+      withNoConfig
+        [ "-c",
+          "test/functional/config.toml",
+          "sleep 0",
+          "edges1",
+          "sleep 14",
+          "edges2"
+        ]
+
     expected =
       [ withSuccessPrefix "sleep 0",
         withSuccessPrefix "e11",
@@ -326,30 +279,11 @@ testCommandGraphLegend testArgs = testCase "Runs with --legend edges" $ do
         withSuccessPrefix "sleep 14"
       ]
 
-testCommandGraphLegendAndEdge :: IO TestArgs -> TestTree
-testCommandGraphLegendAndEdge testArgs = testCase desc $ do
-  outFile <- (</> [osp|testCommandGraphLegendAndEdge.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "-c",
-            "test/functional/config.toml",
-            "--file-log",
-            outFileStr,
-            "--edges",
-            "1 -> 3, 2 -> 4",
-            "sleep 0",
-            "edges1",
-            "sleep 14",
-            "edges2"
-          ]
-
+testCommandGraphLegendAndEdge :: TestTree
+testCommandGraphLegendAndEdge = testCase desc $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpectedOrder resultsConsole expected
-
-  resultsFile <- readLogFile outFile
-  V.verifyExpectedOrder resultsFile expected
 
   let seconds = ts ^. #sec
 
@@ -357,6 +291,18 @@ testCommandGraphLegendAndEdge testArgs = testCase desc $ do
   assertBool (show seconds ++ " < 21") $ seconds < 21
   where
     desc = "Runs with --edges and legend edges"
+
+    args =
+      withNoConfig
+        [ "-c",
+          "test/functional/config.toml",
+          "--edges",
+          "1 -> 3, 2 -> 4",
+          "sleep 0",
+          "edges1",
+          "sleep 14",
+          "edges2"
+        ]
 
     -- Same as the previous example, except the e2s are after the e1s.
     -- Hence the e2s are moved to the end. Hopefully this is still
@@ -378,18 +324,18 @@ testCommandGraphLegendAndEdge testArgs = testCase desc $ do
 
 testCommandGraphLegendEdgeFailure :: TestTree
 testCommandGraphLegendEdgeFailure = testCase desc $ do
-  let args =
-        withNoConfig
-          [ "-c",
-            "test/functional/config.toml",
-            "bad_edge"
-          ]
-
   (_, ex) <- runExceptionE @StringException args
 
   "Index '3' in edge '1 -> 3' is out-of-bounds." @=? displayException ex
   where
     desc = "Runs with legend edges failure"
+
+    args =
+      withNoConfig
+        [ "-c",
+          "test/functional/config.toml",
+          "bad_edge"
+        ]
 
 -- NOTE:
 --
@@ -405,34 +351,11 @@ testCommandGraphLegendEdgeFailure = testCase desc $ do
 --
 -- As these tests have nothing to do with read strategy, we choose 1.
 
-cancelSequential :: IO TestArgs -> TestTree
-cancelSequential testArgs = testCase desc $ do
-  outFile <- (</> [osp|cancelSequential.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--notify-action",
-            "all",
-            "--notify-system",
-            notifySystemArg,
-            "--console-log-command",
-            "on",
-            "--edges",
-            "1 -> 3, 3 -> 4",
-            "sleep 4",
-            "sleep 8",
-            "sleep 3",
-            "sleep 5"
-          ]
-
+cancelSequential :: TestTree
+cancelSequential = testCase desc $ do
   (resultsConsole, notes) <- runCancelled 2 args
 
   V.verifyExpected resultsConsole expected
-
-  fileResults <- readLogFile outFile
-  V.verifyExpected fileResults expected
 
   case notes of
     [n] -> do
@@ -452,6 +375,22 @@ cancelSequential testArgs = testCase desc $ do
   where
     desc = "Shrun is cancelled with sequential tasks"
 
+    args =
+      withNoConfig
+        [ "--notify-action",
+          "all",
+          "--notify-system",
+          notifySystemArg,
+          "--console-log-command",
+          "on",
+          "--edges",
+          "1 -> 3, 3 -> 4",
+          "sleep 4",
+          "sleep 8",
+          "sleep 3",
+          "sleep 5"
+        ]
+
     -- NOTE: [Cancelled tasks Warn vs. Fatal]
     --
     -- These are virtually identical to timeoutSequential, the difference
@@ -469,34 +408,10 @@ cancelSequential testArgs = testCase desc $ do
     expectedBody :: (IsString s) => s
     expectedBody = "Received cancel after running for"
 
-timeoutSequential :: IO TestArgs -> TestTree
-timeoutSequential testArgs = testCase desc $ do
-  outFile <- (</> [osp|timeoutSequential.log|]) . view #tmpDir <$> testArgs
-  let outFileStr = unsafeDecode outFile
-      args =
-        withNoConfig
-          [ "--file-log",
-            outFileStr,
-            "--notify-action",
-            "all",
-            "--notify-system",
-            notifySystemArg,
-            "--console-log-command",
-            "on",
-            "--edges",
-            "1 -> 3, 3 -> 4",
-            "sleep 4",
-            "sleep 8",
-            "sleep 3",
-            "sleep 5",
-            "-t",
-            "2"
-          ]
+timeoutSequential :: TestTree
+timeoutSequential = testCase desc $ do
   (resultsConsole, notes) <- runAllExitFailure args
   V.verifyExpected resultsConsole expected
-
-  fileResults <- readLogFile outFile
-  V.verifyExpected fileResults expected
 
   case notes of
     [n] -> do
@@ -515,6 +430,24 @@ timeoutSequential testArgs = testCase desc $ do
         ++ show other
   where
     desc = "Shrun times out with sequential tasks"
+
+    args =
+      withNoConfig
+        [ "--notify-action",
+          "all",
+          "--notify-system",
+          notifySystemArg,
+          "--console-log-command",
+          "on",
+          "--edges",
+          "1 -> 3, 3 -> 4",
+          "sleep 4",
+          "sleep 8",
+          "sleep 3",
+          "sleep 5",
+          "-t",
+          "2"
+        ]
 
     -- see NOTE: [Cancelled tasks Warn vs. Fatal]
     expected =

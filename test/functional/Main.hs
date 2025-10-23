@@ -46,7 +46,7 @@ specs args = do
   testGroup
     "Functional Tests"
     [ Examples.specs args,
-      Graph.tests args,
+      Graph.tests,
       Buffering.specs,
       Miscellaneous.specs args,
       Notify.specs
