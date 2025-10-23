@@ -9,23 +9,16 @@ tests :: TestTree
 tests =
   testGroup
     "CommonLogging"
-    (multiTestReadStrategy testsParams)
-  where
-    testsParams :: List ReadStrategyTestParams
-    testsParams =
-      [ debugOn,
-        debugOff,
-        keyHideOn,
-        keyHideOff
-      ]
+    [ debugOn,
+      debugOff,
+      keyHideOn,
+      keyHideOff
+    ]
 
-debugOn :: ReadStrategyTestParams
-debugOn =
-  ReadStrategyTestParametricSimple
-    "Runs debug example with --common-log-debug"
-    run
-    args
-    (\results -> V.verifyExpected results expected)
+debugOn :: TestTree
+debugOn = testCase "Runs debug example with --common-log-debug" $ do
+  results <- run args
+  V.verifyExpected results expected
   where
     args =
       withBaseArgs
@@ -38,13 +31,10 @@ debugOn =
         withSuccessPrefix "sleep 2"
       ]
 
-debugOff :: ReadStrategyTestParams
-debugOff =
-  ReadStrategyTestParametricSimple
-    "Runs debug example with --common-log-debug false"
-    run
-    args
-    (\results -> V.verifyExpectedUnexpected results expected unexpected)
+debugOff :: TestTree
+debugOff = testCase "Runs debug example with --common-log-debug false" $ do
+  results <- run args
+  V.verifyExpectedUnexpected results expected unexpected
   where
     args =
       withBaseArgs
@@ -59,13 +49,10 @@ debugOff =
       [ withDebugPrefix "sleep 2" "Command: 'ShellCommand \". examples/bashrc && sleep 2\"'"
       ]
 
-keyHideOn :: ReadStrategyTestParams
-keyHideOn =
-  ReadStrategyTestParametricSimple
-    "Runs key hide example with --common-log-key-hide"
-    run
-    args
-    (\results -> V.verifyExpectedUnexpected results expected unexpected)
+keyHideOn :: TestTree
+keyHideOn = testCase "Runs key hide example with --common-log-key-hide" $ do
+  results <- run args
+  V.verifyExpectedUnexpected results expected unexpected
   where
     args =
       withBaseArgs
@@ -82,13 +69,10 @@ keyHideOn =
         withSuccessPrefix "some-key"
       ]
 
-keyHideOff :: ReadStrategyTestParams
-keyHideOff =
-  ReadStrategyTestParametricSimple
-    "Runs key hide example without --common-log-key-hide"
-    run
-    args
-    (\results -> V.verifyExpectedUnexpected results expected unexpected)
+keyHideOff :: TestTree
+keyHideOff = testCase "Runs key hide example without --common-log-key-hide" $ do
+  results <- run args
+  V.verifyExpectedUnexpected results expected unexpected
   where
     args =
       withBaseArgs

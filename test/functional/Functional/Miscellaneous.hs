@@ -16,10 +16,17 @@ specs :: IO TestArgs -> TestTree
 specs testArgs =
   testGroup
     "Miscellaneous"
-    (readStrategyDefaultTests testArgs : readStrategyTests)
+    (readStrategyArgsTests : readStrategyTests ++ otherTests)
   where
+    -- Tests that involve read-strategy in some way (possibly implicit).
+    -- E.g. these are tests that either have behavior that differs with read
+    -- strategy (hence non-parametric), or we want to explicitly verify that
+    -- read-strategy has no effect (hence parameteric).
     readStrategyTests =
       multiTestReadStrategy testsParams
+
+    -- Tests how default read-strategy is chosen
+    readStrategyArgsTests = readStrategyDefaultTests testArgs
 
     testsParams :: List ReadStrategyTestParams
     testsParams =
@@ -27,9 +34,14 @@ specs testArgs =
         formatErrorLogs testArgs,
         stripControlAlwaysCmdNames,
         reportsStderr,
-        isCancelled testArgs,
         slowOutputBroken,
         formatsFileLogs testArgs
+      ]
+
+    -- Tests that have nothing to do with read strategy. This should be
+    -- the default.
+    otherTests =
+      [ isCancelled testArgs
       ]
 
 splitNewlineLogs :: ReadStrategyTestParams
@@ -114,50 +126,45 @@ formatErrorLogs testArgs =
       [ withErrorPrefix "sleep 1 && echo 'abc def' && sleep 1 && exit 1" <> "2 seconds: abcdef"
       ]
 
-isCancelled :: IO TestArgs -> ReadStrategyTestParams
-isCancelled testArgs =
-  ReadStrategyTestParametricSetup
-    "Shrun is cancelled"
-    (runCancelled 2)
-    ( \_ -> do
-        outFile <- (</> [osp|cancelled.log|]) . view #tmpDir <$> testArgs
-        let outFileStr = unsafeDecode outFile
-            args =
-              withNoConfig
-                [ "--file-log",
-                  outFileStr,
-                  "--notify-action",
-                  "all",
-                  "--notify-system",
-                  notifySystemArg,
-                  "--console-log-command",
-                  "on",
-                  "sleep 5"
-                ]
-        pure (args, outFile)
-    )
-    ( \((resultsConsole, notes), outFile) -> do
-        V.verifyExpected resultsConsole expected
+isCancelled :: IO TestArgs -> TestTree
+isCancelled testArgs = testCase "Shrun is cancelled" $ do
+  outFile <- (</> [osp|cancelled.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = unsafeDecode outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--notify-action",
+            "all",
+            "--notify-system",
+            notifySystemArg,
+            "--console-log-command",
+            "on",
+            "sleep 5"
+          ]
 
-        fileResults <- readLogFile outFile
-        V.verifyExpected fileResults expected
+  (resultsConsole, notes) <- runCancelled 2 args
 
-        case notes of
-          [n] -> do
-            "" @=? n ^. #body
+  V.verifyExpected resultsConsole expected
 
-            let summary = n ^. (#summary % #unNotifyMessage)
-                err = "Unexpected summary: " ++ unpack summary
+  fileResults <- readLogFile outFile
+  V.verifyExpected fileResults expected
 
-            assertBool err $ expectedBody `T.isPrefixOf` summary
+  case notes of
+    [n] -> do
+      "" @=? n ^. #body
 
-            NotifyTimeoutSeconds 10 @=? n ^. #timeout
-            Critical @=? n ^. #urgency
-          other ->
-            assertFailure
-              $ "Expected exactly one note, received: "
-              ++ show other
-    )
+      let summary = n ^. (#summary % #unNotifyMessage)
+          err = "Unexpected summary: " ++ unpack summary
+
+      assertBool err $ expectedBody `T.isPrefixOf` summary
+
+      NotifyTimeoutSeconds 10 @=? n ^. #timeout
+      Critical @=? n ^. #urgency
+    other ->
+      assertFailure
+        $ "Expected exactly one note, received: "
+        ++ show other
   where
     expected =
       [ runningPrefix,

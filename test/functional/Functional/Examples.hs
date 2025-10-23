@@ -19,32 +19,20 @@ specs :: IO TestArgs -> TestTree
 specs args =
   testGroup
     "Configuration.md examples"
-    ( readStrategyTests
-        ++ [ Examples.Core.tests args,
-             Examples.CommonLogging.tests,
-             Examples.CommandLogging.tests args,
-             Examples.ConsoleLogging.tests,
-             Examples.FileLogging.tests args,
-             Examples.Notify.tests
-           ]
-    )
+    [ gif,
+      core,
+      Examples.Core.tests args,
+      Examples.CommonLogging.tests,
+      Examples.CommandLogging.tests args,
+      Examples.ConsoleLogging.tests,
+      Examples.FileLogging.tests args,
+      Examples.Notify.tests
+    ]
 
-readStrategyTests :: List TestTree
-readStrategyTests = multiTestReadStrategy testsParams
-  where
-    testsParams :: List ReadStrategyTestParams
-    testsParams =
-      [ gif,
-        core
-      ]
-
-gif :: ReadStrategyTestParams
-gif =
-  ReadStrategyTestParametricSimple
-    "Runs gif example"
-    runExitFailure
-    args
-    (`V.verifyExpected` expected)
+gif :: TestTree
+gif = testCase "Runs gif example" $ do
+  results <- runExitFailure args
+  V.verifyExpected results expected
   where
     args =
       withBaseArgs
@@ -68,13 +56,10 @@ gif =
         withTimerPrefix "8 seconds"
       ]
 
-core :: ReadStrategyTestParams
-core =
-  ReadStrategyTestParametricSimple
-    "Runs core example"
-    runExitFailure
-    args
-    (`V.verifyExpected` expected)
+core :: TestTree
+core = testCase "Runs core example" $ do
+  results <- runExitFailure args
+  V.verifyExpected results expected
   where
     args =
       withBaseArgs

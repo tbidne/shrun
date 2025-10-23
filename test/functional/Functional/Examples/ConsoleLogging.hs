@@ -9,31 +9,24 @@ tests :: TestTree
 tests =
   testGroup
     "ConsoleLogging"
-    (multiTestReadStrategy testsParams)
-  where
-    testsParams :: List ReadStrategyTestParams
-    testsParams =
-      [ commandLogOn,
-        commandLogOnDefault,
-        commandLogOff,
-        commandNameTruncN,
-        commandLogLineTruncN,
-        stripControlAll,
-        stripControlNone,
-        stripControlSmart,
-        timerFormatDigitalCompact,
-        timerFormatDigitalFull,
-        timerFormatProseCompact,
-        timerFormatProseFull
-      ]
+    [ commandLogOn,
+      commandLogOnDefault,
+      commandLogOff,
+      commandNameTruncN,
+      commandLogLineTruncN,
+      stripControlAll,
+      stripControlNone,
+      stripControlSmart,
+      timerFormatDigitalCompact,
+      timerFormatDigitalFull,
+      timerFormatProseCompact,
+      timerFormatProseFull
+    ]
 
-commandLogOn :: ReadStrategyTestParams
-commandLogOn =
-  ReadStrategyTestParametricSimple
-    "Runs commandLog example with --console-log-command"
-    run
-    args
-    (`V.verifyExpectedN` expected)
+commandLogOn :: TestTree
+commandLogOn = testCase "Runs commandLog example with --console-log-command" $ do
+  resultsConsole <- run args
+  V.verifyExpectedN resultsConsole expected
   where
     args =
       withNoConfig
@@ -45,13 +38,10 @@ commandLogOn =
       [ (2, withCommandPrefix "for i in 1 2; do echo hi; sleep 1; done" "hi")
       ]
 
-commandLogOnDefault :: ReadStrategyTestParams
-commandLogOnDefault =
-  ReadStrategyTestParametricSimple
-    "Runs --console-log-command with no output shows default message"
-    run
-    args
-    (`V.verifyExpected` expected)
+commandLogOnDefault :: TestTree
+commandLogOnDefault = testCase "Runs --console-log-command with no output shows default message" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withNoConfig
@@ -63,13 +53,10 @@ commandLogOnDefault =
       [ withCommandPrefix "for i in 1 2; do sleep 1; done" "Starting..."
       ]
 
-commandLogOff :: ReadStrategyTestParams
-commandLogOff =
-  ReadStrategyTestParametricSimple
-    "Runs commandLog example without --console-log-command"
-    run
-    args
-    (`V.verifyUnexpected` unexpected)
+commandLogOff :: TestTree
+commandLogOff = testCase "Runs commandLog example without --console-log-command" $ do
+  resultsConsole <- run args
+  V.verifyUnexpected resultsConsole unexpected
   where
     args =
       withNoConfig
@@ -77,13 +64,10 @@ commandLogOff =
         ]
     unexpected = [commandPrefix]
 
-commandNameTruncN :: ReadStrategyTestParams
-commandNameTruncN =
-  ReadStrategyTestParametricSimple
-    "Runs --console-log-command-name-trunc 10 example"
-    run
-    args
-    (`V.verifyExpectedN` expected)
+commandNameTruncN :: TestTree
+commandNameTruncN = testCase "Runs --console-log-command-name-trunc 10 example" $ do
+  resultsConsole <- run args
+  V.verifyExpectedN resultsConsole expected
   where
     args =
       withNoConfig
@@ -98,13 +82,10 @@ commandNameTruncN =
         (1, withSuccessPrefix "for i i...")
       ]
 
-commandLogLineTruncN :: ReadStrategyTestParams
-commandLogLineTruncN =
-  ReadStrategyTestParametricSimple
-    "Runs --console-log-line-trunc 80 example"
-    run
-    args
-    (`V.verifyExpectedN` expected)
+commandLogLineTruncN :: TestTree
+commandLogLineTruncN = testCase "Runs --console-log-line-trunc 80 example" $ do
+  resultsConsole <- run args
+  V.verifyExpectedN resultsConsole expected
   where
     args =
       withNoConfig
@@ -118,13 +99,10 @@ commandLogLineTruncN =
       [ (2, "[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...")
       ]
 
-stripControlAll :: ReadStrategyTestParams
-stripControlAll =
-  ReadStrategyTestParametricSimple
-    "Runs --console-log-strip-control all example"
-    run
-    args
-    (`V.verifyExpected` expected)
+stripControlAll :: TestTree
+stripControlAll = testCase "Runs --console-log-strip-control all example" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withNoConfig
@@ -143,13 +121,10 @@ stripControlAll =
       [ withCommandPrefix "printf ..." "foo  hello  bye "
       ]
 
-stripControlNone :: ReadStrategyTestParams
-stripControlNone =
-  ReadStrategyTestParametricSimple
-    "Runs --console-log-strip-control none example"
-    run
-    args
-    (`V.verifyExpected` expected)
+stripControlNone :: TestTree
+stripControlNone = testCase "Runs --console-log-strip-control none example" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withNoConfig
@@ -165,13 +140,10 @@ stripControlNone =
       [ withCommandPrefix "printf ..." "foo \ESC[35m hello \ESC[3D bye"
       ]
 
-stripControlSmart :: ReadStrategyTestParams
-stripControlSmart =
-  ReadStrategyTestParametricSimple
-    "Runs --console-log-strip-control smart example"
-    run
-    args
-    (`V.verifyExpected` expected)
+stripControlSmart :: TestTree
+stripControlSmart = testCase "Runs --console-log-strip-control smart example" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withNoConfig
@@ -186,13 +158,10 @@ stripControlSmart =
       [ withCommandPrefix "printf ..." "foo \ESC[35m hello  bye "
       ]
 
-timerFormatDigitalCompact :: ReadStrategyTestParams
-timerFormatDigitalCompact =
-  ReadStrategyTestParametricSimple
-    "Runs timer format with digital_compact"
-    run
-    args
-    (`V.verifyExpected` expected)
+timerFormatDigitalCompact :: TestTree
+timerFormatDigitalCompact = testCase "Runs timer format with digital_compact" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withBaseArgs
@@ -204,13 +173,10 @@ timerFormatDigitalCompact =
       [ withTimerPrefix "01"
       ]
 
-timerFormatDigitalFull :: ReadStrategyTestParams
-timerFormatDigitalFull =
-  ReadStrategyTestParametricSimple
-    "Runs timer format with digital_full"
-    run
-    args
-    (`V.verifyExpected` expected)
+timerFormatDigitalFull :: TestTree
+timerFormatDigitalFull = testCase "Runs timer format with digital_full" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withBaseArgs
@@ -222,13 +188,10 @@ timerFormatDigitalFull =
       [ withTimerPrefix "00:00:00:01"
       ]
 
-timerFormatProseCompact :: ReadStrategyTestParams
-timerFormatProseCompact =
-  ReadStrategyTestParametricSimple
-    "Runs timer format with prose_compact"
-    run
-    args
-    (`V.verifyExpected` expected)
+timerFormatProseCompact :: TestTree
+timerFormatProseCompact = testCase "Runs timer format with prose_compact" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withBaseArgs
@@ -240,13 +203,10 @@ timerFormatProseCompact =
       [ withTimerPrefix "1 second"
       ]
 
-timerFormatProseFull :: ReadStrategyTestParams
-timerFormatProseFull =
-  ReadStrategyTestParametricSimple
-    "Runs timer format with prose_full"
-    run
-    args
-    (`V.verifyExpected` expected)
+timerFormatProseFull :: TestTree
+timerFormatProseFull = testCase "Runs timer format with prose_full" $ do
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expected
   where
     args =
       withBaseArgs

@@ -1,5 +1,3 @@
-{-# LANGUAGE QuasiQuotes #-}
-
 -- | Functional tests for graph.
 module Functional.Graph (tests) where
 

@@ -26,9 +26,25 @@ import Test.Tasty.Options
   )
 
 -- | Test parameters, used for running tests against multiple read
--- strategies.
+-- strategies. In general, non-parametric should be preferred. That is, some
+-- tests' behavior depends on the read-strategy, hence we need to use
+-- (non-parametric) 'ReadStrategyTestParams'.
+--
+-- However, some tests do not, therefore we have the choice of:
+--
+--   1. Normal @testCase@ (i.e. no @ReadStrategyTestParams@).
+--   2. Parametric @ReadStrategyTestParams@.
+--
+-- 2 may be tempting out of paranoia, but we should really resist using it
+-- everywhere, as the test is then "overfitted". Really, it should only be
+-- used when there is some reason that read-strategy /might/ have an impact
+-- (but we don't want it to).
+--
+-- It is okay to be caution, but we sohuldn't over do it.
 data ReadStrategyTestParams where
-  -- | Simple test that should be parametric over ReadStrategy.
+  -- | Simple test that should be parametric over ReadStrategy. Prefer
+  -- normal 'testCase', using this only when there is a semi-plausible
+  -- reason read-strategy could have an undesirable effect.
   ReadStrategyTestParametricSimple ::
     -- | Test description
     String ->
@@ -53,7 +69,8 @@ data ReadStrategyTestParams where
     (a -> IO ()) ->
     ReadStrategyTestParams
   -- | Test with more complicated setup that should be parametric over
-  -- ReadStrategy.
+  -- ReadStrategy. Prefer normal 'testCase', using this only when there is a
+  -- semi-plausible reason read-strategy could have an undesirable effect.
   ReadStrategyTestParametricSetup ::
     -- | Test description
     String ->
