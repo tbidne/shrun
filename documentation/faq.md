@@ -177,12 +177,14 @@ $ shrun --edges "1 -> 2" cmd1 cmd2
 
 This declares that the second command should be run only after the first command successfully finishes. If it fails, then the command will not be run at all.
 
-We allow arbitrarily many comma-separated dependencies, including:
+We allow arbitrarily many comma-separated dependencies, including some syntactic sugar:
 
-- Set syntax for "multi-edges": `{1,2} -> {3,4} <=> 1 -> 3, 1 -> 4, 2 -> 3, 2 -> 4`.
-- "Extended edges": `1 -> 4 -> 5 <=> 1 -> 4, 4 -> 5`.
-- Range syntax in sets: `{1, 3 .. 5} <=> {1,3,4,5}`.
-- Range syntax for extended-edges: `1..3 <=> 1 -> 2 -> 3`.
+|                       |             Syntax |                       Desugaring |
+|:----------------------|-------------------:|---------------------------------:|
+| Multi-edge-sets       | `{1, 2} -> {3, 4}` | `1 -> 3, 1 -> 4, 2 -> 3, 2 -> 4` |
+| Extended edges        |       `1 -> 4 -> 5`|                 `1 -> 4, 4 -> 5` |
+| Set range syntax      |       `{1, 3 .. 5}`|                   `{1, 3, 4, 5}` |
+| Extended range syntax |             `1..3` |                    `1 -> 2 -> 3` |
 
 For instance:
 
@@ -224,7 +226,7 @@ $ shrun --edges "1 .. n" cmd1 cmd2 cmd3 ... cmdn
 
 > [!IMPORTANT]
 >
-> There are several nuances.
+> There are some nuances.
 >
 > - Edges respect aliases. That is, suppose we have
 >

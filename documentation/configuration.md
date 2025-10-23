@@ -142,7 +142,7 @@ vs.
 
 ### Legend Keys Cache
 
-**Arg:** `--legend-keys-scacheave (add | clear | write | off)`
+**Arg:** `--legend-keys-cache (add | clear | write | off)`
 
 **Description:** Shrun allows saving legend keys from the current config file so that we can get tab-completions on the next run.
 
@@ -152,7 +152,7 @@ vs.
 
 **Example:**
 
-Used with configs:
+#### Config files:
 
 ```toml
 # config1.toml
@@ -170,80 +170,80 @@ legend = [
 ]
 ```
 
-- `add`: saves keys from `config1.toml`:
+#### `add`: saves keys from `config1.toml`:
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache add "sleep 1"</span>
-    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-    <span style="color: #d6acff">[Finished] 1 second</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache add "sleep 1"</span>
+<span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+<span style="color: #d6acff">[Finished] 1 second</span></code>
+</pre>
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-    <span style="color:">cfg1_key_1</span>
-    <span style="color:">cfg1_key_2</span>
-    <span style="color:">short</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+<span style="color:">cfg1_key_1</span>
+<span style="color:">cfg1_key_2</span>
+<span style="color:">short</span></code>
+</pre>
 
-- `add`: Adds keys from `config2.toml`:
+#### `add`: Adds keys from `config2.toml`:
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache add "sleep 1"</span>
-    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-    <span style="color: #d6acff">[Finished] 1 second</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache add "sleep 1"</span>
+<span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+<span style="color: #d6acff">[Finished] 1 second</span></code>
+</pre>
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-    <span style="color:">cfg1_key_1</span>
-    <span style="color:">cfg1_key_2</span>
-    <span style="color:">cfg2_key_1</span>
-    <span style="color:">cfg2_key_2</span>
-    <span style="color:">short</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+<span style="color:">cfg1_key_1</span>
+<span style="color:">cfg1_key_2</span>
+<span style="color:">cfg2_key_1</span>
+<span style="color:">cfg2_key_2</span>
+<span style="color:">short</span></code>
+</pre>
 
-- `write`: Overwrites keys with `config2.toml`:
+#### `write`: Overwrites keys with `config2.toml`:
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache write "sleep 1"</span>
-    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-    <span style="color: #d6acff">[Finished] 1 second</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache write "sleep 1"</span>
+<span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+<span style="color: #d6acff">[Finished] 1 second</span></code>
+</pre>
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-    <span style="color:">cfg2_key_1</span>
-    <span style="color:">cfg2_key_2</span>
-    <span style="color:">short</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+<span style="color:">cfg2_key_1</span>
+<span style="color:">cfg2_key_2</span>
+<span style="color:">short</span></code>
+</pre>
 
-- `off`: Does nothing:
+#### `off`: Does nothing:
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache off "sleep 1"</span>
-    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-    <span style="color: #d6acff">[Finished] 1 second</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache off "sleep 1"</span>
+<span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+<span style="color: #d6acff">[Finished] 1 second</span></code>
+</pre>
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-    <span style="color:">cfg2_key_1</span>
-    <span style="color:">cfg2_key_2</span>
-    <span style="color:">short</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+<span style="color:">cfg2_key_1</span>
+<span style="color:">cfg2_key_2</span>
+<span style="color:">short</span></code>
+</pre>
 
-- `clear`: Removes all keys:
+#### `clear`: Removes all keys:
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache clear "sleep 1"</span>
-    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-    <span style="color: #d6acff">[Finished] 1 second</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache clear "sleep 1"</span>
+<span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+<span style="color: #d6acff">[Finished] 1 second</span></code>
+</pre>
 
-    <pre>
-    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
-    <span style="color:">cat: legend-keys.txt: No such file or directory</span></code>
-    </pre>
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+<span style="color:">cat: legend-keys.txt: No such file or directory</span></code>
+</pre>
 
 ### Timeout
 
