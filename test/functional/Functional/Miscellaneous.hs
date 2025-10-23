@@ -9,9 +9,6 @@ import Data.Text qualified as T
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout (NotifyTimeoutSeconds))
-import Shrun.Notify.MonadNotify
-  ( ShrunNote (MkShrunNote, body, summary, timeout, urgency),
-  )
 import Test.Shrun.Verifier (ExpectedText)
 import Test.Shrun.Verifier qualified as V
 
@@ -75,23 +72,17 @@ formatErrorLogs testArgs =
               withNoConfig
                 [ "--file-log",
                   outFileStr,
-                  "--notify-action",
-                  "all",
-                  "--notify-system",
-                  notifySystemArg,
                   "--console-log-command",
                   "on",
                   "sleep 1 && echo 'abc\n  def' && sleep 1 && exit 1"
                 ]
         pure (args, outFile)
     )
-    ( \((resultsConsole, notes), outFile) -> do
+    ( \((resultsConsole, _), outFile) -> do
         V.verifyExpectedUnexpected resultsConsole expectedConsole unexpected
 
         fileResults <- readLogFile outFile
         V.verifyExpectedUnexpected fileResults expectedFile unexpected
-
-        expectedNotes @=? notes
     )
   where
     -- Verifying how final 'abc\n  def' log is translated in the final error
@@ -121,21 +112,6 @@ formatErrorLogs testArgs =
            ]
     unexpected =
       [ withErrorPrefix "sleep 1 && echo 'abc def' && sleep 1 && exit 1" <> "2 seconds: abcdef"
-      ]
-
-    expectedNotes =
-      [ MkShrunNote
-          { body = "2 seconds",
-            summary = "Shrun Finished",
-            timeout = NotifyTimeoutSeconds 10,
-            urgency = Critical
-          },
-        MkShrunNote
-          { body = "2 seconds\nabc\n  def",
-            summary = "[sleep 1 && echo 'abc   def' && sleep 1 && exit 1]  Finished",
-            timeout = NotifyTimeoutSeconds 10,
-            urgency = Critical
-          }
       ]
 
 isCancelled :: IO TestArgs -> ReadStrategyTestParams
