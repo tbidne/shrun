@@ -296,6 +296,7 @@ test-suite functional
     Functional.Miscellaneous
     Functional.Notify
     Functional.Prelude
+    Functional.Prelude.FuncEnv
     Functional.ReadStrategyTest
     Functional.TestArgs
 
