@@ -1,6 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-missing-methods #-}
 
 -- TODO:
 --
@@ -23,6 +24,11 @@ module Functional.Prelude
     runExitFailure,
     runAllExitFailure,
     runCancelled,
+
+    -- ** Mocked IO
+    FuncIO (..),
+    FuncIOEnv (..),
+    runFuncIO,
 
     -- ** Read strategies
     ReadStrategyTestParams (..),
@@ -69,6 +75,9 @@ import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Typeable (typeRep)
 import Effects.Concurrent.Async qualified as Async
+import Effects.FileSystem.PathReader
+import Effects.System.Posix.Signals (MonadPosixSignals (installHandler))
+import Effects.System.Posix.Signals qualified as Signals
 import FileSystem.OsPath as X (combineFilePaths, unsafeDecode)
 import Functional.ReadStrategyTest
   ( ReadStrategyTestParams
@@ -102,6 +111,7 @@ import Shrun.Logging.MonadRegionLogger
         withRegion
       ),
   )
+import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Notify.MonadNotify (MonadNotify (notify), ShrunNote)
 import Shrun.Prelude as X
 import Shrun.ShellT (ShellT)
@@ -121,11 +131,71 @@ import Test.Tasty.HUnit as X
     (@=?),
   )
 
+-- | Enviroment used by 'FuncIO'. For when we want some IO behavior mocked.
+newtype FuncIOEnv = MkFuncIOEnv
+  { xdgDir :: Maybe (XdgDirectory -> OsPath)
+  }
+
+-- | In a real run, we run shrun with 'ShellT (Env IO) IO'. In our functional
+-- tests, this is generally 'ShellT FuncEnv IO', which is mostly unmocked,
+-- appart from things like terminal output and notifications.
+--
+-- However, we sometimes want to mock other parts, like the XDG directory.
+-- FuncIO exists for this purpose. With this type, the runner is ultimately
+-- 'ShellT (Env IO) FuncIO'.
+newtype FuncIO a = MkFuncIO (ReaderT FuncIOEnv IO a)
+  deriving newtype
+    ( Functor,
+      Applicative,
+      Monad,
+      MonadAsync,
+      MonadDBus,
+      MonadCatch,
+      MonadEnv,
+      MonadFileReader,
+      MonadFileWriter,
+      MonadHandleReader,
+      MonadHandleWriter,
+      MonadIO,
+      MonadIORef,
+      MonadMask,
+      MonadMVar,
+      MonadOptparse,
+      MonadPathWriter,
+      MonadProcess,
+      MonadReader FuncIOEnv,
+      MonadSTM,
+      MonadTerminal,
+      MonadThread,
+      MonadTime,
+      MonadThrow
+    )
+
+unFuncIO :: FuncIO a -> ReaderT FuncIOEnv IO a
+unFuncIO (MkFuncIO rdr) = rdr
+
+instance MonadPathReader FuncIO where
+  doesFileExist = liftIO . doesFileExist
+
+  getXdgDirectory xdg p = do
+    MkFuncIOEnv mOnXdg <- ask
+    case mOnXdg of
+      Nothing -> liftIO (getXdgDirectory xdg p)
+      Just onXdg -> pure $ onXdg xdg </> p
+
+instance MonadPosixSignals FuncIO where
+  installHandler s h m = MkFuncIO $ do
+    hFromM <$> installHandler s (hToM h) m
+    where
+      hFromM = Signals.mapHandler MkFuncIO
+      hToM = Signals.mapHandler unFuncIO
+
 -- NOTE: FuncEnv is essentially the real Env w/ an IORef for logs and a
 -- simplified logging
 
 data FuncEnv = MkFuncEnv
   { coreEnv :: Env (),
+    funcIOEnv :: FuncIOEnv,
     logs :: IORef (List Text),
     shrunNotes :: IORef (List ShrunNote)
   }
@@ -139,10 +209,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncEnv a1 a2 a3) ->
+      $ \f (MkFuncEnv a1 a2 a3 a4) ->
         fmap
-          (\b -> MkFuncEnv b a2 a3)
+          (\b -> MkFuncEnv b a2 a3 a4)
           (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ FuncIOEnv,
+    b ~ FuncIOEnv
+  ) =>
+  LabelOptic "funcIOEnv" k FuncEnv FuncEnv a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkFuncEnv a1 a2 a3 a4) ->
+        fmap
+          (\b -> MkFuncEnv a1 b a3 a4)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -154,10 +239,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncEnv a1 a2 a3) ->
+      $ \f (MkFuncEnv a1 a2 a3 a4) ->
         fmap
-          (\b -> MkFuncEnv a1 b a3)
-          (f a2)
+          (\b -> MkFuncEnv a1 a2 b a4)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -169,10 +254,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncEnv a1 a2 a3) ->
+      $ \f (MkFuncEnv a1 a2 a3 a4) ->
         fmap
-          (\b -> MkFuncEnv a1 a2 b)
-          (f a3)
+          (\b -> MkFuncEnv a1 a2 a3 b)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance HasTimeout FuncEnv where
@@ -203,8 +288,8 @@ instance HasFileLogging FuncEnv where
 instance HasNotifyConfig FuncEnv where
   getNotifyConfig = getNotifyConfig . view #coreEnv
 
-instance MonadRegionLogger (ShellT FuncEnv IO) where
-  type Region (ShellT FuncEnv IO) = ()
+instance (MonadIO m) => MonadRegionLogger (ShellT FuncEnv m) where
+  type Region (ShellT FuncEnv m) = ()
 
   logGlobal txt = do
     ls <- asks $ view #logs
@@ -216,17 +301,25 @@ instance MonadRegionLogger (ShellT FuncEnv IO) where
 
   displayRegions = id
 
-  regionList = atomically $ newTMVar []
+  regionList = liftIO $ atomically $ newTMVar []
 
-instance MonadNotify (ShellT FuncEnv IO) where
+instance (MonadIO m) => MonadNotify (ShellT FuncEnv m) where
   notify note = do
     notesRef <- asks (view #shrunNotes)
-    modifyIORef' notesRef (note :)
+    liftIO $ modifyIORef' notesRef (note :)
     pure Nothing
 
 -- | Runs the args and retrieves the logs.
 run :: List String -> IO (List ResultText)
 run = fmap fst . runMaybeException ExNothing
+
+-- | Like 'run', but with 'FuncIO' instead of normal 'IO'.
+runFuncIO :: FuncIOEnv -> List String -> IO (List ResultText)
+runFuncIO env =
+  usingReaderT env
+    . unFuncIO
+    . fmap fst
+    . runMaybeException ExNothing
 
 -- | Runs the args and retrieves the sent notifications.
 runNotes :: List String -> IO (List ShrunNote)
@@ -257,9 +350,11 @@ data MaybeException where
 
 -- | Runs shrun potentially catching an expected exception.
 runMaybeException ::
+  forall m.
+  (ShrunCons m) =>
   MaybeException ->
   List String ->
-  IO (List ResultText, List ShrunNote)
+  m (List ResultText, List ShrunNote)
 runMaybeException mException argList = do
   ls <- newIORef []
   shrunNotes <- newIORef []
@@ -269,6 +364,7 @@ runMaybeException mException argList = do
           let funcEnv =
                 MkFuncEnv
                   { coreEnv = env,
+                    funcIOEnv = MkFuncIOEnv Nothing,
                     logs = ls,
                     shrunNotes
                   }
@@ -313,17 +409,17 @@ runMaybeException mException argList = do
     readRefs ::
       IORef (List Text) ->
       IORef (List ShrunNote) ->
-      IO (List ResultText, List ShrunNote)
+      m (List ResultText, List ShrunNote)
     readRefs ls ns = ((,) . fmap MkResultText . L.reverse <$> readIORef ls) <*> readIORef ns
 
-    printLogsReThrow :: (Exception e) => e -> IORef (List Text) -> IO void
+    printLogsReThrow :: (Exception e) => e -> IORef (List Text) -> m void
     printLogsReThrow ex ls = do
       printLogs ls
 
       -- rethrow
       throwM ex
 
-    printLogs :: IORef (List Text) -> IO ()
+    printLogs :: IORef (List Text) -> m ()
     printLogs ls = do
       logs <- readIORef ls
 
@@ -347,6 +443,7 @@ runExceptionE argList = do
           let funcEnv =
                 MkFuncEnv
                   { coreEnv = env,
+                    funcIOEnv = MkFuncIOEnv Nothing,
                     logs = ls,
                     shrunNotes
                   }
@@ -406,6 +503,7 @@ runCancelled secToSleep argList = do
           let funcEnv =
                 MkFuncEnv
                   { coreEnv = env,
+                    funcIOEnv = MkFuncIOEnv Nothing,
                     logs = ls,
                     shrunNotes
                   }
@@ -507,6 +605,9 @@ withBaseArgs as =
 withNoConfig :: List String -> List String
 withNoConfig as =
   [ "--config",
+    "off",
+    -- This is not the default, but we do not want it on.
+    "--legend-keys-cache",
     "off"
   ]
     <> as
@@ -536,3 +637,29 @@ appendScriptsHome p = scriptsHomeStr <> "/" <> p
 
 scriptsHomeStr :: (IsString a) => a
 scriptsHomeStr = "test/functional/scripts"
+
+type ShrunCons m =
+  ( MonadAsync m,
+    MonadDBus m,
+    MonadEnv m,
+    MonadFileReader m,
+    MonadFileWriter m,
+    MonadHandleReader m,
+    MonadHandleWriter m,
+    MonadIO m,
+    MonadIORef m,
+    MonadMask m,
+    MonadMVar m,
+    MonadOptparse m,
+    MonadPathReader m,
+    MonadPathWriter m,
+    MonadPosixSignals m,
+    MonadProcess m,
+    MonadSTM m,
+    MonadTerminal m,
+    MonadThread m,
+    MonadTime m
+  )
+
+usingReaderT :: env -> ReaderT env m a -> m a
+usingReaderT = flip runReaderT

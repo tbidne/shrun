@@ -80,32 +80,52 @@ A running timer is provided, and stdout will be updated when a command finishes 
 
 ## Examples
 
-```
 1. Runs cmd1, cmd2, cmd3 concurrently.
 
-   $ shrun cmd1 cmd2 cmd3
+    ```
+    $ shrun cmd1 cmd2 cmd3
+    [Command][cmd1] cmd1 output...
+    [Command][cmd2] cmd2 output...
+    [Command][cmd3] cmd3 output...
+    [Timer] 5 seconds
+    ```
 
-2. Uses --edges to specify command dependencies. Commands cmd1 and
-   cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish
+2. Uses `--edges` to specify command dependencies. Commands `cmd1` and
+   `cmd2` are run concurrently; `cmd3` is started after `cmd1` and `cmd2` finish
    successfully.
 
-   $ shrun --edges "1 -> 3, 2 -> 3" cmd1 cmd2 cmd3
+    ```
+    $ shrun --edges "1 -> 3, 2 -> 3" cmd1 cmd2 cmd3
+    [Command][cmd1] cmd1 output...
+    [Command][cmd2] cmd2 output...
+    [Timer] 5 seconds
+    ```
 
-3. Using config file aliases i.e. builds frontend, backend, and db
-   concurrently, then runs deploy if those tasks completed successfully.
+3. Using config file aliases i.e. builds `frontend`, `backend`, and `db`
+   concurrently, then runs `deploy` if those tasks completed successfully.
 
-  # config.toml
-  legend = [
-    { key = 'build_deploy_app', val = [ 'build_app', 'deploy' ], edges = '1 -> 2' },
-    { key = 'build_app', val = [ 'frontend', 'backend', 'db' ] },
-    { key = 'frontend', val = 'npm run build' },
-    { key = 'backend', val = 'javac ...' },
-    { key = 'db', val = 'db.sh' },
-    { key = 'deploy', val = 'deploy.sh' },
-  ]
+    ```toml
+    # config.toml
+    legend = [
+      # Aliases for multiple commands
+      { key = 'deploy', val = [ 'build', 'ds' ], edges = '1 -> 2' },
+      { key = 'build', val = [ 'frontend', 'backend', 'db' ] },
 
-  $ shrun --config config.toml build_deploy_app
-```
+      # Aliases to actual commands
+      { key = 'frontend', val = 'npm run build' },
+      { key = 'backend', val = 'javac ...' },
+      { key = 'db', val = 'db.sh' },
+      { key = 'ds', val = 'deploy.sh' },
+    ]
+    ```
+
+    ```
+    $ shrun --config config.toml deploy
+    [Command][frontend] Running npm...
+    [Command][backend] Running javac...
+    [Command][db] Running db.sh...
+    [Timer] 5 seconds
+    ```
 
 # Installation
 

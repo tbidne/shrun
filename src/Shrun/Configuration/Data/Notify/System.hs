@@ -134,7 +134,7 @@ parseNotifySystem getTxt =
 
 -- | Available 'NotifySystem' strings.
 notifySystemStr :: (IsString a) => a
-notifySystemStr = "(dbus | notify-send | apple-script)"
+notifySystemStr = "(apple-script | dbus | notify-send)"
 
 #if OSX
 instance Default (NotifySystemP p) where

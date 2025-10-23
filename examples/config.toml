@@ -19,6 +19,15 @@ timeout = 20
 # .bashrc.
 init = ". examples/bashrc"
 
+# Shrun allows saving legend keys from the current config file so that we can
+# get tab-completions on the next run.
+#
+# - add: The default. Combines keys from this run with the prior run(s).
+# - clear: Deletes the keys cache, if it exists.
+# - write: Saves keys from this run only.
+# - off: Does nothing.
+legend-keys-cache = "write"
+
 # Command aliases are defined here. Values can either be a single unit or a
 # list of units, where a unit is either a command literal
 # (e.g. bash expression) or a recursive reference to another alias.

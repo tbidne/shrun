@@ -52,6 +52,7 @@ import Shrun.Configuration.Data.Core
         consoleLogging,
         fileLogging,
         init,
+        legendKeysCache,
         notify,
         timeout
       ),
@@ -143,6 +144,7 @@ genToml = do
 genCoreConfig :: Gen CoreConfigToml
 genCoreConfig = do
   init <- genMWithDisabled genText
+  legendKeysCache <- genMaybe G.enumBounded
   timeout <- genMWithDisabled genTimeout
   commonLogging <- genMaybe genCommonLogging
   commandLogging <- genMaybe genCommandLogging
@@ -152,6 +154,7 @@ genCoreConfig = do
   pure
     $ MkCoreConfigP
       { init,
+        legendKeysCache,
         timeout,
         commonLogging,
         commandLogging,

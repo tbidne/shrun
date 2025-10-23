@@ -1,6 +1,7 @@
 module Unit.Shrun.Configuration.Args.Parsing.TestUtils
   ( -- * Verification
     verifyResult,
+    verifyResultT,
     verifyFailure,
     verifyFailureString,
 
@@ -30,10 +31,16 @@ import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 
 execParserUnit :: List String -> ParserResult Args
-execParserUnit = OA.execParserPure prefs parserInfoArgs
+execParserUnit = OA.execParserPure prefs (parserInfoArgs [])
 
 verifyResult :: List String -> Maybe Args -> Property
-verifyResult argList expected = withTests 1 $ property $ do
+verifyResult argList =
+  withTests 1
+    . property
+    . verifyResultT argList
+
+verifyResultT :: [String] -> Maybe Args -> PropertyT IO ()
+verifyResultT argList expected = do
   let parseResult = execParserUnit argList
 
   annotateShow argList

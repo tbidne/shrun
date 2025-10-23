@@ -15,6 +15,7 @@ import Shrun.Configuration.Data.Core
         consoleLogging,
         fileLogging,
         init,
+        legendKeysCache,
         notify,
         timeout
       ),
@@ -54,6 +55,7 @@ instance DecodeTOML Toml where
   tomlDecoder = do
     timeout <- decodeTimeout
     init <- decodeInit
+    legendKeysCache <- getFieldOptWith tomlDecoder "legend-keys-cache"
     commonLogging <- getFieldOptWith tomlDecoder "common-log"
     commandLogging <- getFieldOptWith tomlDecoder "command-log"
     consoleLogging <- getFieldOptWith tomlDecoder "console-log"
@@ -66,6 +68,7 @@ instance DecodeTOML Toml where
         { coreConfig =
             MkCoreConfigP
               { timeout,
+                legendKeysCache,
                 init,
                 commonLogging,
                 commandLogging,

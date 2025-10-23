@@ -32,6 +32,7 @@ import Shrun.Configuration.Data.ConsoleLogging qualified as ConsoleLogging
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
 import Shrun.Configuration.Data.FileLogging qualified as FileLogging
+import Shrun.Configuration.Data.LegendKeysCache (LegendKeysCache)
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<|?|>))
@@ -63,11 +64,19 @@ type family TimeoutF a where
   TimeoutF ConfigPhaseMerged = WithDisabled Timeout
   TimeoutF ConfigPhaseEnv = WithDisabled Timeout
 
+type family LegendKeysCacheF a where
+  LegendKeysCacheF ConfigPhaseArgs = Maybe LegendKeysCache
+  LegendKeysCacheF ConfigPhaseToml = Maybe LegendKeysCache
+  LegendKeysCacheF ConfigPhaseMerged = LegendKeysCache
+  LegendKeysCacheF ConfigPhaseEnv = ()
+
 -- | Holds core configuration data.
 type CoreConfigP :: ConfigPhase -> Type
 data CoreConfigP p = MkCoreConfigP
   { -- | Shell logic to run before each command.
     init :: ConfigPhaseDisabledMaybeF p Text,
+    -- | Whether to save legend keys.
+    legendKeysCache :: LegendKeysCacheF p,
     -- | Timeout.
     timeout :: TimeoutF p,
     -- | Holds common logging config.
@@ -91,10 +100,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
         fmap
-          (\b -> MkCoreConfigP b a2 a3 a4 a5 a6 a7)
+          (\b -> MkCoreConfigP b a2 a3 a4 a5 a6 a7 a8)
           (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ LegendKeysCacheF p,
+    b ~ LegendKeysCacheF p
+  ) =>
+  LabelOptic "legendKeysCache" k (CoreConfigP p) (CoreConfigP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
+        fmap
+          (\b -> MkCoreConfigP a1 b a3 a4 a5 a6 a7 a8)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -106,10 +130,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
         fmap
-          (\b -> MkCoreConfigP a1 b a3 a4 a5 a6 a7)
-          (f a2)
+          (\b -> MkCoreConfigP a1 a2 b a4 a5 a6 a7 a8)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance
@@ -121,10 +145,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
         fmap
-          (\b -> MkCoreConfigP a1 a2 b a4 a5 a6 a7)
-          (f a3)
+          (\b -> MkCoreConfigP a1 a2 a3 b a5 a6 a7 a8)
+          (f a4)
   {-# INLINE labelOptic #-}
 
 instance
@@ -136,10 +160,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
         fmap
-          (\b -> MkCoreConfigP a1 a2 a3 b a5 a6 a7)
-          (f a4)
+          (\b -> MkCoreConfigP a1 a2 a3 a4 b a6 a7 a8)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 instance
@@ -151,10 +175,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
         fmap
-          (\b -> MkCoreConfigP a1 a2 a3 a4 b a6 a7)
-          (f a5)
+          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 b a7 a8)
+          (f a6)
   {-# INLINE labelOptic #-}
 
 instance
@@ -166,10 +190,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
         fmap
-          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 b a7)
-          (f a6)
+          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 a6 b a8)
+          (f a7)
   {-# INLINE labelOptic #-}
 
 instance
@@ -181,16 +205,17 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 a8) ->
         fmap
-          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 a6 b)
-          (f a7)
+          (\b -> MkCoreConfigP a1 a2 a3 a4 a5 a6 a7 b)
+          (f a8)
   {-# INLINE labelOptic #-}
 
 instance Semigroup CoreConfigToml where
   l <> r =
     MkCoreConfigP
       { init = l ^. #init <|> r ^. #init,
+        legendKeysCache = l ^. #legendKeysCache <|> r ^. #legendKeysCache,
         timeout = l ^. #timeout <|> r ^. #timeout,
         commonLogging = l ^. #commonLogging <> r ^. #commonLogging,
         commandLogging = l ^. #commandLogging <> r ^. #commandLogging,
@@ -203,6 +228,7 @@ instance Monoid CoreConfigToml where
   mempty =
     MkCoreConfigP
       { init = Nothing,
+        legendKeysCache = Nothing,
         timeout = Nothing,
         commonLogging = Nothing,
         commandLogging = Nothing,
@@ -261,6 +287,7 @@ mergeCoreConfig cmds args toml = do
   pure
     $ MkCoreConfigP
       { timeout = (args ^. #timeout) <.> (toml ^. #timeout),
+        legendKeysCache = (args ^. #legendKeysCache) <.> (toml ^. #legendKeysCache),
         init = (args ^. #init) <|?|> (toml ^. #init),
         commonLogging =
           mergeCommonLogging
@@ -300,6 +327,7 @@ withCoreEnv merged onCoreConfigEnv = do
     let coreConfigEnv =
           MkCoreConfigP
             { init = merged ^. #init,
+              legendKeysCache = (),
               timeout = merged ^. #timeout,
               commonLogging = CommonLogging.toEnv (merged ^. #commonLogging),
               commandLogging = CommandLogging.toEnv (merged ^. #commandLogging),
@@ -314,6 +342,7 @@ instance Default (CoreConfigP ConfigPhaseArgs) where
   def =
     MkCoreConfigP
       { init = Nothing,
+        legendKeysCache = Nothing,
         timeout = Nothing,
         commonLogging = def,
         commandLogging = def,

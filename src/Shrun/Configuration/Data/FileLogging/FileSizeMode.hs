@@ -56,4 +56,4 @@ instance Default FileSizeMode where
       defBytes = MkBytes 50
 
 fileSizeModeStr :: String
-fileSizeModeStr = "(warn BYTES | delete BYTES | off)"
+fileSizeModeStr = "(delete BYTES | warn BYTES | off)"

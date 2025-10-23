@@ -66,6 +66,7 @@ import Shrun.Configuration.Data.Core
         consoleLogging,
         fileLogging,
         init,
+        legendKeysCache,
         notify,
         timeout
       ),
@@ -89,6 +90,12 @@ import Shrun.Configuration.Data.FileLogging.FilePathDefault
   )
 import Shrun.Configuration.Data.FileLogging.FileSizeMode (FileSizeMode (FileSizeModeNothing, FileSizeModeWarn))
 import Shrun.Configuration.Data.Graph qualified as Graph
+import Shrun.Configuration.Data.LegendKeysCache
+  ( LegendKeysCache
+      ( LegendKeysAdd,
+        LegendKeysOff
+      ),
+  )
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
   )
@@ -389,6 +396,7 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
           MkSomeSetter #commands commands,
           MkSomeSetter #commandGraph (Graph.mkTrivialGraph commands),
           -- core
+          MkSomeSetter (#coreConfig % #legendKeysCache) LegendKeysAdd,
           MkSomeSetter (#coreConfig % #timeout) Disabled,
           -- command logging
           MkSomeSetter (#coreConfig % #commandLogging % #bufferLength) 1000,
@@ -447,6 +455,7 @@ expectedMultiConfig =
         MkCoreConfigP
           { timeout = With 87,
             init = Just "cfg3 init",
+            legendKeysCache = LegendKeysOff,
             commonLogging =
               MkCommonLoggingP
                 { debug = MkDebug True,

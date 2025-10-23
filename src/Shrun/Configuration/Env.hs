@@ -16,7 +16,10 @@ where
 import Data.List qualified as L
 import Data.Map.Strict qualified as Map
 import Data.Sequence qualified as Seq
+import Data.Set qualified as Set
 import Data.Text qualified as T
+import Effects.FileSystem.PathReader qualified as PR
+import Effects.FileSystem.PathWriter qualified as PW
 import Shrun (runShellT, shrun)
 import Shrun.Command.Types (CommandStatus (CommandWaiting))
 import Shrun.Configuration (mergeConfig)
@@ -24,6 +27,14 @@ import Shrun.Configuration.Args.Parsing
   ( parserInfoArgs,
   )
 import Shrun.Configuration.Data.Core qualified as CoreConfig
+import Shrun.Configuration.Data.LegendKeysCache
+  ( LegendKeysCache
+      ( LegendKeysAdd,
+        LegendKeysClear,
+        LegendKeysOff,
+        LegendKeysWrite
+      ),
+  )
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env.Types
@@ -101,14 +112,22 @@ withEnv onEnv = getMergedConfig >>= flip fromMergedConfig onEnv
 getMergedConfig ::
   ( HasCallStack,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadOptparse m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadThrow m,
     MonadTerminal m
   ) =>
   m MergedConfig
 getMergedConfig = do
-  args <- execParser parserInfoArgs
+  xdgState <- getShrunXdgState
+
+  -- Read legend keys from last run, if they exist. We then pass them into
+  -- the parser so we get completions.
+  prevKeys <- readPreviousLegendKeys xdgState
+
+  args <- execParser (parserInfoArgs $ unpack <$> prevKeys)
 
   let configPaths = args ^. #configPaths
 
@@ -133,7 +152,13 @@ getMergedConfig = do
               )
             pure configPaths
 
-  mergeTomls tomls >>= mergeConfig args
+  finalToml <- mergeTomls tomls
+
+  merged <- mergeConfig args finalToml
+
+  saveLegendKeys xdgState (merged ^. #coreConfig % #legendKeysCache) prevKeys finalToml
+
+  pure merged
   where
     containsDisabled = L.elem Disabled
 {-# INLINEABLE getMergedConfig #-}
@@ -241,3 +266,91 @@ fromMergedConfig cfg onEnv = do
 getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgConfig = getXdgConfig [osp|shrun|]
 {-# INLINEABLE getShrunXdgConfig #-}
+
+-- | Given the xdg state dir, reads the legend key cache, if it exists.
+readPreviousLegendKeys ::
+  ( HasCallStack,
+    MonadFileReader m,
+    MonadPathReader m,
+    MonadThrow m
+  ) =>
+  OsPath ->
+  m (List Text)
+readPreviousLegendKeys xdgState = do
+  exists <- PR.doesFileExist keysPath
+  if exists
+    then do
+      contents <- readFileUtf8ThrowM keysPath
+      pure $ T.lines $ T.strip contents
+    else pure []
+  where
+    keysPath = mkLegendKeysPath xdgState
+{-# INLINEABLE readPreviousLegendKeys #-}
+
+-- | Saves the legend keys from the currently loaded legend file, depending on
+-- the 'LegendKeysCache' parameter.
+saveLegendKeys ::
+  ( HasCallStack,
+    MonadFileWriter m,
+    MonadPathReader m,
+    MonadPathWriter m
+  ) =>
+  -- | Shrun xdg state.
+  OsPath ->
+  -- | Key action.
+  LegendKeysCache ->
+  -- | Keys from last run.
+  List Text ->
+  -- | Toml from this run.
+  Toml ->
+  m ()
+saveLegendKeys xdgState cache prevKeysList toml =
+  case cache of
+    -- 1. Do nothing.
+    LegendKeysOff -> pure ()
+    -- 2. Delete file.
+    LegendKeysClear -> PW.removeFileIfExists_ keysPath
+    -- 3. Overwrite the previous key file, if it exists. We want the following
+    --    semantics (0/1 indicates if there are zero/some keys):
+    --
+    --      - 0_old_keys + 0_new_keys: Do nothing.
+    --      - 0_old_keys + 1_new_keys: Write new keys.
+    --      - 1_old_keys + 0_new_keys: Write new zero keys
+    --      - 1_old_keys + 1_new_keys: Write new keys.
+    --
+    --    Hence the only time we do nothing is when both the old keys and
+    --    new keys are empty. Otherwise we unconditionally write whatever
+    --    new keys we have received (potentially zero).
+    LegendKeysWrite ->
+      unless (L.null prevKeysList && Set.null newKeySet)
+        $ writeKeys Set.empty newKeySet
+    -- 4. Union the previous and new keys. We want the following semantics:
+    --
+    --      - 0_old_keys + 0_new_keys: Do nothing.
+    --      - 0_old_keys + 1_new_keys: Write new keys.
+    --      - 1_old_keys + 0_new_keys: Do nothing.
+    --      - 1_old_keys + 1_new_keys: Write old + new keys.
+    --
+    -- Hence we do nothing when there are no new keys. Otherwise we
+    -- unconditionally write old + new keys.
+    LegendKeysAdd ->
+      unless (Set.null newKeySet)
+        $ writeKeys (Set.fromList prevKeysList) newKeySet
+  where
+    toKeyList = toList . fmap (view #key)
+    newKeySet = maybe Set.empty (Set.fromList . toKeyList) (toml ^. #legend)
+
+    writeKeys pkeys ckeys = do
+      let allKeys = toList $ Set.union pkeys ckeys
+      -- Ensure directory exists.
+      PW.createDirectoryIfMissing True xdgState
+      writeFileUtf8 keysPath (T.intercalate "\n" allKeys)
+
+    keysPath = mkLegendKeysPath xdgState
+{-# INLINEABLE saveLegendKeys #-}
+
+mkLegendKeysPath :: OsPath -> OsPath
+mkLegendKeysPath xdgState = xdgState </> [osp|legend-keys.txt|]
+
+getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
+getShrunXdgState = PR.getXdgState [osp|shrun|]

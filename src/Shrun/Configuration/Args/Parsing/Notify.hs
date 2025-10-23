@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | CLI parsing for NotifyArgs
 module Shrun.Configuration.Args.Parsing.Notify
   ( notifyParser,
@@ -43,16 +45,22 @@ notifyActionParser =
     opts =
       [ OA.long "notify-action",
         OA.completeWith ["final", "command", "all"],
-        Utils.mkHelp helpTxt
+        helpTxt
       ]
 
     helpTxt =
-      mconcat
-        [ "Sends notifications for various actions. 'Final' sends off a ",
-          "notification when Shrun itself finishes whereas 'command' sends ",
-          "off one each time a command finishes. 'All' implies 'final' and ",
-          "'command'."
-        ]
+      Utils.itemize
+        $ intro
+        :<|| [ hall,
+               hcommand,
+               hfinal
+             ]
+
+    intro = "Sends notifications for various actions."
+
+    hfinal = "final: Sends off a single notification when shrun itself finishes."
+    hcommand = "command: Sends off a notification for each command that finishes."
+    hall = "all: Implies 'final' and 'command'."
 
 notifySystemParser :: Parser (Maybe NotifySystemArgs)
 notifySystemParser = mainParser

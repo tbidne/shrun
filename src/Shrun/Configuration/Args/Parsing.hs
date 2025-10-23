@@ -94,10 +94,10 @@ instance
   {-# INLINE labelOptic #-}
 
 -- | 'ParserInfo' type for parsing 'Args'.
-parserInfoArgs :: ParserInfo Args
-parserInfoArgs =
+parserInfoArgs :: List String -> ParserInfo Args
+parserInfoArgs prevKeys =
   ParserInfo
-    { infoParser = argsParser,
+    { infoParser = argsParser prevKeys,
       infoFullDesc = True,
       infoProgDesc = desc,
       infoHeader = Chunk headerTxt,
@@ -123,19 +123,27 @@ parserInfoArgs =
                 "'--console-log-command off' will disable ",
                 "command logging, regardless of the toml's console-log.command."
               ],
+          completions,
           Chunk.paragraph "See github.com/tbidne/shrun#README for full documentation.",
           Chunk.paragraph "Examples:",
           mkExample
             [ "1. Runs cmd1, cmd2, cmd3 concurrently:",
               "",
-              "$ shrun cmd1 cmd2 cmd3"
+              "$ shrun cmd1 cmd2 cmd3",
+              "[Command][cmd1] cmd1 output...",
+              "[Command][cmd2] cmd2 output...",
+              "[Command][cmd3] cmd3 output...",
+              "[Timer] 5 seconds"
             ],
           mkExample
             [ "2. Uses --edges to specify command dependencies. Commands cmd1 and",
               "cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish",
               "successfully.",
               "",
-              "$ shrun --edges \"1 -> 3, 2 -> 3\" cmd1 cmd2 cmd3"
+              "$ shrun --edges \"1 -> 3, 2 -> 3\" cmd1 cmd2 cmd3",
+              "[Command][cmd1] cmd1 output...",
+              "[Command][cmd2] cmd2 output...",
+              "[Timer] 5 seconds"
             ],
           mkExample
             [ "3. Uses config file aliases i.e. builds frontend, backend, and db",
@@ -143,23 +151,49 @@ parserInfoArgs =
               "",
               "# config.toml",
               "legend = [",
-              "  { key = 'build_deploy_app', val = [ 'build_app', 'deploy' ], edges = '1 -> 2' },",
-              "  { key = 'build_app', val = [ 'frontend', 'backend', 'db' ] },",
+              "  # Aliases for multiple commands",
+              "  { key = 'deploy', val = [ 'build', 'ds' ], edges = '1 -> 2' },",
+              "  { key = 'build', val = [ 'frontend', 'backend', 'db' ] },",
+              "",
+              "  # Aliases to actual commands",
               "  { key = 'frontend', val = 'npm run build' },",
               "  { key = 'backend', val = 'javac ...' },",
               "  { key = 'db', val = 'db.sh' },",
-              "  { key = 'deploy', val = 'deploy.sh' },",
+              "  { key = 'ds', val = 'deploy.sh' },",
               "]",
               "",
-              "$ shrun --config config.toml build_deploy_app"
+              "$ shrun --config config.toml deploy",
+              "[Command][frontend] Running npm...",
+              "[Command][backend] Running javac...",
+              "[Command][db] Running db.sh...",
+              "[Timer] 5 seconds"
             ]
         ]
 
-    mkExample :: NonEmpty String -> Chunk Doc
-    mkExample (h :| xs) =
+    completions =
       Chunk.vcatChunks
-        . (\ys -> toChunk 2 h : ys)
-        . fmap (toChunk 5)
+        [ Chunk.paragraph
+            $ mconcat
+              [ "Shrun also supports tab-completions for bash, zsh, and fish. ",
+                "To load them, run the appropriate script:"
+              ],
+          Pretty.nest 2
+            <$> Chunk.vcatChunks
+              [ toChunk 0 "",
+                Chunk.stringChunk "$ source <(shrun --bash-completion-script `which shrun`)",
+                Chunk.stringChunk "$ source <(shrun --zsh-completion-script `which shrun`)",
+                Chunk.stringChunk "$ source <(shrun --fish-completion-script `which shrun`)"
+              ]
+        ]
+
+    mkExample :: NonEmpty String -> Chunk Doc
+    mkExample = identPara 2 5
+
+    identPara :: Int -> Int -> NonEmpty String -> Chunk Doc
+    identPara hIndent lIndent (h :| xs) =
+      Chunk.vcatChunks
+        . (\ys -> toChunk hIndent h : ys)
+        . fmap (toChunk lIndent)
         $ xs
 
     toChunk _ "" = line
@@ -167,8 +201,8 @@ parserInfoArgs =
 
     line = Chunk (Just Pretty.softline)
 
-argsParser :: Parser Args
-argsParser = do
+argsParser :: List String -> Parser Args
+argsParser prevKeys = do
   -- defaultConfig in between configPath and edges for alphabetical order.
   configPaths <- configParser <**> defaultConfig
   edges <- Graph.edgesParser
@@ -176,7 +210,7 @@ argsParser = do
     Core.coreParser
       <**> version
       <**> OA.helper
-  commands <- commandsParser
+  commands <- commandsParser prevKeys
 
   pure
     $ MkArgs
@@ -264,10 +298,16 @@ configParser =
           "config, hence it is disabled by any '--config off' options."
         ]
 
-commandsParser :: Parser (NESeq Text)
-commandsParser =
+commandsParser :: List String -> Parser (NESeq Text)
+commandsParser prevKeys =
   unsafeListToNESeq
     <$> OA.some
       ( T.pack
-          <$> OA.argument OA.str (OA.metavar "Commands...")
+          <$> OA.argument OA.str opts
       )
+  where
+    opts =
+      mconcat
+        [ OA.metavar "Commands...",
+          OA.completeWith prevKeys
+        ]

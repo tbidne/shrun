@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | CLI parsing for CoreConfigArgs
 module Shrun.Configuration.Args.Parsing.Core
   ( coreParser,
@@ -21,18 +23,22 @@ import Shrun.Configuration.Data.Core
         consoleLogging,
         fileLogging,
         init,
+        legendKeysCache,
         notify,
         timeout
       ),
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
+import Shrun.Configuration.Data.LegendKeysCache (LegendKeysCache)
+import Shrun.Configuration.Data.LegendKeysCache qualified as LKS
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 
 coreParser :: Parser CoreConfigArgs
 coreParser = do
   init <- initParser
+  legendKeysCache <- legendKeysCacheParser
   timeout <- timeoutParser
 
   commonLogging <-
@@ -49,6 +55,7 @@ coreParser = do
     $ MkCoreConfigP
       { timeout,
         init,
+        legendKeysCache,
         commonLogging,
         consoleLogging,
         commandLogging,
@@ -93,3 +100,36 @@ initParser =
           "'shrun --init \". ~/.bashrc\" foo bar' is equivalent ",
           "to 'shrun \". ~/.bashrc && foo\" \". ~/.bashrc && bar\"'."
         ]
+
+legendKeysCacheParser :: Parser (Maybe LegendKeysCache)
+legendKeysCacheParser =
+  OA.optional
+    $ OA.option
+      (LKS.parseLegendKeysCache OA.str)
+      opts
+  where
+    opts =
+      mconcat
+        [ OA.long "legend-keys-cache",
+          OA.completeWith ["add", "clear", "write", "off"],
+          OA.metavar LKS.lksStrings,
+          helpTxt
+        ]
+
+    helpTxt =
+      Utils.itemize
+        $ intro
+        :<|| [ add,
+               clear,
+               write
+             ]
+
+    intro =
+      mconcat
+        [ "Shrun allows saving legend keys from the current config file so ",
+          "that we can get tab-completions on the next run."
+        ]
+
+    add = "add: The default. Combines keys from this run with the prior run(s)."
+    write = "write: Saves keys from this run only."
+    clear = "clear: Deletes the keys cache, if it exists."

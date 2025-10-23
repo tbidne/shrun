@@ -2,6 +2,14 @@
 
 module Unit.Shrun.Configuration.Args.Parsing.Core (tests) where
 
+import Shrun.Configuration.Data.LegendKeysCache
+  ( LegendKeysCache
+      ( LegendKeysAdd,
+        LegendKeysClear,
+        LegendKeysOff,
+        LegendKeysWrite
+      ),
+  )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.CommandLogging qualified as CommandLogging
@@ -16,6 +24,7 @@ tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.Core"
     [ initTests,
+      legendKeysCacheTests,
       timeoutTests,
       CommonLogging.tests,
       CommandLogging.tests,
@@ -99,6 +108,44 @@ testTimeoutDisabled =
   where
     argList = ["--timeout", "off", "command"]
     expected = U.updateDefCoreArgs #timeout Disabled
+
+legendKeysCacheTests :: TestTree
+legendKeysCacheTests =
+  testGroup
+    "--legend-keys-cache"
+    [ testLegendKeysClear,
+      testLegendKeysWrite,
+      testLegendKeysAdd,
+      testLegendKeysOff
+    ]
+
+testLegendKeysClear :: TestTree
+testLegendKeysClear = testProp1 "Parses clear" "testLegendKeysClear" $ do
+  U.verifyResultT argList expected
+  where
+    argList = ["--legend-keys-cache", "clear", "command"]
+    expected = U.updateDefCoreArgs #legendKeysCache LegendKeysClear
+
+testLegendKeysWrite :: TestTree
+testLegendKeysWrite = testProp1 "Parses write" "testLegendKeysWrite" $ do
+  U.verifyResultT argList expected
+  where
+    argList = ["--legend-keys-cache", "write", "command"]
+    expected = U.updateDefCoreArgs #legendKeysCache LegendKeysWrite
+
+testLegendKeysAdd :: TestTree
+testLegendKeysAdd = testProp1 "Parses add" "testLegendKeysAdd" $ do
+  U.verifyResultT argList expected
+  where
+    argList = ["--legend-keys-cache", "add", "command"]
+    expected = U.updateDefCoreArgs #legendKeysCache LegendKeysAdd
+
+testLegendKeysOff :: TestTree
+testLegendKeysOff = testProp1 "Parses off" "testLegendKeysOff" $ do
+  U.verifyResultT argList expected
+  where
+    argList = ["--legend-keys-cache", "off", "command"]
+    expected = U.updateDefCoreArgs #legendKeysCache LegendKeysOff
 
 initTests :: TestTree
 initTests =

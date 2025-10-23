@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | CLI parsing for ConsoleLoggingArgs
 module Shrun.Configuration.Args.Parsing.ConsoleLogging
   ( consoleLoggingParser,
@@ -108,19 +110,31 @@ stripControlParser = mainParser
           ( mconcat
               [ OA.long "console-log-strip-control",
                 OA.completeWith ["all", "smart", "off"],
-                Utils.mkHelp helpTxt,
+                helpTxt,
                 OA.metavar StripControl.stripControlStr
               ]
           )
+
     helpTxt =
+      Utils.itemize
+        $ intro
+        :<|| [ hall,
+               hsmart
+             ]
+
+    intro =
       mconcat
-        [ "Control characters can wreak layout havoc, thus we include this",
-          " option. 'all' strips all",
-          " such chars. 'off' does nothing i.e. all chars are left",
-          " untouched. The default 'smart' attempts to strip",
-          " only the control chars that affect layout (e.g. cursor movements) and",
-          " leaves others unaffected (e.g. colors). This has the potential",
-          " to be the 'prettiest' though it is possible to miss some chars."
+        [ "Control characters can wreak layout havoc, hence this option for ",
+          "stripping such characters."
+        ]
+
+    hall = "all: Strips all such chars."
+    hsmart =
+      mconcat
+        [ "smart: The default. Attempts to strip only the control chars that ",
+          "affect layout (e.g. cursor movements) and leaves others unaffected ",
+          "(e.g. colors). This has the potential to be the 'prettiest' though ",
+          "it is possible to miss some chars."
         ]
 
 timerFormatParser :: Parser (Maybe TimerFormat)
@@ -132,11 +146,21 @@ timerFormatParser = mainParser
         $ mconcat
           [ OA.long "console-log-timer-format",
             OA.completeWith ["digital_compact", "digital_full", "prose_compact", "prose_full"],
-            Utils.mkHelpNoLine helpTxt,
-            OA.metavar TimerFormat.timerFormatStr
+            OA.metavar "TIME_FMT",
+            helpTxt
           ]
     helpTxt =
-      mconcat
-        [ "How to format the timer. Defaults to prose_compact e.g. ",
-          "'2 hours, 3 seconds'."
-        ]
+      Utils.itemizeNoLine
+        $ intro
+        :<|| [ hdc,
+               hdf,
+               hpc,
+               hpf
+             ]
+
+    intro = "How to format the timer. Options:"
+
+    hdc = "digital_compact: e.g. '02:00:03'."
+    hdf = "digital_full: e.g. '00:02:00:03'."
+    hpc = "prose_compact: The default e.g. '2 hours, 3 seconds'."
+    hpf = "prose_full: e.g. '0 days, 2 hours, 0 minutes, 3 seconds'."

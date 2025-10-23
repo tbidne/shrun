@@ -1,4 +1,5 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-# OPTIONS_GHC -Wno-missing-methods #-}
 
 -- | Misc tests
 module Functional.Miscellaneous (specs) where

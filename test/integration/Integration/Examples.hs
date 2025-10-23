@@ -65,11 +65,18 @@ import Shrun.Configuration.Data.Core
         consoleLogging,
         fileLogging,
         init,
+        legendKeysCache,
         notify,
         timeout
       ),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
+import Shrun.Configuration.Data.LegendKeysCache
+  ( LegendKeysCache
+      ( LegendKeysAdd,
+        LegendKeysWrite
+      ),
+  )
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
   )
@@ -109,6 +116,7 @@ examplesConfig = testProp1 desc "examplesConfig" $ do
             MkCoreConfigP
               { timeout = With 20,
                 init = Just ". examples/bashrc",
+                legendKeysCache = LegendKeysWrite,
                 commonLogging =
                   MkCommonLoggingP
                     { debug = MkDebug False,

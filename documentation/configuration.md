@@ -5,6 +5,7 @@
     - [Config](#config)
     - [Edges](#edges)
     - [Init](#init)
+    - [Legend Keys Cache](#legend-keys-cache)
     - [Timeout](#timeout)
   - [Logging](#logging)
     - [Common Logging](#common-logging)
@@ -100,7 +101,7 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 **Arg:** `--edges (EDGES_STR | sequential | off)`
 
-**Description:** Comma separated list, specifying command dependencies, based on their order. For instance, `--edges '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
+**Description:** Comma-separated list, specifying command dependencies, based on their order. For instance, `--edges '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
 
 **Example:**
 
@@ -138,6 +139,111 @@ vs.
 <span style="color: #ff6e6e">[Error][bash_function] 0 seconds: /bin/sh: line 1: bash_function: command not found</span>
 <span style="color: #d6acff">[Finished] 0 seconds</span></code>
 </pre>
+
+### Legend Keys Cache
+
+**Arg:** `--legend-keys-scacheave (add | clear | write | off)`
+
+**Description:** Shrun allows saving legend keys from the current config file so that we can get tab-completions on the next run.
+
+  - add: The default. Combines keys from this run with the prior run(s).
+  - clear: Deletes the keys file, if it exists.
+  - write: Saves keys from this run only.
+
+**Example:**
+
+Used with configs:
+
+```toml
+# config1.toml
+legend = [
+  { key = 'short', val = 'same as config.toml' },
+  { key = 'cfg1_key_1', val = 'val 1' },
+  { key = 'cfg1_key_2', val = 'val 1' }
+]
+
+# config2.toml
+legend = [
+  { key = 'short', val = 'same as config.toml' },
+  { key = 'cfg2_key_1', val = 'val 2' },
+  { key = 'cfg2_key_2', val = 'val 2' }
+]
+```
+
+- `add`: saves keys from `config1.toml`:
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache add "sleep 1"</span>
+    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+    <span style="color: #d6acff">[Finished] 1 second</span></code>
+    </pre>
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+    <span style="color:">cfg1_key_1</span>
+    <span style="color:">cfg1_key_2</span>
+    <span style="color:">short</span></code>
+    </pre>
+
+- `add`: Adds keys from `config2.toml`:
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache add "sleep 1"</span>
+    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+    <span style="color: #d6acff">[Finished] 1 second</span></code>
+    </pre>
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+    <span style="color:">cfg1_key_1</span>
+    <span style="color:">cfg1_key_2</span>
+    <span style="color:">cfg2_key_1</span>
+    <span style="color:">cfg2_key_2</span>
+    <span style="color:">short</span></code>
+    </pre>
+
+- `write`: Overwrites keys with `config2.toml`:
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache write "sleep 1"</span>
+    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+    <span style="color: #d6acff">[Finished] 1 second</span></code>
+    </pre>
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+    <span style="color:">cfg2_key_1</span>
+    <span style="color:">cfg2_key_2</span>
+    <span style="color:">short</span></code>
+    </pre>
+
+- `off`: Does nothing:
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache off "sleep 1"</span>
+    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+    <span style="color: #d6acff">[Finished] 1 second</span></code>
+    </pre>
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+    <span style="color:">cfg2_key_1</span>
+    <span style="color:">cfg2_key_2</span>
+    <span style="color:">short</span></code>
+    </pre>
+
+- `clear`: Removes all keys:
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache clear "sleep 1"</span>
+    <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
+    <span style="color: #d6acff">[Finished] 1 second</span></code>
+    </pre>
+
+    <pre>
+    <code><span style="color: #ff79c6">$</span><span> cat ~/.local/state/shrun/legend-keys.txt</span>
+    <span style="color:">cat: legend-keys.txt: No such file or directory</span></code>
+    </pre>
 
 ### Timeout
 
@@ -291,7 +397,10 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 
 **Arg:** `--command-log-read-strategy (block | block-line-buffer)`
 
-**Description:** The `block` strategy reads `N` (`--command-log-read-size`) bytes at a time, whereas `block-line-buffer` also reads `N` bytes at a time, but buffers newlines, for potentially nicer formatted file logs. By default, we only use `block-line-buffer` when there is exactly one command. Otherwise we use `block`. This option explicitly sets the strategy.
+**Description:** Strategy for reading command logs. `block-line-buffer` is allowed (and the default) as long as we do not have multiple commands with file logging. In that scenario, we use `block`.
+
+  - block: Reads `N` (`--command-log-read-size`) bytes at a time.
+  - block-line-buffer: Also reads `N` bytes at a time, but buffers newlines, for potentially nicer formatted logs.
 
 > [!WARNING]
 >
@@ -377,12 +486,10 @@ vs.
 
 **Arg:** `--console-log-strip-control (all | smart | off)`
 
-**Description:** Control characters can wreak layout havoc, thus we include this option. `all` strips all such chars. `off` does nothing i.e. all chars are left untouched. The default `smart` attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' as:
+**Description:** Control characters can wreak layout havoc, hence this option for stripping such characters.
 
-* Simple formatting is left intact.
-* The layout should not be damaged.
-
-Though it is possible to miss some chars.
+  - all: Strips all such chars.
+  - smart: The default. Attempts to strip only the control chars that affect layout (e.g. cursor movements) and leaves others unaffected (e.g. colors). This has the potential to be the 'prettiest' though it is possible to miss some chars.
 
 **Example:**
 
@@ -411,9 +518,14 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 #### Timer Format
 
-**Arg:** `--console-log-timer-format (digital_compact | digital_full | prose_compact | prose_full)`
+**Arg:** `--console-log-timer-format TIME_FMT`
 
-**Description:** How to format the timer. Defaults to `prose_compact` e.g. `2 hours, 3 seconds`.
+**Description:** How to format the timer. Options:
+
+  - digital_compact: e.g. `02:00:03`.
+  - digital_full: e.g. `00:02:00:03`.
+  - prose_compact: The default e.g. `2 hours, 3 seconds`.
+  - prose_full: e.g. `0 days, 2 hours, 0 minutes, 3 seconds`.
 
 **Example:**
 
@@ -560,7 +672,7 @@ vs.
 
 #### File Log Size Mode
 
-**Arg:** `--file-log-size-mode (warn BYTES | delete BYTES | off)`
+**Arg:** `--file-log-size-mode (delete BYTES | warn BYTES | off)`
 
 **Description:** Sets a threshold for the file log size, upon which we either print a warning or delete the file, if it is exceeded. The `BYTES` should include the value and units e.g. `warn 10 mb`, `warn 5 gigabytes`, `delete 20.5B`. Defaults to warning at `50 mb`.
 
@@ -591,9 +703,13 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 ### Notify Action
 
-**Arg:** `--notify-action (final | command | all | off)`
+**Arg:** `--notify-action (all | command | final | off)`
 
-**Description:** Sends notifications for various actions. `final` sends off a notification when `shrun` itself finishes whereas `command` sends one off each time a command finishes. `all` implies `final` and `command`.
+**Description:** Sends notifications for various actions.
+
+  - all: Implies `final` and `command`.
+  - command: Sends off a notification for each command that finishes.
+  - final: Sends off a single notification when shrun itself finishes.
 
 **Example:**
 

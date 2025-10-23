@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedLists #-}
 
 module Shrun.Configuration.Args.Parsing.Utils
-  ( mkHelp,
+  ( -- * Simple help
+    mkHelp,
     mkHelpNoLine,
 
     -- * Disabled parser
@@ -20,6 +21,9 @@ module Shrun.Configuration.Args.Parsing.Utils
 
     -- * Misc
     autoStripUnderscores,
+    itemize,
+    itemizeNoLine,
+    toMDoc,
   )
 where
 
@@ -28,11 +32,13 @@ import Data.List qualified as L
 import Data.Sequence qualified as Seq
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.System.Process qualified as P
-import Options.Applicative (Parser)
+import Options.Applicative (OptionFields, Parser)
 import Options.Applicative qualified as OA
 import Options.Applicative.Builder (Mod, ReadM)
 import Options.Applicative.Builder.Completer (Completer)
 import Options.Applicative.Builder.Completer qualified as Completer
+import Options.Applicative.Help (Doc)
+import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
@@ -48,14 +54,10 @@ mkHelp :: String -> OA.Mod f a
 mkHelp =
   OA.helpDoc
     . fmap (<> Pretty.hardline)
-    . Chunk.unChunk
-    . Chunk.paragraph
+    . toMDoc
 
 mkHelpNoLine :: String -> OA.Mod f a
-mkHelpNoLine =
-  OA.helpDoc
-    . Chunk.unChunk
-    . Chunk.paragraph
+mkHelpNoLine = OA.helpDoc . toMDoc
 
 -- | Reads 'Text', strips underscores, then uses the Read class. This is
 -- essentially 'auto' but removes underscores. This is used for nicer
@@ -220,3 +222,49 @@ bashCompleter action = Completer.mkCompleter $ \word -> do
   pure $ case ec of
     ExitFailure _ -> []
     ExitSuccess -> L.lines out
+
+toMDoc :: String -> Maybe Doc
+toMDoc = Chunk.unChunk . Chunk.paragraph
+
+-- | Make an itemized list e.g.
+--
+-- @
+--   itemize [intro, l1, l2, l2]
+--
+--   ==> intro
+--
+--       - l1
+--       - l2
+--       - l3
+-- @
+itemize :: NESeq String -> Mod OptionFields a
+itemize =
+  OA.helpDoc
+    . Chunk.unChunk
+    . fmap (<> Pretty.line)
+    . itemizeHelper
+
+-- | 'itemize' that does not append a trailing newline. Useful for the last
+-- option in a group, as groups already start a newline.
+itemizeNoLine :: NESeq String -> Mod OptionFields a
+itemizeNoLine =
+  OA.helpDoc
+    . Chunk.unChunk
+    . itemizeHelper
+
+itemizeHelper :: NESeq String -> Chunk Doc
+itemizeHelper (intro :<|| ds) =
+  Chunk.vcatChunks
+    $ toList
+      ( Chunk.paragraph intro
+          :<| toChunk Pretty.softline
+          :<| (toItem <$> ds)
+      )
+  where
+    toItem d =
+      fmap (Pretty.nest 2)
+        . Chunk.paragraph
+        $ ("- " <> d)
+
+toChunk :: a -> Chunk a
+toChunk = Chunk . Just

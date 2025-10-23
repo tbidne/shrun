@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | CLI parsing for CommandLoggingArgs
 module Shrun.Configuration.Args.Parsing.CommandLogging
   ( commandLoggingParser,
@@ -157,17 +159,28 @@ readStrategyParser = mainParser
         $ mconcat
           [ OA.long "command-log-read-strategy",
             OA.completeWith ["block", "block-line-buffer"],
-            Utils.mkHelpNoLine helpTxt,
-            OA.metavar ReadStrategy.readStrategyStr
+            OA.metavar ReadStrategy.readStrategyStr,
+            helpTxt
           ]
     helpTxt =
+      Utils.itemizeNoLine
+        $ intro
+        :<|| [ block,
+               blockLineBuffer
+             ]
+
+    intro =
       mconcat
-        [ "The 'block' strategy reads N (--command-log-read-size) bytes at a time, ",
-          "whereas 'block-line-buffer' also reads N bytes at a time, but buffers ",
-          "newlines, for potentially nicer formatted logs. By default, we use ",
-          "'block-line-buffer' if we are only running one command and/or file-logging ",
-          "is not active. For multiple commands with file-logging, we default to ",
-          "'block'. This option explicitly sets the strategy."
+        [ "Strategy for reading command logs. 'block-line-buffer' is allowed ",
+          "(and the default) as long as we do not have multiple commands with ",
+          "file logging. In that scenario, we use 'block'."
+        ]
+
+    block = "block: Reads N (--command-log-read-size) bytes at a time."
+    blockLineBuffer =
+      mconcat
+        [ "block-line-buffer: Also reads N bytes at a time, but buffers ",
+          "newlines, for potentially nicer formatted logs."
         ]
 
 reportReadErrorsParser :: Parser (Maybe ReportReadErrorsSwitch)

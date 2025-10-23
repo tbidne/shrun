@@ -38,4 +38,4 @@ parseNotifyAction = \case
 
 -- | Available 'NotifyAction' strings.
 notifyActionStr :: (IsString a) => a
-notifyActionStr = "final | command | all"
+notifyActionStr = "all | command | final"

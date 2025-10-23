@@ -20,7 +20,7 @@ specs args =
   testGroup
     "Configuration.md examples"
     ( readStrategyTests
-        ++ [ Examples.Core.tests,
+        ++ [ Examples.Core.tests args,
              Examples.CommonLogging.tests,
              Examples.CommandLogging.tests args,
              Examples.ConsoleLogging.tests,

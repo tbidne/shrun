@@ -68,6 +68,7 @@ import Shrun.Configuration.Data.Core
         consoleLogging,
         fileLogging,
         init,
+        legendKeysCache,
         notify,
         timeout
       ),
@@ -105,6 +106,13 @@ import Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode (FileSizeModeWarn),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
+import Shrun.Configuration.Data.LegendKeysCache
+  ( LegendKeysCache
+      ( LegendKeysAdd,
+        LegendKeysClear,
+        LegendKeysOff
+      ),
+  )
 import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig
       ( MkMergedConfig,
@@ -176,6 +184,7 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
             MkCoreConfigP
               { timeout = With 3_600,
                 init = Just ". some file",
+                legendKeysCache = LegendKeysOff,
                 commonLogging =
                   MkCommonLoggingP
                     { debug = MkDebug True,
@@ -246,6 +255,8 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
         "10",
         "--init",
         ". another file",
+        "--legend-keys-cache",
+        "clear",
         "--file-log",
         logPath,
         "--file-log-strip-control",
@@ -295,6 +306,7 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
             MkCoreConfigP
               { timeout = With 10,
                 init = Just ". another file",
+                legendKeysCache = LegendKeysClear,
                 commonLogging =
                   MkCommonLoggingP
                     { debug = MkDebug True,
@@ -480,6 +492,9 @@ cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
         "off",
         "--init",
         "off",
+        -- --legend-keys-cache add is the default, /not/ off.
+        "--legend-keys-cache",
+        "add",
         "--file-log",
         "off",
         "--edges",

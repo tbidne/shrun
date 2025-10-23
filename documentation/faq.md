@@ -10,7 +10,7 @@
 - [Init vs. Legend?](#init-vs-legend)
 - [How do I run sequential commands?](#how-do-i-run-sequential-commands)
 - [Can file logging preserve formatting?](#can-file-logging-preserve-formatting)
-- [How do I set bash auto-completions?](#how-do-i-set-bash-auto-completions)
+- [How do I set shell auto-completions?](#how-do-i-set-shell-auto-completions)
 
 ## If I don't run multiple commands all that often, does shrun hold any value?
 
@@ -332,10 +332,25 @@ There are various other tweaks one can try if the file log formatting is still d
 
 If none of those help, the best solution is likely to simply use `--command-log-read-strategy block` -- which generally does a pretty good job -- and make your peace with the fact that this is all best-effort 🙂.
 
-## How do I set bash auto-completions?
+## How do I set shell auto-completions?
 
-To get bash auto-completions for `shrun` options, add the following to your `.bashrc` (assuming `shrun` is on the `PATH`):
+Shrun supports tab-completions for bash, zsh, and fish. To load them, run the appropriate script:
 
 ```sh
-. <(shrun --bash-completion-script `which shrun`)
+$ source <(shrun --bash-completion-script `which shrun`)
+$ source <(shrun --zsh-completion-script `which shrun`)
+$ source <(shrun --fish-completion-script `which shrun`)
 ```
+
+Furthermore, we can use the `--legend-keys-cache` option to save legend keys, so that we get tab completions on the next run.
+
+```sh
+# some_alias is a legend key in config.toml. The first time we use
+# config.toml, we have to fully type it out.
+$ shrun --legend-keys-cache add --config config.toml some_alias
+
+# Now that the first run saved the keys, we can use tab completions.
+$ shrun --config config.toml some<TAB> # will auto-complete to some_alias
+```
+
+The keys will be persisted until `--legend-keys-cache clear` is used (or overwritten with `--legend-keys-cache write`). Hence `--legend-keys-cache add` only needs to be run the first time a particular legend file is used, though it does not hurt to set it in the toml config.

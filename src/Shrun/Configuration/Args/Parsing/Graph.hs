@@ -48,7 +48,7 @@ edgesParser =
       ]
     mainHelpTxt =
       mconcat
-        [ "Comma separated list, specifying command dependencies, based on ",
+        [ "Comma-separated list, specifying command dependencies, based on ",
           "their order. For instance, --edges '1 -> 3, 2 -> 3' ",
           "will require commands 1 and 2 to complete before 3 is run. The ",
           "literal 'sequential' will run all commands sequentially."

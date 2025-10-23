@@ -162,7 +162,7 @@ fileLogModeParser = mainParser
           )
     helpTxt =
       mconcat
-        [ "Mode in which to open the log file. Defaults to write. The 'rename'",
+        [ "Mode in which to open the log file. Defaults to 'write'. The 'rename' ",
           "option will rename the requested log file if there is a collision ",
           "e.g. '-f shrun.log' will become 'shrun (1).log'."
         ]
@@ -186,6 +186,6 @@ fileLogSizeModeParser = mainParser
         [ "Sets a threshold for the file log size, upon which we either ",
           "print a warning or delete the file, if it is exceeded. ",
           "The BYTES should include the value and units e.g. ",
-          "warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning ",
+          "'warn 10 mb', 'warn 5 gigabytes', 'delete 20.5B'. Defaults to warning ",
           "at 50 mb."
         ]

@@ -104,6 +104,7 @@ library
     Shrun.Configuration.Data.FileLogging.FilePathDefault
     Shrun.Configuration.Data.FileLogging.FileSizeMode
     Shrun.Configuration.Data.Graph
+    Shrun.Configuration.Data.LegendKeysCache
     Shrun.Configuration.Data.MergedConfig
     Shrun.Configuration.Data.Notify
     Shrun.Configuration.Data.Notify.Action
@@ -302,6 +303,7 @@ test-suite functional
     , base
     , effects-async
     , effects-fs
+    , effects-unix
     , env-guard
     , fdo-notify
     , optparse-applicative

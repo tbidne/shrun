@@ -36,12 +36,14 @@ import DBus.Client
   )
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
+import Effects.FileSystem.FileWriter (MonadFileWriter (writeBinaryFile))
 import Effects.FileSystem.PathReader
   ( MonadPathReader
       ( getHomeDirectory,
         getXdgDirectory
       ),
   )
+import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
 import Effects.System.Terminal
   ( MonadTerminal (getChar, getTerminalSize),
     Window (Window),
@@ -64,12 +66,10 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
       MonadCatch,
       MonadEnv,
       MonadFileReader,
-      MonadFileWriter,
       MonadHandleWriter,
       MonadIO,
       MonadMask,
       MonadOptparse,
-      MonadPathWriter,
       MonadIORef,
       MonadReader (IORef (List Text)),
       MonadSTM,
@@ -79,6 +79,9 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
 
 runConfigIO :: ConfigIO a -> IORef (List Text) -> IO a
 runConfigIO (MkConfigIO rdr) = runReaderT rdr
+
+instance MonadFileWriter ConfigIO where
+  writeBinaryFile _ _ = pure ()
 
 -- HACK: Listing all the MonadPathReader methods is tedious and unnecessary,
 -- so rather than list all of them like @foo = error "todo"@, we simply
@@ -96,6 +99,16 @@ instance MonadPathReader ConfigIO where
   getXdgDirectory _ _ =
     pure (unsafeEncode $ concatDirs ["test", "integration", "toml"])
 #endif
+
+-- Paranoid, only delete files we know about for the tests.
+instance MonadPathWriter ConfigIO where
+  removeFile p = do
+    when ("large-file-del" `T.isInfixOf` pTxt) $ do
+      liftIO $ removeFile p
+    where
+      pTxt = pack $ decodeLenient p
+
+  createDirectoryIfMissing _ _ = pure ()
 
 instance MonadTerminal ConfigIO where
   putStr = error "putStr: unimplemented"
@@ -125,13 +138,11 @@ instance MonadDBus ConfigIO where
 newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
   deriving
     ( Applicative,
-      MonadPathWriter,
       Functor,
       Monad,
       MonadCatch,
       MonadEnv,
       MonadFileReader,
-      MonadFileWriter,
       MonadHandleWriter,
       MonadIO,
       MonadMask,
@@ -145,10 +156,15 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
 runNoConfigIO :: NoConfigIO a -> IORef (List Text) -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
 
+instance MonadFileWriter NoConfigIO where
+  writeBinaryFile _ _ = pure ()
+
 instance MonadPathReader NoConfigIO where
   getXdgDirectory _ _ = pure [osp|./|]
   getHomeDirectory = error "getHomeDirectory: unimplemented"
   doesFileExist = liftIO . doesFileExist
+
+instance MonadPathWriter NoConfigIO
 
 deriving via ConfigIO instance MonadTerminal NoConfigIO
 
@@ -158,9 +174,11 @@ makeConfigAndAssertEq ::
   forall m.
   ( MonadEnv m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadMask m,
     MonadOptparse m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadTerminal m
   ) =>
   -- | List of CLI arguments.
@@ -203,9 +221,11 @@ makeConfigAndAssertFieldEq ::
   forall m.
   ( MonadEnv m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadMask m,
     MonadOptparse m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadTerminal m
   ) =>
   -- | List of CLI arguments.
@@ -226,9 +246,11 @@ makeMergedConfig ::
   forall m.
   ( MonadEnv m,
     MonadFileReader m,
+    MonadFileWriter m,
     MonadMask m,
     MonadOptparse m,
     MonadPathReader m,
+    MonadPathWriter m,
     MonadTerminal m
   ) =>
   -- | List of CLI arguments.

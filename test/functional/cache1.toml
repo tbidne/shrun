@@ -1,0 +1,5 @@
+legend = [
+  { key = 'short', val = 'same as config.toml' },
+  { key = 'cfg1_key_1', val = 'val 1' },
+  { key = 'cfg1_key_2', val = 'val 1' }
+]
