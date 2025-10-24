@@ -15,10 +15,6 @@ module Shrun.Configuration.Args.Parsing.Utils
     switchParserNoLine,
     switchParserOpts,
 
-    -- * Completers
-    fileCompleter,
-    fileCompleterSuffix,
-
     -- * Misc
     autoStripUnderscores,
     itemize,
@@ -27,16 +23,9 @@ module Shrun.Configuration.Args.Parsing.Utils
   )
 where
 
-import Data.Either (fromRight)
-import Data.List qualified as L
-import Data.Sequence qualified as Seq
-import Effects.FileSystem.PathReader qualified as PR
-import Effects.System.Process qualified as P
 import Options.Applicative (OptionFields, Parser)
 import Options.Applicative qualified as OA
 import Options.Applicative.Builder (Mod, ReadM)
-import Options.Applicative.Builder.Completer (Completer)
-import Options.Applicative.Builder.Completer qualified as Completer
 import Options.Applicative.Help (Doc)
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
@@ -160,68 +149,6 @@ switchParserHelper mkHelpFn opts cons name helpTxt = fmap cons <$> mainParser
                 unpack other,
                 "'"
               ]
-
--- | File completer that tries compgen and gracefully falls back to
--- ordinary IO.
-fileCompleter :: Completer
-fileCompleter = bashCompleter "file" <> actionFileFallback
-
--- | 'fileCompleter' that filters on the given suffix.
-fileCompleterSuffix :: String -> Completer
-fileCompleterSuffix sfx =
-  bashCompleter compgenFilter
-    <> actionFileFallbackFilter strFilter
-  where
-    compgenFilter =
-      mconcat
-        [ "file -X '!*",
-          sfx,
-          "'"
-        ]
-
-    strFilter = L.isSuffixOf sfx
-
--- | Haskell IO completer fallback for 'bashCompleter "file"' i.e. does not
--- rely on compgen.
-actionFileFallback :: Completer
-actionFileFallback = actionFileFallbackFilter (const True)
-
--- | 'actionFileFallback' that additionally applies the given filter.
-actionFileFallbackFilter :: (String -> Bool) -> Completer
-actionFileFallbackFilter pred = Completer.mkCompleter $ \word -> do
-  eFiles <- tryMySync $ do
-    cwd <- PR.getCurrentDirectory
-    PR.listDirectory cwd
-
-  let files = fromRight [] eFiles
-  fmap toList $ flip foldMapA files $ \p -> do
-    isFile <-
-      tryMySync (PR.doesFileExist p) <&> \case
-        Left _ -> False
-        Right b -> b
-
-    let pStr = decodeLenient p
-        matchesPat = word `L.isPrefixOf` pStr
-    pure
-      $ if isFile && matchesPat && pred pStr
-        then Seq.singleton pStr
-        else Empty
-
--- | This is like optparse-applicative's bashComplete with one exception:
--- This swallows stderr intentionally, to avoid cluttering the output.
--- If compgen doesn't exist (e.g. nix develop), then OA will fail and print
--- stderr, which is ugly.
---
--- By using readCreateProcessWithExitCode, we can swallow stderr. This
--- also means we do not have to us try/catch or manually pass in 'bash -c',
--- like OA.
-bashCompleter :: String -> Completer
-bashCompleter action = Completer.mkCompleter $ \word -> do
-  let cmd = L.unwords ["compgen", "-A", action, "--", Completer.requote word]
-  (ec, out, _err) <- P.readCreateProcessWithExitCode (P.shell cmd) ""
-  pure $ case ec of
-    ExitFailure _ -> []
-    ExitSuccess -> L.lines out
 
 toMDoc :: String -> Maybe Doc
 toMDoc = Chunk.unChunk . Chunk.paragraph

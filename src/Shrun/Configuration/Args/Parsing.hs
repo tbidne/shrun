@@ -16,6 +16,7 @@ import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Version (showVersion)
 import Effects.Optparse (validOsPath)
+import Effects.Optparse.Completer qualified as EOC
 import FileSystem.OsString (OsString)
 import FileSystem.OsString qualified as OsString
 import Options.Applicative
@@ -281,7 +282,7 @@ configParser =
       [ OA.long "config",
         OA.short 'c',
         OA.metavar "(PATH | off)...",
-        OA.completer (Utils.fileCompleterSuffix ".toml"),
+        OA.completer (EOC.compgenCwdPathsSuffixCompleter ".toml"),
         OA.completeWith ["off"],
         Utils.mkHelp mainHelpTxt
       ]
