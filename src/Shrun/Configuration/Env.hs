@@ -310,38 +310,23 @@ saveLegendKeys xdgState cache prevKeysList toml =
     LegendKeysOff -> pure ()
     -- 2. Delete file.
     LegendKeysClear -> PW.removeFileIfExists_ keysPath
-    -- 3. Overwrite the previous key file, if it exists. We want the following
-    --    semantics (0/1 indicates if there are zero/some keys):
-    --
-    --      - 0_old_keys + 0_new_keys: Do nothing.
-    --      - 0_old_keys + 1_new_keys: Write new keys.
-    --      - 1_old_keys + 0_new_keys: Write new zero keys
-    --      - 1_old_keys + 1_new_keys: Write new keys.
-    --
-    --    Hence the only time we do nothing is when both the old keys and
-    --    new keys are empty. Otherwise we unconditionally write whatever
-    --    new keys we have received (potentially zero).
+    -- 3. Overwrite the previous key file, if it exists. If the current keys are
+    --    /not/ equal to the old keys, write them.
     LegendKeysWrite ->
-      unless (L.null prevKeysList && Set.null newKeySet)
-        $ writeKeys Set.empty newKeySet
-    -- 4. Union the previous and new keys. We want the following semantics:
-    --
-    --      - 0_old_keys + 0_new_keys: Do nothing.
-    --      - 0_old_keys + 1_new_keys: Write new keys.
-    --      - 1_old_keys + 0_new_keys: Do nothing.
-    --      - 1_old_keys + 1_new_keys: Write old + new keys.
-    --
-    -- Hence we do nothing when there are no new keys. Otherwise we
-    -- unconditionally write old + new keys.
+      unless (prevKeySet == currKeySet) $ writeKeys currKeySet
+    -- 4. Union the previous and new keys. If the current keys are /not/ a
+    --    subset of the previous keys, write the union.
     LegendKeysAdd ->
-      unless (Set.null newKeySet)
-        $ writeKeys (Set.fromList prevKeysList) newKeySet
+      unless currIsSubset $ writeKeys (Set.union prevKeySet currKeySet)
   where
     toKeyList = toList . fmap (view #key)
-    newKeySet = maybe Set.empty (Set.fromList . toKeyList) (toml ^. #legend)
+    prevKeySet = Set.fromList prevKeysList
+    currKeySet = maybe Set.empty (Set.fromList . toKeyList) (toml ^. #legend)
 
-    writeKeys pkeys ckeys = do
-      let allKeys = toList $ Set.union pkeys ckeys
+    currIsSubset = currKeySet `Set.isSubsetOf` prevKeySet
+
+    writeKeys newKeys = do
+      let allKeys = toList newKeys
       -- Ensure directory exists.
       PW.createDirectoryIfMissing True xdgState
       writeFileUtf8 keysPath (T.intercalate "\n" allKeys)
