@@ -30,6 +30,7 @@ specs testArgs =
         emptyKey,
         emptyValue,
         cyclicKeys,
+        cyclicKeysMultiLegend,
         emptyFileLog,
         testReadStrategyFailure testArgs
       ]
@@ -131,10 +132,36 @@ cyclicKeys = testCase "Cyclic keys throws exception" $ do
 
   case result of
     Just (MkCyclicKeyError path) -> "a -> b -> c -> a" @=? path
-    Nothing -> assertFailure "Exception exception"
+    Nothing -> assertFailure "Expected exception"
 
   logs <- readIORef logsRef
   logs @=? []
+
+cyclicKeysMultiLegend :: TestTree
+cyclicKeysMultiLegend = testCase desc $ do
+  logsRef <- newIORef []
+  -- using config.toml, which has cyclic definition
+  result <- runCaptureError args logsRef
+
+  case result of
+    Just (MkCyclicKeyError path) -> "a -> b -> c -> a" @=? path
+    Nothing -> assertFailure "Expected exception"
+
+  logs <- readIORef logsRef
+  logs @=? []
+  where
+    desc = "Cyclic keys across multiple legends throws exception"
+    args =
+      [ "--config",
+        "off",
+        "--config",
+        getIntConfig "cyclic1",
+        "--config",
+        getIntConfig "cyclic2",
+        "--config",
+        getIntConfig "cyclic3",
+        "a"
+      ]
 
 emptyFileLog :: TestTree
 emptyFileLog = testCase "Empty file log throws exception" $ do
