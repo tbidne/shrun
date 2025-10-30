@@ -1,0 +1,7 @@
+legend = [
+  { key = 'xdg_key', val = 'sleep 1' },
+  # These keys defined in other configs, tests that they are correctly
+  # overwritten.
+  { key = '.shrun_key', val = 'sleep 10' },
+  { key = 'shrun_key', val = 'sleep 10' }
+]

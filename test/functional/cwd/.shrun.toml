@@ -1,0 +1,6 @@
+legend = [
+  { key = '.shrun_key', val = 'sleep 1' },
+  # This key defined in other config, tests that it is correctly
+  # overwritten.
+  { key = 'shrun_key', val = 'sleep 15' }
+]

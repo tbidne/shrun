@@ -19,6 +19,8 @@ module Shrun.Configuration.Args.Parsing.Utils
     autoStripUnderscores,
     itemize,
     itemizeNoLine,
+    itemizeHelper,
+    toChunk,
     toMDoc,
   )
 where

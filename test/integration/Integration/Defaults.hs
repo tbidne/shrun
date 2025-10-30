@@ -165,7 +165,7 @@ defaultEnv = testProp1 desc "defaultEnv" $ do
   makeConfigAndAssertEq ["cmd"] (`runNoConfigIO` logsRef) expected
 
   logs <- liftIO $ readIORef logsRef
-  ["No default config found at: './config.toml'"] === logs
+  [] === logs
   where
     desc = "No arguments and empty config path should return default Env"
 
@@ -428,7 +428,7 @@ fileLogStripControlDefaultsAll = testProp1 desc "fileLogStripControlDefaultsAll"
   makeConfigAndAssertFieldEq args1 (`runNoConfigIO` logsRef) expected
 
   logs <- liftIO $ readIORef logsRef
-  ["No default config found at: './config.toml'"] === logs
+  [] === logs
 
   -- Test that with toml defaults to All
   makeConfigAndAssertFieldEq args2 (`runNoConfigIO` logsRef) expected

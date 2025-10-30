@@ -39,7 +39,8 @@ import Data.Text qualified as T
 import Effects.FileSystem.FileWriter (MonadFileWriter (writeBinaryFile))
 import Effects.FileSystem.PathReader
   ( MonadPathReader
-      ( getHomeDirectory,
+      ( getCurrentDirectory,
+        getHomeDirectory,
         getXdgDirectory
       ),
   )
@@ -88,6 +89,8 @@ instance MonadFileWriter ConfigIO where
 -- disable the warning with -Wno-missing-methods
 
 instance MonadPathReader ConfigIO where
+  getCurrentDirectory = liftIO getCurrentDirectory
+
   getFileSize = liftIO . getFileSize
   doesFileExist = liftIO . doesFileExist
   doesDirectoryExist = liftIO . doesDirectoryExist
@@ -160,6 +163,7 @@ instance MonadFileWriter NoConfigIO where
   writeBinaryFile _ _ = pure ()
 
 instance MonadPathReader NoConfigIO where
+  getCurrentDirectory = liftIO getCurrentDirectory
   getXdgDirectory _ _ = pure [osp|./|]
   getHomeDirectory = error "getHomeDirectory: unimplemented"
   doesFileExist = liftIO . doesFileExist

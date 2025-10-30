@@ -29,7 +29,10 @@ extra-source-files:
   LICENSE
   README.md
   test/functional/*.toml
+  test/functional/cwd/*.toml
   test/functional/scripts/*.sh
+  test/functional/xdg_config/shrun/*.toml
+  test/functional/xdg_state/shrun/*.txt
   test/integration/toml/*.toml
   test/integration/toml/osx/*.toml
 

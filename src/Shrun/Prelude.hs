@@ -27,6 +27,7 @@ module Shrun.Prelude
     (<<&>>),
     convertIntegral,
     unsafeConvertIntegral,
+    catSeqMaybes,
     neToList,
     listToSeq,
     neseqToSeq,
@@ -572,3 +573,9 @@ isTermException e = case fromException (toException e) of
 
 foldMapA :: (Applicative m, Foldable t, Monoid b) => (a -> m b) -> t a -> m b
 foldMapA f = getAp <$> foldMap (Ap . f)
+
+catSeqMaybes :: Seq (Maybe a) -> Seq a
+catSeqMaybes = foldl' go Empty
+  where
+    go acc Nothing = acc
+    go acc (Just x) = acc :|> x

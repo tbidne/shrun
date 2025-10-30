@@ -6,6 +6,7 @@ module Functional.Miscellaneous (specs) where
 
 import DBus.Notify (UrgencyLevel (Critical))
 import Data.Text qualified as T
+import Effects.FileSystem.PathReader (XdgDirectory (XdgConfig, XdgState))
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
 import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout (NotifyTimeoutSeconds))
@@ -41,7 +42,8 @@ specs testArgs =
     -- Tests that have nothing to do with read strategy. This should be
     -- the default.
     otherTests =
-      [ isCancelled testArgs
+      [ isCancelled testArgs,
+        testImplicitConfigLookup
       ]
 
 splitNewlineLogs :: ReadStrategyTestParams
@@ -484,6 +486,44 @@ testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
         withCommandPrefix readStrategyDefaultCmdLog "bye",
         finishedPrefix
       ]
+
+testImplicitConfigLookup :: TestTree
+testImplicitConfigLookup = testCase desc $ do
+  (ts, resultsConsole) <- withTiming $ runFuncIO env args
+
+  V.verifyExpected resultsConsole expected
+
+  let seconds = ts ^. #sec
+
+  -- This should take around 1 second. If the legends are not correctly
+  -- found/combined, this could take longer.
+  assertBool (show seconds ++ " < 3") $ seconds < 3
+  where
+    desc = "Finds implicit configs"
+
+    -- These keys all come from implicit config (xdg, .shrun.toml, shrun.toml).
+    -- If they are not found, this will error.
+    args =
+      [ "xdg_key",
+        ".shrun_key",
+        "shrun_key"
+      ]
+
+    expected =
+      [ withSuccessPrefix "xdg_key",
+        withSuccessPrefix ".shrun_key",
+        withSuccessPrefix "shrun_key"
+      ]
+
+    env :: FuncIOEnv
+    env =
+      MkFuncIOEnv
+        { cwdDir = Just [ospPathSep|test/functional/cwd|],
+          xdgDir = Just $ \case
+            XdgConfig -> [ospPathSep|test/functional/xdg_config|]
+            XdgState -> [ospPathSep|test/functional/xdg_state|]
+            other -> error $ "Unexpected xdg: " ++ show other
+        }
 
 readStrategyDefaultCmd :: String
 readStrategyDefaultCmd = "printf 'hello\nbye' && sleep 1"

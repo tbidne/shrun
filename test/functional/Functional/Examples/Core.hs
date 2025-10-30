@@ -147,7 +147,8 @@ testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr
 mkEnv :: OsPath -> FuncIOEnv
 mkEnv d =
   MkFuncIOEnv
-    { xdgDir = Just $ \case
+    { cwdDir = Nothing,
+      xdgDir = Just $ \case
         XdgState -> d
         other -> error $ "Unexpected xdg: " ++ show other
     }

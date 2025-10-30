@@ -282,22 +282,45 @@ configParser =
       [ OA.long "config",
         OA.short 'c',
         OA.metavar "(PATH | off)...",
-        OA.completer (EOC.compgenCwdPathsSuffixCompleter ".toml"),
+        OA.completer EOC.compgenCwdPathsCompleter,
         OA.completeWith ["off"],
-        Utils.mkHelp mainHelpTxt
+        helpTxt
       ]
 
-    mainHelpTxt =
+    helpTxt =
+      OA.helpDoc
+        . Chunk.unChunk
+        $ Chunk.vcatChunks
+          [ helpList,
+            Utils.toChunk Pretty.softline,
+            outtro,
+            Utils.toChunk Pretty.softline
+          ]
+
+    helpList =
+      Utils.itemizeHelper
+        $ intro
+        :<|| [ "<XDG_config>/shrun/config.toml",
+               ".shrun.toml",
+               "shrun.toml"
+             ]
+
+    intro =
       mconcat
         [ "Path(s) to TOML config file(s). This argument can be given multiple ",
           "times, in which case all keys are merged. When there is a conflict, ",
-          "the right-most config wins. The legends are also merged, with ",
-          "the same right-bias for conflicting keys. The string 'off' ",
-          "disables all config files to its left. Finally, we also look in the ",
-          "the XDG config directory automatically e.g. ",
-          "~/.config/shrun/config.toml. This is considered the 'left-most' ",
-          "config, hence it is disabled by any '--config off' options."
+          "the right-most config wins. The legends are also merged, with the ",
+          "same right-bias for conflicting keys. The string 'off' disables ",
+          "all config files to its left. Finally, we also search in specific ",
+          "locations automatically. These are:"
         ]
+
+    outtro =
+      Chunk.paragraph
+        $ mconcat
+          [ "These files are considered 'left' of any configs explicitly given ",
+            "with --config, hence disabled with 'off'."
+          ]
 
 commandsParser :: List String -> Parser (NESeq Text)
 commandsParser prevKeys =

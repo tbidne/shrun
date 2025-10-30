@@ -75,7 +75,7 @@ import Effects.Concurrent.Async qualified as Async
 import FileSystem.OsPath as X (combineFilePaths, unsafeDecode)
 import Functional.Prelude.FuncEnv
   ( FuncEnv (MkFuncEnv, coreEnv, funcIOEnv, logs, shrunNotes),
-    FuncIOEnv (MkFuncIOEnv, xdgDir),
+    FuncIOEnv (MkFuncIOEnv, cwdDir, xdgDir),
     unFuncIO,
   )
 import Functional.ReadStrategyTest
@@ -162,7 +162,7 @@ runMaybeException mException argList = do
           let funcEnv =
                 MkFuncEnv
                   { coreEnv = env,
-                    funcIOEnv = MkFuncIOEnv Nothing,
+                    funcIOEnv = MkFuncIOEnv Nothing Nothing,
                     logs = ls,
                     shrunNotes
                   }
@@ -241,7 +241,7 @@ runExceptionE argList = do
           let funcEnv =
                 MkFuncEnv
                   { coreEnv = env,
-                    funcIOEnv = MkFuncIOEnv Nothing,
+                    funcIOEnv = MkFuncIOEnv Nothing Nothing,
                     logs = ls,
                     shrunNotes
                   }
@@ -301,7 +301,7 @@ runCancelled secToSleep argList = do
           let funcEnv =
                 MkFuncEnv
                   { coreEnv = env,
-                    funcIOEnv = MkFuncIOEnv Nothing,
+                    funcIOEnv = MkFuncIOEnv Nothing Nothing,
                     logs = ls,
                     shrunNotes
                   }

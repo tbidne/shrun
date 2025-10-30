@@ -1,0 +1,3 @@
+legend = [
+  { key = 'shrun_key', val = 'sleep 1' }
+]

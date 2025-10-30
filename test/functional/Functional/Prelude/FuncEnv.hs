@@ -13,7 +13,7 @@ module Functional.Prelude.FuncEnv
 where
 
 import Effects.FileSystem.PathReader
-  ( MonadPathReader (getXdgDirectory),
+  ( MonadPathReader (getCurrentDirectory, getXdgDirectory),
     XdgDirectory,
   )
 import Effects.System.Posix.Signals (MonadPosixSignals (installHandler))
@@ -46,9 +46,40 @@ import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 
 -- | Enviroment used by 'FuncIO'. For when we want some IO behavior mocked.
-newtype FuncIOEnv = MkFuncIOEnv
-  { xdgDir :: Maybe (XdgDirectory -> OsPath)
+data FuncIOEnv = MkFuncIOEnv
+  { cwdDir :: Maybe OsPath,
+    xdgDir :: Maybe (XdgDirectory -> OsPath)
   }
+
+instance
+  ( k ~ A_Lens,
+    a ~ Maybe OsPath,
+    b ~ Maybe OsPath
+  ) =>
+  LabelOptic "cwdDir" k FuncIOEnv FuncIOEnv a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkFuncIOEnv a1 a2) ->
+        fmap
+          (\b -> MkFuncIOEnv b a2)
+          (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ Maybe (XdgDirectory -> OsPath),
+    b ~ Maybe (XdgDirectory -> OsPath)
+  ) =>
+  LabelOptic "xdgDir" k FuncIOEnv FuncIOEnv a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkFuncIOEnv a1 a2) ->
+        fmap
+          (\b -> MkFuncIOEnv a1 b)
+          (f a2)
+  {-# INLINE labelOptic #-}
 
 -- | In a real run, we run shrun with 'ShellT (Env IO) IO'. In our functional
 -- tests, this is generally 'ShellT FuncEnv IO', which is mostly unmocked,
@@ -98,8 +129,14 @@ unFuncIO (MkFuncIO rdr) = rdr
 instance MonadPathReader FuncIO where
   doesFileExist = liftIO . doesFileExist
 
+  getCurrentDirectory = do
+    mCwd <- asks (view #cwdDir)
+    case mCwd of
+      Nothing -> liftIO getCurrentDirectory
+      Just cwd -> pure cwd
+
   getXdgDirectory xdg p = do
-    MkFuncIOEnv mOnXdg <- ask
+    mOnXdg <- asks (view #xdgDir)
     case mOnXdg of
       Nothing -> liftIO (getXdgDirectory xdg p)
       Just onXdg -> pure $ onXdg xdg </> p

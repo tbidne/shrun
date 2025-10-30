@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -132,25 +133,12 @@ getMergedConfig = do
   let configPaths = args ^. #configPaths
 
   tomls <- do
-    -- If our configs list contains /any/ Disabled, then the xdg config
-    -- will be ignored, as it is the implicit first element. Hence we guard
-    -- against it to save an unnecessary lookup.
+    -- If our configs list contains /any/ Disabled, then the implicit configs
+    -- will be ignored, as they are the implicit first elements. Hence we guard
+    -- against it to save unnecessary lookups.
     if containsDisabled configPaths
       then pure configPaths
-      else do
-        configDir <- getShrunXdgConfig
-        let path = configDir </> [osp|config.toml|]
-        b <- doesFileExist path
-        -- If xdg config exists, add it to the list. Otherwise just use args.
-        if b
-          then pure (With path :<| configPaths)
-          else do
-            putTextLn
-              ( "No default config found at: '"
-                  <> T.pack (decodeLenient path)
-                  <> "'"
-              )
-            pure configPaths
+      else (\ps -> (With <$> ps) <> configPaths) <$> findImplicitConfigs
 
   finalToml <- mergeTomls tomls
 
@@ -162,6 +150,38 @@ getMergedConfig = do
   where
     containsDisabled = L.elem Disabled
 {-# INLINEABLE getMergedConfig #-}
+
+-- | Searches for implicit configs. The list of searched paths are:
+--
+-- - xdg_config/config.toml
+-- - cwd/.shrun.toml
+-- - cwd/shrun.toml
+findImplicitConfigs ::
+  ( HasCallStack,
+    MonadPathReader m
+  ) =>
+  m (Seq OsPath)
+findImplicitConfigs = do
+  xdgConfig <- getShrunXdgConfig
+  cwd <- PR.getCurrentDirectory
+  let paths =
+        [ xdgConfig </> [osp|config.toml|],
+          cwd </> [osp|.shrun.toml|],
+          cwd </> [osp|shrun.toml|]
+        ]
+
+  xs <- traverse configExists paths
+  pure $ catSeqMaybes xs
+{-# INLINEABLE findImplicitConfigs #-}
+
+configExists :: (HasCallStack, MonadPathReader m) => OsPath -> m (Maybe OsPath)
+configExists p = do
+  exists <- doesFileExist p
+  pure
+    $ if exists
+      then Just p
+      else Nothing
+{-# INLINEABLE configExists #-}
 
 -- | Merges several toml files together.
 --

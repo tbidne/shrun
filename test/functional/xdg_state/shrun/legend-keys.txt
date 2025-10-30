@@ -1,0 +1,3 @@
+.shrun_key
+shrun_key
+xdg_key

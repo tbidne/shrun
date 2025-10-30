@@ -27,6 +27,9 @@ for versions < 1.
   exists -- is considered the left-most config, hence any `-c off` will
   ignore it.
 
+* In addition to automatic config lookup in `xdg_config/shrun/config.toml`,
+  we also look in the current directory i.e. `.shrun.toml` and `shrun.toml`.
+
 * Extensive CLI/toml option changes wrt disabling `--no-x`, aiming for
   the following principles:
 
