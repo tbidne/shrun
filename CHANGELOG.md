@@ -68,13 +68,17 @@ for versions < 1.
     * `--init`
     * `--notify-action`
 
+  * Options that already had some "off" value now renamed to `off`:
+
+    * `--console-log-strip-control`: `none -> off`.
+    * `--file-log-size-mode`: `nothing -> off`.
+    * `--file-log-strip-control`: `none -> off`.
+    * `--notify-timeout`: `never -> off`.
+    * `--timeout`: `never -> off`.
+
   * Toml `file-log.path` and `notify.action` are no longer mandatory for those
     tables to be valid (though they must be given by at least one of the
     CLI or toml).
-
-  * `--file-log-size-mode`'s `nothing` value renamed to `off`.
-
-  * `--timeout` and `--notify-timeout`'s `never` value renamed to `off`.
 
 ### Added
 * Added `--edges` (toml: legend `edges`) option for declaring dependencies
