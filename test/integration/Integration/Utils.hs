@@ -168,7 +168,8 @@ instance MonadPathReader NoConfigIO where
   getHomeDirectory = error "getHomeDirectory: unimplemented"
   doesFileExist = liftIO . doesFileExist
 
-instance MonadPathWriter NoConfigIO
+instance MonadPathWriter NoConfigIO where
+  createDirectoryIfMissing _ _ = pure ()
 
 deriving via ConfigIO instance MonadTerminal NoConfigIO
 
