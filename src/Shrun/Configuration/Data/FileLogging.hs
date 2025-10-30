@@ -36,6 +36,7 @@ import Shrun.Configuration.Data.ConfigPhase
     ConfigPhaseF,
     LineTruncF,
     SwitchF,
+    parseSwitch,
   )
 import Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode
@@ -78,6 +79,9 @@ newtype DeleteOnSuccessSwitch = MkDeleteOnSuccessSwitch Bool
 
 instance Default DeleteOnSuccessSwitch where
   def = MkDeleteOnSuccessSwitch False
+
+instance DecodeTOML DeleteOnSuccessSwitch where
+  tomlDecoder = MkDeleteOnSuccessSwitch <$> (tomlDecoder >>= parseSwitch)
 
 instance
   (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
@@ -487,8 +491,7 @@ instance DecodeTOML FileLoggingToml where
       <*> decodeFileLogStripControl
 
 decodeFileDeleteOnSuccess :: Decoder (Maybe DeleteOnSuccessSwitch)
-decodeFileDeleteOnSuccess =
-  fmap MkDeleteOnSuccessSwitch <$> getFieldOptWith tomlDecoder "delete-on-success"
+decodeFileDeleteOnSuccess = getFieldOptWith tomlDecoder "delete-on-success"
 
 decodeFileLogStripControl :: Decoder (Maybe FileLogStripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "strip-control"

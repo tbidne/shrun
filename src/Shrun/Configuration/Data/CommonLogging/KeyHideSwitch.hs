@@ -5,6 +5,7 @@ module Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   )
 where
 
+import Shrun.Configuration.Data.ConfigPhase (parseSwitch)
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
@@ -15,7 +16,7 @@ newtype KeyHideSwitch = MkKeyHideSwitch Bool
   deriving newtype (Enum)
 
 instance DecodeTOML KeyHideSwitch where
-  tomlDecoder = MkKeyHideSwitch <$> tomlDecoder
+  tomlDecoder = MkKeyHideSwitch <$> (tomlDecoder >>= parseSwitch)
 
 instance Default KeyHideSwitch where
   def = MkKeyHideSwitch False

@@ -51,6 +51,9 @@ for versions < 1.
     * `--console-log-command`.
     * `--file-log-delete-on-success`.
 
+    This includes the toml options e.g. `console-log.command` now takes strings
+    `"on"/"off"` rather than booleans `true/false`.
+
   * Options where `--no-x` was the only way to disable the toml now take the
     string `off` for this purpose. E.g.`--edges off` now disables
     toml edges. These are:

@@ -9,6 +9,9 @@ module Shrun.Configuration.Data.ConfigPhase
     ConfigPhaseDisabledMaybeF,
     LineTruncF,
     SwitchF,
+
+    -- * Misc
+    parseSwitch,
   )
 where
 
@@ -84,3 +87,15 @@ type family LineTruncF p where
   LineTruncF ConfigPhaseToml = Maybe (WithDisabled LineTruncation)
   LineTruncF ConfigPhaseMerged = Maybe (Truncation TruncLine)
   LineTruncF ConfigPhaseEnv = Maybe (Truncation TruncLine)
+
+parseSwitch :: (MonadFail m) => Text -> m Bool
+parseSwitch = \case
+  "on" -> pure True
+  "off" -> pure False
+  other ->
+    fail
+      $ mconcat
+        [ "Expected (on | off), received: '",
+          unpack other,
+          "'"
+        ]

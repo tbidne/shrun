@@ -9,9 +9,9 @@ legend = [
 poll-interval = 100
 
 [console-log]
-command = false
+command = "off"
 command-name-trunc = 100
-delete-on-success = false
+delete-on-success = "off"
 timer-format = 'digital_compact'
 
 [file-log]

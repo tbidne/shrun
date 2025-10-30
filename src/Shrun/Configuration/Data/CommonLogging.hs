@@ -24,6 +24,7 @@ import Shrun.Configuration.Data.ConfigPhase
         ConfigPhaseToml
       ),
     SwitchF,
+    parseSwitch,
   )
 import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Prelude
@@ -42,7 +43,7 @@ instance Default Debug where
   def = MkDebug False
 
 instance DecodeTOML Debug where
-  tomlDecoder = MkDebug <$> tomlDecoder
+  tomlDecoder = MkDebug <$> (tomlDecoder >>= parseSwitch)
 
 -- | Holds command logging config.
 type CommonLoggingP :: ConfigPhase -> Type

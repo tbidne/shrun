@@ -1,5 +1,5 @@
 [file-log]
 path = "apath"
-delete-on-success = true
+delete-on-success = "on"
 line-trunc = 200
 size-mode = "off"

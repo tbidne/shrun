@@ -77,15 +77,15 @@ legend = [
 # Common logging configuation.
 [common-log]
 # Enables additional debug logs.
-debug = false
-# By default (key-hide = false), logs will refer to the key name, as defined in
-# legend section. If set to true, logs will instead reference the literal
+debug = "off"
+# By default (key-hide = "off"), logs will refer to the key name, as defined in
+# the legend section. If set to "on", logs will instead reference the literal
 # command.
 #
 # For example, if there is an alias 'cmd1 = some long command' and we
-# run 'cmd1', then, with key-hide = true the logs will print
-# 'some long command'. With key-hide = false, they will instead print 'cmd1'.
-key-hide = false
+# run 'cmd1', then, with key-hide = "on" the logs will print
+# 'some long command'. With key-hide = "off", they will instead print 'cmd1'.
+key-hide = "off"
 
 # Configuration for "command logs", enabled by console-log.command and/or
 # file-logging.
@@ -124,14 +124,14 @@ read-strategy = "block"
 [console-log]
 # If enabled, the output of the commands themselves will be logged. The
 # default behavior is to swallow command logs.
-command = true
+command = "on"
 
 # If set, this truncates command names in the logs to the specified number of
 # characters. This setting is useful when:
 #
 # 1. You do not want a long command to clutter the logs
 # 2. The command is not run with an alias (so it cannot be hidden with
-#    key-hide = false).
+#    key-hide = "off").
 command-name-trunc = 80
 
 # If set, this truncates the entire line to the specified number of
@@ -173,9 +173,9 @@ timer-format = "prose_compact"
 # Like command-name-trunc, but for file logs.
 #command-name-trunc = 40
 
-# If true, the log file is deleted on a successful exit. Does not delete the
+# If "on", the log file is deleted on a successful exit. Does not delete the
 # file if shrun exited via failure.
-#delete-on-success = false
+#delete-on-success = "off"
 
 # Like console-log.line-trunc, but for file logs.
 # line-trunc = 150

@@ -32,6 +32,7 @@ import Options.Applicative.Help (Doc)
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
+import Shrun.Configuration.Data.ConfigPhase qualified as ConfigPhase
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Prelude
@@ -140,17 +141,7 @@ switchParserHelper mkHelpFn opts cons name helpTxt = fmap cons <$> mainParser
               ]
           )
 
-    readBool =
-      OA.str @Text >>= \case
-        "on" -> pure True
-        "off" -> pure False
-        other ->
-          fail
-            $ mconcat
-              [ "Expected (on | off), received: '",
-                unpack other,
-                "'"
-              ]
+    readBool = OA.str @Text >>= ConfigPhase.parseSwitch
 
 toMDoc :: String -> Maybe Doc
 toMDoc = Chunk.unChunk . Chunk.paragraph

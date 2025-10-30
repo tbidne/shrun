@@ -76,7 +76,9 @@ notifySendHandlesLegendQuotes = testCase "notify-send handles legend quotes" $ d
   runShrun args
   where
     args =
-      [ "--common-log-key-hide",
+      [ "--config",
+        "off",
+        "--common-log-key-hide",
         "on",
         "--notify-action",
         "all",

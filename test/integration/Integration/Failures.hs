@@ -14,7 +14,7 @@ import Shrun.Configuration.Data.Notify.System
   ( LinuxNotifySystemMismatch,
     OsxNotifySystemMismatch,
   )
-import Shrun.Configuration.Env (withEnv)
+import Shrun.Configuration.Env (TomlPathError, withEnv)
 import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
     DuplicateKeyError (MkDuplicateKeyError),
@@ -97,7 +97,7 @@ emptyKey :: TestTree
 emptyKey = testCase "Empty key throws exception" $ do
   logsRef <- newIORef []
   let args = ["-c", getIntConfig "empty-key", "cmd"]
-  result <- runCaptureError @TOMLError args logsRef
+  result <- runCaptureError @TomlPathError args logsRef
 
   case result of
     Just err -> expectedErr @=? displayException err
@@ -106,13 +106,17 @@ emptyKey = testCase "Empty key throws exception" $ do
   logs <- readIORef logsRef
   logs @=? []
   where
-    expectedErr = "Decode error at '.legend[0].key': Unexpected empty text"
+    expectedErr =
+      mconcat
+        [ "Toml error in 'test/integration/toml/empty-key.toml': ",
+          "Decode error at '.legend[0].key': Unexpected empty text"
+        ]
 
 emptyValue :: TestTree
 emptyValue = testCase "Empty value throws exception" $ do
   logsRef <- newIORef []
   let args = ["-c", getIntConfig "empty-value", "cmd"]
-  result <- runCaptureError @TOMLError args logsRef
+  result <- runCaptureError @TomlPathError args logsRef
 
   case result of
     Just err -> expectedErr @=? displayException err
@@ -121,7 +125,11 @@ emptyValue = testCase "Empty value throws exception" $ do
   logs <- readIORef logsRef
   logs @=? []
   where
-    expectedErr = "Decode error at '.legend[0].val': Unexpected empty text"
+    expectedErr =
+      mconcat
+        [ "Toml error in 'test/integration/toml/empty-value.toml': ",
+          "Decode error at '.legend[0].val': Unexpected empty text"
+        ]
 
 cyclicKeys :: TestTree
 cyclicKeys = testCase "Cyclic keys throws exception" $ do
@@ -167,7 +175,7 @@ emptyFileLog :: TestTree
 emptyFileLog = testCase "Empty file log throws exception" $ do
   logsRef <- newIORef []
   let args = ["-c", getIntConfig "empty-file-log", "cmd"]
-  result <- runCaptureError @TOMLError args logsRef
+  result <- runCaptureError @TomlPathError args logsRef
 
   case result of
     Just err -> expectedErr @=? displayException err
@@ -176,7 +184,11 @@ emptyFileLog = testCase "Empty file log throws exception" $ do
   logs <- readIORef logsRef
   logs @=? []
   where
-    expectedErr = "Decode error at '.file-log.path': Empty path given for --file-log"
+    expectedErr =
+      mconcat
+        [ "Toml error in 'test/integration/toml/empty-file-log.toml': ",
+          "Decode error at '.file-log.path': Empty path given for --file-log"
+        ]
 
 testReadStrategyFailure :: IO TestArgs -> TestTree
 testReadStrategyFailure testArgs = testCase desc $ do

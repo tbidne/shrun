@@ -26,6 +26,7 @@ import Shrun.Configuration.Data.ConfigPhase
     ConfigPhaseF,
     LineTruncF,
     SwitchF,
+    parseSwitch,
   )
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat)
 import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
@@ -47,6 +48,9 @@ newtype ConsoleLogCmdSwitch = MkConsoleLogCmdSwitch Bool
 
 instance Default ConsoleLogCmdSwitch where
   def = MkConsoleLogCmdSwitch False
+
+instance DecodeTOML ConsoleLogCmdSwitch where
+  tomlDecoder = MkConsoleLogCmdSwitch <$> (tomlDecoder >>= parseSwitch)
 
 instance
   (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
@@ -239,8 +243,7 @@ instance DecodeTOML ConsoleLoggingToml where
       <*> decodeTimerFormat
 
 decodeCommandLogging :: Decoder (Maybe ConsoleLogCmdSwitch)
-decodeCommandLogging =
-  fmap MkConsoleLogCmdSwitch <$> getFieldOptWith tomlDecoder "command"
+decodeCommandLogging = getFieldOptWith tomlDecoder "command"
 
 decodeStripControl :: Decoder (Maybe ConsoleLogStripControl)
 decodeStripControl = getFieldOptWith tomlDecoder "strip-control"

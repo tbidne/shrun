@@ -50,6 +50,7 @@ import Shrun.Configuration.Data.ConfigPhase
       ),
     ConfigPhaseF,
     SwitchF,
+    parseSwitch,
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
@@ -114,6 +115,9 @@ newtype ReportReadErrorsSwitch = MkReportReadErrorsSwitch Bool
 
 instance Default ReportReadErrorsSwitch where
   def = MkReportReadErrorsSwitch False
+
+instance DecodeTOML ReportReadErrorsSwitch where
+  tomlDecoder = MkReportReadErrorsSwitch <$> (tomlDecoder >>= parseSwitch)
 
 instance
   (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
@@ -359,8 +363,7 @@ decodeReadStrategy :: Decoder (Maybe ReadStrategy)
 decodeReadStrategy = getFieldOptWith tomlDecoder "read-strategy"
 
 decodeReportReadErrors :: Decoder (Maybe ReportReadErrorsSwitch)
-decodeReportReadErrors =
-  fmap MkReportReadErrorsSwitch <$> getFieldOptWith tomlDecoder "report-read-errors"
+decodeReportReadErrors = getFieldOptWith tomlDecoder "report-read-errors"
 
 -- | Creates env version from merged. Requires commands because we pick
 -- the read strategy based on the number of commands.

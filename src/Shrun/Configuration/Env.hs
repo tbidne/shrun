@@ -10,6 +10,7 @@ module Shrun.Configuration.Env
     makeEnvAndShrun,
 
     -- * Misc
+    TomlPathError (..),
     getMergedConfig,
   )
 where
@@ -224,6 +225,18 @@ mergeTomls =
     dropAfterDisabled (Disabled :<| _) = Empty
     dropAfterDisabled (With f :<| fs) = f :<| dropAfterDisabled fs
 
+data TomlPathError = MkTomlPathError OsPath TOMLError
+  deriving stock (Show)
+
+instance Exception TomlPathError where
+  displayException (MkTomlPathError p err) =
+    mconcat
+      [ "Toml error in '",
+        decodeLenient p,
+        "': ",
+        displayException err
+      ]
+
 readConfig ::
   ( HasCallStack,
     MonadFileReader m,
@@ -235,7 +248,7 @@ readConfig fp = do
   contents <- readFileUtf8ThrowM fp
   case decode contents of
     Right cfg -> pure cfg
-    Left tomlErr -> throwM tomlErr
+    Left tomlErr -> throwM $ MkTomlPathError fp tomlErr
 
 fromMergedConfig ::
   ( HasCallStack,
