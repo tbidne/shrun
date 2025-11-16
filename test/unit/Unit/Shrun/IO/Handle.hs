@@ -36,9 +36,7 @@ testRHRLaws =
   testGroup
     "Laws"
     [ testRHRAssociativity,
-      testRHRIdentity,
-      testRHRLeftBias,
-      testReadSuccessNormalSubmonoid
+      testRHRIdentity
     ]
 
 testRHRAssociativity :: TestTree
@@ -58,27 +56,6 @@ testRHRIdentity = testPropertyNamed "Identity" "testRHRIdentity" $ do
     x === mempty <> x
     x === x <> mempty
 
-testRHRLeftBias :: TestTree
-testRHRLeftBias = testPropertyNamed "Left bias" "testRHRLeftBias" $ do
-  property $ do
-    x <- forAll genReadSuccess
-    y <- forAll genReadSuccess
-
-    x === x <> y
-    y === y <> x
-
-testReadSuccessNormalSubmonoid :: TestTree
-testReadSuccessNormalSubmonoid = testPropertyNamed desc name $ do
-  property $ do
-    s <- forAll genReadSuccess
-    x <- forAll genNoSuccess
-
-    s === s <> x
-    s === x <> s
-  where
-    desc = "ReadSuccess is a normal submonoid"
-    name = "testReadSuccessNormalSubmonoid"
-
 genReadHandleResult :: Gen ReadHandleResult
 genReadHandleResult =
   G.choice
@@ -96,9 +73,6 @@ genReadErrSuccess = ReadErrSuccess <$> genUnlinedTexts <*> genUnlinedTexts
 
 genReadErr :: Gen ReadHandleResult
 genReadErr = ReadErr <$> genUnlinedTexts
-
-genNoSuccess :: Gen ReadHandleResult
-genNoSuccess = G.choice [genReadErrSuccess, genReadErr, pure ReadNoData]
 
 genUnlinedTexts :: Gen (NonEmpty UnlinedText)
 genUnlinedTexts = ShrunText.unsafeFromTextNE <$> genText

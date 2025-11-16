@@ -93,17 +93,16 @@ verifyExpectedOrder results = void . allExpectedFound ("<none>", -1)
       when (prevIdx >= newIdx) $ do
         assertFailure $
           mconcat
-            [ "Expected text <",
+            [ "Expected text '",
               T.unpack e,
-              "> -- found at index ",
+              "' -- found at index ",
               show newIdx,
               " -- is <= the index ",
               show prevIdx,
-              " for the previously found \n<",
+              " for the previously found:\n\n",
               T.unpack prevExpected,
-              ">, in output: \n<",
-              formatResults results,
-              ">"
+              "\n\nin output:\n\n",
+              formatResults results
             ]
 
       pure (expected, newIdx)
@@ -126,15 +125,14 @@ findOneExpectedN results (numExpected, MkExpectedText expected) = do
     else
       assertFailure $
         mconcat
-          [ "Expected text <",
+          [ "Expected text '",
             T.unpack expected,
-            "> ",
+            "' ",
             show numExpected,
             " times, found ",
             show numHits,
-            " in output: \n<",
-            formatResults results,
-            ">"
+            " in output:\n\n",
+            formatResults results
           ]
   where
     searchT :: Int -> ResultText -> Int
@@ -151,11 +149,10 @@ findOneExpectedIdx results (MkExpectedText expected) = do
     Nothing ->
       assertFailure $
         mconcat
-          [ "Did not find expected text <",
+          [ "Did not find expected text '",
             T.unpack expected,
-            "> in output: \n<",
-            formatResults results,
-            ">"
+            "' in output:\n\n",
+            formatResults results
           ]
     Just (foundIdx, numHits) ->
       if numHits == 1
@@ -163,13 +160,12 @@ findOneExpectedIdx results (MkExpectedText expected) = do
         else
           assertFailure $
             mconcat
-              [ "Expected text <",
+              [ "Expected text '",
                 T.unpack expected,
-                "> 1 time, found ",
+                "' 1 time, found ",
                 show numHits,
-                " in output: \n<",
-                formatResults results,
-                ">"
+                " in output:\n\n",
+                formatResults results
               ]
   where
     -- Explicit recursion for clear order.
@@ -190,11 +186,10 @@ findOneUnexpected results (MkUnexpectedText unexpected) = do
   let found = foldr searchT False results
       err =
         mconcat
-          [ "Found unexpected <",
+          [ "Found unexpected '",
             T.unpack unexpected,
-            "> in output: \n<",
-            formatResults results,
-            ">"
+            "' in output:\n\n",
+            formatResults results
           ]
   assertBool err (not found)
   where
@@ -202,7 +197,11 @@ findOneUnexpected results (MkUnexpectedText unexpected) = do
     searchT (MkResultText result) acc = unexpected `T.isInfixOf` result || acc
 
 formatResults :: List ResultText -> String
-formatResults results = T.unpack lineSep
-  where
-    results' = fmap (.unResultText) results
-    lineSep = T.intercalate "\n" results'
+formatResults =
+  T.unpack
+    . T.intercalate "\n"
+    . zipWith (\i r -> showt i <> ". " <> r) [0 :: Int ..]
+    . fmap (.unResultText)
+
+showt :: (Show a) => a -> Text
+showt = T.pack . show

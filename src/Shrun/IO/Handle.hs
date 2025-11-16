@@ -3,6 +3,7 @@
 -- | Provides types for typical "IO" processes.
 module Shrun.IO.Handle
   ( -- * Read handle result
+    HandleResult,
     ReadHandleResult (..),
 
     -- * Reading
@@ -31,6 +32,9 @@ import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Prelude
 
+-- Timestamp and actual read result.
+type HandleResult = Tuple2 Double ReadHandleResult
+
 -- | Result from reading a handle. The ordering is based on:
 --
 -- @
@@ -52,13 +56,17 @@ data ReadHandleResult
   deriving stock (Eq, Show)
 
 instance Semigroup ReadHandleResult where
-  ReadSuccess l <> _ = ReadSuccess l
-  _ <> ReadSuccess r = ReadSuccess r
-  ReadErrSuccess e s <> _ = ReadErrSuccess e s
-  _ <> ReadErrSuccess e s = ReadErrSuccess e s
-  ReadErr l <> _ = ReadErr l
-  _ <> ReadErr r = ReadErr r
-  _ <> _ = ReadNoData
+  ReadSuccess ls <> ReadSuccess rs = ReadSuccess (ls <> rs)
+  ReadSuccess ls <> ReadErrSuccess re rs = ReadErrSuccess re (ls <> rs)
+  ReadSuccess ls <> ReadErr re = ReadErrSuccess re ls
+  ReadErrSuccess le ls <> ReadSuccess rs = ReadErrSuccess le (ls <> rs)
+  ReadErrSuccess le ls <> ReadErrSuccess re rs = ReadErrSuccess (le <> re) (ls <> rs)
+  ReadErrSuccess le ls <> ReadErr re = ReadErrSuccess (le <> re) ls
+  ReadErr le <> ReadSuccess rs = ReadErrSuccess le rs
+  ReadErr le <> ReadErrSuccess re rs = ReadErrSuccess (le <> re) rs
+  ReadErr le <> ReadErr re = ReadErr (le <> re)
+  l <> ReadNoData = l
+  ReadNoData <> r = r
 
 instance Monoid ReadHandleResult where
   mempty = ReadNoData
@@ -126,9 +134,10 @@ readHandle ::
   Maybe BufferParams ->
   Int ->
   Handle ->
-  m ReadHandleResult
+  m (Tuple2 Double ReadHandleResult)
 readHandle mBufferParams blockSize handle = do
-  readHandleRaw blockSize handle >>= \case
+  readTime <- getMonotonicTime
+  fmap (readTime,) $ readHandleRaw blockSize handle >>= \case
     Left err ->
       -- If we encountered an error but are holding onto a previous log,
       -- let's print it too.

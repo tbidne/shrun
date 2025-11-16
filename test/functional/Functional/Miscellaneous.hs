@@ -35,6 +35,7 @@ specs testArgs =
         formatErrorLogs testArgs,
         stripControlAlwaysCmdNames,
         reportsStderr,
+        reportsFinalOutput,
         slowOutputBroken,
         formatsFileLogs testArgs
       ]
@@ -212,7 +213,11 @@ reportsStderr =
     "Reports stderr"
     runExitFailure
     args
-    (\results -> V.verifyExpectedUnexpected results expected unexpected)
+    ( \results -> do
+        V.verifyExpected results expected
+        V.verifyUnexpected results unexpected
+        V.verifyExpectedOrder results expectedOrder
+    )
   where
     scriptPath :: (IsString a, Semigroup a) => a
     scriptPath = appendScriptsHome "stderr.sh"
@@ -224,11 +229,19 @@ reportsStderr =
           scriptPath
         ]
 
+    -- 'more output' and 'some stderr' can appear in different order, depending
+    -- on timing, hence we do not verify the order.
     expected =
-      [ withErrorPrefix scriptPath <> "1 second: some stderr",
-        withCommandPrefix scriptPath "some output",
-        withCommandPrefix scriptPath "some stderr",
-        withCommandPrefix scriptPath "more output"
+      [ withCommandPrefix scriptPath "some output",
+        withCommandPrefix scriptPath "more output",
+        withCommandPrefix scriptPath "some stderr"
+      ]
+
+    -- OTOH, 'some output' will _always_ precede the final error output, so
+    -- this is fine.
+    expectedOrder =
+      [ withCommandPrefix scriptPath "some output",
+        withErrorPrefix scriptPath <> "1 second\n  some output\n  more output\n  some stderr"
       ]
 
     -- Really the first one is what we should get if we are ignoring stderr,
@@ -237,6 +250,43 @@ reportsStderr =
       [ withErrorPrefix scriptPath <> "1 second: some output more output",
         withErrorPrefix scriptPath <> "1 second: some output",
         withErrorPrefix scriptPath <> "1 second: more output"
+      ]
+
+-- Tests that final output includes final reads for stdout and stderr.
+reportsFinalOutput :: ReadStrategyTestParams
+reportsFinalOutput =
+  ReadStrategyTestParametricSimple
+    "Reports final output"
+    runExitFailure
+    args
+    ( \results -> do
+        V.verifyExpectedOrder results expected
+        V.verifyUnexpected results unexpected
+    )
+  where
+    scriptPath :: (IsString a, Semigroup a) => a
+    scriptPath = appendScriptsHome "final_err.sh"
+
+    args =
+      withNoConfig
+        [ "--console-log-command",
+          "on",
+          scriptPath
+        ]
+
+    expected =
+      [ withCommandPrefix scriptPath "output 1",
+        withCommandPrefix scriptPath "stderr 1",
+        withCommandPrefix scriptPath "output 2",
+        withCommandPrefix scriptPath "stderr 2",
+        withCommandPrefix scriptPath "output 3",
+        withCommandPrefix scriptPath "stderr 3",
+        withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3"
+      ]
+
+    unexpected =
+      [ "  stderr 1",
+        "  output 1"
       ]
 
 -- This is a combination "anti-test" and test. The block expectation is the

@@ -108,24 +108,27 @@ formatConsoleMultiLineLogs ::
   ConsoleLoggingEnv ->
   NonEmpty Log ->
   ConsoleLog
-formatConsoleMultiLineLogs keyHide consoleLogging =
+formatConsoleMultiLineLogs keyHide consoleLogging logs@(l :| _) =
   UnsafeConsoleLog
+    -- No need to color each line individually: we can just do it once.
+    . color
     . T.intercalate "\n"
     . F.toList
     . fmap mkLine
     . zipMultilineSpacePrefix
+    $ logs
   where
     mkLine (prefixSpace, log) =
-      let t =
-            coreFormatting
-              prefixSpace
-              ((,Nothing) <$> consoleLogging ^. #lineTrunc)
-              (consoleLogging ^. #commandNameTrunc)
-              False
-              (consoleLogging ^. #stripControl)
-              keyHide
-              log
-       in P.color (logToColor log) t
+      coreFormatting
+        prefixSpace
+        ((,Nothing) <$> consoleLogging ^. #lineTrunc)
+        (consoleLogging ^. #commandNameTrunc)
+        False
+        (consoleLogging ^. #stripControl)
+        keyHide
+        log
+
+    color = P.color (logToColor l)
 
 maybeApply :: (a -> b -> b) -> Maybe a -> b -> b
 maybeApply = maybe id

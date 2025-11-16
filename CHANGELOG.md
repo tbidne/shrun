@@ -89,6 +89,10 @@ for versions < 1.
   for previously loaded legend keys. Legend keys are saved with the
   new `--legend-keys-cache` option.
 
+### Fixed
+* Improved final error output, so it is more likely that the actual error
+  is included in the output.
+
 ## [0.9.2] -- 2025-10-10
 ### Changed
 * Updated blessed GHC to 9.12.2.

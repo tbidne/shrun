@@ -11,6 +11,7 @@ module Shrun.IO
   )
 where
 
+import Data.List qualified as L
 import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.HandleWriter qualified as HW
 import Effects.System.Process (ProcessHandle)
@@ -49,7 +50,8 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.IO.Handle
-  ( ReadHandleResult (ReadErr, ReadErrSuccess, ReadNoData, ReadSuccess),
+  ( HandleResult,
+    ReadHandleResult (ReadErr, ReadErrSuccess, ReadNoData, ReadSuccess),
   )
 import Shrun.IO.Handle qualified as Handle
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
@@ -428,9 +430,9 @@ streamOutput logFn cmd processParams = do
         Handle ->
         m
           ( Tuple3
-              (IORef ReadHandleResult)
+              (IORef HandleResult)
               (IORef (Maybe UnlinedText))
-              (m ReadHandleResult)
+              (m HandleResult)
           )
       handleToParams =
         mkHandleParams
@@ -494,29 +496,39 @@ streamOutput logFn cmd processParams = do
   -- NOTE: [Stderr reporting]
   --
   -- In the event of a process failure (exitCode == ExitFailure), we want to
-  -- return the last (successful) read, as it is the most likely to have
-  -- relevant information. We have two possible reads here:
+  -- return the last output to give a good error message. We have two
+  -- possible reads here:
   --
   -- 1. The last read while the process was running (lastReadErr)
   -- 2. A final read after the process exited (remainingErr)
   --
-  -- We prioritize (Semigroup), in order:
+  -- We return everything, as timing issues means it is not always reliable
+  -- which handle has which data. We sort the output according to the time
+  -- they were read.
   --
-  -- 1. remainingErr
-  -- 2. lastReadErr
-  -- 3. remainingOut
-  -- 4. lastReadOut
+  -- NB. It is not necessarily true that Err has the actual error, or that
+  -- timing is respected. For instance, the command "nix run .#format"
+  -- may first print a message about a dirty tree to stderr, then print
+  -- the actual lint errors to stdout. Hence we actually want to show stdout,
+  -- and this should be displayed /after/ stderr.
   --
-  -- We make the assumption that the most recent Stderr is the most likely to
-  -- have the relevant error message, though we fall back to stdout as this
-  -- is not always true.
+  -- We therefore sort according to the timestamps in which each message
+  -- was read, and display everything.
+  --
+  -- Do note that the ordering is not necessarily perfect, as it is based
+  -- on when we read the handles, /not/ necessarily when the underlying
+  -- command output that message. For instance, if the underlying command
+  -- prints to stderr then stdout very quickly, we may read them in the same
+  -- loop, in which case stdout will be given the earlier timestamp, as we
+  -- arbitrarily choose to read it first above.
   let finalData =
-        mconcat
-          [ remainingErr,
-            lastReadErr,
-            remainingOut,
-            lastReadOut
-          ]
+        foldMap snd
+          . L.sortOn fst
+          $ [ lastReadOut,
+              lastReadErr,
+              remainingOut,
+              remainingErr
+            ]
 
   pure (exitCode, finalData)
   where
@@ -549,12 +561,12 @@ mkHandleParams ::
   --  3. Read function.
   m
     ( Tuple3
-        (IORef ReadHandleResult)
+        (IORef HandleResult)
         (IORef (Maybe UnlinedText))
-        (m ReadHandleResult)
+        (m HandleResult)
     )
 mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
-  lastReadRef <- newIORef ReadNoData
+  lastReadRef <- newIORef (0, ReadNoData)
   prevReadRef <- newIORef Nothing
 
   currTime <- getMonotonicTime
@@ -575,7 +587,8 @@ readFinalWithPrev ::
   ( HasCallStack,
     MonadCatch m,
     MonadHandleReader m,
-    MonadIORef m
+    MonadIORef m,
+    MonadTime m
   ) =>
   -- | Block size.
   Int ->
@@ -584,9 +597,10 @@ readFinalWithPrev ::
   -- | Previous partial read.
   IORef (Maybe UnlinedText) ->
   -- | Result.
-  m ReadHandleResult
+  m HandleResult
 readFinalWithPrev blockSize handle prevReadRef = do
-  Handle.readHandleRaw blockSize handle >>= \case
+  readTime <- getMonotonicTime
+  fmap (readTime,) $ Handle.readHandleRaw blockSize handle >>= \case
     -- Do not care about errors here, since we may still have leftover
     -- data that we need to get. If we cared, we could log the errors
     -- here, but it seems minor.
@@ -610,23 +624,23 @@ writeLog ::
   (Log -> m ()) ->
   ReportReadErrorsSwitch ->
   CommandP1 ->
-  IORef ReadHandleResult ->
-  ReadHandleResult ->
+  IORef HandleResult ->
+  HandleResult ->
   m ()
 writeLog = \cases
   -- 1. No data: Do nothing.
-  _ _ _ _ ReadNoData -> pure ()
+  _ _ _ _ (_, ReadNoData) -> pure ()
   -- 2. ReadErr but ReadErrors is off: Do nothing.
-  _ (getReadErrors -> False) _ _ (ReadErr _) -> pure ()
+  _ (getReadErrors -> False) _ _ (_, ReadErr _) -> pure ()
   -- 3. ReadErr and ReadErrors is on: Log it.
-  logFn (getReadErrors -> True) cmd lastReadRef r@(ReadErr messages) ->
+  logFn (getReadErrors -> True) cmd lastReadRef r@(_, ReadErr messages) ->
     writeLogHelper logFn cmd lastReadRef r messages
   -- 4. Log success and potentially errors.
-  logFn reportReadErrors cmd lastReadRef r@(ReadErrSuccess errs successes) -> do
+  logFn reportReadErrors cmd lastReadRef r@(_, ReadErrSuccess errs successes) -> do
     when (getReadErrors reportReadErrors) $ writeLogHelper logFn cmd lastReadRef r errs
     writeLogHelper logFn cmd lastReadRef r successes
   -- 5. Log successes.
-  logFn _ cmd lastReadRef r@(ReadSuccess messages) ->
+  logFn _ cmd lastReadRef r@(_, ReadSuccess messages) ->
     writeLogHelper logFn cmd lastReadRef r messages
   where
     getReadErrors = view #unReportReadErrorsSwitch
@@ -638,8 +652,8 @@ writeLogHelper ::
   ) =>
   (Log -> m b) ->
   CommandP1 ->
-  IORef ReadHandleResult ->
-  ReadHandleResult ->
+  IORef HandleResult ->
+  HandleResult ->
   NonEmpty UnlinedText ->
   m ()
 writeLogHelper logFn cmd lastReadRef handleResult messages = do

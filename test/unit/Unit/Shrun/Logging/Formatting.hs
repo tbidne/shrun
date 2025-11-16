@@ -61,7 +61,7 @@ import Shrun.Configuration.Data.StripControl
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel (LevelCommand, LevelFinished, LevelSuccess),
+    LogLevel (LevelCommand, LevelError, LevelFinished, LevelSuccess),
     LogMode (LogModeSet),
   )
 import Unit.Generators qualified as PGens
@@ -87,7 +87,8 @@ consoleLogTests =
       testFormatsCLCmdNoKey,
       testFormatsCLCommandNameTrunc,
       testFormatsCLLineTrunc,
-      testFormatsCLSpecs
+      testFormatsCLSpecs,
+      testFormatsCLMultiLine
     ]
 
 testFormatsCLNoCmd :: TestTree
@@ -300,6 +301,20 @@ testFormatsCLSpecs = testCase "Specific specs" $ do
   expectedKeyHideOn1 @=? resultKeyHideOn1
   where
     fmtKeyHideOn = Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
+
+testFormatsCLMultiLine :: TestTree
+testFormatsCLMultiLine = testCase "Formats multiline" $ do
+  let l1 = MkLog (Just cmd1) "some error" LevelError LogModeSet
+      l2 = MkLog (Just cmd1) "more output" LevelError LogModeSet
+      cmd1 = MkCommandP (mkIdx 1) (Just "") "cmd"
+
+      result = fmt (l1 :| [l2]) ^. #unConsoleLog
+
+  expected @=? result
+  where
+    fmt = Formatting.formatConsoleMultiLineLogs (MkKeyHideSwitch False) baseConsoleLoggingEnv
+
+    expected = "\ESC[91m[Error][] some error\n  more output\ESC[0m"
 
 baseConsoleLoggingEnv :: ConsoleLoggingEnv
 baseConsoleLoggingEnv =
