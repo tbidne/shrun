@@ -14,10 +14,11 @@ import Data.List.NonEmpty qualified as NE
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
+import Effects.System.Process qualified as Process
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
 import Shrun.Command qualified as Command
-import Shrun.Command.Types (CommandP1)
+import Shrun.Command.Types (CommandP1, CommandStatus (CommandRunning))
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
@@ -37,7 +38,7 @@ import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
     HasCommandLogging,
-    HasCommands,
+    HasCommands (getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -581,6 +582,7 @@ teardown ::
     MonadIORef m,
     MonadHandleWriter m,
     MonadNotify m,
+    MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -611,6 +613,31 @@ teardown startTime = do
   (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
   traverse_ sendConsole mWaitingLog
   traverse_ sendConsole mRunningLog
+
+  commandsStatusTVar <- asks getCommandStatus
+  commandsStatus <- readTVarA commandsStatusTVar
+
+  -- On some systems (e.g. linux on CI), we have trouble ending all processes.
+  -- For example, "shrun 'sleep 4'" will create 2 processes for the subcommand,
+  -- depending on the platform, i.e.
+  --
+  --   - ./bin/sh -c sleep 4
+  --   - sleep 4
+  --
+  -- When shrun is terminated, the exception is automatically sent to the
+  -- ./bin/sh, which is terminated, and should terminate the actual sleep cmd.
+  -- Unfortunately, this does not always seem to work e.g. linux on CI does
+  -- not kill the 'sleep 4' command. It does fork for CI osx, and my local
+  -- linux machine (the bin/sh command appears to immediately terminate and
+  -- given control to the sub 'sleep 4' command).
+  --
+  -- Hence here we have a fallback i.e. manually try to terminate the
+  -- command's group.
+  for_ commandsStatus $ \(_cmd, status) -> do
+    case status of
+      CommandRunning ph -> do
+        Process.interruptProcessGroupOf ph
+      _ -> pure ()
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []
 

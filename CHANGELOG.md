@@ -92,6 +92,8 @@ for versions < 1.
 ### Fixed
 * Improved final error output, so it is more likely that the actual error
   is included in the output.
+* Improve cancellation logic so that more platforms have all subcommands
+  properly cancelled (e.g. CI linux).
 
 ## [0.9.2] -- 2025-10-10
 ### Changed
