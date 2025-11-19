@@ -363,6 +363,7 @@ tryCommandStream logFn cmd = do
             P.std_in = P.Inherit,
             P.std_err = P.UseHandle sendErrH,
             P.cwd = Nothing,
+            P.delegate_ctlc = True,
             -- We are possibly trying to read from these after the process
             -- closes (e.g. an error), so it is important they are not
             -- closed automatically!
