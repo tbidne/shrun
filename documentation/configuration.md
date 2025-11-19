@@ -508,9 +508,9 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
-`none` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
+`off` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control none "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control off "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
@@ -692,7 +692,7 @@ vs.
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --file-log size_mode_warn.log --file-log-size-mode nothing "sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log size_mode_warn.log --file-log-size-mode off "sleep 2"</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #d6acff">[Finished] 2 seconds</span></code>
 </pre>
