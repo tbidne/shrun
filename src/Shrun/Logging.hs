@@ -182,7 +182,7 @@ mkUnfinishedCmdLogs = do
       go acc@(ws, rs) (cmd, status) = case status of
         CommandSuccess -> acc
         CommandFailure () -> acc
-        CommandRunning () -> (ws, Set.insert (MkCommandOrd cmd) rs)
+        CommandRunning _ -> (ws, Set.insert (MkCommandOrd cmd) rs)
         CommandWaiting () -> (Set.insert (MkCommandOrd cmd) ws, rs)
 
       cmdToTxt :: CommandOrd CommandPhase1 -> Text

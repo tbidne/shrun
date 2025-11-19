@@ -25,7 +25,7 @@ import Shrun.Command.Types
   ( CommandIndex,
     CommandP1,
     CommandStatus,
-    CommandStatusData (CommandStatusUnit),
+    CommandStatusIx (CommandStatusIxSelf),
   )
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
@@ -48,7 +48,7 @@ class HasCommands env where
   -- | Retrieves commands and their statuses.
   getCommandStatus ::
     env ->
-    TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit)))
+    TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
 
 -- | Timeout, if any.
 class HasTimeout env where
@@ -89,7 +89,7 @@ data Env r = MkEnv
     -- determine which commands have /not/ completed if we time out.
     --
     -- The boolean indicates success/fail (used for command dependencies).
-    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))),
+    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))),
     -- | Console log queue.
     consoleLogQueue :: ~(TBQueue (LogRegion r)),
     -- | Holds the anyError flag, signaling if any command exited with an
@@ -122,8 +122,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))),
-    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit)))
+    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))),
+    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
   ) =>
   LabelOptic "completedCommands" k (Env r) (Env r) a b
   where
@@ -245,7 +245,7 @@ updateCommandStatus ::
     MonadSTM m
   ) =>
   CommandP1 ->
-  CommandStatus CommandStatusUnit ->
+  CommandStatus CommandStatusIxSelf ->
   m ()
 updateCommandStatus command result = do
   completedCommands <- asks getCommandStatus

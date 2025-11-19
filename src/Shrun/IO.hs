@@ -33,9 +33,6 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
         ReadBlockLineBuffer
       ),
   )
-import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch (MkKeyHideSwitch),
-  )
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommandLogging (getCommandLogging),
@@ -88,53 +85,6 @@ data CommandResult
   = CommandResultSuccess RelativeTime
   | CommandResultFailure RelativeTime Stderr
   deriving stock (Eq, Show)
-
--- | Runs the command, returns ('ExitCode', 'Stderr')
-shExitCode ::
-  ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasInit env,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m
-  ) =>
-  CommandP1 ->
-  m (ExitCode, Stderr)
-shExitCode cmd = do
-  process <- commandToProcess cmd <$> asks getInit
-
-  logDebugCmd cmd process $ \region log -> do
-    (consoleLogging, consoleLogQueue, _) <- asks getConsoleLogging
-    let formatted = formatConsoleLog (MkKeyHideSwitch False) consoleLogging log
-    writeTBQueueA consoleLogQueue (LogRegion (log ^. #mode) region formatted)
-
-  (exitCode, _stdout, stderr) <- P.readCreateProcessWithExitCode process ""
-  pure (exitCode, wrap (MkStderr . ShrunText.fromText) stderr)
-  where
-    wrap f = f . pack
-{-# INLINEABLE shExitCode #-}
-
--- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
--- 'Right' 'Stdout' otherwise.
-tryShExitCode ::
-  ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasInit env,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m
-  ) =>
-  CommandP1 ->
-  m (Maybe Stderr)
-tryShExitCode cmd =
-  shExitCode cmd <&> \case
-    (ExitSuccess, _) -> Nothing
-    (ExitFailure _, stderr) -> Just stderr
-{-# INLINEABLE tryShExitCode #-}
 
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
@@ -210,8 +160,8 @@ tryCommandLogging command = do
       -- the queue. Debugging gets its own queue because we do not want it
       -- to be overridden by command logs.
       cmdFn = case (consoleLogSwitch, mFileLogging) of
-        -- 1. No CommandLogging and no FileLogging: No streaming at all.
-        (False, Nothing) -> tryShExitCode
+        -- 1. No CommandLogging and no FileLogging: No logging at all.
+        (False, Nothing) -> tryCommandStream (\_ _ -> pure ())
         -- 3. CommandLogging but no FileLogging. Stream.
         (True, Nothing) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
@@ -252,7 +202,6 @@ tryCommandLogging command = do
 
             tryCommandStream logFn cmd
 
-  updateCommandStatus command (CommandRunning ())
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
       -- update completed commands
@@ -290,6 +239,7 @@ tryCommandLogging command = do
 tryCommandStream ::
   ( HasInit env,
     HasCallStack,
+    HasCommands env,
     HasCommandLogging env,
     HasCommonLogging env,
     MonadHandleReader m,
@@ -299,6 +249,7 @@ tryCommandStream ::
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
+    MonadSTM m,
     MonadThread m,
     MonadTime m
   ) =>
@@ -373,6 +324,7 @@ tryCommandStream logFn cmd = do
   logDebugCmd cmd procConfig (logFn . Just)
 
   (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
+    updateCommandStatus cmd (CommandRunning ph)
     streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
