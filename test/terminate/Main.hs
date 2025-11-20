@@ -150,7 +150,7 @@ runTest sp tp = testCase desc $ do
 
 runPs :: IO (List Text)
 runPs = do
-  (ec, out, err) <- runProcess "ps aux | grep \"sleep 77\""
+  (ec, out, err) <- runProcess "ps aux -j | grep \"sleep 77\""
 
   let outLines = T.lines $ pack out
       msg = "*** ps output: ***" <> tlinesToStr outLines
@@ -294,8 +294,8 @@ runShrun sp tp = do
 
     args =
       if tp ^. #commandLogging
-        then ["--config", "off", "--console-log-command", "on", "sleep 77"]
-        else ["--config", "off", "sleep 77"]
+        then ["--config", "off", "--common-log-debug", "on", "--console-log-command", "on", "sleep 77"]
+        else ["--config", "off", "--common-log-debug", "on", "sleep 77"]
 
 runProcess :: String -> IO (ExitCode, String, String)
 runProcess txt = do

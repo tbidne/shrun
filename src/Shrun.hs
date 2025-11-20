@@ -72,7 +72,8 @@ import Shrun.Logging.Types
     FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
     LogLevel
-      ( LevelError,
+      ( LevelDebug,
+        LevelError,
         LevelFatal,
         LevelFinished,
         LevelKilled,
@@ -636,6 +637,20 @@ teardown startTime = do
   for_ commandsStatus $ \(_cmd, status) -> do
     case status of
       CommandRunning ph -> do
+        mPid <- Process.getPid ph
+        let pidStr = maybe "<nothing>" show mPid
+            pidLog =
+              MkLog
+                { cmd = Nothing,
+                  msg = fromString pidStr,
+                  lvl = LevelDebug,
+                  mode = LogModeFinish
+                }
+            pidConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging pidLog
+
+        debug <- asks (view #debug . getCommonLogging)
+        when (debug ^. #unDebug) $ do
+          withRegion Linear $ \r -> logRegion LogModeFinish r (pidConsoleLog ^. #unConsoleLog)
         Process.interruptProcessGroupOf ph
       _ -> pure ()
 
