@@ -8,13 +8,19 @@ module Shrun.IO
 
     -- * Running commands
     tryCommandLogging,
+
+    -- * Misc
+    killChildPids,
+    killPids,
   )
 where
 
+import Control.Monad (filterM)
 import Data.List qualified as L
+import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.HandleWriter qualified as HW
-import Effects.System.Process (ProcessHandle)
+import Effects.System.Process (Pid, ProcessHandle)
 import Effects.System.Process qualified as P
 import Effects.Time (MonadTime (getMonotonicTime))
 import Shrun.Command.Types
@@ -33,13 +39,10 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
         ReadBlockLineBuffer
       ),
   )
-import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
-  ( KeyHideSwitch (MkKeyHideSwitch),
-  )
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommandLogging (getCommandLogging),
-    HasCommands,
+    HasCommands (getCleanup),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -56,6 +59,7 @@ import Shrun.IO.Handle
     ReadHandleResult (ReadErr, ReadErrSuccess, ReadNoData, ReadSuccess),
   )
 import Shrun.IO.Handle qualified as Handle
+import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting (formatConsoleLog, formatFileLog)
 import Shrun.Logging.MonadRegionLogger
   ( MonadRegionLogger
@@ -73,6 +77,7 @@ import Shrun.Logging.Types
 import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import Text.Read qualified as TR
 
 -- | Newtype wrapper for stderr.
 newtype Stderr = MkStderr {unStderr :: List UnlinedText}
@@ -90,53 +95,6 @@ data CommandResult
   = CommandResultSuccess RelativeTime
   | CommandResultFailure RelativeTime Stderr
   deriving stock (Eq, Show)
-
--- | Runs the command, returns ('ExitCode', 'Stderr')
-shExitCode ::
-  ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasInit env,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m
-  ) =>
-  CommandP1 ->
-  m (ExitCode, Stderr)
-shExitCode cmd = do
-  process <- commandToProcess cmd <$> asks getInit
-
-  logDebugCmd cmd process $ \region log -> do
-    (consoleLogging, consoleLogQueue, _) <- asks getConsoleLogging
-    let formatted = formatConsoleLog (MkKeyHideSwitch False) consoleLogging log
-    writeTBQueueA consoleLogQueue (LogRegion (log ^. #mode) region formatted)
-
-  (exitCode, _stdout, stderr) <- P.readCreateProcessWithExitCode process ""
-  pure (exitCode, wrap (MkStderr . ShrunText.fromText) stderr)
-  where
-    wrap f = f . pack
-{-# INLINEABLE shExitCode #-}
-
--- | Version of 'shExitCode' that returns 'Left' 'Stderr' if there is a failure,
--- 'Right' 'Stdout' otherwise.
-tryShExitCode ::
-  ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasInit env,
-    MonadProcess m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m
-  ) =>
-  CommandP1 ->
-  m (Maybe Stderr)
-tryShExitCode cmd =
-  shExitCode cmd <&> \case
-    (ExitSuccess, _) -> Nothing
-    (ExitFailure _, stderr) -> Just stderr
-{-# INLINEABLE tryShExitCode #-}
 
 -- | Runs the command, returning the time elapsed along with a possible
 -- error.
@@ -209,9 +167,9 @@ tryCommandLogging command = do
       -- the queue. Debugging gets its own queue because we do not want it
       -- to be overridden by command logs.
       cmdFn = case (consoleLogSwitch, mFileLogging) of
-        -- 1. No CommandLogging and no FileLogging: No streaming at all.
-        (False, Nothing) -> tryShExitCode
-        -- 3. CommandLogging but no FileLogging. Stream.
+        -- 1. No CommandLogging and no FileLogging: No logging at all.
+        (False, Nothing) -> tryCommandStream (\_ _ -> pure ())
+        -- 2. CommandLogging but no FileLogging. Stream.
         (True, Nothing) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
             restoreTimerRegion timerRegion
@@ -251,7 +209,6 @@ tryCommandLogging command = do
 
             tryCommandStream logFn cmd
 
-  updateCommandStatus command (CommandRunning ())
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
       -- update completed commands
@@ -289,6 +246,7 @@ tryCommandLogging command = do
 tryCommandStream ::
   ( HasInit env,
     HasCallStack,
+    HasCommands env,
     HasLogging env m,
     MonadHandleReader m,
     MonadHandleWriter m,
@@ -297,6 +255,7 @@ tryCommandStream ::
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
+    MonadSTM m,
     MonadThread m,
     MonadTime m
   ) =>
@@ -371,6 +330,14 @@ tryCommandStream logFn cmd = do
   logDebugCmd cmd procConfig (logFn . Just)
 
   (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
+    -- Store the process PID and potential child PIDs. This is potentially
+    -- needed for later cleanup, as the /bin/sh command may start children
+    -- whose parents are later reassigned to PID 1.
+    --
+    -- See NOTE: [Command cleanup]
+    mPid <- P.getPid ph
+    childPids <- getChildPids True mPid
+    updateCommandStatus cmd (CommandRunning (mPid, childPids))
     streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
@@ -690,3 +657,219 @@ logDebugCmd cmd procConfig logFn = do
               mode = Types.LogModeFinish
             }
     withRegion Linear $ \r -> logFn r lg
+
+killChildPids ::
+  forall env m.
+  ( HasCallStack,
+    HasCommands env,
+    HasLogging env m,
+    MonadCatch m,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m,
+    MonadTime m
+  ) =>
+  Maybe Pid ->
+  m ()
+killChildPids Nothing = Logging.putDebugLogDirect "killChildPids: No pid given"
+killChildPids (Just pid) = do
+  pidsStr <- getChildPids False (Just pid)
+  pidsToKill <- filterM canKillPid pidsStr
+  killPids pidsToKill
+
+getChildPids ::
+  ( HasCallStack,
+    HasCommands env,
+    HasLogging env m,
+    MonadCatch m,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m,
+    MonadTime m
+  ) =>
+  -- | Is multithreaded. Used for logging.
+  Bool ->
+  Maybe Pid ->
+  m (List Pid)
+getChildPids _ Nothing = pure []
+getChildPids multiThreads (Just pid) = do
+  asks getCleanup >>= \case
+    Nothing -> pure []
+    Just cleanup -> do
+      (ec, stdout, stderr) <-
+        readProcessTotal
+          (cleanup ^. #findPidsExe)
+          args
+          "getChildPids"
+
+      let (result, msg) = case ec of
+            ExitFailure _ ->
+              let m =
+                    fromString
+                      $ mconcat
+                        [ "Failed finding child pids of '",
+                          show pid,
+                          "': out: '",
+                          stdout,
+                          "', err: '",
+                          stderr,
+                          "'"
+                        ]
+               in ([], m)
+            ExitSuccess ->
+              let pidsTxt =
+                    T.lines
+                      . T.strip
+                      . pack
+                      $ stdout
+                  m =
+                    fromString
+                      $ mconcat
+                        [ "Child pids of '",
+                          show pid,
+                          "': ",
+                          unpack $ T.intercalate "," pidsTxt
+                        ]
+               in case traverse (TR.readMaybe . unpack) pidsTxt of
+                    Nothing -> ([], fromString $ "Failed reading pid strings: " <> show pidsTxt)
+                    Just pids -> (pids, m)
+      logFn msg
+      pure result
+  where
+    args = ["-P", show pid]
+
+    logFn =
+      -- If multiThreads is active then this function is possibly called from
+      -- multiple threads i.e. the logs should be sent to the queue, as usual.
+      --
+      -- OTOH, this must have been called during termination when the queues
+      -- are already shutdown, hence we should log directly.
+      if multiThreads
+        then Logging.putDebugLog
+        else Logging.putDebugLogDirect
+
+killPids ::
+  ( HasCallStack,
+    HasCommands env,
+    HasLogging env m,
+    MonadCatch m,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadTime m
+  ) =>
+  List Pid ->
+  m ()
+killPids [] = pure ()
+killPids pids = do
+  asks getCleanup >>= \case
+    Nothing -> pure ()
+    Just cleanup -> do
+      (ec, stdout, stderr) <-
+        readProcessTotal
+          (cleanup ^. #killPidsExe)
+          ("-15" : fmap show pids)
+          "killChildPids"
+
+      let msg = case ec of
+            ExitSuccess ->
+              fromString
+                $ mconcat
+                  [ "Successfully ran kill with: ",
+                    unpack $ T.intercalate "," pidsTxt
+                  ]
+            ExitFailure _ ->
+              fromString
+                $ mconcat
+                  [ "Kill with '",
+                    unpack $ T.intercalate "," pidsTxt,
+                    "' failed: ",
+                    "': out: '",
+                    stdout,
+                    "', err: '",
+                    stderr,
+                    "'"
+                  ]
+
+      Logging.putDebugLogDirect msg
+  where
+    pidsTxt = fmap showt pids
+
+canKillPid ::
+  forall env m.
+  ( HasCallStack,
+    HasCommands env,
+    HasLogging env m,
+    MonadCatch m,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadTime m
+  ) =>
+  Pid ->
+  m Bool
+canKillPid pid = do
+  asks getCleanup >>= \case
+    Nothing -> pure False
+    Just cleanup -> do
+      (ec, stdout, stderr) <-
+        readProcessTotal
+          (cleanup ^. #killPidsExe)
+          ["-0", show pid]
+          "canKillPid"
+
+      let msg = case ec of
+            ExitSuccess ->
+              fromString
+                $ mconcat
+                  [ "Successfully ran kill -0 with: ",
+                    show pid
+                  ]
+            ExitFailure _ ->
+              fromString
+                $ mconcat
+                  [ "Kill -0 with '",
+                    show pid,
+                    "' failed: ",
+                    "': out: '",
+                    stdout,
+                    "', err: '",
+                    stderr,
+                    "'"
+                  ]
+      Logging.putDebugLogDirect msg
+
+      case ec of
+        ExitSuccess -> pure True
+        ExitFailure _ -> pure False
+
+readProcessTotal ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadProcess m
+  ) =>
+  FilePath ->
+  [String] ->
+  String ->
+  m (ExitCode, String, String)
+readProcessTotal exe args str = do
+  tryMySync (P.readProcessWithExitCode exe args str) >>= \case
+    Left ex -> pure (ExitFailure 1, "", mkExeErr exe args $ displayException ex)
+    Right r -> pure r
+
+mkExeErr :: String -> [String] -> String -> String
+mkExeErr exeStr args err =
+  mconcat
+    [ "Failed running command '",
+      exeStr,
+      "' with args '",
+      unpack $ T.intercalate "," (pack <$> args),
+      "': ",
+      err
+    ]

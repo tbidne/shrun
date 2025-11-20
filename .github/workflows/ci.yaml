@@ -37,7 +37,7 @@ jobs:
           - os: "macos-latest"
             test-terminate: "command"
           - os: "ubuntu-latest"
-            test-terminate: "shrun"
+            test-terminate: "command"
     name: "cabal (${{ matrix.ghc.vers }}, ${{ matrix.platform.os }})"
     runs-on: ${{ matrix.platform.os }}
     steps:
@@ -86,7 +86,7 @@ jobs:
       - name: Terminate Tests
         shell: bash
         run: |
-          TEST_TERMINATE=${{ matrix.platform.test-terminate }} cabal test ${{ matrix.ghc.proj-file }} terminate
+          TEST_TERMINATE=${{ matrix.platform.test-terminate }} cabal run ${{ matrix.ghc.proj-file }} terminate
 
       - name: Benchmarks
         if: ${{ matrix.platform.os == 'ubuntu-latest' }}

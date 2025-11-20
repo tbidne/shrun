@@ -22,8 +22,8 @@ cradle:
     - path: "./test/notify"
       component: "shrun:test:notify"
 
-    - path: "./test/terminate"
-      component: "shrun:test:terminate"
+    - path: "./test/terminate/Main.hs"
+      component: "shrun:exe:terminate"
 
     - path: "./benchmarks/Main.hs"
       component: "shrun:bench:benchmarks"

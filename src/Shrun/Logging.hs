@@ -21,9 +21,13 @@ module Shrun.Logging
     regionLogToConsoleQueue,
     logToFileQueue,
 
-    -- * Other
+    -- * Direct logs
     putRegionLogDirect,
     putRegionMultiLineLogDirect,
+
+    -- * Debug
+    putDebugLog,
+    putDebugLogDirect,
 
     -- * Misc
     mkUnfinishedCmdLogs,
@@ -45,11 +49,12 @@ import Shrun.Command.Types
   )
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Env.Types
-  ( HasCommands (getCommandStatus),
+  ( HasCommands,
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
     HasLogging,
+    getReadCommandStatus,
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Logging.Formatting qualified as Formatting
@@ -58,7 +63,7 @@ import Shrun.Logging.MonadRegionLogger qualified as MRL
 import Shrun.Logging.Types
   ( FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel (LevelWarn),
+    LogLevel (LevelDebug, LevelWarn),
     LogMessage (UnsafeLogMessage),
     LogMode (LogModeFinish),
     LogRegion (LogRegion),
@@ -177,14 +182,13 @@ mkUnfinishedCmdLogs ::
   m (Tuple2 (Maybe (NonEmpty Log)) (Maybe (NonEmpty Log)))
 mkUnfinishedCmdLogs = do
   keyHide <- asks (view #keyHide . getCommonLogging)
-  commandsStatusTVar <- asks getCommandStatus
-  commandsStatus <- readTVarA commandsStatusTVar
+  commandsStatus <- getReadCommandStatus
 
   let (waiting, running) = foldl' go (Set.empty, Set.empty) commandsStatus
       go acc@(ws, rs) (cmd, status) = case status of
         CommandSuccess -> acc
         CommandFailure () -> acc
-        CommandRunning () -> (ws, Set.insert (MkCommandOrd cmd) rs)
+        CommandRunning _ -> (ws, Set.insert (MkCommandOrd cmd) rs)
         CommandWaiting () -> (Set.insert (MkCommandOrd cmd) ws, rs)
 
       cmdToTxt :: CommandOrd CommandPhase1 -> Text
@@ -279,3 +283,51 @@ putRegionMultiLineLogDirect logs@(log :| _) = do
     fileLog <- Formatting.formatFileMultiLineLogs keyHide fl logs
     logFile (fl ^. #file % #handle) fileLog
 {-# INLINEABLE putRegionMultiLineLogDirect #-}
+
+putDebugLogDirect ::
+  ( HasCallStack,
+    HasLogging env m,
+    MonadHandleWriter m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadTime m
+  ) =>
+  LogMessage ->
+  m ()
+putDebugLogDirect = putDebugLogHelper putRegionLogDirect
+{-# INLINEABLE putDebugLogDirect #-}
+
+putDebugLog ::
+  ( HasCallStack,
+    HasLogging env m,
+    MonadHandleWriter m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m,
+    MonadTime m
+  ) =>
+  LogMessage ->
+  m ()
+putDebugLog = putDebugLogHelper (\log -> MRL.withRegion Linear $ \r -> putRegionLog r log)
+{-# INLINEABLE putDebugLog #-}
+
+putDebugLogHelper ::
+  ( HasLogging env m,
+    MonadHandleWriter m,
+    MonadReader env m
+  ) =>
+  (Log -> m ()) ->
+  LogMessage ->
+  m ()
+putDebugLogHelper logFn msg = do
+  debug <- asks (view (#debug % #unDebug) . getCommonLogging)
+  when debug $ do
+    let log =
+          MkLog
+            { cmd = Nothing,
+              msg,
+              lvl = LevelDebug,
+              mode = LogModeFinish
+            }
+    logFn log
+{-# INLINEABLE putDebugLogHelper #-}

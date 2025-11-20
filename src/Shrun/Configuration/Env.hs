@@ -40,14 +40,21 @@ import Shrun.Configuration.Data.LegendKeysCache
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env.Types
-  ( Env
+  ( CommandCleanup
+      ( MkCommandCleanup,
+        findPidsExe,
+        killPidsExe
+      ),
+    Env
       ( MkEnv,
         anyError,
+        commandCleanup,
         commandGraph,
         commands,
         completedCommands,
         config,
         consoleLogQueue,
+        hasTimedOut,
         timerRegion
       ),
     HasConsoleLogging,
@@ -93,6 +100,7 @@ makeEnvAndShrun = withEnv @m @r (runShellT shrun)
 withEnv ::
   forall m r a.
   ( HasCallStack,
+    MonadCatch m,
     MonadDBus m,
     MonadFileReader m,
     MonadFileWriter m,
@@ -102,7 +110,6 @@ withEnv ::
     MonadPathReader m,
     MonadPathWriter m,
     MonadSTM m,
-    MonadThrow m,
     MonadTerminal m
   ) =>
   (Env r -> m a) ->
@@ -252,6 +259,7 @@ readConfig fp = do
 
 fromMergedConfig ::
   ( HasCallStack,
+    MonadCatch m,
     MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
@@ -259,8 +267,7 @@ fromMergedConfig ::
     MonadPathReader m,
     MonadPathWriter m,
     MonadSTM m,
-    MonadTerminal m,
-    MonadThrow m
+    MonadTerminal m
   ) =>
   MergedConfig ->
   (Env r -> m a) ->
@@ -270,7 +277,20 @@ fromMergedConfig cfg onEnv = do
 
   anyError <- newTVarA False
   consoleLogQueue <- newTBQueueA 1_000
+  hasTimedOut <- newTVarA False
   timerRegion <- newIORef Nothing
+
+  mKillExe <- mFindExe [osp|kill|]
+  mPGrepExe <- mFindExe [osp|pgrep|]
+
+  let commandCleanup = do
+        findPidsExe <- mPGrepExe
+        killPidsExe <- mKillExe
+        pure
+          $ MkCommandCleanup
+            { findPidsExe,
+              killPidsExe
+            }
 
   CoreConfig.withCoreEnv (cfg ^. #coreConfig) $ \coreConfigEnv -> do
     let env =
@@ -281,6 +301,8 @@ fromMergedConfig cfg onEnv = do
               consoleLogQueue,
               commandGraph,
               commands,
+              commandCleanup,
+              hasTimedOut,
               timerRegion
             }
 
@@ -294,6 +316,11 @@ fromMergedConfig cfg onEnv = do
         ( c ^. #index,
           (c, CommandWaiting ())
         )
+
+    mFindExe p = do
+      tryMySync (PR.findExecutable p) <&> \case
+        Left _ -> Nothing
+        Right mPath -> mPath >>= decodeThrowM
 {-# INLINEABLE fromMergedConfig #-}
 
 getShrunXdgConfig :: (HasCallStack, MonadPathReader m) => m OsPath

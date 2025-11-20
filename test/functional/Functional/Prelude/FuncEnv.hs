@@ -22,13 +22,13 @@ import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
     HasCommandLogging (getCommandLogging),
-    HasCommands (getCommandDepGraph, getCommandStatus),
+    HasCommands (getCleanup, getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
     HasInit (getInit),
     HasNotifyConfig (getNotifyConfig),
-    HasTimeout (getTimeout),
+    HasTimeout (getHasTimedOut, getTimeout),
   )
 import Shrun.Logging.MonadRegionLogger
   ( MonadRegionLogger
@@ -220,11 +220,13 @@ instance
 
 instance HasTimeout FuncEnv where
   getTimeout = getTimeout . view #coreEnv
+  getHasTimedOut = getHasTimedOut . view #coreEnv
 
 instance HasInit FuncEnv where
   getInit = getInit . view #coreEnv
 
 instance HasCommands FuncEnv where
+  getCleanup = getCleanup . view #coreEnv
   getCommandDepGraph = getCommandDepGraph . view #coreEnv
   getCommandStatus = getCommandStatus . view #coreEnv
 

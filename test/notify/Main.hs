@@ -13,13 +13,13 @@ import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
     HasCommandLogging (getCommandLogging),
-    HasCommands (getCommandDepGraph, getCommandStatus),
+    HasCommands (getCleanup, getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
     HasInit (getInit),
     HasNotifyConfig (getNotifyConfig),
-    HasTimeout (getTimeout),
+    HasTimeout (getHasTimedOut, getTimeout),
   )
 import Shrun.Logging.MonadRegionLogger
   ( MonadRegionLogger
@@ -123,6 +123,7 @@ instance HasAnyError NotifyEnv where
   getAnyError = getAnyError . (.unNotifyEnv)
 
 instance HasCommands NotifyEnv where
+  getCleanup = getCleanup . (.unNotifyEnv)
   getCommandDepGraph = getCommandDepGraph . (.unNotifyEnv)
   getCommandStatus = getCommandStatus . (.unNotifyEnv)
 
@@ -146,6 +147,8 @@ instance HasNotifyConfig NotifyEnv where
 
 instance HasTimeout NotifyEnv where
   getTimeout = getTimeout . (.unNotifyEnv)
+
+  getHasTimedOut = getHasTimedOut . (.unNotifyEnv)
 
 liftNotify :: ShellT (Env ()) IO a -> ShellT NotifyEnv IO a
 liftNotify m = do

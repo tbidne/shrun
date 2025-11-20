@@ -85,6 +85,7 @@ import Control.Exception as X
 import Control.Exception.Utils as X
   ( StringException (MkStringException),
     exitFailure,
+    throwString,
     throwText,
   )
 import Control.Exception.Utils qualified as Ex.Utils
@@ -255,6 +256,7 @@ import Effects.Time as X (MonadTime, withTiming)
 import FileSystem.OsPath as X
   ( OsPath,
     decodeLenient,
+    decodeThrowM,
     encodeThrowM,
     osp,
     ospPathSep,

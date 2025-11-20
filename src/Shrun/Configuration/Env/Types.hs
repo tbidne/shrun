@@ -4,12 +4,16 @@
 module Shrun.Configuration.Env.Types
   ( -- * \"HasX\" style typeclasses
     HasCommands (..),
+    CommandCleanup (..),
     updateCommandStatus,
+    getReadCommandStatus,
     HasCommandLogging (..),
     HasCommonLogging (..),
     HasConsoleLogging (..),
     HasFileLogging (..),
     HasTimeout (..),
+    setTimedOut,
+    whenTimedOut,
     HasInit (..),
     HasAnyError (..),
     setAnyErrorTrue,
@@ -29,7 +33,7 @@ import Shrun.Command.Types
   ( CommandIndex,
     CommandP1,
     CommandStatus,
-    CommandStatusData (CommandStatusUnit),
+    CommandStatusIx (CommandStatusIxSelf),
   )
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
@@ -53,19 +57,55 @@ type HasLogging env m =
     HasFileLogging env
   )
 
+-- TODO: When we can (i.e. process provides OsPath API), these types should
+-- be changed to OsPath.
+data CommandCleanup = MkCommandCleanup
+  { findPidsExe :: FilePath,
+    killPidsExe :: FilePath
+  }
+  deriving stock (Eq, Show)
+
+instance
+  (k ~ A_Lens, a ~ FilePath, b ~ FilePath) =>
+  LabelOptic "findPidsExe" k CommandCleanup CommandCleanup a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkCommandCleanup a1 a2) ->
+        fmap
+          (\b -> MkCommandCleanup b a2)
+          (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ FilePath, b ~ FilePath) =>
+  LabelOptic "killPidsExe" k CommandCleanup CommandCleanup a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkCommandCleanup a1 a2) ->
+        fmap
+          (\b -> MkCommandCleanup a1 b)
+          (f a2)
+  {-# INLINE labelOptic #-}
+
 -- | The commands themselves.
 class HasCommands env where
+  -- | Retrieves the cleanup functions, if they exist.
+  getCleanup :: env -> Maybe CommandCleanup
+
   -- | Retrieves full command graph.
   getCommandDepGraph :: env -> CommandGraph
 
   -- | Retrieves commands and their statuses.
   getCommandStatus ::
     env ->
-    TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit)))
+    TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
 
 -- | Timeout, if any.
 class HasTimeout env where
   getTimeout :: env -> WithDisabled Timeout
+  getHasTimedOut :: env -> TVar Bool
 
 -- | Init, if any.
 class HasInit env where
@@ -97,71 +137,31 @@ class HasAnyError env where
 
 -- | The main 'Env' type used by Shrun.
 data Env r = MkEnv
-  { config :: CoreConfigP ConfigPhaseEnv,
+  { -- | Holds the anyError flag, signaling if any command exited with an
+    -- error.
+    anyError :: TVar Bool,
+    -- | Functions to clean up running commands.
+    commandCleanup :: Maybe CommandCleanup,
+    -- | Holds notification environment.
+    -- | Commands
+    commands :: NESeq CommandP1,
+    -- | Command graph.
+    commandGraph :: CommandGraph,
     -- | Holds a sequence of commands that have completed. Used so we can
     -- determine which commands have /not/ completed if we time out.
     --
     -- The boolean indicates success/fail (used for command dependencies).
-    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))),
+    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))),
+    -- | Core config.
+    config :: CoreConfigP ConfigPhaseEnv,
     -- | Console log queue.
     consoleLogQueue :: ~(TBQueue (LogRegion r)),
-    -- | Holds the anyError flag, signaling if any command exited with an
-    -- error.
-    anyError :: TVar Bool,
-    -- | Command graph.
-    commandGraph :: CommandGraph,
-    -- | Holds notification environment.
-    -- | Commands
-    commands :: NESeq CommandP1,
+    -- Flag for if shrun has timed out, for conditionally running cleanup.
+    hasTimedOut :: TVar Bool,
     -- | Timer region. It's an IORef only because it is not initialized on
     -- startup. Once it is set it is no longer mutated.
     timerRegion :: IORef (Maybe r)
   }
-
-instance
-  ( k ~ A_Lens,
-    a ~ CoreConfigP ConfigPhaseEnv,
-    b ~ CoreConfigP ConfigPhaseEnv
-  ) =>
-  LabelOptic "config" k (Env r) (Env r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkEnv b a2 a3 a4 a5 a6 a7)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))),
-    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit)))
-  ) =>
-  LabelOptic "completedCommands" k (Env r) (Env r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkEnv a1 b a3 a4 a5 a6 a7)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ TBQueue (LogRegion r),
-    b ~ TBQueue (LogRegion r)
-  ) =>
-  LabelOptic "consoleLogQueue" k (Env r) (Env r) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
-        fmap
-          (\b -> MkEnv a1 a2 b a4 a5 a6 a7)
-          (f a3)
-  {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Lens,
@@ -172,25 +172,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 b a5 a6 a7)
-          (f a4)
+          (\b -> MkEnv b a2 a3 a4 a5 a6 a7 a8 a9)
+          (f a1)
   {-# INLINE labelOptic #-}
 
 instance
   ( k ~ A_Lens,
-    a ~ CommandGraph,
-    b ~ CommandGraph
+    a ~ Maybe CommandCleanup,
+    b ~ Maybe CommandCleanup
   ) =>
-  LabelOptic "commandGraph" k (Env r) (Env r) a b
+  LabelOptic "commandCleanup" k (Env r) (Env r) a b
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 a4 b a6 a7)
-          (f a5)
+          (\b -> MkEnv a1 b a3 a4 a5 a6 a7 a8 a9)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -202,10 +202,85 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 a4 a5 b a7)
+          (\b -> MkEnv a1 a2 b a4 a5 a6 a7 a8 a9)
+          (f a3)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ CommandGraph,
+    b ~ CommandGraph
+  ) =>
+  LabelOptic "commandGraph" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 b a5 a6 a7 a8 a9)
+          (f a4)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))),
+    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
+  ) =>
+  LabelOptic "completedCommands" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 a4 b a6 a7 a8 a9)
+          (f a5)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ CoreConfigP ConfigPhaseEnv,
+    b ~ CoreConfigP ConfigPhaseEnv
+  ) =>
+  LabelOptic "config" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 a4 a5 b a7 a8 a9)
           (f a6)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TBQueue (LogRegion r),
+    b ~ TBQueue (LogRegion r)
+  ) =>
+  LabelOptic "consoleLogQueue" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 a4 a5 a6 b a8 a9)
+          (f a7)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ TVar Bool,
+    b ~ TVar Bool
+  ) =>
+  LabelOptic "hasTimedOut" k (Env r) (Env r) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
+        fmap
+          (\b -> MkEnv a1 a2 a3 a4 a5 a6 a7 b a9)
+          (f a8)
   {-# INLINE labelOptic #-}
 
 instance
@@ -217,14 +292,16 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7) ->
+      $ \f (MkEnv a1 a2 a3 a4 a5 a6 a7 a8 a9) ->
         fmap
-          (\b -> MkEnv a1 a2 a3 a4 a5 a6 b)
-          (f a7)
+          (\b -> MkEnv a1 a2 a3 a4 a5 a6 a7 a8 b)
+          (f a9)
   {-# INLINE labelOptic #-}
 
 instance HasTimeout (Env r) where
   getTimeout = view (#config % #timeout)
+
+  getHasTimedOut = view #hasTimedOut
 
 instance HasInit (Env r) where
   getInit = view (#config % #init)
@@ -246,6 +323,8 @@ instance HasFileLogging (Env r) where
   getFileLogging = view (#config % #fileLogging)
 
 instance HasCommands (Env r) where
+  getCleanup = view #commandCleanup
+
   getCommandDepGraph = view #commandGraph
 
   getCommandStatus = view #completedCommands
@@ -258,7 +337,7 @@ updateCommandStatus ::
     MonadSTM m
   ) =>
   CommandP1 ->
-  CommandStatus CommandStatusUnit ->
+  CommandStatus CommandStatusIxSelf ->
   m ()
 updateCommandStatus command result = do
   completedCommands <- asks getCommandStatus
@@ -292,3 +371,22 @@ whenDebug :: (HasCommonLogging env, MonadReader env m) => m () -> m ()
 whenDebug m = do
   debug <- asks (view (#debug % #unDebug) . getCommonLogging)
   when debug m
+
+getReadCommandStatus ::
+  ( HasCallStack,
+    HasCommands env,
+    MonadReader env m,
+    MonadSTM m
+  ) =>
+  m (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
+getReadCommandStatus = asks getCommandStatus >>= readTVarA
+
+-- | Sets timedout to true.
+setTimedOut :: (HasTimeout env, MonadReader env m, MonadSTM m) => m ()
+setTimedOut = asks getHasTimedOut >>= \r -> writeTVarA r True
+
+-- | Run the action when shrun has timed out.
+whenTimedOut :: (HasTimeout env, MonadReader env m, MonadSTM m) => m () -> m ()
+whenTimedOut m = do
+  hasTimedOut <- readTVarA =<< asks getHasTimedOut
+  when hasTimedOut m

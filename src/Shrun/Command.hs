@@ -17,7 +17,7 @@ import Shrun.Command.Types
         CommandSuccess,
         CommandWaiting
       ),
-    CommandStatusData (CommandStatusUnit, CommandStatusVertex),
+    CommandStatusIx (CommandStatusIxPredecessors, CommandStatusIxSelf),
   )
 import Shrun.Command.Types qualified as Command.Types
 import Shrun.Configuration.Data.Graph (CommandGraph)
@@ -93,7 +93,7 @@ runCommand ::
   -- | Command dependency graph.
   CommandGraph ->
   -- | Command status ref.
-  TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))) ->
+  TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))) ->
   -- | Vertex semaphore map, for preventing the same command being kicked off
   -- by multiple commands.
   Map Vertex (MVar ()) ->
@@ -194,13 +194,13 @@ getPredecessorsStatus ::
     MonadSTM m
   ) =>
   CommandGraph ->
-  TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusUnit))) ->
+  TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))) ->
   Vertex ->
-  m (CommandStatus CommandStatusVertex)
+  m (CommandStatus CommandStatusIxPredecessors)
 getPredecessorsStatus cdg commandStatusesRef v = do
   commandStatuses <- readTVarA commandStatusesRef
 
-  let toResult :: Vertex -> m (CommandStatus CommandStatusVertex)
+  let toResult :: Vertex -> m (CommandStatus CommandStatusIxPredecessors)
       toResult p =
         let idx = Command.Types.fromVertex p
          in case Map.lookup (Command.Types.fromVertex p) commandStatuses of
