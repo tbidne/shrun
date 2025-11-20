@@ -13,10 +13,11 @@ import Data.List qualified as L
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
+import Effects.System.Process qualified as Process
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
 import Shrun.Command qualified as Command
-import Shrun.Command.Types (CommandP1)
+import Shrun.Command.Types (CommandP1, CommandStatus (CommandRunning))
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
@@ -35,12 +36,12 @@ import Shrun.Configuration.Data.Notify.Action
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
-    HasCommandLogging,
-    HasCommands,
+    HasCommands (getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
     HasInit,
+    HasLogging,
     HasNotifyConfig (getNotifyConfig),
     HasTimeout (getTimeout),
     setAnyErrorTrue,
@@ -53,6 +54,7 @@ import Shrun.IO
     Stderr (MkStderr),
     tryCommandLogging,
   )
+import Shrun.IO qualified
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Formatting qualified as LogFmt
@@ -97,10 +99,7 @@ shrun ::
     HasCallStack,
     HasCommands env,
     HasInit env,
-    HasCommandLogging env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     HasNotifyConfig env,
     HasTimeout env,
     MonadAsync m,
@@ -175,10 +174,7 @@ runCommand ::
     HasCallStack,
     HasCommands env,
     HasInit env,
-    HasCommandLogging env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     HasNotifyConfig env,
     MonadHandleReader m,
     MonadHandleWriter m,
@@ -342,9 +338,7 @@ printFinalResult ::
     HasAnyError env,
     HasCallStack,
     HasCommands env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     HasNotifyConfig env,
     MonadIORef m,
     MonadNotify m,
@@ -573,13 +567,13 @@ teardown ::
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     HasNotifyConfig env,
+    MonadCatch m,
     MonadIORef m,
     MonadHandleWriter m,
     MonadNotify m,
+    MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -600,9 +594,16 @@ teardown startTime = do
 
   (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
 
+  -- NOTE: Manual logging because the logging queues have been shutdown at this
+  -- point. We must write to the console (logRegion) and file (logFile)
+  -- directly.
+
   -- 1. Send message about cancelling commands.
   traverse_ Logging.putRegionMultiLineLogDirect mWaitingLog
   traverse_ Logging.putRegionMultiLineLogDirect mRunningLog
+
+  -- Clean up remaining commands.
+  cleanupCommands
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []
 
@@ -664,3 +665,75 @@ handleTerminate tid = do
         throwTo tid MkTermException
 
   void $ Signals.installHandler Posix.sigTERM handler Nothing
+
+-- NOTE: [Command cleanup]
+--
+-- When shrun is going to terminate prematurely (e.g. killed externally or
+-- a fatal exception is encountered), we want all subcommands to terminate
+-- as well. We generally rely on our libraries to handle this automatically:
+--
+--   - async ensures an exception in the main thread is rethrown to all
+--     subthreads.
+--
+--   - process forwards this exception to the running command.
+--
+-- While this is often enough, unfortunately there are some situations where
+-- it is not. First, note that command running is complicated by the fact
+-- that we are running through the shell, so e.g. "shrun 'some command'"
+-- actually runs "/bin/sh -c 'some command'", which in turn runs
+-- 'some command' in a platform-specific way.
+--
+-- For example, my local (linux) machine and CI OSX appear to immediately
+-- terminate the /bin/sh command, and run 'some command' directly, whereas
+-- CI Linux has both running.
+--
+-- Unfortunately, while an exception will terminate the /bin/sh command
+-- on CI Linux, this exception does _not_ get proprogated to the underlying
+-- 'some command'. To make matters worse, 'some command' has its parent PID
+-- reassigned to PID 1, meaning we no longer have any connection to this
+-- process.
+--
+-- To combat this, when we launch a command, we immediately store its PID
+-- and any child PIDs in our command status map. Then, we attempt to kill all
+-- of this upon cleanup. While this is overkill on some platforms,
+-- it is necessary for CI linux (and presumably others), and does not appear
+-- to be harmful. Note that this requires the following utilities:
+--
+--   - kill
+--   - pgrep
+--
+-- It would be nice if these were not required.
+cleanupCommands ::
+  ( HasCallStack,
+    HasCommands env,
+    HasLogging env m,
+    MonadCatch m,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m,
+    MonadTime m
+  ) =>
+  m ()
+cleanupCommands = do
+  commandsStatusTVar <- asks getCommandStatus
+  commandsStatus <- readTVarA commandsStatusTVar
+
+  -- 1. Try to kill any commands still running.
+  for_ commandsStatus $ \(_cmd, status) -> do
+    case status of
+      CommandRunning (mPid, childPids) -> do
+        -- 1.1. Kill the commands children that were immediately spawned.
+        -- This is the primary 'fix', as it is what happens on CI Linux,
+        -- at least.
+        Shrun.IO.killPids childPids
+        -- 1.2. Search for any remaining children and kill those too.
+        -- This would only be relevant if the command spawned any commands
+        -- sometime _after_ its initial run - presumably a rarity.
+        Shrun.IO.killChildPids mPid
+      _ -> pure ()
+
+  -- Kill any of shrun's remaining children. Probably unnecessary.
+  pid <- Process.getCurrentPid
+  Shrun.IO.killChildPids (Just pid)

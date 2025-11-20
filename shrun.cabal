@@ -335,9 +335,8 @@ test-suite notify
 
   hs-source-dirs: test/notify
 
-test-suite terminate
+executable terminate
   import:         common-lang
-  type:           exitcode-stdio-1.0
   main-is:        Main.hs
   other-modules:
   build-depends:
@@ -347,8 +346,6 @@ test-suite terminate
     , effects-process
     , env-guard
     , shrun
-    , tasty
-    , tasty-hunit
     , text
 
   hs-source-dirs: test/terminate
