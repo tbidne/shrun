@@ -23,6 +23,7 @@ module Shrun.Logging
 
     -- * Other
     putRegionLogDirect,
+    putRegionMultiLineLogDirect,
 
     -- * Misc
     mkUnfinishedCmdLogs,
@@ -61,7 +62,6 @@ import Shrun.Logging.Types
     LogMode (LogModeFinish),
     LogRegion (LogRegion),
   )
-import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 
 -- | Unconditionally writes a log to the console queue. Conditionally
@@ -224,6 +224,9 @@ logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 {-# INLINEABLE logFile #-}
 
+-- | Like 'putRegionLog', except this logs directly to the console / file,
+-- rather than placing the log in a queue. This is for when log queues are
+-- shutdown (e.g. terminated). This should only be called from a single thread.
 putRegionLogDirect ::
   forall env m.
   ( HasCallStack,
@@ -245,8 +248,41 @@ putRegionLogDirect log = do
   let keyHide = view #keyHide commonLogging
       consoleLog = Formatting.formatConsoleLog keyHide consoleLogging log
 
-  MRL.withRegion Linear $ \r -> MRL.logRegion Types.LogModeFinish r (consoleLog ^. #unConsoleLog)
+  MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
 
   for_ mFileLogging $ \fl -> do
     fileLog <- Formatting.formatFileLog keyHide fl log
     logFile (fl ^. #file % #handle) fileLog
+{-# INLINEABLE putRegionLogDirect #-}
+
+-- | Like 'putRegionMultiLineLogDirect', except this logs directly to the
+-- console / file, rather than placing the log in a queue. This is for when
+-- log queues are shutdown (e.g. terminated). This should only be called from
+-- a single thread.
+putRegionMultiLineLogDirect ::
+  forall env m.
+  ( HasCallStack,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
+    MonadHandleWriter m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadTime m
+  ) =>
+  NonEmpty Log ->
+  m ()
+putRegionMultiLineLogDirect logs@(log :| _) = do
+  commonLogging <- asks getCommonLogging
+  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
+  mFileLogging <- asks getFileLogging
+
+  let keyHide = view #keyHide commonLogging
+      consoleLog = Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
+
+  MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
+
+  for_ mFileLogging $ \fl -> do
+    fileLog <- Formatting.formatFileMultiLineLogs keyHide fl logs
+    logFile (fl ^. #file % #handle) fileLog
+{-# INLINEABLE putRegionMultiLineLogDirect #-}
