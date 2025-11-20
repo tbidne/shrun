@@ -634,15 +634,24 @@ teardown startTime = do
   --
   -- Hence here we have a fallback i.e. manually try to terminate the
   -- command's group.
-  for_ commandsStatus $ \(_cmd, status) -> do
+  for_ commandsStatus $ \(cmd, status) -> do
     case status of
-      CommandRunning ph -> do
-        mPid <- Process.getPid ph
+      CommandRunning mPid -> do
+        -- FIXME: This is just an extra message for debugging. Currently,
+        -- we want to see the tests print out some pids w/ ps aux, and
+        -- _hopefully_ the problematic 'sleep 77' pid will have the /bin/sh
+        -- pid as its parent. As a bonus, hopefully that matches up with here.
+        --
+        -- If that's right, then _maybe_ we can come up with some way to
+        --
+        --   1. Get the child pid from the parent pid (might require external process)
+        --   2. Kill that (kill?)
         let pidStr = maybe "<nothing>" show mPid
+            pidMsg = "cmd '" ++ show cmd ++ "' with pid: " ++ pidStr
             pidLog =
               MkLog
                 { cmd = Nothing,
-                  msg = fromString pidStr,
+                  msg = fromString pidMsg,
                   lvl = LevelDebug,
                   mode = LogModeFinish
                 }
@@ -651,7 +660,6 @@ teardown startTime = do
         debug <- asks (view #debug . getCommonLogging)
         when (debug ^. #unDebug) $ do
           withRegion Linear $ \r -> logRegion LogModeFinish r (pidConsoleLog ^. #unConsoleLog)
-        Process.interruptProcessGroupOf ph
       _ -> pure ()
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []

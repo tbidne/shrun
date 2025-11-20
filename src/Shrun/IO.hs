@@ -8,6 +8,10 @@ module Shrun.IO
 
     -- * Running commands
     tryCommandLogging,
+
+    -- * Misc
+    getChildPids,
+    killPids,
   )
 where
 
@@ -68,6 +72,7 @@ import Shrun.Logging.Types
 import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import Data.Text qualified as T
 
 -- | Newtype wrapper for stderr.
 newtype Stderr = MkStderr {unStderr :: List UnlinedText}
@@ -325,7 +330,8 @@ tryCommandStream logFn cmd = do
   logDebugCmd cmd procConfig (logFn . Just)
 
   (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
-    updateCommandStatus cmd (CommandRunning ph)
+    mPid <- P.getPid ph
+    updateCommandStatus cmd (CommandRunning mPid)
     streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
@@ -646,3 +652,33 @@ logDebugCmd cmd procConfig logFn = do
               mode = Types.LogModeFinish
             }
     withRegion Linear $ \r -> logFn r lg
+
+getChildPids :: (HasCallStack, MonadProcess m) => ProcessHandle -> m (List String)
+getChildPids ph = do
+  pid <- P.getPid ph
+  let args = mkArgs pid
+  -- FIXME: Debug stderr on failure.
+  (_ec, stdout, _stderr) <- P.readProcessWithExitCode "pgrep" args "getChildPids"
+  let pids =
+        fmap unpack
+          . T.lines
+          . T.strip
+          . pack
+          $ stdout
+  pure pids
+  where
+    mkArgs p = ["-P", show p]
+
+killPids :: (HasCallStack, MonadProcess f) => List String -> f ()
+killPids pids = do
+  P.readProcessWithExitCode "kill" ("-15" : pids) "killChildPids"
+  pure ()
+  where
+
+replace :: Eq a => a -> a -> [a] -> [a]
+replace c d = go
+  where
+    go [] = []
+    go (x : xs)
+      | x == c = d : go xs
+      | otherwise = c : go xs

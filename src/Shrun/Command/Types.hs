@@ -31,7 +31,7 @@ module Shrun.Command.Types
 where
 
 import Data.Text qualified as T
-import Effects.System.Process (ProcessHandle)
+import Effects.System.Process (Pid)
 import Effects.System.Process qualified as P
 import Shrun.Command.Types.Internal (CommandIndex)
 import Shrun.Command.Types.Internal qualified as Internal
@@ -164,7 +164,7 @@ data CommandStatus a
   | -- | The command failed.
     CommandFailure (CommandStatusF a ())
   | -- | The command is running.
-    CommandRunning (CommandStatusF a ProcessHandle)
+    CommandRunning (CommandStatusF a (Maybe Pid))
   | -- | The command is waiting to run.
     CommandWaiting (CommandStatusF a ())
 
