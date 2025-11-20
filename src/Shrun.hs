@@ -16,7 +16,7 @@ import Effects.System.Posix.Signals qualified as Signals
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
 import Shrun.Command qualified as Command
-import Shrun.Command.Types (CommandP1)
+import Shrun.Command.Types (CommandP1, CommandStatus (CommandRunning))
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
@@ -36,7 +36,7 @@ import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env.Types
   ( HasAnyError (getAnyError),
     HasCommandLogging,
-    HasCommands,
+    HasCommands (getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -53,6 +53,7 @@ import Shrun.IO
     Stderr (MkStderr),
     tryCommandLogging,
   )
+import Shrun.IO qualified
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Formatting qualified as LogFmt
@@ -580,6 +581,7 @@ teardown ::
     MonadIORef m,
     MonadHandleWriter m,
     MonadNotify m,
+    MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -603,6 +605,34 @@ teardown startTime = do
   -- 1. Send message about cancelling commands.
   traverse_ Logging.putRegionMultiLineLogDirect mWaitingLog
   traverse_ Logging.putRegionMultiLineLogDirect mRunningLog
+
+  -- NOTE: Manual logging because the logging queues have been shutdown at this
+  -- point. We must write to the console (logRegion) and file (logFile)
+  -- directly.
+
+  commandsStatusTVar <- asks getCommandStatus
+  commandsStatus <- readTVarA commandsStatusTVar
+
+  -- On some systems (e.g. linux on CI), we have trouble ending all processes.
+  -- For example, "shrun 'sleep 4'" will create 2 processes for the subcommand,
+  -- depending on the platform, i.e.
+  --
+  --   - ./bin/sh -c sleep 4
+  --   - sleep 4
+  --
+  -- When shrun is terminated, the exception is automatically sent to the
+  -- ./bin/sh, which is terminated, and should terminate the actual sleep cmd.
+  -- Unfortunately, this does not always seem to work e.g. linux on CI does
+  -- not kill the 'sleep 4' command. It does fork for CI osx, and my local
+  -- linux machine (the bin/sh command appears to immediately terminate and
+  -- given control to the sub 'sleep 4' command).
+  --
+  -- Hence here we have a fallback i.e. manually try to terminate the
+  -- command's group.
+  for_ commandsStatus $ \(_cmd, status) -> do
+    case status of
+      CommandRunning mPid -> Shrun.IO.killChildPids mPid
+      _ -> pure ()
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []
 

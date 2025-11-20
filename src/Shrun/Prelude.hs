@@ -85,6 +85,7 @@ import Control.Exception as X
 import Control.Exception.Utils as X
   ( StringException (MkStringException),
     exitFailure,
+    throwString,
     throwText,
   )
 import Control.Exception.Utils qualified as Ex.Utils

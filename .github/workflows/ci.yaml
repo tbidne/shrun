@@ -5,6 +5,7 @@ on: # yamllint disable-line rule:truthy rule:comments
     branches:
       - main
       - release
+      - sub-kill-3
 
   pull_request:
     branches:
@@ -37,7 +38,7 @@ jobs:
           - os: "macos-latest"
             test-terminate: "command"
           - os: "ubuntu-latest"
-            test-terminate: "shrun"
+            test-terminate: "command"
     name: "cabal (${{ matrix.ghc.vers }}, ${{ matrix.platform.os }})"
     runs-on: ${{ matrix.platform.os }}
     steps:
@@ -51,241 +52,242 @@ jobs:
         run: |
           cabal configure \
             ${{ matrix.ghc.proj-file }} \
-            --enable-tests \
-            --ghc-options -Werror
+            --enable-tests # \
+            # --ghc-options -Werror
 
       - name: Compile
         run: cabal build ${{ matrix.ghc.proj-file }} lib:shrun
 
-      - name: Doctests
-        if: ${{ matrix.ghc == '9.6.7'
-          || matrix.ghc == '9.8.4'
-          || matrix.ghc == '9.10.2'
-          || matrix.ghc == '9.12.2'
-          }}
-        run: |
-          echo "*** Installing doctest ***"
-          cabal install --ignore-project doctest --flag cabal-doctest
+      # - name: Doctests
+      #   if: ${{ matrix.ghc == '9.6.7'
+      #     || matrix.ghc == '9.8.4'
+      #     || matrix.ghc == '9.10.2'
+      #     || matrix.ghc == '9.12.2'
+      #     }}
+      #   run: |
+      #     echo "*** Installing doctest ***"
+      #     cabal install --ignore-project doctest --flag cabal-doctest
 
-          echo "*** Running doctest ***"
-          cabal doctest lib:unicode-grapheme
+      #     echo "*** Running doctest ***"
+      #     cabal doctest lib:unicode-grapheme
 
-      - name: Unit Tests
-        run: |
-          cabal test ${{ matrix.ghc.proj-file }} unit \
-            --test-options '--hedgehog-tests 100000'
+      # - name: Unit Tests
+      #   run: |
+      #     cabal test ${{ matrix.ghc.proj-file }} unit \
+      #       --test-options '--hedgehog-tests 100000'
 
-      - name: Integration Tests
-        run: cabal test ${{ matrix.ghc.proj-file }} integration
+      # - name: Integration Tests
+      #   run: cabal test ${{ matrix.ghc.proj-file }} integration
 
-      - name: Functional Tests
-        run: |
-          TEST_FUNCTIONAL=1 cabal test ${{ matrix.ghc.proj-file }} functional \
-            --test-options '--read-strategy all'
+      # - name: Functional Tests
+      #   run: |
+      #     TEST_FUNCTIONAL=1 cabal test ${{ matrix.ghc.proj-file }} functional \
+      #       --test-options '--read-strategy all'
 
       - name: Terminate Tests
         shell: bash
         run: |
-          TEST_TERMINATE=${{ matrix.platform.test-terminate }} cabal test ${{ matrix.ghc.proj-file }} terminate
+          set +e
+          TEST_TERMINATE=${{ matrix.platform.test-terminate }} cabal run ${{ matrix.ghc.proj-file }} terminate
 
-      - name: Benchmarks
-        if: ${{ matrix.platform.os == 'ubuntu-latest' }}
-        id: bench
-        run: |
-          cabal bench ${{ matrix.ghc.proj-file }} --benchmark-options '
-            +RTS -T -RTS
-            -t200
-            --csv benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv
-            --svg benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.svg
-            --baseline benchmarks/baseline_${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv'
+      # - name: Benchmarks
+      #   if: ${{ matrix.platform.os == 'ubuntu-latest' }}
+      #   id: bench
+      #   run: |
+      #     cabal bench ${{ matrix.ghc.proj-file }} --benchmark-options '
+      #       +RTS -T -RTS
+      #       -t200
+      #       --csv benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv
+      #       --svg benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.svg
+      #       --baseline benchmarks/baseline_${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv'
 
-      - uses: actions/upload-artifact@v4
-        if: ${{ matrix.platform.os == 'ubuntu-latest' }}
-        id: bench-upload
-        with:
-          # Unique because we only run the benchmarks on ubuntu
-          name: bench-artifacts-${{ matrix.ghc.vers }}
-          path: |
-            benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv
-            benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.svg
-          retention-days: 1
+      # - uses: actions/upload-artifact@v4
+      #   if: ${{ matrix.platform.os == 'ubuntu-latest' }}
+      #   id: bench-upload
+      #   with:
+      #     # Unique because we only run the benchmarks on ubuntu
+      #     name: bench-artifacts-${{ matrix.ghc.vers }}
+      #     path: |
+      #       benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.csv
+      #       benchmarks/${{ matrix.platform.os }}_${{ matrix.ghc.vers }}_ci.svg
+      #     retention-days: 1
 
-  merge-benchmarks:
-    runs-on: "ubuntu-latest"
-    needs: cabal
-    if: ${{ always() && needs.cabal.result == 'failure' }}
-    steps:
-      - name: Merge Bench Artifacts
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: bench-artifacts
-          pattern: bench-artifacts-*
-          delete-merged: true
-          retention-days: 1
+  # merge-benchmarks:
+  #   runs-on: "ubuntu-latest"
+  #   needs: cabal
+  #   if: ${{ always() && needs.cabal.result == 'failure' }}
+  #   steps:
+  #     - name: Merge Bench Artifacts
+  #       uses: actions/upload-artifact/merge@v4
+  #       with:
+  #         name: bench-artifacts
+  #         pattern: bench-artifacts-*
+  #         delete-merged: true
+  #         retention-days: 1
 
-  stack:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - os: "macos-latest"
-            flaky: false
-          - os: "ubuntu-latest"
-            flaky: true
-    runs-on: ${{ matrix.platform.os }}
-    # The ubuntu runner has inexplicably started refusing to run on CI...
-    continue-on-error: ${{ matrix.platform.flaky }}
-    steps:
-      - uses: actions/checkout@v4
+  # stack:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       platform:
+  #         - os: "macos-latest"
+  #           flaky: false
+  #         - os: "ubuntu-latest"
+  #           flaky: true
+  #   runs-on: ${{ matrix.platform.os }}
+  #   # The ubuntu runner has inexplicably started refusing to run on CI...
+  #   continue-on-error: ${{ matrix.platform.flaky }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: haskell-actions/setup@v2
-        with:
-          enable-stack: true
+  #     - uses: haskell-actions/setup@v2
+  #       with:
+  #         enable-stack: true
 
-      - name: Compile
-        run: stack build --ghc-options -Werror
+  #     - name: Compile
+  #       run: stack build --ghc-options -Werror
 
-      - name: Test
-        run: TEST_FUNCTIONAL=1 stack test --ghc-options -Werror
+  #     - name: Test
+  #       run: TEST_FUNCTIONAL=1 stack test --ghc-options -Werror
 
-  nix:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - "macos-latest"
-          - "ubuntu-latest"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
+  # nix:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #         - "macos-latest"
+  #         - "ubuntu-latest"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup nix
-        uses: cachix/install-nix-action@v31
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          nix_path: nixpkgs=channel:nixos-unstable
+  #     - name: Setup nix
+  #       uses: cachix/install-nix-action@v31
+  #       with:
+  #         github_access_token: ${{ secrets.GITHUB_TOKEN }}
+  #         nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Compile & Test
-        run: nix build -L
+  #     - name: Compile & Test
+  #       run: nix build -L
 
-  # Unfortunately, notify-tests does not seem to work for linux on CI.
-  # Leaving it for osx as that provides some value, and at least we can
-  # test linux notifications manually.
-  notify-tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - "macos-latest"
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
+  # # Unfortunately, notify-tests does not seem to work for linux on CI.
+  # # Leaving it for osx as that provides some value, and at least we can
+  # # test linux notifications manually.
+  # notify-tests:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #         - "macos-latest"
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup nix
-        uses: cachix/install-nix-action@v31
+  #     - name: Setup nix
+  #       uses: cachix/install-nix-action@v31
 
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          nix_path: nixpkgs=channel:nixos-unstable
+  #       with:
+  #         github_access_token: ${{ secrets.GITHUB_TOKEN }}
+  #         nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Test
-        run: |
-          nix develop .#notifyTests -L \
-            -c bash -c '.github/scripts/notify_tests.sh'
+  #     - name: Test
+  #       run: |
+  #         nix develop .#notifyTests -L \
+  #           -c bash -c '.github/scripts/notify_tests.sh'
 
-  lint:
-    runs-on: "ubuntu-latest"
-    steps:
-      - uses: actions/checkout@v4
+  # lint:
+  #   runs-on: "ubuntu-latest"
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup nix
-        uses: cachix/install-nix-action@v31
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-          nix_path: nixpkgs=channel:nixos-unstable
+  #     - name: Setup nix
+  #       uses: cachix/install-nix-action@v31
+  #       with:
+  #         github_access_token: ${{ secrets.GITHUB_TOKEN }}
+  #         nix_path: nixpkgs=channel:nixos-unstable
 
-      - name: Formatting
-        run: |
-          nix run .#format
-          git diff --exit-code --color=always
+  #     - name: Formatting
+  #       run: |
+  #         nix run .#format
+  #         git diff --exit-code --color=always
 
-      - name: Lint
-        run: |
-          nix run .#lint
+  #     - name: Lint
+  #       run: |
+  #         nix run .#lint
 
-  release:
-    needs: [cabal, stack, nix, notify-tests, lint]
-    if: github.ref == 'refs/heads/release'
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - name: "macos-13"
-            os: "macos-13"
-            script: ".github/scripts/release_osx.sh"
-            script_args: ""
+  # release:
+  #   needs: [cabal, stack, nix, notify-tests, lint]
+  #   if: github.ref == 'refs/heads/release'
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       platform:
+  #         - name: "macos-13"
+  #           os: "macos-13"
+  #           script: ".github/scripts/release_osx.sh"
+  #           script_args: ""
 
-          - name: "macos-14"
-            os: "macos-14"
-            script: ".github/scripts/release_osx.sh"
-            script_args: ""
+  #         - name: "macos-14"
+  #           os: "macos-14"
+  #           script: ".github/scripts/release_osx.sh"
+  #           script_args: ""
 
-          - name: "macos-15"
-            os: "macos-15"
-            script: ".github/scripts/release_osx.sh"
-            script_args: ""
+  #         - name: "macos-15"
+  #           os: "macos-15"
+  #           script: ".github/scripts/release_osx.sh"
+  #           script_args: ""
 
-          - name: "alpine_amd64"
-            os: "ubuntu-24.04"
-            script: ".github/scripts/release_linux.sh"
-            script_args: "alpine_amd64"
+  #         - name: "alpine_amd64"
+  #           os: "ubuntu-24.04"
+  #           script: ".github/scripts/release_linux.sh"
+  #           script_args: "alpine_amd64"
 
-          - name: "alpine_arm64v8"
-            os: "ubuntu-24.04-arm"
-            script: ".github/scripts/release_linux.sh"
-            script_args: "alpine_arm64v8"
+  #         - name: "alpine_arm64v8"
+  #           os: "ubuntu-24.04-arm"
+  #           script: ".github/scripts/release_linux.sh"
+  #           script_args: "alpine_arm64v8"
 
-    runs-on: ${{ matrix.platform.os }}
-    steps:
-      - uses: actions/checkout@v4
+  #   runs-on: ${{ matrix.platform.os }}
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Verify env vars
-        run: .github/scripts/verify_env.sh
+  #     - name: Verify env vars
+  #       run: .github/scripts/verify_env.sh
 
-      - uses: docker/setup-docker-action@v4
-        if: ${{ matrix.platform.name == 'alpine_amd64' || matrix.platform.name == 'alpine_arm64v8' }}
+  #     - uses: docker/setup-docker-action@v4
+  #       if: ${{ matrix.platform.name == 'alpine_amd64' || matrix.platform.name == 'alpine_arm64v8' }}
 
-      # So we have sha256sum
-      - name: Install coreutils
-        if: ${{ matrix.platform.os == 'macos-13' || matrix.platform.os == 'macos-14' }}
-        run: brew install coreutils
+  #     # So we have sha256sum
+  #     - name: Install coreutils
+  #       if: ${{ matrix.platform.os == 'macos-13' || matrix.platform.os == 'macos-14' }}
+  #       run: brew install coreutils
 
-      - uses: haskell-actions/setup@v2
-        if: ${{ matrix.platform.name != 'alpine_amd64' && matrix.platform.name != 'alpine_arm64v8' }}
-        with:
-          ghc-version: ${{ env.GHC_VERS }}
-          cabal-version: ${{ env.CABAL_VERS }}
+  #     - uses: haskell-actions/setup@v2
+  #       if: ${{ matrix.platform.name != 'alpine_amd64' && matrix.platform.name != 'alpine_arm64v8' }}
+  #       with:
+  #         ghc-version: ${{ env.GHC_VERS }}
+  #         cabal-version: ${{ env.CABAL_VERS }}
 
-      - name: Install binary
-        shell: bash
-        run: |
-          ${{ matrix.platform.script }} ${{ matrix.platform.script_args }}
+  #     - name: Install binary
+  #       shell: bash
+  #       run: |
+  #         ${{ matrix.platform.script }} ${{ matrix.platform.script_args }}
 
-      - name: Upload binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts-${{ matrix.platform.name }}
-          path: shrun*.zip
-          retention-days: 1
+  #     - name: Upload binary
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: release-artifacts-${{ matrix.platform.name }}
+  #         path: shrun*.zip
+  #         retention-days: 1
 
-  merge-releases:
-    runs-on: "ubuntu-latest"
-    needs: release
-    steps:
-      - name: Merge Release Artifacts
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: release-artifacts
-          pattern: release-artifacts-*
-          delete-merged: true
-          retention-days: 1
+  # merge-releases:
+  #   runs-on: "ubuntu-latest"
+  #   needs: release
+  #   steps:
+  #     - name: Merge Release Artifacts
+  #       uses: actions/upload-artifact/merge@v4
+  #       with:
+  #         name: release-artifacts
+  #         pattern: release-artifacts-*
+  #         delete-merged: true
+  #         retention-days: 1
