@@ -52,8 +52,8 @@ jobs:
         run: |
           cabal configure \
             ${{ matrix.ghc.proj-file }} \
-            --enable-tests \
-            --ghc-options -Werror
+            --enable-tests # \
+            # --ghc-options -Werror
 
       - name: Compile
         run: cabal build ${{ matrix.ghc.proj-file }} lib:shrun

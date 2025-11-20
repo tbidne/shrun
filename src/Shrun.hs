@@ -14,7 +14,6 @@ import Data.List.NonEmpty qualified as NE
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
-import Effects.System.Process qualified as Process
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
 import Shrun.Command qualified as Command
@@ -55,6 +54,7 @@ import Shrun.IO
     Stderr (MkStderr),
     tryCommandLogging,
   )
+import Shrun.IO qualified
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Formatting qualified as LogFmt
@@ -72,8 +72,7 @@ import Shrun.Logging.Types
     FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
     LogLevel
-      ( LevelDebug,
-        LevelError,
+      ( LevelError,
         LevelFatal,
         LevelFinished,
         LevelKilled,
@@ -634,32 +633,9 @@ teardown startTime = do
   --
   -- Hence here we have a fallback i.e. manually try to terminate the
   -- command's group.
-  for_ commandsStatus $ \(cmd, status) -> do
+  for_ commandsStatus $ \(_cmd, status) -> do
     case status of
-      CommandRunning mPid -> do
-        -- FIXME: This is just an extra message for debugging. Currently,
-        -- we want to see the tests print out some pids w/ ps aux, and
-        -- _hopefully_ the problematic 'sleep 77' pid will have the /bin/sh
-        -- pid as its parent. As a bonus, hopefully that matches up with here.
-        --
-        -- If that's right, then _maybe_ we can come up with some way to
-        --
-        --   1. Get the child pid from the parent pid (might require external process)
-        --   2. Kill that (kill?)
-        let pidStr = maybe "<nothing>" show mPid
-            pidMsg = "cmd '" ++ show cmd ++ "' with pid: " ++ pidStr
-            pidLog =
-              MkLog
-                { cmd = Nothing,
-                  msg = fromString pidMsg,
-                  lvl = LevelDebug,
-                  mode = LogModeFinish
-                }
-            pidConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging pidLog
-
-        debug <- asks (view #debug . getCommonLogging)
-        when (debug ^. #unDebug) $ do
-          withRegion Linear $ \r -> logRegion LogModeFinish r (pidConsoleLog ^. #unConsoleLog)
+      CommandRunning mPid -> Shrun.IO.killChildPids mPid
       _ -> pure ()
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []

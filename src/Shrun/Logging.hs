@@ -21,6 +21,9 @@ module Shrun.Logging
     regionLogToConsoleQueue,
     logToFileQueue,
 
+    -- * Other
+    putRegionLogDirect,
+
     -- * Misc
     mkUnfinishedCmdLogs,
     logFile,
@@ -49,6 +52,7 @@ import Shrun.Configuration.Env.Types
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
+import Shrun.Logging.MonadRegionLogger qualified as MRL
 import Shrun.Logging.Types
   ( FileLog,
     Log (MkLog, cmd, lvl, mode, msg),
@@ -57,6 +61,7 @@ import Shrun.Logging.Types
     LogMode (LogModeFinish),
     LogRegion (LogRegion),
   )
+import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 
 -- | Unconditionally writes a log to the console queue. Conditionally
@@ -218,3 +223,30 @@ mkUnfinishedCmdLogs = do
 logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
 logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 {-# INLINEABLE logFile #-}
+
+putRegionLogDirect ::
+  forall env m.
+  ( HasCallStack,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
+    MonadHandleWriter m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadTime m
+  ) =>
+  Log ->
+  m ()
+putRegionLogDirect log = do
+  commonLogging <- asks getCommonLogging
+  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
+  mFileLogging <- asks getFileLogging
+
+  let keyHide = view #keyHide commonLogging
+      consoleLog = Formatting.formatConsoleLog keyHide consoleLogging log
+
+  MRL.withRegion Linear $ \r -> MRL.logRegion Types.LogModeFinish r (consoleLog ^. #unConsoleLog)
+
+  for_ mFileLogging $ \fl -> do
+    fileLog <- Formatting.formatFileLog keyHide fl log
+    logFile (fl ^. #file % #handle) fileLog
