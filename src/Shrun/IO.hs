@@ -46,6 +46,7 @@ import Shrun.Configuration.Env.Types
     HasInit (getInit),
     setAnyErrorTrue,
     updateCommandStatus,
+    whenDebug,
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
@@ -678,8 +679,7 @@ logDebugCmd ::
   (Region m -> Log -> m ()) ->
   m ()
 logDebugCmd cmd procConfig logFn = do
-  commonLogging <- asks getCommonLogging
-  when (commonLogging ^. #debug % #unDebug) $ do
+  whenDebug $ do
     let cs = show $ P.cmdspec procConfig
         lg =
           MkLog

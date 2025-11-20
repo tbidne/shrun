@@ -20,13 +20,13 @@ import Shrun.Command.Types
     CommandStatusData (CommandStatusUnit, CommandStatusVertex),
   )
 import Shrun.Command.Types qualified as Command.Types
-import Shrun.Configuration.Data.CommonLogging (Debug)
 import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Env.Types
   ( HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging,
     HasFileLogging,
+    whenDebug,
   )
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging qualified as Logging
@@ -66,10 +66,9 @@ runCommands ::
 runCommands runner = do
   cdg <- asks getCommandDepGraph
   commandStatuses <- asks getCommandStatus
-  debug <- asks (view #debug . getCommonLogging)
   let roots = cdg ^. #roots
   vtxSemMap <- mkVertexSemMap cdg
-  Async.mapConcurrently_ (runCommand runner debug cdg commandStatuses vtxSemMap) roots
+  Async.mapConcurrently_ (runCommand runner cdg commandStatuses vtxSemMap) roots
 {-# INLINEABLE runCommands #-}
 
 -- | Builds a map for each Vertex -> MVar. This ensures that we only start
@@ -101,8 +100,6 @@ runCommand ::
   ) =>
   -- | Individual command runner.
   ((HasCallStack) => CommandP1 -> m ()) ->
-  -- | Debug flag, for logging.
-  Debug ->
   -- | Command dependency graph.
   CommandGraph ->
   -- | Command status ref.
@@ -113,16 +110,16 @@ runCommand ::
   -- | Vertex to run.
   Vertex ->
   m ()
-runCommand runner debug cdg commandStatuses vtxSemMap = go Nothing
+runCommand runner cdg commandStatuses vtxSemMap = go Nothing
   where
     go prevVertex vertex = do
       status <- getPredecessorsStatus cdg commandStatuses vertex
       case status of
         CommandWaiting depV ->
-          when (debug ^. #unDebug) $ do
+          whenDebug $ do
             logNoRun cdg LevelDebug prevVertex debugMsg (Just depV) vertex
         CommandRunning depV ->
-          when (debug ^. #unDebug) $ do
+          whenDebug $ do
             logNoRun cdg LevelDebug prevVertex debugMsg (Just depV) vertex
         CommandFailure depV -> logNoRun cdg LevelError prevVertex errMsg (Just depV) vertex
         CommandSuccess -> do
@@ -163,7 +160,7 @@ runCommand runner debug cdg commandStatuses vtxSemMap = go Nothing
               tryTakeMVar mvar >>= \case
                 Nothing ->
                   -- No MVar, print a message and leave.
-                  when (debug ^. #unDebug) $ do
+                  whenDebug $ do
                     logNoRun cdg LevelDebug prevVertex alreadyRunningMsg Nothing vertex
                 Just () -> do
                   -- We are not blocked. Run the command and kick off all

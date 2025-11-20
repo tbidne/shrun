@@ -10,7 +10,6 @@ where
 
 import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Data.List qualified as L
-import Data.List.NonEmpty qualified as NE
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
@@ -593,24 +592,17 @@ teardown startTime = do
   let totalTime = Time.fromSeconds $ endTime - startTime
   timeFormatted <- formatTimeSpec totalTime
 
-  commonLogging <- asks getCommonLogging
-  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
-  mFileLogging <- asks getFileLogging
-  let keyHide = commonLogging ^. #keyHide
-      cancelTasksMsg = "Received cancel"
+  let cancelTasksMsg = "Received cancel"
       finalErrMsg = cancelTasksMsg <> " after running for: " <> timeFormatted
 
   -- update anyError
   setAnyErrorTrue
 
-  -- 1. Send message about cancelling commands.
-  let sendConsole log = do
-        let formatted = Formatting.formatConsoleMultiLineLogs keyHide consoleLogging log
-        withRegion Linear $ \r -> logRegion LogModeFinish r (formatted ^. #unConsoleLog)
-
   (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
-  traverse_ sendConsole mWaitingLog
-  traverse_ sendConsole mRunningLog
+
+  -- 1. Send message about cancelling commands.
+  traverse_ Logging.putRegionMultiLineLogDirect mWaitingLog
+  traverse_ Logging.putRegionMultiLineLogDirect mRunningLog
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []
 
@@ -623,13 +615,7 @@ teardown startTime = do
             mode = LogModeFinish
           }
 
-      finalConsoleLog = Formatting.formatConsoleLog keyHide consoleLogging finalLog
-
-  -- NOTE: Manual logging because the logging queues have been shutdown at this
-  -- point. We must write to the console (logRegion) and file (logFile)
-  -- directly.
-
-  withRegion Linear $ \r -> logRegion LogModeFinish r (finalConsoleLog ^. #unConsoleLog)
+  Logging.putRegionLogDirect finalLog
 
   -- 3. Send notification
   cfg <- asks getNotifyConfig
@@ -637,16 +623,6 @@ teardown startTime = do
     -- If notifcations are on at all, send one
     Just _ -> Notify.sendNotif notifyBody "" Critical
     _ -> pure ()
-
-  -- 4. Send above logs to file.
-  for_ mFileLogging $ \fl -> do
-    let sendFile log = do
-          formatted <- Formatting.formatFileMultiLineLogs keyHide fl log
-          Logging.logFile (fl ^. #file % #handle) formatted
-
-    traverse_ sendFile mWaitingLog
-    traverse_ sendFile mRunningLog
-    sendFile (NE.singleton finalLog)
 {-# INLINEABLE teardown #-}
 
 -- | Installs a handler for SIGTERM, so shrun can be cancelled with kill -15.
@@ -669,13 +645,8 @@ handleTerminate ::
   ThreadId ->
   m ()
 handleTerminate tid = do
-  commonLogging <- asks getCommonLogging
-  (consoleLogging, _, _) <- asks (getConsoleLogging @env @(Region m))
-  mFileLogging <- asks getFileLogging
-
   let handler = Signals.CatchInfo $ \si -> do
-        let keyHide = commonLogging ^. #keyHide
-            errMsg =
+        let errMsg =
               "Received terminate signal: "
                 <> Text.unsafeUnlinedText (showt (Posix.siginfoSignal si))
             baseLog =
@@ -686,12 +657,7 @@ handleTerminate tid = do
                   mode = LogModeFinish
                 }
 
-        let consoleLog = Formatting.formatConsoleLog keyHide consoleLogging baseLog
-        withRegion Linear $ \r -> logRegion LogModeFinish r (consoleLog ^. #unConsoleLog)
-
-        for_ mFileLogging $ \fl -> do
-          fileLog <- Formatting.formatFileLog keyHide fl baseLog
-          Logging.logFile (fl ^. #file % #handle) fileLog
+        Logging.putRegionLogDirect baseLog
 
         -- Need to throw exception to main thread since this handler is run
         -- in a different thread.

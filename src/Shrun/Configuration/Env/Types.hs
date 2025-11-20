@@ -17,6 +17,7 @@ module Shrun.Configuration.Env.Types
 
     -- * Types
     Env (..),
+    whenDebug,
   )
 where
 
@@ -273,3 +274,9 @@ class HasNotifyConfig env where
 
 instance HasNotifyConfig (Env r) where
   getNotifyConfig = view (#config % #notify)
+
+-- | Run the action when the debug flag is active.
+whenDebug :: (HasCommonLogging env, MonadReader env m) => m () -> m ()
+whenDebug m = do
+  debug <- asks (view (#debug % #unDebug) . getCommonLogging)
+  when debug m
