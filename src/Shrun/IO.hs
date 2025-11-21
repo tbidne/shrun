@@ -11,6 +11,7 @@ module Shrun.IO
 
     -- * Misc
     killChildPids,
+    killPids,
   )
 where
 
@@ -75,6 +76,7 @@ import Shrun.Logging.Types
 import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import Text.Read qualified as TR
 
 -- | Newtype wrapper for stderr.
 newtype Stderr = MkStderr {unStderr :: List UnlinedText}
@@ -249,6 +251,8 @@ tryCommandStream ::
     HasCommands env,
     HasCommandLogging env,
     HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -331,8 +335,10 @@ tryCommandStream logFn cmd = do
   logDebugCmd cmd procConfig (logFn . Just)
 
   (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
+    -- FIXME: Add NOTE: here explaining why we set children here.
     mPid <- P.getPid ph
-    updateCommandStatus cmd (CommandRunning mPid)
+    childPids <- getChildPids mPid
+    updateCommandStatus cmd (CommandRunning (mPid, childPids))
     streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
   pure $ case exitCode of
@@ -677,7 +683,7 @@ killChildPids Nothing = whenDebug $ do
           }
   Logging.putRegionLogDirect log
 killChildPids (Just pid) = do
-  pidsStr <- getChildPids pid
+  pidsStr <- getChildPids (Just pid)
   pidsToKill <- filterM canKillPid pidsStr
   killPids pidsToKill
 
@@ -692,9 +698,10 @@ getChildPids ::
     MonadRegionLogger m,
     MonadTime m
   ) =>
-  Pid ->
-  m (List Text)
-getChildPids pid = do
+  Maybe Pid ->
+  m (List Pid)
+getChildPids Nothing = pure []
+getChildPids (Just pid) = do
   (ec, stdout, stderr) <- P.readProcessWithExitCode "pgrep" args "getChildPids"
   let (result, msg) = case ec of
         ExitFailure _ ->
@@ -708,7 +715,7 @@ getChildPids pid = do
                     ]
            in ([], m)
         ExitSuccess ->
-          let pids =
+          let pidsTxt =
                 T.lines
                   . T.strip
                   . pack
@@ -719,9 +726,11 @@ getChildPids pid = do
                     [ "Child pids of '",
                       show pid,
                       "': ",
-                      unpack $ T.intercalate "," pids
+                      unpack $ T.intercalate "," pidsTxt
                     ]
-           in (pids, m)
+           in case traverse (TR.readMaybe . unpack) pidsTxt of
+                Nothing -> ([], fromString $ "Failed reading pid strings: " <> show pidsTxt)
+                Just pids -> (pids, m)
   whenDebug $ do
     let log =
           MkLog
@@ -746,11 +755,11 @@ killPids ::
     MonadRegionLogger m,
     MonadTime m
   ) =>
-  List Text ->
+  List Pid ->
   m ()
 killPids [] = pure ()
 killPids pids = do
-  (ec, _stdout, stderr) <- P.readProcessWithExitCode "kill" ("-15" : fmap unpack pids) "killChildPids"
+  (ec, _stdout, stderr) <- P.readProcessWithExitCode "kill" ("-15" : fmap show pids) "killChildPids"
 
   whenDebug $ do
     let msg = case ec of
@@ -758,13 +767,13 @@ killPids pids = do
             fromString
               $ mconcat
                 [ "Successfully ran kill with: ",
-                  unpack $ T.intercalate "," pids
+                  unpack $ T.intercalate "," pidsTxt
                 ]
           ExitFailure _ ->
             fromString
               $ mconcat
                 [ "Kill with '",
-                  unpack $ T.intercalate "," pids,
+                  unpack $ T.intercalate "," pidsTxt,
                   "' failed: ",
                   stderr
                 ]
@@ -777,6 +786,8 @@ killPids pids = do
               mode = Types.LogModeFinish
             }
     Logging.putRegionLogDirect log
+  where
+    pidsTxt = fmap showt pids
 
 canKillPid ::
   ( HasCallStack,
@@ -789,23 +800,23 @@ canKillPid ::
     MonadRegionLogger m,
     MonadTime m
   ) =>
-  Text ->
+  Pid ->
   m Bool
 canKillPid pid = do
-  (ec, _, stderr) <- P.readProcessWithExitCode "kill" ["-0", unpack pid] "canKillPid"
+  (ec, _, stderr) <- P.readProcessWithExitCode "kill" ["-0", show pid] "canKillPid"
   whenDebug $ do
     let msg = case ec of
           ExitSuccess ->
             fromString
               $ mconcat
                 [ "Successfully ran kill -0 with: ",
-                  unpack pid
+                  show pid
                 ]
           ExitFailure _ ->
             fromString
               $ mconcat
                 [ "Kill -0 with '",
-                  unpack pid,
+                  show pid,
                   "' failed: ",
                   stderr
                 ]

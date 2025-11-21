@@ -164,7 +164,7 @@ data CommandStatus a
   | -- | The command failed.
     CommandFailure (CommandStatusF a ())
   | -- | The command is running.
-    CommandRunning (CommandStatusF a (Maybe Pid))
+    CommandRunning (CommandStatusF a (Tuple2 (Maybe Pid) (List Pid)))
   | -- | The command is waiting to run.
     CommandWaiting (CommandStatusF a ())
 

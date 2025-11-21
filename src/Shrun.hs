@@ -13,6 +13,7 @@ import Data.List qualified as L
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
 import Effects.System.Posix.Signals qualified as Signals
+import Effects.System.Process qualified as Process
 import Effects.Time (TimeSpec)
 import Effects.Time qualified as Time
 import Shrun.Command qualified as Command
@@ -602,37 +603,16 @@ teardown startTime = do
 
   (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
 
-  -- 1. Send message about cancelling commands.
-  traverse_ Logging.putRegionMultiLineLogDirect mWaitingLog
-  traverse_ Logging.putRegionMultiLineLogDirect mRunningLog
-
   -- NOTE: Manual logging because the logging queues have been shutdown at this
   -- point. We must write to the console (logRegion) and file (logFile)
   -- directly.
 
-  commandsStatusTVar <- asks getCommandStatus
-  commandsStatus <- readTVarA commandsStatusTVar
+  -- 1. Send message about cancelling commands.
+  traverse_ Logging.putRegionMultiLineLogDirect mWaitingLog
+  traverse_ Logging.putRegionMultiLineLogDirect mRunningLog
 
-  -- On some systems (e.g. linux on CI), we have trouble ending all processes.
-  -- For example, "shrun 'sleep 4'" will create 2 processes for the subcommand,
-  -- depending on the platform, i.e.
-  --
-  --   - ./bin/sh -c sleep 4
-  --   - sleep 4
-  --
-  -- When shrun is terminated, the exception is automatically sent to the
-  -- ./bin/sh, which is terminated, and should terminate the actual sleep cmd.
-  -- Unfortunately, this does not always seem to work e.g. linux on CI does
-  -- not kill the 'sleep 4' command. It does fork for CI osx, and my local
-  -- linux machine (the bin/sh command appears to immediately terminate and
-  -- given control to the sub 'sleep 4' command).
-  --
-  -- Hence here we have a fallback i.e. manually try to terminate the
-  -- command's group.
-  for_ commandsStatus $ \(_cmd, status) -> do
-    case status of
-      CommandRunning mPid -> Shrun.IO.killChildPids mPid
-      _ -> pure ()
+  -- Clean up remaining commands.
+  cleanupCommands
 
   let notifyBody = Notify.formatNotifyMessage finalErrMsg []
 
@@ -694,3 +674,36 @@ handleTerminate tid = do
         throwTo tid MkTermException
 
   void $ Signals.installHandler Posix.sigTERM handler Nothing
+
+-- FIXME: Put a NOTE: here explaining everything.
+cleanupCommands ::
+  ( HasCallStack,
+    HasCommands env,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadSTM m,
+    MonadTime m
+  ) =>
+  m ()
+cleanupCommands = do
+  commandsStatusTVar <- asks getCommandStatus
+  commandsStatus <- readTVarA commandsStatusTVar
+
+  -- 1. Try to kill any commands still running.
+  for_ commandsStatus $ \(_cmd, status) -> do
+    case status of
+      CommandRunning (mPid, childPids) -> do
+        -- 1.1. Manually try to kill child pids.
+        Shrun.IO.killPids childPids
+        -- 1.2. Automatically try to kill child pids.
+        Shrun.IO.killChildPids mPid
+      _ -> pure ()
+
+  -- Kill shrun's child pids.
+  pid <- Process.getCurrentPid
+  Shrun.IO.killChildPids (Just pid)

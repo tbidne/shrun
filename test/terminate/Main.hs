@@ -160,9 +160,13 @@ runPs = do
       -- distinguish "good" failures from "bad" ones.
       --
       -- The output is basically empty, so we test that.
-      let failOk = i == 1
-            && "" == T.strip (pack out1)
-            && "" == T.strip (pack err1)
+      let failOk =
+            i
+              == 1
+              && ""
+              == T.strip (pack out1)
+              && ""
+              == T.strip (pack err1)
           errMsg =
             mconcat
               [ "runPs: pgrep failed: ",
