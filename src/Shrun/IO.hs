@@ -47,6 +47,7 @@ import Shrun.Configuration.Env.Types
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
     HasInit (getInit),
+    HasLogging,
     setAnyErrorTrue,
     updateCommandStatus,
     whenDebug,
@@ -103,10 +104,7 @@ tryCommandLogging ::
     HasCallStack,
     HasCommands env,
     HasInit env,
-    HasCommandLogging env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -249,10 +247,7 @@ tryCommandStream ::
   ( HasInit env,
     HasCallStack,
     HasCommands env,
-    HasCommandLogging env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -335,7 +330,11 @@ tryCommandStream logFn cmd = do
   logDebugCmd cmd procConfig (logFn . Just)
 
   (exitCode, finalData) <- P.withCreateProcess procConfig $ \_ _ _ ph -> do
-    -- FIXME: Add NOTE: here explaining why we set children here.
+    -- Store the process PID and potential child PIDs. This is potentially
+    -- needed for later cleanup, as the /bin/sh command may start children
+    -- whose parents are later reassigned to PID 1.
+    --
+    -- See NOTE: [Command cleanup]
     mPid <- P.getPid ph
     childPids <- getChildPids mPid
     updateCommandStatus cmd (CommandRunning (mPid, childPids))
@@ -662,9 +661,7 @@ logDebugCmd cmd procConfig logFn = do
 killChildPids ::
   forall env m.
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
@@ -689,9 +686,7 @@ killChildPids (Just pid) = do
 
 getChildPids ::
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
@@ -746,9 +741,7 @@ getChildPids (Just pid) = do
 
 killPids ::
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
@@ -791,9 +784,7 @@ killPids pids = do
 
 canKillPid ::
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -62,9 +61,8 @@ tests sp =
   where
     combs = zip [(cl, st) | cl <- universe, st <- universe] [1 ..]
 
-    -- FIXME: Remove logic once we fix stuff
     universe :: (Bounded a, Enum a) => [a]
-    universe = (: []) $ L.head [minBound .. maxBound]
+    universe = [minBound .. maxBound]
 
 runTest :: SuiteParams -> Int -> TestParams -> IO ()
 runTest sp idx tp = do
@@ -178,7 +176,9 @@ runPs = do
                 "\n"
               ]
       if failOk
-        then pure []
+        then do
+          putLog "No processes found, OK"
+          pure []
         else throwString errMsg
     ExitSuccess -> do
       (ec2, out2, err2) <- runProcessArgs "ps" ("-fp" : L.lines out1)
@@ -517,13 +517,6 @@ displayCmd cmd args =
       "', args: ",
       show args
     ]
-
-psCmd :: String
-#if OSX
-psCmd = "ps -fp $(pgrep -f '.*sleep.*')"
-#else
-psCmd = "ps -fp $(pgrep -f '.*sleep.*')"
-#endif
 
 putLog :: String -> IO ()
 putLog s = putStrLn $ "\n*** " ++ s ++ " ***"
