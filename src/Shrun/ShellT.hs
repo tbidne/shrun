@@ -55,6 +55,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadIORef,
       MonadMask,
       MonadMVar,
+      MonadPathReader,
       MonadPathWriter,
       MonadProcess,
       MonadReader env,

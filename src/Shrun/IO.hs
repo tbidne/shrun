@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE ViewPatterns #-}
 
 -- | Provides the low-level `IO` functions for running shell commands.
@@ -20,6 +21,7 @@ import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
 import Effects.FileSystem.HandleWriter qualified as HW
+import Effects.FileSystem.PathReader qualified as PR
 import Effects.System.Process (Pid, ProcessHandle)
 import Effects.System.Process qualified as P
 import Effects.Time (MonadTime (getMonotonicTime))
@@ -77,6 +79,7 @@ import Shrun.Logging.Types
 import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import System.OsPath (decodeUtf)
 import Text.Read qualified as TR
 
 -- | Newtype wrapper for stderr.
@@ -108,6 +111,7 @@ tryCommandLogging ::
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadPathReader m,
     MonadProcess m,
     MonadMask m,
     MonadReader env m,
@@ -252,6 +256,7 @@ tryCommandStream ::
     MonadHandleWriter m,
     MonadIORef m,
     MonadMask m,
+    MonadPathReader m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -336,7 +341,7 @@ tryCommandStream logFn cmd = do
     --
     -- See NOTE: [Command cleanup]
     mPid <- P.getPid ph
-    childPids <- getChildPids mPid
+    childPids <- getChildPids True mPid
     updateCommandStatus cmd (CommandRunning (mPid, childPids))
     streamOutput (logFn Nothing) cmd (recvOutH, recvErrH, ph)
 
@@ -662,10 +667,13 @@ killChildPids ::
   forall env m.
   ( HasCallStack,
     HasLogging env m,
+    MonadCatch m,
     MonadHandleWriter m,
+    MonadPathReader m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
+    MonadSTM m,
     MonadTime m
   ) =>
   Maybe Pid ->
@@ -680,68 +688,125 @@ killChildPids Nothing = whenDebug $ do
           }
   Logging.putRegionLogDirect log
 killChildPids (Just pid) = do
-  pidsStr <- getChildPids (Just pid)
+  pidsStr <- getChildPids False (Just pid)
   pidsToKill <- filterM canKillPid pidsStr
   killPids pidsToKill
 
 getChildPids ::
   ( HasCallStack,
     HasLogging env m,
+    MonadCatch m,
     MonadHandleWriter m,
+    MonadPathReader m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
+    MonadSTM m,
     MonadTime m
   ) =>
+  -- | Is multithreaded. Used for logging.
+  Bool ->
   Maybe Pid ->
   m (List Pid)
-getChildPids Nothing = pure []
-getChildPids (Just pid) = do
-  (ec, stdout, stderr) <- P.readProcessWithExitCode "pgrep" args "getChildPids"
-  let (result, msg) = case ec of
-        ExitFailure _ ->
-          let m =
-                fromString
-                  $ mconcat
-                    [ "Failed finding child pids of '",
-                      show pid,
-                      "': ",
-                      stderr
-                    ]
-           in ([], m)
-        ExitSuccess ->
-          let pidsTxt =
-                T.lines
-                  . T.strip
-                  . pack
-                  $ stdout
-              m =
-                fromString
-                  $ mconcat
-                    [ "Child pids of '",
-                      show pid,
-                      "': ",
-                      unpack $ T.intercalate "," pidsTxt
-                    ]
-           in case traverse (TR.readMaybe . unpack) pidsTxt of
-                Nothing -> ([], fromString $ "Failed reading pid strings: " <> show pidsTxt)
-                Just pids -> (pids, m)
-  whenDebug $ do
-    let log =
-          MkLog
-            { cmd = Nothing,
-              msg,
-              lvl = Types.LevelDebug,
-              mode = Types.LogModeFinish
-            }
-    Logging.putRegionLogDirect log
-  pure result
+getChildPids _ Nothing = pure []
+getChildPids multiThreads (Just pid) = do
+  findExeStr >>= \case
+    Nothing -> pure []
+    Just exePathStr -> do
+      (ec, stdout, stderr) <- readProcessTotal exePathStr args "getChildPids"
+      let (result, msg) = case ec of
+            ExitFailure _ ->
+              let m =
+                    fromString
+                      $ mconcat
+                        [ "Failed finding child pids of '",
+                          show pid,
+                          "': ",
+                          stderr
+                        ]
+               in ([], m)
+            ExitSuccess ->
+              let pidsTxt =
+                    T.lines
+                      . T.strip
+                      . pack
+                      $ stdout
+                  m =
+                    fromString
+                      $ mconcat
+                        [ "Child pids of '",
+                          show pid,
+                          "': ",
+                          unpack $ T.intercalate "," pidsTxt
+                        ]
+               in case traverse (TR.readMaybe . unpack) pidsTxt of
+                    Nothing -> ([], fromString $ "Failed reading pid strings: " <> show pidsTxt)
+                    Just pids -> (pids, m)
+      whenDebug $ do
+        let log =
+              MkLog
+                { cmd = Nothing,
+                  msg,
+                  lvl = Types.LevelDebug,
+                  mode = Types.LogModeFinish
+                }
+        logFn log
+      pure result
   where
     args = ["-P", show pid]
+
+    findExeStr = do
+      tryMySync (PR.findExecutable [osp|pgrep|]) >>= \case
+        Left ex -> do
+          whenDebug $ do
+            let log =
+                  MkLog
+                    { cmd = Nothing,
+                      msg = fromString $ "Exception searching for pgrep: " <> displayException ex,
+                      lvl = Types.LevelDebug,
+                      mode = Types.LogModeFinish
+                    }
+            logFn log
+          pure Nothing
+        Right Nothing -> do
+          whenDebug $ do
+            let log =
+                  MkLog
+                    { cmd = Nothing,
+                      msg = "pgrep not found",
+                      lvl = Types.LevelDebug,
+                      mode = Types.LogModeFinish
+                    }
+            logFn log
+          pure Nothing
+        Right (Just path) -> case decodeUtf path of
+          Nothing -> do
+            whenDebug $ do
+              let log =
+                    MkLog
+                      { cmd = Nothing,
+                        msg = fromString $ "Could not decode path: " ++ show path,
+                        lvl = Types.LevelDebug,
+                        mode = Types.LogModeFinish
+                      }
+              logFn log
+            pure Nothing
+          Just pathStr -> pure $ Just pathStr
+
+    logFn =
+      -- If multiThreads is active then this function is possibly called from
+      -- multiple threads i.e. the logs should be sent to the queue, as usual.
+      --
+      -- OTOH, this must have been called during termination when the queues
+      -- are already shutdown, hence we should log directly.
+      if multiThreads
+        then \log -> withRegion Linear $ \r -> Logging.putRegionLog r log
+        else Logging.putRegionLogDirect
 
 killPids ::
   ( HasCallStack,
     HasLogging env m,
+    MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
@@ -752,7 +817,7 @@ killPids ::
   m ()
 killPids [] = pure ()
 killPids pids = do
-  (ec, _stdout, stderr) <- P.readProcessWithExitCode "kill" ("-15" : fmap show pids) "killChildPids"
+  (ec, _stdout, stderr) <- readProcessTotal "kill" ("-15" : fmap show pids) "killChildPids"
 
   whenDebug $ do
     let msg = case ec of
@@ -785,6 +850,7 @@ killPids pids = do
 canKillPid ::
   ( HasCallStack,
     HasLogging env m,
+    MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
@@ -794,7 +860,7 @@ canKillPid ::
   Pid ->
   m Bool
 canKillPid pid = do
-  (ec, _, stderr) <- P.readProcessWithExitCode "kill" ["-0", show pid] "canKillPid"
+  (ec, _, stderr) <- readProcessTotal "kill" ["-0", show pid] "canKillPid"
   whenDebug $ do
     let msg = case ec of
           ExitSuccess ->
@@ -823,3 +889,25 @@ canKillPid pid = do
   case ec of
     ExitSuccess -> pure True
     ExitFailure _ -> pure False
+
+readProcessTotal ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadProcess m
+  ) =>
+  FilePath ->
+  [String] ->
+  String ->
+  m (ExitCode, String, String)
+readProcessTotal fp args str = do
+  tryMySync (P.readProcessWithExitCode fp args str) >>= \case
+    Left ex -> pure (ExitFailure 1, cmdMsg, displayException ex)
+    Right r -> pure r
+  where
+    cmdMsg =
+      mconcat
+        [ "Failed running command '",
+          fp,
+          "' with args: ",
+          show args
+        ]
