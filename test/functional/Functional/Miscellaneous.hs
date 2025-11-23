@@ -260,7 +260,9 @@ reportsFinalOutput =
     runExitFailure
     args
     ( \results -> do
-        V.verifyExpectedOrder results expected
+        V.verifyExpectedOrder results expected1
+        V.verifyExpectedOrder results expected2
+        V.verifyExpectedOrder results expected3
         V.verifyUnexpected results unexpected
     )
   where
@@ -274,13 +276,27 @@ reportsFinalOutput =
           scriptPath
         ]
 
-    expected =
+    -- Split these up because we cannot guarantee that e.g. 'output 1'
+    -- precedes 'stderr 1'. As usual, CI osx is the culprint, occasionally
+    --- printing 'stderr 3' prior to 'output 3'.
+    expected1 =
       [ withCommandPrefix scriptPath "output 1",
-        withCommandPrefix scriptPath "stderr 1",
         withCommandPrefix scriptPath "output 2",
+        withCommandPrefix scriptPath "output 3",
+        withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3"
+      ]
+
+    expected2 =
+      [ withCommandPrefix scriptPath "stderr 1",
+        withCommandPrefix scriptPath "stderr 2",
+        withCommandPrefix scriptPath "stderr 3",
+        withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3"
+      ]
+
+    expected3 =
+      [ withCommandPrefix scriptPath "output 1",
         withCommandPrefix scriptPath "stderr 2",
         withCommandPrefix scriptPath "output 3",
-        withCommandPrefix scriptPath "stderr 3",
         withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3"
       ]
 
