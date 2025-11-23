@@ -15,6 +15,9 @@ module Shrun.Configuration.Env.Types
     setAnyErrorTrue,
     HasNotifyConfig (..),
 
+    -- ** Aggregate
+    HasLogging,
+
     -- * Types
     Env (..),
     whenDebug,
@@ -38,8 +41,17 @@ import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Data.Notify (NotifyEnv)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (LogRegion)
 import Shrun.Prelude
+
+-- | Alias for all logging config.
+type HasLogging env m =
+  ( HasCommandLogging env,
+    HasCommonLogging env,
+    HasConsoleLogging env (Region m),
+    HasFileLogging env
+  )
 
 -- | The commands themselves.
 class HasCommands env where

@@ -24,19 +24,13 @@ import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Configuration.Env.Types
   ( HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
-    HasConsoleLogging,
-    HasFileLogging,
+    HasLogging,
     whenDebug,
   )
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging qualified as Logging
 import Shrun.Logging.Formatting qualified as Formatting
-import Shrun.Logging.MonadRegionLogger
-  ( MonadRegionLogger
-      ( Region,
-        withRegion
-      ),
-  )
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (withRegion))
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelDebug, LevelError),
@@ -49,9 +43,7 @@ import Shrun.Prelude
 runCommands ::
   ( HasCallStack,
     HasCommands env,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadAsync m,
     MonadMVar m,
     MonadReader env m,
@@ -87,9 +79,7 @@ mkVertexSemMap cdg = do
 runCommand ::
   forall m env.
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadAsync m,
     MonadMVar m,
     MonadReader env m,
@@ -242,9 +232,7 @@ findPredecessors cdg v =
 
 logNoRun ::
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,

@@ -9,16 +9,14 @@ import DBus.Notify (UrgencyLevel)
 import Data.Text qualified as T
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
-    HasCommonLogging,
-    HasConsoleLogging,
-    HasFileLogging,
+    HasLogging,
     HasNotifyConfig (getNotifyConfig),
     setAnyErrorTrue,
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging qualified as Logging
-import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region, withRegion))
+import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (withRegion))
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelError),
@@ -38,9 +36,7 @@ import Shrun.Utils qualified as U
 sendNotif ::
   ( HasAnyError env,
     HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     HasNotifyConfig env,
     MonadNotify m,
     MonadReader env m,

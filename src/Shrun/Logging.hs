@@ -49,6 +49,7 @@ import Shrun.Configuration.Env.Types
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
+    HasLogging,
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Logging.Formatting qualified as Formatting
@@ -70,9 +71,7 @@ import Shrun.Prelude
 putRegionLog ::
   forall m env.
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadReader env m,
     MonadSTM m,
     MonadTime m
@@ -105,9 +104,7 @@ putRegionLog region lg = do
 putRegionMultiLog ::
   forall m env.
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadReader env m,
     MonadSTM m,
     MonadTime m
@@ -230,9 +227,7 @@ logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 putRegionLogDirect ::
   forall env m.
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleWriter m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -262,9 +257,7 @@ putRegionLogDirect log = do
 putRegionMultiLineLogDirect ::
   forall env m.
   ( HasCallStack,
-    HasCommonLogging env,
-    HasConsoleLogging env (Region m),
-    HasFileLogging env,
+    HasLogging env m,
     MonadHandleWriter m,
     MonadReader env m,
     MonadRegionLogger m,
