@@ -3,7 +3,7 @@ module Unit.Shrun.Configuration.Args.Parsing.Notify (tests) where
 import Shrun.Configuration.Args (Args)
 import Shrun.Configuration.Data.Notify (NotifyArgs)
 import Shrun.Configuration.Data.Notify.Action
-  ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
+  ( NotifyActionComplete (NotifyActionCompleteAll, NotifyActionCompleteCommand, NotifyActionCompleteFinal),
   )
 import Shrun.Configuration.Data.Notify.System
   ( NotifySystemP (AppleScript, DBus, NotifySend),
@@ -27,7 +27,7 @@ tests =
 notifyActionTests :: TestTree
 notifyActionTests =
   testGroup
-    "--notify-action"
+    "--notify-action-complete"
     [ testActionFinal,
       testActionCommand,
       testActionAll,
@@ -39,35 +39,35 @@ testActionFinal =
   testPropertyNamed desc "testActionFinal"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --notify-action final"
-    argList = ["--notify-action", "final", "command"]
-    expected = updateDefNotifyArgsWD #action NotifyFinal
+    desc = "Parses --notify-action-complete final"
+    argList = ["--notify-action-complete", "final", "command"]
+    expected = updateDefNotifyArgsWD #actionComplete NotifyActionCompleteFinal
 
 testActionCommand :: TestTree
 testActionCommand =
   testPropertyNamed desc "testActionCommand"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --notify-action command"
-    argList = ["--notify-action", "command", "command"]
-    expected = updateDefNotifyArgsWD #action NotifyCommand
+    desc = "Parses --notify-action-complete command"
+    argList = ["--notify-action-complete", "command", "command"]
+    expected = updateDefNotifyArgsWD #actionComplete NotifyActionCompleteCommand
 
 testActionAll :: TestTree
 testActionAll =
   testPropertyNamed desc "testActionAll"
     $ U.verifyResult argList expected
   where
-    desc = "Parses --notify-action all"
-    argList = ["--notify-action", "all", "command"]
-    expected = updateDefNotifyArgsWD #action NotifyAll
+    desc = "Parses --notify-action-complete all"
+    argList = ["--notify-action-complete", "all", "command"]
+    expected = updateDefNotifyArgsWD #actionComplete NotifyActionCompleteAll
 
 testActionDisabled :: TestTree
 testActionDisabled =
-  testPropertyNamed "Parses --notify-action off" "testActionDisabled"
+  testPropertyNamed "Parses --notify-action-complete off" "testActionDisabled"
     $ U.verifyResult argList expected
   where
-    argList = ["--notify-action", "off", "command"]
-    expected = U.disableDefCoreArgs (#notify % #action)
+    argList = ["--notify-action-complete", "off", "command"]
+    expected = U.disableDefCoreArgs (#notify % #actionComplete)
 
 notifySystemTests :: TestTree
 notifySystemTests =

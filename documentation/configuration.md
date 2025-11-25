@@ -707,11 +707,11 @@ vs.
 
 These options configure `shrun` to send off desktop notifications for certain actions i.e. a command finishes or shrun itself finishes.
 
-### Notify Action
+### Notify Action Complete
 
-**Arg:** `--notify-action (all | command | final | off)`
+**Arg:** `--notify-action-complete (all | command | final | off)`
 
-**Description:** Sends notifications for various actions.
+**Description:** Sends notifications for 'complete' actions.
 
   - all: Implies `final` and `command`.
   - command: Sends off a notification for each command that finishes.
@@ -720,7 +720,7 @@ These options configure `shrun` to send off desktop notifications for certain ac
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action final "sleep 5"</span></code>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action-complete final "sleep 5"</span></code>
 </pre>
 
 ### Notify System

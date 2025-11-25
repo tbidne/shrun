@@ -12,19 +12,19 @@ import Shrun.Prelude hiding (fromMaybe)
 -- 'Maybe', it exists to distinguish "missing" vs. explicitly
 -- disabled. For instance, we want to be able to disable the parameter
 -- notify-action, but we do not want to add another constructor to it, because
--- we want NotifyAction to represent definite actions, hence the user config
--- (CLI and Toml) is 'Maybe (Disabled NotifyAction)' i.e.
+-- we want NotifyActionComplete to represent definite actions, hence the user config
+-- (CLI and Toml) is 'Maybe (Disabled NotifyActionComplete)' i.e.
 --
--- - Just Disabled: NotifyAction explicitly disabled.
--- - Nothing: NotifyAction not given.
--- - Just Enabled _: NotifyAction explicity enabled.
+-- - Just Disabled: NotifyActionComplete explicitly disabled.
+-- - Nothing: NotifyActionComplete not given.
+-- - Just Enabled _: NotifyActionComplete explicity enabled.
 --
 -- We have this for the purposes of allowing CLI the override whatever
 -- Toml parameter might exist, while at shrun's runtime it is merged to
--- 'Maybe NotifyAction':
+-- 'Maybe NotifyActionComplete':
 --
 -- - Nothing: Notifications off.
--- - Just NotifyAction: Notifications on.
+-- - Just NotifyActionComplete: Notifications on.
 data WithDisabled a
   = -- | The field.
     With a

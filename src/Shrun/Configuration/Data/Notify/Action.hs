@@ -1,6 +1,6 @@
 -- | Provides type for notifications.
 module Shrun.Configuration.Data.Notify.Action
-  ( NotifyAction (..),
+  ( NotifyActionComplete (..),
     parseNotifyAction,
     notifyActionStr,
   )
@@ -9,33 +9,33 @@ where
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
--- | Determines for which actions we should send notifications.
-data NotifyAction
+-- | Determines for which 'complete' actions we should send notifications.
+data NotifyActionComplete
   = -- | Send a notification after all commands are completed.
-    NotifyFinal
+    NotifyActionCompleteFinal
   | -- | Send notifications when each command completes.
-    NotifyCommand
-  | -- | NotifyFinal and NotifyCommand.
-    NotifyAll
+    NotifyActionCompleteCommand
+  | -- | NotifyActionCompleteFinal and NotifyActionCompleteCommand.
+    NotifyActionCompleteAll
   deriving stock (Bounded, Enum, Eq, Show)
 
-instance DecodeTOML NotifyAction where
+instance DecodeTOML NotifyActionComplete where
   tomlDecoder = tomlDecoder >>= parseNotifyAction
 
--- | Parses 'NotifyAction'.
-parseNotifyAction :: (MonadFail m) => Text -> m NotifyAction
+-- | Parses 'NotifyActionComplete'.
+parseNotifyAction :: (MonadFail m) => Text -> m NotifyActionComplete
 parseNotifyAction = \case
-  "final" -> pure NotifyFinal
-  "command" -> pure NotifyCommand
-  "all" -> pure NotifyAll
+  "final" -> pure NotifyActionCompleteFinal
+  "command" -> pure NotifyActionCompleteCommand
+  "all" -> pure NotifyActionCompleteAll
   bad ->
     fail
       $ Utils.fmtUnrecognizedError
-        "notify action"
+        "notify action complete"
         notifyActionStr
         (unpack bad)
 {-# INLINEABLE parseNotifyAction #-}
 
--- | Available 'NotifyAction' strings.
+-- | Available 'NotifyActionComplete' strings.
 notifyActionStr :: (IsString a) => a
 notifyActionStr = "all | command | final"

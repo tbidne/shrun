@@ -32,7 +32,7 @@ tests =
 -- connection, as we are running in IO.
 
 notifyActionFinal :: TestTree
-notifyActionFinal = testCase "Runs --notify-action final" $ do
+notifyActionFinal = testCase "Runs --notify-action-complete final" $ do
   results <- runNotes args
   expected @=? results
   where
@@ -40,7 +40,7 @@ notifyActionFinal = testCase "Runs --notify-action final" $ do
       withNoConfig
         [ "--notify-system",
           notifySystemArg,
-          "--notify-action",
+          "--notify-action-complete",
           "final",
           "sleep 2",
           "sleep 3"
@@ -63,7 +63,7 @@ notifyTimeoutNever = testCase "Runs --notify-timeout off" $ do
       withNoConfig
         [ "--notify-system",
           notifySystemArg,
-          "--notify-action",
+          "--notify-action-complete",
           "all",
           "--notify-timeout",
           "off",

@@ -80,7 +80,7 @@ notifySendHandlesLegendQuotes = testCase "notify-send handles legend quotes" $ d
         "off",
         "--common-log-key-hide",
         "on",
-        "--notify-action",
+        "--notify-action-complete",
         "all",
         "--notify-system",
         "notify-send",
@@ -96,7 +96,7 @@ mkTest system = testCase ("Runs notify with " ++ system) $ do
 
 mkArgs :: String -> List String
 mkArgs system =
-  [ "--notify-action",
+  [ "--notify-action-complete",
     "all",
     "--notify-system",
     system,

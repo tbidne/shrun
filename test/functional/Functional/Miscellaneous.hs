@@ -137,7 +137,7 @@ isCancelled testArgs = testCase "Shrun is cancelled" $ do
         withNoConfig
           [ "--file-log",
             outFileStr,
-            "--notify-action",
+            "--notify-action-complete",
             "all",
             "--notify-system",
             notifySystemArg,

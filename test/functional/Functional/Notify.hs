@@ -42,7 +42,7 @@ notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
   where
     args =
       withNoConfig
-        [ "--notify-action",
+        [ "--notify-action-complete",
           "command",
           "--notify-system",
           notifySystemArg,
@@ -65,13 +65,13 @@ notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
       ]
 
 notifyActionCommand :: TestTree
-notifyActionCommand = testCase "Runs --notify-action command" $ do
+notifyActionCommand = testCase "Runs --notify-action-complete command" $ do
   results <- runNotes args
   expected @=? results
   where
     args =
       withNoConfig
-        [ "--notify-action",
+        [ "--notify-action-complete",
           "command",
           "--notify-system",
           notifySystemArg,
@@ -94,13 +94,13 @@ notifyActionCommand = testCase "Runs --notify-action command" $ do
       ]
 
 notifyActionAll :: TestTree
-notifyActionAll = testCase "Runs --notify-action all" $ do
+notifyActionAll = testCase "Runs --notify-action-complete all" $ do
   results <- runNotes args
   expected @=? results
   where
     args =
       withNoConfig
-        [ "--notify-action",
+        [ "--notify-action-complete",
           "all",
           "--notify-system",
           notifySystemArg,
@@ -135,7 +135,7 @@ notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
   where
     args =
       withNoConfig
-        [ "--notify-action",
+        [ "--notify-action-complete",
           "all",
           "--notify-system",
           notifySystemArg,

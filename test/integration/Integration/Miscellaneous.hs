@@ -100,9 +100,9 @@ import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
   )
 import Shrun.Configuration.Data.Notify
-  ( NotifyP (MkNotifyP, action, system, timeout),
+  ( NotifyP (MkNotifyP, actionComplete, system, timeout),
   )
-import Shrun.Configuration.Data.Notify.Action (NotifyAction (NotifyAll))
+import Shrun.Configuration.Data.Notify.Action (NotifyActionComplete (NotifyActionCompleteAll))
 import Shrun.Configuration.Data.Notify.Timeout
   ( NotifyTimeout (NotifyTimeoutNever),
   )
@@ -495,7 +495,7 @@ expectedMultiConfig =
             notify =
               Just
                 $ MkNotifyP
-                  { action = NotifyAll,
+                  { actionComplete = NotifyActionCompleteAll,
                     system = notifySystemOSDBus,
                     timeout = NotifyTimeoutNever
                   }

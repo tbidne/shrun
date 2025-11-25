@@ -11,9 +11,9 @@ import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Notify
   ( NotifyArgs,
-    NotifyP (MkNotifyP, action, system, timeout),
+    NotifyP (MkNotifyP, actionComplete, system, timeout),
   )
-import Shrun.Configuration.Data.Notify.Action (NotifyAction)
+import Shrun.Configuration.Data.Notify.Action (NotifyActionComplete)
 import Shrun.Configuration.Data.Notify.Action qualified as Action
 import Shrun.Configuration.Data.Notify.System (NotifySystemArgs)
 import Shrun.Configuration.Data.Notify.System qualified as System
@@ -24,26 +24,26 @@ import Shrun.Prelude
 
 notifyParser :: Parser NotifyArgs
 notifyParser = do
-  action <- notifyActionParser
+  actionComplete <- notifyActionCompleteParser
   system <- notifySystemParser
   timeout <- notifyTimeoutParser
 
   pure
     $ MkNotifyP
-      { action,
+      { actionComplete,
         system,
         timeout
       }
 
-notifyActionParser :: Parser (Maybe (WithDisabled NotifyAction))
-notifyActionParser =
+notifyActionCompleteParser :: Parser (Maybe (WithDisabled NotifyActionComplete))
+notifyActionCompleteParser =
   Utils.mWithDisabledParser
     (OA.str >>= Action.parseNotifyAction)
     opts
     Action.notifyActionStr
   where
     opts =
-      [ OA.long "notify-action",
+      [ OA.long "notify-action-complete",
         OA.completeWith ["final", "command", "all"],
         helpTxt
       ]
@@ -56,7 +56,7 @@ notifyActionParser =
                hfinal
              ]
 
-    intro = "Sends notifications for various actions."
+    intro = "Sends notifications for various 'complete' actions."
 
     hfinal = "final: Sends off a single notification when shrun itself finishes."
     hcommand = "command: Sends off a notification for each command that finishes."

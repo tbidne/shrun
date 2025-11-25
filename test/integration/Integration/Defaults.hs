@@ -122,10 +122,10 @@ import Shrun.Configuration.Data.MergedConfig
       ),
   )
 import Shrun.Configuration.Data.Notify
-  ( NotifyP (MkNotifyP, action, system, timeout),
+  ( NotifyP (MkNotifyP, actionComplete, system, timeout),
   )
 import Shrun.Configuration.Data.Notify.Action
-  ( NotifyAction (NotifyAll, NotifyCommand, NotifyFinal),
+  ( NotifyActionComplete (NotifyActionCompleteAll, NotifyActionCompleteCommand, NotifyActionCompleteFinal),
   )
 import Shrun.Configuration.Data.Notify.System
   ( NotifySystemP (AppleScript, DBus, NotifySend),
@@ -224,7 +224,7 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                 notify =
                   Just
                     $ MkNotifyP
-                      { action = NotifyAll,
+                      { actionComplete = NotifyActionCompleteAll,
                         system = notifySystemOSDBus,
                         timeout = NotifyTimeoutNever
                       }
@@ -293,7 +293,7 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
         "60",
         "--console-log-strip-control",
         "off",
-        "--notify-action",
+        "--notify-action-complete",
         "final",
         "--notify-timeout",
         "10"
@@ -346,7 +346,7 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                 notify =
                   Just
                     $ MkNotifyP
-                      { action = NotifyFinal,
+                      { actionComplete = NotifyActionCompleteFinal,
                         system = notifySystemOSNotifySend,
                         timeout = NotifyTimeoutSeconds 10
                       }
@@ -499,7 +499,7 @@ cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
         "off",
         "--edges",
         "off",
-        "--notify-action",
+        "--notify-action-complete",
         "off",
         "cmd"
       ]

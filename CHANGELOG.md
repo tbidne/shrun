@@ -80,6 +80,8 @@ for versions < 1.
     tables to be valid (though they must be given by at least one of the
     CLI or toml).
 
+* `--notify-action` renamed to `--notify-action-complete`.
+
 ### Added
 * Added `--edges` (toml: legend `edges`) option for declaring dependencies
   between commands e.g. `shrun cmd1 cmd2 --edges "1 -> 2"` means `cmd2` will

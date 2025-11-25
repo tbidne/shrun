@@ -23,7 +23,7 @@ import Shrun.Configuration.Data.ConfigPhase
     ConfigPhaseF,
   )
 import Shrun.Configuration.Data.Notify.Action
-  ( NotifyAction,
+  ( NotifyActionComplete,
   )
 import Shrun.Configuration.Data.Notify.System
   ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
@@ -51,18 +51,18 @@ import Shrun.Prelude
 -- See NOTE: [Args vs. Toml mandatory fields]
 
 -- | Notify action is mandatory if we are running notifications.
-type NotifyActionF :: ConfigPhase -> Type
-type family NotifyActionF p where
-  NotifyActionF ConfigPhaseArgs = Maybe (WithDisabled NotifyAction)
-  NotifyActionF ConfigPhaseToml = Maybe (WithDisabled NotifyAction)
-  NotifyActionF ConfigPhaseMerged = NotifyAction
-  NotifyActionF ConfigPhaseEnv = NotifyAction
+type NotifyActionCompleteF :: ConfigPhase -> Type
+type family NotifyActionCompleteF p where
+  NotifyActionCompleteF ConfigPhaseArgs = Maybe (WithDisabled NotifyActionComplete)
+  NotifyActionCompleteF ConfigPhaseToml = Maybe (WithDisabled NotifyActionComplete)
+  NotifyActionCompleteF ConfigPhaseMerged = NotifyActionComplete
+  NotifyActionCompleteF ConfigPhaseEnv = NotifyActionComplete
 
 -- | Holds notification config.
 type NotifyP :: ConfigPhase -> Type
 data NotifyP p = MkNotifyP
-  { -- | Actions for which to send notifications.
-    action :: NotifyActionF p,
+  { -- | Complete actions for which to send notifications.
+    actionComplete :: NotifyActionCompleteF p,
     -- | The notification system to use.
     system :: ConfigPhaseF p (NotifySystemP p),
     -- | when to timeout successful notifications.
@@ -71,10 +71,10 @@ data NotifyP p = MkNotifyP
 
 instance
   ( k ~ A_Lens,
-    a ~ NotifyActionF p,
-    b ~ NotifyActionF p
+    a ~ NotifyActionCompleteF p,
+    b ~ NotifyActionCompleteF p
   ) =>
-  LabelOptic "action" k (NotifyP p) (NotifyP p) a b
+  LabelOptic "actionComplete" k (NotifyP p) (NotifyP p) a b
   where
   labelOptic =
     lensVL
@@ -117,7 +117,7 @@ instance
 instance Semigroup NotifyToml where
   l <> r =
     MkNotifyP
-      { action = l ^. #action <|> r ^. #action,
+      { actionComplete = l ^. #actionComplete <|> r ^. #actionComplete,
         system = l ^. #system <|> r ^. #system,
         timeout = l ^. #timeout <|> r ^. #timeout
       }
@@ -125,7 +125,7 @@ instance Semigroup NotifyToml where
 instance Monoid NotifyToml where
   mempty =
     MkNotifyP
-      { action = Nothing,
+      { actionComplete = Nothing,
         system = Nothing,
         timeout = Nothing
       }
@@ -155,7 +155,7 @@ instance Default NotifyArgs where
   def =
     MkNotifyP
       { system = Nothing,
-        action = Nothing,
+        actionComplete = Nothing,
         timeout = Nothing
       }
 
@@ -165,24 +165,24 @@ mergeNotifyLogging ::
   Maybe NotifyToml ->
   Maybe NotifyMerged
 mergeNotifyLogging args mToml =
-  mAction <&> \action ->
+  mAction <&> \actionComplete ->
     let toml :: NotifyToml
         toml = fromMaybe defaultNotifyToml mToml
      in MkNotifyP
-          { action,
+          { actionComplete,
             system =
               mergeNotifySystem (args ^. #system) (toml ^. #system),
             timeout =
               (args ^. #timeout) <.> (toml ^. #timeout)
           }
   where
-    mAction :: Maybe NotifyAction
-    mAction = args ^. #action <|?|> (mToml ^? _Just % #action % _Just)
+    mAction :: Maybe NotifyActionComplete
+    mAction = args ^. #actionComplete <|?|> (mToml ^? _Just % #actionComplete % _Just)
 
 instance DecodeTOML NotifyToml where
   tomlDecoder =
     MkNotifyP
-      <$> getFieldWith tomlDecoder "action"
+      <$> getFieldWith tomlDecoder "action-complete"
       <*> getFieldOptWith tomlDecoder "system"
       <*> getFieldOptWith tomlDecoder "timeout"
 
@@ -225,7 +225,7 @@ mkNotify :: NotifyMerged -> NotifySystemEnv -> NotifyEnv
 mkNotify notifyToml systemP2 =
   MkNotifyP
     { system = systemP2,
-      action = notifyToml ^. #action,
+      actionComplete = notifyToml ^. #actionComplete,
       timeout = notifyToml ^. #timeout
     }
 
@@ -233,6 +233,6 @@ defaultNotifyToml :: NotifyToml
 defaultNotifyToml =
   MkNotifyP
     { system = Nothing,
-      action = Nothing,
+      actionComplete = Nothing,
       timeout = Nothing
     }

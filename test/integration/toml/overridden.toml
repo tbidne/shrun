@@ -23,5 +23,5 @@ line-trunc = 200
 
 [notify]
 system = "dbus"
-action = "command"
+action-complete = "command"
 timeout = "off"

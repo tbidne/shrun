@@ -81,9 +81,9 @@ import Shrun.Configuration.Data.MergedConfig
   ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
   )
 import Shrun.Configuration.Data.Notify
-  ( NotifyP (MkNotifyP, action, system, timeout),
+  ( NotifyP (MkNotifyP, actionComplete, system, timeout),
   )
-import Shrun.Configuration.Data.Notify.Action (NotifyAction (NotifyCommand))
+import Shrun.Configuration.Data.Notify.Action (NotifyActionComplete (NotifyActionCompleteCommand))
 import Shrun.Configuration.Data.Notify.System
   ( NotifySystemP (AppleScript, NotifySend),
   )
@@ -143,7 +143,7 @@ examplesConfig = testProp1 desc "examplesConfig" $ do
                 notify =
                   Just
                     $ MkNotifyP
-                      { action = NotifyCommand,
+                      { actionComplete = NotifyActionCompleteCommand,
                         system = notifySystemOSNotifySend,
                         timeout = NotifyTimeoutNever
                       }

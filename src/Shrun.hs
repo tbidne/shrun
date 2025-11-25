@@ -26,10 +26,10 @@ import Shrun.Configuration.Data.FileLogging
     FileLoggingEnv,
   )
 import Shrun.Configuration.Data.Notify.Action
-  ( NotifyAction
-      ( NotifyAll,
-        NotifyCommand,
-        NotifyFinal
+  ( NotifyActionComplete
+      ( NotifyActionCompleteAll,
+        NotifyActionCompleteCommand,
+        NotifyActionCompleteFinal
       ),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
@@ -209,12 +209,12 @@ runCommand cmd = do
       keyHide = commonLogging ^. #keyHide
       formattedCmd = LogFmt.formatCommand keyHide commandNameTrunc cmd
 
-  -- Sent off notif if NotifyAll or NotifyCommand is set
+  -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteCommand is set
   cfg <- asks getNotifyConfig
-  case cfg ^? (_Just % #action) of
-    Just NotifyAll ->
+  case cfg ^? (_Just % #actionComplete) of
+    Just NotifyActionCompleteAll ->
       Notify.sendNotif (MonadNotify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
-    Just NotifyCommand ->
+    Just NotifyActionCompleteCommand ->
       Notify.sendNotif (MonadNotify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
     _ -> pure ()
 {-# INLINEABLE runCommand #-}
@@ -395,11 +395,11 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
   let urgency = if anyError then Critical else Normal
       notifyBody = Notify.formatNotifyMessage totalTimeTxt []
 
-  -- Sent off notif if NotifyAll or NotifyFinal is set
+  -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteFinal is set
   cfg <- asks getNotifyConfig
-  case cfg ^? (_Just % #action) of
-    Just NotifyAll -> Notify.sendNotif "Shrun Finished" notifyBody urgency
-    Just NotifyFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
+  case cfg ^? (_Just % #actionComplete) of
+    Just NotifyActionCompleteAll -> Notify.sendNotif "Shrun Finished" notifyBody urgency
+    Just NotifyActionCompleteFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
     _ -> pure ()
 
   Logging.putRegionLog r finalLog
@@ -622,7 +622,7 @@ teardown startTime = do
 
   -- 3. Send notification
   cfg <- asks getNotifyConfig
-  case cfg ^? (_Just % #action) of
+  case cfg ^? (_Just % #actionComplete) of
     -- If notifcations are on at all, send one
     Just _ -> Notify.sendNotif notifyBody "" Critical
     _ -> pure ()

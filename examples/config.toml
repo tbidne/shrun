@@ -197,12 +197,12 @@ timer-format = "prose_compact"
 
 # If enabled, sends off notifications when commands/shrun complete.
 [notify]
-# Turns on notifications.
+# Turns on notifications for 'complete' actions.
 #
 # "final" -> sends off a notification when all commands finish
 # "command" -> sends off a notification when each command finishes.
 # "all" -> implies "final" and "command".
-action = "command"
+action-complete = "command"
 
 # For linux, must be one of "dbus" or "notify-send". Defaults to "dbus".
 # OSX must be "apple-script" or unspecified.

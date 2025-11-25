@@ -375,7 +375,7 @@ cancelSequential = testCase desc $ do
 
     args =
       withNoConfig
-        [ "--notify-action",
+        [ "--notify-action-complete",
           "all",
           "--notify-system",
           notifySystemArg,
@@ -431,7 +431,7 @@ timeoutSequential = testCase desc $ do
 
     args =
       withNoConfig
-        [ "--notify-action",
+        [ "--notify-action-complete",
           "all",
           "--notify-system",
           notifySystemArg,
