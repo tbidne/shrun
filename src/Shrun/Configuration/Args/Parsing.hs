@@ -333,5 +333,6 @@ commandsParser prevKeys =
     opts =
       mconcat
         [ OA.metavar "Commands...",
-          OA.completeWith prevKeys
+          OA.completeWith prevKeys,
+          OA.completer EOC.compgenCwdPathsCompleter
         ]
