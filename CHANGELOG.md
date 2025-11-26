@@ -90,6 +90,7 @@ for versions < 1.
   have option value competions, local toml files for config, and completions
   for previously loaded legend keys. Legend keys are saved with the
   new `--legend-keys-cache` option.
+* Added `--notify-action-start (on | off)` for command start notifications.
 
 ### Fixed
 * Improved final error output, so it is more likely that the actual error

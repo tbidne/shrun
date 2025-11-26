@@ -122,10 +122,19 @@ import Shrun.Configuration.Data.MergedConfig
       ),
   )
 import Shrun.Configuration.Data.Notify
-  ( NotifyP (MkNotifyP, actionComplete, system, timeout),
+  ( NotifyActionsActive
+      ( NotifyActionsActiveAll,
+        NotifyActionsActiveComplete
+      ),
+    NotifyP (MkNotifyP, actions, system, timeout),
   )
 import Shrun.Configuration.Data.Notify.Action
-  ( NotifyActionComplete (NotifyActionCompleteAll, NotifyActionCompleteCommand, NotifyActionCompleteFinal),
+  ( NotifyActionComplete
+      ( NotifyActionCompleteAll,
+        NotifyActionCompleteCommand,
+        NotifyActionCompleteFinal
+      ),
+    NotifyActionStartSwitch (MkNotifyActionStartSwitch),
   )
 import Shrun.Configuration.Data.Notify.System
   ( NotifySystemP (AppleScript, DBus, NotifySend),
@@ -224,7 +233,7 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                 notify =
                   Just
                     $ MkNotifyP
-                      { actionComplete = NotifyActionCompleteAll,
+                      { actions = NotifyActionsActiveAll NotifyActionCompleteAll,
                         system = notifySystemOSDBus,
                         timeout = NotifyTimeoutNever
                       }
@@ -295,6 +304,8 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
         "off",
         "--notify-action-complete",
         "final",
+        "--notify-action-start",
+        "off",
         "--notify-timeout",
         "10"
       ]
@@ -346,7 +357,7 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                 notify =
                   Just
                     $ MkNotifyP
-                      { actionComplete = NotifyActionCompleteFinal,
+                      { actions = NotifyActionsActiveComplete NotifyActionCompleteFinal,
                         system = notifySystemOSNotifySend,
                         timeout = NotifyTimeoutSeconds 10
                       }
@@ -500,6 +511,8 @@ cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
         "--edges",
         "off",
         "--notify-action-complete",
+        "off",
+        "--notify-action-start",
         "off",
         "cmd"
       ]

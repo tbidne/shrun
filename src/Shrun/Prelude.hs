@@ -176,7 +176,7 @@ import Data.String as X (IsString (fromString), String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
 import Data.Traversable as X (Traversable (sequenceA, traverse), for)
-import Data.Tuple as X (fst, snd)
+import Data.Tuple as X (fst, snd, uncurry)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4)
 #endif
@@ -301,7 +301,9 @@ import Numeric.Data.Positive as X
 import Optics.Core as X
   ( A_Getter,
     A_Lens,
+    A_Prism,
     A_Setter,
+    AffineFold,
     AffineTraversal',
     An_AffineFold,
     An_AffineTraversal,
@@ -317,6 +319,7 @@ import Optics.Core as X
     Optic',
     Prism,
     Prism',
+    afolding,
     iso,
     lensVL,
     over',

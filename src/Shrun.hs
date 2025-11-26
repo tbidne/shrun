@@ -19,11 +19,16 @@ import Shrun.Command qualified as Command
 import Shrun.Command.Types (CommandP1, CommandStatus (CommandRunning))
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
 import Shrun.Configuration.Data.ConsoleLogging (ConsoleLoggingEnv)
+import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat (ProseCompact))
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat qualified as TimerFormat
 import Shrun.Configuration.Data.Core.Timeout (Timeout (MkTimeout))
 import Shrun.Configuration.Data.FileLogging
   ( FileLogOpened (MkFileLogOpened),
     FileLoggingEnv,
+  )
+import Shrun.Configuration.Data.Notify
+  ( _NotifyActionsActiveCompleteAny,
+    _NotifyActionsActiveStartAny,
   )
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete
@@ -165,7 +170,7 @@ shrun = do
 
     runCommands :: (HasCallStack) => Double -> m ()
     runCommands startTime = do
-      let actions = Command.runCommands runCommand
+      let actions = Command.runCommands (runCommand startTime)
           actionsWithTimer = Async.race_ actions counter
 
       result <- tryMySync actionsWithTimer
@@ -193,25 +198,40 @@ runCommand ::
     MonadThread m,
     MonadTime m
   ) =>
+  Double ->
   CommandP1 ->
   m ()
-runCommand cmd = do
-  cmdResult <- tryCommandLogging cmd
+runCommand globalStartTime cmd = do
+  cfg <- asks getNotifyConfig
   commonLogging <- asks getCommonLogging
   (consoleLogging, consoleQueue, _) <- asks (getConsoleLogging @env @(Region m))
+
+  let commandNameTrunc = consoleLogging ^. #commandNameTrunc
+      keyHide = commonLogging ^. #keyHide
+      formattedCmd = LogFmt.formatCommand keyHide commandNameTrunc cmd
+
+  case cfg ^? (_Just % #actions % _NotifyActionsActiveStartAny) of
+    Just () -> do
+      cmdStartTimeDouble <- Time.getMonotonicTime
+      let cmdStartTime = Time.fromSeconds (cmdStartTimeDouble - globalStartTime)
+          rt = Utils.timeSpecToRelTime cmdStartTime
+          startTimeMsg = TimerFormat.formatRelativeTime ProseCompact rt
+          notifyMsg = "Started after " <> startTimeMsg
+      Notify.sendNotif
+        (MonadNotify.fromUnlined $ formattedCmd <> "Started")
+        (MonadNotify.fromUnlined notifyMsg)
+        Normal
+    _ -> pure ()
+
+  cmdResult <- tryCommandLogging cmd
 
   let (urgency, consoleLog, mkFileLog, notifyMsg) =
         mkResultData commonLogging consoleLogging cmd cmdResult
 
   putCommandFinalLog consoleQueue consoleLog mkFileLog
 
-  let commandNameTrunc = consoleLogging ^. #commandNameTrunc
-      keyHide = commonLogging ^. #keyHide
-      formattedCmd = LogFmt.formatCommand keyHide commandNameTrunc cmd
-
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteCommand is set
-  cfg <- asks getNotifyConfig
-  case cfg ^? (_Just % #actionComplete) of
+  case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
     Just NotifyActionCompleteAll ->
       Notify.sendNotif (MonadNotify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
     Just NotifyActionCompleteCommand ->
@@ -397,7 +417,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteFinal is set
   cfg <- asks getNotifyConfig
-  case cfg ^? (_Just % #actionComplete) of
+  case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
     Just NotifyActionCompleteAll -> Notify.sendNotif "Shrun Finished" notifyBody urgency
     Just NotifyActionCompleteFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
     _ -> pure ()
@@ -622,8 +642,8 @@ teardown startTime = do
 
   -- 3. Send notification
   cfg <- asks getNotifyConfig
-  case cfg ^? (_Just % #actionComplete) of
-    -- If notifcations are on at all, send one
+  case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
+    -- If complete notifcations are on at all, send one
     Just _ -> Notify.sendNotif notifyBody "" Critical
     _ -> pure ()
 {-# INLINEABLE teardown #-}

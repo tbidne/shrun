@@ -24,4 +24,5 @@ line-trunc = 200
 [notify]
 system = "apple-script"
 action-complete = "command"
+action-start = "off"
 timeout = "off"

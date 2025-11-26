@@ -85,8 +85,10 @@ import Shrun.Configuration.Data.Graph
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Notify
-  ( NotifyP (MkNotifyP, actionComplete, system, timeout),
+  ( NotifyActionsInit (MkNotifyActionsInit, complete, start),
+    NotifyP (MkNotifyP, actions, system, timeout),
   )
+import Shrun.Configuration.Data.Notify.Action (NotifyActionStartSwitch (MkNotifyActionStartSwitch))
 import Shrun.Configuration.Data.Notify.Timeout
   ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
@@ -244,12 +246,17 @@ genCoreConfig = do
           }
 
     genNotify = do
-      actionComplete <- genMWithDisabled G.enumBounded
+      complete <- genMWithDisabled G.enumBounded
+      start <- fmap MkNotifyActionStartSwitch <$> genMaybe G.enumBounded
       system <- genMaybe G.enumBounded
       timeout <- genMaybe genNotifyTimeout
       pure
         $ MkNotifyP
-          { actionComplete,
+          { actions =
+              MkNotifyActionsInit
+                { complete,
+                  start
+                },
             system,
             timeout
           }

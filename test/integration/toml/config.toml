@@ -46,4 +46,5 @@ strip-control = "off"
 [notify]
 system = "dbus"
 action-complete = "all"
+action-start = "on"
 timeout = "off"

@@ -10,10 +10,14 @@ import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Notify
-  ( NotifyArgs,
-    NotifyP (MkNotifyP, actionComplete, system, timeout),
+  ( NotifyActionsInit (MkNotifyActionsInit, complete, start),
+    NotifyArgs,
+    NotifyP (MkNotifyP, actions, system, timeout),
   )
-import Shrun.Configuration.Data.Notify.Action (NotifyActionComplete)
+import Shrun.Configuration.Data.Notify.Action
+  ( NotifyActionComplete,
+    NotifyActionStartSwitch (MkNotifyActionStartSwitch),
+  )
 import Shrun.Configuration.Data.Notify.Action qualified as Action
 import Shrun.Configuration.Data.Notify.System (NotifySystemArgs)
 import Shrun.Configuration.Data.Notify.System qualified as System
@@ -24,13 +28,18 @@ import Shrun.Prelude
 
 notifyParser :: Parser NotifyArgs
 notifyParser = do
-  actionComplete <- notifyActionCompleteParser
+  complete <- notifyActionCompleteParser
+  start <- notifyActionStartParser
   system <- notifySystemParser
   timeout <- notifyTimeoutParser
 
   pure
     $ MkNotifyP
-      { actionComplete,
+      { actions =
+          MkNotifyActionsInit
+            { complete,
+              start
+            },
         system,
         timeout
       }
@@ -61,6 +70,11 @@ notifyActionCompleteParser =
     hfinal = "final: Sends off a single notification when shrun itself finishes."
     hcommand = "command: Sends off a notification for each command that finishes."
     hall = "all: Implies 'final' and 'command'."
+
+notifyActionStartParser :: Parser (Maybe NotifyActionStartSwitch)
+notifyActionStartParser = Utils.switchParser MkNotifyActionStartSwitch "notify-action-start" helpTxt
+  where
+    helpTxt = "Sends a notification when a command is started."
 
 notifySystemParser :: Parser (Maybe NotifySystemArgs)
 notifySystemParser = mainParser

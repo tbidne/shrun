@@ -1,13 +1,40 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Provides type for notifications.
 module Shrun.Configuration.Data.Notify.Action
-  ( NotifyActionComplete (..),
+  ( -- * Start
+    NotifyActionStartSwitch (..),
+
+    -- * Complete
+    NotifyActionComplete (..),
     parseNotifyAction,
     notifyActionStr,
   )
 where
 
+import Shrun.Configuration.Data.ConfigPhase (parseSwitch)
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
+
+-- | Type for determining if we use the command's key
+-- for display, rather than the key itself.
+newtype NotifyActionStartSwitch = MkNotifyActionStartSwitch Bool
+  deriving stock (Bounded, Eq, Ord, Show)
+  deriving newtype (Enum)
+
+instance DecodeTOML NotifyActionStartSwitch where
+  tomlDecoder = MkNotifyActionStartSwitch <$> (tomlDecoder >>= parseSwitch)
+
+instance Default NotifyActionStartSwitch where
+  def = MkNotifyActionStartSwitch False
+
+instance
+  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
+  LabelOptic "unNotifyActionStartSwitch" k NotifyActionStartSwitch NotifyActionStartSwitch a b
+  where
+  labelOptic = iso (\(MkNotifyActionStartSwitch b) -> b) MkNotifyActionStartSwitch
+  {-# INLINE labelOptic #-}
 
 -- | Determines for which 'complete' actions we should send notifications.
 data NotifyActionComplete

@@ -32,7 +32,8 @@
       - [File Log Size Mode](#file-log-size-mode)
       - [File Log Strip Control](#file-log-strip-control)
   - [Notifications](#notifications)
-    - [Notify Action](#notify-action)
+    - [Notify Action Complete](#notify-action-complete)
+    - [Notify Action Start](#notify-action-start)
     - [Notify System](#notify-system)
     - [Notify Timeout](#notify-timeout)
   - [Miscellaneous](#miscellaneous)
@@ -721,6 +722,18 @@ These options configure `shrun` to send off desktop notifications for certain ac
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action-complete final "sleep 5"</span></code>
+</pre>
+
+### Notify Action Start
+
+**Arg:** `--notify-action-start (on | off)`
+
+**Description:** Sends notifications for 'start' actions.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --notify-system dbus --notify-action-start on "sleep 5"</span></code>
 </pre>
 
 ### Notify System

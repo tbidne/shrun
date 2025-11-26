@@ -24,15 +24,16 @@ tests :: TestTree
 tests =
   testGroup
     "Notify"
-    [ notifyActionFinal,
+    [ notifyActionCompleteFinal,
+      notifyActionStartOn,
       notifyTimeoutNever
     ]
 
 -- NOTE: There is no DBus test because that requires creating a real DBus
 -- connection, as we are running in IO.
 
-notifyActionFinal :: TestTree
-notifyActionFinal = testCase "Runs --notify-action-complete final" $ do
+notifyActionCompleteFinal :: TestTree
+notifyActionCompleteFinal = testCase "Runs --notify-action-complete final" $ do
   results <- runNotes args
   expected @=? results
   where
@@ -49,6 +50,37 @@ notifyActionFinal = testCase "Runs --notify-action-complete final" $ do
       [ MkShrunNote
           { summary = "Shrun Finished",
             body = "3 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutSeconds 10
+          }
+      ]
+
+notifyActionStartOn :: TestTree
+notifyActionStartOn = testCase "Runs --notify-action-start on" $ do
+  results <- runNotes args
+  expected @=? results
+  where
+    args =
+      withNoConfig
+        [ "--notify-system",
+          notifySystemArg,
+          "--notify-action-start",
+          "on",
+          "--edges",
+          "sequential",
+          "sleep 2",
+          "sleep 3"
+        ]
+    expected =
+      [ MkShrunNote
+          { summary = "[sleep 3] Started",
+            body = "Started after 2 seconds",
+            urgency = Normal,
+            timeout = NotifyTimeoutSeconds 10
+          },
+        MkShrunNote
+          { summary = "[sleep 2] Started",
+            body = "Started after 0 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 10
           }

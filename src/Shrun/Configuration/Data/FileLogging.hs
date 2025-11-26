@@ -98,22 +98,27 @@ instance
 
 -- NOTE: [Args vs. Toml mandatory fields]
 --
--- Some fields are mandatory e.g. FileLogging's path if we are actually
--- doing file logging. The latter is determined by the FileLoggingP itself
--- being Just (cf. Nothing), thus the path itself is mandatory on Toml and
--- Merged.
+-- Some "aggregate types" (e.g. FileLogging, NotifyConfig) are optional
+-- on the config itself i.e. they are surrounded by Maybe. This is opposed
+-- to normal types (e.g. ConsoleLogging) that always exist.
 --
--- So why is it optional on Args? Because Args' FileLoggingP is _always_
--- present, unlike Toml and Merged's Maybe. We need this behavior because the
--- former's fields can be used to override toml fields, even if file-logging is
--- not specified on the CLI.
+-- We do this because it makes it easier to verify whether certain actions
+-- should be "on" at all. For instance, if file-logging has not been set
+-- (the user has not given us any 'path'), then not only do we not want to
+-- log anything (fine, the field is Nothing), but we also do not want to
+-- send any log messages to the queue, since that is just wasted work.
 --
--- For example, 'shrun --file-log-mode write cmd' _should_ overwrite toml's
--- file-log.mode even though we did not specify --file-log. Therefore Args'
--- FileLoggingP always needs to be present hence all its field must be
--- optional, even when some are mandatory on Merged.
+-- Similarly, if the user has not set any notify actions, then we do not
+-- want to send any to its queue.
+--
+-- By surrounding the entire config in a maybe, we do not need to worry about
+-- checking any implicit invariants ("only send notif to queue if some
+-- action is set").
+--
+-- This generally means that the important fields (file-log path,
+-- notify action), will be required on if the config exists.
 
--- | File logging's path is only optional for the Args. For Toml and merged,
+-- | File logging's path is only optional for the Args and Toml. For merged,
 -- it must be present if file logging is active.
 type FileLogPathF :: ConfigPhase -> Type
 type family FileLogPathF p where

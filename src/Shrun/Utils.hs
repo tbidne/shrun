@@ -18,6 +18,7 @@ module Shrun.Utils
     atomicReadWrite,
     fmtUnrecognizedError,
     parseByteText,
+    surroundJust,
     whileM_,
     whenLeft,
     untilJust,
@@ -37,6 +38,7 @@ import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
 import Effects.Time (TimeSpec, diffTimeSpec)
+import Optics.Core qualified as O
 import Shrun.Prelude
 import Text.Read (Read)
 import Text.Read qualified as TR
@@ -360,3 +362,11 @@ indexPos (x :<|| xs) = (one, x) :<|| ys
     ys = Seq.zip (unsafePositive <$> Seq.fromList [2 .. len]) xs
 
     len = length xs + 1
+
+surroundJust ::
+  ( O.JoinKinds k A_Prism m,
+    O.JoinKinds A_Prism l k
+  ) =>
+  Optic l ks u v (Maybe a) (Maybe b) ->
+  Optic m ks (Maybe u) (Maybe v) a b
+surroundJust l = _Just % l % _Just

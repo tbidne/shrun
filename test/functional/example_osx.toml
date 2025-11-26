@@ -204,6 +204,9 @@ timer-format = "prose_compact"
 # "all" -> implies "final" and "command".
 action-complete = "command"
 
+# Turns on notifications for 'start' actions. Can be 'on' or 'off'.
+action-start = "on"
+
 # For linux, must be one of "dbus" or "notify-send". Defaults to "dbus".
 # OSX must be "apple-script" or unspecified.
 system = "apple-script"
