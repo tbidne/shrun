@@ -68,7 +68,7 @@ jobs:
           cabal install --ignore-project doctest --flag cabal-doctest
 
           echo "*** Running doctest ***"
-          cabal doctest lib:unicode-grapheme
+          cabal doctest lib:shrun
 
       - name: Unit Tests
         run: |
