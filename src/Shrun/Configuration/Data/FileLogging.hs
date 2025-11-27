@@ -60,7 +60,8 @@ import Shrun.Configuration.Data.FileLogging.FileSizeMode
   )
 import Shrun.Configuration.Data.StripControl (FileLogStripControl)
 import Shrun.Configuration.Data.Truncation
-  ( TruncRegion (TruncCommandName),
+  ( DetectResult,
+    TruncRegion (TruncCommandName),
     Truncation,
     configToLineTrunc,
     decodeCommandNameTrunc,
@@ -430,16 +431,19 @@ instance Default FileLoggingArgs where
 -- | Merges args and toml configs.
 mergeFileLogging ::
   ( HasCallStack,
+    MonadCatch m,
+    MonadIORef m,
     MonadTerminal m
   ) =>
+  IORef DetectResult ->
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
   m (Maybe FileLoggingMerged)
-mergeFileLogging args mToml = for mPath $ \path -> do
+mergeFileLogging detectRef args mToml = for mPath $ \path -> do
   let toml = fromMaybe defaultToml mToml
 
   lineTrunc <-
-    configToLineTrunc $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
+    configToLineTrunc detectRef $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
 
   pure
     $ MkFileLoggingP

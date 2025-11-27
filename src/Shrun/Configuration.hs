@@ -40,8 +40,9 @@ import Shrun.Utils qualified as Utils
 -- queues.
 mergeConfig ::
   ( HasCallStack,
-    MonadTerminal m,
-    MonadThrow m
+    MonadCatch m,
+    MonadIORef m,
+    MonadTerminal m
   ) =>
   Args ->
   Toml ->

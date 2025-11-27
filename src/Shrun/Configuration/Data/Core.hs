@@ -35,6 +35,7 @@ import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.LegendKeysCache (LegendKeysCache)
 import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
 import Shrun.Configuration.Data.Notify qualified as Notify
+import Shrun.Configuration.Data.Truncation (DetectResult (DetectNotRun))
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<|?|>))
 import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Notify.DBus (MonadDBus)
@@ -259,21 +260,26 @@ deriving stock instance Show (CoreConfigP ConfigPhaseMerged)
 
 mergeCoreConfig ::
   ( HasCallStack,
-    MonadTerminal m,
-    MonadThrow m
+    MonadCatch m,
+    MonadIORef m,
+    MonadTerminal m
   ) =>
   NESeq CommandP1 ->
   CoreConfigArgs ->
   CoreConfigToml ->
   m CoreConfigMerged
 mergeCoreConfig cmds args toml = do
+  detectRef <- newIORef DetectNotRun
+
   consoleLogging <-
     mergeConsoleLogging
+      detectRef
       (args ^. #consoleLogging)
       (toml ^. #consoleLogging)
 
   fileLogging <-
     mergeFileLogging
+      detectRef
       (args ^. #fileLogging)
       (toml ^. #fileLogging)
 

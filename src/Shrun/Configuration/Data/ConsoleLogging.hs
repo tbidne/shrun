@@ -31,7 +31,8 @@ import Shrun.Configuration.Data.ConfigPhase
 import Shrun.Configuration.Data.ConsoleLogging.TimerFormat (TimerFormat)
 import Shrun.Configuration.Data.StripControl (ConsoleLogStripControl)
 import Shrun.Configuration.Data.Truncation
-  ( TruncRegion (TruncCommandName),
+  ( DetectResult,
+    TruncRegion (TruncCommandName),
     Truncation,
     configToLineTrunc,
     decodeCommandNameTrunc,
@@ -207,14 +208,17 @@ instance Default ConsoleLoggingArgs where
 -- | Merges args and toml configs.
 mergeConsoleLogging ::
   ( HasCallStack,
+    MonadCatch m,
+    MonadIORef m,
     MonadTerminal m
   ) =>
+  IORef DetectResult ->
   ConsoleLoggingArgs ->
   Maybe ConsoleLoggingToml ->
   m ConsoleLoggingMerged
-mergeConsoleLogging args mToml = do
+mergeConsoleLogging detectRef args mToml = do
   lineTrunc <-
-    configToLineTrunc $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
+    configToLineTrunc detectRef $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
 
   pure
     $ MkConsoleLoggingP

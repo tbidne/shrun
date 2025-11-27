@@ -5,9 +5,11 @@
 module Integration.Miscellaneous (specs) where
 
 import Data.Text qualified as T
+import Effects.System.Terminal (getTerminalSize)
 import Integration.Prelude
 import Integration.Utils
-  ( makeConfigAndAssertEq,
+  ( ConfigIO,
+    makeConfigAndAssertEq,
     makeConfigAndAssertFieldEq,
     notifySystemOSDBus,
     runConfigIO,
@@ -115,6 +117,7 @@ import Shrun.Configuration.Data.Truncation
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env (withEnv)
+import Shrun.Notify.DBus (MonadDBus)
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -126,6 +129,7 @@ specs testArgs =
       usesRecursiveCmdExample,
       usesRecursiveCmd,
       lineTruncDetect,
+      testLineTruncDetectTotal,
       testFileLogDeleteOnSuccess,
       testFileSizeModeNothing,
       testReadBlockLineBufferReadStrategy,
@@ -309,6 +313,38 @@ lineTruncDetect = testProp1 desc "lineTruncDetect" $ do
         #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 86,
         #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeRename
       ]
+
+testLineTruncDetectTotal :: TestTree
+testLineTruncDetectTotal = testProp1 desc "testLineTruncDetectTotal" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runTermWidthFailIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  case logs of
+    [] -> do
+      annotate "Expected exactly 1 log"
+      failure
+    [l] -> do
+      unless (expectedLog `T.isPrefixOf` l) $ do
+        annotate "Did not match expected log"
+        annotate (unpack l)
+        failure
+    ls@(_ : _ : _) -> do
+      annotate "Expected exactly 1 log, received > 1"
+      annotateShow ls
+      failure
+  where
+    desc = "lineTrunc 'detect' is total"
+    args = ["-c", getIntConfig "misc", "cmd1"]
+
+    expected =
+      -- 80 is the fallback.
+      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 80,
+        #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 80,
+        #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeRename
+      ]
+
+    expectedLog = "Failed detecting terminal width, defaulting to 80: windows error"
 
 testFileSizeModeNothing :: TestTree
 testFileSizeModeNothing = testProp1 desc "testFileSizeModeNothing" $ do
@@ -544,3 +580,36 @@ setMany' ::
   p ->
   p
 setMany' ls s = foldl' (\s' (MkSomeSetter l x) -> set' l x s') s ls
+
+newtype TermWidthFailIO a = MkTermWidthFailIO (ConfigIO a)
+  deriving
+    ( Applicative,
+      Functor,
+      Monad,
+      MonadCatch,
+      MonadDBus,
+      MonadEnv,
+      MonadFileReader,
+      MonadFileWriter,
+      MonadHandleWriter,
+      MonadIO,
+      MonadMask,
+      MonadOptparse,
+      MonadPathReader,
+      MonadPathWriter,
+      MonadIORef,
+      MonadReader (IORef (List Text)),
+      MonadSTM,
+      MonadThrow
+    )
+    via ConfigIO
+
+instance MonadTerminal TermWidthFailIO where
+  -- capture logs
+  putStrLn t = ask >>= (`modifyIORef'` (T.pack t :))
+
+  -- hardcoded so we can test 'detect'
+  getTerminalSize = throwText "windows error"
+
+runTermWidthFailIO :: TermWidthFailIO a -> IORef (List Text) -> IO a
+runTermWidthFailIO (MkTermWidthFailIO cfgIO) = runConfigIO cfgIO

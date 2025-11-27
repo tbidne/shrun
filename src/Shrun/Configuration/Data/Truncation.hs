@@ -10,6 +10,7 @@ module Shrun.Configuration.Data.Truncation
     -- * Misc
     decodeCommandNameTrunc,
     decodeLineTrunc,
+    DetectResult (..),
     configToLineTrunc,
     lineTruncStr,
   )
@@ -18,6 +19,7 @@ where
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.WithDisabled
 import Shrun.Prelude
+import Shrun.Utils ((∸))
 import Shrun.Utils qualified as Utils
 
 -- | The different regions to apply truncation rules.
@@ -102,18 +104,47 @@ decodeCommandNameTrunc = getFieldOptWith tomlDecoder "command-name-trunc"
 decodeLineTrunc :: Decoder (Maybe (WithDisabled LineTruncation))
 decodeLineTrunc = getFieldOptWith tomlDecoder "line-trunc"
 
+data DetectResult
+  = DetectNotRun
+  | DetectFailed
+  | DetectSucceeded Int
+
 -- | Maps line trunc config to actual value.
 configToLineTrunc ::
   ( HasCallStack,
+    MonadCatch m,
+    MonadIORef m,
     MonadTerminal m
   ) =>
+  IORef DetectResult ->
   Maybe LineTruncation ->
   m (Maybe (Truncation TruncLine))
-configToLineTrunc Nothing = pure Nothing
-configToLineTrunc (Just Detected) =
-  -- We subtract one because otherwise we can fill the entire terminal with a
-  -- log, which will automatically add a newline. The point of this option is
-  -- to avoid multiple lines, hence the subtraction.
-  Just . MkTruncation . (\x -> x - 1) <$> getTerminalWidth
-configToLineTrunc (Just (Undetected x)) = pure $ Just x
+configToLineTrunc _ Nothing = pure Nothing
+configToLineTrunc detectRef (Just Detected) = do
+  -- ref exists so that we only check this once, even if both console
+  -- and file specify detect.
+  width <-
+    readIORef detectRef >>= \case
+      DetectSucceeded w -> pure w
+      DetectFailed -> pure defLen
+      DetectNotRun -> do
+        -- We subtract one because otherwise we can fill the entire terminal with a
+        -- log, which will automatically add a newline. The point of this option is
+        -- to avoid multiple lines, hence the subtraction.
+        tryMySync getTerminalWidth >>= \case
+          Left ex -> do
+            let msg =
+                  mconcat
+                    [ "Failed detecting terminal width, defaulting to 80: ",
+                      displayExceptiont ex
+                    ]
+            putTextLn msg
+            writeIORef detectRef DetectFailed
+            pure defLen
+          Right w -> pure $ w ∸ 1
+
+  pure $ Just $ MkTruncation width
+  where
+    defLen = 80
+configToLineTrunc _ (Just (Undetected x)) = pure $ Just x
 {-# INLINEABLE configToLineTrunc #-}
