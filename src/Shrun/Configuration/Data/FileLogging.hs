@@ -70,6 +70,7 @@ import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<|?|>))
 import Shrun.Configuration.Default (Default (def), (<.>))
 import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
+import Shrun.Utils qualified as Utils
 import System.OsPath qualified as OsPath
 
 -- | Switch for deleting the log file upon success.
@@ -478,12 +479,12 @@ mergeFileLogging args mToml = for mPath $ \path -> do
     --     else Args and Toml
     --       Just fileLogging ..
     --
-    -- That is, we'd repeate the "Just fileLogging" step several types, and
+    -- That is, we'd repeat the "Just fileLogging" step several types, and
     -- since it is already quite wordy, readability suffers. It is easier to
     -- reduce the pattern matching down to a "go no-go" switch first, then
     -- make the fileLogging based on that.
     mPath :: Maybe FilePathDefault
-    mPath = args ^. #file % #path <|?|> (mToml ^? _Just % #file % #path % _Just)
+    mPath = args ^. #file % #path <|?|> (mToml ^? Utils.surroundJust (#file % #path))
 {-# INLINEABLE mergeFileLogging #-}
 
 instance DecodeTOML FileLoggingToml where
