@@ -123,7 +123,7 @@ read-strategy = "block"
 # Configuration for console logging.
 [console-log]
 # If enabled, the output of the commands themselves will be logged. The
-# default behavior is to swallow command logs.
+# default behavior is 'on'.
 command = "on"
 
 # If set, this truncates command names in the logs to the specified number of
@@ -136,9 +136,10 @@ command-name-trunc = 80
 
 # If set, this truncates the entire line to the specified number of
 # characters. It can either be a non-negative integer or the string 'detect',
-# in which we attempt to detect the terminal width. Note that "log prefixes"
-# (e.g. labels like [Success], timestamps) are counted towards the total
-# length but are never truncated.
+# in which we attempt to detect the terminal width. Defaults to 'detect' if
+# console-log.command is on. Note that "log prefixes" (e.g. labels like
+# [Success], timestamps) are counted towards the total length but are never
+# truncated.
 line-trunc = 150
 
 # With command logging, the logs can become garbled in the presence of

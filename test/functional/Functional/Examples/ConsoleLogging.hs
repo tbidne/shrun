@@ -54,13 +54,15 @@ commandLogOnDefault = testCase "Runs --console-log-command with no output shows 
       ]
 
 commandLogOff :: TestTree
-commandLogOff = testCase "Runs commandLog example without --console-log-command" $ do
+commandLogOff = testCase "Runs commandLog example with --console-log-command off" $ do
   resultsConsole <- run args
   V.verifyUnexpected resultsConsole unexpected
   where
     args =
       withNoConfig
-        [ "for i in 1 2; do echo hi; sleep 1; done"
+        [ "--console-log-command",
+          "off",
+          "for i in 1 2; do echo hi; sleep 1; done"
         ]
     unexpected = [commandPrefix]
 

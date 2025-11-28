@@ -29,7 +29,14 @@ main = bracket setup teardown runBenchmarks
         ]
 
 basicLogs :: Benchmark
-basicLogs = bgroup "Basic Logging" (runLoops ["--config", "off"])
+basicLogs = bgroup "Basic Logging" (runLoops args)
+  where
+    args =
+      [ "--console-log-command",
+        "off",
+        "--config",
+        "off"
+      ]
 
 commandLogs :: Benchmark
 commandLogs = bgroup "Command Logging" (runLoops args)
@@ -44,9 +51,18 @@ commandLogs = bgroup "Command Logging" (runLoops args)
       ]
 
 fileLogs :: OsPath -> Benchmark
-fileLogs testDir = bgroup "File Logging" (runLoops ["-f", unsafeDecode fp, "--config", "off"])
+fileLogs testDir = bgroup "File Logging" (runLoops args)
   where
     fp = testDir </> [osp|bench.log|]
+
+    args =
+      [ "-f",
+        unsafeDecode fp,
+        "--console-log-command",
+        "off",
+        "--config",
+        "off"
+      ]
 
 runLoops :: List String -> List Benchmark
 runLoops args = fmap f loops

@@ -48,7 +48,7 @@ newtype ConsoleLogCmdSwitch = MkConsoleLogCmdSwitch Bool
   deriving newtype (Bounded, Enum)
 
 instance Default ConsoleLogCmdSwitch where
-  def = MkConsoleLogCmdSwitch False
+  def = MkConsoleLogCmdSwitch True
 
 instance DecodeTOML ConsoleLogCmdSwitch where
   tomlDecoder = MkConsoleLogCmdSwitch <$> (tomlDecoder >>= parseSwitch)

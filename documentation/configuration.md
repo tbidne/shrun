@@ -331,7 +331,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > In this example, the log 'hi' is printed even though it is not newline-terminated, because the `--command-log-buffer-length 1` is exceeded (2 characters). On the other hand, the final log 'b' is not printed until the very end since it is within the buffer limit.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-buffer-length 1 "printf hi && sleep 1 && printf b && sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-length 1 "printf hi && sleep 1 && printf b && sleep 2"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 1 && printf b && sleep 1] hi</span>
 <span style="color: #d6acff">[Timer] 1 second</span></code>
 </pre>
@@ -348,13 +348,13 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > In this example, the logs 'hi' and 'b' are printed even though they are not newline-terminated, because the `--command-log-buffer-timeout 1` is exceeded (1 second).
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] hi</span>
 <span style="color: #d6acff">[Timer] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] b</span>
 <span style="color: #d6acff">[Timer] 3 seconds</span></code>
 </pre>
@@ -371,7 +371,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --command-log-poll-interval 100 --console-log-command "for i in {1..10}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-poll-interval 100 --console-log-command on "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Timer] 7 seconds</span></code>
 </pre>
@@ -388,13 +388,13 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > In this example we also use `--command-log-poll-interval 1_000_000` to slow down the reads, so that we can see `acbde` and `f` are indeed read separately. Ordinarily this would be too fast to see the difference.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcde</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] f</span>
 <span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
@@ -419,7 +419,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > This is the previous example, but with `--command-log-read-strategy block-line-buffer` enabled. Notice the entire 'abcdef' is printed, since 'abcd' is read first, buffered, then 'f\n' is read, and the buffer flushed.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --command-log-read-size 5b --command-log-poll-interval 1_000_000 --command-log-read-strategy block-line-buffer "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 --command-log-read-strategy block-line-buffer "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcdef</span>
 <span style="color: #a3fefe">[Timer] 2 seconds</span></code>
 </pre>
@@ -432,7 +432,7 @@ Config related to console logs.
 
 **Arg:** `--console-log-command (on | off)`
 
-**Description:** The default behavior is to swallow logs for the commands themselves. This flag gives each command a console region in which its logs will be printed. Only the latest log per region is shown at a given time.
+**Description:** This flag gives each command a console region in which its logs will be printed, as opposed to swallowing command logs. Only the latest log per region is shown at a given time. Defaults to `on`.
 
 > [!NOTE]
 > When commands have complicated output, the logs can interfere with each other (indeed even overwrite themselves). We attempt to mitigate such situations: see [Strip Control](#strip-control).
@@ -440,7 +440,7 @@ Config related to console logs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command "for i in {1..2}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun "for i in {1..2}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..2}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
@@ -448,7 +448,7 @@ Config related to console logs.
 vs.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun "for i in {1..2}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command off "for i in {1..2}; do echo hi; sleep 1; done"</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
@@ -484,7 +484,7 @@ vs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
 <span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
@@ -504,21 +504,21 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 `off` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control off "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control off "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command --console-log-command-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Timer] 1 second</span></code>
 </pre>

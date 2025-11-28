@@ -363,7 +363,10 @@ runShrun sp tp = do
             : "--console-log-line-trunc"
             : "off"
             : as
-        else as
+        else
+          "--console-log-command"
+            : "off"
+            : as
 
     addTimeout as =
       case tp ^. #signalType of

@@ -331,7 +331,7 @@ testLineTruncDefaults = testProp1 desc "testLineTruncDefaults" $ do
       ]
 
     expected =
-      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Nothing,
+      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 86,
         #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Nothing
       ]
 
@@ -343,17 +343,17 @@ testCmdLogLineTruncDefaults = testProp1 desc "testCmdLogLineTruncDefaults" $ do
   logs <- liftIO $ readIORef logsRef
   logs === []
   where
-    desc = "lineTrunc defaults with --console-log-command"
+    desc = "lineTrunc defaults with --console-log-command off"
     args =
       [ "--console-log-command",
-        "on",
+        "off",
         "--file-log",
         "log_file",
         "cmd1"
       ]
 
     expected =
-      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 86,
+      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Nothing,
         #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Nothing
       ]
 
@@ -489,8 +489,8 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
           MkSomeSetter (#coreConfig % #commonLogging % #debug % #unDebug) False,
           MkSomeSetter (#coreConfig % #commonLogging % #keyHide % #unKeyHideSwitch) False,
           -- console logging
-          MkSomeSetter (#coreConfig % #consoleLogging % #commandLogging % #unConsoleLogCmdSwitch) False,
-          MkSomeSetter (#coreConfig % #consoleLogging % #lineTrunc) Nothing,
+          MkSomeSetter (#coreConfig % #consoleLogging % #commandLogging % #unConsoleLogCmdSwitch) True,
+          MkSomeSetter (#coreConfig % #consoleLogging % #lineTrunc) (Just 86),
           MkSomeSetter (#coreConfig % #consoleLogging % #stripControl) StripControlSmart,
           MkSomeSetter (#coreConfig % #consoleLogging % #timerFormat) ProseCompact,
           -- file logging

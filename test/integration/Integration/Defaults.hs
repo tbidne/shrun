@@ -495,14 +495,15 @@ cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
         "off",
         "--config",
         getIntConfigOS "overridden",
+        -- --console-log-command on is the default.
         "--console-log-command",
-        "off",
+        "on",
         "--console-log-command-name-trunc",
         "off",
-        -- --console-log-line-trunc of is the default when
-        -- --console-log-command is off.
+        -- --console-log-line-trunc detect is the default when
+        -- --console-log-command is on.
         "--console-log-line-trunc",
-        "off",
+        "detect",
         "--init",
         "off",
         -- --legend-keys-cache add is the default, /not/ off.

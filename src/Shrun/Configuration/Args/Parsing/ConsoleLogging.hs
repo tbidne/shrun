@@ -56,10 +56,9 @@ commandLoggingParser = Utils.switchParser MkConsoleLogCmdSwitch "console-log-com
   where
     helpTxt =
       mconcat
-        [ "The default behavior is to swallow logs for the commands ",
-          "themselves. This flag gives each command a console region in ",
-          "which its logs will be printed. Only the latest log per region ",
-          "is shown at a given time."
+        [ "This flag gives each command a console region in which its logs ",
+          "will be printed, as opposed to swallowing command logs. Only the ",
+          "latest log per region is shown at a given time. Defaults to 'on'."
         ]
 
 commandNameTruncParser :: Parser (Maybe (WithDisabled (Truncation TruncCommandName)))
