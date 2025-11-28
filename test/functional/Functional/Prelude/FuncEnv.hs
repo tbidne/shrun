@@ -3,9 +3,9 @@
 
 module Functional.Prelude.FuncEnv
   ( -- * Potential IO wrapper
-    FuncIO (..),
-    unFuncIO,
-    FuncIOEnv (..),
+    ConfigIO (..),
+    unConfigIO,
+    ConfigIOEnv (..),
 
     -- * Shrun environment for functional tests
     FuncEnv (..),
@@ -18,6 +18,7 @@ import Effects.FileSystem.PathReader
   )
 import Effects.System.Posix.Signals (MonadPosixSignals (installHandler))
 import Effects.System.Posix.Signals qualified as Signals
+import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
@@ -45,8 +46,8 @@ import Shrun.Notify.MonadNotify (MonadNotify (notify), ShrunNote)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 
--- | Enviroment used by 'FuncIO'. For when we want some IO behavior mocked.
-data FuncIOEnv = MkFuncIOEnv
+-- | Enviroment used by 'ConfigIO'. For when we want some IO behavior mocked.
+data ConfigIOEnv = MkConfigIOEnv
   { cwdDir :: Maybe OsPath,
     xdgDir :: Maybe (XdgDirectory -> OsPath)
   }
@@ -56,13 +57,13 @@ instance
     a ~ Maybe OsPath,
     b ~ Maybe OsPath
   ) =>
-  LabelOptic "cwdDir" k FuncIOEnv FuncIOEnv a b
+  LabelOptic "cwdDir" k ConfigIOEnv ConfigIOEnv a b
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncIOEnv a1 a2) ->
+      $ \f (MkConfigIOEnv a1 a2) ->
         fmap
-          (\b -> MkFuncIOEnv b a2)
+          (\b -> MkConfigIOEnv b a2)
           (f a1)
   {-# INLINE labelOptic #-}
 
@@ -71,31 +72,44 @@ instance
     a ~ Maybe (XdgDirectory -> OsPath),
     b ~ Maybe (XdgDirectory -> OsPath)
   ) =>
-  LabelOptic "xdgDir" k FuncIOEnv FuncIOEnv a b
+  LabelOptic "xdgDir" k ConfigIOEnv ConfigIOEnv a b
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncIOEnv a1 a2) ->
+      $ \f (MkConfigIOEnv a1 a2) ->
         fmap
-          (\b -> MkFuncIOEnv a1 b)
+          (\b -> MkConfigIOEnv a1 b)
           (f a2)
   {-# INLINE labelOptic #-}
 
+instance Default ConfigIOEnv where
+  def =
+    MkConfigIOEnv
+      { cwdDir = Nothing,
+        xdgDir = Nothing
+      }
+
 -- | In a real run, we run shrun with 'ShellT (Env IO) IO'. In our functional
--- tests, this is generally 'ShellT FuncEnv IO', which is mostly unmocked,
+-- tests, this would generally be 'ShellT FuncEnv IO', which is mostly unmocked,
 -- appart from things like terminal output and notifications.
 --
 -- However, we sometimes want to mock other parts, like the XDG directory.
--- FuncIO exists for this purpose. With this type, the runner is ultimately
--- 'ShellT (Env IO) FuncIO'.
+-- ConfigIO exists for this purpose. With this type, the runner is ultimately
+-- 'ShellT (Env IO) ConfigIO'.
 --
 -- Why do we not add the conditional XDG mocking to FuncEnv instead? Because
 -- FuncEnv is only created _after_ shrun's configuration steps are run. But
 -- we want XDG mocked for the configuration step itself.
 --
--- This is generally IO, so FuncIO exists so we can instead inject FuncIO,
+-- In other words, our functional tests are running 'ShellT FuncEnv ConfigIO',
+-- where 'ShellT FuncEnv' is what is actually run for the test logic
+-- (mocking e.g. terminal output and notifications), whereas 'ConfigIO' is
+-- very nearly pure IO, but mocks some things we occasionally want at the
+-- __config__ stage (e.g. xdg, terminal size detection).
+--
+-- This is generally IO, so ConfigIO exists so we can instead inject ConfigIO,
 -- and use its instances.
-newtype FuncIO a = MkFuncIO (ReaderT FuncIOEnv IO a)
+newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
   deriving newtype
     ( Functor,
       Applicative,
@@ -115,7 +129,7 @@ newtype FuncIO a = MkFuncIO (ReaderT FuncIOEnv IO a)
       MonadOptparse,
       MonadPathWriter,
       MonadProcess,
-      MonadReader FuncIOEnv,
+      MonadReader ConfigIOEnv,
       MonadSTM,
       MonadTerminal,
       MonadThread,
@@ -123,10 +137,10 @@ newtype FuncIO a = MkFuncIO (ReaderT FuncIOEnv IO a)
       MonadThrow
     )
 
-unFuncIO :: FuncIO a -> ReaderT FuncIOEnv IO a
-unFuncIO (MkFuncIO rdr) = rdr
+unConfigIO :: ConfigIO a -> ReaderT ConfigIOEnv IO a
+unConfigIO (MkConfigIO rdr) = rdr
 
-instance MonadPathReader FuncIO where
+instance MonadPathReader ConfigIO where
   doesFileExist = liftIO . doesFileExist
 
   getCurrentDirectory = do
@@ -135,25 +149,26 @@ instance MonadPathReader FuncIO where
       Nothing -> liftIO getCurrentDirectory
       Just cwd -> pure cwd
 
+  getFileSize = liftIO . getFileSize
+
   getXdgDirectory xdg p = do
     mOnXdg <- asks (view #xdgDir)
     case mOnXdg of
       Nothing -> liftIO (getXdgDirectory xdg p)
       Just onXdg -> pure $ onXdg xdg </> p
 
-instance MonadPosixSignals FuncIO where
-  installHandler s h m = MkFuncIO $ do
+instance MonadPosixSignals ConfigIO where
+  installHandler s h m = MkConfigIO $ do
     hFromM <$> installHandler s (hToM h) m
     where
-      hFromM = Signals.mapHandler MkFuncIO
-      hToM = Signals.mapHandler unFuncIO
+      hFromM = Signals.mapHandler MkConfigIO
+      hToM = Signals.mapHandler unConfigIO
 
 -- NOTE: FuncEnv is essentially the real Env w/ an IORef for logs and a
 -- simplified logging
 
 data FuncEnv = MkFuncEnv
   { coreEnv :: Env (),
-    funcIOEnv :: FuncIOEnv,
     logs :: IORef (List Text),
     shrunNotes :: IORef (List ShrunNote)
   }
@@ -167,25 +182,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncEnv a1 a2 a3 a4) ->
+      $ \f (MkFuncEnv a1 a2 a3) ->
         fmap
-          (\b -> MkFuncEnv b a2 a3 a4)
+          (\b -> MkFuncEnv b a2 a3)
           (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ FuncIOEnv,
-    b ~ FuncIOEnv
-  ) =>
-  LabelOptic "funcIOEnv" k FuncEnv FuncEnv a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFuncEnv a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkFuncEnv a1 b a3 a4)
-          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -197,10 +197,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncEnv a1 a2 a3 a4) ->
+      $ \f (MkFuncEnv a1 a2 a3) ->
         fmap
-          (\b -> MkFuncEnv a1 a2 b a4)
-          (f a3)
+          (\b -> MkFuncEnv a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -212,10 +212,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFuncEnv a1 a2 a3 a4) ->
+      $ \f (MkFuncEnv a1 a2 a3) ->
         fmap
-          (\b -> MkFuncEnv a1 a2 a3 b)
-          (f a4)
+          (\b -> MkFuncEnv a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 instance HasTimeout FuncEnv where

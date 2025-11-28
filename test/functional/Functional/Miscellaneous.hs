@@ -555,7 +555,7 @@ testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
 
 testImplicitConfigLookup :: TestTree
 testImplicitConfigLookup = testCase desc $ do
-  (ts, resultsConsole) <- withTiming $ runFuncIO env args
+  (ts, resultsConsole) <- withTiming $ runConfigIO env args
 
   V.verifyExpected resultsConsole expected
 
@@ -581,9 +581,9 @@ testImplicitConfigLookup = testCase desc $ do
         withSuccessPrefix "shrun_key"
       ]
 
-    env :: FuncIOEnv
+    env :: ConfigIOEnv
     env =
-      MkFuncIOEnv
+      MkConfigIOEnv
         { cwdDir = Just [ospPathSep|test/functional/cwd|],
           xdgDir = Just $ \case
             XdgConfig -> [ospPathSep|test/functional/xdg_config|]

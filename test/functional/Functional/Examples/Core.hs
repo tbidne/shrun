@@ -114,11 +114,11 @@ testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr
   let env = mkEnv xdgDir
       keysPath = xdgDir </> [ospPathSep|shrun/legend-keys.txt|]
 
-  void $ runFuncIO env args1
+  void $ runConfigIO env args1
   contents1 <- readLines keysPath
   e1 @=? contents1
 
-  void $ runFuncIO env args2
+  void $ runConfigIO env args2
   contents2 <- readLines keysPath
   e2 @=? contents2
   where
@@ -144,9 +144,9 @@ testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr
         p2 = unsafeDecode $ mkPath [osp|cache2.toml|]
         mkPath p = [ospPathSep|test/functional/|] </> p
 
-mkEnv :: OsPath -> FuncIOEnv
+mkEnv :: OsPath -> ConfigIOEnv
 mkEnv d =
-  MkFuncIOEnv
+  MkConfigIOEnv
     { cwdDir = Nothing,
       xdgDir = Just $ \case
         XdgState -> d
