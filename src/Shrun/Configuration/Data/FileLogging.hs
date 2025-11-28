@@ -63,9 +63,9 @@ import Shrun.Configuration.Data.Truncation
   ( DetectResult,
     TruncRegion (TruncCommandName),
     Truncation,
-    configToLineTrunc,
     decodeCommandNameTrunc,
     decodeLineTrunc,
+    mergeLineTrunc,
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<|?|>))
 import Shrun.Configuration.Default (Default (def), (<.>))
@@ -443,7 +443,7 @@ mergeFileLogging detectRef args mToml = for mPath $ \path -> do
   let toml = fromMaybe defaultToml mToml
 
   lineTrunc <-
-    configToLineTrunc detectRef $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
+    mergeLineTrunc detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
 
   pure
     $ MkFileLoggingP

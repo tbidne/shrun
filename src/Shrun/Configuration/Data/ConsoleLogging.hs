@@ -34,9 +34,9 @@ import Shrun.Configuration.Data.Truncation
   ( DetectResult,
     TruncRegion (TruncCommandName),
     Truncation,
-    configToLineTrunc,
     decodeCommandNameTrunc,
     decodeLineTrunc,
+    mergeLineTrunc,
   )
 import Shrun.Configuration.Data.WithDisabled ((<|?|>))
 import Shrun.Configuration.Default (Default (def), (<.>))
@@ -218,7 +218,7 @@ mergeConsoleLogging ::
   m ConsoleLoggingMerged
 mergeConsoleLogging detectRef args mToml = do
   lineTrunc <-
-    configToLineTrunc detectRef $ (args ^. #lineTrunc) <|?|> (toml ^. #lineTrunc)
+    mergeLineTrunc detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
 
   pure
     $ MkConsoleLoggingP

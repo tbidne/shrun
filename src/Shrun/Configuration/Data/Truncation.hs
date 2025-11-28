@@ -11,13 +11,18 @@ module Shrun.Configuration.Data.Truncation
     decodeCommandNameTrunc,
     decodeLineTrunc,
     DetectResult (..),
-    configToLineTrunc,
+    mergeLineTrunc,
     lineTruncStr,
   )
 where
 
 import Effects.System.Terminal (getTerminalWidth)
 import Shrun.Configuration.Data.WithDisabled
+  ( WithDisabled
+      ( Disabled,
+        With
+      ),
+  )
 import Shrun.Prelude
 import Shrun.Utils ((∸))
 import Shrun.Utils qualified as Utils
@@ -108,6 +113,22 @@ data DetectResult
   = DetectNotRun
   | DetectFailed
   | DetectSucceeded Int
+
+-- | Merges line truncation. Defaults to 'detect'.
+mergeLineTrunc ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadIORef m,
+    MonadTerminal m
+  ) =>
+  IORef DetectResult ->
+  Maybe (WithDisabled LineTruncation) ->
+  Maybe (WithDisabled LineTruncation) ->
+  m (Maybe (Truncation TruncLine))
+mergeLineTrunc detectRef args toml = case args <|> toml of
+  Nothing -> pure Nothing
+  Just Disabled -> pure Nothing
+  (Just (With t)) -> configToLineTrunc detectRef (Just t)
 
 -- | Maps line trunc config to actual value.
 configToLineTrunc ::

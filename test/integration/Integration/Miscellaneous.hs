@@ -5,7 +5,6 @@
 module Integration.Miscellaneous (specs) where
 
 import Data.Text qualified as T
-import Effects.System.Terminal (getTerminalSize)
 import Integration.Prelude
 import Integration.Utils
   ( ConfigIO,
@@ -129,6 +128,7 @@ specs testArgs =
       usesRecursiveCmdExample,
       usesRecursiveCmd,
       lineTruncDetect,
+      testLineTruncDefaults,
       testLineTruncDetectTotal,
       testFileLogDeleteOnSuccess,
       testFileSizeModeNothing,
@@ -312,6 +312,26 @@ lineTruncDetect = testProp1 desc "lineTruncDetect" $ do
       [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 86,
         #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 86,
         #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeRename
+      ]
+
+testLineTruncDefaults :: TestTree
+testLineTruncDefaults = testProp1 desc "testLineTruncDefaults" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  logs === []
+  where
+    desc = "lineTrunc defaults"
+    args =
+      [ "--file-log",
+        "log_file",
+        "cmd1"
+      ]
+
+    expected =
+      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Nothing,
+        #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Nothing
       ]
 
 testLineTruncDetectTotal :: TestTree

@@ -46,8 +46,7 @@ import Effects.FileSystem.PathReader
   )
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
 import Effects.System.Terminal
-  ( MonadTerminal (getChar, getTerminalSize),
-    Window (Window),
+  ( MonadTerminal (getChar),
   )
 import Integration.Prelude as X
 import Shrun.Configuration qualified as Config

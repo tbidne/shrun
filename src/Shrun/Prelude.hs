@@ -247,6 +247,8 @@ import Effects.System.Posix.Signals as X (MonadPosixSignals)
 import Effects.System.Process as X (CreateProcess, MonadProcess)
 import Effects.System.Terminal as X
   ( MonadTerminal,
+    Window (Window),
+    getTerminalSize,
     putStr,
     putStrLn,
     putText,
