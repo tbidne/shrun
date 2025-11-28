@@ -443,7 +443,7 @@ mergeFileLogging detectRef args mToml = for mPath $ \path -> do
   let toml = fromMaybe defaultToml mToml
 
   lineTrunc <-
-    mergeLineTrunc detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
+    mergeLineTrunc False detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
 
   pure
     $ MkFileLoggingP

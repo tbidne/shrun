@@ -217,21 +217,25 @@ mergeConsoleLogging ::
   Maybe ConsoleLoggingToml ->
   m ConsoleLoggingMerged
 mergeConsoleLogging detectRef args mToml = do
+  let commandLogging =
+        args
+          ^. #commandLogging
+          <.> toml
+          ^. #commandLogging
+      -- Default to 'detect' iff command logging is on. We do this because the
+      -- only logs likely to need line truncation are long command  logs.
+      defDetect = commandLogging ^. #unConsoleLogCmdSwitch
+
   lineTrunc <-
-    mergeLineTrunc detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
+    mergeLineTrunc defDetect detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
 
   pure
     $ MkConsoleLoggingP
-      { commandLogging =
-          args
-            ^. #commandLogging
-            <.> (toml ^. #commandLogging),
-        commandNameTrunc = (args ^. #commandNameTrunc) <|?|> (toml ^. #commandNameTrunc),
+      { commandLogging,
+        commandNameTrunc = args ^. #commandNameTrunc <|?|> toml ^. #commandNameTrunc,
         lineTrunc,
-        stripControl =
-          (args ^. #stripControl) <.> (toml ^. #stripControl),
-        timerFormat =
-          (args ^. #timerFormat) <.> (toml ^. #timerFormat)
+        stripControl = args ^. #stripControl <.> toml ^. #stripControl,
+        timerFormat = args ^. #timerFormat <.> toml ^. #timerFormat
       }
   where
     toml = fromMaybe mempty mToml

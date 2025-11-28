@@ -280,10 +280,39 @@ makeMergedConfig args toIO = do
 
 -- | Convenience for tests expecting a default config. The test should
 -- pass a single command 'cmd'.
-defaultConfig :: IO MergedConfig
-defaultConfig = Config.mergeConfig args mempty
+defaultConfig :: (MonadIO m) => m MergedConfig
+defaultConfig = liftIO $ runDefaultIO $ Config.mergeConfig args mempty
   where
     args = Args.defaultArgs (NESeq.singleton "cmd")
+
+newtype DefaultIO a = MkDefaultIO (IO a)
+  deriving
+    ( Applicative,
+      Functor,
+      Monad,
+      MonadCatch,
+      MonadEnv,
+      MonadFileReader,
+      MonadHandleWriter,
+      MonadIO,
+      MonadIORef,
+      MonadMask,
+      MonadOptparse,
+      MonadSTM,
+      MonadThrow
+    )
+    via IO
+
+runDefaultIO :: DefaultIO a -> IO a
+runDefaultIO (MkDefaultIO io) = io
+
+-- Essentially, derive MonadTerminal from NoConfigIO. This ensures we have the
+-- same windows size, which matters because 'detect' is the default line
+-- trunc.
+instance MonadTerminal DefaultIO where
+  getTerminalSize = do
+    r <- newIORef []
+    liftIO $ runNoConfigIO getTerminalSize r
 
 notifySystemOSDBus :: NotifySystemMerged
 #if OSX

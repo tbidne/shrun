@@ -131,7 +131,6 @@ newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
       MonadProcess,
       MonadReader ConfigIOEnv,
       MonadSTM,
-      MonadTerminal,
       MonadThread,
       MonadTime,
       MonadThrow
@@ -163,6 +162,25 @@ instance MonadPosixSignals ConfigIO where
     where
       hFromM = Signals.mapHandler MkConfigIO
       hToM = Signals.mapHandler unConfigIO
+
+instance MonadTerminal ConfigIO where
+  putStr = liftIO . putStr
+  putStrLn = liftIO . putStrLn
+
+  -- Give this a large width so that test logs do not get cut off. We want
+  -- to mock this anyway, as we do not want real, non-deterministic detection
+  -- to be used in the tests, but there is an even greater urgency for mocking
+  -- this: getTerminalSize actually fails in some instances!
+  --
+  -- In particular, if we run the test suite with shrun i.e.
+  --
+  --   TEST_FUNCTIONAL=1 shrun "cabal test functional"
+  --
+  -- Then getTerminalSize actually fails. Sadly we do not get any information
+  -- why; ultimately, the reason is that our upstream dependency terminal-size
+  -- returns Nothing. It seems the getTerminalSize call, when run via
+  -- process, does not work.
+  getTerminalSize = pure $ Window 100 150
 
 -- NOTE: FuncEnv is essentially the real Env w/ an IORef for logs and a
 -- simplified logging

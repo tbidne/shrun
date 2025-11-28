@@ -82,6 +82,9 @@ for versions < 1.
 
 * `--notify-action` renamed to `--notify-action-complete`.
 
+* `--console-log-line-trunc` default to `detect` if `--console-log-command`
+  is on. Falls back to 80 if detection fails.
+
 ### Added
 * Added `--edges` (toml: legend `edges`) option for declaring dependencies
   between commands e.g. `shrun cmd1 cmd2 --edges "1 -> 2"` means `cmd2` will

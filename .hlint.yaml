@@ -4,6 +4,9 @@
     name: "Avoid lambda"
 
 - ignore:
+    name: "Redundant ^."
+
+- ignore:
     name: Use <$>
     within:
       - "Shrun.Configuration.Args.Parsing.TH"

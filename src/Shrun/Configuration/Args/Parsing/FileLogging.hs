@@ -124,7 +124,7 @@ lineTruncParser =
         OA.completeWith ["detect"],
         Utils.mkHelp helpTxt
       ]
-    helpTxt = "Like --console-log-line-trunc, but for --file-log."
+    helpTxt = "Like --console-log-line-trunc, but for --file-log. Defaults to 'off'."
 
 fileLogStripControlParser :: Parser (Maybe FileLogStripControl)
 fileLogStripControlParser = mainParser

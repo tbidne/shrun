@@ -357,7 +357,12 @@ runShrun sp tp = do
 
     addCommandLogging as =
       if tp ^. #commandLogging
-        then "--console-log-command" : "on" : as
+        then
+          "--console-log-command"
+            : "on"
+            : "--console-log-line-trunc"
+            : "off"
+            : as
         else as
 
     addTimeout as =

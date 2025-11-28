@@ -170,7 +170,7 @@ defaultEnv :: TestTree
 defaultEnv = testProp1 desc "defaultEnv" $ do
   logsRef <- liftIO $ newIORef []
 
-  expected <- liftIO defaultConfig
+  expected <- defaultConfig
   makeConfigAndAssertEq ["cmd"] (`runNoConfigIO` logsRef) expected
 
   logs <- liftIO $ readIORef logsRef
@@ -478,7 +478,7 @@ cliDisabledToml :: TestTree
 cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
   logsRef <- liftIO $ newIORef []
 
-  expected <- liftIO defaultConfig
+  expected <- defaultConfig
 
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
@@ -499,6 +499,8 @@ cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
         "off",
         "--console-log-command-name-trunc",
         "off",
+        -- --console-log-line-trunc of is the default when
+        -- --console-log-command is off.
         "--console-log-line-trunc",
         "off",
         "--init",

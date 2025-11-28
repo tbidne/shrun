@@ -127,8 +127,9 @@ specs testArgs =
       logFileNothing testArgs,
       usesRecursiveCmdExample,
       usesRecursiveCmd,
-      lineTruncDetect,
+      testLineTruncDetect,
       testLineTruncDefaults,
+      testCmdLogLineTruncDefaults,
       testLineTruncDetectTotal,
       testFileLogDeleteOnSuccess,
       testFileSizeModeNothing,
@@ -297,8 +298,8 @@ usesRecursiveCmd = testProp1 desc "usesRecursiveCmd" $ do
              ]
     expected = [#commands ^=@ cmds]
 
-lineTruncDetect :: TestTree
-lineTruncDetect = testProp1 desc "lineTruncDetect" $ do
+testLineTruncDetect :: TestTree
+testLineTruncDetect = testProp1 desc "testLineTruncDetect" $ do
   logsRef <- liftIO $ newIORef []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
@@ -331,6 +332,28 @@ testLineTruncDefaults = testProp1 desc "testLineTruncDefaults" $ do
 
     expected =
       [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Nothing,
+        #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Nothing
+      ]
+
+testCmdLogLineTruncDefaults :: TestTree
+testCmdLogLineTruncDefaults = testProp1 desc "testCmdLogLineTruncDefaults" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  logs === []
+  where
+    desc = "lineTrunc defaults with --console-log-command"
+    args =
+      [ "--console-log-command",
+        "on",
+        "--file-log",
+        "log_file",
+        "cmd1"
+      ]
+
+    expected =
+      [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 86,
         #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Nothing
       ]
 
@@ -466,6 +489,7 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
           MkSomeSetter (#coreConfig % #commonLogging % #debug % #unDebug) False,
           MkSomeSetter (#coreConfig % #commonLogging % #keyHide % #unKeyHideSwitch) False,
           -- console logging
+          MkSomeSetter (#coreConfig % #consoleLogging % #commandLogging % #unConsoleLogCmdSwitch) False,
           MkSomeSetter (#coreConfig % #consoleLogging % #lineTrunc) Nothing,
           MkSomeSetter (#coreConfig % #consoleLogging % #stripControl) StripControlSmart,
           MkSomeSetter (#coreConfig % #consoleLogging % #timerFormat) ProseCompact,

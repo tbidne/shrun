@@ -475,7 +475,7 @@ vs.
 
 **Arg:** `--console-log-line-trunc (NATURAL | detect | off)`
 
-**Description:** Non-negative integer that limits the length of console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to no truncation.
+**Description:** Non-negative integer that limits the length of console logs. Can also be the string literal `detect`, to detect the terminal size automatically. Defaults to `detect` if `--console-log-command` is on.
 
 > [!NOTE]
 >
@@ -653,7 +653,7 @@ vs.
 
 **Arg:** `--file-log-line-trunc (NATURAL | detect | off)`
 
-**Description:** Like [`--console-log-line-trunc`](#line-truncation), but for file logs.
+**Description:** Like [`--console-log-line-trunc`](#line-truncation), but for file logs. Defaults to `off`.
 
 **Example:**
 

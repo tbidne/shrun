@@ -109,24 +109,35 @@ decodeCommandNameTrunc = getFieldOptWith tomlDecoder "command-name-trunc"
 decodeLineTrunc :: Decoder (Maybe (WithDisabled LineTruncation))
 decodeLineTrunc = getFieldOptWith tomlDecoder "line-trunc"
 
+-- | Terminal width detect result. We save this so we only look it up at
+-- most once (i.e. both --console-log-line-trunc and --file-log-line-trunc
+-- are on).
 data DetectResult
   = DetectNotRun
   | DetectFailed
   | DetectSucceeded Int
 
--- | Merges line truncation. Defaults to 'detect'.
+-- | Merges line truncation.
 mergeLineTrunc ::
   ( HasCallStack,
     MonadCatch m,
     MonadIORef m,
     MonadTerminal m
   ) =>
+  -- | If true, defaults to 'detect'.
+  Bool ->
+  -- | Detect result cache, so we only look it up at most once.
   IORef DetectResult ->
+  -- | Args config.
   Maybe (WithDisabled LineTruncation) ->
+  -- | Toml config.
   Maybe (WithDisabled LineTruncation) ->
   m (Maybe (Truncation TruncLine))
-mergeLineTrunc detectRef args toml = case args <|> toml of
-  Nothing -> pure Nothing
+mergeLineTrunc defaultDetect detectRef args toml = case args <|> toml of
+  Nothing ->
+    if defaultDetect
+      then configToLineTrunc detectRef (Just Detected)
+      else pure Nothing
   Just Disabled -> pure Nothing
   (Just (With t)) -> configToLineTrunc detectRef (Just t)
 
