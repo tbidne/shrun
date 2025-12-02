@@ -360,7 +360,9 @@ repairEdges (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
                   showt (i ^. #unCommandIndex % #unPositive),
                   "' in edge '",
                   showt (src ^. #unCommandIndex % #unPositive),
-                  " -> ",
+                  " ",
+                  Graph.displayEdgeLabel lbl,
+                  " ",
                   showt (dest ^. #unCommandIndex % #unPositive),
                   "' is out-of-bounds."
                 ]
@@ -386,15 +388,15 @@ mkSequentialEdges =
 -- to its new index range. This is used to repair edges. For instance:
 -- we have commands:
 --
---   shrun --edges="1 -> 3" cmd1 some_aliases cmd2
+--   shrun --edges="1 & 3" cmd1 some_aliases cmd2
 --
 -- where some_aliases expands to a1 and a2. The intention is that cmd2 needs
 -- to wait for cmd1. But after alias expansion, our commands will be indexed:
 --
 --   cmd1 a1 a2 cmd2
 --
--- And the edge will mistakenly be "cmd1 -> a2". We use the map to update
--- the edges i.e. transform that edge to "1 -> 4".
+-- And the edge will mistakenly be "cmd1 & a2". We use the map to update
+-- the edges i.e. transform that edge to "1 & 4".
 type Acc =
   Tuple3
     (NESeq CommandP1)

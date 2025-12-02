@@ -40,6 +40,7 @@ tests =
       testCommandGraphEmptySetFails,
       testCommandGraphBadSetRangeFails,
       testCommandGraphBadArrowRangeFails,
+      testCommandGraphBadArrowRangeFails2,
       testCommandGraphIndexFails,
       testCommandGraphIndexSetFails
     ]
@@ -51,7 +52,7 @@ testCommandGraph =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges (mkEdgesAnd [(1, 3), (2, 3), (1, 4)])
-    depsStr = "1 -> 3, 2 -> 3, 1 -> 4"
+    depsStr = "1 & 3, 2 & 3, 1 & 4"
 
 testCommandGraphAnd :: TestTree
 testCommandGraphAnd =
@@ -60,7 +61,7 @@ testCommandGraphAnd =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges (mkEdgesAnd [(1, 3), (2, 3), (1, 4)])
-    depsStr = "1 &-> 3, 2 &-> 3, 1 &-> 4"
+    depsStr = "1 & 3, 2 & 3, 1 & 4"
 
 testCommandGraphOr :: TestTree
 testCommandGraphOr =
@@ -69,7 +70,7 @@ testCommandGraphOr =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges (mkEdgesOr [(1, 3), (2, 3), (1, 4)])
-    depsStr = "1 |-> 3, 2 |-> 3, 1 |-> 4"
+    depsStr = "1 | 3, 2 | 3, 1 | 4"
 
 testCommandGraphAny :: TestTree
 testCommandGraphAny =
@@ -78,7 +79,7 @@ testCommandGraphAny =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges (mkEdgesAny [(1, 3), (2, 3), (1, 4)])
-    depsStr = "1 ;-> 3, 2 ;-> 3, 1 ;-> 4"
+    depsStr = "1 ; 3, 2 ; 3, 1 ; 4"
 
 testCommandGraphNoWs :: TestTree
 testCommandGraphNoWs =
@@ -87,7 +88,7 @@ testCommandGraphNoWs =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges (mkEdgesAnd [(1, 3), (2, 3), (1, 4)])
-    depsStr = "1->3,2->3,1->4"
+    depsStr = "1&3,2&3,1&4"
 
 testCommandGraphExtendedEdge :: TestTree
 testCommandGraphExtendedEdge =
@@ -96,7 +97,7 @@ testCommandGraphExtendedEdge =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "1 -> 3 -> 2, 5 -> 6, 1 -> 4 -> 5"
+    depsStr = "1 & 3 & 2, 5 & 6, 1 & 4 & 5"
     es = mkEdgesAnd [(1, 3), (3, 2), (5, 6), (1, 4), (4, 5)]
 
 testCommandGraphMultiEdge :: TestTree
@@ -106,7 +107,7 @@ testCommandGraphMultiEdge =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "{1,2} -> 3, 3 -> {4,5}"
+    depsStr = "{1,2} & 3, 3 & {4,5}"
     es = mkEdgesAnd [(1, 3), (2, 3), (3, 4), (3, 5)]
 
 testCommandGraphSetRange :: TestTree
@@ -116,7 +117,7 @@ testCommandGraphSetRange =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "1 -> {2, 4..6, 7..7}"
+    depsStr = "1 & {2, 4..6, 7..7}"
     es = mkEdgesAnd [(1, 2), (1, 4), (1, 5), (1, 6), (1, 7)]
 
 testCommandGraphOneRangeEdge :: TestTree
@@ -126,7 +127,7 @@ testCommandGraphOneRangeEdge =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "1..3"
+    depsStr = "1&..3"
     es = mkEdgesAnd [(1, 2), (2, 3)]
 
 testCommandGraphOneRangeEdgeAnd :: TestTree
@@ -166,7 +167,7 @@ testCommandGraphRangeEdge =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "1 -> 3 .. 6 -> 7..7"
+    depsStr = "1 & 3 &.. 6 & 7&..7"
     es = mkEdgesAnd [(1, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
 
 testCommandGraphComplex :: TestTree
@@ -176,7 +177,7 @@ testCommandGraphComplex =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "{1,2} -> {3..5,6} ;-> 7 .. 9 |-> {10, 11}"
+    depsStr = "{1,2} & {3..5,6} ; 7 &.. 9 | {10, 11}"
     es =
       mkEdges
         [ (1, 3, EdgeAnd),
@@ -233,34 +234,34 @@ testCommandGraphEmptyFail =
 
 testCommandGraphNoSrcFail :: TestTree
 testCommandGraphNoSrcFail =
-  testPropertyNamed "Parses --edges -> 3" "testCommandGraphNoSrcFail"
+  testPropertyNamed "Parses --edges & 3" "testCommandGraphNoSrcFail"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", " -> 3", "command"]
+    argList = ["--edges", " & 3", "command"]
 
     expected =
       T.unlines
         [ "option --edges: 1:1:",
           "  |",
-          "1 | -> 3",
+          "1 | & 3",
           "  | ^",
-          "Expected a set, arrow range, or index. Examples: '{1,2}', '1 .. 3', '1'."
+          "Expected a set, arrow range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
         ]
 
 testCommandGraphNoDestFail :: TestTree
 testCommandGraphNoDestFail =
-  testPropertyNamed "Parses --edges 3 ->" "testCommandGraphNoDestFail"
+  testPropertyNamed "Parses --edges 3 &" "testCommandGraphNoDestFail"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", " 3 -> ", "command"]
+    argList = ["--edges", " 3 & ", "command"]
 
     expected =
       T.unlines
-        [ "option --edges: 1:6:",
+        [ "option --edges: 1:5:",
           "  |",
-          "1 | 3 -> ",
-          "  |      ^",
-          "Expected a set, arrow range, or index. Examples: '{1,2}', '1 .. 3', '1'."
+          "1 | 3 & ",
+          "  |     ^",
+          "Expected a set, arrow range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
         ]
 
 testCommandGraphEmptySetFails :: TestTree
@@ -268,14 +269,14 @@ testCommandGraphEmptySetFails =
   testPropertyNamed "Parses empty --edges set failure" "testCommandGraphEmptySetFails"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", "1 -> {} -> 3", "command"]
+    argList = ["--edges", "1 & {} & 3", "command"]
 
     expected =
       T.unlines
-        [ "option --edges: 1:6:",
+        [ "option --edges: 1:5:",
           "  |",
-          "1 | 1 -> {} -> 3",
-          "  |      ^",
+          "1 | 1 & {} & 3",
+          "  |     ^",
           "Empty set"
         ]
 
@@ -284,14 +285,14 @@ testCommandGraphBadSetRangeFails =
   testPropertyNamed "Parses --edges bad set range failure" "testCommandGraphBadSetRangeFails"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", "1 -> {3..2}", "command"]
+    argList = ["--edges", "1 & {3..2}", "command"]
 
     expected =
       T.unlines
-        [ "option --edges: 1:6:",
+        [ "option --edges: 1:5:",
           "  |",
-          "1 | 1 -> {3..2}",
-          "  |      ^",
+          "1 | 1 & {3..2}",
+          "  |     ^",
           "Bad range. Expected 3 <= 2"
         ]
 
@@ -300,15 +301,31 @@ testCommandGraphBadArrowRangeFails =
   testPropertyNamed "Parses --edges bad arrow range failure" "testCommandGraphBadArrowRangeFails"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", "1 -> 3..2", "command"]
+    argList = ["--edges", "1 & 3&..2", "command"]
 
     expected =
       T.unlines
-        [ "option --edges: 1:6:",
+        [ "option --edges: 1:5:",
           "  |",
-          "1 | 1 -> 3..2",
-          "  |      ^",
+          "1 | 1 & 3&..2",
+          "  |     ^",
           "Bad range. Expected 3 <= 2"
+        ]
+
+testCommandGraphBadArrowRangeFails2 :: TestTree
+testCommandGraphBadArrowRangeFails2 =
+  testPropertyNamed "Parses --edges bad arrow range failure 2" "testCommandGraphBadArrowRangeFails2"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "1 & 3..2", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:5:",
+          "  |",
+          "1 | 1 & 3..2",
+          "  |     ^",
+          "Found '..' in extended range syntax. Perhaps you wanted e.g. '&..'?"
         ]
 
 testCommandGraphIndexFails :: TestTree

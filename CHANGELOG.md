@@ -89,7 +89,7 @@ for versions < 1.
 
 ### Added
 * Added `--edges` (toml: legend `edges`) option for declaring dependencies
-  between commands e.g. `shrun cmd1 cmd2 --edges "1 -> 2"` means `cmd2` will
+  between commands e.g. `shrun cmd1 cmd2 --edges "1 & 2"` means `cmd2` will
   run only once `cmd1` successfully finishes.
 * Added more completions. In addition to normal option completions, we now
   have option value competions, local toml files for config, and completions

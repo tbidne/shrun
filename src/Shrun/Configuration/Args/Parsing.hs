@@ -141,7 +141,7 @@ parserInfoArgs prevKeys =
               "cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish",
               "successfully.",
               "",
-              "$ shrun --edges \"1 -> 3, 2 -> 3\" cmd1 cmd2 cmd3",
+              "$ shrun --edges \"1 & 3, 2 & 3\" cmd1 cmd2 cmd3",
               "[Command][cmd1] cmd1 output...",
               "[Command][cmd2] cmd2 output...",
               "[Timer] 5 seconds"
@@ -153,7 +153,7 @@ parserInfoArgs prevKeys =
               "# config.toml",
               "legend = [",
               "  # Aliases for multiple commands",
-              "  { key = 'deploy', val = [ 'build', 'ds' ], edges = '1 -> 2' },",
+              "  { key = 'deploy', val = [ 'build', 'ds' ], edges = '1 & 2' },",
               "  { key = 'build', val = [ 'frontend', 'backend', 'db' ] },",
               "",
               "  # Aliases to actual commands",

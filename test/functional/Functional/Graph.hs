@@ -41,7 +41,7 @@ testCommandGraphSuccess = testCase "Runs with --edges" $ do
     args =
       withNoConfig
         [ "--edges",
-          "1 -> 3, 2 -> 3",
+          "1 & 3, 2 & 3",
           "--common-log-debug",
           "on",
           "sleep 3.5",
@@ -73,7 +73,7 @@ testCommandGraphSuccessOr = testCase "Runs with or --edges" $ do
     args =
       withNoConfig
         [ "--edges",
-          "1 -> 3, 2 |-> 3, 2 -> 5, 1 |-> 6",
+          "1 & 3, 2 | 3, 2 & 5, 1 | 6",
           "--common-log-debug",
           "on",
           "sleep 3.5",
@@ -116,7 +116,7 @@ testCommandGraphSuccessAny = testCase "Runs with any --edges" $ do
     args =
       withNoConfig
         [ "--edges",
-          "1 ;-> 3, 2 ;-> 3, 2 -> 5",
+          "1 ; 3, 2 ; 3, 2 & 5",
           "--common-log-debug",
           "on",
           "sleep 3.5",
@@ -167,7 +167,7 @@ testCommandGraphRunsAtMostOnce = testCase desc $ do
     args =
       withNoConfig
         [ "--edges",
-          "1 -> 4, 2 -> 4, 3 -> 4",
+          "1 & 4, 2 & 4, 3 & 4",
           "--common-log-debug",
           "on",
           "sleep 2",
@@ -200,7 +200,7 @@ testCommandGraphComplex = testCase desc $ do
     args =
       withNoConfig
         [ "--edges",
-          "{1,2} -> {3..5,6} -> 7 .. 9 -> {10, 11}",
+          "{1,2} & {3..5,6} & 7 &.. 9 & {10, 11}",
           "sleep 1",
           "sleep 1",
           "sleep 1",
@@ -233,7 +233,7 @@ testCommandGraphFailure = testCase "Runs with --edges failure" $ do
     args =
       withNoConfig
         [ "--edges",
-          "1 -> 3, 2 -> 3",
+          "1 & 3, 2 & 3",
           "--common-log-debug",
           "on",
           "sleep 3.5",
@@ -270,7 +270,7 @@ testCommandGraphBlockedFailure = testCase desc $ do
     args =
       withNoConfig
         [ "--edges",
-          "1 -> 3, 2 -> 3",
+          "1 & 3, 2 & 3",
           "--common-log-debug",
           "on",
           "sleep 3.5 && sdf",
@@ -380,7 +380,7 @@ testCommandGraphLegendAndEdge = testCase desc $ do
         [ "-c",
           "test/functional/config.toml",
           "--edges",
-          "1 -> 3, 2 -> 4",
+          "1 & 3, 2 & 4",
           "sleep 0",
           "edges1",
           "sleep 14",
@@ -409,7 +409,7 @@ testCommandGraphLegendEdgeFailure :: TestTree
 testCommandGraphLegendEdgeFailure = testCase desc $ do
   (_, ex) <- runExceptionE @StringException args
 
-  "Index '3' in edge '1 -> 3' is out-of-bounds." @=? displayException ex
+  "Index '3' in edge '1 & 3' is out-of-bounds." @=? displayException ex
   where
     desc = "Runs with legend edges failure"
 
@@ -467,7 +467,7 @@ cancelSequential = testCase desc $ do
           "--console-log-command",
           "on",
           "--edges",
-          "1 -> 3, 3 -> 4",
+          "1 & 3, 3 & 4",
           "sleep 4",
           "sleep 8",
           "sleep 3",
@@ -523,7 +523,7 @@ timeoutSequential = testCase desc $ do
           "--console-log-command",
           "on",
           "--edges",
-          "1 -> 3, 3 -> 4",
+          "1 & 3, 3 & 4",
           "sleep 4",
           "sleep 8",
           "sleep 3",

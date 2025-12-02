@@ -74,9 +74,9 @@ edgesParser =
           "their order. There are three edge types:"
         ]
 
-    andEdges = "and: 'cmd1 -> cmd2', runs cmd2 iff cmd1 succeeds."
-    orEdges = "or: 'cmd1 |-> cmd2', runs cmd2 iff cmd1 fails."
-    anyEdges = "any: 'cmd1 ;-> cmd2', runs cmd2 iff cmd1 finishes."
+    andEdges = "and: 'cmd1 & cmd2', runs cmd2 iff cmd1 succeeds."
+    orEdges = "or: 'cmd1 | cmd2', runs cmd2 iff cmd1 fails."
+    anyEdges = "any: 'cmd1 ; cmd2', runs cmd2 iff cmd1 finishes."
 
     outro =
       Chunk.paragraph
@@ -97,9 +97,12 @@ parseEdges txt = do
   let stripped = T.stripStart txt
   if T.null stripped
     then Left $ "Received empty input: '" ++ unpack txt ++ "'"
-    else case MP.parse (MP.try parseSequential <|> parseExtendedEdges) "" stripped of
+    else case MP.parse p "" stripped of
       Left err -> Left $ MP.errorBundlePretty err
       Right cga -> pure cga
+  where
+    -- eof so that trailing charts that failed to parse cause an error.
+    p = (MP.try parseSequential <|> parseExtendedEdges) <* MP.eof
 
 type MParser a = Parsec FatalError Text a
 
@@ -109,14 +112,14 @@ parseSequential = MPC.string "sequential" $> EdgeArgsSequential
 -- | Parses at least one (extended-)edge. Examples with the edge results:
 --
 -- @
--- 1 -> 2
+-- 1 & 2
 --   - (1, 2)
 --
--- 1 -> 2 -> 3:
+-- 1 & 2 & 3:
 --   - (1, 2)
 --   - (2, 3)
 --
--- {1, 2} -> {3, 4} -> {5, 6}:
+-- {1, 2} & {3, 4} & {5, 6}:
 --   - (1, 3)
 --   - (1, 4)
 --   - (2, 3)
@@ -146,7 +149,7 @@ data GraphToken
     -- - '{1}
     -- - '{1, 3..5}'
     GraphIndices (NESeq CommandIndex)
-  | -- | An arrow between edges i.e. '->'
+  | -- | An arrow between edges i.e. '&'
     GraphArrow GraphArrowToken
   deriving stock (Show)
 
@@ -159,19 +162,19 @@ data GraphArrowToken
 -- | Parses one (possibly extended) edge. That is, we allow > 1 arrows i.e.
 --
 -- @
---   <indices> -> <indices>
---   <indices> -> <indices> -> <indices> -> ...
+--   <indices> & <indices>
+--   <indices> & <indices> & <indices> & ...
 -- @
 --
 -- where @<indices>@ can be either a single index or an index set.
 parseOneExtendedEdge :: MParser (NESeq Edge)
 parseOneExtendedEdge = lexeme $ do
-  -- Some index (set) e.g. '1', '{1,3..5}', '2..4'.
+  -- Some index (set) e.g. '1', '{1,3..5}', '2&..4'.
   node <- parseNode
-  -- Possible edge destination(s) e.g. '-> 3', '-> {3, 4..6}', '-> 2..4'.
+  -- Possible edge destination(s) e.g. '& 3', '& {3, 4..6}', '& 2&..4'.
   -- This is 'many' (zero or more) not 'some' (one or more) because node
   -- can actually be self-contained, if it is an arrow range
-  -- (e.g. '1..3').
+  -- (e.g. '1&..3').
   nodes <- many parseEdgeDest
   let tokens = neseqToSeq node <> (listToSeq nodes >>= neseqToSeq)
   mkEdges tokens >>= \case
@@ -195,7 +198,7 @@ parseOneExtendedEdge = lexeme $ do
         go rest =
           fail
             $ mconcat
-              [ "Expected '<indices> -> <indices>' syntax, found: '",
+              [ "Expected '<indices> <arrow> <indices>' syntax, found: '",
                 render rest,
                 "'.\nFull token list: ",
                 render tokens
@@ -211,9 +214,9 @@ parseOneExtendedEdge = lexeme $ do
         . toList
         . fmap renderToken
 
-    renderToken (GraphArrow GraphArrowAnd) = "->"
-    renderToken (GraphArrow GraphArrowOr) = "|->"
-    renderToken (GraphArrow GraphArrowAny) = ";->"
+    renderToken (GraphArrow GraphArrowAnd) = "&"
+    renderToken (GraphArrow GraphArrowOr) = "|"
+    renderToken (GraphArrow GraphArrowAny) = ";"
     renderToken (GraphIndices idxs) = renderIndices idxs
 
     renderIndices =
@@ -222,7 +225,7 @@ parseOneExtendedEdge = lexeme $ do
         . fmap (showt . view (#unCommandIndex % #unPositive))
         . toList
 
--- | Parses an "edge destination" i.e. a leading arrow and node: "-> <node>".
+-- | Parses an "edge destination" i.e. a leading arrow and node: "& <node>".
 parseEdgeDest :: MParser (NESeq GraphToken)
 parseEdgeDest = do
   arrow <- parseArrow
@@ -233,10 +236,9 @@ parseArrow :: MParser GraphArrowToken
 parseArrow =
   lexeme
     $ asum @List
-      [ GraphArrowAnd <$ MPC.string "->",
-        GraphArrowAnd <$ MPC.string "&->",
-        GraphArrowOr <$ MPC.string "|->",
-        GraphArrowAny <$ MPC.string ";->"
+      [ GraphArrowAnd <$ MPC.string "&",
+        GraphArrowOr <$ MPC.string "|",
+        GraphArrowAny <$ MPC.string ";"
       ]
 
 -- | Parses a single "node", where node is a single string "entity", but the
@@ -245,7 +247,7 @@ parseArrow =
 -- @
 --   - "1"          => 1
 --   - "{2, 4..6}"" => {2, 4, 5, 6}
---   - "1..3"       => 1 -> 2 -> 3
+--   - "1&..3"       => 1 & 2 & 3
 -- @
 parseNode :: MParser (NESeq GraphToken)
 parseNode = do
@@ -258,7 +260,7 @@ parseNode = do
   where
     pDef =
       fail
-        "Expected a set, arrow range, or index. Examples: '{1,2}', '1 .. 3', '1'."
+        "Expected a set, arrow range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
 
 -- | Parses an index set.
 --
@@ -284,43 +286,48 @@ parseIndexSet = lexeme $ do
 -- | Parses an "arrow range" i.e. a range that represents an extended edge.
 --
 -- @
---   "1..3" <=> "1 -> 2 -> 3"
+--   "1&..3" <=> "1 & 2 & 3"
 -- @
 parseArrowRange :: MParser (NESeq GraphToken)
 parseArrowRange =
   asum @List
-    [ MP.try $ toTokens GraphArrowAnd <$> parseRange,
-      MP.try $ toTokens GraphArrowAnd <$> parseRangeLit "&..",
-      MP.try $ toTokens GraphArrowOr <$> parseRangeLit "|..",
-      toTokens GraphArrowAny <$> parseRangeLit ";.."
+    [ MP.try $ toTokens GraphArrowAnd <$> parseRangeLit (Just "&.."),
+      MP.try $ toTokens GraphArrowOr <$> parseRangeLit (Just "|.."),
+      toTokens GraphArrowAny <$> parseRangeLit (Just ";..")
     ]
   where
     toTokens arr =
       NESeq.intersperse (GraphArrow arr)
         . fmap (GraphIndices . NESeq.singleton)
 
--- | Parse "1..3". Note that this is intended as an alias for two situations:
---
--- @
---   1. "1..3" -> "1,2,3" valid in set syntax e.g. "{1..3,5}"
---   2. "1..3" -> "1 -> 2 -> 3" valid for extended edges.
--- @
---
--- Notice that there is a third possibility:
---
--- @
---   3. "1..3" => {1,2,3} e.g. "1 -> 2..4" => "1 -> {2,3,4}"
--- @
---
--- But this would conflict with 2, hence it is disallowed.
+-- | Parse "1..3".
 parseRange :: MParser (NESeq CommandIndex)
-parseRange = parseRangeLit ".."
+parseRange = parseRangeLit Nothing
 
-parseRangeLit :: Text -> MParser (NESeq CommandIndex)
-parseRangeLit s = lexeme $ do
+-- | Parse "1<lit>3" e.g. "1 .. 3", "1 &.. 3".
+parseRangeLit :: Maybe Text -> MParser (NESeq CommandIndex)
+parseRangeLit mLit = lexeme $ do
   l <- parseOneIndex
-  lexeme $ MPC.string s
-  u <- parseOneIndex
+  u <- case mLit of
+    Nothing -> do
+      _ <- lexeme $ MPC.string ".."
+      parseOneIndex
+    Just lit -> do
+      -- If we are parsing a custom literal, than '..' is an error. Try to
+      -- parse it here anyway, so we can give a better error.
+      MP.optional (MPC.string "..") >>= \case
+        Nothing -> pure ()
+        Just _ -> do
+          let err =
+                mconcat
+                  [ "Found '..' in extended range syntax. Perhaps you wanted ",
+                    "e.g. '&..'?"
+                  ]
+          MP.customFailure (MkFatalError err)
+
+      _ <- lexeme $ MPC.string lit
+      parseOneIndex
+
   case range l u of
     Right r -> pure r
     Left err -> MP.customFailure (MkFatalError err)
@@ -402,7 +409,7 @@ hasFatalError = \case
     --
     --    option --edges: 1:6:
     --      |
-    --    1 | 1 -> 3..2
+    --    1 | 1 & 3..2
     --      |      ^
     --   Bad range. Expected 3 <= 2
     --
@@ -410,7 +417,7 @@ hasFatalError = \case
     --
     --    option --edges: 1:10:
     --      |
-    --    1 | 1 -> 3..2
+    --    1 | 1 & 3..2
     --      |          ^
     --   Bad range. Expected 3 <= 2
     --

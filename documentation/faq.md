@@ -172,46 +172,46 @@ The workaround would be to use `&&` manually e.g. `shrun "cmd1 && cmd2"` or `shr
 The `--edges` option is introduced for this reason. It allows us to specify dependencies between commands via a numeric index, which is based on the command's left-to-right appearance in the CLI. For example, the above scenario would be run as:
 
 ```sh
-$ shrun --edges "1 -> 2" cmd1 cmd2
+$ shrun --edges "1 & 2" cmd1 cmd2
 ```
 
 This declares that the second command should be run only after the first command successfully finishes. If it fails, then the command will not be run at all.
 
 We also provide `or`-edges (`||`) and `any`-edges (`;`):
 
-|       |          Syntax |   Bash equivalent | Description                      |
-|:------|----------------:|------------------:|:---------------------------------|
-| `And` | `->` <br> `&->` |    `cmd1 && cmd2` | Runs `cmd2` iff `cmd1` succeeds. |
-| `Or`  |          `\|->` |  `cmd1 \|\| cmd2` | Runs `cmd2` iff `cmd2` fails.    |
-| `Any` |           `;->` |     `cmd1 ; cmd2` | Runs `cmd` iff `cmd1` finishes.  |
+|     | Syntax |   Bash equivalent | Description                      |
+|:----|-------:|------------------:|:---------------------------------|
+| And |    `&` |    `cmd1 && cmd2` | Runs `cmd2` iff `cmd1` succeeds. |
+| Or  |   `\|` |  `cmd1 \|\| cmd2` | Runs `cmd2` iff `cmd2` fails.    |
+| Any |    `;` |     `cmd1 ; cmd2` | Runs `cmd` iff `cmd1` finishes.  |
 
 For example:
 
 ```sh
 # Runs cmd2 if cmd1 fails; runs cmd3 after cmd1 finishes.
-$ shrun --edges "1 |-> 2, 1 ;->" cmd1 cmd2 cmd3
+$ shrun --edges "1 | 2, 1 ; 3" cmd1 cmd2 cmd3
 ```
 
 We allow arbitrarily many comma-separated dependencies, including some syntactic sugar:
 
-|                       |                                               Syntax |                                                                     Desugaring |
-|:----------------------|-----------------------------------------------------:|-------------------------------------------------------------------------------:|
-| Multi-edge-sets       |                                   `{1, 2} -> {3, 4}` |                                               `1 -> 3, 1 -> 4, 2 -> 3, 2 -> 4` |
-| Extended edges        |                                      `1 -> 4 \|-> 5` |                                                             `1 -> 4, 4 \|-> 5` |
-| Set range syntax      |                                        `{1, 3 .. 5}` |                                                                 `{1, 3, 4, 5}` |
-| Extended range syntax | `1..3` <br> `1 &.. 3` <br> `1 \|.. 3` <br> `1 ;.. 3` | `1 -> 2 -> 3` <br> `1 &-> 2 &-> 3` <br> `1 \|-> 2 \|-> 3` <br> `1 ;-> 2 ;-> 3` |
+|                       |                                   Syntax |                                      Desugaring |
+|:----------------------|-----------------------------------------:|------------------------------------------------:|
+| Multi-edge-sets       |                        `{1, 2} & {3, 4}` |                    `1 & 3, 1 & 4, 2 & 3, 2 & 4` |
+| Extended edges        |                             `1 & 4 \| 5` |                                 `1 & 4, 4 \| 5` |
+| Set range syntax      |                            `{1, 3 .. 5}` |                                  `{1, 3, 4, 5}` |
+| Extended range syntax | `1 &.. 3` <br> `1 \|.. 3` <br> `1 ;.. 3` | `1 & 2 & 3` <br> `1 \| 2 \| 3` <br> `1 ; 2 ; 3` |
 
 For instance:
 
 ```sh
-$ shrun --edges "{1,2..4} -> 7 .. 9 -> {10, 11}, 12 -> 13 -> 16" cmd1 cmd2 cmd3 ...
+$ shrun --edges "{1,2..4} & 7 .. 9 & {10, 11}, 12 & 13 & 16" cmd1 cmd2 cmd3 ...
 
 # The above is equivalent to:
 $ shrun --edges "
-  1 -> 7, 2 -> 7, 3 -> 7, 4 -> 7,
-  7 -> 8, 8 -> 9,
-  9 -> 10, 9 -> 11,
-  12 -> 13, 13 -> 16" cmd1 cmd2 ...
+  1 & 7, 2 & 7, 3 & 7, 4 & 7,
+  7 & 8, 8 & 9,
+  9 & 10, 9 & 11,
+  12 & 13, 13 & 16" cmd1 cmd2 ...
 ```
 
 This means:
@@ -230,7 +230,7 @@ We also allow the literal `sequential`, which declares all commands will be run 
 $ shrun --edges sequential cmd1 cmd2 cmd3 ... cmdn
 
 # The above is equivalent to:
-$ shrun --edges "1 .. n" cmd1 cmd2 cmd3 ... cmdn
+$ shrun --edges "1 &.. n" cmd1 cmd2 cmd3 ... cmdn
 ```
 
 - Command 1 will start immediately.
@@ -246,13 +246,13 @@ $ shrun --edges "1 .. n" cmd1 cmd2 cmd3 ... cmdn
 > - Edges respect aliases. That is, suppose we have
 >
 >     ```toml
->     legend = [ { key = 'all', val = ['cmd2', 'cmd3', 'cmd4'], edges = '1 -> 3' } ]
+>     legend = [ { key = 'all', val = ['cmd2', 'cmd3', 'cmd4'], edges = '1 & 3' } ]
 >     ```
 >
 >   Then
 >
 >     ```sh
->     $ shrun -c config.toml cmd1 all cmd5 --edges "1 -> 2, 2 -> 3"
+>     $ shrun -c config.toml cmd1 all cmd5 --edges "1 & 2, 2 & 3"
 >     ```
 >
 >   will be expanded to
@@ -267,12 +267,12 @@ $ shrun --edges "1 .. n" cmd1 cmd2 cmd3 ... cmdn
 >   and the edges will therefore be
 >
 >     ```sh
->     # Original '1 -> 2' edge i.e. "cmd1" -> "all"
->     1 -> 2, 1 -> 3, 1 -> 4,
->     # all's '1 -> 3' edge i.e. "cmd2 -> cmd4"
->     2 -> 4,
->     # Original '2 -> 3' edge i.e. "all" -> "cmd5"
->     2 -> 5, 3 -> 5, 4 -> 5
+>     # Original '1 & 2' edge i.e. "cmd1" & "all"
+>     1 & 2, 1 & 3, 1 & 4,
+>     # all's '1 & 3' edge i.e. "cmd2 & cmd4"
+>     2 & 4,
+>     # Original '2 & 3' edge i.e. "all" & "cmd5"
+>     2 & 5, 3 & 5, 4 & 5
 >     ```
 >
 >   That is, edges are mapped based on alias expansion, and if an edge refers

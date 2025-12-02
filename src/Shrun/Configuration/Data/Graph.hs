@@ -7,6 +7,7 @@ module Shrun.Configuration.Data.Graph
     sortEdges,
     Edge,
     EdgeLabel (..),
+    displayEdgeLabel,
 
     -- * Graph
     CommandGraph (..),
@@ -72,14 +73,20 @@ import Shrun.Prelude
 
 -- | Types of edges.
 data EdgeLabel
-  = -- | cmd1 &-> cmd2 runs cmd2 iff cmd1 succeeds.
+  = -- | cmd1 & cmd2 runs cmd2 iff cmd1 succeeds.
     EdgeAnd
-  | -- | cmd1 |-> cmd2 runs cmd2 iff cmd1 fails.
+  | -- | cmd1 | cmd2 runs cmd2 iff cmd1 fails.
     EdgeOr
-  | -- | cmd1 ;-> cmd2 runs cmd2 iff cmd1 finishes with any status.
+  | -- | cmd1 ; cmd2 runs cmd2 iff cmd1 finishes with any status.
     EdgeAny
   deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
   deriving anyclass (NFData)
+
+displayEdgeLabel :: (IsString s) => EdgeLabel -> s
+displayEdgeLabel = \case
+  EdgeAnd -> "&"
+  EdgeOr -> "|"
+  EdgeAny -> ";"
 
 -- | CLI command graph. The default instance is an "edgeless graph", in the
 -- sense that all commands are root nodes without any edges, hence normal
