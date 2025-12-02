@@ -287,10 +287,16 @@ parseIndexSet = lexeme $ do
 --   "1..3" <=> "1 -> 2 -> 3"
 -- @
 parseArrowRange :: MParser (NESeq GraphToken)
-parseArrowRange = toTokens <$> parseRange
+parseArrowRange =
+  asum @List
+    [ MP.try $ toTokens GraphArrowAnd <$> parseRange,
+      MP.try $ toTokens GraphArrowAnd <$> parseRangeLit "&..",
+      MP.try $ toTokens GraphArrowOr <$> parseRangeLit "|..",
+      toTokens GraphArrowAny <$> parseRangeLit ";.."
+    ]
   where
-    toTokens =
-      NESeq.intersperse (GraphArrow GraphArrowAnd)
+    toTokens arr =
+      NESeq.intersperse (GraphArrow arr)
         . fmap (GraphIndices . NESeq.singleton)
 
 -- | Parse "1..3". Note that this is intended as an alias for two situations:
@@ -308,9 +314,12 @@ parseArrowRange = toTokens <$> parseRange
 --
 -- But this would conflict with 2, hence it is disallowed.
 parseRange :: MParser (NESeq CommandIndex)
-parseRange = lexeme $ do
+parseRange = parseRangeLit ".."
+
+parseRangeLit :: Text -> MParser (NESeq CommandIndex)
+parseRangeLit s = lexeme $ do
   l <- parseOneIndex
-  lexeme $ MPC.string ".."
+  lexeme $ MPC.string s
   u <- parseOneIndex
   case range l u of
     Right r -> pure r

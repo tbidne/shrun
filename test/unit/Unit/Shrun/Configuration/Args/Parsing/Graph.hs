@@ -28,6 +28,9 @@ tests =
       testCommandGraphMultiEdge,
       testCommandGraphSetRange,
       testCommandGraphOneRangeEdge,
+      testCommandGraphOneRangeEdgeAnd,
+      testCommandGraphOneRangeEdgeOr,
+      testCommandGraphOneRangeEdgeAny,
       testCommandGraphRangeEdge,
       testCommandGraphComplex,
       testCommandGraphSequential,
@@ -52,7 +55,7 @@ testCommandGraph =
 
 testCommandGraphAnd :: TestTree
 testCommandGraphAnd =
-  testPropertyNamed "Parses and --edges with alternative syntax" "testCommandGraphAnd"
+  testPropertyNamed "Parses 'and' --edges with alternative syntax" "testCommandGraphAnd"
     $ U.verifyResult argList expected
   where
     argList = ["--edges", depsStr, "command"]
@@ -61,7 +64,7 @@ testCommandGraphAnd =
 
 testCommandGraphOr :: TestTree
 testCommandGraphOr =
-  testPropertyNamed "Parses or --edges" "testCommandGraphOr"
+  testPropertyNamed "Parses 'or' --edges" "testCommandGraphOr"
     $ U.verifyResult argList expected
   where
     argList = ["--edges", depsStr, "command"]
@@ -70,7 +73,7 @@ testCommandGraphOr =
 
 testCommandGraphAny :: TestTree
 testCommandGraphAny =
-  testPropertyNamed "Parses any --edges" "testCommandGraphAny"
+  testPropertyNamed "Parses 'any' --edges" "testCommandGraphAny"
     $ U.verifyResult argList expected
   where
     argList = ["--edges", depsStr, "command"]
@@ -125,6 +128,36 @@ testCommandGraphOneRangeEdge =
     expected = U.updateDefArgs #edges es
     depsStr = "1..3"
     es = mkEdgesAnd [(1, 2), (2, 3)]
+
+testCommandGraphOneRangeEdgeAnd :: TestTree
+testCommandGraphOneRangeEdgeAnd =
+  testPropertyNamed "Parses 'and' --edges range edges" "testCommandGraphOneRangeEdgeAnd"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", depsStr, "command"]
+    expected = U.updateDefArgs #edges es
+    depsStr = "1 &.. 3"
+    es = mkEdgesAnd [(1, 2), (2, 3)]
+
+testCommandGraphOneRangeEdgeOr :: TestTree
+testCommandGraphOneRangeEdgeOr =
+  testPropertyNamed "Parses 'or' --edges range edges" "testCommandGraphOneRangeEdgeOr"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", depsStr, "command"]
+    expected = U.updateDefArgs #edges es
+    depsStr = "1 |.. 3"
+    es = mkEdgesOr [(1, 2), (2, 3)]
+
+testCommandGraphOneRangeEdgeAny :: TestTree
+testCommandGraphOneRangeEdgeAny =
+  testPropertyNamed "Parses 'any' --edges range edges" "testCommandGraphOneRangeEdgeAny"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", depsStr, "command"]
+    expected = U.updateDefArgs #edges es
+    depsStr = "1 ;.. 3"
+    es = mkEdgesAny [(1, 2), (2, 3)]
 
 testCommandGraphRangeEdge :: TestTree
 testCommandGraphRangeEdge =
