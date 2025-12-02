@@ -2,7 +2,6 @@
 
 module Unit.Shrun.Configuration.Data.Graph (tests) where
 
-import Data.Graph qualified as Graph
 import Data.List qualified as L
 import Hedgehog.Gen qualified as G
 import Hedgehog.Range qualified as R
@@ -14,7 +13,9 @@ import Shrun.Command.Types
   )
 import Shrun.Configuration.Data.Graph
   ( EdgeArgs (EdgeArgsList, EdgeArgsSequential),
+    EdgeLabel (EdgeAnd),
     Edges (MkEdges),
+    Vertex,
   )
 import Shrun.Configuration.Data.Graph qualified as CDG
 import Shrun.Configuration.Default (Default (def))
@@ -34,7 +35,7 @@ tests =
       testUnreachableNodeFails,
       testCycleFails,
       testTrivialCycleFails,
-      testTrivialGraphProp,
+      testEdgelessGraphProp,
       testVertexCommandIndexRel,
       testSequential
     ]
@@ -95,20 +96,17 @@ testTrivialCycleFails = testCase "Trivial cycle fails" $ do
     es = [(1, 2), (2, 2)]
     cmds = unsafeListToNESeq $ mkCmds [1 .. 2]
 
-testTrivialGraphProp :: TestTree
-testTrivialGraphProp = testProp desc "testTrivialGraphProp" $ do
+testEdgelessGraphProp :: TestTree
+testEdgelessGraphProp = testProp desc "testEdgelessGraphProp" $ do
   cmds <- forAll genCmds
-  let t = CDG.mkTrivialGraph cmds
+  let t = CDG.mkEdgelessGraph cmds
   g <- CDG.mkGraph def cmds
 
   let ggraph = g ^. #graph
       tgraph = t ^. #graph
 
-      gfromV = g ^. #fromV
-      tfromV = t ^. #fromV
-
-      gvertices = Graph.vertices ggraph
-      tvertices = Graph.vertices tgraph
+      gvertices = CDG.vertices g
+      tvertices = CDG.vertices t
 
   -- CDG equality is based on #graph, so we manually compare some we can
   -- compare roots too.
@@ -116,28 +114,32 @@ testTrivialGraphProp = testProp desc "testTrivialGraphProp" $ do
   g ^. #roots === t ^. #roots
 
   -- Probably unnecessary, but it doesn't slow down the tests, so whatever.
-  for_ gvertices $ \gv -> gfromV gv === tfromV gv
-  for_ tvertices $ \tv -> gfromV tv === tfromV tv
+  for_ gvertices $ \gv -> do
+    ctx1 <- liftIO $ CDG.context g gv
+    ctx2 <- liftIO $ CDG.context t gv
+    ctx1 === ctx2
+
+  for_ tvertices $ \tv -> do
+    ctx1 <- liftIO $ CDG.context g tv
+    ctx2 <- liftIO $ CDG.context t tv
+    ctx1 === ctx2
   where
-    desc = "mkGraph [] === mkTrivialGraph"
+    desc = "mkGraph [] === mkEdgelessGraph"
 
 testVertexCommandIndexRel :: TestTree
 testVertexCommandIndexRel = testProp desc "testVertexCommandIndexRel" $ do
   cmds <- forAll genCmds
   cdg <- CDG.mkGraph def cmds
 
-  let fromV = cdg ^. #fromV
-      vertices = Graph.vertices $ cdg ^. #graph
+  for_ (CDG.labVertices cdg) $ \(v, cmd) -> do
+    -- Internal: Node and command idx should agree.
+    cmd ^. #index === fromVertex v
+    toVertex (cmd ^. #index) === v
 
-  for_ vertices $ \v -> do
-    let (cmd, cmdIdx, _) = fromV v
-
-    -- Command should have its own index.
-    cmd ^. #index === cmdIdx
-
-    -- Conversion functions should provide isomorphism.
-    v === toVertex cmdIdx
-    fromVertex v === cmdIdx
+    -- Sanity check: this is presumably an fgl invariant.
+    (node, cmd2) <- liftIO $ CDG.labVertex cdg v
+    cmd === cmd2
+    v === node
   where
     desc = "Verify Vertex <-> CommandIndex conversions"
 
@@ -154,8 +156,7 @@ testSequential = testProp desc "testSequential" $ do
 
   annotateShow cdg
 
-  let fromV = cdg ^. #fromV
-      idxToV = cdg ^. #idxToV
+  let fromV = CDG.outVertices cdg
 
       go :: Vertex -> List CommandP1 -> PropertyT IO ()
       go v [] = do
@@ -164,13 +165,12 @@ testSequential = testProp desc "testSequential" $ do
       go v (MkCommandP cmdIdx _ _ : cmds) = do
         -- Sanity checks
         -- 1. This vertex corresponds exactly to the command index
-        --    (modulo 1, for the offset).
-        v === cmdIdx ^. (#unCommandIndex % #unPositive) - 1
+        v === cmdIdx ^. (#unCommandIndex % #unPositive)
         -- 2. Same as above, just testing our functions.
         v === toVertex cmdIdx
         fromVertex v === cmdIdx
 
-        let (_, _, edges) = fromV v
+        let edges = fromV v
         case (edges, cmds) of
           -- 1. No more edges or commands: Good.
           ([], []) -> pure ()
@@ -187,12 +187,7 @@ testSequential = testProp desc "testSequential" $ do
             annotate $ "More than one edge: " ++ show es
             failure
           -- 5. Exactly one edge and some commands: Fine, recurse.
-          ([edgeIdx], _) -> do
-            case idxToV edgeIdx of
-              Nothing -> do
-                annotate $ "Failed converting edgeIdx: " ++ show edgeIdx
-                failure
-              Just edgeV -> go edgeV cmds
+          ([edgeIdx], _) -> go edgeIdx cmds
 
   case toList (cdg ^. #roots) of
     [] -> do
@@ -213,7 +208,7 @@ runFailure expected edgeInts cmds =
     Right g -> assertFailure $ "Expected failure, received success: " ++ show g
     Left (MkStringException str) -> expected @=? str
   where
-    edges = MkEdges $ bimap mkIdx mkIdx <$> edgeInts
+    edges = MkEdges $ (\(s, d) -> (mkIdx s, mkIdx d, EdgeAnd)) <$> edgeInts
 
 genCmds :: Gen (NESeq CommandP1)
 genCmds =

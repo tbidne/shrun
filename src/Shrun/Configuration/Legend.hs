@@ -30,6 +30,7 @@ import Shrun.Command.Types qualified as CT
 import Shrun.Configuration.Data.Graph
   ( Edge,
     EdgeArgs (EdgeArgsList, EdgeArgsSequential),
+    EdgeLabel (EdgeAnd),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
@@ -335,17 +336,17 @@ repairEdges ::
     MonadThrow m
   ) =>
   Edges ->
-  HashMap CommandIndex Edge ->
+  HashMap CommandIndex (Tuple2 CommandIndex CommandIndex) ->
   m Edges
 repairEdges (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
   where
-    mapEdge (src, dest) mAcc = do
+    mapEdge (src, dest, lbl) mAcc = do
       (srcStart, srcEnd) <- lookupEdge src
       (destStart, destEnd) <- lookupEdge dest
 
       let newEdges :: Seq Edge
           newEdges =
-            [ (s, d)
+            [ (s, d, lbl)
             | s <- [srcStart .. srcEnd],
               d <- [destStart .. destEnd]
             ]
@@ -374,7 +375,7 @@ mkSequentialEdges =
     . NESeq.toSeq
     . indexSeq
   where
-    toEdge (idx, _) = (idx, CT.succ idx)
+    toEdge (idx, _) = (idx, CT.succ idx, EdgeAnd)
 
     dropLast Empty = Empty
     dropLast (_ :<| Empty) = Empty

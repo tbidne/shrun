@@ -19,6 +19,7 @@ import Shrun.Configuration.Data.Graph
       ( EdgeArgsList,
         EdgeArgsSequential
       ),
+    EdgeLabel (EdgeAnd),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
@@ -116,7 +117,11 @@ data GraphToken
     -- - '{1, 3..5}'
     GraphIndices (NESeq CommandIndex)
   | -- | An arrow between edges i.e. '->'
-    GraphArrow
+    GraphArrow GraphArrowToken
+  deriving stock (Show)
+
+data GraphArrowToken
+  = GraphArrowAnd
   deriving stock (Show)
 
 -- | Parses one (possibly extended) edge. That is, we allow > 1 arrows i.e.
@@ -149,8 +154,8 @@ parseOneExtendedEdge = lexeme $ do
         -- A single node: fine, presumably the end.
         go (GraphIndices _ :<| Empty) = pure Empty
         -- source -> dest; make edge(s).
-        go (GraphIndices s :<| GraphArrow :<| GraphIndices d :<| rest) =
-          (neseqToSeq (cartProd s d) <>) <$> go (GraphIndices d :<| rest)
+        go (GraphIndices s :<| GraphArrow GraphArrowAnd :<| GraphIndices d :<| rest) =
+          (neseqToSeq (cartProd EdgeAnd s d) <>) <$> go (GraphIndices d :<| rest)
         go rest =
           fail
             $ mconcat
@@ -160,8 +165,8 @@ parseOneExtendedEdge = lexeme $ do
                 render tokens
               ]
 
-    cartProd :: NESeq CommandIndex -> NESeq CommandIndex -> NESeq Edge
-    cartProd srcs dests = [(s, d) | s <- srcs, d <- dests]
+    cartProd :: EdgeLabel -> NESeq CommandIndex -> NESeq CommandIndex -> NESeq Edge
+    cartProd lbl srcs dests = [(s, d, lbl) | s <- srcs, d <- dests]
 
     render :: Seq GraphToken -> String
     render =
@@ -170,7 +175,7 @@ parseOneExtendedEdge = lexeme $ do
         . toList
         . fmap renderToken
 
-    renderToken GraphArrow = "->"
+    renderToken (GraphArrow GraphArrowAnd) = "->"
     renderToken (GraphIndices idxs) = renderIndices idxs
 
     renderIndices =
@@ -183,11 +188,11 @@ parseOneExtendedEdge = lexeme $ do
 parseEdgeDest :: MParser (NESeq GraphToken)
 parseEdgeDest = do
   arrow <- parseArrow
-  (\(t :<|| ts) -> arrow :<|| (t :<| ts)) <$> parseNode
+  (\(t :<|| ts) -> GraphArrow arrow :<|| (t :<| ts)) <$> parseNode
 
 -- | Parses an arrow token.
-parseArrow :: MParser GraphToken
-parseArrow = lexeme $ MPC.string "->" $> GraphArrow
+parseArrow :: MParser GraphArrowToken
+parseArrow = lexeme $ MPC.string "->" $> GraphArrowAnd
 
 -- | Parses a single "node", where node is a single string "entity", but the
 -- entity could expand to multiple tokens.
@@ -240,7 +245,7 @@ parseArrowRange :: MParser (NESeq GraphToken)
 parseArrowRange = toTokens <$> parseRange
   where
     toTokens =
-      NESeq.intersperse GraphArrow
+      NESeq.intersperse (GraphArrow GraphArrowAnd)
         . fmap (GraphIndices . NESeq.singleton)
 
 -- | Parse "1..3". Note that this is intended as an alias for two situations:

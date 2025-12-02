@@ -238,7 +238,7 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                         timeout = NotifyTimeoutNever
                       }
               },
-          commandGraph = Graph.mkTrivialGraph commands,
+          commandGraph = Graph.mkEdgelessGraph commands,
           commands
         }
     commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []
@@ -362,7 +362,7 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                         timeout = NotifyTimeoutSeconds 10
                       }
               },
-          commandGraph = Graph.mkTrivialGraph commands,
+          commandGraph = Graph.mkEdgelessGraph commands,
           commands
         }
     commands = MkCommandP (mkIdx 1) Nothing "cmd" :<|| []

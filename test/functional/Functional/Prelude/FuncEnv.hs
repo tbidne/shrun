@@ -118,6 +118,7 @@ newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
       MonadDBus,
       MonadCatch,
       MonadEnv,
+      MonadEvaluate,
       MonadFileReader,
       MonadFileWriter,
       MonadHandleReader,

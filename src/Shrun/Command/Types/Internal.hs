@@ -3,14 +3,19 @@
 
 -- | Internal module. Take care as usage can violate invariants.
 module Shrun.Command.Types.Internal
-  ( CommandIndex (..),
+  ( -- * Index
+    CommandIndex (..),
     fromPositive,
     unsafeFromInt,
-    toVertex,
-    fromVertex,
     succ,
     addNN,
     range,
+
+    -- * Vertex
+    Vertex,
+    LVertex,
+    toVertex,
+    fromVertex,
   )
 where
 
@@ -21,8 +26,9 @@ import Shrun.Prelude
 -- 'indexFromVertex', as 'CommandIndex' is 1-based whereas 'Vertex' is
 -- 0-based.
 newtype CommandIndex = MkCommandIndex {unCommandIndex :: Positive Int}
-  deriving stock (Show)
+  deriving stock (Generic, Show)
   deriving newtype (ASemigroup, Eq, Hashable, MSemigroup, MMonoid, Ord)
+  deriving anyclass (NFData)
 
 instance Enum CommandIndex where
   toEnum = unsafeFromInt
@@ -66,10 +72,16 @@ fromPositive = MkCommandIndex
 unsafeFromInt :: (HasCallStack) => Int -> CommandIndex
 unsafeFromInt = fromPositive . unsafePositive
 
+-- | Type for Command graph vertex, for usage with fgl.
+type Vertex = Int
+
+-- | Labeled 'Vertex'.
+type LVertex a = Tuple2 Vertex a
+
 -- | Conversion to 'Vertex'.
 toVertex :: CommandIndex -> Vertex
-toVertex (MkCommandIndex (MkPositive i)) = i - 1
+toVertex (MkCommandIndex (MkPositive i)) = i
 
 -- | Conversion from 'Vertex'.
 fromVertex :: (HasCallStack) => Vertex -> CommandIndex
-fromVertex v = MkCommandIndex (unsafePositive $ v + 1)
+fromVertex v = MkCommandIndex (unsafePositive v)

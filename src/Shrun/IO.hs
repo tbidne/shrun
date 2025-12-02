@@ -217,7 +217,7 @@ tryCommandLogging command = do
       pure $ CommandResultSuccess $ U.timeSpecToRelTime rt
     (rt, Just err) -> do
       -- update completed commands
-      updateCommandStatus command (CommandFailure ())
+      updateCommandStatus command CommandFailure
 
       -- update anyError
       setAnyErrorTrue

@@ -110,6 +110,7 @@ shrun ::
     HasNotifyConfig env,
     HasTimeout env,
     MonadAsync m,
+    MonadEvaluate m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,

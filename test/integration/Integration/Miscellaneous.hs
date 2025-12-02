@@ -476,7 +476,7 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
       setMany' @List
         [ -- commands
           MkSomeSetter #commands commands,
-          MkSomeSetter #commandGraph (Graph.mkTrivialGraph commands),
+          MkSomeSetter #commandGraph (Graph.mkEdgelessGraph commands),
           -- core
           MkSomeSetter (#coreConfig % #legendKeysCache) LegendKeysAdd,
           MkSomeSetter (#coreConfig % #timeout) Disabled,
@@ -583,7 +583,7 @@ expectedMultiConfig =
                     timeout = NotifyTimeoutNever
                   }
           },
-      commandGraph = Graph.mkTrivialGraph commands,
+      commandGraph = Graph.mkEdgelessGraph commands,
       commands
     }
   where

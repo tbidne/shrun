@@ -19,6 +19,7 @@ import Shrun.Command.Types
   )
 import Shrun.Configuration.Data.Graph
   ( EdgeArgs (EdgeArgsSequential),
+    EdgeLabel (EdgeAnd),
     Edges,
   )
 import Shrun.Configuration.Legend
@@ -298,8 +299,8 @@ testTranslateEdges1 = testCase desc $ do
         MkCommandP (mkIdx 4) Nothing "cmd2"
       ]
 
-    cliEdges = [(mkIdx 1, mkIdx 3)]
-    expectedEdges = [(mkIdx 1, mkIdx 4)]
+    cliEdges = [(mkIdx 1, mkIdx 3, EdgeAnd)]
+    expectedEdges = [(mkIdx 1, mkIdx 4, EdgeAnd)]
 
     map =
       Map.fromList
@@ -324,7 +325,7 @@ testTranslateEdges2 = testCase desc $ do
 
     cliEdges = EdgeArgsSequential
     expectedEdges =
-      mkEdges
+      mkEdgesSuccess
         [ (1, 2),
           (1, 3),
           (2, 3),
@@ -358,9 +359,9 @@ testTranslateEdges3 = testCase desc $ do
         MkCommandP (mkIdx 9) Nothing "other2"
       ]
 
-    cliEdges = mkEdgeArgs [(1, 2), (2, 3)]
+    cliEdges = mkEdgeArgsSuccess [(1, 2), (2, 3)]
     expectedEdges =
-      mkEdges
+      mkEdgesSuccess
         [ -- 'other1' has an edge to everything in 'all'
           (1, 2),
           (1, 3),
@@ -396,13 +397,13 @@ testTranslateEdges3 = testCase desc $ do
       Map.fromList
         [ ( "all",
             ( ["cmd1", "aliases1", "cmd3", "aliases2"],
-              mkMEdgeArgs [(1, 3), (2, 4)]
+              mkMEdgeArgsSuccess [(1, 3), (2, 4)]
             )
           ),
-          ("aliases1", (["a1", "a2", "a3"], mkMEdgeArgs [(2, 3)])),
+          ("aliases1", (["a1", "a2", "a3"], mkMEdgeArgsSuccess [(2, 3)])),
           ("a2", (["a22"], Nothing)),
           ("cmd3", (["cmd33"], Nothing)),
-          ("aliases2", (["b1", "b2"], mkMEdgeArgs [(1, 2)]))
+          ("aliases2", (["b1", "b2"], mkMEdgeArgsSuccess [(1, 2)]))
         ]
 
 testTranslateEdgesOneBoundsFailure :: TestTree
@@ -416,7 +417,7 @@ testTranslateEdgesOneBoundsFailure = testCase desc $ do
 
     map =
       Map.fromList
-        [ ("some_aliases", (["a1"], mkMEdgeArgs [(1, 2)]))
+        [ ("some_aliases", (["a1"], mkMEdgeArgsSuccess [(1, 2)]))
         ]
 
 testTranslateEdgesBoundsFailure :: TestTree
@@ -430,22 +431,22 @@ testTranslateEdgesBoundsFailure = testCase desc $ do
 
     map =
       Map.fromList
-        [ ("some_aliases", (["a1", "a2"], mkMEdgeArgs [(1, 2), (1, 3)]))
+        [ ("some_aliases", (["a1", "a2"], mkMEdgeArgsSuccess [(1, 2), (1, 3)]))
         ]
 
-mkMEdgeArgs :: List (Int, Int) -> Maybe EdgeArgs
-mkMEdgeArgs = Just . mkEdgeArgs
+mkMEdgeArgsSuccess :: List (Int, Int) -> Maybe EdgeArgs
+mkMEdgeArgsSuccess = Just . mkEdgeArgsSuccess
 
-mkEdgeArgs :: List (Int, Int) -> EdgeArgs
-mkEdgeArgs = Exts.fromList . fmap (bimap mkIdx mkIdx)
+mkEdgeArgsSuccess :: List (Int, Int) -> EdgeArgs
+mkEdgeArgsSuccess = Exts.fromList . fmap (\(s, d) -> (mkIdx s, mkIdx d, EdgeAnd))
 
-mkEdges :: List (Int, Int) -> Edges
-mkEdges = Exts.fromList . fmap (bimap mkIdx mkIdx)
+mkEdgesSuccess :: List (Int, Int) -> Edges
+mkEdgesSuccess = Exts.fromList . fmap (\(s, d) -> (mkIdx s, mkIdx d, EdgeAnd))
 
 assertEdges :: Edges -> Edges -> Assertion
 assertEdges xs ys = assertList showEdge (Exts.toList xs) (Exts.toList ys)
   where
-    showEdge (i, j) = show (unIdx i, unIdx j)
+    showEdge (i, j, l) = show (unIdx i, unIdx j, l)
     unIdx = view (#unCommandIndex % #unPositive)
 
 legendMap :: LegendMap

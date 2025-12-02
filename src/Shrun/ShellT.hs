@@ -47,6 +47,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadAsync,
       MonadDBus,
       MonadCatch,
+      MonadEvaluate,
       MonadFileReader,
       MonadFileWriter,
       MonadHandleReader,

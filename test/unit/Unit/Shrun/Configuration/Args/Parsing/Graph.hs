@@ -8,6 +8,7 @@ import Shrun.Configuration.Data.Graph
       ( EdgeArgsList,
         EdgeArgsSequential
       ),
+    EdgeLabel (EdgeAnd),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
@@ -138,7 +139,7 @@ mkEdges =
   With
     . EdgeArgsList
     . MkEdges
-    . fmap (bimap mkIdx mkIdx)
+    . fmap (\(s, d) -> (mkIdx s, mkIdx d, EdgeAnd))
 
 testCommandGraphSequential :: TestTree
 testCommandGraphSequential =

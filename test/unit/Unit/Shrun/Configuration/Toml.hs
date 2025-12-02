@@ -298,7 +298,11 @@ genLegend = genMaybe genSeq
         . listToSeq
         <$> G.list (R.linearFrom 1 1 20) genEdge
 
-    genEdge = (,) <$> genCommandIdx <*> genCommandIdx
+    genEdge =
+      (,,)
+        <$> genCommandIdx
+        <*> genCommandIdx
+        <*> G.enumBounded
 
     genCommandIdx = CT.unsafeFromInt <$> genPos
 

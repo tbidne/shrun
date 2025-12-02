@@ -187,9 +187,9 @@ mkUnfinishedCmdLogs = do
   let (waiting, running) = foldl' go (Set.empty, Set.empty) commandsStatus
       go acc@(ws, rs) (cmd, status) = case status of
         CommandSuccess -> acc
-        CommandFailure () -> acc
+        CommandFailure -> acc
         CommandRunning _ -> (ws, Set.insert (MkCommandOrd cmd) rs)
-        CommandWaiting () -> (Set.insert (MkCommandOrd cmd) ws, rs)
+        CommandWaiting -> (Set.insert (MkCommandOrd cmd) ws, rs)
 
       cmdToTxt :: CommandOrd CommandPhase1 -> Text
       cmdToTxt cmd =

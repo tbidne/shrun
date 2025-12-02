@@ -78,6 +78,7 @@ import Control.Applicative as X
 import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
 import Control.Concurrent.STM.TMVar as X (TMVar, newTMVar)
+import Control.DeepSeq as X (NFData, force)
 import Control.Exception as X
   ( Exception (displayException, fromException, toException),
     SomeException,
@@ -148,7 +149,6 @@ import Data.Functor as X
     (<$>),
     (<&>),
   )
-import Data.Graph as X (Graph, Vertex)
 import Data.HashMap.Strict as X (HashMap)
 import Data.HashSet as X (HashSet)
 import Data.Hashable as X (Hashable (hashWithSalt))
@@ -203,6 +203,7 @@ import Effects.Concurrent.Thread as X
     microsleep,
     sleep,
   )
+import Effects.Evaluate as X (MonadEvaluate (evaluate))
 import Effects.FileSystem.FileReader as X
   ( MonadFileReader,
     decodeUtf8Lenient,

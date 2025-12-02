@@ -73,6 +73,7 @@ makeEnvAndShrun ::
     HasConsoleLogging (Env r) (Region (ShellT (Env r) m)),
     MonadAsync m,
     MonadDBus m,
+    MonadEvaluate m,
     MonadFileReader m,
     MonadFileWriter m,
     MonadHandleReader m,
@@ -315,7 +316,7 @@ fromMergedConfig cfg onEnv = do
     commandStatusInit =
       commands <&> \c ->
         ( c ^. #index,
-          (c, CommandWaiting ())
+          (c, CommandWaiting)
         )
 
     mFindExe p = do

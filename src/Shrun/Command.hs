@@ -3,9 +3,7 @@ module Shrun.Command
   )
 where
 
-import Data.Graph qualified as G
 import Data.Map.Strict qualified as Map
-import Data.Set qualified as Set
 import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Shrun.Command.Types
@@ -17,10 +15,14 @@ import Shrun.Command.Types
         CommandSuccess,
         CommandWaiting
       ),
-    CommandStatusIx (CommandStatusIxPredecessors, CommandStatusIxSelf),
   )
 import Shrun.Command.Types qualified as Command.Types
-import Shrun.Configuration.Data.Graph (CommandGraph)
+import Shrun.Configuration.Data.Graph
+  ( CommandGraph,
+    EdgeLabel (EdgeAnd),
+    Vertex,
+  )
+import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Env.Types
   ( HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
@@ -45,6 +47,7 @@ runCommands ::
     HasCommands env,
     HasLogging env m,
     MonadAsync m,
+    MonadEvaluate m,
     MonadMVar m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -73,7 +76,7 @@ mkVertexSemMap cdg = do
 
   pure $ Map.fromList vs
   where
-    vertices = G.vertices $ cdg ^. #graph
+    vertices = Graph.vertices cdg
 {-# INLINEABLE mkVertexSemMap #-}
 
 runCommand ::
@@ -81,6 +84,7 @@ runCommand ::
   ( HasCallStack,
     HasLogging env m,
     MonadAsync m,
+    MonadEvaluate m,
     MonadMVar m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -93,7 +97,7 @@ runCommand ::
   -- | Command dependency graph.
   CommandGraph ->
   -- | Command status ref.
-  TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))) ->
+  TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
   -- | Vertex semaphore map, for preventing the same command being kicked off
   -- by multiple commands.
   Map Vertex (MVar ()) ->
@@ -103,16 +107,14 @@ runCommand ::
 runCommand runner cdg commandStatuses vtxSemMap = go Nothing
   where
     go prevVertex vertex = do
+      -- Check that all predecessor edges have been satisfied.
       status <- getPredecessorsStatus cdg commandStatuses vertex
       case status of
-        CommandWaiting depV ->
+        PredecessorUnfinished depV ->
           whenDebug $ do
             logNoRun cdg LevelDebug prevVertex debugMsg (Just depV) vertex
-        CommandRunning depV ->
-          whenDebug $ do
-            logNoRun cdg LevelDebug prevVertex debugMsg (Just depV) vertex
-        CommandFailure depV -> logNoRun cdg LevelError prevVertex errMsg (Just depV) vertex
-        CommandSuccess -> do
+        PredecessorFailure depV -> logNoRun cdg LevelError prevVertex errMsg (Just depV) vertex
+        PredecessorSuccess -> do
           case Map.lookup vertex vtxSemMap of
             Nothing ->
               throwText
@@ -155,9 +157,11 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
                 Just () -> do
                   -- We are not blocked. Run the command and kick off all
                   -- successors.
-                  let (cmd, _, edges) = fromV vertex
+                  ctx <- Graph.context cdg vertex
+                  let (_, cmd) = Graph.ctxLabVertex ctx
+                      outNodes = Graph.ctxOutVertices ctx
                   runner cmd
-                  Async.mapConcurrently_ (go (Just vertex)) (Command.Types.toVertex <$> edges)
+                  Async.mapConcurrently_ (go (Just vertex)) outNodes
 
     debugMsg depCmdTxt cmdTxt =
       mconcat
@@ -183,10 +187,37 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
           cmdTxt,
           "' is already running."
         ]
-
-    fromV = cdg ^. #fromV
 {-# INLINEABLE runCommand #-}
 
+-- | Given a vertex v, 'PredecessorResult' represents the status of all of
+-- its predecessors. The algebra is left-biased for identical constructors,
+-- otherwise takes the greatest in
+--
+-- @
+--   PredecessorSuccess < PredecessorUnfinished < PredecessorFailure
+-- @
+data PredecessorResult
+  = -- | Some predecessor unfinished.
+    PredecessorUnfinished Vertex
+  | -- | All predecessors finished and expectations matched. Note that this
+    -- does /not/ necessarily imply all predecessor /commands/ finished
+    -- successfully.
+    PredecessorSuccess
+  | -- | Some predecessor finished but did not match the expectation.
+    PredecessorFailure Vertex
+
+instance Semigroup PredecessorResult where
+  PredecessorFailure v <> _ = PredecessorFailure v
+  _ <> PredecessorFailure v = PredecessorFailure v
+  PredecessorUnfinished v <> _ = PredecessorUnfinished v
+  _ <> PredecessorUnfinished v = PredecessorUnfinished v
+  PredecessorSuccess <> PredecessorSuccess = PredecessorSuccess
+
+instance Monoid PredecessorResult where
+  mempty = PredecessorSuccess
+
+-- | Get result of all predecessor nodes. We only progress if all have finished
+-- and each result matches the expectation (e.g. CommandSuccess and EdgeSucces).
 getPredecessorsStatus ::
   forall m.
   ( HasCallStack,
@@ -194,45 +225,38 @@ getPredecessorsStatus ::
     MonadSTM m
   ) =>
   CommandGraph ->
-  TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))) ->
+  TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
   Vertex ->
-  m (CommandStatus CommandStatusIxPredecessors)
+  m PredecessorResult
 getPredecessorsStatus cdg commandStatusesRef v = do
   commandStatuses <- readTVarA commandStatusesRef
 
-  let toResult :: Vertex -> m (CommandStatus CommandStatusIxPredecessors)
-      toResult p =
+  let toResult :: Tuple2 Vertex EdgeLabel -> m PredecessorResult
+      toResult (p, lbl) =
         let idx = Command.Types.fromVertex p
-         in case Map.lookup (Command.Types.fromVertex p) commandStatuses of
+         in case Map.lookup idx commandStatuses of
               Nothing ->
                 throwText
                   $ mconcat
                     [ "Failed searching for command index ",
                       showt (idx ^. #unCommandIndex % #unPositive)
                     ]
-              Just (_, status) -> pure $ Command.Types.mapCommandStatus (const p) status
+              Just (_, status) -> do
+                case (status, lbl) of
+                  (CommandWaiting, _) -> pure $ PredecessorUnfinished p
+                  (CommandRunning _, _) -> pure $ PredecessorUnfinished p
+                  (CommandSuccess, EdgeAnd) -> pure PredecessorSuccess
+                  (CommandFailure, EdgeAnd) -> pure $ PredecessorFailure p
 
   foldMapA toResult predecessors
   where
-    predecessors = findPredecessors cdg v
+    predecessors = Graph.labInVertices cdg v
 {-# INLINEABLE getPredecessorsStatus #-}
-
-findPredecessors :: CommandGraph -> Vertex -> List Vertex
-findPredecessors cdg v =
-  fst
-    . foldl' go ([], Set.empty)
-    . G.edges
-    $ (cdg ^. #graph)
-  where
-    -- For each s -> t, if t == v and we have not previously found s, add
-    -- s as a direct predecessor. Otherwise continue.
-    go (acc, found) (s, t)
-      | t == v && Set.notMember s found = (s : acc, Set.insert s found)
-      | otherwise = (acc, found)
 
 logNoRun ::
   ( HasCallStack,
     HasLogging env m,
+    MonadEvaluate m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -255,22 +279,22 @@ logNoRun ::
   m ()
 logNoRun cdg lvl mPrevVertex msgFn mDepVertex vertex = do
   commonLogging <- asks getCommonLogging
+  thisCmd <- nodeToCommand vertex
+  prevCmd <- for mPrevVertex nodeToCommand
   let keyHide = commonLogging ^. #keyHide
-      (thisCmd, _, _) = fromV vertex
 
-      prevCmd = (\(c, _, _) -> c) . fromV <$> mPrevVertex
-
-      depCmdTxt = case mDepVertex of
-        Nothing -> ""
-        Just depVertex ->
-          let (depCmd, _, _) = fromV depVertex
-           in mconcat
-                [ "(",
-                  vToUnlined depVertex,
-                  ") ",
-                  Formatting.displayCmd depCmd keyHide
-                ]
-      cmdTxt = Formatting.displayCmd thisCmd keyHide
+  depCmdTxt <- case mDepVertex of
+    Nothing -> pure ""
+    Just depVertex -> do
+      depCmd <- nodeToCommand depVertex
+      pure
+        $ mconcat
+          [ "(",
+            vToUnlined depVertex,
+            ") ",
+            Formatting.displayCmd depCmd keyHide
+          ]
+  let cmdTxt = Formatting.displayCmd thisCmd keyHide
       errMsg = msgFn depCmdTxt cmdTxt
 
       log =
@@ -283,6 +307,8 @@ logNoRun cdg lvl mPrevVertex msgFn mDepVertex vertex = do
 
   withRegion Linear $ \r -> Logging.putRegionLog r log
   where
+    nodeToCommand = fmap (view _2) . Graph.labVertex cdg
+
     -- Convert back to CommandIndex to match user-supplied value.
     vToUnlined :: Vertex -> UnlinedText
     vToUnlined =
@@ -290,6 +316,4 @@ logNoRun cdg lvl mPrevVertex msgFn mDepVertex vertex = do
         . show
         . view (#unCommandIndex % #unPositive)
         . Command.Types.fromVertex
-
-    fromV = cdg ^. #fromV
 {-# INLINEABLE logNoRun #-}

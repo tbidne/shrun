@@ -22,11 +22,11 @@ module Shrun.Command.Types
 
     -- * Status
     CommandStatus (..),
-    CommandStatusIx (..),
-    mapCommandStatus,
 
     -- * Misc
     CommandPhase (..),
+    Internal.Vertex,
+    Internal.LVertex,
   )
 where
 
@@ -56,6 +56,7 @@ data CommandP p = MkCommandP
     command :: Text
   }
   deriving stock (Eq, Generic, Show)
+  deriving anyclass (NFData)
 
 -- NOTE: We use standard Eq here and put the equivalence class Ord on a
 -- newtype (CommandOrd) because some of tests verify all CommandP fields
@@ -137,60 +138,18 @@ commandToProcess command =
     . commandToShell
     . advancePhase command
 
--- | Index for command status, for extra data associated to a command status.
-data CommandStatusIx
-  = -- | Data associated to the command's own status.
-    CommandStatusIxSelf
-  | -- | Data associated to the command's predecessors' summed status.
-    CommandStatusIxPredecessors
-
--- | Associates 'CommandStatusIx' to extra data on the 'CommandStatus'.
-type CommandStatusF :: CommandStatusIx -> Type -> Type
-type family CommandStatusF ix a where
-  CommandStatusF CommandStatusIxSelf a = a
-  CommandStatusF CommandStatusIxPredecessors _ = Vertex
-
--- | Represents the Command's status. The 'Semigroup' is intended to
--- summarize dependency statuses for a command. For example:
---
--- - If some dependency d of e has failed, the overall status is failed.
--- - Else if some d is still running, then the status is running.
--- - Else if some d is still waiting, then the status is waiting.
--- - Else if all ds must have succeeded.
-type CommandStatus :: CommandStatusIx -> Type
-data CommandStatus a
+-- | Represents a Command's status.
+type CommandStatus :: Type
+data CommandStatus
   = -- | The command ran successfully.
     CommandSuccess
   | -- | The command failed.
-    CommandFailure (CommandStatusF a ())
-  | -- | The command is running. For the 'Self' index, it is associated to
-    -- its own PID and child PIDs, for later cleanup.
-    CommandRunning (CommandStatusF a (Tuple2 (Maybe Pid) (List Pid)))
+    CommandFailure
+  | -- | The command is running. It is associated to its own PID and child
+    -- PIDs, for later cleanup.
+    CommandRunning (Tuple2 (Maybe Pid) (List Pid))
   | -- | The command is waiting to run.
-    CommandWaiting (CommandStatusF a ())
-
-instance Semigroup (CommandStatus a) where
-  CommandFailure v <> _ = CommandFailure v
-  _ <> CommandFailure v = CommandFailure v
-  CommandRunning v <> _ = CommandRunning v
-  _ <> CommandRunning v = CommandRunning v
-  CommandWaiting v <> _ = CommandWaiting v
-  _ <> CommandWaiting v = CommandWaiting v
-  CommandSuccess <> CommandSuccess = CommandSuccess
-
-instance Monoid (CommandStatus a) where
-  mempty = CommandSuccess
-
-mapCommandStatus ::
-  (i ~ CommandStatusIxSelf, j ~ CommandStatusIxPredecessors) =>
-  (forall x. CommandStatusF i x -> CommandStatusF j x) ->
-  CommandStatus i ->
-  CommandStatus j
-mapCommandStatus f = \case
-  CommandSuccess -> CommandSuccess
-  CommandFailure x -> CommandFailure (f x)
-  CommandRunning x -> CommandRunning (f x)
-  CommandWaiting x -> CommandWaiting (f x)
+    CommandWaiting
 
 -- | Wraps 'CommandP' for the purposes of ordering by index.
 newtype CommandOrd p = MkCommandOrd (CommandP p)

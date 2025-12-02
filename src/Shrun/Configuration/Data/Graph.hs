@@ -6,18 +6,39 @@ module Shrun.Configuration.Data.Graph
     Edges (..),
     sortEdges,
     Edge,
+    EdgeLabel (..),
 
     -- * Graph
     CommandGraph (..),
+    Vertex,
+    LVertex,
+
+    -- ** Creation
     mkGraph,
-    mkTrivialGraph,
+    mkEdgelessGraph,
+
+    -- ** Functions
+    labVertices,
+    labVertex,
+    labInVertices,
+    outVertices,
+    vertices,
+
+    -- *** Context
+    context,
+    ctxLabVertex,
+    ctxOutVertices,
   )
 where
 
-import Data.Graph qualified as G
+import Data.Graph.Inductive.Graph (Context, Node)
+import Data.Graph.Inductive.Graph qualified as G
+import Data.Graph.Inductive.PatriciaTree (Gr)
+import Data.Graph.Inductive.Query.Dominators qualified as Dom
 import Data.HashMap.Strict qualified as HMap
 import Data.HashSet qualified as HSet
 import Data.List qualified as L
+import Data.Map.Strict qualified as Map
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Set qualified as Set
@@ -29,16 +50,38 @@ import Shrun.Command.Types
     CommandOrd (MkCommandOrd),
     CommandP (MkCommandP),
     CommandP1,
+    LVertex,
+    Vertex,
   )
 import Shrun.Command.Types qualified as Command.Types
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
--- | CLI command graph. The default instance is a "trivial graph", in the
+-- Note that these 'Edge' types all refer to types that are user-facing i.e.
+-- parsed. The internal graph operates an pure Ints intead of our CommandIndex.
+
+-------------------------------------------------------------------------------
+--                                User Edges                                 --
+-------------------------------------------------------------------------------
+
+-- NOTE: [User Edges]
+--
+-- These edge types are used at the user-config level i.e. CLI args or
+-- toml configuration. Once we parse the edges and commands into a
+-- 'CommandGraph', we use more appropriate vertex/edge types.
+
+-- | Types of edges.
+data EdgeLabel
+  = -- | cmd1 -> cmd2 runs cmd2 iff cmd1 succeeds.
+    EdgeAnd
+  deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
+  deriving anyclass (NFData)
+
+-- | CLI command graph. The default instance is an "edgeless graph", in the
 -- sense that all commands are root nodes without any edges, hence normal
 -- behavior.
 data EdgeArgs
-  = -- | Sequential i.e. a linear graph.
+  = -- | Sequential i.e. a linear graph of success edges.
     EdgeArgsSequential
   | -- | Explicit edges.
     EdgeArgsList Edges
@@ -56,7 +99,17 @@ instance IsList EdgeArgs where
   toList EdgeArgsSequential = error "Called toList on EdgeArgsSequential"
 
 -- | An edge between two indices.
-type Edge = Tuple2 CommandIndex CommandIndex
+type Edge = Tuple3 CommandIndex CommandIndex EdgeLabel
+
+edgeToFgl :: Edge -> GEdge
+edgeToFgl (s, d, l) =
+  ( toV s,
+    toV d,
+    l
+  )
+
+-- | FGL edge.
+type GEdge = Tuple3 Node Node EdgeLabel
 
 -- | Dependency edges are supplied by the user on the CLI.
 newtype Edges = MkEdges {unEdges :: Seq Edge}
@@ -79,27 +132,65 @@ instance
   labelOptic = iso (\(MkEdges es) -> es) MkEdges
   {-# INLINE labelOptic #-}
 
--- | Command dependency graph. Morally, @Vertex + 1 == CommandIndex@.
+-------------------------------------------------------------------------------
+--                              Command Graph                                --
+-------------------------------------------------------------------------------
+
+-- NOTE: [Command Graph]
+--
+-- 'CommandGraph' is merely fgl's graph type, along with the root vertexes.
+-- We want other modules to use the API here rather than depend on fgl's API,
+-- hence other modules should use functions/types defined here only.
+--
+-- Currently, our vertex types are aliases:
+--
+--   - type Vertex = Int
+--   - type LVertex a = Tuple2 Vertex a
+--
+-- Which happens to match fgl's Node and LNode, respectively. We do this for
+-- convenience, though a newtype would be another option.
+--
+-- We currently do not have any particular type for edges, as our 'edge'
+-- functions return source or dest vertices directly.
+
+-- | Command dependency graph. Morally, @Vertex == CommandIndex@.
 data CommandGraph = MkCommandGraph
-  { -- | Map from a vertex (index) to its command data and edges. This is
-    -- a /partial/ function, though we should have the invariant that all
-    -- roots and reachable vertices are in the domain.
-    fromV :: Vertex -> Tuple3 CommandP1 CommandIndex (List CommandIndex),
-    -- | The actual graph.
-    graph :: Graph,
-    -- | Determines if the Index is in the graph. In practice, this should
-    -- never be 'Nothing', as we should only call this with nodes reachable
-    -- by the roots.
-    idxToV :: CommandIndex -> Maybe Vertex,
+  { -- | Underlying graph.
+    graph :: Gr CommandP1 EdgeLabel,
     -- | Root commands i.e. have no dependencies.
     roots :: NESeq Vertex
   }
+  deriving stock (Eq, Show)
 
-instance Eq CommandGraph where
-  x == y = view #graph x == view #graph y
+instance
+  ( k ~ A_Lens,
+    a ~ Gr CommandP1 EdgeLabel,
+    b ~ Gr CommandP1 EdgeLabel
+  ) =>
+  LabelOptic "graph" k CommandGraph CommandGraph a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkCommandGraph a1 a2) ->
+        fmap
+          (\b -> MkCommandGraph b a2)
+          (f a1)
+  {-# INLINE labelOptic #-}
 
-instance Show CommandGraph where
-  show = show . view #graph
+instance
+  ( k ~ A_Lens,
+    a ~ NESeq Vertex,
+    b ~ NESeq Vertex
+  ) =>
+  LabelOptic "roots" k CommandGraph CommandGraph a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkCommandGraph a1 a2) ->
+        fmap
+          (\b -> MkCommandGraph a1 b)
+          (f a2)
+  {-# INLINE labelOptic #-}
 
 -- | Creates a command dependency graph from list of dependencies and typed
 -- commands.
@@ -118,16 +209,20 @@ mkGraph cdgArgs cmds = do
   allEdgesExist edges cmdSet
 
   -- Find roots.
-  let rootSet = Set.difference cmdSet nonRoots
-  roots <- case toList rootSet of
-    [] -> throwText "No root command(s) found! There is probably a cycle."
-    (r : rs) -> pure $ fmap Command.Types.toVertex $ r :<|| Seq.fromList rs
+  let rootMap = Map.withoutKeys cmdMap nonRoots
 
-  let cdg =
+  (roots, vs) <- case Map.toList rootMap of
+    [] -> throwText "No root command(s) found! There is probably a cycle."
+    (r : rs) -> do
+      pure
+        ( fmap (view _1) (r :<|| Seq.fromList rs),
+          Map.toList cmdMap
+        )
+
+  let graph = G.mkGraph @Gr vs (toList edges)
+      cdg =
         MkCommandGraph
-          { fromV,
-            graph,
-            idxToV,
+          { graph,
             roots
           }
 
@@ -150,127 +245,162 @@ mkGraph cdgArgs cmds = do
   pure cdg
   where
     edges = case cdgArgs of
-      EdgeArgsList es -> es
+      EdgeArgsList es -> edgeToFgl <$> (es ^. #unEdges)
       EdgeArgsSequential -> mkSequentialEdges cmds
 
-    (graph, fromV, idxToV) = G.graphFromEdges cmdEdges
-
-    -- command pairs with their edges
-    cmdEdges :: List (Tuple3 CommandP1 CommandIndex (List CommandIndex))
-    cmdEdges = foldl' mkCmdEdgeList [] cmds
-
-    mkCmdEdgeList :: CmdEdgeAcc -> CommandP1 -> CmdEdgeAcc
-    mkCmdEdgeList acc cmd = case HMap.lookup (cmd ^. #index) edgeMap of
-      Nothing -> (cmd, cmd ^. #index, []) : acc
-      Just es -> (cmd, cmd ^. #index, es) : acc
-
-    -- edgeMap is used for more efficient lookup when constructing the
-    -- command edge list
-    edgeMap :: HashMap CommandIndex (List CommandIndex)
-
     -- nonRoots is all vertices with an in-edge.
-    nonRoots :: Set CommandIndex
+    nonRoots :: Set Int
 
-    (edgeMap, nonRoots) =
-      foldl' mkEdgeMap (HMap.empty, Set.empty) (edges ^. #unEdges)
+    (_, nonRoots) = foldl' mkEdgeMap (HMap.empty, Set.empty) edges
 
-    mkEdgeMap :: EdgeAcc -> Edge -> EdgeAcc
-    mkEdgeMap (mp, nr) (s, d) = case HMap.lookup s mp of
+    mkEdgeMap :: EdgeAcc -> GEdge -> EdgeAcc
+    mkEdgeMap (mp, nr) (s, d, _) = case HMap.lookup s mp of
       Nothing -> (HMap.insert s [d] mp, Set.insert d nr)
       Just es -> (HMap.insert s (d : es) mp, Set.insert d nr)
 
-    -- cmdSet is used to check edge existence
-    cmdSet = Set.fromList (view #index <$> toList cmds)
+    cmdSet = Map.keysSet cmdMap
+    cmdMap =
+      Map.fromList ((\cmd -> (toV $ cmd ^. #index, cmd)) <$> toList cmds)
 
 -- | Creates a trivial command dep graph where each command is a
 -- disconnected vertex, hence root. This exists to avoid the monad in
 -- 'mkGraph', as some uses want purity (defaultConfig...).
--- We /should/ have @mkGraph mempty == mkTrivialGraph@.
-mkTrivialGraph :: NESeq CommandP1 -> CommandGraph
-mkTrivialGraph cmds =
+-- We /should/ have @mkGraph mempty == mkEdgelessGraph@.
+mkEdgelessGraph :: NESeq CommandP1 -> CommandGraph
+mkEdgelessGraph cmds =
   MkCommandGraph
-    { fromV,
-      graph,
-      idxToV,
+    { graph,
       roots
     }
   where
-    (graph, fromV, idxToV) = G.graphFromEdges trivialEdges
+    graph = G.mkGraph idxCmds []
 
-    trivialEdges = (\cmd -> (cmd, cmd ^. #index, [])) <$> toList cmds
+    idxCmds = zip [1 ..] (toList cmds)
 
-    roots = Command.Types.toVertex . view #index <$> cmds
+    roots = toV . view #index <$> cmds
 
-type CmdEdgeAcc = List (Tuple3 CommandP1 CommandIndex (List CommandIndex))
+-- | Retrieves all labeled vertices.
+labVertices :: CommandGraph -> List (LVertex CommandP1)
+labVertices = G.labNodes . view #graph
 
-type EdgeAcc = Tuple2 (HashMap CommandIndex (List CommandIndex)) (Set CommandIndex)
+-- | Finds a labeled vertex. Can fail.
+labVertex :: (HasCallStack, MonadEvaluate m) => CommandGraph -> Vertex -> m (LVertex CommandP1)
+labVertex cg = fmap G.labNode' . context cg
 
-verifyUniqueEdges :: (HasCallStack, MonadThrow m) => Edges -> m ()
+-- | Retrieves all vertices.
+vertices :: CommandGraph -> List Vertex
+vertices = G.nodes . view #graph
+
+-- | Given a vertex d, returns all (s, l) s.t. there exists an l-edge
+-- s -> d.
+labInVertices :: CommandGraph -> Vertex -> List (Tuple2 Vertex EdgeLabel)
+labInVertices = G.lpre . view #graph
+
+-- | Given a vertex s, returns all d s.t. there exists an edge s -> d.
+outVertices :: CommandGraph -> Vertex -> List Vertex
+outVertices cg = G.suc (cg ^. #graph)
+
+-- | 'labVertex' that operates on the context.
+ctxLabVertex :: Context a b -> LVertex a
+ctxLabVertex = G.labNode'
+
+-- | 'outVertices' that operates on the context.
+ctxOutVertices :: Context a b -> List Vertex
+ctxOutVertices = G.suc'
+
+-- | Given a vertex, retrieves its context.
+context ::
+  ( HasCallStack,
+    MonadEvaluate m
+  ) =>
+  CommandGraph ->
+  Vertex ->
+  m (Context CommandP1 EdgeLabel)
+context cg = evaluate . force . G.context (cg ^. #graph)
+
+displayCommandIndex :: CommandIndex -> Text
+displayCommandIndex = showt . view (#unCommandIndex % #unPositive)
+
+displayVertex :: Node -> Text
+displayVertex = displayCommandIndex . Command.Types.fromVertex
+
+toV :: CommandIndex -> Node
+toV = Command.Types.toVertex
+
+-- ((out) Edge Map, Non-roots)
+type EdgeAcc =
+  Tuple2
+    (HashMap Int (List Int))
+    (Set Int)
+
+verifyUniqueEdges :: (HasCallStack, MonadThrow m) => Seq GEdge -> m ()
 verifyUniqueEdges edges = case toList duplicates of
   [] -> pure ()
   es@(_ : _) -> do
     let msg = "Found duplicates: " <> T.intercalate " " (renderEdge <$> es)
     throwText msg
   where
-    (_, duplicates) = foldl' go (Set.empty, Set.empty) (edges ^. #unEdges)
+    (_, duplicates) = foldl' go (Set.empty, Set.empty) edges
 
+    go :: Tuple2 (Set GEdge) (Set GEdge) -> GEdge -> Tuple2 (Set GEdge) (Set GEdge)
     go (found, dupes) edge
       | Set.member edge found = (found, Set.insert edge dupes)
       | otherwise = (Set.insert edge found, dupes)
 
-    renderEdge (s, t) =
+    renderEdge (s, t, _) =
       mconcat
         [ "(",
-          displayCommandIndex s,
+          showt s,
           ",",
-          displayCommandIndex t,
+          showt t,
           ")"
         ]
 
 -- | Verifies all commands references in the edges exist.
-allEdgesExist :: (HasCallStack, MonadThrow m) => Edges -> Set CommandIndex -> m ()
-allEdgesExist edges cmds = do
-  for_ (edges ^. #unEdges) $ \e@(s, d) -> do
-    if
-      | s `notMember` cmds ->
-          throwText $ mkErr s e
-      | d `notMember` cmds ->
-          throwText $ mkErr d e
-      | otherwise -> pure ()
+allEdgesExist :: (HasCallStack, MonadThrow m) => Seq GEdge -> Set Int -> m ()
+allEdgesExist edges cmds = for_ edges $ \(s, d, _) -> do
+  if
+    | s `notMember` cmds ->
+        throwText $ mkErr s (s, d)
+    | d `notMember` cmds ->
+        throwText $ mkErr d (s, d)
+    | otherwise -> pure ()
   where
     notMember x = not . Set.member x
 
     mkErr x (s, d) =
       mconcat
         [ "Command index ",
-          displayCommandIndex x,
+          showt x,
           " in dependency ",
-          displayCommandIndex s,
+          showt s,
           " -> ",
-          displayCommandIndex d,
+          showt d,
           " does not exist."
         ]
 
-verifyAllReachable :: (HasCallStack, MonadThrow m) => CommandGraph -> Set CommandIndex -> m ()
-verifyAllReachable cdg cmdSet = case toList nonReachable of
-  [] -> pure ()
-  xs@(_ : _) -> do
-    let msg =
-          mconcat
-            [ "The following commands are not reachable: ",
-              T.intercalate ", " (displayCommandIndex <$> xs),
-              ". There is probably a cycle."
-            ]
-    throwText msg
+verifyAllReachable :: (HasCallStack, MonadThrow m) => CommandGraph -> Set Int -> m ()
+verifyAllReachable cdg cmdSet = do
+  case toList nonReachable of
+    [] -> pure ()
+    xs@(_ : _) -> do
+      let msg =
+            mconcat
+              [ "The following commands are not reachable: ",
+                T.intercalate ", " (showt <$> xs),
+                ". There is probably a cycle."
+              ]
+      throwText msg
   where
-    nonReachable = Set.difference cmdSet (Set.map Command.Types.fromVertex reachable)
-
+    nonReachable = Set.difference cmdSet reachable
     reachable = reachableFromRoots cdg
 
-reachableFromRoots :: CommandGraph -> Set Vertex
+-- Dominators seems to do what we want, but if not we can write this manually.
+reachableFromRoots :: CommandGraph -> Set Node
 reachableFromRoots cdg =
   Set.fromList
-    . (G.reachable graph <=< toList)
+    . fmap (view _1)
+    . (Dom.dom graph <=< toList)
     $ cdg
     ^. #roots
   where
@@ -280,15 +410,13 @@ reachableFromRoots cdg =
 verifyNoCycles :: (HasCallStack, MonadThrow m) => CommandGraph -> m ()
 verifyNoCycles cdg = traverse_ (traverseVertex cdg) (cdg ^. #roots)
 
-traverseVertex :: forall m. (HasCallStack, MonadThrow m) => CommandGraph -> Vertex -> m ()
+traverseVertex :: forall m. (HasCallStack, MonadThrow m) => CommandGraph -> Node -> m ()
 traverseVertex cdg = go (HSet.empty, [])
   where
-    fromV :: Vertex -> (CommandP1, Vertex, [Vertex])
-    fromV =
-      (\(a, b, c) -> (a, Command.Types.toVertex b, Command.Types.toVertex <$> c))
-        . (cdg ^. #fromV)
+    fromV :: Node -> List Node
+    fromV = G.suc (cdg ^. #graph)
 
-    go :: CycleAcc -> Vertex -> m ()
+    go :: CycleAcc -> Node -> m ()
     go (foundVs, path) v = do
       if HSet.member v foundVs
         then do
@@ -299,89 +427,26 @@ traverseVertex cdg = go (HSet.empty, [])
                   ]
           throwText msg
         else do
-          let (_, _, es) = fromV v
+          let es = fromV v
           traverse_ (go (HSet.insert v foundVs, v : path)) es
 
     renderPath = T.intercalate " -> " . fmap displayVertex
 
-type CycleAcc = (HashSet Vertex, [Vertex])
+type CycleAcc = (HashSet Node, [Node])
 
-mkSequentialEdges :: NESeq CommandP1 -> Edges
+mkSequentialEdges :: NESeq CommandP1 -> Seq GEdge
 mkSequentialEdges =
-  MkEdges
-    . dropLast
+  dropLast
     . fmap toEdge
     . Seq.sortOn MkCommandOrd
     . NESeq.toSeq
   where
-    toEdge (MkCommandP idx _ _) = (idx, Command.Types.succ idx)
+    toEdge (MkCommandP idx _ _) =
+      ( toV idx,
+        toV $ Command.Types.succ idx,
+        EdgeAnd
+      )
 
     dropLast Empty = Empty
     dropLast (_ :<| Empty) = Empty
     dropLast (x :<| ys) = x :<| dropLast ys
-
-instance
-  ( k ~ A_Lens,
-    a ~ (Vertex -> (CommandP1, CommandIndex, [CommandIndex])),
-    b ~ (Vertex -> (CommandP1, CommandIndex, [CommandIndex]))
-  ) =>
-  LabelOptic "fromV" k CommandGraph CommandGraph a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandGraph a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkCommandGraph b a2 a3 a4)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ Graph,
-    b ~ Graph
-  ) =>
-  LabelOptic "graph" k CommandGraph CommandGraph a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandGraph a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkCommandGraph a1 b a3 a4)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ (CommandIndex -> Maybe Vertex),
-    b ~ (CommandIndex -> Maybe Vertex)
-  ) =>
-  LabelOptic "idxToV" k CommandGraph CommandGraph a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandGraph a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkCommandGraph a1 a2 b a4)
-          (f a3)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ NESeq Vertex,
-    b ~ NESeq Vertex
-  ) =>
-  LabelOptic "roots" k CommandGraph CommandGraph a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkCommandGraph a1 a2 a3 a4) ->
-        fmap
-          (\b -> MkCommandGraph a1 a2 a3 b)
-          (f a4)
-  {-# INLINE labelOptic #-}
-
-displayCommandIndex :: CommandIndex -> Text
-displayCommandIndex = showt . view (#unCommandIndex % #unPositive)
-
-displayVertex :: Vertex -> Text
-displayVertex = displayCommandIndex . Command.Types.fromVertex

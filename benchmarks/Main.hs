@@ -3,7 +3,6 @@
 module Main (main) where
 
 import Bench.Prelude
-import Control.DeepSeq (force)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.PathWriter qualified as WDir
 import FileSystem.OsPath (unsafeDecode)

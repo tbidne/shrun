@@ -152,7 +152,7 @@ examplesConfig = testProp1 desc "examplesConfig" $ do
                         timeout = NotifyTimeoutNever
                       }
               },
-          commandGraph = Graph.mkTrivialGraph commands,
+          commandGraph = Graph.mkEdgelessGraph commands,
           commands
         }
     commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []

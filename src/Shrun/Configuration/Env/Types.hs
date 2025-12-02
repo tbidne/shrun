@@ -33,7 +33,6 @@ import Shrun.Command.Types
   ( CommandIndex,
     CommandP1,
     CommandStatus,
-    CommandStatusIx (CommandStatusIxSelf),
   )
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
@@ -100,7 +99,7 @@ class HasCommands env where
   -- | Retrieves commands and their statuses.
   getCommandStatus ::
     env ->
-    TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
+    TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus))
 
 -- | Timeout, if any.
 class HasTimeout env where
@@ -151,7 +150,7 @@ data Env r = MkEnv
     -- determine which commands have /not/ completed if we time out.
     --
     -- The boolean indicates success/fail (used for command dependencies).
-    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))),
+    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)),
     -- | Core config.
     config :: CoreConfigP ConfigPhaseEnv,
     -- | Console log queue.
@@ -225,8 +224,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf))),
-    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
+    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)),
+    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus))
   ) =>
   LabelOptic "completedCommands" k (Env r) (Env r) a b
   where
@@ -337,7 +336,7 @@ updateCommandStatus ::
     MonadSTM m
   ) =>
   CommandP1 ->
-  CommandStatus CommandStatusIxSelf ->
+  CommandStatus ->
   m ()
 updateCommandStatus command result = do
   completedCommands <- asks getCommandStatus
@@ -378,7 +377,7 @@ getReadCommandStatus ::
     MonadReader env m,
     MonadSTM m
   ) =>
-  m (Map CommandIndex (Tuple2 CommandP1 (CommandStatus CommandStatusIxSelf)))
+  m (Map CommandIndex (Tuple2 CommandP1 CommandStatus))
 getReadCommandStatus = asks getCommandStatus >>= readTVarA
 
 -- | Sets timedout to true.

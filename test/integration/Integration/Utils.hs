@@ -56,6 +56,7 @@ import Shrun.Configuration.Data.Notify.System (NotifySystemMerged)
 import Shrun.Configuration.Data.Notify.System qualified as Notify.System
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Notify.DBus (MonadDBus (connectSession, notify))
+import System.OsPath qualified as OsP
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
 newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
@@ -91,7 +92,9 @@ instance MonadPathReader ConfigIO where
   getCurrentDirectory = liftIO getCurrentDirectory
 
   getFileSize = liftIO . getFileSize
-  doesFileExist = liftIO . doesFileExist
+
+  doesFileExist = doesFileExistIgnoreLocalShrun
+
   doesDirectoryExist = liftIO . doesDirectoryExist
 
 #if OSX
@@ -166,7 +169,7 @@ instance MonadPathReader NoConfigIO where
   getCurrentDirectory = liftIO getCurrentDirectory
   getXdgDirectory _ _ = pure [osp|./|]
   getHomeDirectory = error "getHomeDirectory: unimplemented"
-  doesFileExist = liftIO . doesFileExist
+  doesFileExist = doesFileExistIgnoreLocalShrun
 
 instance MonadPathWriter NoConfigIO where
   createDirectoryIfMissing _ _ = pure ()
@@ -327,3 +330,12 @@ notifySystemOSNotifySend = Notify.System.AppleScript
 #else
 notifySystemOSNotifySend = Notify.System.NotifySend
 #endif
+
+-- Ignore these so that local files do not interfere with tests.
+doesFileExistIgnoreLocalShrun :: (HasCallStack, MonadIO m) => OsPath -> m Bool
+doesFileExistIgnoreLocalShrun p
+  | pName == [osp|shrun.toml|] = pure False
+  | pName == [osp|.shrun.toml|] = pure False
+  | otherwise = liftIO $ doesFileExist p
+  where
+    pName = OsP.takeFileName p
