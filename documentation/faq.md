@@ -177,6 +177,19 @@ $ shrun --edges "1 -> 2" cmd1 cmd2
 
 This declares that the second command should be run only after the first command successfully finishes. If it fails, then the command will not be run at all.
 
+We also provide `or`-edges (`||`) and `any`-edges (`;`):
+
+|       |        Syntax |   Bash equivalent | Description                      |
+|:------|--------------:|------------------:|:---------------------------------|
+| `And` | `->` or `&->` |    `cmd1 && cmd2` | Runs `cmd2` iff `cmd1` succeeds. |
+| `Or`  |        `\|->` |  `cmd1 \|\| cmd2` | Runs `cmd2` iff `cmd2` fails.    |
+| `Any` |         `;->` |     `cmd1 ; cmd2` | Runs `cmd` iff `cmd1` finishes.  |
+
+```sh
+# Runs cmd2 if cmd1 fails; runs cmd3 after cmd1 finishes.
+$ shrun --edges "1 |-> 2, 1 ;->" cmd1 cmd2 cmd3
+```
+
 We allow arbitrarily many comma-separated dependencies, including some syntactic sugar:
 
 |                       |             Syntax |                       Desugaring |

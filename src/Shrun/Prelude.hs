@@ -146,6 +146,7 @@ import Data.Function as X (const, flip, id, ($), (&))
 import Data.Functor as X
   ( Functor (fmap),
     ($>),
+    (<$),
     (<$>),
     (<&>),
   )

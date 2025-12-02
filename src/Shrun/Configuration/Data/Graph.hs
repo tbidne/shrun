@@ -72,8 +72,12 @@ import Shrun.Prelude
 
 -- | Types of edges.
 data EdgeLabel
-  = -- | cmd1 -> cmd2 runs cmd2 iff cmd1 succeeds.
+  = -- | cmd1 &-> cmd2 runs cmd2 iff cmd1 succeeds.
     EdgeAnd
+  | -- | cmd1 |-> cmd2 runs cmd2 iff cmd1 fails.
+    EdgeOr
+  | -- | cmd1 ;-> cmd2 runs cmd2 iff cmd1 finishes with any status.
+    EdgeAny
   deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
   deriving anyclass (NFData)
 

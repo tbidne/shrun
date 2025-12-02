@@ -1,4 +1,5 @@
 {-# LANGUAGE MonadComprehensions #-}
+{-# LANGUAGE OverloadedLists #-}
 
 module Shrun.Configuration.Args.Parsing.Graph
   ( edgesParser,
@@ -11,6 +12,8 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Options.Applicative (Parser, ReadM)
 import Options.Applicative qualified as OA
+import Options.Applicative.Help.Chunk qualified as Chunk
+import Options.Applicative.Help.Pretty qualified as Pretty
 import Shrun.Command.Types.Internal (CommandIndex (MkCommandIndex), range)
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
 import Shrun.Configuration.Data.Graph
@@ -19,7 +22,7 @@ import Shrun.Configuration.Data.Graph
       ( EdgeArgsList,
         EdgeArgsSequential
       ),
-    EdgeLabel (EdgeAnd),
+    EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
@@ -45,15 +48,42 @@ edgesParser =
     opts =
       [ OA.long "edges",
         OA.completeWith ["sequential"],
-        Utils.mkHelp mainHelpTxt
+        helpTxt
       ]
-    mainHelpTxt =
+
+    helpTxt =
+      OA.helpDoc
+        . Chunk.unChunk
+        . fmap (<> Pretty.line)
+        . Chunk.vsepChunks
+        $ [ items,
+            outro
+          ]
+
+    items =
+      Utils.itemizeHelper
+        $ intro
+        :<|| [ andEdges,
+               orEdges,
+               anyEdges
+             ]
+
+    intro =
       mconcat
         [ "Comma-separated list, specifying command dependencies, based on ",
-          "their order. For instance, --edges '1 -> 3, 2 -> 3' ",
-          "will require commands 1 and 2 to complete before 3 is run. The ",
-          "literal 'sequential' will run all commands sequentially."
+          "their order. There are three edge types:"
         ]
+
+    andEdges = "and: 'cmd1 -> cmd2', runs cmd2 iff cmd1 succeeds."
+    orEdges = "or: 'cmd1 |-> cmd2', runs cmd2 iff cmd1 fails."
+    anyEdges = "any: 'cmd1 ;-> cmd2', runs cmd2 iff cmd1 finishes."
+
+    outro =
+      Chunk.paragraph
+        $ mconcat
+          [ "The literal 'sequential' is equivalent to placing an 'and'-edge ",
+            "between all commands."
+          ]
 
 readEdges :: ReadM EdgeArgs
 readEdges = do
@@ -122,6 +152,8 @@ data GraphToken
 
 data GraphArrowToken
   = GraphArrowAnd
+  | GraphArrowOr
+  | GraphArrowAny
   deriving stock (Show)
 
 -- | Parses one (possibly extended) edge. That is, we allow > 1 arrows i.e.
@@ -154,8 +186,12 @@ parseOneExtendedEdge = lexeme $ do
         -- A single node: fine, presumably the end.
         go (GraphIndices _ :<| Empty) = pure Empty
         -- source -> dest; make edge(s).
-        go (GraphIndices s :<| GraphArrow GraphArrowAnd :<| GraphIndices d :<| rest) =
-          (neseqToSeq (cartProd EdgeAnd s d) <>) <$> go (GraphIndices d :<| rest)
+        go (GraphIndices s :<| GraphArrow arrow :<| GraphIndices d :<| rest) =
+          let lbl = case arrow of
+                GraphArrowAnd -> EdgeAnd
+                GraphArrowOr -> EdgeOr
+                GraphArrowAny -> EdgeAny
+           in (neseqToSeq (cartProd lbl s d) <>) <$> go (GraphIndices d :<| rest)
         go rest =
           fail
             $ mconcat
@@ -176,6 +212,8 @@ parseOneExtendedEdge = lexeme $ do
         . fmap renderToken
 
     renderToken (GraphArrow GraphArrowAnd) = "->"
+    renderToken (GraphArrow GraphArrowOr) = "|->"
+    renderToken (GraphArrow GraphArrowAny) = ";->"
     renderToken (GraphIndices idxs) = renderIndices idxs
 
     renderIndices =
@@ -192,7 +230,14 @@ parseEdgeDest = do
 
 -- | Parses an arrow token.
 parseArrow :: MParser GraphArrowToken
-parseArrow = lexeme $ MPC.string "->" $> GraphArrowAnd
+parseArrow =
+  lexeme
+    $ asum @List
+      [ GraphArrowAnd <$ MPC.string "->",
+        GraphArrowAnd <$ MPC.string "&->",
+        GraphArrowOr <$ MPC.string "|->",
+        GraphArrowAny <$ MPC.string ";->"
+      ]
 
 -- | Parses a single "node", where node is a single string "entity", but the
 -- entity could expand to multiple tokens.

@@ -12,6 +12,8 @@ tests =
   testGroup
     "Command graph"
     [ testCommandGraphSuccess,
+      testCommandGraphSuccessOr,
+      testCommandGraphSuccessAny,
       testCommandGraphRunsAtMostOnce,
       testCommandGraphComplex,
       testCommandGraphFailure,
@@ -54,6 +56,89 @@ testCommandGraphSuccess = testCase "Runs with --edges" $ do
         withSuccessPrefix "sleep 3.5",
         withSuccessPrefix "sleep 4",
         withDebugPrefix "sleep 2" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'."
+      ]
+
+testCommandGraphSuccessOr :: TestTree
+testCommandGraphSuccessOr = testCase "Runs with or --edges" $ do
+  (ts, resultsConsole) <- withTiming $ runExitFailure args
+
+  V.verifyExpectedUnexpected resultsConsole expected unexpected
+
+  let seconds = ts ^. #sec
+
+  -- Without --edges this command should take around 4 seconds.
+  assertBool (show seconds ++ " > 5") $ seconds > 5
+  assertBool (show seconds ++ " < 8") $ seconds < 8
+  where
+    args =
+      withNoConfig
+        [ "--edges",
+          "1 -> 3, 2 |-> 3, 2 -> 5, 1 |-> 6",
+          "--common-log-debug",
+          "on",
+          "sleep 3.5",
+          "sleep 2 && bad",
+          "sleep 3",
+          "sleep 4",
+          "sleep 5",
+          "sleep 6"
+        ]
+
+    expected =
+      [ withSuccessPrefix "sleep 3",
+        withSuccessPrefix "sleep 3.5",
+        withSuccessPrefix "sleep 4",
+        withDebugPrefix "sleep 2 && bad" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'.",
+        withErrorPrefix "sleep 2 && bad" <> "2 seconds",
+        withErrorPrefix "sleep 2 && bad" <> "Not running 'sleep 5' due to dependency failure: '(2) sleep 2 && bad'",
+        withWarnCmdPrefix "sleep 3.5" <> "Not running 'sleep 6' due to dependency succeeding: '(1) sleep 3.5'",
+        waitingPrefix,
+        "  - sleep 5",
+        "  - sleep 6"
+      ]
+
+    unexpected =
+      [ withSuccessPrefix "sleep 5"
+      ]
+
+testCommandGraphSuccessAny :: TestTree
+testCommandGraphSuccessAny = testCase "Runs with any --edges" $ do
+  (ts, resultsConsole) <- withTiming $ runExitFailure args
+
+  V.verifyExpectedUnexpected resultsConsole expected unexpected
+
+  let seconds = ts ^. #sec
+
+  -- Without --edges this command should take around 4 seconds.
+  assertBool (show seconds ++ " > 5") $ seconds > 5
+  assertBool (show seconds ++ " < 8") $ seconds < 8
+  where
+    args =
+      withNoConfig
+        [ "--edges",
+          "1 ;-> 3, 2 ;-> 3, 2 -> 5",
+          "--common-log-debug",
+          "on",
+          "sleep 3.5",
+          "sleep 2 && bad",
+          "sleep 3",
+          "sleep 4",
+          "sleep 5"
+        ]
+
+    expected =
+      [ withSuccessPrefix "sleep 3",
+        withSuccessPrefix "sleep 3.5",
+        withSuccessPrefix "sleep 4",
+        withDebugPrefix "sleep 2 && bad" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'.",
+        withErrorPrefix "sleep 2 && bad" <> "2 seconds",
+        withErrorPrefix "sleep 2 && bad" <> "Not running 'sleep 5' due to dependency failure: '(2) sleep 2 && bad'",
+        waitingPrefix,
+        "  - sleep 5"
+      ]
+
+    unexpected =
+      [ withSuccessPrefix "sleep 5"
       ]
 
 testCommandGraphRunsAtMostOnce :: TestTree

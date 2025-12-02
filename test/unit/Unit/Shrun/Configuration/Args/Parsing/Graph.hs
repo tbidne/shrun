@@ -8,7 +8,7 @@ import Shrun.Configuration.Data.Graph
       ( EdgeArgsList,
         EdgeArgsSequential
       ),
-    EdgeLabel (EdgeAnd),
+    EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
@@ -20,6 +20,9 @@ tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.Graph"
     [ testCommandGraph,
+      testCommandGraphAnd,
+      testCommandGraphOr,
+      testCommandGraphAny,
       testCommandGraphNoWs,
       testCommandGraphExtendedEdge,
       testCommandGraphMultiEdge,
@@ -44,8 +47,35 @@ testCommandGraph =
     $ U.verifyResult argList expected
   where
     argList = ["--edges", depsStr, "command"]
-    expected = U.updateDefArgs #edges (mkEdges [(1, 3), (2, 3), (1, 4)])
+    expected = U.updateDefArgs #edges (mkEdgesAnd [(1, 3), (2, 3), (1, 4)])
     depsStr = "1 -> 3, 2 -> 3, 1 -> 4"
+
+testCommandGraphAnd :: TestTree
+testCommandGraphAnd =
+  testPropertyNamed "Parses and --edges with alternative syntax" "testCommandGraphAnd"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", depsStr, "command"]
+    expected = U.updateDefArgs #edges (mkEdgesAnd [(1, 3), (2, 3), (1, 4)])
+    depsStr = "1 &-> 3, 2 &-> 3, 1 &-> 4"
+
+testCommandGraphOr :: TestTree
+testCommandGraphOr =
+  testPropertyNamed "Parses or --edges" "testCommandGraphOr"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", depsStr, "command"]
+    expected = U.updateDefArgs #edges (mkEdgesOr [(1, 3), (2, 3), (1, 4)])
+    depsStr = "1 |-> 3, 2 |-> 3, 1 |-> 4"
+
+testCommandGraphAny :: TestTree
+testCommandGraphAny =
+  testPropertyNamed "Parses any --edges" "testCommandGraphAny"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", depsStr, "command"]
+    expected = U.updateDefArgs #edges (mkEdgesAny [(1, 3), (2, 3), (1, 4)])
+    depsStr = "1 ;-> 3, 2 ;-> 3, 1 ;-> 4"
 
 testCommandGraphNoWs :: TestTree
 testCommandGraphNoWs =
@@ -53,7 +83,7 @@ testCommandGraphNoWs =
     $ U.verifyResult argList expected
   where
     argList = ["--edges", depsStr, "command"]
-    expected = U.updateDefArgs #edges (mkEdges [(1, 3), (2, 3), (1, 4)])
+    expected = U.updateDefArgs #edges (mkEdgesAnd [(1, 3), (2, 3), (1, 4)])
     depsStr = "1->3,2->3,1->4"
 
 testCommandGraphExtendedEdge :: TestTree
@@ -64,7 +94,7 @@ testCommandGraphExtendedEdge =
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
     depsStr = "1 -> 3 -> 2, 5 -> 6, 1 -> 4 -> 5"
-    es = mkEdges [(1, 3), (3, 2), (5, 6), (1, 4), (4, 5)]
+    es = mkEdgesAnd [(1, 3), (3, 2), (5, 6), (1, 4), (4, 5)]
 
 testCommandGraphMultiEdge :: TestTree
 testCommandGraphMultiEdge =
@@ -74,7 +104,7 @@ testCommandGraphMultiEdge =
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
     depsStr = "{1,2} -> 3, 3 -> {4,5}"
-    es = mkEdges [(1, 3), (2, 3), (3, 4), (3, 5)]
+    es = mkEdgesAnd [(1, 3), (2, 3), (3, 4), (3, 5)]
 
 testCommandGraphSetRange :: TestTree
 testCommandGraphSetRange =
@@ -84,7 +114,7 @@ testCommandGraphSetRange =
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
     depsStr = "1 -> {2, 4..6, 7..7}"
-    es = mkEdges [(1, 2), (1, 4), (1, 5), (1, 6), (1, 7)]
+    es = mkEdgesAnd [(1, 2), (1, 4), (1, 5), (1, 6), (1, 7)]
 
 testCommandGraphOneRangeEdge :: TestTree
 testCommandGraphOneRangeEdge =
@@ -94,7 +124,7 @@ testCommandGraphOneRangeEdge =
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
     depsStr = "1..3"
-    es = mkEdges [(1, 2), (2, 3)]
+    es = mkEdgesAnd [(1, 2), (2, 3)]
 
 testCommandGraphRangeEdge :: TestTree
 testCommandGraphRangeEdge =
@@ -104,7 +134,7 @@ testCommandGraphRangeEdge =
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
     depsStr = "1 -> 3 .. 6 -> 7..7"
-    es = mkEdges [(1, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
+    es = mkEdgesAnd [(1, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
 
 testCommandGraphComplex :: TestTree
 testCommandGraphComplex =
@@ -113,33 +143,45 @@ testCommandGraphComplex =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "{1,2} -> {3..5,6} -> 7 .. 9 -> {10, 11}"
+    depsStr = "{1,2} -> {3..5,6} ;-> 7 .. 9 |-> {10, 11}"
     es =
       mkEdges
-        [ (1, 3),
-          (1, 4),
-          (1, 5),
-          (1, 6),
-          (2, 3),
-          (2, 4),
-          (2, 5),
-          (2, 6),
-          (3, 7),
-          (4, 7),
-          (5, 7),
-          (6, 7),
-          (7, 8),
-          (8, 9),
-          (9, 10),
-          (9, 11)
+        [ (1, 3, EdgeAnd),
+          (1, 4, EdgeAnd),
+          (1, 5, EdgeAnd),
+          (1, 6, EdgeAnd),
+          (2, 3, EdgeAnd),
+          (2, 4, EdgeAnd),
+          (2, 5, EdgeAnd),
+          (2, 6, EdgeAnd),
+          (3, 7, EdgeAny),
+          (4, 7, EdgeAny),
+          (5, 7, EdgeAny),
+          (6, 7, EdgeAny),
+          (7, 8, EdgeAnd),
+          (8, 9, EdgeAnd),
+          (9, 10, EdgeOr),
+          (9, 11, EdgeOr)
         ]
 
-mkEdges :: Seq (Tuple2 Int Int) -> WithDisabled EdgeArgs
+mkEdgesAny :: Seq (Tuple2 Int Int) -> WithDisabled EdgeArgs
+mkEdgesAny = mkEdgesLbl EdgeAny
+
+mkEdgesAnd :: Seq (Tuple2 Int Int) -> WithDisabled EdgeArgs
+mkEdgesAnd = mkEdgesLbl EdgeAnd
+
+mkEdgesOr :: Seq (Tuple2 Int Int) -> WithDisabled EdgeArgs
+mkEdgesOr = mkEdgesLbl EdgeOr
+
+mkEdgesLbl :: EdgeLabel -> Seq (Tuple2 Int Int) -> WithDisabled EdgeArgs
+mkEdgesLbl lbl = mkEdges . fmap (\(s, d) -> (s, d, lbl))
+
+mkEdges :: Seq (Tuple3 Int Int EdgeLabel) -> WithDisabled EdgeArgs
 mkEdges =
   With
     . EdgeArgsList
     . MkEdges
-    . fmap (\(s, d) -> (mkIdx s, mkIdx d, EdgeAnd))
+    . fmap (\(s, d, lbl) -> (mkIdx s, mkIdx d, lbl))
 
 testCommandGraphSequential :: TestTree
 testCommandGraphSequential =

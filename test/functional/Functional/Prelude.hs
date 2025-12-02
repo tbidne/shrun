@@ -53,6 +53,7 @@ module Functional.Prelude
     withSuccessPrefix,
     withErrorPrefix,
     withWarnPrefix,
+    withWarnCmdPrefix,
     withFatalPrefix,
     withTimerPrefix,
     withFinishedPrefix,
@@ -315,6 +316,9 @@ withErrorPrefix cmd = errorPrefix <> "[" <> cmd <> "] "
 -- | Expected error text.
 withWarnPrefix :: (IsString s, Semigroup s) => s -> s
 withWarnPrefix = ("[Warn] " <>)
+
+withWarnCmdPrefix :: (IsString s, Semigroup s) => s -> s
+withWarnCmdPrefix cmd = "[Warn][" <> cmd <> "] "
 
 -- | Expected error text.
 withFatalPrefix :: (IsString s, Semigroup s) => s -> s

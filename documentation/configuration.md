@@ -108,7 +108,13 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 
 **Arg:** `--edges (EDGES_STR | sequential | off)`
 
-**Description:** Comma-separated list, specifying command dependencies, based on their order. For instance, `--edges '1 -> 3, 2 -> 3'` will require commands 1 and 2 to complete before 3 is run. The literal `sequential` will run all commands sequentially.
+**Description:** Comma-separated list, specifying command dependencies, based on their order. There are three edge types:
+
+  - and: `cmd1 -> cmd2`, runs cmd2 iff cmd1 succeeds.
+  - or: `cmd1 |-> cmd2`, runs cmd2 iff cmd1 fails.
+  - any: `cmd1 ;-> cmd2`, runs cmd2 iff cmd1 finishes.
+
+The literal `sequential` is equivalent to placing an `and`-edge between all commands.
 
 **Example:**
 

@@ -19,7 +19,7 @@ import Shrun.Command.Types
 import Shrun.Command.Types qualified as Command.Types
 import Shrun.Configuration.Data.Graph
   ( CommandGraph,
-    EdgeLabel (EdgeAnd),
+    EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
     Vertex,
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
@@ -35,7 +35,7 @@ import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (withRegion))
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel (LevelDebug, LevelError),
+    LogLevel (LevelDebug, LevelError, LevelWarn),
     LogMessage (UnsafeLogMessage),
   )
 import Shrun.Logging.Types.Internal (LogMode (LogModeFinish))
@@ -113,7 +113,12 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
         PredecessorUnfinished depV ->
           whenDebug $ do
             logNoRun cdg LevelDebug prevVertex debugMsg (Just depV) vertex
-        PredecessorFailure depV -> logNoRun cdg LevelError prevVertex errMsg (Just depV) vertex
+        PredecessorFailure failExpected depV -> do
+          if failExpected
+            then
+              logNoRun cdg LevelWarn prevVertex failOkMsg (Just depV) vertex
+            else
+              logNoRun cdg LevelError prevVertex errMsg (Just depV) vertex
         PredecessorSuccess -> do
           case Map.lookup vertex vtxSemMap of
             Nothing ->
@@ -181,6 +186,15 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
           "'."
         ]
 
+    failOkMsg depCmdTxt cmdTxt =
+      mconcat
+        [ "Not running '",
+          cmdTxt,
+          "' due to dependency succeeding: '",
+          depCmdTxt,
+          "'."
+        ]
+
     alreadyRunningMsg _ cmdTxt =
       mconcat
         [ "Command '",
@@ -203,12 +217,13 @@ data PredecessorResult
     -- does /not/ necessarily imply all predecessor /commands/ finished
     -- successfully.
     PredecessorSuccess
-  | -- | Some predecessor finished but did not match the expectation.
-    PredecessorFailure Vertex
+  | -- | Some predecessor finished but did not match the expectation. The
+    -- boolean is True iff failure was expected.
+    PredecessorFailure Bool Vertex
 
 instance Semigroup PredecessorResult where
-  PredecessorFailure v <> _ = PredecessorFailure v
-  _ <> PredecessorFailure v = PredecessorFailure v
+  PredecessorFailure b v <> _ = PredecessorFailure b v
+  _ <> PredecessorFailure b v = PredecessorFailure b v
   PredecessorUnfinished v <> _ = PredecessorUnfinished v
   _ <> PredecessorUnfinished v = PredecessorUnfinished v
   PredecessorSuccess <> PredecessorSuccess = PredecessorSuccess
@@ -246,7 +261,11 @@ getPredecessorsStatus cdg commandStatusesRef v = do
                   (CommandWaiting, _) -> pure $ PredecessorUnfinished p
                   (CommandRunning _, _) -> pure $ PredecessorUnfinished p
                   (CommandSuccess, EdgeAnd) -> pure PredecessorSuccess
-                  (CommandFailure, EdgeAnd) -> pure $ PredecessorFailure p
+                  (CommandSuccess, EdgeOr) -> pure $ PredecessorFailure True p
+                  (CommandSuccess, EdgeAny) -> pure PredecessorSuccess
+                  (CommandFailure, EdgeAnd) -> pure $ PredecessorFailure False p
+                  (CommandFailure, EdgeOr) -> pure PredecessorSuccess
+                  (CommandFailure, EdgeAny) -> pure PredecessorSuccess
 
   foldMapA toResult predecessors
   where
