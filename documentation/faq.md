@@ -182,8 +182,8 @@ We also provide `or`-edges (`||`) and `any`-edges (`;`):
 |     | Syntax |   Bash equivalent | Description                      |
 |:----|-------:|------------------:|:---------------------------------|
 | And |    `&` |    `cmd1 && cmd2` | Runs `cmd2` iff `cmd1` succeeds. |
-| Or  |   `\|` |  `cmd1 \|\| cmd2` | Runs `cmd2` iff `cmd2` fails.    |
-| Any |    `;` |     `cmd1 ; cmd2` | Runs `cmd` iff `cmd1` finishes.  |
+| Or  |   `\|` |  `cmd1 \|\| cmd2` | Runs `cmd2` iff `cmd1` fails.    |
+| Any |    `;` |     `cmd1 ; cmd2` | Runs `cmd2` iff `cmd1` finishes. |
 
 For example:
 
@@ -204,38 +204,40 @@ We allow arbitrarily many comma-separated dependencies, including some syntactic
 For instance:
 
 ```sh
-$ shrun --edges "{1,2..4} & 7 .. 9 & {10, 11}, 12 & 13 & 16" cmd1 cmd2 cmd3 ...
+$ shrun --edges "{1,2..4} & 7 &.. 9 & {10, 11}, 12 & 13 & 16" cmd1 cmd2 ... cmd16
 
 # The above is equivalent to:
 $ shrun --edges "
   1 & 7, 2 & 7, 3 & 7, 4 & 7,
   7 & 8, 8 & 9,
   9 & 10, 9 & 11,
-  12 & 13, 13 & 16" cmd1 cmd2 ...
+  12 & 13, 13 & 16" cmd1 cmd2 ... cmd16
 ```
 
 This means:
 
-- Commands 1, 2, 3, 4, and 12 will start immediately.
-- Command 7 will start once 1, 2, 3, and 4 finish successfully.
-- Command 8 will start once 7 finishes successfully.
-- Command 9 will start once 8 finishes successfully.
-- Commands 10 and 11 will start once 9 finishes successfully.
-- Command 13 will start once 12 finishes successfully.
-- Command 16 will start once 13 finishes successfully.
+- Commands 1, 2, 3, and 4 will start immediately.
+  - Command 7 will start once 1, 2, 3, and 4 finish successfully.
+  - Command 8 will start once 7 finishes successfully.
+  - Command 9 will start once 8 finishes successfully.
+  - Commands 10 and 11 will start once 9 finishes successfully.
+- Command 12 will start immediately.
+  - Command 13 will start once 12 finishes successfully.
+  - Command 16 will start once 13 finishes successfully.
+- Command 14 will start immediately.
+- Command 15 will start immediately.
 
 We also allow the literals `seq_and`, `seq_or`, and `seq_any`, which declares all commands will be run sequentially with the given edge. That is,
 
 ```sh
-$ shrun --edges seq_and cmd1 cmd2 cmd3 ... cmdn
+$ shrun --edges seq_and cmd1 cmd2 ... cmdn
 
 # The above is equivalent to:
-$ shrun --edges "1 &.. n" cmd1 cmd2 cmd3 ... cmdn
+$ shrun --edges "1 &.. n" cmd1 cmd2 ... cmdn
 ```
 
 - Command 1 will start immediately.
 - Command 2 will start once 1 succeeds.
-- Command 3 will start once 2 succeeds.
 - ...
 - Command n will start once n-1 succeeds.
 
