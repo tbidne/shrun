@@ -19,6 +19,8 @@ tests =
       testCommandGraphFailure,
       testCommandGraphBlockedFailure,
       testCommandGraphSeqAnd,
+      testCommandGraphSeqOr,
+      testCommandGraphSeqAny,
       testCommandGraphLegend,
       testCommandGraphLegendAndEdge,
       testCommandGraphLegendEdgeFailure,
@@ -91,7 +93,7 @@ testCommandGraphSuccessOr = testCase "Runs with or --edges" $ do
         withDebugPrefix "sleep 2 && bad" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'.",
         withErrorPrefix "sleep 2 && bad" <> "2 seconds",
         withErrorPrefix "sleep 2 && bad" <> "Not running 'sleep 5' due to dependency failure: '(2) sleep 2 && bad'",
-        withWarnCmdPrefix "sleep 3.5" <> "Not running 'sleep 6' due to dependency succeeding: '(1) sleep 3.5'",
+        withWarnCmdPrefix "sleep 3.5" <> "Not running 'sleep 6' due to dependency success: '(1) sleep 3.5'",
         waitingPrefix,
         "  - sleep 5",
         "  - sleep 6"
@@ -291,7 +293,7 @@ testCommandGraphBlockedFailure = testCase desc $ do
       ]
 
 testCommandGraphSeqAnd :: TestTree
-testCommandGraphSeqAnd = testCase "Runs with --edges seq_and" $ do
+testCommandGraphSeqAnd = testCase "Runs with --edges '&&&'" $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpected resultsConsole expected
@@ -308,7 +310,7 @@ testCommandGraphSeqAnd = testCase "Runs with --edges seq_and" $ do
       -- doesn't explode).
       withNoConfig
         [ "--edges",
-          "seq_and",
+          "&&&",
           "--common-log-debug",
           "on",
           "--console-log-command",
@@ -324,6 +326,70 @@ testCommandGraphSeqAnd = testCase "Runs with --edges seq_and" $ do
         withSuccessPrefix "sleep 2",
         withSuccessPrefix "sleep 3",
         withSuccessPrefix "sleep 4"
+      ]
+
+testCommandGraphSeqOr :: TestTree
+testCommandGraphSeqOr = testCase "Runs with --edges '|||'" $ do
+  (ts, resultsConsole) <- withTiming $ runExitFailure args
+
+  V.verifyExpectedUnexpected resultsConsole expected unexpected
+
+  let seconds = ts ^. #sec
+
+  assertBool (show seconds ++ " > 2") $ seconds > 2
+  assertBool (show seconds ++ " < 5") $ seconds < 5
+  where
+    args =
+      withNoConfig
+        [ "--edges",
+          "|||",
+          "--common-log-debug",
+          "on",
+          "--console-log-command",
+          "on",
+          "sleep 1 && bad",
+          "sleep 2",
+          "sleep 3"
+        ]
+
+    expected =
+      [ withErrorPrefix "sleep 1 && bad",
+        withSuccessPrefix "sleep 2",
+        withWarnCmdPrefix "sleep 2" <> "Not running 'sleep 3' due to dependency success: '(2) sleep 2'"
+      ]
+
+    unexpected =
+      [ withSuccessPrefix "sleep 3"
+      ]
+
+testCommandGraphSeqAny :: TestTree
+testCommandGraphSeqAny = testCase "Runs with --edges ';;;'" $ do
+  (ts, resultsConsole) <- withTiming $ runExitFailure args
+
+  V.verifyExpected resultsConsole expected
+
+  let seconds = ts ^. #sec
+
+  assertBool (show seconds ++ " > 5") $ seconds > 5
+  assertBool (show seconds ++ " < 7") $ seconds < 7
+  where
+    args =
+      withNoConfig
+        [ "--edges",
+          ";;;",
+          "--common-log-debug",
+          "on",
+          "--console-log-command",
+          "on",
+          "sleep 1",
+          "sleep 2 && bad",
+          "sleep 3"
+        ]
+
+    expected =
+      [ withSuccessPrefix "sleep 1",
+        withErrorPrefix "sleep 2 && bad",
+        withSuccessPrefix "sleep 3"
       ]
 
 testCommandGraphLegend :: TestTree

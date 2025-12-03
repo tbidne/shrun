@@ -190,7 +190,7 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
       mconcat
         [ "Not running '",
           cmdTxt,
-          "' due to dependency succeeding: '",
+          "' due to dependency success: '",
           depCmdTxt,
           "'."
         ]

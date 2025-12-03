@@ -44,11 +44,10 @@ edgesParser =
   Utils.mWithDisabledParser
     readEdges
     opts
-    "EDGES_STR | seq_and | seq_or | seq_any"
+    "EDGES_STR | &&& | ||| | ;;;"
   where
     opts =
       [ OA.long "edges",
-        OA.completeWith ["seq_and", "seq_or", "seq_any"],
         helpTxt
       ]
 
@@ -83,7 +82,7 @@ edgesParser =
       Chunk.paragraph
         $ mconcat
           [ "The literals are equivalent to placing edges between all ",
-            "commands e.g. 'seq_and' puts an 'and'-edge between all commands."
+            "commands e.g. '&&&' puts an 'and'-edge between all commands."
           ]
 
 readEdges :: ReadM EdgeArgs
@@ -114,13 +113,16 @@ parseEdges txt = do
 type MParser a = Parsec FatalError Text a
 
 parseSeqAnd :: MParser EdgeArgs
-parseSeqAnd = MPC.string "seq_and" $> EdgeArgsSequential EdgeSequentialAnd
+parseSeqAnd = parseSeq "&&&" EdgeSequentialAnd
 
 parseSeqOr :: MParser EdgeArgs
-parseSeqOr = MPC.string "seq_or" $> EdgeArgsSequential EdgeSequentialOr
+parseSeqOr = parseSeq "|||" EdgeSequentialOr
 
 parseSeqAny :: MParser EdgeArgs
-parseSeqAny = MPC.string "seq_any" $> EdgeArgsSequential EdgeSequentialAny
+parseSeqAny = parseSeq ";;;" EdgeSequentialAny
+
+parseSeq :: Text -> EdgeSequential -> MParser EdgeArgs
+parseSeq s c = MPC.string s $> EdgeArgsSequential c
 
 -- | Parses at least one (extended-)edge. Examples with the edge results:
 --

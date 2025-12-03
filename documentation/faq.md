@@ -227,10 +227,10 @@ This means:
 - Command 14 will start immediately.
 - Command 15 will start immediately.
 
-We also allow the literals `seq_and`, `seq_or`, and `seq_any`, which declares all commands will be run sequentially with the given edge. That is,
+We also allow the literals `&&&`, `|||`, and `;;;`, which declares all commands will be run sequentially with the given edge. That is,
 
 ```sh
-$ shrun --edges seq_and cmd1 cmd2 ... cmdn
+$ shrun --edges "&&&" cmd1 cmd2 ... cmdn
 
 # The above is equivalent to:
 $ shrun --edges "1 &.. n" cmd1 cmd2 ... cmdn

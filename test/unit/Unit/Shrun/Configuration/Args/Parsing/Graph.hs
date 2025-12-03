@@ -222,26 +222,26 @@ mkEdges =
 
 testCommandGraphSeqAnd :: TestTree
 testCommandGraphSeqAnd =
-  testPropertyNamed "Parses --edges seq_and" "testCommandGraphSeqAnd"
+  testPropertyNamed "Parses --edges &&&" "testCommandGraphSeqAnd"
     $ U.verifyResult argList expected
   where
-    argList = ["--edges", "seq_and", "command"]
+    argList = ["--edges", "&&&", "command"]
     expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialAnd))
 
 testCommandGraphSeqOr :: TestTree
 testCommandGraphSeqOr =
-  testPropertyNamed "Parses --edges seq_or" "testCommandGraphSeqOr"
+  testPropertyNamed "Parses --edges |||" "testCommandGraphSeqOr"
     $ U.verifyResult argList expected
   where
-    argList = ["--edges", "seq_or", "command"]
+    argList = ["--edges", "|||", "command"]
     expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialOr))
 
 testCommandGraphSeqAny :: TestTree
 testCommandGraphSeqAny =
-  testPropertyNamed "Parses --edges seq_any" "testCommandGraphSeqAny"
+  testPropertyNamed "Parses --edges ;;;" "testCommandGraphSeqAny"
     $ U.verifyResult argList expected
   where
-    argList = ["--edges", "seq_any", "command"]
+    argList = ["--edges", ";;;", "command"]
     expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialAny))
 
 testCommandGraphEmptyFail :: TestTree
