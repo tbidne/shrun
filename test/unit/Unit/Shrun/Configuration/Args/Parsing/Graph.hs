@@ -45,7 +45,9 @@ tests =
       testCommandGraphBadArrowRangeFails,
       testCommandGraphBadArrowRangeFails2,
       testCommandGraphIndexFails,
-      testCommandGraphIndexSetFails
+      testCommandGraphIndexSetFails,
+      testBadArrowFails,
+      testBadArrowFails2
     ]
 
 testCommandGraph :: TestTree
@@ -264,7 +266,7 @@ testCommandGraphNoSrcFail =
           "  |",
           "1 | & 3",
           "  | ^",
-          "Expected a set, arrow range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
+          "Expected a set, edge range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
         ]
 
 testCommandGraphNoDestFail :: TestTree
@@ -280,7 +282,7 @@ testCommandGraphNoDestFail =
           "  |",
           "1 | 3 & ",
           "  |     ^",
-          "Expected a set, arrow range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
+          "Expected a set, edge range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
         ]
 
 testCommandGraphEmptySetFails :: TestTree
@@ -317,7 +319,7 @@ testCommandGraphBadSetRangeFails =
 
 testCommandGraphBadArrowRangeFails :: TestTree
 testCommandGraphBadArrowRangeFails =
-  testPropertyNamed "Parses --edges bad arrow range failure" "testCommandGraphBadArrowRangeFails"
+  testPropertyNamed "Parses --edges bad edge range failure" "testCommandGraphBadArrowRangeFails"
     $ U.verifyFailureString argList expected
   where
     argList = ["--edges", "1 & 3&..2", "command"]
@@ -333,7 +335,7 @@ testCommandGraphBadArrowRangeFails =
 
 testCommandGraphBadArrowRangeFails2 :: TestTree
 testCommandGraphBadArrowRangeFails2 =
-  testPropertyNamed "Parses --edges bad arrow range failure 2" "testCommandGraphBadArrowRangeFails2"
+  testPropertyNamed "Parses --edges bad edge range failure 2" "testCommandGraphBadArrowRangeFails2"
     $ U.verifyFailureString argList expected
   where
     argList = ["--edges", "1 & 3..2", "command"]
@@ -344,7 +346,7 @@ testCommandGraphBadArrowRangeFails2 =
           "  |",
           "1 | 1 & 3..2",
           "  |     ^",
-          "Found '..' in extended range syntax. Perhaps you wanted e.g. '&..'?"
+          "Found '..' in edge range syntax. Perhaps you wanted e.g. '&..'?"
         ]
 
 testCommandGraphIndexFails :: TestTree
@@ -377,4 +379,36 @@ testCommandGraphIndexSetFails =
           "1 | {1,2}",
           "  |      ^",
           "Empty edges"
+        ]
+
+testBadArrowFails :: TestTree
+testBadArrowFails =
+  testPropertyNamed "Parses --edges bad arrow failure" "testBadArrowFails"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "1 -> 2", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:3:",
+          "  |",
+          "1 | 1 -> 2",
+          "  |   ^",
+          "Expected an edge or edge range: '&', '|', ';', '&..', '|..', ';..'."
+        ]
+
+testBadArrowFails2 :: TestTree
+testBadArrowFails2 =
+  testPropertyNamed "Parses --edges bad arrow failure 2" "testBadArrowFails2"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "1 % 2", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:3:",
+          "  |",
+          "1 | 1 % 2",
+          "  |   ^",
+          "Expected an edge or edge range: '&', '|', ';', '&..', '|..', ';..'."
         ]

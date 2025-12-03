@@ -142,6 +142,7 @@ import Data.Foldable as X
     length,
     traverse_,
   )
+import Data.Foldable1 as X (Foldable1, foldr1)
 import Data.Function as X (const, flip, id, ($), (&))
 import Data.Functor as X
   ( Functor (fmap),

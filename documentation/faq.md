@@ -194,12 +194,12 @@ $ shrun --edges "1 | 2, 1 ; 3" cmd1 cmd2 cmd3
 
 We allow arbitrarily many comma-separated dependencies, including some syntactic sugar:
 
-|                       |                                   Syntax |                                      Desugaring |
-|:----------------------|-----------------------------------------:|------------------------------------------------:|
-| Multi-edge-sets       |                        `{1, 2} & {3, 4}` |                    `1 & 3, 1 & 4, 2 & 3, 2 & 4` |
-| Extended edges        |                             `1 & 4 \| 5` |                                 `1 & 4, 4 \| 5` |
-| Set range syntax      |                            `{1, 3 .. 5}` |                                  `{1, 3, 4, 5}` |
-| Extended range syntax | `1 &.. 3` <br> `1 \|.. 3` <br> `1 ;.. 3` | `1 & 2 & 3` <br> `1 \| 2 \| 3` <br> `1 ; 2 ; 3` |
+|                   |                                   Syntax |                                      Desugaring |
+|:------------------|-----------------------------------------:|------------------------------------------------:|
+| Multi-edge-sets   |                        `{1, 2} & {3, 4}` |                    `1 & 3, 1 & 4, 2 & 3, 2 & 4` |
+| Extended edges    |                             `1 & 4 \| 5` |                                 `1 & 4, 4 \| 5` |
+| Set range syntax  |                            `{1, 3 .. 5}` |                                  `{1, 3, 4, 5}` |
+| Edge range syntax | `1 &.. 3` <br> `1 \|.. 3` <br> `1 ;.. 3` | `1 & 2 & 3` <br> `1 \| 2 \| 3` <br> `1 ; 2 ; 3` |
 
 For instance:
 

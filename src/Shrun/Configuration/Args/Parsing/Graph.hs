@@ -103,7 +103,7 @@ parseEdges txt = do
       Right cga -> pure cga
   where
     p =
-      asum @List
+      runFatalErrors1
         [ MP.try parseSeqAnd,
           MP.try parseSeqOr,
           MP.try parseSeqAny,
@@ -190,7 +190,25 @@ parseOneExtendedEdge = lexeme $ do
   -- This is 'many' (zero or more) not 'some' (one or more) because node
   -- can actually be self-contained, if it is an arrow range
   -- (e.g. '1&..3').
-  nodes <- many parseEdgeDest
+  --
+  -- This can be zero or more because node can actually be self-contained, if
+  -- it is an edge range (e.g. '1 &.. 3').
+  --
+  -- This could be as simple as @nodes <- many parseEdgeDest@, but we have
+  -- a more complicated impl for a better error message. That is, if there
+  -- is no more input or we have encountered a comma (edge delimiter), then
+  -- we should do no more parsing.
+  --
+  -- If we encounter another token, then this means we should be attempting
+  -- to parse an 'edge destination'. We therefore use 'some' -- expecting
+  -- an edge -- so that we can use its error message if there is a failure,
+  -- rather that relying on the vague 'Empty edges' that comes after.
+  c <- MP.lookAhead (MP.optional MP.anySingle)
+  nodes <- case c of
+    Nothing -> pure []
+    Just ',' -> pure []
+    Just _ -> some parseEdgeDest
+
   let tokens = neseqToSeq node <> (listToSeq nodes >>= neseqToSeq)
   mkEdges tokens >>= \case
     Empty -> fail "Empty edges"
@@ -250,11 +268,28 @@ parseEdgeDest = do
 parseArrow :: MParser GraphArrowToken
 parseArrow =
   lexeme
-    $ asum @List
+    $ runFatalErrors
+      pDef
       [ GraphArrowAnd <$ MPC.string "&",
         GraphArrowOr <$ MPC.string "|",
         GraphArrowAny <$ MPC.string ";"
       ]
+  where
+    -- NOTE: It is a bit odd that the error message here mentions edge ranges
+    -- yet this parser does not parse them. We do this because this is the
+    -- error message that is used when we successfully parse a 'source node'
+    -- (index, set) -- hence we now require an edge -- but we now encounter
+    -- an unexpected character.
+    --
+    -- We should therefore mention both normal edges and edge ranges.
+    --
+    -- Alternatively, we could refactor the parser so that 'edge ranges' are
+    -- not parsed at the same time as other 'nodes' (an index or a set). This
+    -- would put the arrow parsing in one location, which probably makes more
+    -- sense.
+    pDef =
+      fail
+        "Expected an edge or edge range: '&', '|', ';', '&..', '|..', ';..'."
 
 -- | Parses a single "node", where node is a single string "entity", but the
 -- entity could expand to multiple tokens.
@@ -275,7 +310,7 @@ parseNode = do
   where
     pDef =
       fail
-        "Expected a set, arrow range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
+        "Expected a set, edge range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
 
 -- | Parses an index set.
 --
@@ -305,7 +340,7 @@ parseIndexSet = lexeme $ do
 -- @
 parseArrowRange :: MParser (NESeq GraphToken)
 parseArrowRange =
-  asum @List
+  runFatalErrors1
     [ MP.try $ toTokens GraphArrowAnd <$> parseRangeLit (Just "&.."),
       MP.try $ toTokens GraphArrowOr <$> parseRangeLit (Just "|.."),
       toTokens GraphArrowAny <$> parseRangeLit (Just ";..")
@@ -335,7 +370,7 @@ parseRangeLit mLit = lexeme $ do
         Just _ -> do
           let err =
                 mconcat
-                  [ "Found '..' in extended range syntax. Perhaps you wanted ",
+                  [ "Found '..' in edge range syntax. Perhaps you wanted ",
                     "e.g. '&..'?"
                   ]
           MP.customFailure (MkFatalError err)
@@ -400,6 +435,11 @@ instance ShowErrorComponent FatalError where
 -- parser is the default when all fail, intended for a better error message.
 runFatalErrors :: forall a. MParser a -> List (MParser a) -> MParser a
 runFatalErrors = foldr runFatalError
+
+-- | Like 'runFatalErrors' but with no default error. For when we want the
+-- underlying error to be used.
+runFatalErrors1 :: forall a. NonEmpty (MParser a) -> MParser a
+runFatalErrors1 = foldr1 runFatalError
 
 -- | Like '(<|>)', except it does not try the RHS when the LHS has a fatal
 -- error.

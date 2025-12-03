@@ -71,10 +71,22 @@ verifyFailureString argList expected = withTests 1 $ property $ do
     OA.Success _ -> failure
     OA.Failure f -> do
       let (errStr, _) = OA.renderFailure f ""
+          errTxt = pack errStr
+      annotate $ textEq expected errTxt
       annotate (unpack expected)
       annotate errStr
-      assert (expected `T.isPrefixOf` pack errStr)
+      assert (expected `T.isPrefixOf` errTxt)
     OA.CompletionInvoked _ -> failure
+
+textEq :: Text -> Text -> String
+textEq t1 t2 = go (unpack t1) (unpack t2)
+  where
+    go [] [] = ""
+    go xs@(_ : _) [] = "LHS non-empty: " <> xs
+    go [] ys@(_ : _) = "RHS non-empty: " <> ys
+    go (x : xs) (y : ys)
+      | x == y = go xs ys
+      | otherwise = '\'' : x : "' /= '" <> [y, '\'']
 
 prefs :: ParserPrefs
 prefs = OA.prefs mempty
