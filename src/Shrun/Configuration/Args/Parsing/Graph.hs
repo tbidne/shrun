@@ -23,6 +23,7 @@ import Shrun.Configuration.Data.Graph
         EdgeArgsSequential
       ),
     EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
+    EdgeSequential (EdgeSequentialAnd, EdgeSequentialAny, EdgeSequentialOr),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
@@ -43,11 +44,11 @@ edgesParser =
   Utils.mWithDisabledParser
     readEdges
     opts
-    "EDGES_STR | sequential"
+    "EDGES_STR | seq_and | seq_or | seq_any"
   where
     opts =
       [ OA.long "edges",
-        OA.completeWith ["sequential"],
+        OA.completeWith ["seq_and", "seq_or", "seq_any"],
         helpTxt
       ]
 
@@ -81,8 +82,8 @@ edgesParser =
     outro =
       Chunk.paragraph
         $ mconcat
-          [ "The literal 'sequential' is equivalent to placing an 'and'-edge ",
-            "between all commands."
+          [ "The literals are equivalent to placing edges between all ",
+            "commands e.g. 'seq_and' puts an 'and'-edge between all commands."
           ]
 
 readEdges :: ReadM EdgeArgs
@@ -97,17 +98,29 @@ parseEdges txt = do
   let stripped = T.stripStart txt
   if T.null stripped
     then Left $ "Received empty input: '" ++ unpack txt ++ "'"
-    else case MP.parse p "" stripped of
+    -- eof so that trailing charts that failed to parse cause an error.
+    else case MP.parse (p <* MP.eof) "" stripped of
       Left err -> Left $ MP.errorBundlePretty err
       Right cga -> pure cga
   where
-    -- eof so that trailing charts that failed to parse cause an error.
-    p = (MP.try parseSequential <|> parseExtendedEdges) <* MP.eof
+    p =
+      asum @List
+        [ MP.try parseSeqAnd,
+          MP.try parseSeqOr,
+          MP.try parseSeqAny,
+          parseExtendedEdges
+        ]
 
 type MParser a = Parsec FatalError Text a
 
-parseSequential :: MParser EdgeArgs
-parseSequential = MPC.string "sequential" $> EdgeArgsSequential
+parseSeqAnd :: MParser EdgeArgs
+parseSeqAnd = MPC.string "seq_and" $> EdgeArgsSequential EdgeSequentialAnd
+
+parseSeqOr :: MParser EdgeArgs
+parseSeqOr = MPC.string "seq_or" $> EdgeArgsSequential EdgeSequentialOr
+
+parseSeqAny :: MParser EdgeArgs
+parseSeqAny = MPC.string "seq_any" $> EdgeArgsSequential EdgeSequentialAny
 
 -- | Parses at least one (extended-)edge. Examples with the edge results:
 --

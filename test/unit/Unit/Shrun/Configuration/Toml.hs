@@ -289,7 +289,7 @@ genLegend = genMaybe genSeq
 
     genEdgeArgs =
       G.frequency
-        [ (1, pure EdgeArgsSequential),
+        [ (1, EdgeArgsSequential <$> G.enumBounded),
           (3, EdgeArgsList <$> genEdgeArgsList)
         ]
 

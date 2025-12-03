@@ -224,10 +224,10 @@ This means:
 - Command 13 will start once 12 finishes successfully.
 - Command 16 will start once 13 finishes successfully.
 
-We also allow the literal `sequential`, which declares all commands will be run sequentially. That is,
+We also allow the literals `seq_and`, `seq_or`, and `seq_any`, which declares all commands will be run sequentially with the given edge. That is,
 
 ```sh
-$ shrun --edges sequential cmd1 cmd2 cmd3 ... cmdn
+$ shrun --edges seq_and cmd1 cmd2 cmd3 ... cmdn
 
 # The above is equivalent to:
 $ shrun --edges "1 &.. n" cmd1 cmd2 cmd3 ... cmdn

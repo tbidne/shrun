@@ -30,7 +30,8 @@ import Shrun.Command.Types qualified as CT
 import Shrun.Configuration.Data.Graph
   ( Edge,
     EdgeArgs (EdgeArgsList, EdgeArgsSequential),
-    EdgeLabel (EdgeAnd),
+    EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
+    EdgeSequential (EdgeSequentialAnd, EdgeSequentialAny, EdgeSequentialOr),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
@@ -253,10 +254,10 @@ translateMap mp initKey = do
             -- Repair the edges.
             repairedEdges <- case mEdges of
               Nothing -> pure mempty
-              Just EdgeArgsSequential ->
+              Just (EdgeArgsSequential s) ->
                 -- If our graph is sequential, make an edge list (sequential
                 -- edges for original values), then repair it.
-                repairEdges (mkSequentialEdges vals) subCmdIdxMap
+                repairEdges (mkSequentialEdges s vals) subCmdIdxMap
               Just (EdgeArgsList es) -> repairEdges es subCmdIdxMap
 
             let newEdges = repairedEdges <> subEdges
@@ -369,15 +370,20 @@ repairEdges (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
           Just (s, e) -> pure (s, e)
 {-# INLINEABLE repairEdges #-}
 
-mkSequentialEdges :: NESeq Text -> Edges
-mkSequentialEdges =
+mkSequentialEdges :: EdgeSequential -> NESeq Text -> Edges
+mkSequentialEdges eseq =
   MkEdges
     . dropLast
     . fmap toEdge
     . NESeq.toSeq
     . indexSeq
   where
-    toEdge (idx, _) = (idx, CT.succ idx, EdgeAnd)
+    toEdge (idx, _) = (idx, CT.succ idx, lbl)
+
+    lbl = case eseq of
+      EdgeSequentialAnd -> EdgeAnd
+      EdgeSequentialOr -> EdgeOr
+      EdgeSequentialAny -> EdgeAny
 
     dropLast Empty = Empty
     dropLast (_ :<| Empty) = Empty

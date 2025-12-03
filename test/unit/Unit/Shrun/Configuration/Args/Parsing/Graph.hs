@@ -9,6 +9,7 @@ import Shrun.Configuration.Data.Graph
         EdgeArgsSequential
       ),
     EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
+    EdgeSequential (EdgeSequentialAnd, EdgeSequentialAny, EdgeSequentialOr),
     Edges (MkEdges),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
@@ -33,7 +34,9 @@ tests =
       testCommandGraphOneRangeEdgeAny,
       testCommandGraphRangeEdge,
       testCommandGraphComplex,
-      testCommandGraphSequential,
+      testCommandGraphSeqAnd,
+      testCommandGraphSeqOr,
+      testCommandGraphSeqAny,
       testCommandGraphEmptyFail,
       testCommandGraphNoSrcFail,
       testCommandGraphNoDestFail,
@@ -217,13 +220,29 @@ mkEdges =
     . MkEdges
     . fmap (\(s, d, lbl) -> (mkIdx s, mkIdx d, lbl))
 
-testCommandGraphSequential :: TestTree
-testCommandGraphSequential =
-  testPropertyNamed "Parses --edges sequential" "testCommandGraphSequential"
+testCommandGraphSeqAnd :: TestTree
+testCommandGraphSeqAnd =
+  testPropertyNamed "Parses --edges seq_and" "testCommandGraphSeqAnd"
     $ U.verifyResult argList expected
   where
-    argList = ["--edges", "sequential", "command"]
-    expected = U.updateDefArgs #edges (With EdgeArgsSequential)
+    argList = ["--edges", "seq_and", "command"]
+    expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialAnd))
+
+testCommandGraphSeqOr :: TestTree
+testCommandGraphSeqOr =
+  testPropertyNamed "Parses --edges seq_or" "testCommandGraphSeqOr"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", "seq_or", "command"]
+    expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialOr))
+
+testCommandGraphSeqAny :: TestTree
+testCommandGraphSeqAny =
+  testPropertyNamed "Parses --edges seq_any" "testCommandGraphSeqAny"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", "seq_any", "command"]
+    expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialAny))
 
 testCommandGraphEmptyFail :: TestTree
 testCommandGraphEmptyFail =

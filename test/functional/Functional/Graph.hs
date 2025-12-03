@@ -18,7 +18,7 @@ tests =
       testCommandGraphComplex,
       testCommandGraphFailure,
       testCommandGraphBlockedFailure,
-      testCommandGraphSequential,
+      testCommandGraphSeqAnd,
       testCommandGraphLegend,
       testCommandGraphLegendAndEdge,
       testCommandGraphLegendEdgeFailure,
@@ -290,8 +290,8 @@ testCommandGraphBlockedFailure = testCase desc $ do
       [ withSuccessPrefix "sleep 3.5"
       ]
 
-testCommandGraphSequential :: TestTree
-testCommandGraphSequential = testCase "Runs with --edges sequential" $ do
+testCommandGraphSeqAnd :: TestTree
+testCommandGraphSeqAnd = testCase "Runs with --edges seq_and" $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpected resultsConsole expected
@@ -308,7 +308,7 @@ testCommandGraphSequential = testCase "Runs with --edges sequential" $ do
       -- doesn't explode).
       withNoConfig
         [ "--edges",
-          "sequential",
+          "seq_and",
           "--common-log-debug",
           "on",
           "--console-log-command",

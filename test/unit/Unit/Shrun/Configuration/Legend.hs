@@ -20,6 +20,7 @@ import Shrun.Command.Types
 import Shrun.Configuration.Data.Graph
   ( EdgeArgs (EdgeArgsSequential),
     EdgeLabel (EdgeAnd),
+    EdgeSequential (EdgeSequentialAnd),
     Edges,
   )
 import Shrun.Configuration.Legend
@@ -323,7 +324,7 @@ testTranslateEdges2 = testCase desc $ do
         MkCommandP (mkIdx 4) Nothing "cmd2"
       ]
 
-    cliEdges = EdgeArgsSequential
+    cliEdges = EdgeArgsSequential EdgeSequentialAnd
     expectedEdges =
       mkEdgesSuccess
         [ (1, 2),
@@ -335,7 +336,7 @@ testTranslateEdges2 = testCase desc $ do
 
     map =
       Map.fromList
-        [ ("some_aliases", (["a1", "a2"], Just EdgeArgsSequential))
+        [ ("some_aliases", (["a1", "a2"], Just cliEdges))
         ]
 
 testTranslateEdges3 :: TestTree

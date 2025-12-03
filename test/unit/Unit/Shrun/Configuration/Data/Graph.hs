@@ -14,6 +14,7 @@ import Shrun.Command.Types
 import Shrun.Configuration.Data.Graph
   ( EdgeArgs (EdgeArgsList, EdgeArgsSequential),
     EdgeLabel (EdgeAnd),
+    EdgeSequential (EdgeSequentialAnd),
     Edges (MkEdges),
     Vertex,
   )
@@ -37,7 +38,7 @@ tests =
       testTrivialCycleFails,
       testEdgelessGraphProp,
       testVertexCommandIndexRel,
-      testSequential
+      testSeqAnd
     ]
 
 testDuplicateEdgesFails :: TestTree
@@ -143,12 +144,12 @@ testVertexCommandIndexRel = testProp desc "testVertexCommandIndexRel" $ do
   where
     desc = "Verify Vertex <-> CommandIndex conversions"
 
-testSequential :: TestTree
-testSequential = testProp desc "testSequential" $ do
+testSeqAnd :: TestTree
+testSeqAnd = testProp desc "testSeqAnd" $ do
   commands <- forAll genCmds
   -- Try/catch because exceptions screw with hedgehog's nice output.
   cdg <-
-    tryMySync (CDG.mkGraph EdgeArgsSequential commands) >>= \case
+    tryMySync (CDG.mkGraph (EdgeArgsSequential EdgeSequentialAnd) commands) >>= \case
       Right cg -> pure cg
       Left ex -> do
         annotate $ "Exception creating graph: " ++ displayException ex

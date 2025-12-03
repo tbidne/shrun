@@ -6,6 +6,7 @@ module Shrun.Configuration.Data.Graph
     Edges (..),
     sortEdges,
     Edge,
+    EdgeSequential (..),
     EdgeLabel (..),
     displayEdgeLabel,
 
@@ -88,12 +89,23 @@ displayEdgeLabel = \case
   EdgeOr -> "|"
   EdgeAny -> ";"
 
+-- | Sequential options.
+data EdgeSequential
+  = -- | Sequential 'and'-edges.
+    EdgeSequentialAnd
+  | -- | Sequential 'or'-edges.
+    EdgeSequentialOr
+  | -- | Sequential 'any'-edges.
+    EdgeSequentialAny
+  deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
+  deriving anyclass (NFData)
+
 -- | CLI command graph. The default instance is an "edgeless graph", in the
 -- sense that all commands are root nodes without any edges, hence normal
 -- behavior.
 data EdgeArgs
   = -- | Sequential i.e. a linear graph of success edges.
-    EdgeArgsSequential
+    EdgeArgsSequential EdgeSequential
   | -- | Explicit edges.
     EdgeArgsList Edges
   deriving stock (Eq, Show)
@@ -107,7 +119,7 @@ instance IsList EdgeArgs where
   fromList = EdgeArgsList . Exts.fromList
 
   toList (EdgeArgsList xs) = Exts.toList xs
-  toList EdgeArgsSequential = error "Called toList on EdgeArgsSequential"
+  toList (EdgeArgsSequential _) = error "Called toList on EdgeArgsSequential"
 
 -- | An edge between two indices.
 type Edge = Tuple3 CommandIndex CommandIndex EdgeLabel
@@ -257,7 +269,7 @@ mkGraph cdgArgs cmds = do
   where
     edges = case cdgArgs of
       EdgeArgsList es -> edgeToFgl <$> (es ^. #unEdges)
-      EdgeArgsSequential -> mkSequentialEdges cmds
+      (EdgeArgsSequential s) -> mkSequentialEdges s cmds
 
     -- nonRoots is all vertices with an in-edge.
     nonRoots :: Set Int
@@ -445,8 +457,8 @@ traverseVertex cdg = go (HSet.empty, [])
 
 type CycleAcc = (HashSet Node, [Node])
 
-mkSequentialEdges :: NESeq CommandP1 -> Seq GEdge
-mkSequentialEdges =
+mkSequentialEdges :: EdgeSequential -> NESeq CommandP1 -> Seq GEdge
+mkSequentialEdges eseq =
   dropLast
     . fmap toEdge
     . Seq.sortOn MkCommandOrd
@@ -455,8 +467,13 @@ mkSequentialEdges =
     toEdge (MkCommandP idx _ _) =
       ( toV idx,
         toV $ Command.Types.succ idx,
-        EdgeAnd
+        label
       )
+
+    label = case eseq of
+      EdgeSequentialAnd -> EdgeAnd
+      EdgeSequentialOr -> EdgeOr
+      EdgeSequentialAny -> EdgeAny
 
     dropLast Empty = Empty
     dropLast (_ :<| Empty) = Empty
