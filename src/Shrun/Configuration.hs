@@ -13,7 +13,9 @@ import Shrun.Configuration.Data.MergedConfig
       ( MkMergedConfig,
         commandGraph,
         commands,
-        coreConfig
+        coreConfig,
+        dryRun,
+        tomlPaths
       ),
   )
 import Shrun.Configuration.Data.WithDisabled
@@ -46,8 +48,9 @@ mergeConfig ::
   ) =>
   Args ->
   Toml ->
+  Seq OsPath ->
   m MergedConfig
-mergeConfig args toml = do
+mergeConfig args toml tomlPaths = do
   (commands, ea) <- case toml ^. #legend of
     Nothing -> pure (mkCmd <$> cmdsTextIndexed, cliEdgeArgs)
     Just aliases -> do
@@ -80,7 +83,9 @@ mergeConfig args toml = do
     $ MkMergedConfig
       { coreConfig,
         commandGraph,
-        commands
+        commands,
+        dryRun = args ^. #dryRun,
+        tomlPaths
       }
   where
     cmdsText = args ^. #commands

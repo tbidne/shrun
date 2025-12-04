@@ -59,7 +59,7 @@ import Shrun.Prelude
 
 newtype BufferLength = MkBufferLength Int
   deriving stock (Eq, Show)
-  deriving (Num) via Int
+  deriving (Num, Pretty) via Int
 
 instance
   (k ~ An_Iso, a ~ Int, b ~ Int) =>
@@ -84,7 +84,7 @@ parseBufferLength getNat = do
 
 newtype BufferTimeout = MkBufferTimeout Timeout
   deriving stock (Eq, Show)
-  deriving newtype (FromInteger)
+  deriving newtype (FromInteger, Pretty)
 
 instance
   (k ~ An_Iso, a ~ Timeout, b ~ Timeout) =>
@@ -245,6 +245,17 @@ instance Monoid CommandLoggingToml where
         readStrategy = Nothing,
         reportReadErrors = Nothing
       }
+
+instance Pretty CommandLoggingMerged where
+  pretty c =
+    vcat
+      [ "buffer-length: " <> pretty (c ^. #bufferLength),
+        "buffer-timeout: " <> pretty (c ^. #bufferTimeout),
+        "poll-interval: " <> pretty (c ^. #pollInterval),
+        "read-size: " <> pretty (c ^. #readSize),
+        "read-strategy: " <> pretty (c ^. #readStrategy)
+        -- reportReadErrors intentionally unexposed
+      ]
 
 type CommandLoggingArgs = CommandLoggingP ConfigPhaseArgs
 

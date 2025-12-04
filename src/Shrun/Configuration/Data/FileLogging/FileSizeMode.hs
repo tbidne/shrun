@@ -28,6 +28,12 @@ data FileSizeMode
 instance DecodeTOML FileSizeMode where
   tomlDecoder = parseFileSizeMode tomlDecoder
 
+instance Pretty FileSizeMode where
+  pretty = \case
+    FileSizeModeWarn b -> "warn " <> prettyBytesInt b
+    FileSizeModeDelete b -> "delete " <> prettyBytesInt b
+    FileSizeModeNothing -> "off"
+
 parseFileSizeMode :: (MonadFail m) => m Text -> m FileSizeMode
 parseFileSizeMode getTxt = do
   txt <- getTxt

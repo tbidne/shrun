@@ -22,6 +22,8 @@ import Data.Set qualified as Set
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
+import Prettyprinter qualified
+import Prettyprinter.Render.Text qualified as PrettyprinterT
 import Shrun (runShellT, shrun)
 import Shrun.Command.Types (CommandStatus (CommandWaiting))
 import Shrun.Configuration (mergeConfig)
@@ -150,9 +152,9 @@ getMergedConfig = do
       then pure configPaths
       else (\ps -> (With <$> ps) <> configPaths) <$> findImplicitConfigs
 
-  finalToml <- mergeTomls tomls
+  (tomlPaths, finalToml) <- mergeTomls tomls
 
-  merged <- mergeConfig args finalToml
+  merged <- mergeConfig args finalToml tomlPaths
 
   saveLegendKeys xdgState (merged ^. #coreConfig % #legendKeysCache) prevKeys finalToml
 
@@ -223,10 +225,12 @@ mergeTomls ::
     MonadThrow m
   ) =>
   Seq (WithDisabled OsPath) ->
-  m Toml
+  m (Tuple2 (Seq OsPath) Toml)
 mergeTomls =
-  fmap Toml.mergeTomls
-    . traverse readConfig
+  -- Reverse toml paths so they are in the original order. No need to reverse
+  -- actual Toml files because mergeTomls expects the inverse order.
+  fmap (bimap Seq.reverse Toml.mergeTomls . Seq.unzip)
+    . traverse (\t -> (t,) <$> readConfig t)
     . dropAfterDisabled
     . Seq.reverse
   where
@@ -275,6 +279,14 @@ fromMergedConfig ::
   (Env r -> m a) ->
   m a
 fromMergedConfig cfg onEnv = do
+  when (cfg ^. #dryRun) $ do
+    putTextLn
+      . PrettyprinterT.renderStrict
+      . Prettyprinter.layoutPretty Prettyprinter.defaultLayoutOptions
+      . pretty
+      $ cfg
+    throwM ExitSuccess
+
   completedCommands <- newTVarA (Map.fromList $ toList commandStatusInit)
 
   anyError <- newTVarA False

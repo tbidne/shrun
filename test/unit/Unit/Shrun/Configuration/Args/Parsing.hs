@@ -21,6 +21,7 @@ tests =
       configTests,
       Graph.tests,
       Core.tests,
+      dryRunTests,
       commandTests
     ]
 
@@ -121,3 +122,18 @@ testCommands =
     argList = ["one", "two", "three"]
     expected = ((_Just % #commands) .~ cmds) U.defArgs
     cmds = unsafeListToNESeq ["one", "two", "three"]
+
+dryRunTests :: TestTree
+dryRunTests =
+  testGroup
+    "--dry-run"
+    [ testDryRun
+    ]
+
+testDryRun :: TestTree
+testDryRun =
+  testPropertyNamed "Parses --dry-run" "testDryRun"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--dry-run", "command"]
+    expected = set' (_Just % #dryRun) True U.defArgs

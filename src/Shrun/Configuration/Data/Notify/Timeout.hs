@@ -42,6 +42,11 @@ instance DecodeTOML NotifyTimeout where
     where
       strErr = "Unexpected timeout. Only valid string is 'off'."
 
+instance Pretty NotifyTimeout where
+  pretty = \case
+    NotifyTimeoutNever -> "off"
+    NotifyTimeoutSeconds x -> pretty x
+
 tooLargeErr :: Maybe Integer -> Text
 tooLargeErr Nothing = "Timeout integer too large. Max is: " <> showt maxW16
 tooLargeErr (Just i) =

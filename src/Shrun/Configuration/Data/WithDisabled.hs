@@ -57,6 +57,11 @@ instance (DecodeTOML a) => DecodeTOML (WithDisabled a) where
           "off" -> pure Disabled
           other -> fail $ "Expected 'off', received: " <> unpack other
 
+instance (Pretty a) => Pretty (WithDisabled a) where
+  pretty = \case
+    Disabled -> "off"
+    With x -> pretty x
+
 disabledParser :: (Applicative f) => Text -> f a -> f (WithDisabled a)
 disabledParser "off" _ = pure Disabled
 disabledParser _ fx = With <$> fx

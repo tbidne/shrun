@@ -28,7 +28,6 @@ where
 import Options.Applicative (OptionFields, Parser)
 import Options.Applicative qualified as OA
 import Options.Applicative.Builder (Mod, ReadM)
-import Options.Applicative.Help (Doc)
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
@@ -143,7 +142,7 @@ switchParserHelper mkHelpFn opts cons name helpTxt = fmap cons <$> mainParser
 
     readBool = OA.str @Text >>= ConfigPhase.parseSwitch
 
-toMDoc :: String -> Maybe Doc
+toMDoc :: String -> Maybe DocOA
 toMDoc = Chunk.unChunk . Chunk.paragraph
 
 -- | Make an itemized list e.g.
@@ -172,7 +171,7 @@ itemizeNoLine =
     . Chunk.unChunk
     . itemizeHelper
 
-itemizeHelper :: NESeq String -> Chunk Doc
+itemizeHelper :: NESeq String -> Chunk DocOA
 itemizeHelper (intro :<|| ds) =
   Chunk.vcatChunks
     $ toList

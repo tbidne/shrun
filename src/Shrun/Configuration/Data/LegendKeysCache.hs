@@ -28,6 +28,13 @@ instance DecodeTOML LegendKeysCache where
 instance Default LegendKeysCache where
   def = LegendKeysAdd
 
+instance Pretty LegendKeysCache where
+  pretty = \case
+    LegendKeysAdd -> "add"
+    LegendKeysClear -> "clear"
+    LegendKeysOff -> "off"
+    LegendKeysWrite -> "write"
+
 parseLegendKeysCache :: (MonadFail m) => m Text -> m LegendKeysCache
 parseLegendKeysCache getTxt =
   getTxt >>= \case

@@ -31,6 +31,7 @@ import Shrun.Prelude
 
 newtype Debug = MkDebug {unDebug :: Bool}
   deriving stock (Eq, Show)
+  deriving (Pretty) via PrettySwitch
 
 instance
   (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
@@ -89,6 +90,13 @@ instance Monoid CommonLoggingToml where
       { debug = Nothing,
         keyHide = Nothing
       }
+
+instance Pretty CommonLoggingMerged where
+  pretty c =
+    vcat
+      [ "debug: " <> pretty (c ^. #debug),
+        "key-hide: " <> pretty (c ^. #keyHide)
+      ]
 
 type CommonLoggingArgs = CommonLoggingP ConfigPhaseArgs
 

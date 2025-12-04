@@ -78,7 +78,14 @@ import Shrun.Configuration.Data.LegendKeysCache
       ),
   )
 import Shrun.Configuration.Data.MergedConfig
-  ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
+  ( MergedConfig
+      ( MkMergedConfig,
+        commandGraph,
+        commands,
+        coreConfig,
+        dryRun,
+        tomlPaths
+      ),
   )
 import Shrun.Configuration.Data.Notify
   ( NotifyActionsActive (NotifyActionsActiveAll),
@@ -153,6 +160,8 @@ examplesConfig = testProp1 desc "examplesConfig" $ do
                       }
               },
           commandGraph = Graph.mkEdgelessGraph commands,
-          commands
+          commands,
+          dryRun = False,
+          tomlPaths = [getExampleConfigPathOS]
         }
     commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []

@@ -49,6 +49,12 @@ data NotifyActionComplete
 instance DecodeTOML NotifyActionComplete where
   tomlDecoder = tomlDecoder >>= parseNotifyAction
 
+instance Pretty NotifyActionComplete where
+  pretty = \case
+    NotifyActionCompleteFinal -> "final"
+    NotifyActionCompleteCommand -> "command"
+    NotifyActionCompleteAll -> "all"
+
 -- | Parses 'NotifyActionComplete'.
 parseNotifyAction :: (MonadFail m) => Text -> m NotifyActionComplete
 parseNotifyAction = \case

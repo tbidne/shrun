@@ -18,7 +18,6 @@ import Effects.FileSystem.PathReader
   )
 import Effects.System.Posix.Signals (MonadPosixSignals (installHandler))
 import Effects.System.Posix.Signals qualified as Signals
-import Shrun.Configuration.Default (Default (def))
 import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
@@ -49,6 +48,7 @@ import Shrun.ShellT (ShellT)
 -- | Enviroment used by 'ConfigIO'. For when we want some IO behavior mocked.
 data ConfigIOEnv = MkConfigIOEnv
   { cwdDir :: Maybe OsPath,
+    logs :: IORef (List Text),
     xdgDir :: Maybe (XdgDirectory -> OsPath)
   }
 
@@ -61,10 +61,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkConfigIOEnv a1 a2) ->
+      $ \f (MkConfigIOEnv a1 a2 a3) ->
         fmap
-          (\b -> MkConfigIOEnv b a2)
+          (\b -> MkConfigIOEnv b a2 a3)
           (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ IORef (List Text),
+    b ~ IORef (List Text)
+  ) =>
+  LabelOptic "logs" k ConfigIOEnv ConfigIOEnv a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkConfigIOEnv a1 a2 a3) ->
+        fmap
+          (\b -> MkConfigIOEnv a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -76,18 +91,11 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkConfigIOEnv a1 a2) ->
+      $ \f (MkConfigIOEnv a1 a2 a3) ->
         fmap
-          (\b -> MkConfigIOEnv a1 b)
-          (f a2)
+          (\b -> MkConfigIOEnv a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}
-
-instance Default ConfigIOEnv where
-  def =
-    MkConfigIOEnv
-      { cwdDir = Nothing,
-        xdgDir = Nothing
-      }
 
 -- | In a real run, we run shrun with 'ShellT (Env IO) IO'. In our functional
 -- tests, this would generally be 'ShellT FuncEnv IO', which is mostly unmocked,
@@ -165,8 +173,10 @@ instance MonadPosixSignals ConfigIO where
       hToM = Signals.mapHandler unConfigIO
 
 instance MonadTerminal ConfigIO where
-  putStr = liftIO . putStr
-  putStrLn = liftIO . putStrLn
+  putStr s = do
+    logsRef <- asks (view #logs)
+    modifyIORef' logsRef (pack s :)
+  putStrLn = putStr . (<> "\n")
 
   -- Give this a large width so that test logs do not get cut off. We want
   -- to mock this anyway, as we do not want real, non-deterministic detection

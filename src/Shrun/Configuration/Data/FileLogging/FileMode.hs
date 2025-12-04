@@ -19,6 +19,12 @@ data FileMode
 instance DecodeTOML FileMode where
   tomlDecoder = parseFileMode tomlDecoder
 
+instance Pretty FileMode where
+  pretty = \case
+    FileModeAppend -> "append"
+    FileModeRename -> "rename"
+    FileModeWrite -> "write"
+
 parseFileMode :: (MonadFail m) => m Text -> m FileMode
 parseFileMode getTxt =
   getTxt >>= \case

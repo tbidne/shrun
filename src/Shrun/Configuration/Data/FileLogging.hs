@@ -78,6 +78,7 @@ import System.OsPath qualified as OsPath
 newtype DeleteOnSuccessSwitch = MkDeleteOnSuccessSwitch Bool
   deriving stock (Eq, Show)
   deriving newtype (Bounded, Enum)
+  deriving (Pretty) via PrettySwitch
 
 instance Default DeleteOnSuccessSwitch where
   def = MkDeleteOnSuccessSwitch False
@@ -397,6 +398,18 @@ instance Monoid FileLoggingToml where
         lineTrunc = Nothing,
         stripControl = Nothing
       }
+
+instance Pretty FileLoggingMerged where
+  pretty c =
+    vcat
+      [ "command-name-trunc: " <> prettyMaybe (c ^. #commandNameTrunc),
+        "delete-on-success: " <> pretty (c ^. #deleteOnSuccess),
+        "line-trunc: " <> prettyMaybe (c ^. #lineTrunc),
+        "mode: " <> pretty (c ^. #file % #mode),
+        "path: " <> pretty (c ^. #file % #path),
+        "size-mode: " <> pretty (c ^. #file % #sizeMode),
+        "strip-control: " <> pretty (c ^. #stripControl)
+      ]
 
 type FileLoggingArgs = FileLoggingP ConfigPhaseArgs
 

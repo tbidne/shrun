@@ -1,6 +1,8 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE CPP #-}
 
+{- HLINT ignore "Functor law" -}
+
 -- TODO:
 --
 --   1. It would be nice if we could test that we do not receive any "extra"
@@ -22,6 +24,7 @@ module Functional.Prelude
     runExitFailure,
     runAllExitFailure,
     runCancelled,
+    runExitConfigLogs,
 
     -- ** Mocked IO (Configuration)
     ConfigIOEnv (..),
@@ -60,6 +63,8 @@ module Functional.Prelude
     withKilledPrefix,
 
     -- * Misc
+    assertList,
+    configPath,
     withBaseArgs,
     withNoConfig,
     appendScriptsHome,
@@ -75,7 +80,7 @@ import Data.Typeable (typeRep)
 import Effects.Concurrent.Async qualified as Async
 import FileSystem.OsPath as X (combineFilePaths, unsafeDecode)
 import Functional.Prelude.FuncEnv
-  ( ConfigIOEnv (MkConfigIOEnv, cwdDir, xdgDir),
+  ( ConfigIOEnv (MkConfigIOEnv, cwdDir, logs, xdgDir),
     FuncEnv (MkFuncEnv, coreEnv, logs, shrunNotes),
     unConfigIO,
   )
@@ -88,7 +93,6 @@ import Functional.ReadStrategyTest
   )
 import Functional.ReadStrategyTest qualified as ReadStrategyTest
 import Shrun qualified as SR
-import Shrun.Configuration.Default qualified as Default
 import Shrun.Configuration.Env qualified as Env
 import Shrun.Notify.MonadNotify (ShrunNote)
 import Shrun.Prelude as X
@@ -110,25 +114,28 @@ import Test.Tasty.HUnit as X
 
 -- | Runs the args and retrieves the logs.
 run :: List String -> IO (List ResultText)
-run = fmap (view _1) . baseRunner @SomeException Nothing Nothing
+run = fmap (view _2) . baseRunner @SomeException Nothing Nothing
 
 -- | Like 'run', but with 'ConfigIO' instead of normal 'IO'.
 runConfigIO :: ConfigIOEnv -> List String -> IO (List ResultText)
-runConfigIO env = fmap (view _1) . baseRunner @SomeException (Just env) Nothing
+runConfigIO env = fmap (view _2) . baseRunner @SomeException (Just env) Nothing
 
 -- | Runs the args and retrieves the sent notifications.
 runNotes :: List String -> IO (List ShrunNote)
-runNotes = fmap (view _2) . baseRunner @SomeException Nothing Nothing
+runNotes = fmap (view _3) . baseRunner @SomeException Nothing Nothing
+
+runExitConfigLogs :: List String -> IO (List Text)
+runExitConfigLogs = fmap (view _1) . baseRunner Nothing (Just $ Proxy @ExitCode)
 
 -- | 'runException' specialized to ExitFailure.
 runExitFailure :: List String -> IO (List ResultText)
 runExitFailure =
-  fmap (view _1)
+  fmap (view _2)
     . baseRunner Nothing (Just $ Proxy @ExitCode)
 
 runAllExitFailure :: List String -> IO (Tuple2 (List ResultText) (List ShrunNote))
 runAllExitFailure =
-  fmap (\(x, y, _) -> (x, y))
+  fmap (\(_, y, z, _) -> (y, z))
     . baseRunner Nothing (Just $ Proxy @ExitCode)
 
 -- | Like 'runException', except it expects an exception.
@@ -137,7 +144,7 @@ runException ::
   (Exception e) =>
   List String ->
   IO (List ResultText)
-runException = fmap (view _1) . baseRunner Nothing (Just $ Proxy @e)
+runException = fmap (view _2) . baseRunner Nothing (Just $ Proxy @e)
 
 -- | Runs shrun potentially catching an expected exception.
 baseRunner ::
@@ -146,9 +153,9 @@ baseRunner ::
   Maybe ConfigIOEnv ->
   Maybe (Proxy e) ->
   List String ->
-  IO (List ResultText, List ShrunNote, Maybe e)
+  IO (List Text, List ResultText, List ShrunNote, Maybe e)
 baseRunner mConfigIOEnv mExProxy argList = do
-  (action, ls, shrunNotes) <- mkShrunAction mConfigIOEnv argList
+  (action, configLogs, ls, shrunNotes) <- mkShrunAction mConfigIOEnv argList
 
   case mExProxy of
     -- 1. Not expecting an exception
@@ -157,7 +164,7 @@ baseRunner mConfigIOEnv mExProxy argList = do
         -- 1.1: Received an exception: print logs and rethrow
         Left ex -> printLogsReThrow ex ls
         -- 1.2: No exception, return logs/notes
-        Right _ -> (\(x, y) -> (x, y, Nothing)) <$> readRefs ls shrunNotes
+        Right _ -> (\(x, y, z) -> (x, y, z, Nothing)) <$> readRefs configLogs ls shrunNotes
     -- 2. Expecting exception e
     Just proxy ->
       tryMySync action >>= \case
@@ -173,7 +180,7 @@ baseRunner mConfigIOEnv mExProxy argList = do
         Left someEx -> do
           case fromException @e someEx of
             -- 2.2: Received exception e: return logs/notes
-            Just e2 -> (\(x, y) -> (x, y, Just e2)) <$> readRefs ls shrunNotes
+            Just e2 -> (\(x, y, z) -> (x, y, z, Just e2)) <$> readRefs configLogs ls shrunNotes
             -- 2.3: Received some other exception: print logs and die
             Nothing -> do
               printLogs ls
@@ -208,7 +215,7 @@ runExceptionE ::
   List String ->
   IO (List ResultText, e)
 runExceptionE argList = do
-  (results, _, mEx) <- baseRunner Nothing (Just $ Proxy @e) argList
+  (_, results, _, mEx) <- baseRunner Nothing (Just $ Proxy @e) argList
   case mEx of
     Nothing ->
       -- This is probably impossible
@@ -221,25 +228,35 @@ runCancelled ::
   List String ->
   IO (List ResultText, List ShrunNote)
 runCancelled secToSleep argList = do
-  (action, ls, shrunNotes) <- mkShrunAction Nothing argList
+  (action, configLogs, ls, shrunNotes) <- mkShrunAction Nothing argList
 
   Async.withAsync action $ \async -> do
     sleep secToSleep
     Async.cancel async
 
-  readRefs ls shrunNotes
+  (\(_, y, z) -> (y, z)) <$> readRefs configLogs ls shrunNotes
 
 mkShrunAction ::
   Maybe ConfigIOEnv ->
   List String ->
-  IO (Tuple3 (IO ()) (IORef (List Text)) (IORef (List ShrunNote)))
+  IO (Tuple4 (IO ()) (IORef (List Text)) (IORef (List Text)) (IORef (List ShrunNote)))
 mkShrunAction mConfigIOEnv argList = do
+  configLogsRef <- newIORef []
   ls <- newIORef []
   shrunNotes <- newIORef []
 
+  configIOEnv <- case mConfigIOEnv of
+    Nothing -> do
+      pure
+        $ MkConfigIOEnv
+          { cwdDir = Nothing,
+            logs = configLogsRef,
+            xdgDir = Nothing
+          }
+    Just cfg -> pure cfg
+
   -- Always run the config stage via ConfigIO.
-  let configIOEnv = Default.fromMaybe mConfigIOEnv
-      action = do
+  let action = do
         usingReaderT configIOEnv
           . unConfigIO
           . withArgs argList
@@ -254,13 +271,18 @@ mkShrunAction mConfigIOEnv argList = do
 
             SR.runShellT SR.shrun funcEnv
 
-  pure (action, ls, shrunNotes)
+  pure (action, configLogsRef, ls, shrunNotes)
 
 readRefs ::
   IORef (List Text) ->
+  IORef (List Text) ->
   IORef (List ShrunNote) ->
-  IO (List ResultText, List ShrunNote)
-readRefs ls ns = ((,) . fmap MkResultText . L.reverse <$> readIORef ls) <*> readIORef ns
+  IO (List Text, List ResultText, List ShrunNote)
+readRefs configLogs ls ns =
+  (,,)
+    <$> (L.reverse <$> readIORef configLogs)
+    <*> (fmap MkResultText . L.reverse <$> readIORef ls)
+    <*> readIORef ns
 
 debugPrefix :: (IsString s) => s
 debugPrefix = "[Debug]"
@@ -362,7 +384,7 @@ configPath = "test" `cfp` "functional" `cfp` "example_osx.toml"
 configPath = "examples" `cfp` "config.toml"
 #endif
 
-notifySystemArg :: String
+notifySystemArg :: (IsString s) => s
 #if OSX
 notifySystemArg = "apple-script"
 #else
@@ -383,3 +405,11 @@ scriptsHomeStr = "test/functional/scripts"
 
 usingReaderT :: env -> ReaderT env m a -> m a
 usingReaderT = flip runReaderT
+
+assertList :: (Eq a, Show a) => List a -> List a -> IO ()
+assertList = go
+  where
+    go [] [] = pure ()
+    go lhs@(_ : _) [] = assertFailure $ "LHS nonempty: " ++ show lhs
+    go [] rhs@(_ : _) = assertFailure $ "RHS nonempty: " ++ show rhs
+    go (x : xs) (y : ys) = (x @=? y) *> go xs ys

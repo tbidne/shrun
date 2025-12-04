@@ -27,6 +27,11 @@ data ReadStrategy
 instance DecodeTOML ReadStrategy where
   tomlDecoder = parseReadStrategy tomlDecoder
 
+instance Pretty ReadStrategy where
+  pretty = \case
+    ReadBlock -> "block"
+    ReadBlockLineBuffer -> "block-line-buffer"
+
 defaultReadStrategy :: Bool -> NESeq CommandP1 -> ReadStrategy
 defaultReadStrategy fileLogging cmds =
   if readBlockLineBufferNotAllowed fileLogging cmds

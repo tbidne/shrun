@@ -38,6 +38,7 @@
     - [Notify Timeout](#notify-timeout)
   - [Miscellaneous](#miscellaneous)
     - [Default Config](#default-config)
+    - [Dry Run](#dry-run)
 
 ---
 
@@ -777,3 +778,9 @@ These options configure `shrun` to send off desktop notifications for certain ac
 **Arg:** `--default-config`
 
 **Description:** Writes a default configuration to `stdout`.
+
+### Dry Run
+
+**Arg:** `--dry-run`
+
+**Description:** Prints the configuration and commands that would be run to `stdout`, then exits.

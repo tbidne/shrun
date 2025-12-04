@@ -46,6 +46,7 @@ import Shrun.Prelude
 newtype ConsoleLogCmdSwitch = MkConsoleLogCmdSwitch Bool
   deriving stock (Eq, Show)
   deriving newtype (Bounded, Enum)
+  deriving (Pretty) via PrettySwitch
 
 instance Default ConsoleLogCmdSwitch where
   def = MkConsoleLogCmdSwitch True
@@ -174,6 +175,16 @@ instance Monoid ConsoleLoggingToml where
         stripControl = Nothing,
         timerFormat = Nothing
       }
+
+instance Pretty ConsoleLoggingMerged where
+  pretty c =
+    vcat
+      [ "command-logging: " <> pretty (c ^. #commandLogging),
+        "command-name-trunc: " <> prettyMaybe (c ^. #commandNameTrunc),
+        "line-trunc: " <> prettyMaybe (c ^. #lineTrunc),
+        "strip-control: " <> pretty (c ^. #stripControl),
+        "timer-format: " <> pretty (c ^. #timerFormat)
+      ]
 
 type ConsoleLoggingArgs = ConsoleLoggingP ConfigPhaseArgs
 

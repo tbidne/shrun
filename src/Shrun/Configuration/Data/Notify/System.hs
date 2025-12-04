@@ -76,6 +76,12 @@ instance Enum NotifySystemToml where
   fromEnum (DBus ()) = 1
   fromEnum NotifySend = 2
 
+instance Pretty NotifySystemMerged where
+  pretty = \case
+    AppleScript -> "apple-script"
+    DBus () -> "dbus"
+    NotifySend -> "notify-send"
+
 deriving stock instance Eq NotifySystemArgs
 
 deriving stock instance Show NotifySystemArgs

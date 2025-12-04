@@ -43,6 +43,13 @@ instance DecodeTOML TimerFormat where
 instance Default TimerFormat where
   def = ProseCompact
 
+instance Pretty TimerFormat where
+  pretty = \case
+    DigitalCompact -> "digital_compact"
+    DigitalFull -> "digital_full"
+    ProseCompact -> "prose_compact"
+    ProseFull -> "prose_full"
+
 -- | Parse timer format.
 parseTimerFormat :: (MonadFail m) => m Text -> m TimerFormat
 parseTimerFormat getTxt =

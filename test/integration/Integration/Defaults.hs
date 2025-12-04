@@ -118,7 +118,9 @@ import Shrun.Configuration.Data.MergedConfig
       ( MkMergedConfig,
         commandGraph,
         commands,
-        coreConfig
+        coreConfig,
+        dryRun,
+        tomlPaths
       ),
   )
 import Shrun.Configuration.Data.Notify
@@ -239,7 +241,9 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                       }
               },
           commandGraph = Graph.mkEdgelessGraph commands,
-          commands
+          commands,
+          dryRun = False,
+          tomlPaths = [xdgDirPathOS </> [osp|config.toml|]]
         }
     commands = MkCommandP (mkIdx 1) (Just "cmd1") "echo \"command one\"" :<|| []
 
@@ -363,7 +367,9 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                       }
               },
           commandGraph = Graph.mkEdgelessGraph commands,
-          commands
+          commands,
+          dryRun = False,
+          tomlPaths = [getIntConfigPathOS [ospPathSep|overridden|]]
         }
     commands = MkCommandP (mkIdx 1) Nothing "cmd" :<|| []
 
@@ -478,7 +484,9 @@ cliDisabledToml :: TestTree
 cliDisabledToml = testProp1 desc "cliDisabledToml" $ do
   logsRef <- liftIO $ newIORef []
 
-  expected <- defaultConfig
+  expected <-
+    defaultConfig
+      <&> set' #tomlPaths [getIntConfigPathOS [ospPathSep|overridden|]]
 
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 

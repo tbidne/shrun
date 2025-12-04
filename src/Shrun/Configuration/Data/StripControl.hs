@@ -31,6 +31,12 @@ data StripControl t
 instance DecodeTOML (StripControl t) where
   tomlDecoder = parseStripControl tomlDecoder
 
+instance Pretty (StripControl t) where
+  pretty = \case
+    StripControlSmart -> "smart"
+    StripControlNone -> "off"
+    StripControlAll -> "all"
+
 type ConsoleLogStripControl = StripControl StripControlConsoleLog
 
 type FileLogStripControl = StripControl StripControlFileLog

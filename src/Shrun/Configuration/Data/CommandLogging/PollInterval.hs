@@ -14,7 +14,7 @@ import Shrun.Prelude
 -- Zero is interpreted as infinite i.e. limited only by the CPU.
 newtype PollInterval = MkPollInterval {unPollInterval :: Natural}
   deriving stock (Eq, Ord, Show)
-  deriving (Num) via Natural
+  deriving (Num, Pretty) via Natural
 
 instance
   (k ~ An_Iso, a ~ Natural, b ~ Natural) =>

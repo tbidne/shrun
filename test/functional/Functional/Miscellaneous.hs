@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
@@ -44,7 +45,11 @@ specs testArgs =
     -- the default.
     otherTests =
       [ isCancelled testArgs,
-        testImplicitConfigLookup
+        testImplicitConfigLookup,
+        testDefaultDryRun,
+        testDefaultNoCmdLogDryRun,
+        testExampleDryRun,
+        testFileLogDryRun
       ]
 
 splitNewlineLogs :: ReadStrategyTestParams
@@ -555,6 +560,17 @@ testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
 
 testImplicitConfigLookup :: TestTree
 testImplicitConfigLookup = testCase desc $ do
+  logs <- newIORef []
+  let env =
+        MkConfigIOEnv
+          { cwdDir = Just [ospPathSep|test/functional/cwd|],
+            logs,
+            xdgDir = Just $ \case
+              XdgConfig -> [ospPathSep|test/functional/xdg_config|]
+              XdgState -> [ospPathSep|test/functional/xdg_state|]
+              other -> error $ "Unexpected xdg: " ++ show other
+          }
+
   (ts, resultsConsole) <- withTiming $ runConfigIO env args
 
   V.verifyExpected resultsConsole expected
@@ -581,15 +597,195 @@ testImplicitConfigLookup = testCase desc $ do
         withSuccessPrefix "shrun_key"
       ]
 
-    env :: ConfigIOEnv
-    env =
-      MkConfigIOEnv
-        { cwdDir = Just [ospPathSep|test/functional/cwd|],
-          xdgDir = Just $ \case
-            XdgConfig -> [ospPathSep|test/functional/xdg_config|]
-            XdgState -> [ospPathSep|test/functional/xdg_state|]
-            other -> error $ "Unexpected xdg: " ++ show other
-        }
+testDefaultDryRun :: TestTree
+testDefaultDryRun = testCase desc $ do
+  configLogs <- runExitConfigLogs args
+
+  assertList expected (configLogs >>= T.lines)
+  where
+    desc = "Prints default config with --dry-run"
+    args =
+      withNoConfig
+        [ "--dry-run",
+          "cmd"
+        ]
+    expected =
+      [ "config-paths: off",
+        "config:",
+        "  init: off",
+        "  legend-keys-cache: off",
+        "  timeout: off",
+        "  common-logging:",
+        "    debug: off",
+        "    key-hide: off",
+        "  command-logging:",
+        "    buffer-length: 1000",
+        "    buffer-timeout: 30",
+        "    poll-interval: 10000",
+        "    read-size: 16 kb",
+        "    read-strategy: block-line-buffer",
+        "  console-logging:",
+        "    command-logging: on",
+        "    command-name-trunc: off",
+        "    line-trunc: 149",
+        "    strip-control: smart",
+        "    timer-format: prose_compact",
+        "  file-logging: off",
+        "  notify: off",
+        "command-graph:",
+        "  graph:",
+        "    1: ->[]",
+        "  roots: 1",
+        "commands:",
+        "  1. cmd"
+      ]
+
+testDefaultNoCmdLogDryRun :: TestTree
+testDefaultNoCmdLogDryRun = testCase desc $ do
+  configLogs <- runExitConfigLogs args
+
+  assertList expected (configLogs >>= T.lines)
+  where
+    desc = "Prints default config with --dry-run and no command logging"
+    args =
+      withNoConfig
+        [ "--console-log-command",
+          "off",
+          "--dry-run",
+          "cmd"
+        ]
+    expected =
+      [ "config-paths: off",
+        "config:",
+        "  init: off",
+        "  legend-keys-cache: off",
+        "  timeout: off",
+        "  common-logging:",
+        "    debug: off",
+        "    key-hide: off",
+        "  command-logging: off",
+        "  console-logging:",
+        "    command-logging: off",
+        "    command-name-trunc: off",
+        "    line-trunc: off",
+        "    strip-control: smart",
+        "    timer-format: prose_compact",
+        "  file-logging: off",
+        "  notify: off",
+        "command-graph:",
+        "  graph:",
+        "    1: ->[]",
+        "  roots: 1",
+        "commands:",
+        "  1. cmd"
+      ]
+
+testExampleDryRun :: TestTree
+testExampleDryRun = testCase desc $ do
+  configLogs <- runExitConfigLogs args
+
+  assertList expected (configLogs >>= T.lines)
+  where
+    desc = "Prints example config with --dry-run"
+    args =
+      withBaseArgs
+        [ "--dry-run",
+          "some_aliases"
+        ]
+
+    expected =
+      [ "config-paths:",
+        "  - " <> pack configPath,
+        "config:",
+        "  init: . examples/bashrc",
+        "  legend-keys-cache: off",
+        "  timeout: 20",
+        "  common-logging:",
+        "    debug: off",
+        "    key-hide: off",
+        "  command-logging:",
+        "    buffer-length: 2000",
+        "    buffer-timeout: 60",
+        "    poll-interval: 100",
+        "    read-size: 1 mb",
+        "    read-strategy: block",
+        "  console-logging:",
+        "    command-logging: on",
+        "    command-name-trunc: 80",
+        "    line-trunc: 150",
+        "    strip-control: smart",
+        "    timer-format: prose_compact",
+        "  file-logging: off",
+        "  notify:",
+        "    action-complete: command",
+        "    action-start: on",
+        "    system: " <> notifySystemArg,
+        "    timeout: off",
+        "command-graph:",
+        "  graph:",
+        "    1: ->[(&,3)]",
+        "    2: ->[(;,3),(|,4)]",
+        "    3: ->[]",
+        "    4: ->[]",
+        "  roots: 1, 2",
+        "commands:",
+        "  1. c1",
+        "  2. c2",
+        "  3. c3",
+        "  4. c4"
+      ]
+
+testFileLogDryRun :: TestTree
+testFileLogDryRun = testCase desc $ do
+  configLogs <- runExitConfigLogs args
+
+  assertList expected (configLogs >>= T.lines)
+  where
+    desc = "Prints file-log config with --dry-run"
+    args =
+      withNoConfig
+        [ "--dry-run",
+          "--file-log",
+          "shrun.log",
+          "cmd"
+        ]
+    expected =
+      [ "config-paths: off",
+        "config:",
+        "  init: off",
+        "  legend-keys-cache: off",
+        "  timeout: off",
+        "  common-logging:",
+        "    debug: off",
+        "    key-hide: off",
+        "  command-logging:",
+        "    buffer-length: 1000",
+        "    buffer-timeout: 30",
+        "    poll-interval: 10000",
+        "    read-size: 16 kb",
+        "    read-strategy: block-line-buffer",
+        "  console-logging:",
+        "    command-logging: on",
+        "    command-name-trunc: off",
+        "    line-trunc: 149",
+        "    strip-control: smart",
+        "    timer-format: prose_compact",
+        "  file-logging:",
+        "    command-name-trunc: off",
+        "    delete-on-success: off",
+        "    line-trunc: off",
+        "    mode: write",
+        "    path: shrun.log",
+        "    size-mode: warn 50 mb",
+        "    strip-control: all",
+        "  notify: off",
+        "command-graph:",
+        "  graph:",
+        "    1: ->[]",
+        "  roots: 1",
+        "commands:",
+        "  1. cmd"
+      ]
 
 readStrategyDefaultCmd :: String
 readStrategyDefaultCmd = "printf 'hello\nbye' && sleep 1"

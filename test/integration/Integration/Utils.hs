@@ -97,13 +97,7 @@ instance MonadPathReader ConfigIO where
 
   doesDirectoryExist = liftIO . doesDirectoryExist
 
-#if OSX
-  getXdgDirectory _ _ =
-    pure (unsafeEncode $ concatDirs ["test", "integration", "toml", "osx"])
-#else
-  getXdgDirectory _ _ =
-    pure (unsafeEncode $ concatDirs ["test", "integration", "toml"])
-#endif
+  getXdgDirectory _ _ = pure xdgDirPathOS
 
 -- Paranoid, only delete files we know about for the tests.
 instance MonadPathWriter ConfigIO where
@@ -284,7 +278,7 @@ makeMergedConfig args toIO = do
 -- | Convenience for tests expecting a default config. The test should
 -- pass a single command 'cmd'.
 defaultConfig :: (MonadIO m) => m MergedConfig
-defaultConfig = liftIO $ runDefaultIO $ Config.mergeConfig args mempty
+defaultConfig = liftIO $ runDefaultIO $ Config.mergeConfig args mempty mempty
   where
     args = Args.defaultArgs (NESeq.singleton "cmd")
 

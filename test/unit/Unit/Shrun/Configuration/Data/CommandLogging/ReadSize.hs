@@ -7,7 +7,6 @@ import Data.Bytes
   ( FloatingFormatter (MkFloatingFormatter),
     MGroup,
     RawNumeric (Raw),
-    Sized,
     SomeSize,
   )
 import Data.Bytes qualified as Bytes

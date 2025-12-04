@@ -20,7 +20,7 @@ newtype Timeout = MkTimeout
   { unTimeout :: Natural
   }
   deriving stock (Eq, Ord, Show)
-  deriving (FromInteger, Num) via Natural
+  deriving (FromInteger, Num, Pretty) via Natural
 
 instance
   (k ~ An_Iso, a ~ Natural, b ~ Natural) =>

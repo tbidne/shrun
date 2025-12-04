@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.Core
@@ -237,6 +238,35 @@ instance Monoid CoreConfigToml where
         fileLogging = Nothing,
         notify = Nothing
       }
+
+instance Pretty CoreConfigMerged where
+  pretty c =
+    vcat
+      . toList @Seq
+      $ [ "init: " <> prettyMaybe (c ^. #init),
+          "legend-keys-cache: " <> pretty (c ^. #legendKeysCache),
+          "timeout: " <> pretty (c ^. #timeout),
+          "common-logging:",
+          indentField $ pretty (c ^. #commonLogging)
+        ]
+      <> prettyCommandLogging
+      <> ["console-logging:", indentField $ pretty (c ^. #consoleLogging)]
+      <> prettyMField "file-logging:" (c ^. #fileLogging)
+      <> prettyMField "notify:" (c ^. #notify)
+    where
+      -- If command logging is not on then there is no reason to print its
+      -- config.
+      prettyCommandLogging =
+        if commandLoggingOn
+          then ["command-logging:", indentField $ pretty (c ^. #commandLogging)]
+          else ["command-logging: off"]
+
+      commandLoggingOn =
+        view (#consoleLogging % #commandLogging % #unConsoleLogCmdSwitch) c
+          || is (#fileLogging % _Just) c
+
+      prettyMField k Nothing = [k <> " off"]
+      prettyMField k (Just x) = [k, indentField (pretty x)]
 
 type CoreConfigArgs = CoreConfigP ConfigPhaseArgs
 

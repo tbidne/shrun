@@ -19,6 +19,7 @@ module Shrun.Command.Types.Internal
   )
 where
 
+import Numeric.Data.Positive.Internal (Positive (UnsafePositive))
 import Shrun.Prelude
 
 -- | Numeric index for each command, for handling command graph dependencies.
@@ -29,6 +30,7 @@ newtype CommandIndex = MkCommandIndex {unCommandIndex :: Positive Int}
   deriving stock (Generic, Show)
   deriving newtype (ASemigroup, Eq, Hashable, MSemigroup, MMonoid, Ord)
   deriving anyclass (NFData)
+  deriving (Pretty) via Int
 
 instance Enum CommandIndex where
   toEnum = unsafeFromInt

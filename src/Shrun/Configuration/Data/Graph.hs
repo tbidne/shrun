@@ -83,6 +83,9 @@ data EdgeLabel
   deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
   deriving anyclass (NFData)
 
+instance Pretty EdgeLabel where
+  pretty = displayEdgeLabel
+
 displayEdgeLabel :: (IsString s) => EdgeLabel -> s
 displayEdgeLabel = \case
   EdgeAnd -> "&"
@@ -214,6 +217,37 @@ instance
           (\b -> MkCommandGraph a1 b)
           (f a2)
   {-# INLINE labelOptic #-}
+
+instance Pretty CommandGraph where
+  pretty c =
+    vcat
+      [ "graph:",
+        prettyGraph,
+        "roots: " <> rs
+      ]
+    where
+      rs = hsep (punctuate comma . fmap pretty $ toList (c ^. #roots))
+
+      prettyGraph =
+        -- 3. Make the output slightly nicer.
+        massageGraph
+          -- 2. Use fgl's prettify to create a String rep.
+          . G.prettify
+          -- 1. Map graph to a less noisy one i.e. remove commands, and
+          -- prettyify indices.
+          . bimap mapCmd pretty
+          $ c
+          ^. #graph
+
+      -- G.prettify is pretty good, but we want to do some extra processing
+      -- e.g. indent and label each line.
+      massageGraph =
+        vcat
+          . fmap (indent 2 . pretty)
+          . T.lines
+          . pack
+
+      mapCmd = const (pretty @String " ")
 
 -- | Creates a command dependency graph from list of dependencies and typed
 -- commands.

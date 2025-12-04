@@ -1,12 +1,16 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Integration.Prelude
   ( module X,
     TestArgs (..),
     getExampleConfigOS,
+    getExampleConfigPathOS,
     getIntConfig,
     getIntConfigOS,
+    getIntConfigPathOS,
+    xdgDirPathOS,
     concatDirs,
     mkIdx,
 
@@ -110,22 +114,36 @@ instance
           (f a2)
   {-# INLINE labelOptic #-}
 
+xdgDirPathOS :: OsPath
+#if OSX
+xdgDirPathOS = [ospPathSep|test/integration/toml/osx|]
+#else
+xdgDirPathOS = [ospPathSep|test/integration/toml|]
+#endif
+
 -- | Retrieves file path from the examples directory, potentially appending
 -- the os onto the filename (e.g. osx).
 getExampleConfigOS :: FilePath
+getExampleConfigOS = unsafeDecode getExampleConfigPathOS
+
+getExampleConfigPathOS :: OsPath
 
 #if OSX
-getExampleConfigOS = concatDirs ["test", "functional", "example_osx.toml"]
+getExampleConfigPathOS = [ospPathSep|test/functional/example_osx.toml|]
 #else
-getExampleConfigOS = concatDirs ["examples", "config.toml"]
+getExampleConfigPathOS = [ospPathSep|examples/config.toml|]
 #endif
 
 -- | Retrieves file path from the integration directory, potentially appending
 -- the os onto the filename (e.g. osx).
 getIntConfigOS :: FilePath -> FilePath
-getIntConfigOS fileName =
-  concatDirs ["test", "integration", "toml", osExt fileName]
-    <> ".toml"
+getIntConfigOS = unsafeDecode . getIntConfigPathOS . unsafeEncode
+
+getIntConfigPathOS :: OsPath -> OsPath
+getIntConfigPathOS fileName =
+  [ospPathSep|test/integration/toml|]
+    </> osPathExt fileName
+    <> [osp|.toml|]
 
 -- | Retrieves file path from the integration directory.
 getIntConfig :: FilePath -> FilePath
@@ -136,11 +154,11 @@ getIntConfig fileName =
 concatDirs :: List FilePath -> FilePath
 concatDirs = foldr combineFilePaths []
 
-osExt :: FilePath -> FilePath
+osPathExt :: OsPath -> OsPath
 #if OSX
-osExt = (<> "_osx")
+osPathExt = (<> [osp|_osx|])
 #else
-osExt = id
+osPathExt = id
 #endif
 
 mkIdx :: Int -> CommandIndex

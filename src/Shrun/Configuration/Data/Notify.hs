@@ -149,6 +149,24 @@ data NotifyActionsActive
     NotifyActionsActiveAll NotifyActionComplete
   deriving stock (Eq, Show)
 
+instance Pretty NotifyActionsActive where
+  pretty = \case
+    NotifyActionsActiveComplete c ->
+      vcat
+        [ "action-complete: " <> pretty c,
+          "action-start: off"
+        ]
+    NotifyActionsActiveStart ->
+      vcat
+        [ "action-complete: off",
+          "action-start: on"
+        ]
+    NotifyActionsActiveAll c ->
+      vcat
+        [ "action-complete: " <> pretty c,
+          "action-start: on"
+        ]
+
 -- NOTE:
 --
 -- These optics do not exactly match the constructors because they are intended
@@ -249,6 +267,14 @@ instance Monoid NotifyToml where
         system = Nothing,
         timeout = Nothing
       }
+
+instance Pretty NotifyMerged where
+  pretty c =
+    vcat
+      [ pretty (c ^. #actions),
+        "system: " <> pretty (c ^. #system),
+        "timeout: " <> pretty (c ^. #timeout)
+      ]
 
 type NotifyArgs = NotifyP ConfigPhaseArgs
 

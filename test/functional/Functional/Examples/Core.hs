@@ -111,8 +111,8 @@ testLegendKeysCache ::
 testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr $ do
   xdgDir <- (</> xdgName) . view #tmpDir <$> testArgs
 
-  let env = mkEnv xdgDir
-      keysPath = xdgDir </> [ospPathSep|shrun/legend-keys.txt|]
+  env <- mkEnv xdgDir
+  let keysPath = xdgDir </> [ospPathSep|shrun/legend-keys.txt|]
 
   void $ runConfigIO env args1
   contents1 <- readLines keysPath
@@ -144,14 +144,17 @@ testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr
         p2 = unsafeDecode $ mkPath [osp|cache2.toml|]
         mkPath p = [ospPathSep|test/functional/|] </> p
 
-mkEnv :: OsPath -> ConfigIOEnv
-mkEnv d =
-  MkConfigIOEnv
-    { cwdDir = Nothing,
-      xdgDir = Just $ \case
-        XdgState -> d
-        other -> error $ "Unexpected xdg: " ++ show other
-    }
+mkEnv :: OsPath -> IO ConfigIOEnv
+mkEnv d = do
+  logs <- newIORef []
+  pure
+    $ MkConfigIOEnv
+      { cwdDir = Nothing,
+        logs,
+        xdgDir = Just $ \case
+          XdgState -> d
+          other -> error $ "Unexpected xdg: " ++ show other
+      }
 
 readLines :: OsPath -> IO (List Text)
 readLines p = do

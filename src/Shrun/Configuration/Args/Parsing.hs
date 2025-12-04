@@ -35,7 +35,6 @@ import Options.Applicative
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
-import Options.Applicative.Help.Pretty (Doc)
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse))
 import Paths_shrun qualified as Paths
@@ -57,6 +56,8 @@ data Args = MkArgs
     coreConfig :: CoreConfigArgs,
     -- | List of commands.
     commands :: NESeq Text,
+    -- | Whether to print the config.
+    dryRun :: Bool,
     -- | Command dependencies.
     edges :: Maybe (WithDisabled EdgeArgs)
   }
@@ -66,32 +67,40 @@ instance
   (k ~ A_Lens, a ~ Seq (WithDisabled OsPath), b ~ Seq (WithDisabled OsPath)) =>
   LabelOptic "configPaths" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
-    fmap (\b -> MkArgs b a2 a3 a4) (f a1)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
+    fmap (\b -> MkArgs b a2 a3 a4 a5) (f a1)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ CoreConfigArgs, b ~ CoreConfigArgs) =>
   LabelOptic "coreConfig" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
-    fmap (\b -> MkArgs a1 b a3 a4) (f a2)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
+    fmap (\b -> MkArgs a1 b a3 a4 a5) (f a2)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ NESeq Text, b ~ NESeq Text) =>
   LabelOptic "commands" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
-    fmap (\b -> MkArgs a1 a2 b a4) (f a3)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
+    fmap (\b -> MkArgs a1 a2 b a4 a5) (f a3)
+  {-# INLINE labelOptic #-}
+
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "dryRun" k Args Args a b
+  where
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
+    fmap (\b -> MkArgs a1 a2 a3 b a5) (f a4)
   {-# INLINE labelOptic #-}
 
 instance
   (k ~ A_Lens, a ~ Maybe (WithDisabled EdgeArgs), b ~ Maybe (WithDisabled EdgeArgs)) =>
   LabelOptic "edges" k Args Args a b
   where
-  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4) ->
-    fmap (\b -> MkArgs a1 a2 a3 b) (f a4)
+  labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
+    fmap (\b -> MkArgs a1 a2 a3 a4 b) (f a5)
   {-# INLINE labelOptic #-}
 
 -- | 'ParserInfo' type for parsing 'Args'.
@@ -187,10 +196,10 @@ parserInfoArgs prevKeys =
               ]
         ]
 
-    mkExample :: NonEmpty String -> Chunk Doc
+    mkExample :: NonEmpty String -> Chunk DocOA
     mkExample = identPara 2 5
 
-    identPara :: Int -> Int -> NonEmpty String -> Chunk Doc
+    identPara :: Int -> Int -> NonEmpty String -> Chunk DocOA
     identPara hIndent lIndent (h :| xs) =
       Chunk.vcatChunks
         . (\ys -> toChunk hIndent h : ys)
@@ -204,13 +213,15 @@ parserInfoArgs prevKeys =
 
 argsParser :: List String -> Parser Args
 argsParser prevKeys = do
-  -- defaultConfig in between configPath and edges for alphabetical order.
-  configPaths <- configParser <**> defaultConfig
+  configPaths <- configParser
   edges <- Graph.edgesParser
   coreConfig <-
     Core.coreParser
       <**> version
       <**> OA.helper
+
+  dryRun <- miscParser
+
   commands <- commandsParser prevKeys
 
   pure
@@ -218,8 +229,17 @@ argsParser prevKeys = do
       { configPaths,
         coreConfig,
         commands,
-        edges
+        edges,
+        dryRun
       }
+  where
+    -- Want to put this in its own group. We put defaultConfig first for
+    -- alphabetical order.
+    miscParser =
+      OA.parserOptionGroup
+        "Miscellaneous options:"
+        $ defaultConfig
+        <*> dryRunParser
 
 version :: Parser (a -> a)
 version = OA.infoOption versLong (OA.long "version" <> OA.short 'v' <> OA.hidden)
@@ -336,3 +356,11 @@ commandsParser prevKeys =
           OA.completeWith prevKeys,
           OA.completer EOC.compgenCwdPathsCompleter
         ]
+
+dryRunParser :: Parser Bool
+dryRunParser =
+  OA.switch
+    $ mconcat
+      [ OA.long "dry-run",
+        Utils.mkHelpNoLine "Prints the configuration and commands that would be run to stdout, then exits."
+      ]

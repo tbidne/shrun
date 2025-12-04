@@ -20,6 +20,11 @@ data FilePathDefault
 instance DecodeTOML FilePathDefault where
   tomlDecoder = tomlDecoder >>= parseFilePathDefault
 
+instance Pretty FilePathDefault where
+  pretty = \case
+    FPDefault -> "default"
+    FPManual p -> pretty $ decodeLenient p
+
 parseFilePathDefault :: (MonadFail m) => Text -> m FilePathDefault
 parseFilePathDefault = \case
   "default" -> pure FPDefault

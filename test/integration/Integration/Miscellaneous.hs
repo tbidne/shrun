@@ -98,7 +98,14 @@ import Shrun.Configuration.Data.LegendKeysCache
       ),
   )
 import Shrun.Configuration.Data.MergedConfig
-  ( MergedConfig (MkMergedConfig, commandGraph, commands, coreConfig),
+  ( MergedConfig
+      ( MkMergedConfig,
+        commandGraph,
+        commands,
+        coreConfig,
+        dryRun,
+        tomlPaths
+      ),
   )
 import Shrun.Configuration.Data.Notify
   ( NotifyActionsActive (NotifyActionsActiveAll),
@@ -496,9 +503,16 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
           -- file logging
           MkSomeSetter (#coreConfig % #fileLogging %? #file % #path % _FPManual) [osp|cfg3 file|],
           -- notify
-          MkSomeSetter (#coreConfig % #notify) Nothing
+          MkSomeSetter (#coreConfig % #notify) Nothing,
+          -- toml paths
+          MkSomeSetter #tomlPaths tomlPaths
         ]
         expectedMultiConfig
+
+    tomlPaths =
+      [ [ospPathSep|test/integration/toml/cfg2.toml|],
+        [ospPathSep|test/integration/toml/cfg3.toml|]
+      ]
 
     commands =
       unsafeListToNESeq
@@ -584,7 +598,14 @@ expectedMultiConfig =
                   }
           },
       commandGraph = Graph.mkEdgelessGraph commands,
-      commands
+      commands,
+      dryRun = False,
+      tomlPaths =
+        [ xdgDirPathOS </> [osp|config.toml|],
+          [ospPathSep|test/integration/toml/cfg1.toml|],
+          [ospPathSep|test/integration/toml/cfg2.toml|],
+          [ospPathSep|test/integration/toml/cfg3.toml|]
+        ]
     }
   where
     commands =

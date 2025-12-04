@@ -113,6 +113,9 @@ instance Default ReadSize where
 instance DecodeTOML ReadSize where
   tomlDecoder = parseReadSize tomlDecoder
 
+instance Pretty ReadSize where
+  pretty (MkReadSize b) = prettyBytesInt b
+
 parseReadSize :: (MonadFail m) => m Text -> m ReadSize
 parseReadSize getTxt = do
   byteTxt <- getTxt

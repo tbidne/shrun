@@ -18,6 +18,16 @@ module Shrun.Prelude
   ( -- * Total versions of partial functions
     headMaybe,
 
+    -- * Optparse
+    DocOA,
+
+    -- * Pretty printing
+    PrettySwitch (..),
+    indentField,
+    prettyBytesFloat,
+    prettyBytesInt,
+    prettyMaybe,
+
     -- * Misc utilities
     EitherString (..),
     fromFoldable,
@@ -128,9 +138,16 @@ import Data.Bool as X (Bool (False, True), not, otherwise, (&&), (||))
 import Data.ByteString as X (ByteString)
 import Data.Bytes as X
   ( Bytes (MkBytes),
+    FloatingFormatter,
+    Fromℤ,
     Size (B),
+    Sized,
     _MkBytes,
   )
+import Data.Bytes qualified as Bytes
+import Data.Bytes.Formatting (IntegralFormatter)
+import Data.Bytes.Formatting qualified as BytesFmt
+import Data.Bytes.Formatting.Base (BaseFormatter, Formatter)
 import Data.Char as X (Char)
 import Data.Coerce as X (coerce)
 import Data.Either as X (Either (Left, Right))
@@ -174,6 +191,7 @@ import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Set as X (Set)
+import Data.Singletons (SingI)
 import Data.String as X (IsString (fromString), String)
 import Data.Text as X (Text, pack, unpack)
 import Data.Text qualified as T
@@ -282,10 +300,12 @@ import GHC.Num as X (Num ((*), (+), (-)))
 import GHC.Real as X (Integral, truncate)
 import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack, withFrozenCallStack)
+import Numeric.Algebra (MGroup)
 import Numeric.Algebra as X
   ( ASemigroup ((.+.)),
     MMonoid (one),
     MSemigroup,
+    Normed,
   )
 import Numeric.Convert.Integer as X
   ( FromInteger (fromZ),
@@ -351,6 +371,17 @@ import Optics.Core as X
     _Right,
   )
 import Optics.Core.Extras as X (is)
+import Options.Applicative.Help qualified as H
+import Prettyprinter as X
+  ( Doc,
+    Pretty (pretty),
+    comma,
+    hsep,
+    indent,
+    nest,
+    punctuate,
+    vcat,
+  )
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.Exit as X (ExitCode (ExitFailure, ExitSuccess))
 import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)
@@ -373,6 +404,7 @@ import TOML as X
     runDecoder,
     typeMismatch,
   )
+import Text.Printf (PrintfArg)
 import Type.Reflection (Typeable)
 import Type.Reflection qualified as Typeable
 import Prelude as X (seq)
@@ -589,3 +621,65 @@ catSeqMaybes = foldl' go Empty
   where
     go acc Nothing = acc
     go acc (Just x) = acc :|> x
+
+-- | Alias for optparse's Doc, so we do not clash with prettyprinter's Doc.
+-- The former is an alias for the latter's Doc AnsiStyle.
+type DocOA = H.Doc
+
+newtype PrettySwitch = MkPrettySwitch Bool
+
+instance Pretty PrettySwitch where
+  pretty = \case
+    MkPrettySwitch True -> "on"
+    MkPrettySwitch False -> "off"
+
+indentField :: Doc ann -> Doc ann
+indentField = indent 2
+
+prettyBytesFloat ::
+  ( BaseFormatter a ~ FloatingFormatter,
+    Fromℤ a,
+    MGroup a,
+    Normed a,
+    Ord a,
+    PrintfArg a,
+    SingI s
+  ) =>
+  Bytes s a ->
+  Doc ann
+prettyBytesFloat = prettyBytes (BytesFmt.MkFloatingFormatter (Just 2))
+
+prettyBytesInt ::
+  ( BaseFormatter a ~ IntegralFormatter,
+    Fromℤ a,
+    MGroup a,
+    Normed a,
+    Ord a,
+    PrintfArg a,
+    SingI s
+  ) =>
+  Bytes s a ->
+  Doc ann
+prettyBytesInt = prettyBytes BytesFmt.MkIntegralFormatter
+
+prettyBytes ::
+  ( BaseFormatter a ~ fmt,
+    Fromℤ a,
+    Formatter fmt,
+    MGroup a,
+    Normed a,
+    Ord a,
+    PrintfArg a,
+    SingI s
+  ) =>
+  fmt ->
+  Bytes s a ->
+  Doc ann
+prettyBytes fmt =
+  pretty
+    . BytesFmt.formatSized fmt BytesFmt.sizedFormatterNatural
+    . Bytes.normalize
+
+prettyMaybe :: (Pretty a) => Maybe a -> Doc ann
+prettyMaybe Nothing = "off"
+prettyMaybe (Just x) = pretty x

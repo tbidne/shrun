@@ -41,7 +41,7 @@ newtype Truncation a = MkTruncation
   { unTruncation :: Int
   }
   deriving stock (Eq, Ord, Show)
-  deriving (Num) via Int
+  deriving (Num, Pretty) via Int
 
 instance
   (k ~ An_Iso, a ~ Int, b ~ Int) =>

@@ -96,6 +96,8 @@ for versions < 1.
   for previously loaded legend keys. Legend keys are saved with the
   new `--legend-keys-cache` option.
 * Added `--notify-action-start (on | off)` for command start notifications.
+* Added `--dry-run` which prints the configuration and commands before
+  exiting.
 
 ### Fixed
 * Improved final error output, so it is more likely that the actual error

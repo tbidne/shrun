@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Shrun.Configuration.Data.MergedConfig
@@ -17,7 +18,11 @@ data MergedConfig = MkMergedConfig
     -- | Command graph.
     commandGraph :: CommandGraph,
     -- | Commands.
-    commands :: NESeq CommandP1
+    commands :: NESeq CommandP1,
+    -- | Whether to print the config.
+    dryRun :: Bool,
+    -- | Toml paths used in this config.
+    tomlPaths :: Seq OsPath
   }
   deriving stock (Eq, Show)
 
@@ -30,9 +35,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkMergedConfig a1 a2 a3) ->
+      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
         fmap
-          (\b -> MkMergedConfig b a2 a3)
+          (\b -> MkMergedConfig b a2 a3 a4 a5)
           (f a1)
   {-# INLINE labelOptic #-}
 
@@ -45,9 +50,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkMergedConfig a1 a2 a3) ->
+      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
         fmap
-          (\b -> MkMergedConfig a1 b a3)
+          (\b -> MkMergedConfig a1 b a3 a4 a5)
           (f a2)
   {-# INLINE labelOptic #-}
 
@@ -60,8 +65,71 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkMergedConfig a1 a2 a3) ->
+      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
         fmap
-          (\b -> MkMergedConfig a1 a2 b)
+          (\b -> MkMergedConfig a1 a2 b a4 a5)
           (f a3)
   {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ Bool,
+    b ~ Bool
+  ) =>
+  LabelOptic "dryRun" k MergedConfig MergedConfig a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkMergedConfig a1 a2 a3 b a5)
+          (f a4)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ Seq OsPath,
+    b ~ Seq OsPath
+  ) =>
+  LabelOptic "tomlPaths" k MergedConfig MergedConfig a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkMergedConfig a1 a2 a3 a4 a5) ->
+        fmap
+          (\b -> MkMergedConfig a1 a2 a3 a4 b)
+          (f a5)
+  {-# INLINE labelOptic #-}
+
+instance Pretty MergedConfig where
+  pretty c =
+    vcat
+      . toList
+      $ prettyConfigPaths
+      <> [ "config:",
+           indentField $ pretty $ c ^. #coreConfig,
+           "command-graph:",
+           indentField $ pretty $ c ^. #commandGraph,
+           "commands:",
+           indentField prettyCommands
+         ]
+    where
+      prettyCommands =
+        vcat
+          . toList
+          . fmap prettyCommand
+          $ c
+          ^. #commands
+
+      prettyCommand cmd =
+        mconcat
+          [ pretty (cmd ^. #index),
+            ". ",
+            pretty (cmd ^. #command)
+          ]
+
+      prettyConfigPaths = case c ^. #tomlPaths of
+        Empty -> ["config-paths: off"]
+        ps@(_ :<| _) ->
+          "config-paths:"
+            :<| (indentField . ("- " <>) . pretty . decodeLenient <$> ps)

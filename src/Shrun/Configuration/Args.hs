@@ -10,6 +10,7 @@ import Shrun.Configuration.Args.Parsing
         commands,
         configPaths,
         coreConfig,
+        dryRun,
         edges
       ),
   )
@@ -22,5 +23,6 @@ defaultArgs commands =
     { configPaths = Empty,
       coreConfig = def,
       commands,
-      edges = Nothing
+      edges = Nothing,
+      dryRun = False
     }

@@ -14,6 +14,7 @@ import Shrun.Prelude
 newtype KeyHideSwitch = MkKeyHideSwitch Bool
   deriving stock (Bounded, Eq, Ord, Show)
   deriving newtype (Enum)
+  deriving (Pretty) via PrettySwitch
 
 instance DecodeTOML KeyHideSwitch where
   tomlDecoder = MkKeyHideSwitch <$> (tomlDecoder >>= parseSwitch)
