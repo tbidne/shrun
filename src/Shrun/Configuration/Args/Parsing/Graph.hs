@@ -71,12 +71,12 @@ edgesParser =
     intro =
       mconcat
         [ "Comma-separated list, specifying command dependencies, based on ",
-          "their order. There are three edge types:"
+          "their left-to-right order. There are three edge types:"
         ]
 
-    andEdges = "and: 'cmd1 & cmd2', runs cmd2 iff cmd1 succeeds."
-    orEdges = "or: 'cmd1 | cmd2', runs cmd2 iff cmd1 fails."
-    anyEdges = "any: 'cmd1 ; cmd2', runs cmd2 iff cmd1 finishes."
+    andEdges = "and: '1 & 2', runs cmd2 iff cmd1 succeeds."
+    orEdges = "or: '1 | 2', runs cmd2 iff cmd1 fails."
+    anyEdges = "any: '1 ; 2', runs cmd2 iff cmd1 finishes."
 
     outro =
       Chunk.paragraph

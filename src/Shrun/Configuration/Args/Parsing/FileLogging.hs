@@ -82,7 +82,7 @@ fileLogParser =
     helpTxt =
       mconcat
         [ "If a path is supplied, all logs will additionally be written to ",
-          "the supplied file. Furthermore, command logs will be written to ",
+          "the supplied file. Furthermore, 'command' logs will be written to ",
           "the file irrespective of --console-log-command. Console logging is ",
           "unaffected. This can be useful for investigating command failures. ",
           "If the string 'default' is given, then we write to the XDG state ",

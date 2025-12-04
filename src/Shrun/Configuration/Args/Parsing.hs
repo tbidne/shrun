@@ -288,7 +288,7 @@ defaultConfig =
     (unpack $$TH.defaultToml)
     (OA.long "default-config" <> Utils.mkHelp help)
   where
-    help = "Writes a default config.toml file to stdout."
+    help = "Writes a default toml config file to stdout."
 
 configParser :: Parser (Seq (WithDisabled OsPath))
 configParser =

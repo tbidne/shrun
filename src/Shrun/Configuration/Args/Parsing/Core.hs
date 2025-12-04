@@ -41,14 +41,18 @@ coreParser = do
   legendKeysCache <- legendKeysCacheParser
   timeout <- timeoutParser
 
-  commonLogging <-
-    OA.parserOptionGroup "Common Logging options:" CommonLogging.commonLoggingParser
-  commandLogging <-
-    OA.parserOptionGroup "Command Logging options:" CommandLogging.commandLoggingParser
-  consoleLogging <-
-    OA.parserOptionGroup "Console Logging options:" ConsoleLogging.consoleLoggingParser
-  fileLogging <-
-    OA.parserOptionGroup "File Logging options:" FileLogging.fileLoggingParser
+  ~( commonLogging,
+     commandLogging,
+     consoleLogging,
+     fileLogging
+     ) <-
+    OA.parserOptionGroup "Logging options:"
+      $ (,,,)
+      <$> OA.parserOptionGroup "Common (console and file logs):" CommonLogging.commonLoggingParser
+      <*> OA.parserOptionGroup "Command ('command' logs):" CommandLogging.commandLoggingParser
+      <*> OA.parserOptionGroup "Console:" ConsoleLogging.consoleLoggingParser
+      <*> OA.parserOptionGroup "File:" FileLogging.fileLoggingParser
+
   notify <- OA.parserOptionGroup "Notifications options:" Notify.notifyParser
 
   pure
