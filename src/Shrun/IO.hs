@@ -766,39 +766,10 @@ killPids ::
   List Pid ->
   m ()
 killPids [] = pure ()
-killPids pids = do
-  asks getCleanup >>= \case
-    Nothing -> pure ()
-    Just cleanup -> do
-      (ec, stdout, stderr) <-
-        readProcessTotal
-          (cleanup ^. #killPidsExe)
-          ("-15" : fmap show pids)
-          "killChildPids"
-
-      let msg = case ec of
-            ExitSuccess ->
-              fromString
-                $ mconcat
-                  [ "Successfully ran kill with: ",
-                    unpack $ T.intercalate "," pidsTxt
-                  ]
-            ExitFailure _ ->
-              fromString
-                $ mconcat
-                  [ "Kill with '",
-                    unpack $ T.intercalate "," pidsTxt,
-                    "' failed: ",
-                    "': out: '",
-                    stdout,
-                    "', err: '",
-                    stderr,
-                    "'"
-                  ]
-
-      Logging.putDebugLogDirect msg
-  where
-    pidsTxt = fmap showt pids
+killPids pids =
+  void
+    . runKill "-15"
+    $ pids
 
 canKillPid ::
   forall env m.
@@ -814,28 +785,49 @@ canKillPid ::
   ) =>
   Pid ->
   m Bool
-canKillPid pid = do
+canKillPid = runKill "-0" . (: [])
+
+runKill ::
+  forall env m.
+  ( HasCallStack,
+    HasCommands env,
+    HasLogging env m,
+    MonadCatch m,
+    MonadHandleWriter m,
+    MonadProcess m,
+    MonadReader env m,
+    MonadRegionLogger m,
+    MonadTime m
+  ) =>
+  String ->
+  List Pid ->
+  m Bool
+runKill signal pids = do
   asks getCleanup >>= \case
     Nothing -> pure False
     Just cleanup -> do
       (ec, stdout, stderr) <-
         readProcessTotal
           (cleanup ^. #killPidsExe)
-          ["-0", show pid]
-          "canKillPid"
+          (signal : pidArgs)
+          ("runKill " <> signal)
 
       let msg = case ec of
             ExitSuccess ->
               fromString
                 $ mconcat
-                  [ "Successfully ran kill -0 with: ",
-                    show pid
+                  [ "Successfully ran kill ",
+                    signal,
+                    " with: ",
+                    pidDispStr
                   ]
             ExitFailure _ ->
               fromString
                 $ mconcat
-                  [ "Kill -0 with '",
-                    show pid,
+                  [ "Kill ",
+                    signal,
+                    " with '",
+                    pidDispStr,
                     "' failed: ",
                     "': out: '",
                     stdout,
@@ -848,6 +840,9 @@ canKillPid pid = do
       case ec of
         ExitSuccess -> pure True
         ExitFailure _ -> pure False
+  where
+    pidArgs = show <$> pids
+    pidDispStr = unpack $ T.intercalate ", " (showt <$> pids)
 
 readProcessTotal ::
   ( HasCallStack,
