@@ -144,8 +144,6 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
-The current "blessed" version is `ghc-9.12.2`.
-
 ### Build Shrun
 
 Once you have `cabal` and `ghc`, `shrun` can be built locally with `cabal build` or installed globally (e.g. `~/.local/bin/shrun`) with `cabal install`.
@@ -160,7 +158,7 @@ Once you have `cabal` and `ghc`, `shrun` can be built locally with `cabal build`
 >
 > Nix does not require such a workaround, and stack does not seem to require it either.
 
-For further reproducibility, an optional freeze files can be used for the "blessed" compiler.
+For further reproducibility, an optional freeze file can be used for the "blessed" compiler.
 
 ```sh
 cabal build --project-file cabal.ghc<XYZ>.project
