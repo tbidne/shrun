@@ -27,6 +27,7 @@ module Shrun.Prelude
     prettyBytesFloat,
     prettyBytesInt,
     prettyMaybe,
+    prettyToText,
 
     -- * Misc utilities
     EitherString (..),
@@ -159,7 +160,7 @@ import Data.Foldable as X
     length,
     traverse_,
   )
-import Data.Foldable1 as X (Foldable1, foldr1)
+import Data.Foldable1 as X (Foldable1, fold1, foldr1)
 import Data.Function as X (const, flip, id, ($), (&))
 import Data.Functor as X
   ( Functor (fmap),
@@ -382,6 +383,8 @@ import Prettyprinter as X
     punctuate,
     vcat,
   )
+import Prettyprinter qualified
+import Prettyprinter.Render.Text qualified as PrettyprinterT
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.Exit as X (ExitCode (ExitFailure, ExitSuccess))
 import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)
@@ -683,3 +686,9 @@ prettyBytes fmt =
 prettyMaybe :: (Pretty a) => Maybe a -> Doc ann
 prettyMaybe Nothing = "off"
 prettyMaybe (Just x) = pretty x
+
+prettyToText :: (Pretty a) => a -> Text
+prettyToText =
+  PrettyprinterT.renderStrict
+    . Prettyprinter.layoutPretty Prettyprinter.defaultLayoutOptions
+    . pretty

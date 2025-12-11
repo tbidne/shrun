@@ -19,5 +19,3 @@
 
 - ignore:
     name: "Replace case with maybe"
-    within:
-      - "Shrun.Configuration.Args.Parsing.Graph"
