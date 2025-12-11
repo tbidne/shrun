@@ -20,6 +20,14 @@ tests :: TestTree
 tests =
   testGroup
     "Shrun.Configuration.Args.Parsing.Graph"
+    [ successTests,
+      failureTests
+    ]
+
+successTests :: TestTree
+successTests =
+  testGroup
+    "Success"
     [ testCommandGraph,
       testCommandGraphAnd,
       testCommandGraphOr,
@@ -36,18 +44,7 @@ tests =
       testCommandGraphComplex,
       testCommandGraphSeqAnd,
       testCommandGraphSeqOr,
-      testCommandGraphSeqAny,
-      testCommandGraphEmptyFail,
-      testCommandGraphNoSrcFail,
-      testCommandGraphNoDestFail,
-      testCommandGraphEmptySetFails,
-      testCommandGraphBadSetRangeFails,
-      testCommandGraphBadArrowRangeFails,
-      testCommandGraphBadArrowRangeFails2,
-      testCommandGraphIndexFails,
-      testCommandGraphIndexSetFails,
-      testBadArrowFails,
-      testBadArrowFails2
+      testCommandGraphSeqAny
     ]
 
 testCommandGraph :: TestTree
@@ -122,8 +119,8 @@ testCommandGraphSetRange =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "1 & {2, 4..6, 7..7}"
-    es = mkEdgesAnd [(1, 2), (1, 4), (1, 5), (1, 6), (1, 7)]
+    depsStr = "1 & {2, 4..6, 7..8}"
+    es = mkEdgesAnd [(1, 2), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8)]
 
 testCommandGraphOneRangeEdge :: TestTree
 testCommandGraphOneRangeEdge =
@@ -172,8 +169,8 @@ testCommandGraphRangeEdge =
   where
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges es
-    depsStr = "1 & 3 &.. 6 & 7&..7"
-    es = mkEdgesAnd [(1, 3), (3, 4), (4, 5), (5, 6), (6, 7)]
+    depsStr = "1 & 3 &.. 6 & 7&..8"
+    es = mkEdgesAnd [(1, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8)]
 
 testCommandGraphComplex :: TestTree
 testCommandGraphComplex =
@@ -246,6 +243,26 @@ testCommandGraphSeqAny =
     argList = ["--edges", ";;;", "command"]
     expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialAny))
 
+failureTests :: TestTree
+failureTests =
+  testGroup
+    "Failure"
+    [ testCommandGraphEmptyFail,
+      testCommandGraphNoSrcFail,
+      testCommandGraphNoDestFail,
+      testCommandGraphNoDestDotsFail,
+      testCommandGraphEmptySetFails,
+      testCommandGraphBadSetRangeFails,
+      testCommandGraphBadSetRangeFails2,
+      testCommandGraphBadArrowRangeFails,
+      testCommandGraphBadArrowRangeFails2,
+      testCommandGraphBadArrowRangeFails3,
+      testCommandGraphIndexFails,
+      testCommandGraphIndexSetFails,
+      testBadArrowFails,
+      testBadArrowFails2
+    ]
+
 testCommandGraphEmptyFail :: TestTree
 testCommandGraphEmptyFail =
   testPropertyNamed "Parses empty --edges failure" "testCommandGraphEmptyFail"
@@ -265,8 +282,9 @@ testCommandGraphNoSrcFail =
         [ "option --edges: 1:1:",
           "  |",
           "1 | & 3",
-          "  | ^",
-          "Expected a set, edge range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
+          "  | ^^^",
+          "unexpected \"& 3\"",
+          "expecting comma-delimited edge(s) e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\" or sequential literals (\"&&&\", \"|||\", \";;;\")"
         ]
 
 testCommandGraphNoDestFail :: TestTree
@@ -282,7 +300,25 @@ testCommandGraphNoDestFail =
           "  |",
           "1 | 3 & ",
           "  |     ^",
-          "Expected a set, edge range, or index. Examples: '{1,2}', '1 &.. 3', '1'."
+          "unexpected end of input",
+          "expecting a vertex (e.g. '3', '{1,5}'), range ('..'), or white space"
+        ]
+
+testCommandGraphNoDestDotsFail :: TestTree
+testCommandGraphNoDestDotsFail =
+  testPropertyNamed "Parses --edges 3 &.." "testCommandGraphNoDestDotsFail"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", " 3 &.. ", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:7:",
+          "  |",
+          "1 | 3 &.. ",
+          "  |       ^",
+          "unexpected end of input",
+          "expecting a single vertex (e.g. '3') or white space"
         ]
 
 testCommandGraphEmptySetFails :: TestTree
@@ -294,10 +330,10 @@ testCommandGraphEmptySetFails =
 
     expected =
       T.unlines
-        [ "option --edges: 1:5:",
+        [ "option --edges: 1:7:",
           "  |",
           "1 | 1 & {} & 3",
-          "  |     ^",
+          "  |       ^",
           "Empty set"
         ]
 
@@ -310,11 +346,27 @@ testCommandGraphBadSetRangeFails =
 
     expected =
       T.unlines
-        [ "option --edges: 1:5:",
+        [ "option --edges: 1:6:",
           "  |",
           "1 | 1 & {3..2}",
-          "  |     ^",
-          "Bad range. Expected 3 <= 2"
+          "  |      ^",
+          "Bad range. Expected 3 < 2"
+        ]
+
+testCommandGraphBadSetRangeFails2 :: TestTree
+testCommandGraphBadSetRangeFails2 =
+  testPropertyNamed "Parses --edges bad set range failure 2" "testCommandGraphBadSetRangeFails2"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "1 & {2..2}", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:6:",
+          "  |",
+          "1 | 1 & {2..2}",
+          "  |      ^",
+          "Bad range. Expected 2 < 2"
         ]
 
 testCommandGraphBadArrowRangeFails :: TestTree
@@ -326,11 +378,11 @@ testCommandGraphBadArrowRangeFails =
 
     expected =
       T.unlines
-        [ "option --edges: 1:5:",
+        [ "option --edges: 1:10:",
           "  |",
           "1 | 1 & 3&..2",
-          "  |     ^",
-          "Bad range. Expected 3 <= 2"
+          "  |          ^",
+          "Bad range. Expected 3 < 2"
         ]
 
 testCommandGraphBadArrowRangeFails2 :: TestTree
@@ -342,11 +394,27 @@ testCommandGraphBadArrowRangeFails2 =
 
     expected =
       T.unlines
-        [ "option --edges: 1:5:",
+        [ "option --edges: 1:8:",
           "  |",
           "1 | 1 & 3..2",
-          "  |     ^",
-          "Found '..' in edge range syntax. Perhaps you wanted e.g. '&..'?"
+          "  |        ^",
+          "Expected an edge, found '..'. Perhaps you wanted an edge range e.g. '&..'?"
+        ]
+
+testCommandGraphBadArrowRangeFails3 :: TestTree
+testCommandGraphBadArrowRangeFails3 =
+  testPropertyNamed "Parses --edges bad edge range failure 3" "testCommandGraphBadArrowRangeFails3"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "1 & 2&..2", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:10:",
+          "  |",
+          "1 | 1 & 2&..2",
+          "  |          ^",
+          "Bad range. Expected 2 < 2"
         ]
 
 testCommandGraphIndexFails :: TestTree
@@ -362,7 +430,8 @@ testCommandGraphIndexFails =
           "  |",
           "1 | 1",
           "  |  ^",
-          "Empty edges"
+          "unexpected end of input",
+          "expecting an edge ('&', '|', ';'), digit, or white space"
         ]
 
 testCommandGraphIndexSetFails :: TestTree
@@ -378,7 +447,8 @@ testCommandGraphIndexSetFails =
           "  |",
           "1 | {1,2}",
           "  |      ^",
-          "Empty edges"
+          "unexpected end of input",
+          "expecting an edge ('&', '|', ';') or white space"
         ]
 
 testBadArrowFails :: TestTree
@@ -394,7 +464,8 @@ testBadArrowFails =
           "  |",
           "1 | 1 -> 2",
           "  |   ^",
-          "Expected an edge or edge range: '&', '|', ';', '&..', '|..', ';..'."
+          "unexpected '-'",
+          "expecting an edge ('&', '|', ';') or white space"
         ]
 
 testBadArrowFails2 :: TestTree
@@ -410,5 +481,6 @@ testBadArrowFails2 =
           "  |",
           "1 | 1 % 2",
           "  |   ^",
-          "Expected an edge or edge range: '&', '|', ';', '&..', '|..', ';..'."
+          "unexpected '%'",
+          "expecting an edge ('&', '|', ';') or white space"
         ]

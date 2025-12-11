@@ -89,6 +89,9 @@ library
     Shrun.Configuration.Args.Parsing.Core
     Shrun.Configuration.Args.Parsing.FileLogging
     Shrun.Configuration.Args.Parsing.Graph
+    Shrun.Configuration.Args.Parsing.Graph.Edges
+    Shrun.Configuration.Args.Parsing.Graph.Sequential
+    Shrun.Configuration.Args.Parsing.Graph.Utils
     Shrun.Configuration.Args.Parsing.Notify
     Shrun.Configuration.Args.Parsing.TH
     Shrun.Configuration.Args.Parsing.Utils

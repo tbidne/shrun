@@ -10,6 +10,7 @@ module Shrun.Command.Types.Internal
     succ,
     addNN,
     range,
+    joinRange,
 
     -- * Vertex
     Vertex,
@@ -55,18 +56,30 @@ addNN idx = MkCommandIndex . unsafePositive . (i +) . view #unNonNegative
   where
     i = idx ^. #unCommandIndex % #unPositive
 
-range :: CommandIndex -> CommandIndex -> Either String (NESeq CommandIndex)
+-- | Collapses 'range' output back into a single 'NESeq'.
+joinRange :: (a, NESeq a) -> NESeq a
+joinRange (x1, x2 :<|| xs) = x1 :<|| x2 :<| xs
+
+-- | Given m, n s.t. m < n, returns [m .. n]. Notice this is /strictly/
+-- increasing.
+range :: CommandIndex -> CommandIndex -> Either String (Tuple2 CommandIndex (NESeq CommandIndex))
 range (MkCommandIndex (MkPositive lower)) (MkCommandIndex (MkPositive upper)) =
-  if lower <= upper
-    then Right $ MkCommandIndex . unsafePositive <$> lower :<|| [lower + 1 .. upper]
+  if lower < upper
+    then case lower :<|| [lower + 1 .. upper] of
+      _ :<|| Empty -> Left err -- impossible!
+      x1 :<|| x2 :<| xs -> Right (f x1, f <$> (x2 :<|| xs))
     else
-      Left
-        $ mconcat
-          [ "Bad range. Expected ",
-            show lower,
-            " <= ",
-            show upper
-          ]
+      Left err
+  where
+    f = MkCommandIndex . unsafePositive
+
+    err =
+      mconcat
+        [ "Bad range. Expected ",
+          show lower,
+          " < ",
+          show upper
+        ]
 
 fromPositive :: Positive Int -> CommandIndex
 fromPositive = MkCommandIndex
