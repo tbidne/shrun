@@ -173,7 +173,9 @@ configToLineTrunc detectRef (Just Detected) = do
             putTextLn msg
             writeIORef detectRef DetectFailed
             pure defLen
-          Right w -> pure $ w ∸ 1
+          Right w -> do
+            let w' = w ∸ 1
+            writeIORef detectRef (DetectSucceeded w') $> w'
 
   pure $ Just $ MkTruncation width
   where
