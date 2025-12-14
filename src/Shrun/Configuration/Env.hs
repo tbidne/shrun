@@ -22,8 +22,6 @@ import Data.Set qualified as Set
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
-import Prettyprinter qualified
-import Prettyprinter.Render.Text qualified as PrettyprinterT
 import Shrun (runShellT, shrun)
 import Shrun.Command.Types (CommandStatus (CommandWaiting))
 import Shrun.Configuration (mergeConfig)
@@ -281,9 +279,7 @@ fromMergedConfig ::
 fromMergedConfig cfg onEnv = do
   when (cfg ^. #dryRun) $ do
     putTextLn
-      . PrettyprinterT.renderStrict
-      . Prettyprinter.layoutPretty Prettyprinter.defaultLayoutOptions
-      . pretty
+      . prettyToText
       $ cfg
     throwM ExitSuccess
 
