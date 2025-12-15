@@ -49,7 +49,7 @@ coreParser = do
     OA.parserOptionGroup "Logging options:"
       $ (,,,)
       <$> OA.parserOptionGroup "Common (console and file logs):" CommonLogging.commonLoggingParser
-      <*> OA.parserOptionGroup "Command ('command' logs):" CommandLogging.commandLoggingParser
+      <*> OA.parserOptionGroup cmdLogGroup CommandLogging.commandLoggingParser
       <*> OA.parserOptionGroup "Console:" ConsoleLogging.consoleLoggingParser
       <*> OA.parserOptionGroup "File:" FileLogging.fileLoggingParser
 
@@ -66,6 +66,9 @@ coreParser = do
         fileLogging,
         notify
       }
+  where
+    cmdLogGroup =
+      "Command (--console-log-command and --file-log)"
 
 timeoutParser :: Parser (Maybe (WithDisabled Timeout))
 timeoutParser =
