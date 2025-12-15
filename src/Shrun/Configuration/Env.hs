@@ -340,9 +340,11 @@ getShrunXdgConfig = getXdgConfig [osp|shrun|]
 -- | Given the xdg state dir, reads the legend key cache, if it exists.
 readPreviousLegendKeys ::
   ( HasCallStack,
+    MonadCatch m,
     MonadFileReader m,
     MonadPathReader m,
-    MonadThrow m
+    MonadPathWriter m,
+    MonadTerminal m
   ) =>
   OsPath ->
   m (List Text)
@@ -350,8 +352,13 @@ readPreviousLegendKeys xdgState = do
   exists <- PR.doesFileExist keysPath
   if exists
     then do
-      contents <- readFileUtf8ThrowM keysPath
-      pure $ T.lines $ T.strip contents
+      -- Don't let a read keys error take down shrun.
+      tryMySync (readFileUtf8ThrowM keysPath) >>= \case
+        Left err -> do
+          putStrLn $ "Error reading legend keys cache: " <> displayException err
+          void $ tryMySync $ PW.removePathForcibly keysPath
+          pure []
+        Right contents -> pure $ T.lines $ T.strip contents
     else pure []
   where
     keysPath = mkLegendKeysPath xdgState
