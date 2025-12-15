@@ -24,13 +24,7 @@ import Text.Megaparsec qualified as MP
 --
 -- After we are done parsing all edges, we can combine them.
 parseEdges :: MParser (NESeq Edge)
-parseEdges = MP.label label parseEdges'
-  where
-    label =
-      "comma-delimited edge(s) e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\""
-
-parseEdges' :: MParser (NESeq Edge)
-parseEdges' = MP.label label $ do
+parseEdges = MP.label label $ do
   Utils.optionalTry Utils.parseOneIndex >>= \case
     Just s -> parseEdgeIndex s
     Nothing -> Utils.parseIndexSet >>= parseEdgeIndexSet
