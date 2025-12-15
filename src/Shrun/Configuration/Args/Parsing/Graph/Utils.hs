@@ -12,6 +12,7 @@ module Shrun.Configuration.Args.Parsing.Graph.Utils
     runFatalErrors1,
 
     -- * Combinators
+    failIfNext,
     noLabel,
     optionalTry,
     parseIfNoComma,
@@ -56,15 +57,15 @@ type MParser a = Parsec FatalError Text a
 --   - "{1, 4..6}"
 -- @
 parseIndexSet :: MParser (NESeq CommandIndex)
-parseIndexSet = lexeme $ do
-  lexeme $ MPC.char '{'
-  MP.optional (MPC.char '}') >>= \case
+parseIndexSet = do
+  char '{'
+  MP.optional (char '}') >>= \case
     Nothing -> pure ()
     Just _ -> MP.customFailure (MkFatalError "Empty set")
 
   k <- parseElem
   ks <- many (parseComma *> parseElem)
-  MPC.char '}'
+  char '}'
   pure (join $ k :<|| listToSeq ks)
   where
     parseElem =
@@ -75,8 +76,8 @@ parseIndexSet = lexeme $ do
 
 -- | Parses a single index i.e. a positive integer.
 parseOneIndex :: MParser CommandIndex
-parseOneIndex = lexeme $ do
-  txt <- MP.takeWhile1P (Just "digit") Ch.isDigit
+parseOneIndex = do
+  txt <- lexeme $ MP.takeWhile1P (Just "digit") Ch.isDigit
   case TR.readMaybe @Int (unpack txt) of
     Just n -> case mkPositive n of
       Right p -> pure $ MkCommandIndex p
@@ -90,7 +91,7 @@ parseOneIndex = lexeme $ do
 
 -- | Parse "1..3".
 parseRange :: MParser (Tuple2 CommandIndex (NESeq CommandIndex))
-parseRange = lexeme $ do
+parseRange = do
   l <- parseOneIndex
   parseDots
   u <- parseOneIndex
@@ -109,12 +110,25 @@ anyLeft = do
 -- | Runs the parser if iff a comma is /not/ encountered. If a comma is
 -- encountered, it is not consumed, and the default value is returned.
 parseIfNoComma :: a -> MParser a -> MParser a
-parseIfNoComma def p = do
-  -- Clear parseComma's label as we do not want it to interfere with error
+parseIfNoComma def p = lookAheadBranch parseComma p (pure def)
+
+-- | Fails with the given error message if the given parser is next. Does not
+-- consume the parser, for better carets in the error message.
+failIfNext :: String -> MParser a -> MParser ()
+failIfNext err p = lookAheadBranch p (pure ()) (fail err)
+
+-- | @lookAheadBranch ptest p1 p2@ tries ptest without consuming it. If it
+-- fails, runs p1. Otherwise runs p2.
+--
+-- Note if ptest fails, it may consume input. Consider try if this is a
+-- problem.
+lookAheadBranch :: MParser p -> MParser a -> MParser a -> MParser a
+lookAheadBranch ptest p1 p2 =
+  -- Clear label as we do not want it to interfere with error
   -- messages.
-  MP.optional (noLabel $ MP.lookAhead parseComma) >>= \case
-    Nothing -> p
-    Just _ -> pure def
+  MP.optional (noLabel $ MP.lookAhead ptest) >>= \case
+    Nothing -> p1
+    Just _ -> p2
 
 -- | Parses a comma.
 parseComma :: MParser Char

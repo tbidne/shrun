@@ -33,6 +33,7 @@ successTests =
       testCommandGraphOr,
       testCommandGraphAny,
       testCommandGraphNoWs,
+      testCommandGraphWs,
       testCommandGraphExtendedEdge,
       testCommandGraphMultiEdge,
       testCommandGraphSetRange,
@@ -91,6 +92,22 @@ testCommandGraphNoWs =
     argList = ["--edges", depsStr, "command"]
     expected = U.updateDefArgs #edges (mkEdgesAnd [(1, 3), (2, 3), (1, 4)])
     depsStr = "1&3,2&3,1&4"
+
+testCommandGraphWs :: TestTree
+testCommandGraphWs =
+  testPropertyNamed "Parses --edges with copious whitespace" "testCommandGraphWs"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--edges", depsStr, "command"]
+    expected = U.updateDefArgs #edges (mkEdgesAnd es)
+    depsStr = "{ 1 , 2 .. 3 } & 4 , 2 & .. 3"
+
+    es =
+      [ (1, 4),
+        (2, 4),
+        (3, 4),
+        (2, 3)
+      ]
 
 testCommandGraphExtendedEdge :: TestTree
 testCommandGraphExtendedEdge =
@@ -252,6 +269,7 @@ failureTests =
       testCommandGraphNoDestFail,
       testCommandGraphNoDestDotsFail,
       testCommandGraphEmptySetFails,
+      testCommandGraphEmptySetFails2,
       testCommandGraphBadSetRangeFails,
       testCommandGraphBadSetRangeFails2,
       testCommandGraphBadArrowRangeFails,
@@ -260,7 +278,9 @@ failureTests =
       testCommandGraphIndexFails,
       testCommandGraphIndexSetFails,
       testBadArrowFails,
-      testBadArrowFails2
+      testBadArrowFails2,
+      testSetDotsErr,
+      testDotsSetErr
     ]
 
 testCommandGraphEmptyFail :: TestTree
@@ -330,10 +350,26 @@ testCommandGraphEmptySetFails =
 
     expected =
       T.unlines
-        [ "option --edges: 1:7:",
+        [ "option --edges: 1:8:",
           "  |",
           "1 | 1 & {} & 3",
-          "  |       ^",
+          "  |        ^",
+          "Empty set"
+        ]
+
+testCommandGraphEmptySetFails2 :: TestTree
+testCommandGraphEmptySetFails2 =
+  testPropertyNamed "Parses empty --edges set failure 2" "testCommandGraphEmptySetFails2"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "1 & { } & 3", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:9:",
+          "  |",
+          "1 | 1 & { } & 3",
+          "  |         ^",
           "Empty set"
         ]
 
@@ -394,10 +430,10 @@ testCommandGraphBadArrowRangeFails2 =
 
     expected =
       T.unlines
-        [ "option --edges: 1:8:",
+        [ "option --edges: 1:6:",
           "  |",
           "1 | 1 & 3..2",
-          "  |        ^",
+          "  |      ^",
           "Expected an edge, found '..'. Perhaps you wanted an edge range e.g. '&..'?"
         ]
 
@@ -483,4 +519,36 @@ testBadArrowFails2 =
           "  |   ^",
           "unexpected '%'",
           "expecting an edge ('&', '|', ';') or white space"
+        ]
+
+testSetDotsErr :: TestTree
+testSetDotsErr =
+  testPropertyNamed "Parses --edges bad set dots failure" "testSetDotsErr"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "{1} &.. 2", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:6:",
+          "  |",
+          "1 | {1} &.. 2",
+          "  |      ^",
+          "Edge ranges (e.g. '&..') are not allowed with set syntax."
+        ]
+
+testDotsSetErr :: TestTree
+testDotsSetErr =
+  testPropertyNamed "Parses --edges bad dots set failure" "testDotsSetErr"
+    $ U.verifyFailureString argList expected
+  where
+    argList = ["--edges", "1 &.. {2}", "command"]
+
+    expected =
+      T.unlines
+        [ "option --edges: 1:7:",
+          "  |",
+          "1 | 1 &.. {2}",
+          "  |       ^",
+          "Edge ranges (e.g. '&..') are not allowed with set syntax."
         ]

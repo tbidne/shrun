@@ -57,14 +57,14 @@ parseEdgeIndexComma = Utils.parseIfNoComma [] . fmap neseqToSeq . parseEdgeIndex
 parseEdgeIndex :: CommandIndex -> MParser (NESeq Edge)
 parseEdgeIndex s = do
   -- Try dots for a better error message.
-  MP.optional (Utils.noLabel Utils.parseDots) >>= \case
-    Just () ->
-      fail "Expected an edge, found '..'. Perhaps you wanted an edge range e.g. '&..'?"
-    Nothing -> do
-      lbl <- parseEdgeLabel
-      MP.optional Utils.parseDots >>= \case
-        Just () -> parseEdgeDots lbl s
-        Nothing -> parseEdgeNoDots lbl (NESeq.singleton s)
+  Utils.failIfNext err Utils.parseDots
+
+  lbl <- parseEdgeLabel
+  MP.optional Utils.parseDots >>= \case
+    Just () -> parseEdgeDots lbl s
+    Nothing -> parseEdgeNoDots lbl (NESeq.singleton s)
+  where
+    err = "Expected an edge, found '..'. Perhaps you wanted an edge range e.g. '&..'?"
 
 parseEdgeIndexSetComma :: NESeq CommandIndex -> MParser (Seq Edge)
 parseEdgeIndexSetComma = Utils.parseIfNoComma [] . fmap neseqToSeq . parseEdgeIndexSet
@@ -72,10 +72,17 @@ parseEdgeIndexSetComma = Utils.parseIfNoComma [] . fmap neseqToSeq . parseEdgeIn
 parseEdgeIndexSet :: NESeq CommandIndex -> MParser (NESeq Edge)
 parseEdgeIndexSet idxs = do
   lbl <- parseEdgeLabel
+
+  -- Try dots for a better error message.
+  Utils.failIfNext dotsSetErr Utils.parseDots
+
   parseEdgeNoDots lbl idxs
 
 parseEdgeDots :: EdgeLabel -> CommandIndex -> MParser (NESeq Edge)
 parseEdgeDots lbl s = MP.label label $ do
+  -- Try set for a better error message.
+  Utils.failIfNext dotsSetErr Utils.parseIndexSet
+
   d <- Utils.parseOneIndex
   (r1, r2 :<|| rs) <- case Cmd.T.range s d of
     Right r -> pure r
@@ -91,6 +98,9 @@ parseEdgeDots lbl s = MP.label label $ do
     True -> (\ds -> e1 :<|| es <> ds) <$> parseEdgeIndexComma d
   where
     label = "a single vertex (e.g. '3')"
+
+dotsSetErr :: String
+dotsSetErr = "Edge ranges (e.g. '&..') are not allowed with set syntax."
 
 parseEdgeNoDots :: EdgeLabel -> NESeq CommandIndex -> MParser (NESeq Edge)
 parseEdgeNoDots lbl srcs = MP.label label $ do
