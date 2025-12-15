@@ -62,4 +62,4 @@ parseTimeoutStr txt = case RT.fromString str of
 {-# INLINEABLE parseTimeoutStr #-}
 
 timeoutStr :: String
-timeoutStr = "NATURAL | STRING"
+timeoutStr = "NATURAL | TIME_STR"

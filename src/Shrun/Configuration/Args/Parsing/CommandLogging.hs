@@ -84,7 +84,7 @@ bufferTimeoutParser = mainParser
           ( mconcat
               [ OA.long "command-log-buffer-timeout",
                 Utils.mkHelp helpTxt,
-                OA.metavar "(NATURAL | STRING)"
+                OA.metavar "(NATURAL | TIME_STR)"
               ]
           )
     helpTxt =
