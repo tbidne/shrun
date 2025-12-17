@@ -99,7 +99,7 @@ parser = do
 parseMultiEdges :: MParser Edges
 parseMultiEdges = do
   e <- p
-  es <- MP.many (Utils.char ',' *> p)
+  es <- MP.many (Utils.parseComma *> p)
   pure $ MkEdges . neseqToSeq $ fold1 (e :| es)
   where
     p = Edges.parseEdges

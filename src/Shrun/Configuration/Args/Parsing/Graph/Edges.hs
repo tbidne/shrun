@@ -15,6 +15,7 @@ import Shrun.Configuration.Data.Graph
   ( Edge,
     EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
   )
+import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Prelude
 import Text.Megaparsec qualified as MP
 
@@ -32,7 +33,7 @@ parseEdges = MP.label label $ do
   where
     label = "comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\")"
 
-    edgeErr = Utils.mkMpError "edge" vertexLabel
+    edgeErr = Utils.mkMpError "label" vertexLabel
 
     -- Improving the error message for e.g. '& 3' specifically, as this is
     -- probably an intended edge (not a literal e.g. '&&&'). We only want to
@@ -69,7 +70,7 @@ parseEdgeIndex s = do
     Just () -> parseEdgeDots lbl s
     Nothing -> parseEdgeNoDots lbl (NESeq.singleton s)
   where
-    err = "Expected an edge, found '..'. Perhaps you wanted an edge range e.g. '&..'?"
+    err = "Expected a label, found '..'. Perhaps you wanted an edge range (e.g. '&..')?"
 
 parseEdgeIndexSetComma :: NESeq CommandIndex -> MParser (Seq Edge)
 parseEdgeIndexSetComma = Utils.parseIfNoComma [] . fmap neseqToSeq . parseEdgeIndexSet
@@ -79,14 +80,14 @@ parseEdgeIndexSet idxs = do
   lbl <- parseEdgeLabel
 
   -- Try dots for a better error message.
-  Utils.failIfNext dotsSetErr Utils.parseDots
+  Utils.failIfNext (dotsSetErr lbl) Utils.parseDots
 
   parseEdgeNoDots lbl idxs
 
 parseEdgeDots :: EdgeLabel -> CommandIndex -> MParser (NESeq Edge)
 parseEdgeDots lbl s = MP.label label $ do
   -- Try set for a better error message.
-  Utils.failIfNext dotsSetErr Utils.parseIndexSet
+  Utils.failIfNext (dotsSetErr lbl) Utils.parseIndexSet
 
   d <- Utils.parseOneIndex
   (r1, r2 :<|| rs) <- case Cmd.T.range s d of
@@ -104,8 +105,13 @@ parseEdgeDots lbl s = MP.label label $ do
   where
     label = "a single vertex (e.g. '3')"
 
-dotsSetErr :: String
-dotsSetErr = "Edge ranges (e.g. '&..') are not allowed with set syntax."
+dotsSetErr :: EdgeLabel -> String
+dotsSetErr lbl =
+  mconcat
+    [ "Edge ranges (e.g. '",
+      Graph.displayEdgeLabel lbl,
+      "..') are not allowed with set syntax."
+    ]
 
 parseEdgeNoDots :: EdgeLabel -> NESeq CommandIndex -> MParser (NESeq Edge)
 parseEdgeNoDots lbl srcs = MP.label vertexLabel $ do
@@ -138,4 +144,4 @@ parseEdgeLabel = MP.label label $ do
       EdgeAny <$ Utils.string ";"
     ]
   where
-    label = "an edge ('&', '|', ';')"
+    label = "a label ('&', '|', ';')"

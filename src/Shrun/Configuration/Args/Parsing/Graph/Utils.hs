@@ -21,6 +21,7 @@ module Shrun.Configuration.Args.Parsing.Graph.Utils
     char,
     string,
     lexeme,
+    parseComma,
     parseDots,
 
     -- * Misc
@@ -39,7 +40,6 @@ import Text.Megaparsec
     ParseError (FancyError),
     Parsec,
     ShowErrorComponent,
-    Stream,
     (<?>),
   )
 import Text.Megaparsec qualified as MP
@@ -68,10 +68,9 @@ parseIndexSet = do
   pure (join $ k :<|| listToSeq ks)
   where
     parseElem =
-      lexeme
-        $ runFatalError
-          (Cmd.T.joinRange <$> parseRange)
-          (NESeq.singleton <$> parseOneIndex)
+      runFatalError
+        (Cmd.T.joinRange <$> parseRange)
+        (NESeq.singleton <$> parseOneIndex)
 
 -- | Parses a single index i.e. a positive integer.
 parseOneIndex :: MParser CommandIndex
@@ -130,8 +129,8 @@ lookAheadBranch ptest p1 p2 =
     Just _ -> p2
 
 -- | Parses a comma.
-parseComma :: MParser Char
-parseComma = char ','
+parseComma :: MParser ()
+parseComma = char ',' $> ()
 
 -- | Parses two dots.
 parseDots :: MParser ()
@@ -143,7 +142,7 @@ noLabel = MP.label ""
 
 -- | Optional + try i.e. returns Just iff the parser succeeds, otherwise
 -- backtracks.
-optionalTry :: (Stream s, Ord e) => Parsec e s a -> Parsec e s (Maybe a)
+optionalTry :: MParser a -> MParser (Maybe a)
 optionalTry = MP.optional . MP.try
 
 -- | Modifies a parser to consume trailing whitespace.
@@ -188,29 +187,17 @@ instance ShowErrorComponent FatalError where
 
 -- | Like 'asum', except the combinator is 'runFatalError'. The first
 -- parser is the default when all fail, intended for a better error message.
-runFatalErrors ::
-  (Stream s) =>
-  Parsec FatalError s a ->
-  List (Parsec FatalError s a) ->
-  Parsec FatalError s a
+runFatalErrors :: MParser a -> List (MParser a) -> MParser a
 runFatalErrors = foldr runFatalError
 
 -- | Like 'runFatalErrors' but with no default error. For when we want the
 -- underlying error to be used.
-runFatalErrors1 ::
-  (Stream s) =>
-  NonEmpty (Parsec FatalError s a) ->
-  Parsec FatalError s a
+runFatalErrors1 :: NonEmpty (MParser a) -> MParser a
 runFatalErrors1 = foldr1 runFatalError
 
 -- | Like '(<|>)', except it does not try the RHS when the LHS has a fatal
 -- error.
--- runFatalError :: MParser a -> MParser a -> MParser a
-runFatalError ::
-  (Stream s) =>
-  Parsec FatalError s a ->
-  Parsec FatalError s a ->
-  Parsec FatalError s a
+runFatalError :: MParser a -> MParser a -> MParser a
 runFatalError p1 p2 =
   MP.observing (MP.try p1) >>= \case
     Right x -> pure x

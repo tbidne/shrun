@@ -306,7 +306,7 @@ testCommandGraphNoSrcFail =
           "  |",
           "1 | & 3",
           "  | ^",
-          "unexpected edge",
+          "unexpected label",
           "expecting a vertex (e.g. '3', '{1,5}')"
         ]
 
@@ -488,7 +488,7 @@ testCommandGraphBadArrowRangeFails2 =
           "  |",
           "1 | 1 & 3..2",
           "  |      ^",
-          "Expected an edge, found '..'. Perhaps you wanted an edge range e.g. '&..'?"
+          "Expected a label, found '..'. Perhaps you wanted an edge range (e.g. '&..')?"
         ]
 
 testCommandGraphBadArrowRangeFails3 :: TestTree
@@ -521,7 +521,7 @@ testCommandGraphIndexFails =
           "1 | 1",
           "  |  ^",
           "unexpected end of input",
-          "expecting an edge ('&', '|', ';'), digit, or white space"
+          "expecting a label ('&', '|', ';'), digit, or white space"
         ]
 
 testCommandGraphIndexSetFails :: TestTree
@@ -538,7 +538,7 @@ testCommandGraphIndexSetFails =
           "1 | {1,2}",
           "  |      ^",
           "unexpected end of input",
-          "expecting an edge ('&', '|', ';') or white space"
+          "expecting a label ('&', '|', ';') or white space"
         ]
 
 testBadArrowFails :: TestTree
@@ -555,7 +555,7 @@ testBadArrowFails =
           "1 | 1 -> 2",
           "  |   ^",
           "unexpected '-'",
-          "expecting an edge ('&', '|', ';') or white space"
+          "expecting a label ('&', '|', ';') or white space"
         ]
 
 testBadArrowFails2 :: TestTree
@@ -572,7 +572,7 @@ testBadArrowFails2 =
           "1 | 1 % 2",
           "  |   ^",
           "unexpected '%'",
-          "expecting an edge ('&', '|', ';') or white space"
+          "expecting a label ('&', '|', ';') or white space"
         ]
 
 testSetDotsErr :: TestTree
@@ -596,13 +596,13 @@ testDotsSetErr =
   testPropertyNamed "Parses --edges bad dots set failure" "testDotsSetErr"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", "1 &.. {2}", "command"]
+    argList = ["--edges", "1 |.. {2}", "command"]
 
     expected =
       T.unlines
         [ "option --edges: 1:7:",
           "  |",
-          "1 | 1 &.. {2}",
+          "1 | 1 |.. {2}",
           "  |       ^",
-          "Edge ranges (e.g. '&..') are not allowed with set syntax."
+          "Edge ranges (e.g. '|..') are not allowed with set syntax."
         ]
