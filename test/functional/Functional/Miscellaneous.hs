@@ -269,6 +269,7 @@ reportsFinalOutput =
         V.verifyExpectedOrder results expected2
         V.verifyExpectedOrder results expected3
         V.verifyUnexpected results unexpected
+        V.verifySomeExpected results finalExpected
     )
   where
     scriptPath :: (IsString a, Semigroup a) => a
@@ -287,22 +288,26 @@ reportsFinalOutput =
     expected1 =
       [ withCommandPrefix scriptPath "output 1",
         withCommandPrefix scriptPath "output 2",
-        withCommandPrefix scriptPath "output 3",
-        withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3"
+        withCommandPrefix scriptPath "output 3"
       ]
 
     expected2 =
       [ withCommandPrefix scriptPath "stderr 1",
         withCommandPrefix scriptPath "stderr 2",
-        withCommandPrefix scriptPath "stderr 3",
-        withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3"
+        withCommandPrefix scriptPath "stderr 3"
       ]
 
     expected3 =
       [ withCommandPrefix scriptPath "output 1",
         withCommandPrefix scriptPath "stderr 2",
-        withCommandPrefix scriptPath "output 3",
-        withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3"
+        withCommandPrefix scriptPath "output 3"
+      ]
+
+    -- This output is non-deterministic (anecdotally, osx on CI frequently
+    -- has the latter), hence we try both.
+    finalExpected =
+      [ withErrorPrefix scriptPath <> "3 seconds\n  output 3\n  stderr 3",
+        withErrorPrefix scriptPath <> "3 seconds\n  stderr 3\n  output 3"
       ]
 
     unexpected =

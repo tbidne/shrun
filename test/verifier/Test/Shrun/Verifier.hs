@@ -14,19 +14,21 @@ module Test.Shrun.Verifier
     verifyExpectedOrder,
     verifyUnexpected,
     verifyExpectedUnexpected,
+
+    -- ** Some
+    verifySomeExpected,
   )
 where
 
 import Control.Monad (void, when)
+import Data.Foldable qualified as F
 #if MIN_VERSION_base(4, 20, 0)
 import Data.List (List)
-#else
-import Data.Foldable (Foldable (foldl'))
 #endif
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text qualified as T
-import Test.Tasty.HUnit (Assertion, assertBool, assertFailure)
+import Test.Tasty.HUnit (Assertion, assertFailure)
 import Prelude
 
 #if !MIN_VERSION_base(4, 20, 0)
@@ -78,6 +80,25 @@ verifyExpectedUnexpected results allExpected allUnexpected =
     findUnexpected unexpected acc = findOneUnexpected results unexpected *> acc
     allUnexpectedNotFound = foldr findUnexpected (pure ()) allUnexpected
 
+-- | Verifies that at least one expected is found in the results.
+verifySomeExpected ::
+  List ResultText ->
+  List ExpectedText ->
+  Assertion
+verifySomeExpected results someExpected = F.for_ someExpectedFound assertFailure
+  where
+    findExpected :: ExpectedText -> Maybe String -> Maybe String
+    findExpected expected acc = findOneExpectedStr results expected *> acc
+    someExpectedFound = foldr findExpected (Just err) someExpected
+
+    err =
+      mconcat
+        [ "Did not find any expected text:",
+          mconcat $ fmap ((\t -> "\n - '" <> t <> "'") . T.unpack . (.unExpectedText)) someExpected,
+          "\n\nin output:\n\n",
+          formatResults results
+        ]
+
 -- | Verifies that the expected text occurs exactly once, in the given order.
 verifyExpectedOrder ::
   List ResultText ->
@@ -116,24 +137,30 @@ verifyExpectedOrder results = void . allExpectedFound ("<none>", -1)
 findOneExpected :: List ResultText -> ExpectedText -> Assertion
 findOneExpected results = findOneExpectedN results . (1,)
 
-findOneExpectedN :: List ResultText -> (Int, ExpectedText) -> Assertion
-findOneExpectedN results (numExpected, MkExpectedText expected) = do
-  let numHits = foldl' searchT 0 results
+findOneExpectedStr :: List ResultText -> ExpectedText -> Maybe String
+findOneExpectedStr results = findOneExpectedNStr results . (1,)
 
-  if numHits == numExpected
-    then pure ()
-    else
-      assertFailure $
-        mconcat
-          [ "Expected text '",
-            T.unpack expected,
-            "' ",
-            show numExpected,
-            " times, found ",
-            show numHits,
-            " in output:\n\n",
-            formatResults results
-          ]
+findOneExpectedN :: List ResultText -> (Int, ExpectedText) -> Assertion
+findOneExpectedN results es =
+  F.for_ (findOneExpectedNStr results es) assertFailure
+
+findOneExpectedNStr :: List ResultText -> (Int, ExpectedText) -> Maybe String
+findOneExpectedNStr results (numExpected, MkExpectedText expected) =
+  let numHits = F.foldl' searchT 0 results
+   in if numHits == numExpected
+        then Nothing
+        else
+          Just $
+            mconcat
+              [ "Expected text '",
+                T.unpack expected,
+                "' ",
+                show numExpected,
+                " times, found ",
+                show numHits,
+                " in output:\n\n",
+                formatResults results
+              ]
   where
     searchT :: Int -> ResultText -> Int
     searchT !acc (MkResultText result) =
@@ -182,7 +209,11 @@ findOneExpectedIdx results (MkExpectedText expected) = do
     addHit _ (Just (idx, numHits)) = Just (idx, numHits + 1)
 
 findOneUnexpected :: List ResultText -> UnexpectedText -> Assertion
-findOneUnexpected results (MkUnexpectedText unexpected) = do
+findOneUnexpected results e =
+  F.for_ (findOneUnexpectedStr results e) assertFailure
+
+findOneUnexpectedStr :: List ResultText -> UnexpectedText -> Maybe String
+findOneUnexpectedStr results (MkUnexpectedText unexpected) =
   let found = foldr searchT False results
       err =
         mconcat
@@ -191,7 +222,9 @@ findOneUnexpected results (MkUnexpectedText unexpected) = do
             "' in output:\n\n",
             formatResults results
           ]
-  assertBool err (not found)
+   in if not found
+        then Nothing
+        else Just err
   where
     searchT :: ResultText -> Bool -> Bool
     searchT (MkResultText result) acc = unexpected `T.isInfixOf` result || acc
