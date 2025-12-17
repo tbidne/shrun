@@ -25,11 +25,22 @@ import Text.Megaparsec qualified as MP
 -- After we are done parsing all edges, we can combine them.
 parseEdges :: MParser (NESeq Edge)
 parseEdges = MP.label label $ do
+  Utils.failIfNext edgeErr parseEdgeDest
   Utils.optionalTry Utils.parseOneIndex >>= \case
     Just s -> parseEdgeIndex s
     Nothing -> Utils.parseIndexSet >>= parseEdgeIndexSet
   where
-    label = "comma-delimited edge(s) e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\""
+    label = "comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\")"
+
+    edgeErr = Utils.mkMpError "edge" vertexLabel
+
+    -- Improving the error message for e.g. '& 3' specifically, as this is
+    -- probably an intended edge (not a literal e.g. '&&&'). We only want to
+    -- use this error when we have a correct edge and dest, otherwise fall
+    -- back to general error message.
+    parseEdgeDest = MP.try $ do
+      void parseEdgeLabel
+      void Utils.parseOneIndex <|> void Utils.parseIndexSet
 
 -- NOTE: [Commas]
 --
@@ -97,7 +108,7 @@ dotsSetErr :: String
 dotsSetErr = "Edge ranges (e.g. '&..') are not allowed with set syntax."
 
 parseEdgeNoDots :: EdgeLabel -> NESeq CommandIndex -> MParser (NESeq Edge)
-parseEdgeNoDots lbl srcs = MP.label label $ do
+parseEdgeNoDots lbl srcs = MP.label vertexLabel $ do
   mD <- Utils.optionalTry Utils.parseOneIndex
   (edges@(e1 :<|| es), parseMore) <- case mD of
     Just d -> do
@@ -115,8 +126,9 @@ parseEdgeNoDots lbl srcs = MP.label label $ do
   Utils.anyLeft >>= \case
     False -> pure edges
     True -> (\ds -> e1 :<|| es <> ds) <$> parseMore
-  where
-    label = "a vertex (e.g. '3', '{1,5}')"
+
+vertexLabel :: String
+vertexLabel = "a vertex (e.g. '3', '{1,5}')"
 
 parseEdgeLabel :: MParser EdgeLabel
 parseEdgeLabel = MP.label label $ do

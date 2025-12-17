@@ -117,9 +117,8 @@ translateCommands ::
   NESeq Text ->
   Maybe EdgeArgs ->
   m (Tuple2 (NESeq CommandP1) Edges)
-translateCommands legendMap commands mEdgeArgs = do
-  (legendMap', initKey) <- addCliLegend legendMap commands mEdgeArgs
-  translateMap legendMap' initKey
+translateCommands legendMap commands =
+  addCliLegend legendMap commands >=> uncurry translateMap
 {-# INLINEABLE translateCommands #-}
 
 translateMap ::

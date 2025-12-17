@@ -25,6 +25,7 @@ module Shrun.Configuration.Args.Parsing.Graph.Utils
 
     -- * Misc
     anyLeft,
+    mkMpError,
   )
 where
 
@@ -59,9 +60,7 @@ type MParser a = Parsec FatalError Text a
 parseIndexSet :: MParser (NESeq CommandIndex)
 parseIndexSet = do
   char '{'
-  MP.optional (char '}') >>= \case
-    Nothing -> pure ()
-    Just _ -> MP.customFailure (MkFatalError "Empty set")
+  failIfNext "Empty set" (char '}')
 
   k <- parseElem
   ks <- many (parseComma *> parseElem)
@@ -256,3 +255,12 @@ hasFatalError = \case
     k = \case
       MP.ErrorCustom _ -> True
       _ -> False
+
+mkMpError :: String -> String -> String
+mkMpError u e =
+  mconcat
+    [ "unexpected ",
+      u,
+      "\nexpecting ",
+      e
+    ]
