@@ -84,6 +84,8 @@ notifySendHandlesLegendQuotes = testCase "notify-send handles legend quotes" $ d
         "all",
         "--notify-system",
         "notify-send",
+        "--notify-timeout",
+        "5",
         "--config",
         "examples/config.toml",
         "ui"
