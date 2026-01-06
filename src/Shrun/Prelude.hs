@@ -263,7 +263,7 @@ import Effects.IORef as X
         writeIORef
       ),
   )
-import Effects.Optparse as X (MonadOptparse (execParser))
+import Effects.Optparse as X (MonadOptparse (customExecParser, execParser))
 import Effects.System.Environment as X (MonadEnv (withArgs))
 import Effects.System.Posix.Signals as X (MonadPosixSignals)
 import Effects.System.Process as X (CreateProcess, MonadProcess)

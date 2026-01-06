@@ -9,6 +9,7 @@
 module Shrun.Configuration.Args.Parsing
   ( Args (..),
     parserInfoArgs,
+    parserPrefs,
   )
 where
 
@@ -36,7 +37,7 @@ import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
-import Options.Applicative.Types (ArgPolicy (Intersperse))
+import Options.Applicative.Types (ArgPolicy (Intersperse), ParserPrefs)
 import Paths_shrun qualified as Paths
 import Shrun.Configuration.Args.Parsing.Core qualified as Core
 import Shrun.Configuration.Args.Parsing.Graph qualified as Graph
@@ -210,6 +211,13 @@ parserInfoArgs prevKeys =
     toChunk i other = fmap (Pretty.indent i) . Chunk.stringChunk $ other
 
     line = Chunk (Just Pretty.softline)
+
+parserPrefs :: ParserPrefs
+parserPrefs =
+  OA.prefs
+    $ mconcat
+      [ OA.helpIndent 6
+      ]
 
 argsParser :: List String -> Parser Args
 argsParser prevKeys = do

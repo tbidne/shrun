@@ -118,6 +118,7 @@ for versions < 1.
   external SIGINT (i.e. kill -2, not CTRL-C) when command logging was active.
   This is now fixed so that 'kill -2' unconditionally kills shrun.
 * SIGTERM (kill -15) now properly kills subcommands.
+* Improved `--help` indent.
 
 ## [0.9.1] -- 2024-07-27
 ### Changed

@@ -25,9 +25,7 @@ import Effects.FileSystem.PathWriter qualified as PW
 import Shrun (runShellT, shrun)
 import Shrun.Command.Types (CommandStatus (CommandWaiting))
 import Shrun.Configuration (mergeConfig)
-import Shrun.Configuration.Args.Parsing
-  ( parserInfoArgs,
-  )
+import Shrun.Configuration.Args.Parsing qualified as P
 import Shrun.Configuration.Data.Core qualified as CoreConfig
 import Shrun.Configuration.Data.LegendKeysCache
   ( LegendKeysCache
@@ -138,7 +136,7 @@ getMergedConfig = do
   -- the parser so we get completions.
   prevKeys <- readPreviousLegendKeys xdgState
 
-  args <- execParser (parserInfoArgs $ unpack <$> prevKeys)
+  args <- customExecParser P.parserPrefs (P.parserInfoArgs $ unpack <$> prevKeys)
 
   let configPaths = args ^. #configPaths
 
