@@ -31,6 +31,7 @@ module Shrun.Logging
 
     -- * Misc
     mkUnfinishedCmdLogs,
+    logDebug,
     logFile,
   )
 where
@@ -300,7 +301,6 @@ putDebugLogDirect = putDebugLogHelper putRegionLogDirect
 putDebugLog ::
   ( HasCallStack,
     HasLogging env m,
-    MonadHandleWriter m,
     MonadReader env m,
     MonadRegionLogger m,
     MonadSTM m,
@@ -312,22 +312,32 @@ putDebugLog = putDebugLogHelper (\log -> MRL.withRegion Linear $ \r -> putRegion
 {-# INLINEABLE putDebugLog #-}
 
 putDebugLogHelper ::
-  ( HasLogging env m,
-    MonadHandleWriter m,
+  ( HasCommonLogging env,
     MonadReader env m
   ) =>
   (Log -> m ()) ->
   LogMessage ->
   m ()
 putDebugLogHelper logFn msg = do
-  debug <- asks (view (#debug % #unDebug) . getCommonLogging)
-  when debug $ do
+  logDebug $ \lvl -> do
     let log =
           MkLog
             { cmd = Nothing,
               msg,
-              lvl = LevelDebug,
+              lvl,
               mode = LogModeFinish
             }
     logFn log
 {-# INLINEABLE putDebugLogHelper #-}
+
+-- | Rungs the action when debug is on.
+logDebug ::
+  ( HasCommonLogging env,
+    MonadReader env m
+  ) =>
+  (LogLevel -> m ()) ->
+  m ()
+logDebug logFn = do
+  debug <- asks (view (#debug % #unDebug) . getCommonLogging)
+  when debug (logFn LevelDebug)
+{-# INLINEABLE logDebug #-}

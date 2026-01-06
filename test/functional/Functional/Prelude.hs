@@ -53,6 +53,7 @@ module Functional.Prelude
     -- ** Prefixes
     withCommandPrefix,
     withDebugPrefix,
+    withDebugNoCmdPrefix,
     withSuccessPrefix,
     withErrorPrefix,
     withWarnPrefix,
@@ -322,6 +323,9 @@ finishedPrefix = "[Finished] "
 -- | Expected command text.
 withDebugPrefix :: (IsString s, Semigroup s) => s -> s -> s
 withDebugPrefix cmd txt = debugPrefix <> "[" <> cmd <> "] " <> txt
+
+withDebugNoCmdPrefix :: (IsString s, Semigroup s) => s -> s
+withDebugNoCmdPrefix txt = debugPrefix <> " " <> txt
 
 -- | Expected command text.
 withCommandPrefix :: (IsString s, Semigroup s) => s -> s -> s

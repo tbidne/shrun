@@ -32,7 +32,7 @@ testCommandGraphSuccess :: TestTree
 testCommandGraphSuccess = testCase "Runs with --edges" $ do
   (ts, resultsConsole) <- withTiming $ run args
 
-  V.verifyExpected resultsConsole expected
+  V.verifyExpectedUnexpected resultsConsole expected unexpected
 
   let seconds = ts ^. #sec
 
@@ -57,7 +57,16 @@ testCommandGraphSuccess = testCase "Runs with --edges" $ do
         withSuccessPrefix "sleep 3",
         withSuccessPrefix "sleep 3.5",
         withSuccessPrefix "sleep 4",
-        withDebugPrefix "sleep 2" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'."
+        withDebugPrefix "sleep 2" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'.",
+        withDebugNoCmdPrefix "Starting 'sleep 3.5'.",
+        withDebugNoCmdPrefix "Starting 'sleep 2'.",
+        withDebugNoCmdPrefix "Starting 'sleep 4'.",
+        withDebugPrefix "sleep 3.5" "Starting 'sleep 3'."
+      ]
+
+    unexpected =
+      [ withDebugNoCmdPrefix "Starting 'sleep 3'.",
+        withDebugPrefix "sleep 2" "Starting 'sleep 3'."
       ]
 
 testCommandGraphSuccessOr :: TestTree
@@ -92,15 +101,22 @@ testCommandGraphSuccessOr = testCase "Runs with or --edges" $ do
         withSuccessPrefix "sleep 4",
         withDebugPrefix "sleep 2 && bad" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'.",
         withErrorPrefix "sleep 2 && bad" <> "2 seconds",
-        withErrorPrefix "sleep 2 && bad" <> "Not running 'sleep 5' due to dependency failure: '(2) sleep 2 && bad'",
-        withWarnCmdPrefix "sleep 3.5" <> "Not running 'sleep 6' due to dependency success: '(1) sleep 3.5'",
+        withErrorPrefix "sleep 2 && bad" <> "Not starting 'sleep 5' due to dependency failure: '(2) sleep 2 && bad'",
+        withWarnCmdPrefix "sleep 3.5" <> "Not starting 'sleep 6' due to dependency success: '(1) sleep 3.5'",
         waitingPrefix,
         "  - sleep 5",
-        "  - sleep 6"
+        "  - sleep 6",
+        withDebugNoCmdPrefix "Starting 'sleep 3.5'.",
+        withDebugNoCmdPrefix "Starting 'sleep 2 && bad'.",
+        withDebugNoCmdPrefix "Starting 'sleep 4'.",
+        withDebugPrefix "sleep 3.5" "Starting 'sleep 3'."
       ]
 
     unexpected =
-      [ withSuccessPrefix "sleep 5"
+      [ withSuccessPrefix "sleep 5",
+        withSuccessPrefix "sleep 6",
+        withDebugNoCmdPrefix "Starting 'sleep 3'.",
+        withDebugPrefix "sleep 2" "Starting 'sleep 3'."
       ]
 
 testCommandGraphSuccessAny :: TestTree
@@ -134,13 +150,20 @@ testCommandGraphSuccessAny = testCase "Runs with any --edges" $ do
         withSuccessPrefix "sleep 4",
         withDebugPrefix "sleep 2 && bad" "Command 'sleep 3' is blocked due to dependency pending: '(1) sleep 3.5'.",
         withErrorPrefix "sleep 2 && bad" <> "2 seconds",
-        withErrorPrefix "sleep 2 && bad" <> "Not running 'sleep 5' due to dependency failure: '(2) sleep 2 && bad'",
+        withErrorPrefix "sleep 2 && bad" <> "Not starting 'sleep 5' due to dependency failure: '(2) sleep 2 && bad'",
         waitingPrefix,
-        "  - sleep 5"
+        "  - sleep 5",
+        withDebugNoCmdPrefix "Starting 'sleep 3.5'.",
+        withDebugNoCmdPrefix "Starting 'sleep 2 && bad'.",
+        withDebugNoCmdPrefix "Starting 'sleep 4'.",
+        withDebugPrefix "sleep 3.5" "Starting 'sleep 3'."
       ]
 
     unexpected =
-      [ withSuccessPrefix "sleep 5"
+      [ withSuccessPrefix "sleep 5",
+        withDebugNoCmdPrefix "Starting 'sleep 3'.",
+        withDebugPrefix "sleep 2 && bad" "Starting 'sleep 3'.",
+        withDebugPrefix "sleep 2 && bad" "Starting 'sleep 5'."
       ]
 
 testCommandGraphRunsAtMostOnce :: TestTree
@@ -247,8 +270,8 @@ testCommandGraphFailure = testCase "Runs with --edges failure" $ do
     expected =
       [ withSuccessPrefix "sleep 3.5",
         withSuccessPrefix "sleep 4",
-        withErrorPrefix "sleep 2 && sdf" <> "Not running 'sleep 8' due to dependency failure: '(2) sleep 2 && sdf'.",
-        withErrorPrefix "sleep 3.5" <> "Not running 'sleep 8' due to dependency failure: '(2) sleep 2 && sdf'."
+        withErrorPrefix "sleep 2 && sdf" <> "Not starting 'sleep 8' due to dependency failure: '(2) sleep 2 && sdf'.",
+        withErrorPrefix "sleep 3.5" <> "Not starting 'sleep 8' due to dependency failure: '(2) sleep 2 && sdf'."
       ]
 
     unexpected =
@@ -285,7 +308,7 @@ testCommandGraphBlockedFailure = testCase desc $ do
       [ withSuccessPrefix "sleep 2",
         withSuccessPrefix "sleep 4",
         withDebugPrefix "sleep 2" "Command 'sleep 8' is blocked due to dependency pending: '(1) sleep 3.5 && sdf'",
-        withErrorPrefix "sleep 3.5 && sdf" <> "Not running 'sleep 8' due to dependency failure: '(1) sleep 3.5 && sdf'."
+        withErrorPrefix "sleep 3.5 && sdf" <> "Not starting 'sleep 8' due to dependency failure: '(1) sleep 3.5 && sdf'."
       ]
 
     unexpected =
@@ -355,7 +378,7 @@ testCommandGraphSeqOr = testCase "Runs with --edges '|||'" $ do
     expected =
       [ withErrorPrefix "sleep 1 && bad",
         withSuccessPrefix "sleep 2",
-        withWarnCmdPrefix "sleep 2" <> "Not running 'sleep 3' due to dependency success: '(2) sleep 2'"
+        withWarnCmdPrefix "sleep 2" <> "Not starting 'sleep 3' due to dependency success: '(2) sleep 2'"
       ]
 
     unexpected =

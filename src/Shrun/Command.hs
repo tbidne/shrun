@@ -27,7 +27,6 @@ import Shrun.Configuration.Env.Types
   ( HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasLogging,
-    whenDebug,
   )
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging qualified as Logging
@@ -35,7 +34,7 @@ import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (withRegion))
 import Shrun.Logging.Types
   ( Log (MkLog, cmd, lvl, mode, msg),
-    LogLevel (LevelDebug, LevelError, LevelWarn),
+    LogLevel (LevelError, LevelWarn),
     LogMessage (UnsafeLogMessage),
   )
 import Shrun.Logging.Types.Internal (LogMode (LogModeFinish))
@@ -111,14 +110,14 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
       status <- getPredecessorsStatus cdg commandStatuses vertex
       case status of
         PredecessorUnfinished depV ->
-          whenDebug $ do
-            logNoRun cdg LevelDebug prevVertex debugMsg (Just depV) vertex
+          Logging.logDebug $ \lvl -> do
+            logCommandAction cdg lvl prevVertex debugMsg (Just depV) vertex
         PredecessorFailure failExpected depV -> do
           if failExpected
             then
-              logNoRun cdg LevelWarn prevVertex failOkMsg (Just depV) vertex
+              logCommandAction cdg LevelWarn prevVertex failOkMsg (Just depV) vertex
             else
-              logNoRun cdg LevelError prevVertex errMsg (Just depV) vertex
+              logCommandAction cdg LevelError prevVertex errMsg (Just depV) vertex
         PredecessorSuccess -> do
           case Map.lookup vertex vtxSemMap of
             Nothing ->
@@ -157,14 +156,18 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
               tryTakeMVar mvar >>= \case
                 Nothing ->
                   -- No MVar, print a message and leave.
-                  whenDebug $ do
-                    logNoRun cdg LevelDebug prevVertex alreadyRunningMsg Nothing vertex
+                  Logging.logDebug $ \lvl -> do
+                    logCommandAction cdg lvl prevVertex alreadyRunningMsg Nothing vertex
                 Just () -> do
                   -- We are not blocked. Run the command and kick off all
                   -- successors.
                   ctx <- Graph.context cdg vertex
                   let (_, cmd) = Graph.ctxLabVertex ctx
                       outNodes = Graph.ctxOutVertices ctx
+
+                  Logging.logDebug $ \lvl -> do
+                    logCommandAction cdg lvl prevVertex startMsg Nothing vertex
+
                   runner cmd
                   Async.mapConcurrently_ (go (Just vertex)) outNodes
 
@@ -179,7 +182,7 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
 
     errMsg depCmdTxt cmdTxt =
       mconcat
-        [ "Not running '",
+        [ "Not starting '",
           cmdTxt,
           "' due to dependency failure: '",
           depCmdTxt,
@@ -188,10 +191,17 @@ runCommand runner cdg commandStatuses vtxSemMap = go Nothing
 
     failOkMsg depCmdTxt cmdTxt =
       mconcat
-        [ "Not running '",
+        [ "Not starting '",
           cmdTxt,
           "' due to dependency success: '",
           depCmdTxt,
+          "'."
+        ]
+
+    startMsg _ cmdTxt =
+      mconcat
+        [ "Starting '",
+          cmdTxt,
           "'."
         ]
 
@@ -272,7 +282,7 @@ getPredecessorsStatus cdg commandStatusesRef v = do
     predecessors = Graph.labInVertices cdg v
 {-# INLINEABLE getPredecessorsStatus #-}
 
-logNoRun ::
+logCommandAction ::
   ( HasCallStack,
     HasLogging env m,
     MonadEvaluate m,
@@ -296,7 +306,7 @@ logNoRun ::
   -- | Command vertex that will not be run.
   Vertex ->
   m ()
-logNoRun cdg lvl mPrevVertex msgFn mDepVertex vertex = do
+logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
   commonLogging <- asks getCommonLogging
   thisCmd <- nodeToCommand vertex
   prevCmd <- for mPrevVertex nodeToCommand
@@ -335,4 +345,4 @@ logNoRun cdg lvl mPrevVertex msgFn mDepVertex vertex = do
         . show
         . view (#unCommandIndex % #unPositive)
         . Command.Types.fromVertex
-{-# INLINEABLE logNoRun #-}
+{-# INLINEABLE logCommandAction #-}

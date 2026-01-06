@@ -50,7 +50,6 @@ import Shrun.Configuration.Env.Types
     HasLogging,
     setAnyErrorTrue,
     updateCommandStatus,
-    whenDebug,
   )
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
@@ -643,7 +642,7 @@ logDebugCmd ::
   (Region m -> Log -> m ()) ->
   m ()
 logDebugCmd cmd procConfig logFn = do
-  whenDebug $ do
+  Logging.logDebug $ \lvl -> do
     let cs = show $ P.cmdspec procConfig
         lg =
           MkLog
@@ -653,7 +652,7 @@ logDebugCmd cmd procConfig logFn = do
                   $ "Command: '"
                   <> ShrunText.fromTextReplace (pack cs)
                   <> "'",
-              lvl = Types.LevelDebug,
+              lvl,
               mode = Types.LogModeFinish
             }
     withRegion Linear $ \r -> logFn r lg
