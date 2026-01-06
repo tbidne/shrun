@@ -17,6 +17,8 @@ for versions < 1.
 
 ## [Unreleased]
 ### Changed
+* Updated blessed GHC to 9.12.2.
+
 * Allow `--config` to be specified multiple times. Multiple config files
   can now be *merged* together i.e. keys are unioned, where the right-most
   config takes precedence when there are conflicts. Legends are individually
@@ -88,38 +90,30 @@ for versions < 1.
 * `--console-log-command` default to `on`.
 
 ### Added
-* Added `--edges` (toml: legend `edges`) option for declaring dependencies
+* Option `--edges` (toml: legend `edges`) for declaring dependencies
   between commands e.g. `shrun cmd1 cmd2 --edges "1 & 2"` means `cmd2` will
   run only once `cmd1` successfully finishes.
-* Added more completions. In addition to normal option completions, we now
+* More completions. In addition to normal option completions, we now
   have option value competions, local toml files for config, and completions
   for previously loaded legend keys. Legend keys are saved with the
   new `--legend-keys-cache` option.
-* Added `--notify-action-start (on | off)` for command start notifications.
-* Added `--dry-run` which prints the configuration and commands before
+* Option `--notify-action-start (on | off)` for command start notifications.
+* Option `--dry-run` which prints the configuration and commands before
   exiting.
+* Option `--file-log-mode rename`, that renames the requested log file if it
+  already exists. E.g. `-f shrun.log` becomes `shrun (1).log`.
+* GHC 9.12 support.
+* Git revision info in `--help` and `--version`.
+* Groups to `--help` options.
+* Option `--common-log-debug`.
 
 ### Fixed
+* Improved final command log formatting with newlines.
 * Improved final error output, so it is more likely that the actual error
   is included in the output.
-* Improve cancellation logic so that more platforms have all subcommands
+* Improved logs for when shrun is cancelled (e.g. CTRL-C).
+* Improved cancellation logic so that more platforms have all subcommands
   properly cancelled (e.g. CI linux).
-
-## [0.9.2] -- 2025-10-10
-### Changed
-* Updated blessed GHC to 9.12.2.
-* Improve final command log formatting with newlines.
-* Improve logs for when shrun is cancelled (e.g. CTRL-C).
-
-### Added
-* Add `--file-log-mode rename`, that renames the requested log file if it
-  already exists. E.g. `-f shrun.log` becomes `shrun (1).log`.
-* Add GHC 9.12 support.
-* Added git revision info in `--help` and `--version`.
-* Added groups to `--help` options.
-* Added `--common-log-debug` option.
-
-### Fixed
 * Previously, shrun and subcommands would only be properly killed by
   external SIGINT (i.e. kill -2, not CTRL-C) when command logging was active.
   This is now fixed so that 'kill -2' unconditionally kills shrun.
@@ -359,8 +353,7 @@ for versions < 1.
 
 * First version. Released on an unsuspecting world.
 
-[Unreleased]: https://github.com/tbidne/shrun/compare/0.9.2...main
-[0.9.2]: https://github.com/tbidne/shrun/compare/0.9.1...0.9.2
+[Unreleased]: https://github.com/tbidne/shrun/compare/0.9.1...main
 [0.9.1]: https://github.com/tbidne/shrun/compare/0.9...0.9.1
 [0.9]: https://github.com/tbidne/shrun/compare/0.8.1...0.9
 [0.8.1]: https://github.com/tbidne/shrun/compare/0.8...0.8.1
