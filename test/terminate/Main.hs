@@ -5,17 +5,18 @@ module Main (main) where
 
 import Data.List qualified as L
 import Data.List.NonEmpty qualified as NE
-import Data.Ord (Ord (max))
 import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
-import Effects.System.Process qualified as P
 import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude
 import System.Environment qualified as Env
 import System.Environment.Guard (guardOrElse')
 import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
+import Test.Shrun.Installer qualified as Test.Installer
+import Test.Shrun.Logger qualified as Test.Logger
+import Test.Shrun.Process qualified as Test.Process
 import Text.Read qualified as TR
 
 data VerifyCancel
@@ -40,7 +41,7 @@ main = do
   where
     runTests c = bracket (setup c) cleanup $ \params -> tests params
 
-    dontRun = putLog "Terminate tests disabled. Enable with TEST_TERMINATE=(command|shrun)"
+    dontRun = Test.Logger.putLog "Terminate tests disabled. Enable with TEST_TERMINATE=(command|shrun)"
 
     cleanup sp =
       guardOrElse'
@@ -50,7 +51,7 @@ main = do
         (teardown sp)
       where
         doNothing =
-          putLog
+          Test.Logger.putLog
             $ "Not cleaning up test dir: '"
             <> decodeLenient (sp ^. #testDir)
             <> "'"
@@ -74,7 +75,7 @@ tests sp =
 
 runTest :: (HasCallStack) => SuiteParams -> Int -> TestParams -> IO ()
 runTest sp idx tp = do
-  putLogHeader $ "TEST " ++ show idx ++ ": " ++ desc
+  Test.Logger.putLogHeader $ "TEST " ++ show idx ++ ": " ++ desc
 
   bracket (testSetup sp tp) testTeardown $ \(cmd, shrunPid) -> do
     -- 1. Kill shrun, give it time to clean up.
@@ -146,7 +147,7 @@ runTest sp idx tp = do
 
     assertNotExists :: (HasCallStack) => Text -> [Text] -> IO ()
     assertNotExists t o = do
-      putLog $ "Asserting that '" ++ unpack t ++ "' is not found"
+      Test.Logger.putLog $ "Asserting that '" ++ unpack t ++ "' is not found"
       let found = L.any (foundLine t) o
       when found $ do
         throwString
@@ -163,7 +164,7 @@ runPs :: (HasCallStack) => IO (List Text)
 runPs = do
   -- Split up the pgrep and ps calls so that if pgrep does not find anything,
   -- we do not error.
-  (ec1, out1, err1) <- runProcessArgs "pgrep" ["-f", grepStr]
+  (ec1, out1, err1) <- Test.Process.runProcessArgs "pgrep" ["-f", grepStr]
   case ec1 of
     ExitFailure i -> do
       -- pgrep returns error if it doesn't find anything, which might happen
@@ -190,11 +191,11 @@ runPs = do
               ]
       if failOk
         then do
-          putLog "No processes found, OK"
+          Test.Logger.putLog "No processes found, OK"
           pure []
         else throwString errMsg
     ExitSuccess -> do
-      (ec2, out2, err2) <- runProcessArgs "ps" ("-fp" : L.lines out1)
+      (ec2, out2, err2) <- Test.Process.runProcessArgs "ps" ("-fp" : L.lines out1)
       case ec2 of
         ExitFailure i ->
           throwString
@@ -210,7 +211,7 @@ runPs = do
         ExitSuccess -> do
           let outLines = T.lines $ pack out2
               msg = "ps output: " <> tlinesToStr outLines
-          putLogLines msg
+          Test.Logger.putLogLines msg
           pure outLines
   where
     -- Search for 'sleep N' since CI randomly has a 'sleep 10'
@@ -269,8 +270,8 @@ findShrunPid expectedCmd ls = do
 killPid :: (HasCallStack) => SignalType -> Int -> Bool -> IO ()
 killPid sigType pid failIfNone = case sigType of
   SignalTypeTimeout -> pure ()
-  SignalTypeSIGINT -> runProcessOrDie $ killCmd " -2 "
-  SignalTypeSIGTERM -> runProcessOrDie $ killCmd " -15 "
+  SignalTypeSIGINT -> Test.Process.runProcessOrDie $ killCmd " -2 "
+  SignalTypeSIGTERM -> Test.Process.runProcessOrDie $ killCmd " -15 "
   where
     killCmd signalStr =
       mkKill signalStr
@@ -286,7 +287,7 @@ killPid sigType pid failIfNone = case sigType of
         ]
 
 killShrunName :: (HasCallStack) => IO ()
-killShrunName = void . runProcess $ "pkill -15 shrun || true"
+killShrunName = void . Test.Process.runProcess $ "pkill -15 shrun || true"
 
 runShrun :: (HasCallStack) => SuiteParams -> TestParams -> IO Text
 runShrun sp tp = do
@@ -311,11 +312,11 @@ runShrun sp tp = do
       -- Note we use runProcessArgs due to problems with runProcess, though
       -- it is possible the latter would also work with the non-symlink
       -- (have not tried).
-      (ec, out, err) <- runProcessArgs exePath args
+      (ec, out, err) <- Test.Process.runProcessArgs exePath args
       let msg =
             mconcat
               [ "cmd '",
-                displayCmd exePath args,
+                Test.Process.displayCmd exePath args,
                 "' exited with '",
                 show ec,
                 "'\n\nOUT:\n\n",
@@ -326,11 +327,11 @@ runShrun sp tp = do
               ]
       -- This message is in our expected exception.
       if
-        | "Received cancel after running for" `T.isInfixOf` pack msg -> putLogLines msg
-        | "Timed out" `T.isInfixOf` pack msg -> putLogLines msg
+        | "Received cancel after running for" `T.isInfixOf` pack msg -> Test.Logger.putLogLines msg
+        | "Timed out" `T.isInfixOf` pack msg -> Test.Logger.putLogLines msg
         | otherwise -> do
             cs <- PR.listDirectory testDir
-            putLogLines
+            Test.Logger.putLogLines
               $ mconcat
                 [ show testDir,
                   " contents: ",
@@ -390,74 +391,6 @@ shrunDelay = 2
 testDelay :: Natural
 testDelay = 3
 
-runProcess :: (HasCallStack) => String -> IO (ExitCode, String, String)
-runProcess txt = do
-  putLog $ "Running '" ++ txt ++ "'"
-  tryMySync (P.readCreateProcessWithExitCode (P.shell txt) "runProcess") >>= \case
-    Right r -> pure r
-    Left err -> pure (ExitFailure 1, "Exception running command: " ++ txt, displayException err)
-
-runProcessArgs :: String -> [String] -> IO (ExitCode, String, String)
-runProcessArgs cmd args = do
-  putLog $ "Running '" ++ displayCmd cmd args ++ "'"
-  tryMySync (P.readProcessWithExitCode cmd args "runProcessArgs") >>= \case
-    Right r -> pure r
-    Left err -> pure (ExitFailure 1, "Exception running command: " ++ cmd, displayException err)
-
-runProcessOrDie :: (HasCallStack) => String -> IO ()
-runProcessOrDie txt = do
-  (ec, out, err) <- runProcess txt
-  case ec of
-    ExitSuccess ->
-      putLogLines
-        $ mconcat
-          [ "Process '",
-            txt,
-            "' succeeded. Stdout: '",
-            out,
-            "', stderr: '",
-            err,
-            "'"
-          ]
-    ExitFailure _ -> do
-      throwString
-        $ mconcat
-          [ "Process '",
-            txt,
-            "' failed. Stdout: '",
-            out,
-            "', stderr: '",
-            err,
-            "'"
-          ]
-
-runProcessTotal :: (HasCallStack) => String -> IO ()
-runProcessTotal txt = do
-  (ec, out, err) <- runProcess txt
-  case ec of
-    ExitSuccess ->
-      putLogLines
-        $ mconcat
-          [ "Process '",
-            txt,
-            "' succeeded. Stdout: '",
-            out,
-            "', stderr: '",
-            err,
-            "'"
-          ]
-    ExitFailure _ -> do
-      putLogLines
-        $ mconcat
-          [ "Process '",
-            txt,
-            "' failed. Stdout: '",
-            out,
-            "', stderr: '",
-            err,
-            "'"
-          ]
-
 psLineToPid :: (HasCallStack) => Text -> IO Int
 psLineToPid line =
   case L.filter (not . T.null) $ T.split (== ' ') line of
@@ -508,22 +441,7 @@ testTeardown :: (HasCallStack) => (Text, Int) -> IO ()
 testTeardown (_, shrunPid) = do
   killPid SignalTypeSIGTERM shrunPid False
   -- Kill leftover sleeps so tests do not interfere.
-  runProcessOrDie "pkill -15 sleep || true"
-
-installShrun :: (HasCallStack) => OsPath -> IO ()
-installShrun d = runProcessOrDie cmd
-  where
-    cmd =
-      mconcat
-        [ "export SHRUN_HOME=$(pwd); ",
-          "cabal install exe:shrun ",
-          "--installdir=",
-          dStr,
-          " --install-method=copy ",
-          "--overwrite-policy=always"
-        ]
-
-    dStr = unsafeDecode d
+  Test.Process.runProcessOrDie "pkill -15 sleep || true"
 
 -- Ways to terminate shrun.
 data SignalType
@@ -619,14 +537,10 @@ setup :: (HasCallStack) => VerifyCancel -> IO SuiteParams
 setup verifyCancel = do
   tmpDir <- PR.getTemporaryDirectory
   let testDir = tmpDir </> [ospPathSep|shrun/test/terminate|]
-      exeExpectedPath = testDir </> [osp|shrun|]
 
   PW.createDirectoryIfMissing True testDir
 
-  mExePath <- PR.findExecutable exeExpectedPath
-  case mExePath of
-    Just _ -> pure ()
-    Nothing -> installShrun testDir
+  Test.Installer.installShrunOnce testDir
 
   pure
     $ MkSuiteParams
@@ -637,42 +551,6 @@ setup verifyCancel = do
 teardown :: (HasCallStack) => SuiteParams -> IO ()
 teardown sp = PW.removePathForciblyIfExists_ $ sp ^. #testDir
 
-displayCmd :: String -> List String -> String
-displayCmd cmd args =
-  mconcat
-    [ "command: '",
-      cmd,
-      "', args: ",
-      show args
-    ]
-
-putLog :: (HasCallStack) => String -> IO ()
-putLog s = putStrLn $ "\n*** " ++ s ++ " ***"
-
-putLogLines :: (HasCallStack) => String -> IO ()
-putLogLines s =
-  putStrLn
-    $ L.unlines
-      [ hs,
-        s,
-        hs
-      ]
-  where
-    hs = L.replicate 80 '-'
-
-putLogHeader :: (HasCallStack) => String -> IO ()
-putLogHeader s =
-  putStrLn
-    $ L.unlines
-      [ hs,
-        s,
-        hs
-      ]
-  where
-    hs = L.replicate num '*'
-
-    num = max 80 (L.length s)
-
 mkCommandStr :: TestParams -> String
 mkCommandStr tp = case tp ^. #command of
   TestCommandSingle -> "sleep 77"
@@ -680,8 +558,8 @@ mkCommandStr tp = case tp ^. #command of
 
 runCat :: Bool -> String -> IO ()
 runCat fatalErr str = do
-  putLog $ "start " <> str
+  Test.Logger.putLog $ "start " <> str
   f $ "cat " <> str
-  putLog $ "end " <> str
+  Test.Logger.putLog $ "end " <> str
   where
-    f = if fatalErr then runProcessOrDie else runProcessTotal
+    f = if fatalErr then Test.Process.runProcessOrDie else Test.Process.runProcessTotal
