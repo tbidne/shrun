@@ -628,7 +628,7 @@ Config related to file logs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success "sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success on "sleep 2"</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #d6acff">[Finished] 2 seconds</span></code>
 </pre>
@@ -641,7 +641,7 @@ Config related to file logs.
 vs.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success bad "sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success on bad "sleep 2"</span>
 <span style="color: #ff6e6e">[Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #d6acff">[Finished] 2 seconds</span></code>
@@ -655,6 +655,18 @@ vs.
 <span style="color:">[2024-04-23 01:05:24][Success][sleep 2] 2 seconds</span>
 <span style="color:">[2024-04-23 01:05:24][Finished] 2 seconds</span></code>
 </pre>
+
+> [!TIP]
+>
+> This option allows for a nice workflow with automatic file logging i.e. setting the config:
+>
+> ```toml
+> [file-log]
+> path = "shrun.log"
+> delete-on-success = "on"
+> ```
+>
+> If the command succeeds we do not leave any log files around, but if it fails, we have an easy way to investigate.
 
 #### File Line Truncation
 
