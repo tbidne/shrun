@@ -308,10 +308,10 @@ killedPrefix :: (IsString s) => s
 killedPrefix = "[Killed]"
 
 runningPrefix :: (IsString s, Semigroup s) => s
-runningPrefix = warnPrefix <> " Attempting to cancel: "
+runningPrefix = warnPrefix <> " Attempting to cancel:"
 
 waitingPrefix :: (IsString s, Semigroup s) => s
-waitingPrefix = warnPrefix <> " Commands not started: "
+waitingPrefix = warnPrefix <> " Commands not started:"
 
 timedOut :: (IsString s, Semigroup s) => s
 timedOut = warnPrefix <> " Timed out"

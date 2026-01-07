@@ -216,8 +216,8 @@ mkUnfinishedCmdLogs = do
 
   pure (mkLogs waitingPrefix waiting, mkLogs runningPrefix running)
   where
-    waitingPrefix = "Commands not started: "
-    runningPrefix = "Attempting to cancel: "
+    waitingPrefix = "Commands not started:"
+    runningPrefix = "Attempting to cancel:"
 {-# INLINEABLE mkUnfinishedCmdLogs #-}
 
 -- | Logs to a file. This function is /not/ thread-safe! Hence care must be
