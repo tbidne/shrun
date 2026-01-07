@@ -143,6 +143,9 @@ notifyTimeoutTests =
     "--notify-timeout"
     [ testTimeoutSeconds,
       testTimeoutSecondsUnderscores,
+      testTimeoutString,
+      testTimeoutWordFail,
+      testTimeoutNegativeFail,
       testTimeoutDisabled
     ]
 
@@ -163,6 +166,28 @@ testTimeoutSecondsUnderscores =
     desc = "Parses --notify-timeout 5_000"
     argList = ["--notify-timeout", "5_000", "command"]
     expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 5_000)
+
+testTimeoutString :: TestTree
+testTimeoutString =
+  testPropertyNamed "Parses --notify-timeout 1d2h3m4s" "testTimeoutString"
+    $ U.verifyResult argList expected
+  where
+    argList = ["--notify-timeout", "1d2h3m4s", "command"]
+    expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 93_784)
+
+testTimeoutWordFail :: TestTree
+testTimeoutWordFail =
+  testPropertyNamed "Parses --notify-timeout cat failure" "testTimeoutWordFail"
+    $ U.verifyFailure argList
+  where
+    argList = ["--notify-timeout", "cat", "command"]
+
+testTimeoutNegativeFail :: TestTree
+testTimeoutNegativeFail =
+  testPropertyNamed "Parses --notify-timeout -7" "testTimeoutNegativeFail"
+    $ U.verifyFailure argList
+  where
+    argList = ["--notify-timeout", "-7", "command"]
 
 testTimeoutDisabled :: TestTree
 testTimeoutDisabled =

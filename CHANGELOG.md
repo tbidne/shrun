@@ -106,6 +106,7 @@ for versions < 1.
 * Git revision info in `--help` and `--version`.
 * Groups to `--help` options.
 * Option `--common-log-debug`.
+* Option `--notify-timeout` can now take `TIME_STR` e.g. `2h3s`.
 
 ### Fixed
 * Improved final command log formatting with newlines.

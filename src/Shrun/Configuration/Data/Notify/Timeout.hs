@@ -7,6 +7,7 @@ module Shrun.Configuration.Data.Notify.Timeout
 where
 
 import Data.Bits (toIntegralSized)
+import Data.Time.Relative qualified as RT
 import Data.Word (Word16)
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
@@ -17,7 +18,7 @@ import TOML (Value (Integer, String))
 -- | Determines notification timeout.
 data NotifyTimeout
   = -- | Times out after the given seconds.
-    NotifyTimeoutSeconds Word16
+    NotifyTimeoutSeconds Natural
   | -- | Never times out.
     NotifyTimeoutNever
   deriving stock (Eq, Show)
@@ -33,14 +34,11 @@ instance FromInteger NotifyTimeout where
 
 instance DecodeTOML NotifyTimeout where
   tomlDecoder = makeDecoder $ \case
-    String "off" -> pure NotifyTimeoutNever
-    String bad -> invalidValue strErr (String bad)
+    String t -> parseNotifyTimeoutStr t
     Integer i -> case toIntegralSized i of
       Just i' -> pure $ NotifyTimeoutSeconds i'
       Nothing -> invalidValue (tooLargeErr Nothing) (Integer i)
     badTy -> typeMismatch badTy
-    where
-      strErr = "Unexpected timeout. Only valid string is 'off'."
 
 instance Pretty NotifyTimeout where
   pretty = \case
@@ -60,23 +58,34 @@ tooLargeErr (Just i) =
 maxW16 :: Word16
 maxW16 = maxBound
 
--- | Parses 'NotifyTimeout'.
+-- | Parses 'NotifyTimeout'. For CLI only.
 parseNotifyTimeout :: (MonadFail m) => m Text -> m NotifyTimeout
-parseNotifyTimeout getTxt =
-  getTxt >>= \case
-    "off" -> pure NotifyTimeoutNever
-    other -> case U.readStripUnderscores @_ @Integer other of
-      Just nInt -> case toIntegralSized nInt of
-        Just nW16 -> pure $ NotifyTimeoutSeconds nW16
-        Nothing -> fail (unpack $ tooLargeErr (Just nInt))
-      Nothing ->
-        fail
-          $ Utils.fmtUnrecognizedError
-            "notify timeout"
-            notifyTimeoutStr
-            (unpack other)
+parseNotifyTimeout getTxt = do
+  txt <- getTxt
+  case U.readStripUnderscores @_ @Natural txt of
+    Just nNat -> pure $ NotifyTimeoutSeconds nNat
+    Nothing -> parseNotifyTimeoutStr txt
 {-# INLINEABLE parseNotifyTimeout #-}
+
+-- | Parses a string only i.e. should either be 'off' or a time string, not
+-- a literal natural. Intended for:
+--
+-- - CLI, after parsing a literal fails.
+-- - TOML, when given a String not Integer.
+parseNotifyTimeoutStr :: (MonadFail f) => Text -> f NotifyTimeout
+parseNotifyTimeoutStr "off" = pure NotifyTimeoutNever
+parseNotifyTimeoutStr txt = case RT.fromString str of
+  Right n -> pure $ NotifyTimeoutSeconds $ RT.toSeconds n
+  Left bad ->
+    fail
+      $ Utils.fmtUnrecognizedError
+        "notify timeout"
+        notifyTimeoutStr
+        bad
+  where
+    str = unpack txt
+{-# INLINEABLE parseNotifyTimeoutStr #-}
 
 -- | Available 'NotifyTimeout' strings.
 notifyTimeoutStr :: (IsString a) => a
-notifyTimeoutStr = "(NATURAL | off)"
+notifyTimeoutStr = "(NATURAL | TIME_STR | off)"

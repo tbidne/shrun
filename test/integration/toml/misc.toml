@@ -5,3 +5,7 @@ line-trunc = "detect"
 path = "some path"
 line-trunc = "detect"
 mode = "rename"
+
+[notify]
+action-start = "on"
+timeout = "2h3s"

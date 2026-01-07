@@ -115,7 +115,7 @@ import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete (NotifyActionCompleteAll),
   )
 import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout (NotifyTimeoutNever),
+  ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
 import Shrun.Configuration.Data.StripControl (StripControl (StripControlAll, StripControlSmart))
 import Shrun.Configuration.Data.Truncation
@@ -141,6 +141,7 @@ specs testArgs =
       testFileLogDeleteOnSuccess,
       testFileSizeModeNothing,
       testReadBlockLineBufferReadStrategy,
+      testNotifyTimeoutString,
       testConfigsMerged,
       testConfigsMergedDisabled,
       testOverridesDuplicate
@@ -434,6 +435,21 @@ testReadBlockLineBufferReadStrategy = testProp1 desc "testReadBlockLineBufferRea
     args = ["-c", "off", "-c", getIntConfig "config", "cmd"]
 
     expected = [#coreConfig % #commandLogging % #readStrategy ^=@ ReadBlockLineBuffer]
+
+testNotifyTimeoutString :: TestTree
+testNotifyTimeoutString = testProp1 desc "testNotifyTimeoutString" $ do
+  logsRef <- liftIO $ newIORef []
+  makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef logsRef
+  logs === []
+  where
+    desc = "Reads notify.timeout time string from toml"
+    args = ["-c", getIntConfig "misc", "cmd1"]
+
+    expected =
+      [ #coreConfig % #notify %? #timeout ^?=@ Just (NotifyTimeoutSeconds 7203)
+      ]
 
 testConfigsMerged :: TestTree
 testConfigsMerged = testProp1 desc "testConfigsMerged" $ do

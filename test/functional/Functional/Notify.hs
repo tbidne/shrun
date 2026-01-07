@@ -140,7 +140,7 @@ notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
           "--notify-system",
           notifySystemArg,
           "--notify-timeout",
-          "5",
+          "0m5s",
           "sleep 2",
           "sleep 3"
         ]
