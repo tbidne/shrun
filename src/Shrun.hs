@@ -399,8 +399,8 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
   -- print out any unfinished commands
   (mWaitingLog, mRunningLog) <- Logging.mkUnfinishedCmdLogs
-  for_ mWaitingLog (Logging.putRegionMultiLog r)
-  for_ mRunningLog (Logging.putRegionMultiLog r)
+  for_ mWaitingLog (Logging.putRegionMultiLineLog r)
+  for_ mRunningLog (Logging.putRegionMultiLineLog r)
 
   totalTimeTxt <- formatTimeSpec totalTime
   let finalLog =

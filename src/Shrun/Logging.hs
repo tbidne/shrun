@@ -17,7 +17,7 @@
 module Shrun.Logging
   ( -- * Writing logs
     putRegionLog,
-    putRegionMultiLog,
+    putRegionMultiLineLog,
     regionLogToConsoleQueue,
     logToFileQueue,
 
@@ -107,7 +107,7 @@ putRegionLog region lg = do
 -- | Unconditionally writes a log to the console queue. Conditionally
 -- writes the log to the file queue, if 'Logging'\'s @fileLogging@ is
 -- present.
-putRegionMultiLog ::
+putRegionMultiLineLog ::
   forall m env.
   ( HasCallStack,
     HasLogging env m,
@@ -120,7 +120,7 @@ putRegionMultiLog ::
   -- | Log to send.
   NonEmpty Log ->
   m ()
-putRegionMultiLog region logs = do
+putRegionMultiLineLog region logs = do
   commonLogging <- asks getCommonLogging
   mFileLogging <- asks getFileLogging
 
@@ -137,7 +137,7 @@ putRegionMultiLog region logs = do
     logToFileQueue fl fileLog
   where
     mode = NE.head logs ^. #mode
-{-# INLINEABLE putRegionMultiLog #-}
+{-# INLINEABLE putRegionMultiLineLog #-}
 
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
@@ -255,7 +255,7 @@ putRegionLogDirect log = do
     logFile (fl ^. #file % #handle) fileLog
 {-# INLINEABLE putRegionLogDirect #-}
 
--- | Like 'putRegionMultiLineLogDirect', except this logs directly to the
+-- | Like 'putRegionMultiLineLog', except this logs directly to the
 -- console / file, rather than placing the log in a queue. This is for when
 -- log queues are shutdown (e.g. terminated). This should only be called from
 -- a single thread.
