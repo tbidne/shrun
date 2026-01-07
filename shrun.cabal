@@ -198,7 +198,7 @@ library
 
   hs-source-dirs:  src
 
-library shrun-verifier
+library test-utils
   import:          common-lang
   exposed-modules: Test.Shrun.Verifier
   build-depends:
@@ -206,7 +206,7 @@ library shrun-verifier
     , tasty-hunit  >=0.9 && <0.11
     , text
 
-  hs-source-dirs:  test/verifier
+  hs-source-dirs:  test/utils
 
 executable shrun
   import:         common-lang
@@ -322,10 +322,10 @@ test-suite functional
     , fdo-notify
     , optparse-applicative
     , shrun
-    , shrun-verifier
     , tagged                ^>=0.8.6
     , tasty
     , tasty-hunit
+    , test-utils
     , text
 
   hs-source-dirs: test/functional

@@ -4,8 +4,8 @@ cradle:
     - path: "./src"
       component: "lib:shrun"
 
-    - path: "./test/verifier"
-      component: "shrun:lib:shrun-verifier"
+    - path: "./test/utils"
+      component: "shrun:lib:test-utils"
 
     - path: "./app/Main.hs"
       component: "shrun:exe:shrun"
