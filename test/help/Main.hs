@@ -1,0 +1,349 @@
+{-# LANGUAGE QuasiQuotes #-}
+
+module Main (main) where
+
+import Data.Text qualified as T
+import Effects.FileSystem.PathReader qualified as PR
+import Effects.FileSystem.PathWriter qualified as PW
+import FileSystem.OsPath (unsafeDecode)
+import Shrun.Prelude hiding (IO)
+import System.Environment.Guard (guardOrElse')
+import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
+import Test.Shrun.Installer qualified as Test.Installer
+import Test.Shrun.Logger qualified as Test.Logger
+import Test.Shrun.Process qualified as Test.Process
+import Prelude (IO)
+
+-- | Entry point for functional tests.
+main :: IO ()
+main = do
+  guardOrElse' "TEST_HELP" ExpectEnvSet runTests dontRun
+  where
+    runTests = bracket setup teardown testHelp
+
+    dontRun = Test.Logger.putLog "Help tests disabled. Enable with TEST_HELP=1"
+
+testHelp :: (HasCallStack) => OsPath -> IO ()
+testHelp testDir = do
+  Test.Logger.putLogHeader "Testing --help"
+  results <- runShrun testDir
+
+  assertTextLines expected (T.lines results)
+  Test.Logger.putLog "Test succeeded"
+
+runShrun :: (HasCallStack) => OsPath -> IO Text
+runShrun testDir = Test.Process.runProcessOrDieQuiet $ exePath ++ " --help"
+  where
+    exePath = unsafeDecode $ testDir </> [osp|shrun|]
+
+setup :: (HasCallStack) => IO OsPath
+setup = do
+  tmpDir <- PR.getTemporaryDirectory
+  let testDir = tmpDir </> [ospPathSep|shrun/test/help|]
+
+  PW.createDirectoryIfMissing True testDir
+
+  Test.Installer.installShrunOnce testDir
+
+  pure testDir
+
+teardown :: (HasCallStack) => OsPath -> IO ()
+teardown = PW.removePathForciblyIfExists_
+
+assertTextLines :: [Text] -> [Text] -> IO ()
+assertTextLines = go
+  where
+    go [] [] = pure ()
+    go (e : _) [] = throwText $ "Empty results, expected: " <> quote e
+    go [] (r : _) = throwText $ "Empty expected, results: " <> quote r
+    go (e : es) (r : rs)
+      | e == r = go es rs
+      | isHashLine e r = go es rs
+      | otherwise = throwText $ quote e <> " /= " <> quote r
+
+    isHashLine e r =
+      e
+        == "Shrun: <vers> (<hash>)"
+        && "Shrun: "
+        `T.isPrefixOf` r
+
+    quote t = "'" <> t <> "'"
+
+expected :: [Text]
+expected =
+  [ "Shrun: A tool for running shell commands concurrently.",
+    "",
+    "Usage: shrun [-c|--config (PATH | off)...] ",
+    "             [--edges (EDGES_STR | &&& | ||| | ;;; | off)] ",
+    "             [-i|--init (STRING | off)] ",
+    "             [--legend-keys-cache (add | clear | write | off)] ",
+    "             [-t|--timeout (NATURAL | TIME_STR | off)] ",
+    "             [--common-log-debug (on | off)] [--common-log-key-hide (on | off)] ",
+    "             [--command-log-buffer-length NATURAL] ",
+    "             [--command-log-buffer-timeout (NATURAL | TIME_STR)] ",
+    "             [--command-log-poll-interval NATURAL] ",
+    "             [--command-log-read-size BYTES] ",
+    "             [--command-log-read-strategy (block | block-line-buffer)] ",
+    "             [--console-log-command (on | off)] ",
+    "             [--console-log-command-name-trunc (NATURAL | off)] ",
+    "             [--console-log-line-trunc (NATURAL | detect | off)] ",
+    "             [--console-log-strip-control (all | smart | off)] ",
+    "             [--console-log-timer-format TIME_FMT] ",
+    "             [-f|--file-log (default | PATH | off)] ",
+    "             [--file-log-command-name-trunc (NATURAL | off)] ",
+    "             [--file-log-delete-on-success (on | off)] ",
+    "             [--file-log-line-trunc (NATURAL | detect | off)] ",
+    "             [--file-log-mode (append | rename | write)] ",
+    "             [--file-log-size-mode (delete BYTES | warn BYTES | off)] ",
+    "             [--file-log-strip-control (all | smart | off)] ",
+    "             [--notify-action-complete (all | command | final | off)] ",
+    "             [--notify-action-start (on | off)] ",
+    "             [--notify-system (apple-script | dbus | notify-send)] ",
+    "             [--notify-timeout (NATURAL | off)] [--default-config] [--dry-run]",
+    "             Commands...",
+    "",
+    "  Shrun runs shell commands concurrently. In addition to providing basic timing",
+    "  and logging functionality, we also provide the ability to pass in a config",
+    "  file that can be used to define aliases for commands.",
+    "",
+    "  CLI options override toml config so e.g. '--console-log-command off' will",
+    "  disable command logging, regardless of the toml's console-log.command.",
+    "",
+    "  Shrun also supports tab-completions for bash, fish, and zsh. To load them, run",
+    "  the appropriate script:",
+    "   ",
+    "    $ source <(shrun --bash-completion-script `which shrun`)",
+    "    $ source <(shrun --fish-completion-script `which shrun`)",
+    "    $ source <(shrun --zsh-completion-script `which shrun`)",
+    "",
+    "  See github.com/tbidne/shrun#README for full documentation.",
+    "",
+    "  Examples:",
+    "",
+    "    1. Runs cmd1, cmd2, cmd3 concurrently:",
+    "   ",
+    "       $ shrun cmd1 cmd2 cmd3",
+    "       [Command][cmd1] cmd1 output...",
+    "       [Command][cmd2] cmd2 output...",
+    "       [Command][cmd3] cmd3 output...",
+    "       [Timer] 5 seconds",
+    "",
+    "    2. Uses --edges to specify command dependencies. Commands cmd1 and",
+    "       cmd2 are run concurrently; cmd3 is started after cmd1 and cmd2 finish",
+    "       successfully.",
+    "   ",
+    "       $ shrun --edges \"1 & 3, 2 & 3\" cmd1 cmd2 cmd3",
+    "       [Command][cmd1] cmd1 output...",
+    "       [Command][cmd2] cmd2 output...",
+    "       [Timer] 5 seconds",
+    "",
+    "    3. Uses config file aliases i.e. builds frontend, backend, and db",
+    "       concurrently, then runs deploy if those tasks completed successfully.",
+    "   ",
+    "       # config.toml",
+    "       legend = [",
+    "         # Aliases for multiple commands",
+    "         { key = 'deploy', val = [ 'build', 'ds' ], edges = '1 & 2' },",
+    "         { key = 'build', val = [ 'frontend', 'backend', 'db' ] },",
+    "   ",
+    "         # Aliases to actual commands",
+    "         { key = 'frontend', val = 'npm run build' },",
+    "         { key = 'backend', val = 'javac ...' },",
+    "         { key = 'db', val = 'db.sh' },",
+    "         { key = 'ds', val = 'deploy.sh' },",
+    "       ]",
+    "   ",
+    "       $ shrun --config config.toml deploy",
+    "       [Command][frontend] Running npm...",
+    "       [Command][backend] Running javac...",
+    "       [Command][db] Running db.sh...",
+    "       [Timer] 5 seconds",
+    "",
+    "Available options:",
+    "  -c,--config (PATH | off)...",
+    "         Path(s) to TOML config file(s). This argument can be given multiple",
+    "         times, in which case all keys are merged. When there is a conflict, the",
+    "         right-most config wins. The legends are also merged, with the same",
+    "         right-bias for conflicting keys. The string 'off' disables all config",
+    "         files to its left. Finally, we also search in specific locations",
+    "         automatically. These are:",
+    "          ",
+    "         - <XDG_config>/shrun/config.toml",
+    "         - .shrun.toml",
+    "         - shrun.toml",
+    "          ",
+    "         These files are considered 'left' of any configs explicitly given with",
+    "         --config, hence disabled with 'off'.",
+    "          ",
+    "  --edges (EDGES_STR | &&& | ||| | ;;; | off)",
+    "         Comma-separated list, specifying command dependencies, based on their",
+    "         left-to-right order. There are three edge types:",
+    "          ",
+    "         - and: '1 & 2', runs cmd2 iff cmd1 succeeds.",
+    "         - or: '1 | 2', runs cmd2 iff cmd1 fails.",
+    "         - any: '1 ; 2', runs cmd2 iff cmd1 finishes.",
+    "",
+    "         The literals are equivalent to placing edges between all commands e.g.",
+    "         '&&&' puts an 'and'-edge between all commands.",
+    "",
+    "  -i,--init (STRING | off)",
+    "         If given, init is run before each command. That is, 'shrun --init \".",
+    "         ~/.bashrc\" foo bar' is equivalent to 'shrun \". ~/.bashrc && foo\" \".",
+    "         ~/.bashrc && bar\"'.",
+    "",
+    "  --legend-keys-cache (add | clear | write | off)",
+    "         Shrun allows saving legend keys from the current config file so that we",
+    "         can get tab-completions on the next run.",
+    "          ",
+    "         - add: The default. Combines keys from this run with the prior run(s).",
+    "         - clear: Deletes the keys cache, if it exists.",
+    "         - write: Saves keys from this run only.",
+    "",
+    "  -t,--timeout (NATURAL | TIME_STR | off)",
+    "         Non-negative integer setting a timeout. Can either be a raw number",
+    "         (interpreted as seconds), or a \"time string\" e.g. 1d2h3m4s or 2h3s.",
+    "         Defaults to no timeout.",
+    "",
+    "  -h,--help",
+    "         Show this help text",
+    "",
+    "Common Logging options:",
+    "  --common-log-debug (on | off)",
+    "         Enables additional debug logging.",
+    "",
+    "  --common-log-key-hide (on | off)",
+    "         By default, we display the key name from the legend over the actual",
+    "         command that was run, if the former exists. This flag instead shows the",
+    "         literal command. Commands without keys are unaffected.",
+    "",
+    "Command Logging options:",
+    "  --command-log-buffer-length NATURAL",
+    "         Max text length held by the log buffer, used in conjunction with",
+    "         --command-log-read-strategy block-line-buffer. Defaults to 1,000",
+    "         characters.",
+    "",
+    "  --command-log-buffer-timeout (NATURAL | TIME_STR)",
+    "         Max time the log buffer will hold a log before flushing it, used in",
+    "         conjunction with --command-log-read-strategy block-line-buffer.",
+    "         Defaults to 30 seconds.",
+    "",
+    "  --command-log-poll-interval NATURAL",
+    "         Non-negative integer used in conjunction with --console-log-command and",
+    "         --file-log that determines how quickly we poll commands for logs, in",
+    "         microseconds. A value of 0 is interpreted as infinite i.e. limited only",
+    "         by the CPU. Defaults to 10,000. Note that lower values will increase",
+    "         CPU usage. In particular, 0 will max out a CPU thread.",
+    "",
+    "  --command-log-read-size BYTES",
+    "         The max number of bytes in a single read when streaming command logs",
+    "         (--console-log-command and --file-log). Logs larger than",
+    "         --command-log-read-size will be read in a subsequent read, hence broken",
+    "         across lines. The default is '16 kb'.",
+    "",
+    "  --command-log-read-strategy (block | block-line-buffer)",
+    "         Strategy for reading command logs. 'block-line-buffer' is allowed (and",
+    "         the default) as long as we do not have multiple commands with file",
+    "         logging. In that scenario, we use 'block'.",
+    "          ",
+    "         - block: Reads N (--command-log-read-size) bytes at a time.",
+    "         - block-line-buffer: Also reads N bytes at a time, but buffers",
+    "           newlines, for potentially nicer formatted logs.",
+    "",
+    "Console Logging options:",
+    "  --console-log-command (on | off)",
+    "         This flag gives each command a console region in which its 'command'",
+    "         logs will be printed, as opposed to swallowing command logs. Only the",
+    "         latest log per region is shown at a given time. Defaults to 'on'.",
+    "",
+    "  --console-log-command-name-trunc (NATURAL | off)",
+    "         Non-negative integer that limits the length of commands/key-names in",
+    "         the console logs. Defaults to no truncation.",
+    "",
+    "  --console-log-line-trunc (NATURAL | detect | off)",
+    "         Non-negative integer that limits the length of console logs. Can also",
+    "         be the string literal 'detect', to detect the terminal size",
+    "         automatically. Defaults to 'detect' if --console-log-command is on.",
+    "         Note that \"log prefixes\" (e.g. labels like [Success], timestamps) are",
+    "         counted towards the total length but are never truncated.",
+    "",
+    "  --console-log-strip-control (all | smart | off)",
+    "         Control characters can wreak layout havoc, hence this option for",
+    "         stripping such characters.",
+    "          ",
+    "         - all: Strips all such chars.",
+    "         - smart: The default. Attempts to strip only the control chars that",
+    "           affect layout (e.g. cursor movements) and leaves others unaffected",
+    "           (e.g. colors). This has the potential to be the 'prettiest' though it",
+    "           is possible to miss some chars.",
+    "",
+    "  --console-log-timer-format TIME_FMT",
+    "         How to format the timer. Options:",
+    "          ",
+    "         - digital_compact: e.g. '02:00:03'.",
+    "         - digital_full: e.g. '00:02:00:03'.",
+    "         - prose_compact: The default e.g. '2 hours, 3 seconds'.",
+    "         - prose_full: e.g. '0 days, 2 hours, 0 minutes, 3 seconds'.",
+    "",
+    "File Logging options:",
+    "  -f,--file-log (default | PATH | off)",
+    "         If a path is supplied, all logs will additionally be written to the",
+    "         supplied file. Furthermore, 'command' logs will be written to the file",
+    "         irrespective of --console-log-command. Console logging is unaffected.",
+    "         This can be useful for investigating command failures. If the string",
+    "         'default' is given, then we write to the XDG state directory e.g.",
+    "         ~/.local/state/shrun/shrun.log.",
+    "",
+    "  --file-log-command-name-trunc (NATURAL | off)",
+    "         Like --console-log-command-name-trunc, but for --file-logs.",
+    "",
+    "  --file-log-delete-on-success (on | off)",
+    "         If --file-log is active, deletes the file on a successful exit. Does",
+    "         not delete the file if shrun exited via failure.",
+    "",
+    "  --file-log-line-trunc (NATURAL | detect | off)",
+    "         Like --console-log-line-trunc, but for --file-log. Defaults to 'off'.",
+    "",
+    "  --file-log-mode (append | rename | write)",
+    "         Mode in which to open the log file. Defaults to 'write'. The 'rename'",
+    "         option will rename the requested log file if there is a collision e.g.",
+    "         '-f shrun.log' will become 'shrun (1).log'.",
+    "",
+    "  --file-log-size-mode (delete BYTES | warn BYTES | off)",
+    "         Sets a threshold for the file log size, upon which we either print a",
+    "         warning or delete the file, if it is exceeded. The BYTES should include",
+    "         the value and units e.g. 'warn 10 mb', 'warn 5 gigabytes', 'delete",
+    "         20.5B'. Defaults to warning at 50 mb.",
+    "",
+    "  --file-log-strip-control (all | smart | off)",
+    "         --console-log-strip-control for file logs created with --file-log.",
+    "         Defaults to all.",
+    "",
+    "Notifications options:",
+    "  --notify-action-complete (all | command | final | off)",
+    "         Sends notifications for various 'complete' actions.",
+    "          ",
+    "         - all: Implies 'final' and 'command'.",
+    "         - command: Sends off a notification for each command that finishes.",
+    "         - final: Sends off a single notification when shrun itself finishes.",
+    "",
+    "  --notify-action-start (on | off)",
+    "         Sends a notification when a command is started.",
+    "",
+    "  --notify-system (apple-script | dbus | notify-send)",
+    "         The system used for sending notifications. 'dbus' and 'notify-send' are",
+    "         available on linux, whereas 'apple-script' is available for osx.",
+    "",
+    "  --notify-timeout (NATURAL | off)",
+    "         When to timeout success notifications. Defaults to 10 seconds. Note",
+    "         that the underlying notification system may not support timeouts.",
+    "",
+    "Miscellaneous options:",
+    "  --default-config",
+    "         Writes a default toml config file to stdout.",
+    "",
+    "  --dry-run",
+    "         Prints the configuration and commands that would be run to stdout, then",
+    "         exits.",
+    "",
+    "Shrun: <vers> (<hash>)"
+  ]

@@ -5,6 +5,7 @@ module Test.Shrun.Process
     runProcess,
     runProcessArgs,
     runProcessOrDie,
+    runProcessOrDieQuiet,
     runProcessTotal,
 
     -- * Misc
@@ -14,6 +15,8 @@ where
 
 import Control.Exception (displayException)
 import Control.Exception.Utils (throwString, trySync)
+import Data.Text (Text)
+import Data.Text qualified as T
 import Effects.System.Process qualified as P
 import GHC.Stack.Types (HasCallStack)
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
@@ -48,6 +51,23 @@ runProcessOrDie txt = do
             err,
             "'"
           ]
+    ExitFailure _ -> do
+      throwString $
+        mconcat
+          [ "Process '",
+            txt,
+            "' failed. Stdout: '",
+            out,
+            "', stderr: '",
+            err,
+            "'"
+          ]
+
+runProcessOrDieQuiet :: (HasCallStack) => String -> IO Text
+runProcessOrDieQuiet txt = do
+  (ec, out, err) <- runProcess txt
+  case ec of
+    ExitSuccess -> pure $ T.pack out
     ExitFailure _ -> do
       throwString $
         mconcat

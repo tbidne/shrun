@@ -361,13 +361,26 @@ executable terminate
     , base
     , effects-async
     , effects-fs
-    , effects-process
     , env-guard
     , shrun
     , test-utils
     , text
 
   hs-source-dirs: test/terminate
+
+executable help
+  import:         common-lang
+  main-is:        Main.hs
+  other-modules:
+  build-depends:
+    , base
+    , effects-fs
+    , env-guard
+    , shrun
+    , test-utils
+    , text
+
+  hs-source-dirs: test/help
 
 benchmark benchmarks
   import:         common-lang

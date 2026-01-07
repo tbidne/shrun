@@ -25,6 +25,9 @@ cradle:
     - path: "./test/terminate/Main.hs"
       component: "shrun:exe:terminate"
 
+    - path: "./test/help/Main.hs"
+      component: "shrun:exe:help"
+
     - path: "./benchmarks/Main.hs"
       component: "shrun:bench:benchmarks"
 

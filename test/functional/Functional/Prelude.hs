@@ -10,8 +10,6 @@
 --      with the exception logic, since the exception stuff happens _outside_
 --      of these tests i.e. exceptions are caught and the unwanted output will
 --      occur from the handler (set in Main.hs).
---
---  42. Consider testing --help (would require some refactoring like 3 above).
 
 module Functional.Prelude
   ( module X,

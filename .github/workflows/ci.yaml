@@ -83,6 +83,11 @@ jobs:
           TEST_FUNCTIONAL=1 cabal test ${{ matrix.ghc.proj-file }} functional \
             --test-options '--read-strategy all'
 
+      - name: Help Tests
+        shell: bash
+        run: |
+          TEST_HELP=1 cabal run ${{ matrix.ghc.proj-file }} help
+
       - name: Terminate Tests
         shell: bash
         run: |
