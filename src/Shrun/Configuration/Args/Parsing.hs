@@ -185,15 +185,15 @@ parserInfoArgs prevKeys =
       Chunk.vcatChunks
         [ Chunk.paragraph
             $ mconcat
-              [ "Shrun also supports tab-completions for bash, zsh, and fish. ",
+              [ "Shrun also supports tab-completions for bash, fish, and zsh. ",
                 "To load them, run the appropriate script:"
               ],
           Pretty.nest 2
             <$> Chunk.vcatChunks
               [ toChunk 0 "",
                 Chunk.stringChunk "$ source <(shrun --bash-completion-script `which shrun`)",
-                Chunk.stringChunk "$ source <(shrun --zsh-completion-script `which shrun`)",
-                Chunk.stringChunk "$ source <(shrun --fish-completion-script `which shrun`)"
+                Chunk.stringChunk "$ source <(shrun --fish-completion-script `which shrun`)",
+                Chunk.stringChunk "$ source <(shrun --zsh-completion-script `which shrun`)"
               ]
         ]
 

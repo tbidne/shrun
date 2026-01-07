@@ -353,12 +353,12 @@ If none of those help, the best solution is likely to simply use `--command-log-
 
 ## How do I set shell auto-completions?
 
-Shrun supports tab-completions for bash, zsh, and fish. To load them, run the appropriate script:
+Shrun supports tab-completions for bash, fish, and zsh. To load them, run the appropriate script:
 
 ```sh
 $ source <(shrun --bash-completion-script `which shrun`)
-$ source <(shrun --zsh-completion-script `which shrun`)
 $ source <(shrun --fish-completion-script `which shrun`)
+$ source <(shrun --zsh-completion-script `which shrun`)
 ```
 
 Furthermore, we can use the `--legend-keys-cache` option to save legend keys, so that we get tab completions on the next run.
