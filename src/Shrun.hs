@@ -744,7 +744,7 @@ cleanupCommands ::
 cleanupCommands = do
   commandsStatus <- getReadCommandStatus
 
-  for_ commandsStatus $ \(_cmd, status) -> do
+  for_ commandsStatus $ \(_cmd, status) ->
     case status of
       CommandRunning (mPid, childPids) -> do
         -- 1. Kill the commands' children that were immediately spawned.

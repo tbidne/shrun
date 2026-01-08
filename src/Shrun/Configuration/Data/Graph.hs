@@ -377,7 +377,7 @@ context ::
 context cg = evaluate . force . G.context (cg ^. #graph)
 
 displayCommandIndex :: CommandIndex -> Text
-displayCommandIndex = showt . view (#unCommandIndex % #unPositive)
+displayCommandIndex = prettyToText
 
 displayVertex :: Node -> Text
 displayVertex = displayCommandIndex . Command.Types.fromVertex

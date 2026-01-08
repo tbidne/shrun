@@ -7,6 +7,7 @@ module Shrun.Configuration.Env.Types
     CommandCleanup (..),
     updateCommandStatus,
     getReadCommandStatus,
+    readCommandStatus,
     HasCommandLogging (..),
     HasCommonLogging (..),
     HasConsoleLogging (..),
@@ -99,7 +100,7 @@ class HasCommands env where
   -- | Retrieves commands and their statuses.
   getCommandStatus ::
     env ->
-    TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
+    HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus))
 
 -- | Timeout, if any.
 class HasTimeout env where
@@ -146,11 +147,14 @@ data Env r = MkEnv
     commands :: NESeq CommandP1,
     -- | Command graph.
     commandGraph :: CommandGraph,
-    -- | Holds a sequence of commands that have completed. Used so we can
-    -- determine which commands have /not/ completed if we time out.
+    -- | Map from CommandIndex to Command and its status. Used for determining
+    -- e.g. which commands have completed / failed / not run.
     --
-    -- The boolean indicates success/fail (used for command dependencies).
-    completedCommands :: TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)),
+    -- The statuses are TVars since they are mutable, though the map itself
+    -- can be pure since its structure is fixed at initialization. In fact,
+    -- we could probably swap TVar for IORef since we only update the
+    -- status from a single thread (each command has its own thread).
+    completedCommands :: HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)),
     -- | Core config.
     config :: CoreConfigP ConfigPhaseEnv,
     -- | Console log queue.
@@ -224,8 +228,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)),
-    b ~ TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
+    a ~ HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)),
+    b ~ HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus))
   ) =>
   LabelOptic "completedCommands" k (Env r) (Env r) a b
   where
@@ -333,14 +337,19 @@ updateCommandStatus ::
   ( HasCallStack,
     HasCommands env,
     MonadReader env m,
-    MonadSTM m
+    MonadSTM m,
+    MonadThrow m
   ) =>
   CommandP1 ->
   CommandStatus ->
   m ()
 updateCommandStatus command result = do
   completedCommands <- asks getCommandStatus
-  modifyTVarA' completedCommands (Map.insert (command ^. #index) (command, result))
+  case Map.lookup idx completedCommands of
+    Nothing -> throwText $ prettyToText idx
+    Just (_, statusVar) -> writeTVarA statusVar result
+  where
+    idx = command ^. #index
 {-# INLINEABLE updateCommandStatus #-}
 
 instance HasAnyError (Env r) where
@@ -371,6 +380,7 @@ whenDebug m = do
   debug <- asks (view (#debug % #unDebug) . getCommonLogging)
   when debug m
 
+-- | Retrieves the entire status map in a single STM transaction.
 getReadCommandStatus ::
   ( HasCallStack,
     HasCommands env,
@@ -378,7 +388,17 @@ getReadCommandStatus ::
     MonadSTM m
   ) =>
   m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
-getReadCommandStatus = asks getCommandStatus >>= readTVarA
+getReadCommandStatus = asks getCommandStatus >>= readCommandStatus
+
+-- | Reads a map of TVars into a pure map via a single STM transaction.
+readCommandStatus ::
+  ( HasCallStack,
+    MonadSTM m
+  ) =>
+  HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
+  m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
+readCommandStatus commandStatusRefs =
+  atomically $ for commandStatusRefs (traverse readTVar)
 
 -- | Sets timedout to true.
 setTimedOut :: (HasTimeout env, MonadReader env m, MonadSTM m) => m ()

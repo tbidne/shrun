@@ -281,7 +281,11 @@ fromMergedConfig cfg onEnv = do
       $ cfg
     throwM ExitSuccess
 
-  completedCommands <- newTVarA (Map.fromList $ toList commandStatusInit)
+  completedCommands <- atomically $ do
+    kvs <- for commandStatusInit $ \(k, (cmd, status)) -> do
+      statusVar <- newTVar status
+      pure (k, (cmd, statusVar))
+    pure $ Map.fromList $ toList kvs
 
   anyError <- newTVarA False
   consoleLogQueue <- newTBQueueA 1_000

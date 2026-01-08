@@ -27,6 +27,7 @@ import Shrun.Configuration.Env.Types
   ( HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasLogging,
+    readCommandStatus,
   )
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging qualified as Logging
@@ -96,7 +97,7 @@ runCommand ::
   -- | Command dependency graph.
   CommandGraph ->
   -- | Command status ref.
-  TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
+  HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
   -- | Vertex semaphore map, for preventing the same command being kicked off
   -- by multiple commands.
   HashMap Vertex (MVar ()) ->
@@ -250,12 +251,11 @@ getPredecessorsStatus ::
     MonadSTM m
   ) =>
   CommandGraph ->
-  TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
+  HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
   Vertex ->
   m PredecessorResult
-getPredecessorsStatus cdg commandStatusesRef v = do
-  commandStatuses <- readTVarA commandStatusesRef
-
+getPredecessorsStatus cdg commandStatusesRefs v = do
+  commandStatuses <- readCommandStatus commandStatusesRefs
   let toResult :: Tuple2 Vertex EdgeLabel -> m PredecessorResult
       toResult (p, lbl) =
         let idx = Command.Types.fromVertex p
@@ -264,7 +264,7 @@ getPredecessorsStatus cdg commandStatusesRef v = do
                 throwText
                   $ mconcat
                     [ "Failed searching for command index ",
-                      showt (idx ^. #unCommandIndex % #unPositive)
+                      prettyToText idx
                     ]
               Just (_, status) -> do
                 case (status, lbl) of
@@ -342,7 +342,7 @@ logCommandAction cdg lvl mPrevVertex msgFn mDepVertex vertex = do
     vToUnlined :: Vertex -> UnlinedText
     vToUnlined =
       fromString
-        . show
-        . view (#unCommandIndex % #unPositive)
+        . unpack
+        . prettyToText
         . Command.Types.fromVertex
 {-# INLINEABLE logCommandAction #-}

@@ -89,6 +89,7 @@ import Control.Applicative as X
 import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
 import Control.Concurrent.STM.TMVar as X (TMVar, newTMVar)
+import Control.Concurrent.STM.TVar as X (newTVar, readTVar)
 import Control.DeepSeq as X (NFData, force)
 import Control.Exception as X
   ( Exception (displayException, fromException, toException),
@@ -181,6 +182,7 @@ import Data.List as X (filter, replicate, zip, (++))
 #endif
 import Data.List.NonEmpty as X (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE
+import Data.Map.Strict as X (Map)
 import Data.Maybe as X (Maybe (Just, Nothing), fromMaybe, maybe)
 import Data.Monoid as X (Ap (Ap, getAp), Monoid (mconcat, mempty))
 import Data.Ord as X (Ord ((<), (<=), (>), (>=)), Ordering)

@@ -357,13 +357,13 @@ repairEdges (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
             throwText
               $ mconcat
                 [ "Index '",
-                  showt (i ^. #unCommandIndex % #unPositive),
+                  prettyToText i,
                   "' in edge '",
-                  showt (src ^. #unCommandIndex % #unPositive),
+                  prettyToText src,
                   " ",
                   Graph.displayEdgeLabel lbl,
                   " ",
-                  showt (dest ^. #unCommandIndex % #unPositive),
+                  prettyToText dest,
                   "' is out-of-bounds."
                 ]
           Just (s, e) -> pure (s, e)
