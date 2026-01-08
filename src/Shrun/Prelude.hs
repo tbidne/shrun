@@ -181,7 +181,6 @@ import Data.List as X (filter, replicate, zip, (++))
 #endif
 import Data.List.NonEmpty as X (NonEmpty ((:|)))
 import Data.List.NonEmpty qualified as NE
-import Data.Map.Strict as X (Map)
 import Data.Maybe as X (Maybe (Just, Nothing), fromMaybe, maybe)
 import Data.Monoid as X (Ap (Ap, getAp), Monoid (mconcat, mempty))
 import Data.Ord as X (Ord ((<), (<=), (>), (>=)), Ordering)
@@ -191,7 +190,6 @@ import Data.Sequence as X (Seq ((:<|), (:|>)), pattern Empty)
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
 import Data.Sequence.NonEmpty qualified as NESeq
-import Data.Set as X (Set)
 import Data.Singletons (SingI)
 import Data.String as X (IsString (fromString), String)
 import Data.Text as X (Text, pack, unpack)

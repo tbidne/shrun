@@ -3,7 +3,7 @@ module Shrun.Command
   )
 where
 
-import Data.Map.Strict qualified as Map
+import Data.HashMap.Strict qualified as Map
 import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Shrun.Command.Types
@@ -67,7 +67,7 @@ runCommands runner = do
 
 -- | Builds a map for each Vertex -> MVar. This ensures that we only start
 -- each command at most once.
-mkVertexSemMap :: (MonadMVar m) => CommandGraph -> m (Map Vertex (MVar ()))
+mkVertexSemMap :: (MonadMVar m) => CommandGraph -> m (HashMap Vertex (MVar ()))
 mkVertexSemMap cdg = do
   vs <- for vertices $ \v -> do
     q <- newMVar ()
@@ -96,10 +96,10 @@ runCommand ::
   -- | Command dependency graph.
   CommandGraph ->
   -- | Command status ref.
-  TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
+  TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
   -- | Vertex semaphore map, for preventing the same command being kicked off
   -- by multiple commands.
-  Map Vertex (MVar ()) ->
+  HashMap Vertex (MVar ()) ->
   -- | Vertex to run.
   Vertex ->
   m ()
@@ -250,7 +250,7 @@ getPredecessorsStatus ::
     MonadSTM m
   ) =>
   CommandGraph ->
-  TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
+  TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)) ->
   Vertex ->
   m PredecessorResult
 getPredecessorsStatus cdg commandStatusesRef v = do

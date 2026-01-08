@@ -15,10 +15,10 @@ module Shrun.Configuration.Env
   )
 where
 
+import Data.HashMap.Strict qualified as Map
+import Data.HashSet qualified as Set
 import Data.List qualified as L
-import Data.Map.Strict qualified as Map
 import Data.Sequence qualified as Seq
-import Data.Set qualified as Set
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
@@ -401,7 +401,7 @@ saveLegendKeys xdgState cache prevKeysList toml =
     currIsSubset = currKeySet `Set.isSubsetOf` prevKeySet
 
     writeKeys newKeys = do
-      let allKeys = toList newKeys
+      let allKeys = L.sort $ toList newKeys
       -- Ensure directory exists.
       PW.createDirectoryIfMissing True xdgState
       writeFileUtf8 keysPath (T.intercalate "\n" allKeys)

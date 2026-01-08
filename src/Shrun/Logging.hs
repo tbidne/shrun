@@ -36,8 +36,9 @@ module Shrun.Logging
   )
 where
 
+import Data.HashSet qualified as Set
+import Data.List qualified as L
 import Data.List.NonEmpty qualified as NE
-import Data.Set qualified as Set
 import Shrun.Command.Types
   ( CommandOrd (MkCommandOrd),
     CommandPhase (CommandPhase1),
@@ -205,14 +206,16 @@ mkUnfinishedCmdLogs = do
             mode = LogModeFinish
           }
 
-      mkLogs :: UnlinedText -> Set (CommandOrd CommandPhase1) -> Maybe (NonEmpty Log)
+      mkLogs :: UnlinedText -> HashSet (CommandOrd CommandPhase1) -> Maybe (NonEmpty Log)
       mkLogs pfx st =
         if Set.null st
           then Nothing
           else
             Just
               $ mkLog (pfx ^. #unUnlinedText)
-              :| (mkLog . cmdToTxt <$> toList st)
+              -- Final sort by CommandOrd since our intermediate structure is
+              -- a HashSet.
+              :| (mkLog . cmdToTxt <$> L.sort (toList st))
 
   pure (mkLogs waitingPrefix waiting, mkLogs runningPrefix running)
   where

@@ -28,7 +28,7 @@ module Shrun.Configuration.Env.Types
   )
 where
 
-import Data.Map.Strict qualified as Map
+import Data.HashMap.Strict qualified as Map
 import Shrun.Command.Types
   ( CommandIndex,
     CommandP1,
@@ -99,7 +99,7 @@ class HasCommands env where
   -- | Retrieves commands and their statuses.
   getCommandStatus ::
     env ->
-    TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus))
+    TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
 
 -- | Timeout, if any.
 class HasTimeout env where
@@ -150,7 +150,7 @@ data Env r = MkEnv
     -- determine which commands have /not/ completed if we time out.
     --
     -- The boolean indicates success/fail (used for command dependencies).
-    completedCommands :: TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)),
+    completedCommands :: TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)),
     -- | Core config.
     config :: CoreConfigP ConfigPhaseEnv,
     -- | Console log queue.
@@ -224,8 +224,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus)),
-    b ~ TVar (Map CommandIndex (Tuple2 CommandP1 CommandStatus))
+    a ~ TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)),
+    b ~ TVar (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
   ) =>
   LabelOptic "completedCommands" k (Env r) (Env r) a b
   where
@@ -377,7 +377,7 @@ getReadCommandStatus ::
     MonadReader env m,
     MonadSTM m
   ) =>
-  m (Map CommandIndex (Tuple2 CommandP1 CommandStatus))
+  m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
 getReadCommandStatus = asks getCommandStatus >>= readTVarA
 
 -- | Sets timedout to true.

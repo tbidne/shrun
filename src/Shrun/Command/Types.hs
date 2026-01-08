@@ -58,7 +58,7 @@ data CommandP p = MkCommandP
     command :: Text
   }
   deriving stock (Eq, Generic, Show)
-  deriving anyclass (NFData)
+  deriving anyclass (Hashable, NFData)
 
 -- NOTE: We use standard Eq here and put the equivalence class Ord on a
 -- newtype (CommandOrd) because some of tests verify all CommandP fields
@@ -155,6 +155,7 @@ data CommandStatus
 
 -- | Wraps 'CommandP' for the purposes of ordering by index.
 newtype CommandOrd p = MkCommandOrd (CommandP p)
+  deriving newtype (Generic, Hashable)
 
 instance Eq (CommandOrd p) where
   MkCommandOrd x == MkCommandOrd y = x ^. #index == y ^. #index

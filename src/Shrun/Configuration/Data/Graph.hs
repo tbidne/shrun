@@ -40,10 +40,8 @@ import Data.Graph.Inductive.Query.Dominators qualified as Dom
 import Data.HashMap.Strict qualified as HMap
 import Data.HashSet qualified as HSet
 import Data.List qualified as L
-import Data.Map.Strict qualified as Map
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty qualified as NESeq
-import Data.Set qualified as Set
 import Data.Text qualified as T
 import GHC.Exts (IsList (Item))
 import GHC.Exts qualified as Exts
@@ -81,7 +79,7 @@ data EdgeLabel
   | -- | cmd1 ; cmd2 runs cmd2 iff cmd1 finishes with any status.
     EdgeAny
   deriving stock (Bounded, Enum, Eq, Generic, Ord, Show)
-  deriving anyclass (NFData)
+  deriving anyclass (Hashable, NFData)
 
 instance Pretty EdgeLabel where
   pretty = displayEdgeLabel
@@ -266,14 +264,14 @@ mkGraph cdgArgs cmds = do
   allEdgesExist edges cmdSet
 
   -- Find roots.
-  let rootMap = Map.withoutKeys cmdMap nonRoots
+  let rootMap = withoutKeys cmdMap nonRoots
 
-  (roots, vs) <- case Map.toList rootMap of
+  (roots, vs) <- case HMap.toList rootMap of
     [] -> throwText "No root command(s) found! There is probably a cycle."
     (r : rs) -> do
       pure
         ( fmap (view _1) (r :<|| Seq.fromList rs),
-          Map.toList cmdMap
+          HMap.toList cmdMap
         )
 
   let graph = G.mkGraph @Gr vs (toList edges)
@@ -306,18 +304,21 @@ mkGraph cdgArgs cmds = do
       (EdgeArgsSequential s) -> mkSequentialEdges s cmds
 
     -- nonRoots is all vertices with an in-edge.
-    nonRoots :: Set Int
+    nonRoots :: HashSet Int
 
-    (_, nonRoots) = foldl' mkEdgeMap (HMap.empty, Set.empty) edges
+    (_, nonRoots) = foldl' mkEdgeMap (HMap.empty, HSet.empty) edges
 
     mkEdgeMap :: EdgeAcc -> GEdge -> EdgeAcc
     mkEdgeMap (mp, nr) (s, d, _) = case HMap.lookup s mp of
-      Nothing -> (HMap.insert s [d] mp, Set.insert d nr)
-      Just es -> (HMap.insert s (d : es) mp, Set.insert d nr)
+      Nothing -> (HMap.insert s [d] mp, HSet.insert d nr)
+      Just es -> (HMap.insert s (d : es) mp, HSet.insert d nr)
 
-    cmdSet = Map.keysSet cmdMap
+    cmdSet = HMap.keysSet cmdMap
     cmdMap =
-      Map.fromList ((\cmd -> (toV $ cmd ^. #index, cmd)) <$> toList cmds)
+      HMap.fromList ((\cmd -> (toV $ cmd ^. #index, cmd)) <$> toList cmds)
+
+    withoutKeys :: (Hashable k) => HashMap k v -> HashSet k -> HashMap k v
+    withoutKeys m s = m `HMap.difference` HMap.fromList ((,const ()) <$> HSet.toList s)
 
 -- | Creates a trivial command dep graph where each command is a
 -- disconnected vertex, hence root. This exists to avoid the monad in
@@ -388,7 +389,7 @@ toV = Command.Types.toVertex
 type EdgeAcc =
   Tuple2
     (HashMap Int (List Int))
-    (Set Int)
+    (HashSet Int)
 
 verifyUniqueEdges :: (HasCallStack, MonadThrow m) => Seq GEdge -> m ()
 verifyUniqueEdges edges = case toList duplicates of
@@ -397,12 +398,12 @@ verifyUniqueEdges edges = case toList duplicates of
     let msg = "Found duplicates: " <> T.intercalate " " (renderEdge <$> es)
     throwText msg
   where
-    (_, duplicates) = foldl' go (Set.empty, Set.empty) edges
+    (_, duplicates) = foldl' go (HSet.empty, HSet.empty) edges
 
-    go :: Tuple2 (Set GEdge) (Set GEdge) -> GEdge -> Tuple2 (Set GEdge) (Set GEdge)
+    go :: Tuple2 (HashSet GEdge) (HashSet GEdge) -> GEdge -> Tuple2 (HashSet GEdge) (HashSet GEdge)
     go (found, dupes) edge
-      | Set.member edge found = (found, Set.insert edge dupes)
-      | otherwise = (Set.insert edge found, dupes)
+      | HSet.member edge found = (found, HSet.insert edge dupes)
+      | otherwise = (HSet.insert edge found, dupes)
 
     renderEdge (s, t, _) =
       mconcat
@@ -414,7 +415,7 @@ verifyUniqueEdges edges = case toList duplicates of
         ]
 
 -- | Verifies all commands references in the edges exist.
-allEdgesExist :: (HasCallStack, MonadThrow m) => Seq GEdge -> Set Int -> m ()
+allEdgesExist :: (HasCallStack, MonadThrow m) => Seq GEdge -> HashSet Int -> m ()
 allEdgesExist edges cmds = for_ edges $ \(s, d, _) -> do
   if
     | s `notMember` cmds ->
@@ -423,7 +424,7 @@ allEdgesExist edges cmds = for_ edges $ \(s, d, _) -> do
         throwText $ mkErr d (s, d)
     | otherwise -> pure ()
   where
-    notMember x = not . Set.member x
+    notMember x = not . HSet.member x
 
     mkErr x (s, d) =
       mconcat
@@ -436,7 +437,7 @@ allEdgesExist edges cmds = for_ edges $ \(s, d, _) -> do
           " does not exist."
         ]
 
-verifyAllReachable :: (HasCallStack, MonadThrow m) => CommandGraph -> Set Int -> m ()
+verifyAllReachable :: (HasCallStack, MonadThrow m) => CommandGraph -> HashSet Int -> m ()
 verifyAllReachable cdg cmdSet = do
   case toList nonReachable of
     [] -> pure ()
@@ -449,13 +450,13 @@ verifyAllReachable cdg cmdSet = do
               ]
       throwText msg
   where
-    nonReachable = Set.difference cmdSet reachable
+    nonReachable = HSet.difference cmdSet reachable
     reachable = reachableFromRoots cdg
 
 -- Dominators seems to do what we want, but if not we can write this manually.
-reachableFromRoots :: CommandGraph -> Set Node
+reachableFromRoots :: CommandGraph -> HashSet Node
 reachableFromRoots cdg =
-  Set.fromList
+  HSet.fromList
     . fmap (view _1)
     . (Dom.dom graph <=< toList)
     $ cdg
