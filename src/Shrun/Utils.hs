@@ -12,7 +12,6 @@ module Shrun.Utils
     -- * MonadTime Utils
     diffTime,
     timeSpecToRelTime,
-    foldMap1,
 
     -- * Misc Utils
     atomicReadWrite,
@@ -68,21 +67,6 @@ diffTime t1 t2 = view #sec $ diffTimeSpec t1 t2
 -- | Transforms a 'TimeSpec' into a 'RelativeTime'.
 timeSpecToRelTime :: TimeSpec -> RelativeTime
 timeSpecToRelTime = fromSeconds . view #sec
-
--- | Relaxes 'foldMap'\'s 'Monoid' constraint to 'Semigroup'. Requires a
--- starting value. This will have to do until semigroupoids' Foldable1 is
--- in base.
---
--- ==== __Examples__
--- >>> foldMap1 @List Sum 0 [1..4]
--- Sum {getSum = 10}
---
--- >>> -- Silly, but demonstrates usage i.e. with non-monoid NonEmpty.
--- >>> foldMap1 @List (:| []) 1 [2,3,4]
--- 1 :| [2,3,4]
-foldMap1 :: (Foldable f, Semigroup s) => (a -> s) -> a -> f a -> s
-foldMap1 f x xs = foldr (\b g y -> f y <> g b) f xs x
-{-# INLINEABLE foldMap1 #-}
 
 -- | Wrapper for 'Text'\'s 'T.breakOn' that differs in that:
 --

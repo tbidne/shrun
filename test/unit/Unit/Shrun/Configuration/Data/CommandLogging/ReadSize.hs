@@ -43,10 +43,10 @@ parseNatSucceeds = testPropertyNamed desc name $ do
     for_ allNatSizes $ \bytes -> do
       let txt = bytesToText MkIntegralFormatter bytes
       case ReadSize.parseReadSize (pure txt) of
-        EitherLeft err -> do
+        Err err -> do
           annotate $ expectedSuccess txt err
           failure
-        EitherRight _ -> pure ()
+        Ok _ -> pure ()
   where
     desc = "Integral bytes up to max Int succeedes"
     name = "parseNatSucceeds"
@@ -83,10 +83,10 @@ parseDoubleSucceeds = testPropertyNamed desc name $ do
       -- need at least 6 decimal places to store the max Int.
       let txt = bytesToText (MkFloatingFormatter (Just 6)) bytes
       case ReadSize.parseReadSize (pure txt) of
-        EitherLeft err -> do
+        Err err -> do
           annotate $ expectedSuccess txt err
           failure
-        EitherRight _ -> pure ()
+        Ok _ -> pure ()
   where
     desc = "Floating bytes up to max Int succeedes"
     name = "parseDoubleSucceeds"
@@ -96,8 +96,8 @@ parseDoubleSucceeds = testPropertyNamed desc name $ do
 maxIntSupported :: TestTree
 maxIntSupported = testCase "ReadSize can be Int maxBound" $ do
   case ReadSize.parseReadSize (pure bytesStr) of
-    EitherLeft err -> assertFailure $ expectedSuccess bytesStr err
-    EitherRight _ -> pure ()
+    Err err -> assertFailure $ expectedSuccess bytesStr err
+    Ok _ -> pure ()
   where
     val = fromIntegral @Int @Natural maxBound
     bytesStr = mkBytesString val
@@ -105,8 +105,8 @@ maxIntSupported = testCase "ReadSize can be Int maxBound" $ do
 maxIntDoubleSupported :: TestTree
 maxIntDoubleSupported = testCase "ReadSize can be Double near max Int" $ do
   case ReadSize.parseReadSize (pure bytesStr) of
-    EitherLeft err -> assertFailure $ expectedSuccess bytesStr err
-    EitherRight _ -> pure ()
+    Err err -> assertFailure $ expectedSuccess bytesStr err
+    Ok _ -> pure ()
   where
     -- Why - 1000? Because if we convert the max Int it will round up and
     -- be too large.
@@ -115,18 +115,18 @@ maxIntDoubleSupported = testCase "ReadSize can be Double near max Int" $ do
 
 maxIntIncNotSupported :: TestTree
 maxIntIncNotSupported = testCase "ReadSize cannot be Int maxBound + 1" $ do
-  case ReadSize.parseReadSize (pure bytesStr) of
-    EitherLeft _ -> pure ()
-    EitherRight x -> assertFailure $ expectedFailure bytesStr x
+  case ReadSize.parseReadSize @(Result Text) (pure bytesStr) of
+    Err _ -> pure ()
+    Ok x -> assertFailure $ expectedFailure bytesStr x
   where
     val = fromIntegral @Int @Natural maxBound + 1
     bytesStr = mkBytesString val
 
 maxIntDoubleIncNotSupported :: TestTree
 maxIntDoubleIncNotSupported = testCase desc $ do
-  case ReadSize.parseReadSize (pure bytesStr) of
-    EitherLeft _ -> pure ()
-    EitherRight x -> assertFailure $ expectedFailure bytesStr x
+  case ReadSize.parseReadSize @(Result Text) (pure bytesStr) of
+    Err _ -> pure ()
+    Ok x -> assertFailure $ expectedFailure bytesStr x
   where
     desc = "ReadSize cannot be Double at max Int"
     val = MkBytes @B $ fromIntegral @Int @Double maxBound
@@ -174,14 +174,15 @@ bytesToText ::
   Text
 bytesToText fmtter = BytesFmt.formatSized fmtter BytesFmt.sizedFormatterUnix
 
-expectedSuccess :: Text -> String -> String
+expectedSuccess :: Text -> Text -> String
 expectedSuccess val err =
-  mconcat
-    [ "Failed parsing read-size '",
-      unpack val,
-      "': ",
-      err
-    ]
+  unpack
+    $ mconcat
+      [ "Failed parsing read-size '",
+        val,
+        "': ",
+        err
+      ]
 
 expectedFailure :: (Show a) => Text -> a -> String
 expectedFailure val x =

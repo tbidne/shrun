@@ -7,7 +7,6 @@ module Shrun.Configuration.Env.Types
     CommandCleanup (..),
     updateCommandStatus,
     getReadCommandStatus,
-    readCommandStatus,
     HasCommandLogging (..),
     HasCommonLogging (..),
     HasConsoleLogging (..),

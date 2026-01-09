@@ -30,9 +30,8 @@ module Shrun.Prelude
     prettyToText,
 
     -- * Misc utilities
-    EitherString (..),
+    Result (..),
     fromFoldable,
-    foldMapA,
     onJust,
     (<<$>>),
     (<<&>>),
@@ -88,6 +87,7 @@ import Control.Applicative as X
   )
 import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
+import Control.Concurrent.STM as X (STM)
 import Control.Concurrent.STM.TMVar as X (TMVar, newTMVar)
 import Control.Concurrent.STM.TVar as X (newTVar, readTVar)
 import Control.DeepSeq as X (NFData, force)
@@ -161,7 +161,7 @@ import Data.Foldable as X
     length,
     traverse_,
   )
-import Data.Foldable1 as X (Foldable1, fold1, foldr1)
+import Data.Foldable1 as X (Foldable1, fold1, foldMap1, foldr1)
 import Data.Function as X (const, flip, id, ($), (&))
 import Data.Functor as X
   ( Functor (fmap),
@@ -555,36 +555,44 @@ traceFileLineA f t = traceFileLine f t (pure ())
 onJust :: b -> Maybe a -> (a -> b) -> b
 onJust x m f = maybe x f m
 
--- | Either, specializing Left to String, for the purposes of MonadFail.
-data EitherString a
-  = EitherLeft String
-  | EitherRight a
+-- | Either with custom MonadFail and fail-fast Semigroup instances.
+data Result e a
+  = Err e
+  | Ok a
   deriving stock (Eq, Functor, Show)
 
-instance Applicative EitherString where
-  pure = EitherRight
+instance (Semigroup a) => Semigroup (Result e a) where
+  Err x <> _ = Err x
+  _ <> Err y = Err y
+  Ok x <> Ok y = Ok (x <> y)
 
-  EitherRight f <*> EitherRight x = EitherRight (f x)
-  EitherLeft x <*> _ = EitherLeft x
-  _ <*> EitherLeft x = EitherLeft x
+instance (Monoid a) => Monoid (Result e a) where
+  mempty = Ok mempty
 
-instance Monad EitherString where
-  EitherRight x >>= f = f x
-  EitherLeft x >>= _ = EitherLeft x
+instance Applicative (Result e) where
+  pure = Ok
 
-instance Foldable EitherString where
-  foldr _ e (EitherLeft _) = e
-  foldr f e (EitherRight x) = f x e
+  Err x <*> _ = Err x
+  _ <*> Err x = Err x
+  Ok f <*> Ok x = Ok (f x)
 
-instance Traversable EitherString where
-  sequenceA (EitherLeft x) = pure (EitherLeft x)
-  sequenceA (EitherRight x) = EitherRight <$> x
+instance Monad (Result e) where
+  Err x >>= _ = Err x
+  Ok x >>= f = f x
 
-  traverse _ (EitherLeft x) = pure (EitherLeft x)
-  traverse f (EitherRight x) = EitherRight <$> f x
+instance Foldable (Result e) where
+  foldr _ e (Err _) = e
+  foldr f e (Ok x) = f x e
 
-instance MonadFail EitherString where
-  fail = EitherLeft
+instance Traversable (Result e) where
+  sequenceA (Err x) = pure (Err x)
+  sequenceA (Ok x) = Ok <$> x
+
+  traverse _ (Err x) = pure (Err x)
+  traverse f (Ok x) = Ok <$> f x
+
+instance (IsString e) => MonadFail (Result e) where
+  fail = Err . fromString
 
 -- | TermException is explicitly for when the current process is cancelled
 -- (SIGTERM on posix). We use a separate type so that we can distinguish it
@@ -615,9 +623,6 @@ isTermException :: (Exception e) => e -> Bool
 isTermException e = case fromException (toException e) of
   Just MkTermException -> True
   Nothing -> False
-
-foldMapA :: (Applicative m, Foldable t, Monoid b) => (a -> m b) -> t a -> m b
-foldMapA f = getAp <$> foldMap (Ap . f)
 
 catSeqMaybes :: Seq (Maybe a) -> Seq a
 catSeqMaybes = foldl' go Empty

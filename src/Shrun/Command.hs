@@ -27,7 +27,6 @@ import Shrun.Configuration.Env.Types
   ( HasCommands (getCommandDepGraph, getCommandStatus),
     HasCommonLogging (getCommonLogging),
     HasLogging,
-    readCommandStatus,
   )
 import Shrun.Data.Text (UnlinedText (UnsafeUnlinedText))
 import Shrun.Logging qualified as Logging
@@ -254,32 +253,43 @@ getPredecessorsStatus ::
   HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
   Vertex ->
   m PredecessorResult
-getPredecessorsStatus cdg commandStatusesRefs v = do
-  commandStatuses <- readCommandStatus commandStatusesRefs
-  let toResult :: Tuple2 Vertex EdgeLabel -> m PredecessorResult
-      toResult (p, lbl) =
-        let idx = Command.Types.fromVertex p
-         in case Map.lookup idx commandStatuses of
-              Nothing ->
-                throwText
-                  $ mconcat
-                    [ "Failed searching for command index ",
-                      prettyToText idx
-                    ]
-              Just (_, status) -> do
-                case (status, lbl) of
-                  (CommandWaiting, _) -> pure $ PredecessorUnfinished p
-                  (CommandRunning _, _) -> pure $ PredecessorUnfinished p
-                  (CommandSuccess, EdgeAnd) -> pure PredecessorSuccess
-                  (CommandSuccess, EdgeOr) -> pure $ PredecessorFailure True p
-                  (CommandSuccess, EdgeAny) -> pure PredecessorSuccess
-                  (CommandFailure, EdgeAnd) -> pure $ PredecessorFailure False p
-                  (CommandFailure, EdgeOr) -> pure PredecessorSuccess
-                  (CommandFailure, EdgeAny) -> pure PredecessorSuccess
-
-  foldMapA toResult predecessors
+getPredecessorsStatus cdg commandStatusesRefs v =
+  -- Do all the processing in one transaction. STM inherits its type's monoid
+  -- instance, so this satisfies:
+  --
+  -- 1. Result is fail-fast (Err is a hard stop).
+  -- 2. If there are no predecessors we have mempty which is
+  --    @Ok PredecessorSuccess@.
+  -- 3. Otherwise, results are combined via PredecessorResult's Semigroup,
+  --    which is what we want.
+  atomically (foldMap toResult predecessors) >>= \case
+    Err err -> throwText err
+    Ok r -> pure r
   where
     predecessors = Graph.labInVertices cdg v
+
+    toResult :: Tuple2 Vertex EdgeLabel -> STM (Result Text PredecessorResult)
+    toResult (p, lbl) =
+      let idx = Command.Types.fromVertex p
+       in case Map.lookup idx commandStatusesRefs of
+            Nothing ->
+              pure
+                . Err
+                $ mconcat
+                  [ "Failed searching for command index ",
+                    prettyToText idx
+                  ]
+            Just (_, statusVar) -> do
+              status <- readTVar statusVar
+              pure . Ok $ case (status, lbl) of
+                (CommandWaiting, _) -> PredecessorUnfinished p
+                (CommandRunning _, _) -> PredecessorUnfinished p
+                (CommandSuccess, EdgeAnd) -> PredecessorSuccess
+                (CommandSuccess, EdgeOr) -> PredecessorFailure True p
+                (CommandSuccess, EdgeAny) -> PredecessorSuccess
+                (CommandFailure, EdgeAnd) -> PredecessorFailure False p
+                (CommandFailure, EdgeOr) -> PredecessorSuccess
+                (CommandFailure, EdgeAny) -> PredecessorSuccess
 {-# INLINEABLE getPredecessorsStatus #-}
 
 logCommandAction ::
