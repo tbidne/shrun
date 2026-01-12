@@ -128,12 +128,12 @@ shrun ::
   -- | .
   m ()
 shrun = do
+  -- install handler that turns SIGTERM into an exception in the main thread.
+  myThreadId >>= handleTerminate
+
   startTime <- Time.getMonotonicTime
+
   displayRegions $ flip onMyAsync (teardown startTime) $ do
-    mainTid <- myThreadId
-
-    handleTerminate mainTid
-
     mFileLogging <- asks getFileLogging
     (_, consoleQueue, _) <- asks getConsoleLogging
 
