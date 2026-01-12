@@ -48,8 +48,8 @@ import Shrun.Configuration.Env.Types
         anyError,
         commandCleanup,
         commandGraph,
+        commandStatusMap,
         commands,
-        completedCommands,
         config,
         consoleLogQueue,
         hasTimedOut,
@@ -281,10 +281,10 @@ fromMergedConfig cfg onEnv = do
       $ cfg
     throwM ExitSuccess
 
-  completedCommands <- atomically $ do
-    kvs <- for commandStatusInit $ \(k, (cmd, status)) -> do
-      statusVar <- newTVar status
-      pure (k, (cmd, statusVar))
+  commandStatusMap <- atomically $ do
+    kvs <- for commands $ \cmd -> do
+      statusVar <- newTVar CommandWaiting
+      pure (cmd ^. #index, (cmd, statusVar))
     pure $ Map.fromList $ toList kvs
 
   anyError <- newTVarA False
@@ -309,7 +309,7 @@ fromMergedConfig cfg onEnv = do
           MkEnv
             { config = coreConfigEnv,
               anyError,
-              completedCommands,
+              commandStatusMap,
               consoleLogQueue,
               commandGraph,
               commands,
@@ -322,12 +322,6 @@ fromMergedConfig cfg onEnv = do
   where
     commands = cfg ^. #commands
     commandGraph = cfg ^. #commandGraph
-
-    commandStatusInit =
-      commands <&> \c ->
-        ( c ^. #index,
-          (c, CommandWaiting)
-        )
 
     mFindExe p = do
       tryMySync (PR.findExecutable p) <&> \case

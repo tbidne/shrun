@@ -24,7 +24,7 @@ import Shrun.Configuration.Data.Graph
   )
 import Shrun.Configuration.Data.Graph qualified as Graph
 import Shrun.Configuration.Env.Types
-  ( HasCommands (getCommandDepGraph, getCommandStatus),
+  ( HasCommands (getCommandDepGraph, getCommandStatusMap),
     HasCommonLogging (getCommonLogging),
     HasLogging,
   )
@@ -59,10 +59,10 @@ runCommands ::
   m ()
 runCommands runner = do
   cdg <- asks getCommandDepGraph
-  commandStatuses <- asks getCommandStatus
+  commandStatusMap <- asks getCommandStatusMap
   let roots = cdg ^. #roots
   vtxSemMap <- mkVertexSemMap cdg
-  Async.mapConcurrently_ (runCommand runner cdg commandStatuses vtxSemMap) roots
+  Async.mapConcurrently_ (runCommand runner cdg commandStatusMap vtxSemMap) roots
 {-# INLINEABLE runCommands #-}
 
 -- | Builds a map for each Vertex -> MVar. This ensures that we only start
@@ -103,11 +103,11 @@ runCommand ::
   -- | Vertex to run.
   Vertex ->
   m ()
-runCommand runner cdg commandStatuses vtxSemMap = go Nothing
+runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
   where
     go prevVertex vertex = do
       -- Check that all predecessor edges have been satisfied.
-      status <- getPredecessorsStatus cdg commandStatuses vertex
+      status <- getPredecessorsStatus cdg commandStatusMap vertex
       case status of
         PredecessorUnfinished depV ->
           Logging.logDebug $ \lvl -> do
@@ -253,7 +253,7 @@ getPredecessorsStatus ::
   HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
   Vertex ->
   m PredecessorResult
-getPredecessorsStatus cdg commandStatusesRefs v =
+getPredecessorsStatus cdg commandStatusMap v =
   -- Do all the processing in one transaction. STM inherits its type's monoid
   -- instance, so this satisfies:
   --
@@ -271,7 +271,7 @@ getPredecessorsStatus cdg commandStatusesRefs v =
     toResult :: Tuple2 Vertex EdgeLabel -> STM (Result Text PredecessorResult)
     toResult (p, lbl) =
       let idx = Command.Types.fromVertex p
-       in case Map.lookup idx commandStatusesRefs of
+       in case Map.lookup idx commandStatusMap of
             Nothing ->
               pure
                 . Err

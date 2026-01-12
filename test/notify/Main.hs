@@ -13,7 +13,7 @@ import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
     HasCommandLogging (getCommandLogging),
-    HasCommands (getCleanup, getCommandDepGraph, getCommandStatus),
+    HasCommands (getCleanup, getCommandDepGraph, getCommandStatusMap),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -127,7 +127,7 @@ instance HasAnyError NotifyEnv where
 instance HasCommands NotifyEnv where
   getCleanup = getCleanup . (.unNotifyEnv)
   getCommandDepGraph = getCommandDepGraph . (.unNotifyEnv)
-  getCommandStatus = getCommandStatus . (.unNotifyEnv)
+  getCommandStatusMap = getCommandStatusMap . (.unNotifyEnv)
 
 instance HasCommandLogging NotifyEnv where
   getCommandLogging = getCommandLogging . (.unNotifyEnv)

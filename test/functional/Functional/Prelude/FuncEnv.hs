@@ -22,7 +22,7 @@ import Shrun.Configuration.Env.Types
   ( Env,
     HasAnyError (getAnyError),
     HasCommandLogging (getCommandLogging),
-    HasCommands (getCleanup, getCommandDepGraph, getCommandStatus),
+    HasCommands (getCleanup, getCommandDepGraph, getCommandStatusMap),
     HasCommonLogging (getCommonLogging),
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging (getFileLogging),
@@ -257,7 +257,7 @@ instance HasInit FuncEnv where
 instance HasCommands FuncEnv where
   getCleanup = getCleanup . view #coreEnv
   getCommandDepGraph = getCommandDepGraph . view #coreEnv
-  getCommandStatus = getCommandStatus . view #coreEnv
+  getCommandStatusMap = getCommandStatusMap . view #coreEnv
 
 instance HasAnyError FuncEnv where
   getAnyError = getAnyError . view #coreEnv

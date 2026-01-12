@@ -742,9 +742,21 @@ cleanupCommands ::
   ) =>
   m ()
 cleanupCommands = do
-  commandsStatus <- getReadCommandStatus
+  -- Read all commands in a single transaction, then process. This should be
+  -- safe in the sense that the command status map should not receive any
+  -- updates because this is only called in two situations:
+  --
+  -- 1. All commands have finished.
+  -- 2. Shrun main thread receives an exception.
+  --
+  -- In both cases, all command threads should have been killed hence no more
+  -- status writes.
+  --
+  -- We cannot process the status in the same transaction -- in any case --
+  -- because that would involve mixing IO effects in STM.
+  commandsStatusMap <- getReadCommandStatus
 
-  for_ commandsStatus $ \(_cmd, status) ->
+  for_ commandsStatusMap $ \(_cmd, status) ->
     case status of
       CommandRunning (mPid, childPids) -> do
         -- 1. Kill the commands' children that were immediately spawned.

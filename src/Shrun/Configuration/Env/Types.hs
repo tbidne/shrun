@@ -97,7 +97,7 @@ class HasCommands env where
   getCommandDepGraph :: env -> CommandGraph
 
   -- | Retrieves commands and their statuses.
-  getCommandStatus ::
+  getCommandStatusMap ::
     env ->
     HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus))
 
@@ -153,7 +153,7 @@ data Env r = MkEnv
     -- can be pure since its structure is fixed at initialization. In fact,
     -- we could probably swap TVar for IORef since we only update the
     -- status from a single thread (each command has its own thread).
-    completedCommands :: HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)),
+    commandStatusMap :: HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)),
     -- | Core config.
     config :: CoreConfigP ConfigPhaseEnv,
     -- | Console log queue.
@@ -230,7 +230,7 @@ instance
     a ~ HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)),
     b ~ HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus))
   ) =>
-  LabelOptic "completedCommands" k (Env r) (Env r) a b
+  LabelOptic "commandStatusMap" k (Env r) (Env r) a b
   where
   labelOptic =
     lensVL
@@ -329,7 +329,7 @@ instance HasCommands (Env r) where
 
   getCommandDepGraph = view #commandGraph
 
-  getCommandStatus = view #completedCommands
+  getCommandStatusMap = view #commandStatusMap
 
 -- | Prepends a completed command.
 updateCommandStatus ::
@@ -343,8 +343,8 @@ updateCommandStatus ::
   CommandStatus ->
   m ()
 updateCommandStatus command result = do
-  completedCommands <- asks getCommandStatus
-  case Map.lookup idx completedCommands of
+  commandStatusMap <- asks getCommandStatusMap
+  case Map.lookup idx commandStatusMap of
     Nothing -> throwText $ prettyToText idx
     Just (_, statusVar) -> writeTVarA statusVar result
   where
@@ -387,7 +387,7 @@ getReadCommandStatus ::
     MonadSTM m
   ) =>
   m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
-getReadCommandStatus = asks getCommandStatus >>= readCommandStatus
+getReadCommandStatus = asks getCommandStatusMap >>= readCommandStatus
 
 -- | Reads a map of TVars into a pure map via a single STM transaction.
 readCommandStatus ::
@@ -396,8 +396,8 @@ readCommandStatus ::
   ) =>
   HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
   m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
-readCommandStatus commandStatusRefs =
-  atomically $ for commandStatusRefs (traverse readTVar)
+readCommandStatus commandStatusMap =
+  atomically $ for commandStatusMap (traverse readTVar)
 
 -- | Sets timedout to true.
 setTimedOut :: (HasTimeout env, MonadReader env m, MonadSTM m) => m ()

@@ -184,6 +184,9 @@ mkUnfinishedCmdLogs ::
   m (Tuple2 (Maybe (NonEmpty Log)) (Maybe (NonEmpty Log)))
 mkUnfinishedCmdLogs = do
   keyHide <- asks (view #keyHide . getCommonLogging)
+
+  -- Statuses receive no updates at this point (command threads have finished
+  -- or been killed), so this should be safe.
   commandsStatus <- getReadCommandStatus
 
   let (waiting, running) = foldl' go (Set.empty, Set.empty) commandsStatus
