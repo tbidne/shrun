@@ -200,7 +200,7 @@ baseRunner mConfigIOEnv mExProxy argList = do
 
     printLogs :: IORef (List Text) -> IO ()
     printLogs ls = do
-      logs <- readIORef ls
+      logs <- readIORef' ls
 
       putStrLn "\n*** LOGS ***\n"
 
@@ -240,9 +240,9 @@ mkShrunAction ::
   List String ->
   IO (Tuple4 (IO ()) (IORef (List Text)) (IORef (List Text)) (IORef (List ShrunNote)))
 mkShrunAction mConfigIOEnv argList = do
-  configLogsRef <- newIORef []
-  ls <- newIORef []
-  shrunNotes <- newIORef []
+  configLogsRef <- newIORef' []
+  ls <- newIORef' []
+  shrunNotes <- newIORef' []
 
   configIOEnv <- case mConfigIOEnv of
     Nothing -> do
@@ -279,9 +279,9 @@ readRefs ::
   IO (List Text, List ResultText, List ShrunNote)
 readRefs configLogs ls ns =
   (,,)
-    <$> (L.reverse <$> readIORef configLogs)
-    <*> (fmap MkResultText . L.reverse <$> readIORef ls)
-    <*> readIORef ns
+    <$> (L.reverse <$> readIORef' configLogs)
+    <*> (fmap MkResultText . L.reverse <$> readIORef' ls)
+    <*> readIORef' ns
 
 debugPrefix :: (IsString s) => s
 debugPrefix = "[Debug]"

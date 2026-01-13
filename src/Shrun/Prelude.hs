@@ -258,9 +258,9 @@ import Effects.IORef as X
     MonadIORef
       ( atomicModifyIORef',
         modifyIORef',
-        newIORef,
-        readIORef,
-        writeIORef
+        newIORef',
+        readIORef',
+        writeIORef'
       ),
   )
 import Effects.Optparse as X (MonadOptparse (customExecParser, execParser))

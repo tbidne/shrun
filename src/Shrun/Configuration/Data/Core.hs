@@ -299,7 +299,7 @@ mergeCoreConfig ::
   CoreConfigToml ->
   m CoreConfigMerged
 mergeCoreConfig cmds args toml = do
-  detectRef <- newIORef DetectNotRun
+  detectRef <- newIORef' DetectNotRun
 
   consoleLogging <-
     mergeConsoleLogging

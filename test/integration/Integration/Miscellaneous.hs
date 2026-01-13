@@ -150,7 +150,7 @@ specs testArgs =
 logFileWarn :: IO TestArgs -> TestTree
 logFileWarn testArgs = testProp1 desc "logFileWarn" $ do
   logPath <- liftIO $ (</> [osp|large-file-warn|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   let logsPathStr = unsafeDecode logPath
       contents = T.replicate 1_500 "test "
 
@@ -174,7 +174,7 @@ logFileWarn testArgs = testProp1 desc "logFileWarn" $ do
   -- shrun so the file should stay untouched.
   endSize === startSize
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   [warning logsPathStr] === logs
   where
     desc = "Large log file should print warning"
@@ -196,7 +196,7 @@ logFileWarn testArgs = testProp1 desc "logFileWarn" $ do
 logFileDelete :: IO TestArgs -> TestTree
 logFileDelete testArgs = testProp1 desc "logFileDelete" $ do
   logPath <- liftIO $ (</> [osp|large-file-del|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   let logPathStr = unsafeDecode logPath
       contents = T.replicate 1_500 "test "
 
@@ -215,7 +215,7 @@ logFileDelete testArgs = testProp1 desc "logFileDelete" $ do
   -- file should have been deleted then recreated with a file size of 0.
   0 === endSize
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   [warning logPathStr] === logs
   where
     desc = "Large log file should be deleted"
@@ -237,7 +237,7 @@ logFileDelete testArgs = testProp1 desc "logFileDelete" $ do
 logFileNothing :: IO TestArgs -> TestTree
 logFileNothing testArgs = testProp1 desc "logFileNothing" $ do
   logPath <- liftIO $ (</> [osp|large-file-nothing|]) . view #workingTmpDir <$> testArgs
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   let logsPathStr = unsafeDecode logPath
       contents = T.replicate 1_500 "test "
 
@@ -258,7 +258,7 @@ logFileNothing testArgs = testProp1 desc "logFileNothing" $ do
   -- see NOTE: [Log file unchanged]
   endSize === startSize
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   [] === logs
   where
     desc = "Large log file should print warning"
@@ -272,10 +272,10 @@ logFileNothing testArgs = testProp1 desc "logFileNothing" $ do
 
 usesRecursiveCmdExample :: TestTree
 usesRecursiveCmdExample = testProp1 desc "usesRecursiveCmdExample" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   [] === logs
   where
     desc = "Uses recursive command from example"
@@ -289,10 +289,10 @@ usesRecursiveCmdExample = testProp1 desc "usesRecursiveCmdExample" $ do
 
 usesRecursiveCmd :: TestTree
 usesRecursiveCmd = testProp1 desc "usesRecursiveCmd" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   [] === logs
   where
     desc = "Uses recursive commands"
@@ -308,10 +308,10 @@ usesRecursiveCmd = testProp1 desc "usesRecursiveCmd" $ do
 
 testLineTruncDetect :: TestTree
 testLineTruncDetect = testProp1 desc "testLineTruncDetect" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "lineTrunc reads 'detect' string from toml"
@@ -325,10 +325,10 @@ testLineTruncDetect = testProp1 desc "testLineTruncDetect" $ do
 
 testLineTruncDefaults :: TestTree
 testLineTruncDefaults = testProp1 desc "testLineTruncDefaults" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "lineTrunc defaults"
@@ -345,10 +345,10 @@ testLineTruncDefaults = testProp1 desc "testLineTruncDefaults" $ do
 
 testCmdLogLineTruncDefaults :: TestTree
 testCmdLogLineTruncDefaults = testProp1 desc "testCmdLogLineTruncDefaults" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "lineTrunc defaults with --console-log-command off"
@@ -367,10 +367,10 @@ testCmdLogLineTruncDefaults = testProp1 desc "testCmdLogLineTruncDefaults" $ do
 
 testLineTruncDetectTotal :: TestTree
 testLineTruncDetectTotal = testProp1 desc "testLineTruncDetectTotal" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runTermWidthFailIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   case logs of
     [] -> do
       annotate "Expected exactly 1 log"
@@ -399,10 +399,10 @@ testLineTruncDetectTotal = testProp1 desc "testLineTruncDetectTotal" $ do
 
 testFileSizeModeNothing :: TestTree
 testFileSizeModeNothing = testProp1 desc "testFileSizeModeNothing" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "size-mode reads 'nothing'"
@@ -412,10 +412,10 @@ testFileSizeModeNothing = testProp1 desc "testFileSizeModeNothing" $ do
 
 testFileLogDeleteOnSuccess :: TestTree
 testFileLogDeleteOnSuccess = testProp1 desc "testFileLogDeleteOnSuccess" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "delete-on-success reads true"
@@ -425,10 +425,10 @@ testFileLogDeleteOnSuccess = testProp1 desc "testFileLogDeleteOnSuccess" $ do
 
 testReadBlockLineBufferReadStrategy :: TestTree
 testReadBlockLineBufferReadStrategy = testProp1 desc "testReadBlockLineBufferReadStrategy" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "Read block-line-buffer read-strategy"
@@ -438,10 +438,10 @@ testReadBlockLineBufferReadStrategy = testProp1 desc "testReadBlockLineBufferRea
 
 testNotifyTimeoutString :: TestTree
 testNotifyTimeoutString = testProp1 desc "testNotifyTimeoutString" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "Reads notify.timeout time string from toml"
@@ -453,10 +453,10 @@ testNotifyTimeoutString = testProp1 desc "testNotifyTimeoutString" $ do
 
 testConfigsMerged :: TestTree
 testConfigsMerged = testProp1 desc "testConfigsMerged" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expectedMultiConfig
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "Multiple toml files are merged"
@@ -473,10 +473,10 @@ testConfigsMerged = testProp1 desc "testConfigsMerged" $ do
 
 testConfigsMergedDisabled :: TestTree
 testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "Multiple toml files are merged with disabling"
@@ -541,10 +541,10 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
 
 testOverridesDuplicate :: TestTree
 testOverridesDuplicate = testProp1 desc "testOverridesDuplicate" $ do
-  logsRef <- liftIO $ newIORef []
+  logsRef <- liftIO $ newIORef' []
   makeConfigAndAssertFieldEq args (`runConfigIO` logsRef) expected
 
-  logs <- liftIO $ readIORef logsRef
+  logs <- liftIO $ readIORef' logsRef
   logs === []
   where
     desc = "Config overrides duplicates without error"

@@ -464,10 +464,10 @@ counter = do
   microsleep 100_000
   withRegion Linear $ \r -> do
     (_, _, regionVar) <- asks (getConsoleLogging @_ @(Region m))
-    writeIORef regionVar (Just r)
+    writeIORef' regionVar (Just r)
 
     timeout <- asks getTimeout
-    timer <- newIORef 0
+    timer <- newIORef' 0
     Utils.whileM_ (keepRunning r timer timeout) $ do
       sleep 1
       elapsed <- atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
@@ -519,7 +519,7 @@ keepRunning ::
   WithDisabled Timeout ->
   m Bool
 keepRunning region timer mto = do
-  elapsed <- readIORef timer
+  elapsed <- readIORef' timer
   if timedOut elapsed mto
     then do
       -- update anyError

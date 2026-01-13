@@ -436,8 +436,8 @@ streamOutput logFn cmd processParams = do
     P.getProcessExitCode processHandle
 
   -- These are the final reads while the process was running.
-  lastReadOut <- readIORef lastReadOutRef
-  lastReadErr <- readIORef lastReadErrRef
+  lastReadOut <- readIORef' lastReadOutRef
+  lastReadErr <- readIORef' lastReadErrRef
 
   -- Leftover data. We need this as the process can exit before everything
   -- is read.
@@ -530,11 +530,11 @@ mkHandleParams ::
         (m HandleResult)
     )
 mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
-  lastReadRef <- newIORef (0, ReadNoData)
-  prevReadRef <- newIORef Nothing
+  lastReadRef <- newIORef' (0, ReadNoData)
+  prevReadRef <- newIORef' Nothing
 
   currTime <- getMonotonicTime
-  bufFlushTimeRef <- newIORef currTime
+  bufFlushTimeRef <- newIORef' currTime
 
   let readFn = case readStrategy of
         ReadBlock -> Handle.readHandle Nothing blockSize handle
@@ -621,7 +621,7 @@ writeLogHelper ::
   NonEmpty UnlinedText ->
   m ()
 writeLogHelper logFn cmd lastReadRef handleResult messages = do
-  writeIORef lastReadRef handleResult
+  writeIORef' lastReadRef handleResult
   for_ messages $ \msg ->
     logFn
       $ MkLog

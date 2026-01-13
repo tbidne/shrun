@@ -146,7 +146,7 @@ testLegendKeysCache desc (action1, action2) (e1, e2) testArgs = testCase descStr
 
 mkEnv :: OsPath -> IO ConfigIOEnv
 mkEnv d = do
-  logs <- newIORef []
+  logs <- newIORef' []
   pure
     $ MkConfigIOEnv
       { cwdDir = Nothing,

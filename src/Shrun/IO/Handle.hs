@@ -142,7 +142,7 @@ readHandle mBufferParams blockSize handle = do
       -- If we encountered an error but are holding onto a previous log,
       -- let's print it too.
       onJust (pure $ ReadErr err) mBufferParams $ \(prevReadRef, _, _, _) ->
-        readIORef prevReadRef >>= \case
+        readIORef' prevReadRef >>= \case
           Nothing -> pure $ ReadErr err
           Just prevRead -> do
             resetPrevReadRef prevReadRef
@@ -246,7 +246,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
     -- 1. No data: Send the prevRead if it exists and breaks the thresholds.
     onNoData :: m ReadHandleResult
     onNoData =
-      readIORef prevReadRef
+      readIORef' prevReadRef
         >>= \case
           Nothing -> pure ReadNoData
           Just prevRead ->
@@ -257,7 +257,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
     -- prevRead if it exists.
     onPartialRead :: UnlinedText -> m ReadHandleResult
     onPartialRead finalPartialRead =
-      readIORef prevReadRef >>= \case
+      readIORef' prevReadRef >>= \case
         Nothing ->
           maybeToReadHandleResult
             <$> prepareSendIfExceedsThresholds updateRef finalPartialRead
@@ -297,7 +297,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
         then do
           resetPrevReadRef'
           currTime <- getMonotonicTime
-          writeIORef bufferWriteTimeRef currTime
+          writeIORef' bufferWriteTimeRef currTime
           pure $ Just readData
         else do
           onNoSend readData
@@ -318,7 +318,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
     bufferExceedsTime :: m Bool
     bufferExceedsTime = do
       currTime <- getMonotonicTime
-      bufferWriteTime <- readIORef bufferWriteTimeRef
+      bufferWriteTime <- readIORef' bufferWriteTimeRef
 
       let diffTime = floor (currTime - bufferWriteTime)
 
@@ -328,7 +328,7 @@ readAndUpdateRef (prevReadRef, bufferLength, bufferTimeout, bufferWriteTimeRef) 
 
     resetPrevReadRef' = resetPrevReadRef prevReadRef
 
-    updateRef = writeIORef prevReadRef . Just
+    updateRef = writeIORef' prevReadRef . Just
 
     maybeToReadHandleResult Nothing = ReadNoData
     maybeToReadHandleResult (Just read) = ReadSuccess (ne read)
@@ -356,14 +356,14 @@ readAndUpdateRefFinal prevReadRef =
     -- 1. No data: Final read, so send off prevRead if it exists, and reset the ref.
     onNoData :: m ReadHandleResult
     onNoData =
-      readIORef prevReadRef >>= \case
+      readIORef' prevReadRef >>= \case
         Nothing -> resetPrevReadRef' $> ReadNoData
         Just prevRead -> resetPrevReadRef' $> ReadSuccess (ne prevRead)
 
     -- 2. Partial read: Combine if prevRead exists, send off result.
     onPartialRead :: UnlinedText -> m ReadHandleResult
     onPartialRead finalPartialRead = do
-      readIORef prevReadRef >>= \case
+      readIORef' prevReadRef >>= \case
         Nothing -> resetPrevReadRef' $> ReadSuccess (ne finalPartialRead)
         Just prevRead -> resetPrevReadRef' $> ReadSuccess (ne $ prevRead <> finalPartialRead)
 
@@ -383,7 +383,7 @@ mPrependPrevRead ::
   NonEmpty UnlinedText ->
   m (NonEmpty UnlinedText)
 mPrependPrevRead ref cr@(r :| rs) =
-  readIORef ref >>= \case
+  readIORef' ref >>= \case
     Nothing -> pure cr
     Just prevRead -> resetPrevReadRef' $> prevRead <> r :| rs
   where
@@ -471,7 +471,7 @@ readByteString bs = case BS.unsnoc bs of
     decodeRead = ShrunText.fromText . decodeUtf8Lenient
 
 resetPrevReadRef :: (HasCallStack, MonadIORef m) => IORef (Maybe a) -> m ()
-resetPrevReadRef prevReadRef = writeIORef prevReadRef Nothing
+resetPrevReadRef prevReadRef = writeIORef' prevReadRef Nothing
 {-# INLINEABLE resetPrevReadRef #-}
 
 -- TODO: Remove once we are past GHC 9.6

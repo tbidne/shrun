@@ -70,7 +70,7 @@ packages:
     commit: 26136275027fd827574c5004ebd11b659d7abdab
     git: https://github.com/tbidne/fs-utils.git
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-async
     pantry-tree:
@@ -79,11 +79,11 @@ packages:
     subdir: lib/effects-async
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-async
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-env
     pantry-tree:
@@ -92,11 +92,11 @@ packages:
     subdir: lib/effects-env
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-env
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-evaluate
     pantry-tree:
@@ -105,11 +105,11 @@ packages:
     subdir: lib/effects-evaluate
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-evaluate
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-fs
     pantry-tree:
@@ -118,11 +118,11 @@ packages:
     subdir: lib/effects-fs
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-fs
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-ioref
     pantry-tree:
@@ -131,24 +131,24 @@ packages:
     subdir: lib/effects-ioref
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-ioref
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-optparse
     pantry-tree:
-      sha256: 34b458bd59376691e71667941cb5707bb8999d9882417abbbef5b77ae8cdea0d
+      sha256: b661bc4d7c79ae78bab9f5f24f9c88d2a4e59d0002291d44370990387333d22a
       size: 304
     subdir: lib/effects-optparse
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-optparse
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-process
     pantry-tree:
@@ -157,11 +157,11 @@ packages:
     subdir: lib/effects-process
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-process
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-stm
     pantry-tree:
@@ -170,11 +170,11 @@ packages:
     subdir: lib/effects-stm
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-stm
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-time
     pantry-tree:
@@ -183,11 +183,11 @@ packages:
     subdir: lib/effects-time
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-time
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-terminal
     pantry-tree:
@@ -196,24 +196,24 @@ packages:
     subdir: lib/effects-terminal
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-terminal
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-thread
     pantry-tree:
-      sha256: 8a3e825a7d2e134cb4651dcf415ccbcaefe290722e359e6b00ae03b8786ee18f
-      size: 237
+      sha256: 48f1fda3342a902dec541d4bf5e8683083354c3064ea989dc9061362f0ae0139
+      size: 236
     subdir: lib/effects-thread
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-thread
 - completed:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     name: effects-unix
     pantry-tree:
@@ -222,7 +222,7 @@ packages:
     subdir: lib/effects-unix
     version: '0.1'
   original:
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     git: https://github.com/tbidne/monad-effects.git
     subdir: lib/effects-unix
 - completed:

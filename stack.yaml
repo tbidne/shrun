@@ -33,7 +33,7 @@ extra-deps:
   - git: https://github.com/tbidne/fs-utils.git
     commit: 26136275027fd827574c5004ebd11b659d7abdab
   - git: https://github.com/tbidne/monad-effects.git
-    commit: c9dbb93d65910ae983ed0887826cb42d354a2fd9
+    commit: be5b5077abfe195df3b94385e9873c6ca9f5d80a
     subdirs:
       - lib/effects-async
       - lib/effects-env

@@ -175,7 +175,7 @@ runShrunNoConfig = runShrun . (["--config", "off"] ++)
 runShrun :: List String -> IO ()
 runShrun args = do
   consoleQueue <- newTBQueueA 1
-  logsRef <- newIORef []
+  logsRef <- newIORef' []
   eSomeEx <-
     tryMySync
       $ withArgs
@@ -190,7 +190,7 @@ runShrun args = do
   case eSomeEx of
     Right () -> pure ()
     Left ex -> do
-      logs <- readIORef logsRef
+      logs <- readIORef' logsRef
 
       let formatted = T.intercalate "\n" logs
           err =

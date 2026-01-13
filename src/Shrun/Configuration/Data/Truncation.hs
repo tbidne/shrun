@@ -156,7 +156,7 @@ configToLineTrunc detectRef (Just Detected) = do
   -- ref exists so that we only check this once, even if both console
   -- and file specify detect.
   width <-
-    readIORef detectRef >>= \case
+    readIORef' detectRef >>= \case
       DetectSucceeded w -> pure w
       DetectFailed -> pure defLen
       DetectNotRun -> do
@@ -171,11 +171,11 @@ configToLineTrunc detectRef (Just Detected) = do
                       displayExceptiont ex
                     ]
             putTextLn msg
-            writeIORef detectRef DetectFailed
+            writeIORef' detectRef DetectFailed
             pure defLen
           Right w -> do
             let w' = w ∸ 1
-            writeIORef detectRef (DetectSucceeded w') $> w'
+            writeIORef' detectRef (DetectSucceeded w') $> w'
 
   pure $ Just $ MkTruncation width
   where

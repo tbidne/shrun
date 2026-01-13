@@ -565,7 +565,7 @@ testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
 
 testImplicitConfigLookup :: TestTree
 testImplicitConfigLookup = testCase desc $ do
-  logs <- newIORef []
+  logs <- newIORef' []
   let env =
         MkConfigIOEnv
           { cwdDir = Just [ospPathSep|test/functional/cwd|],

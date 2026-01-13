@@ -290,7 +290,7 @@ fromMergedConfig cfg onEnv = do
   anyError <- newTVarA False
   consoleLogQueue <- newTBQueueA 1_000
   hasTimedOut <- newTVarA False
-  timerRegion <- newIORef Nothing
+  timerRegion <- newIORef' Nothing
 
   mKillExe <- mFindExe [osp|kill|]
   mPGrepExe <- mFindExe [osp|pgrep|]

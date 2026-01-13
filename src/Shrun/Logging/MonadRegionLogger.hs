@@ -81,7 +81,7 @@ restoreTimerRegion ::
   IORef (Maybe (Region m)) ->
   m ()
 restoreTimerRegion timerRegionRef = do
-  mRegion <- readIORef timerRegionRef
+  mRegion <- readIORef' timerRegionRef
   case mRegion of
     Nothing -> pure ()
     Just region -> do

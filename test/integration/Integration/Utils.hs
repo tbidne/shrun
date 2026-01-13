@@ -308,7 +308,7 @@ runDefaultIO (MkDefaultIO io) = io
 -- trunc.
 instance MonadTerminal DefaultIO where
   getTerminalSize = do
-    r <- newIORef []
+    r <- newIORef' []
     liftIO $ runNoConfigIO getTerminalSize r
 
 notifySystemOSDBus :: NotifySystemMerged
