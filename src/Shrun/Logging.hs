@@ -79,8 +79,8 @@ putRegionLog ::
   forall m env.
   ( HasCallStack,
     HasLogging env m,
+    MonadAtomic m,
     MonadReader env m,
-    MonadSTM m,
     MonadTime m
   ) =>
   -- | Region.
@@ -112,8 +112,8 @@ putRegionMultiLineLog ::
   forall m env.
   ( HasCallStack,
     HasLogging env m,
+    MonadAtomic m,
     MonadReader env m,
-    MonadSTM m,
     MonadTime m
   ) =>
   -- | Region.
@@ -143,27 +143,27 @@ putRegionMultiLineLog region logs = do
 -- | Writes the log to the console queue.
 regionLogToConsoleQueue ::
   ( HasCallStack,
-    MonadSTM m
+    MonadAtomic m
   ) =>
   -- | Region.
   TBQueue (LogRegion (Region m)) ->
   -- | Log to send.
   LogRegion (Region m) ->
   m ()
-regionLogToConsoleQueue = writeTBQueueA
+regionLogToConsoleQueue = writeTBQueueA'
 {-# INLINEABLE regionLogToConsoleQueue #-}
 
 -- | Writes the log to the file queue.
 logToFileQueue ::
   ( HasCallStack,
-    MonadSTM m
+    MonadAtomic m
   ) =>
   -- | FileLogging config.
   FileLoggingEnv ->
   -- | Log to send.
   FileLog ->
   m ()
-logToFileQueue fileLogging = writeTBQueueA (fileLogging ^. #file % #queue)
+logToFileQueue fileLogging = writeTBQueueA' (fileLogging ^. #file % #queue)
 {-# INLINEABLE logToFileQueue #-}
 
 -- | Returns formatted log for unfinished commands (waiting and running).
@@ -177,9 +177,8 @@ mkUnfinishedCmdLogs ::
   ( HasCallStack,
     HasCommands env,
     HasCommonLogging env,
-    MonadIORef m,
-    MonadReader env m,
-    MonadSTM m
+    MonadAtomic m,
+    MonadReader env m
   ) =>
   m (Tuple2 (Maybe (NonEmpty Log)) (Maybe (NonEmpty Log)))
 mkUnfinishedCmdLogs = do
@@ -307,9 +306,9 @@ putDebugLogDirect = putDebugLogHelper putRegionLogDirect
 putDebugLog ::
   ( HasCallStack,
     HasLogging env m,
+    MonadAtomic m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   LogMessage ->

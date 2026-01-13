@@ -70,6 +70,7 @@ makeEnvAndShrun ::
   ( HasCallStack,
     HasConsoleLogging (Env r) (Region (ShellT (Env r) m)),
     MonadAsync m,
+    MonadAtomic m,
     MonadDBus m,
     MonadEvaluate m,
     MonadFileReader m,
@@ -84,7 +85,6 @@ makeEnvAndShrun ::
     MonadProcess m,
     MonadMask m,
     MonadMVar m,
-    MonadSTM m,
     MonadRegionLogger m,
     MonadTerminal m,
     MonadThread m,
@@ -99,6 +99,7 @@ makeEnvAndShrun = withEnv @m @r (runShellT shrun)
 withEnv ::
   forall m r a.
   ( HasCallStack,
+    MonadAtomic m,
     MonadCatch m,
     MonadDBus m,
     MonadFileReader m,
@@ -108,7 +109,6 @@ withEnv ::
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadSTM m,
     MonadTerminal m
   ) =>
   (Env r -> m a) ->
@@ -261,6 +261,7 @@ readConfig fp = do
 
 fromMergedConfig ::
   ( HasCallStack,
+    MonadAtomic m,
     MonadCatch m,
     MonadDBus m,
     MonadFileWriter m,
@@ -268,7 +269,6 @@ fromMergedConfig ::
     MonadIORef m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadSTM m,
     MonadTerminal m
   ) =>
   MergedConfig ->
@@ -283,13 +283,13 @@ fromMergedConfig cfg onEnv = do
 
   commandStatusMap <- atomically $ do
     kvs <- for commands $ \cmd -> do
-      statusVar <- newTVar CommandWaiting
+      statusVar <- newTVar' CommandWaiting
       pure (cmd ^. #index, (cmd, statusVar))
     pure $ Map.fromList $ toList kvs
 
-  anyError <- newTVarA False
+  anyError <- newTVarA' False
   consoleLogQueue <- newTBQueueA 1_000
-  hasTimedOut <- newTVarA False
+  hasTimedOut <- newTVarA' False
   timerRegion <- newIORef' Nothing
 
   mKillExe <- mFindExe [osp|kill|]

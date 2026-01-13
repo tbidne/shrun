@@ -335,8 +335,8 @@ instance HasCommands (Env r) where
 updateCommandStatus ::
   ( HasCallStack,
     HasCommands env,
+    MonadAtomic m,
     MonadReader env m,
-    MonadSTM m,
     MonadThrow m
   ) =>
   CommandP1 ->
@@ -346,7 +346,7 @@ updateCommandStatus command result = do
   commandStatusMap <- asks getCommandStatusMap
   case Map.lookup idx commandStatusMap of
     Nothing -> throwText $ prettyToText idx
-    Just (_, statusVar) -> writeTVarA statusVar result
+    Just (_, statusVar) -> writeTVarA' statusVar result
   where
     idx = command ^. #index
 {-# INLINEABLE updateCommandStatus #-}
@@ -358,11 +358,11 @@ instance HasAnyError (Env r) where
 setAnyErrorTrue ::
   ( HasAnyError env,
     HasCallStack,
-    MonadReader env m,
-    MonadSTM m
+    MonadAtomic m,
+    MonadReader env m
   ) =>
   m ()
-setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA ref True
+setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA' ref True
 {-# INLINEABLE setAnyErrorTrue #-}
 
 -- | Class for retrieving the notify config.
@@ -383,8 +383,8 @@ whenDebug m = do
 getReadCommandStatus ::
   ( HasCallStack,
     HasCommands env,
-    MonadReader env m,
-    MonadSTM m
+    MonadAtomic m,
+    MonadReader env m
   ) =>
   m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
 getReadCommandStatus = asks getCommandStatusMap >>= readCommandStatus
@@ -392,19 +392,19 @@ getReadCommandStatus = asks getCommandStatusMap >>= readCommandStatus
 -- | Reads a map of TVars into a pure map via a single STM transaction.
 readCommandStatus ::
   ( HasCallStack,
-    MonadSTM m
+    MonadAtomic m
   ) =>
   HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
   m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
 readCommandStatus commandStatusMap =
-  atomically $ for commandStatusMap (traverse readTVar)
+  atomically $ for commandStatusMap (traverse readTVar')
 
 -- | Sets timedout to true.
-setTimedOut :: (HasTimeout env, MonadReader env m, MonadSTM m) => m ()
-setTimedOut = asks getHasTimedOut >>= \r -> writeTVarA r True
+setTimedOut :: (HasTimeout env, MonadAtomic m, MonadReader env m) => m ()
+setTimedOut = asks getHasTimedOut >>= \r -> writeTVarA' r True
 
 -- | Run the action when shrun has timed out.
-whenTimedOut :: (HasTimeout env, MonadReader env m, MonadSTM m) => m () -> m ()
+whenTimedOut :: (HasTimeout env, MonadAtomic m, MonadReader env m) => m () -> m ()
 whenTimedOut m = do
-  hasTimedOut <- readTVarA =<< asks getHasTimedOut
+  hasTimedOut <- readTVarA' =<< asks getHasTimedOut
   when hasTimedOut m

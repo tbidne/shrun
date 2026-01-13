@@ -45,6 +45,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       Applicative,
       Monad,
       MonadAsync,
+      MonadAtomic,
       MonadDBus,
       MonadCatch,
       MonadEvaluate,
@@ -59,7 +60,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadPathWriter,
       MonadProcess,
       MonadReader env,
-      MonadSTM,
       MonadThread,
       MonadTime,
       MonadThrow

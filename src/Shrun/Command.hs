@@ -50,11 +50,11 @@ runCommands ::
     HasCommands env,
     HasLogging env m,
     MonadAsync m,
+    MonadAtomic m,
     MonadEvaluate m,
     MonadMVar m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadThrow m,
     MonadTime m
   ) =>
@@ -74,7 +74,7 @@ runCommands runner = do
 mkVertexSemMap :: (MonadMVar m) => CommandGraph -> m (HashMap Vertex (MVar ()))
 mkVertexSemMap cdg = do
   vs <- for vertices $ \v -> do
-    q <- newMVar ()
+    q <- newMVar' ()
     pure (v, q)
 
   pure $ Map.fromList vs
@@ -87,11 +87,11 @@ runCommand ::
   ( HasCallStack,
     HasLogging env m,
     MonadAsync m,
+    MonadAtomic m,
     MonadEvaluate m,
     MonadMVar m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadThrow m,
     MonadTime m
   ) =>
@@ -157,7 +157,7 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
               -- We never restore the MVar (because a command should only
               -- be run at most once), so the only sensible thing we can do
               -- is exit.
-              tryTakeMVar mvar >>= \case
+              tryTakeMVar' mvar >>= \case
                 Nothing ->
                   -- No MVar, print a message and leave.
                   Logging.logDebug $ \lvl -> do
@@ -251,8 +251,8 @@ instance Monoid PredecessorResult where
 getPredecessorsStatus ::
   forall m.
   ( HasCallStack,
-    MonadThrow m,
-    MonadSTM m
+    MonadAtomic m,
+    MonadThrow m
   ) =>
   CommandGraph ->
   HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
@@ -285,7 +285,7 @@ getPredecessorsStatus cdg commandStatusMap v =
                     prettyToText idx
                   ]
             Just (_, statusVar) -> do
-              status <- readTVar statusVar
+              status <- readTVar' statusVar
               pure . Ok $ case (status, lbl) of
                 (CommandWaiting, _) -> PredecessorUnfinished p
                 (CommandRunning _, _) -> PredecessorUnfinished p
@@ -300,10 +300,10 @@ getPredecessorsStatus cdg commandStatusMap v =
 logCommandAction ::
   ( HasCallStack,
     HasLogging env m,
+    MonadAtomic m,
     MonadEvaluate m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   -- | Dependency graph

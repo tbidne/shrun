@@ -526,11 +526,11 @@ type MLogging = Maybe (Tuple3 FileLoggingMerged Handle (TBQueue FileLog))
 withFileLoggingEnv ::
   forall m a.
   ( HasCallStack,
+    MonadAtomic m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadSTM m,
     MonadTerminal m,
     MonadThrow m
   ) =>
@@ -560,11 +560,11 @@ withFileLoggingEnv mFileLogging onFileLoggingEnv = do
 withMLogging ::
   forall m a.
   ( HasCallStack,
+    MonadAtomic m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadSTM m,
     MonadTerminal m,
     MonadThrow m
   ) =>

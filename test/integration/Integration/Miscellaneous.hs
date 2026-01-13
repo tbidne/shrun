@@ -667,6 +667,7 @@ newtype TermWidthFailIO a = MkTermWidthFailIO (ConfigIO a)
     ( Applicative,
       Functor,
       Monad,
+      MonadAtomic,
       MonadCatch,
       MonadDBus,
       MonadEnv,
@@ -680,7 +681,6 @@ newtype TermWidthFailIO a = MkTermWidthFailIO (ConfigIO a)
       MonadPathWriter,
       MonadIORef,
       MonadReader (IORef (List Text)),
-      MonadSTM,
       MonadThrow
     )
     via ConfigIO

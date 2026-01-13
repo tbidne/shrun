@@ -110,6 +110,7 @@ shrun ::
     HasNotifyConfig env,
     HasTimeout env,
     MonadAsync m,
+    MonadAtomic m,
     MonadEvaluate m,
     MonadHandleReader m,
     MonadHandleWriter m,
@@ -121,7 +122,6 @@ shrun ::
     MonadMVar m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadThread m,
     MonadTime m
   ) =>
@@ -147,13 +147,13 @@ shrun = do
 
       -- cancel consoleLogger, print remaining logs
       Async.cancel consoleLogger
-      flushTBQueueA consoleQueue >>= traverse_ printConsoleLog
+      flushTBQueueA' consoleQueue >>= traverse_ printConsoleLog
 
       -- Need to run cleanup if we have timed out.
       whenTimedOut cleanupCommands
 
       -- if any processes have failed, exit with an error
-      anyError <- readTVarA =<< asks getAnyError
+      anyError <- readTVarA' =<< asks getAnyError
       when anyError exitFailure
   where
     runWithFileLogging :: (HasCallStack) => Double -> FileLoggingEnv -> m ()
@@ -164,7 +164,7 @@ shrun = do
         Async.cancel fileLoggerThread
 
         -- handle any remaining file logs
-        flushTBQueueA fileQueue >>= traverse_ (Logging.logFile h)
+        flushTBQueueA' fileQueue >>= traverse_ (Logging.logFile h)
         hFlush h
       where
         MkFileLogOpened h fileQueue = fileLogging ^. #file
@@ -187,6 +187,7 @@ runCommand ::
     HasInit env,
     HasLogging env m,
     HasNotifyConfig env,
+    MonadAtomic m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -195,7 +196,6 @@ runCommand ::
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadThread m,
     MonadTime m
   ) =>
@@ -247,16 +247,16 @@ putCommandFinalLog ::
   forall m env.
   ( HasCallStack,
     HasFileLogging env,
+    MonadAtomic m,
     MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m
+    MonadRegionLogger m
   ) =>
   TBQueue (LogRegion (Region m)) ->
   ConsoleLog ->
   (FileLoggingEnv -> m FileLog) ->
   m ()
 putCommandFinalLog consoleQueue consoleLog mkFileLog = do
-  withRegion Linear $ \r -> writeTBQueueA consoleQueue (LogRegion mode r consoleLog)
+  withRegion Linear $ \r -> writeTBQueueA' consoleQueue (LogRegion mode r consoleLog)
 
   mFileLogging <- asks getFileLogging
   for_ mFileLogging $ \fl -> do
@@ -366,11 +366,10 @@ printFinalResult ::
     HasCommands env,
     HasLogging env m,
     HasNotifyConfig env,
-    MonadIORef m,
+    MonadAtomic m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   TimeSpec ->
@@ -412,7 +411,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
           }
 
   -- Send off a 'finished' notification
-  anyError <- readTVarA =<< asks getAnyError
+  anyError <- readTVarA' =<< asks getAnyError
   let urgency = if anyError then Critical else Normal
       notifyBody = Notify.formatNotifyMessage totalTimeTxt []
 
@@ -449,10 +448,10 @@ counter ::
     HasCallStack,
     HasLogging env m,
     HasTimeout env,
+    MonadAtomic m,
     MonadIORef m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadThread m,
     MonadTime m
   ) =>
@@ -480,8 +479,8 @@ logCounter ::
   ( HasCallStack,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
-    MonadReader env m,
-    MonadSTM m
+    MonadAtomic m,
+    MonadReader env m
   ) =>
   Region m ->
   Natural ->
@@ -509,9 +508,9 @@ keepRunning ::
   ( HasAnyError env,
     HasCallStack,
     HasLogging env m,
+    MonadAtomic m,
     MonadIORef m,
     MonadReader env m,
-    MonadSTM m,
     MonadTime m
   ) =>
   Region m ->
@@ -542,10 +541,9 @@ timedOut timer (With (MkTimeout t)) = timer > t
 
 pollQueueToConsole ::
   ( HasCallStack,
+    MonadAtomic m,
     MonadMask m,
-    MonadReader env m,
-    MonadRegionLogger m,
-    MonadSTM m
+    MonadRegionLogger m
   ) =>
   TBQueue (LogRegion (Region m)) ->
   m void
@@ -566,9 +564,9 @@ printConsoleLog (LogRegion m r consoleLog) = logRegion m r (consoleLog ^. #unCon
 
 pollQueueToFile ::
   ( HasCallStack,
+    MonadAtomic m,
     MonadHandleWriter m,
-    MonadMask m,
-    MonadSTM m
+    MonadMask m
   ) =>
   FileLoggingEnv ->
   m void
@@ -592,14 +590,13 @@ teardown ::
     HasCommands env,
     HasLogging env m,
     HasNotifyConfig env,
+    MonadAtomic m,
     MonadCatch m,
-    MonadIORef m,
     MonadHandleWriter m,
     MonadNotify m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   Double ->
@@ -732,12 +729,12 @@ cleanupCommands ::
   ( HasCallStack,
     HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   m ()

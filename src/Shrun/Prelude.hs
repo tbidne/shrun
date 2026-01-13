@@ -89,7 +89,6 @@ import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
 import Control.Concurrent.STM as X (STM)
 import Control.Concurrent.STM.TMVar as X (TMVar, newTMVar)
-import Control.Concurrent.STM.TVar as X (newTVar, readTVar)
 import Control.DeepSeq as X (NFData, force)
 import Control.Exception as X
   ( Exception (displayException, fromException, toException),
@@ -205,21 +204,23 @@ import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Effects.Concurrent.Async as X (MonadAsync)
 import Effects.Concurrent.STM as X
-  ( MonadSTM (atomically),
+  ( MonadAtomic (atomically),
     TBQueue,
     TVar,
-    flushTBQueueA,
+    flushTBQueueA',
     modifyTVarA',
     newTBQueueA,
-    newTVarA,
-    readTBQueueA,
-    readTVarA,
-    writeTBQueueA,
-    writeTVarA,
+    newTVar',
+    newTVarA',
+    readTBQueueA',
+    readTVar',
+    readTVarA',
+    writeTBQueueA',
+    writeTVarA',
   )
 import Effects.Concurrent.Thread as X
   ( MVar,
-    MonadMVar (newMVar, putMVar, tryTakeMVar),
+    MonadMVar (newMVar', putMVar', tryTakeMVar'),
     MonadThread,
     microsleep,
     sleep,

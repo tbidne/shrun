@@ -64,6 +64,7 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
     ( Applicative,
       Functor,
       Monad,
+      MonadAtomic,
       MonadCatch,
       MonadEnv,
       MonadFileReader,
@@ -73,7 +74,6 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
       MonadOptparse,
       MonadIORef,
       MonadReader (IORef (List Text)),
-      MonadSTM,
       MonadThrow
     )
     via (ReaderT (IORef (List Text))) IO
@@ -139,6 +139,7 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
     ( Applicative,
       Functor,
       Monad,
+      MonadAtomic,
       MonadCatch,
       MonadEnv,
       MonadFileReader,
@@ -147,7 +148,6 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
       MonadIORef,
       MonadMask,
       MonadOptparse,
-      MonadSTM,
       MonadThrow
     )
     via (ReaderT (IORef (List Text))) IO
@@ -287,6 +287,7 @@ newtype DefaultIO a = MkDefaultIO (IO a)
     ( Applicative,
       Functor,
       Monad,
+      MonadAtomic,
       MonadCatch,
       MonadEnv,
       MonadFileReader,
@@ -295,7 +296,6 @@ newtype DefaultIO a = MkDefaultIO (IO a)
       MonadIORef,
       MonadMask,
       MonadOptparse,
-      MonadSTM,
       MonadThrow
     )
     via IO

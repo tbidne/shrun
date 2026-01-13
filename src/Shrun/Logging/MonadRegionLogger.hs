@@ -74,9 +74,9 @@ instance (MonadRegionLogger m) => MonadRegionLogger (ReaderT env m) where
 -- See NOTE: [Restore Timer Region].
 restoreTimerRegion ::
   forall m.
-  ( MonadIORef m,
-    MonadRegionLogger m,
-    MonadSTM m
+  ( MonadAtomic m,
+    MonadIORef m,
+    MonadRegionLogger m
   ) =>
   IORef (Maybe (Region m)) ->
   m ()

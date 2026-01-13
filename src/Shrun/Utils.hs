@@ -328,8 +328,8 @@ fmtUnrecognizedError fieldName validVals badValue =
 -- given function, even if an async exception is raised.
 atomicReadWrite ::
   ( HasCallStack,
-    MonadMask m,
-    MonadSTM m
+    MonadAtomic m,
+    MonadMask m
   ) =>
   -- | Queue from which to read.
   TBQueue a ->
@@ -337,7 +337,7 @@ atomicReadWrite ::
   (a -> m b) ->
   m ()
 atomicReadWrite queue logAction =
-  mask $ \restore -> restore (readTBQueueA queue) >>= void . logAction
+  mask $ \restore -> restore (readTBQueueA' queue) >>= void . logAction
 {-# INLINEABLE atomicReadWrite #-}
 
 indexPos :: NESeq a -> NESeq (Positive Int, a)

@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Effect for DBus.
 module Shrun.Notify.DBus
   ( MonadDBus (..),

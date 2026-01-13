@@ -1,5 +1,12 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
+
+-- NOTE: -Wno-redundant-constraints for
+--
+--   withCoreEnv :: (..., MonadDBus m, ...) => ...
+--
+-- on OSX.
 
 module Shrun.Configuration.Data.Core
   ( -- * Types
@@ -344,12 +351,12 @@ mergeCoreConfig cmds args toml = do
 withCoreEnv ::
   forall m a.
   ( HasCallStack,
+    MonadAtomic m,
     MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadPathReader m,
     MonadPathWriter m,
-    MonadSTM m,
     MonadTerminal m,
     MonadThrow m
   ) =>

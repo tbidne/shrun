@@ -123,6 +123,7 @@ newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
       Applicative,
       Monad,
       MonadAsync,
+      MonadAtomic,
       MonadDBus,
       MonadCatch,
       MonadEnv,
@@ -139,7 +140,6 @@ newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
       MonadPathWriter,
       MonadProcess,
       MonadReader ConfigIOEnv,
-      MonadSTM,
       MonadThread,
       MonadTime,
       MonadThrow

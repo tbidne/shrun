@@ -38,10 +38,10 @@ sendNotif ::
     HasCallStack,
     HasLogging env m,
     HasNotifyConfig env,
+    MonadAtomic m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   -- | Notif summary

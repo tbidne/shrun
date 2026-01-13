@@ -104,6 +104,7 @@ tryCommandLogging ::
     HasCommands env,
     HasInit env,
     HasLogging env m,
+    MonadAtomic m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -111,7 +112,6 @@ tryCommandLogging ::
     MonadMask m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadThread m,
     MonadTime m
   ) =>
@@ -125,7 +125,7 @@ tryCommandLogging command = do
   -- total, but there are still a few functions here that can throw. To wit:
   --
   -- - atomically: Used in updateCommandStatus, setAnyErrorTrue,
-  --               writeTBQueueA.
+  --               writeTBQueueA'.
   -- - getSystemTimeString: Used in formatFileLog.
   --
   -- We could catch these exceptions and simply print an error. However, both
@@ -225,11 +225,11 @@ tryCommandLogging command = do
   where
     logConsole keyHide consoleQueue region consoleLogging log = do
       let formatted = formatConsoleLog keyHide consoleLogging log
-      writeTBQueueA consoleQueue (LogRegion (log ^. #mode) region formatted)
+      writeTBQueueA' consoleQueue (LogRegion (log ^. #mode) region formatted)
 
     logFile keyHide fileLogging log = do
       formatted <- formatFileLog keyHide fileLogging log
-      writeTBQueueA (fileLogging ^. #file % #queue) formatted
+      writeTBQueueA' (fileLogging ^. #file % #queue) formatted
 
     hello =
       MkLog
@@ -247,6 +247,7 @@ tryCommandStream ::
     HasCallStack,
     HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
@@ -254,7 +255,6 @@ tryCommandStream ::
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadThread m,
     MonadTime m
   ) =>
@@ -662,12 +662,12 @@ killChildPids ::
   ( HasCallStack,
     HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   Maybe Pid ->
@@ -682,12 +682,12 @@ getChildPids ::
   ( HasCallStack,
     HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadSTM m,
     MonadTime m
   ) =>
   -- | Is multithreaded. Used for logging.
