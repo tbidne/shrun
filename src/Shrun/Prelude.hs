@@ -385,6 +385,7 @@ import Prettyprinter as X
   )
 import Prettyprinter qualified
 import Prettyprinter.Render.Text qualified as PrettyprinterT
+import Shrun.Data.Result as X
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.Exit as X (ExitCode (ExitFailure, ExitSuccess))
 import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)
@@ -554,45 +555,6 @@ traceFileLineA f t = traceFileLine f t (pure ())
 
 onJust :: b -> Maybe a -> (a -> b) -> b
 onJust x m f = maybe x f m
-
--- | Either with custom MonadFail and fail-fast Semigroup instances.
-data Result e a
-  = Err e
-  | Ok a
-  deriving stock (Eq, Functor, Show)
-
-instance (Semigroup a) => Semigroup (Result e a) where
-  Err x <> _ = Err x
-  _ <> Err y = Err y
-  Ok x <> Ok y = Ok (x <> y)
-
-instance (Monoid a) => Monoid (Result e a) where
-  mempty = Ok mempty
-
-instance Applicative (Result e) where
-  pure = Ok
-
-  Err x <*> _ = Err x
-  _ <*> Err x = Err x
-  Ok f <*> Ok x = Ok (f x)
-
-instance Monad (Result e) where
-  Err x >>= _ = Err x
-  Ok x >>= f = f x
-
-instance Foldable (Result e) where
-  foldr _ e (Err _) = e
-  foldr f e (Ok x) = f x e
-
-instance Traversable (Result e) where
-  sequenceA (Err x) = pure (Err x)
-  sequenceA (Ok x) = Ok <$> x
-
-  traverse _ (Err x) = pure (Err x)
-  traverse f (Ok x) = Ok <$> f x
-
-instance (IsString e) => MonadFail (Result e) where
-  fail = Err . fromString
 
 -- | TermException is explicitly for when the current process is cancelled
 -- (SIGTERM on posix). We use a separate type so that we can distinguish it

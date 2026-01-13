@@ -126,6 +126,7 @@ library
     Shrun.Configuration.Legend
     Shrun.Configuration.Toml
     Shrun.Configuration.Toml.Legend
+    Shrun.Data.Result
     Shrun.Data.Text
     Shrun.IO
     Shrun.IO.Handle
@@ -233,6 +234,7 @@ test-suite unit
   other-modules:
     Unit.Generators
     Unit.Prelude
+    Unit.Shrun.Command
     Unit.Shrun.Configuration.Args.Parsing
     Unit.Shrun.Configuration.Args.Parsing.CommandLogging
     Unit.Shrun.Configuration.Args.Parsing.CommonLogging
@@ -247,6 +249,7 @@ test-suite unit
     Unit.Shrun.Configuration.Data.WithDisabled
     Unit.Shrun.Configuration.Legend
     Unit.Shrun.Configuration.Toml
+    Unit.Shrun.Data.Result
     Unit.Shrun.IO.Handle
     Unit.Shrun.Logging.Formatting
     Unit.Shrun.Logging.Generators

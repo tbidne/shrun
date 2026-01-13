@@ -1,5 +1,9 @@
 module Shrun.Command
-  ( runCommands,
+  ( -- * Primary
+    runCommands,
+
+    -- * Misc
+    PredecessorResult (..),
   )
 where
 
@@ -230,6 +234,7 @@ data PredecessorResult
   | -- | Some predecessor finished but did not match the expectation. The
     -- boolean is True iff failure was expected.
     PredecessorFailure Bool Vertex
+  deriving stock (Eq, Show)
 
 instance Semigroup PredecessorResult where
   PredecessorFailure b v <> _ = PredecessorFailure b v
