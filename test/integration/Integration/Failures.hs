@@ -59,7 +59,9 @@ missingConfig = testCase "Missing explicit config throws exception" $ do
 duplicateKeys :: TestTree
 duplicateKeys = testCase "Duplicate keys throws exception" $ do
   logsRef <- newIORef' []
-  let args = ["-c", getIntConfig "duplicate-keys", "cmd"]
+  -- '-c off' is out of paranoia, checking that a single config file can
+  -- still have duplicate keys.
+  let args = ["-c", "off", "-c", getIntConfig "duplicate-keys", "cmd"]
   result <- runCaptureError args logsRef
 
   case result of
