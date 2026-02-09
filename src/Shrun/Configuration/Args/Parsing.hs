@@ -329,8 +329,8 @@ configParser =
       Utils.itemizeHelper
         $ intro
         :<|| [ "<XDG_config>/shrun/config.toml",
-               ".shrun.toml",
-               "shrun.toml"
+               "./.shrun.toml",
+               "./shrun.toml"
              ]
 
     intro =

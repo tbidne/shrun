@@ -62,8 +62,8 @@
 **Description**: Path(s) to TOML config file(s). This argument can be given multiple times, in which case all keys are merged. When there is a conflict, the right-most config wins. The legends are also merged, with the same right-bias for conflicting keys. The string `off` disables all config files to its left. Finally, we also search in specific locations automatically. These are:
 
   - `<XDG_config>/shrun/config.toml`
-  - `.shrun.toml`
-  - `shrun.toml`
+  - `./.shrun.toml`
+  - `./shrun.toml`
 
 These files are considered 'left' of any configs explicitly given with `--config`, hence disabed with `off`.
 
