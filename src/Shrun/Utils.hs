@@ -13,6 +13,12 @@ module Shrun.Utils
     diffTime,
     timeSpecToRelTime,
 
+    -- * Terminal input
+    hWithHidden,
+    withHiddenInput,
+    hHide,
+    drainStdin,
+
     -- * Misc Utils
     atomicReadWrite,
     fmtUnrecognizedError,
@@ -36,9 +42,12 @@ import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
+import Effects.FileSystem.HandleReader qualified as HR
+import Effects.FileSystem.HandleWriter qualified as HW
 import Effects.Time (TimeSpec, diffTimeSpec)
 import Optics.Core qualified as O
 import Shrun.Prelude
+import System.IO qualified as IO
 import Text.Read (Read)
 import Text.Read qualified as TR
 
@@ -354,3 +363,75 @@ surroundJust ::
   Optic l ks u v (Maybe a) (Maybe b) ->
   Optic m ks (Maybe u) (Maybe v) a b
 surroundJust l = _Just % l % _Just
+
+-- | Hides stdin input. Some caveats:
+--
+-- - Tragically, this does not prevent sudo from hijacking stdin e.g.
+--
+--     shrun "sudo ls && sleep 10"
+--
+--   will launch the prompt which will overwrite the terminal. Oh well.
+--
+-- - It does not /swallow/ stdin e.g. read stdin and throw it away. For
+--   example, if the user types in a bunch of stuff, it will be buffered
+--   in memory then printed / executed (e.g. enter key) after shrun finishes.
+--
+--   For the main console, this is handled by 'drainStdin'.
+withHiddenInput ::
+  ( MonadMask m,
+    MonadHandleReader m,
+    MonadHandleWriter m
+  ) =>
+  m a ->
+  m a
+withHiddenInput = hWithHidden IO.stdin
+{-# INLINEABLE withHiddenInput #-}
+
+hWithHidden ::
+  ( MonadMask m,
+    MonadHandleReader m,
+    MonadHandleWriter m
+  ) =>
+  Handle ->
+  m a ->
+  m a
+hWithHidden h m = bracket hideInput unhideInput (const m)
+  where
+    -- Note that this may not work on windows, if we ever want that.
+    --
+    -- - https://stackoverflow.com/questions/15848975/preventing-input-characters-appearing-in-terminal
+    -- - https://hackage.haskell.org/package/echo
+    hideInput = do
+      buffMode <- HR.hGetBuffering h
+      echoMode <- HR.hGetEcho h
+      hHide h
+      pure (buffMode, echoMode)
+
+    unhideInput (buffMode, echoMode) = do
+      HW.hSetBuffering h buffMode
+      HW.hSetEcho h echoMode
+{-# INLINEABLE hWithHidden #-}
+
+hHide ::
+  (MonadHandleWriter m) =>
+  Handle ->
+  m ()
+hHide h = do
+  HW.hSetBuffering h HW.NoBuffering
+  HW.hSetEcho h False
+
+-- | Drains stdin.
+drainStdin ::
+  ( MonadCatch m,
+    MonadHandleReader m
+  ) =>
+  m ()
+drainStdin =
+  tryMySync_
+    $ HR.hIsReadable IO.stdin
+    >>= \case
+      False -> pure ()
+      True ->
+        HR.hIsReadable IO.stdin >>= \case
+          False -> pure ()
+          True -> void $ HR.hGetNonBlocking IO.stdin 1_000

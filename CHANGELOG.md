@@ -120,6 +120,8 @@ for versions < 1.
   This is now fixed so that 'kill -2' unconditionally kills shrun.
 * SIGTERM (kill -15) now properly kills subcommands.
 * Improved `--help` indent.
+* Stdin is silenced, so user keys no longer mess with console logs
+  (sudo prompt still overwrites console, however).
 
 ## [0.9.1] -- 2024-07-27
 ### Changed

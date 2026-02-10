@@ -133,7 +133,7 @@ shrun = do
 
   startTime <- Time.getMonotonicTime
 
-  displayRegions $ flip onMyAsync (teardown startTime) $ do
+  Utils.withHiddenInput $ displayRegions $ flip onMyAsync (teardown startTime) $ do
     mFileLogging <- asks getFileLogging
     (_, consoleQueue, _) <- asks getConsoleLogging
 
@@ -151,6 +151,9 @@ shrun = do
 
       -- Need to run cleanup if we have timed out.
       whenTimedOut cleanupCommands
+
+      -- One final attempt draining stdin.
+      Utils.drainStdin
 
       -- if any processes have failed, exit with an error
       anyError <- readTVarA' =<< asks getAnyError
@@ -172,7 +175,10 @@ shrun = do
     runCommands :: (HasCallStack) => Double -> m ()
     runCommands startTime = do
       let actions = Command.runCommands (runCommand startTime)
-          actionsWithTimer = Async.race_ actions counter
+          actionsWithTimer =
+            actions
+              `Async.race_` counter
+              `Async.race_` drainStdinLoop
 
       result <- tryMySync actionsWithTimer
       endTime <- Time.getMonotonicTime
@@ -471,8 +477,25 @@ counter = do
       sleep 1
       elapsed <- atomicModifyIORef' timer $ \t -> (t + 1, t + 1)
       logCounter r elapsed
+
     setTimedOut
 {-# INLINEABLE counter #-}
+
+-- | Periodically attempts to read stdin, so any entered keystrokes are
+-- thrown away. Does not apply to commands that spawn sudo, sadly.
+drainStdinLoop ::
+  ( MonadCatch m,
+    MonadHandleReader m,
+    MonadThread m
+  ) =>
+  m void
+drainStdinLoop = go
+  where
+    go = do
+      Utils.drainStdin
+      sleep 1
+      go
+{-# INLINEABLE drainStdinLoop #-}
 
 logCounter ::
   forall m env.

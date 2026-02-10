@@ -68,6 +68,7 @@ module Shrun.Prelude
     -- * Exceptions
     TermException (..),
     tryMySync,
+    tryMySync_,
     onMyAsync,
     isMyAsync,
     isTermException,
@@ -571,6 +572,9 @@ instance Exception TermException where
 -- these should be used over the usual trySync, thus always in scope.
 tryMySync :: (HasCallStack, MonadCatch m) => m a -> m (Either SomeException a)
 tryMySync = Ex.Utils.tryIf (not . isMyAsync)
+
+tryMySync_ :: (HasCallStack, MonadCatch m) => m a -> m ()
+tryMySync_ = void . tryMySync
 
 onMyAsync :: (HasCallStack, MonadCatch m) => m a -> m b -> m a
 onMyAsync action handler = withFrozenCallStack catchAsync action $ \e -> do
