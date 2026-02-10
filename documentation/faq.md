@@ -24,11 +24,11 @@
 
 ## What if a command needs sudo?
 
-Commands _can_ receive `stdin`, so running e.g. `shrun "sudo some command"` will launch the sudo prompt. From there we can type the password and hit `enter` as usual.
+In general, `stdin` is ignored so commands that require `stdin` will not work properly. That said, `sudo` _does_ work i.e. launches the `sudo` prompt. From there we can type the password and hit `enter` as usual.
 
 However this is a bit clunky as the timer text will overwrite the `[sudo] password for ...` prompt, and multiple commands add more complication.
 
-It is therefore easiest to run sudo first to elevate privileges, then execute `shrun` as normal e.g.
+It is therefore easiest to run `sudo` first to elevate privileges, then execute `shrun` as normal e.g.
 
 ```sh
 # Run sudo with some dummy command
