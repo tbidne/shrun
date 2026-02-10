@@ -428,10 +428,10 @@ drainStdin ::
   m ()
 drainStdin =
   tryMySync_
-    $ HR.hIsReadable IO.stdin
+    $ HR.hIsClosed IO.stdin
     >>= \case
-      False -> pure ()
-      True ->
+      True -> pure ()
+      False ->
         HR.hIsReadable IO.stdin >>= \case
           False -> pure ()
           True -> void $ HR.hGetNonBlocking IO.stdin 1_000
