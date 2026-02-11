@@ -89,7 +89,8 @@ for versions < 1.
 
 * `--console-log-command` default to `on`.
 
-* `Timer` log now changed to more general `Status`.
+* `Timer` log now changed to more general `Status`, and status info added
+  to final logs.
 
 ### Added
 * Option `--edges` (toml: legend `edges`) for declaring dependencies

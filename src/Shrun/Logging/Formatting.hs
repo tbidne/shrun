@@ -307,8 +307,9 @@ coreFormatting
   keyHide
   log = do
     statusPrefix <- case log ^. #lvl of
-      LevelTimer -> mkStatus
       LevelFinished -> mkStatus
+      LevelKilled -> mkStatus
+      LevelTimer -> mkStatus
       _ -> pure ""
 
     let -- prefix is something like "[Success] " or "[Command][some cmd] ".

@@ -574,7 +574,7 @@ cancelSequential = testCase desc $ do
         runningPrefix,
         "  - sleep 4",
         "  - sleep 8",
-        withKilledPrefix expectedBody
+        withKilledPrefix (2, 2, 0, 0) expectedBody
       ]
 
     expectedBody :: (IsString s) => s

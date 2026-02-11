@@ -314,8 +314,19 @@ timerPrefix (w, r, f, s) =
 warnPrefix :: (IsString s) => s
 warnPrefix = "[Warn]"
 
-killedPrefix :: (IsString s) => s
-killedPrefix = "[Killed]"
+killedPrefix :: (IsString s, Semigroup s) => (Int, Int, Int, Int) -> s
+killedPrefix (w, r, f, s) =
+  sconcat
+    [ "[Killed][",
+      fromString $ show w,
+      "|",
+      fromString $ show r,
+      "|",
+      fromString $ show f,
+      "|",
+      fromString $ show s,
+      "] "
+    ]
 
 runningPrefix :: (IsString s, Semigroup s) => s
 runningPrefix = warnPrefix <> " Attempting to cancel:"
@@ -378,11 +389,8 @@ withTimerPrefix s = (timerPrefix s <>)
 withFinishedPrefix :: (Semigroup s, IsString s) => (Int, Int, Int, Int) -> s -> s
 withFinishedPrefix s = (finishedPrefix s <>)
 
-withKilledPrefix :: (Semigroup s, IsString s) => s -> s
-withKilledPrefix = withPrefix killedPrefix
-
-withPrefix :: (Semigroup a, IsString a) => a -> a -> a
-withPrefix pfx s = pfx <> " " <> s
+withKilledPrefix :: (Semigroup s, IsString s) => (Int, Int, Int, Int) -> s -> s
+withKilledPrefix s = (killedPrefix s <>)
 
 withBaseArgs :: List String -> List String
 withBaseArgs as =

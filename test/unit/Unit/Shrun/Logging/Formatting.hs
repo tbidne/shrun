@@ -140,7 +140,7 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
         "\ESC[93m[Warn] ",
         "\ESC[91m[Error] ",
         "\ESC[91m[Fatal] ",
-        "\ESC[91m[Killed] "
+        "\ESC[91m[Killed][1|2|3|4] "
       ]
     suffixes = L.repeat "\ESC[0m"
 
@@ -200,7 +200,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
         "\ESC[93m[Warn][",
         "\ESC[91m[Error][",
         "\ESC[91m[Fatal][",
-        "\ESC[91m[Killed]["
+        "\ESC[91m[Killed][1|2|3|4]["
       ]
     suffixes = L.repeat "\ESC[0m"
 
@@ -248,7 +248,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
         "\ESC[93m[Warn][",
         "\ESC[91m[Error][",
         "\ESC[91m[Fatal][",
-        "\ESC[91m[Killed]["
+        "\ESC[91m[Killed][1|2|3|4]["
       ]
     suffixes = L.repeat "\ESC[0m"
 
@@ -391,7 +391,7 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
               "[Warn] ",
               "[Error] ",
               "[Fatal] ",
-              "[Killed] "
+              "[Killed][1|2|3|4] "
             ]
     suffixes = L.repeat "\n"
 
@@ -453,7 +453,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
               "[Warn][",
               "[Error][",
               "[Fatal][",
-              "[Killed]["
+              "[Killed][1|2|3|4]["
             ]
     suffixes = L.repeat "\n"
 
@@ -502,7 +502,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
               "[Warn][",
               "[Error][",
               "[Fatal][",
-              "[Killed]["
+              "[Killed][1|2|3|4]["
             ]
     suffixes = L.repeat "\n"
 

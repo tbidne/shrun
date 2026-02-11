@@ -177,7 +177,7 @@ isCancelled testArgs = testCase "Shrun is cancelled" $ do
     expected =
       [ runningPrefix,
         "  - sleep 5",
-        withKilledPrefix expectedBody
+        withKilledPrefix (0, 1, 0, 0) expectedBody
       ]
 
     expectedBody :: (IsString s) => s
