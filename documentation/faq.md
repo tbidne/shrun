@@ -11,6 +11,7 @@
 - [How do I run sequential commands?](#how-do-i-run-sequential-commands)
 - [Can file logging preserve formatting?](#can-file-logging-preserve-formatting)
 - [How do I set shell auto-completions?](#how-do-i-set-shell-auto-completions)
+- [What does the status mean?](#what-does-the-status-mean)
 
 ## If I don't run multiple commands all that often, does shrun hold any value?
 
@@ -373,3 +374,20 @@ $ shrun --config config.toml some<TAB> # will auto-complete to some_alias
 ```
 
 The keys will be persisted until `--legend-keys-cache clear` is used (or overwritten with `--legend-keys-cache write`). Hence `--legend-keys-cache add` only needs to be run the first time a particular legend file is used, though it does not hurt to set it in the toml config.
+
+## What does the status mean?
+
+The status bar e.g.
+
+```sh
+$ shrun --edges "1 & 3, 2 & 3" cmd1 cmd2 cmd3
+[Command][cmd1] cmd1 output...
+[Command][cmd2] cmd2 output...
+[Status][1|2|0|0] 5 seconds
+```
+
+refers to the number of tasks in each status i.e.
+
+```
+[waiting|running|failed|succeeded]
+```

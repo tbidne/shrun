@@ -144,7 +144,7 @@ parserInfoArgs prevKeys =
               "[Command][cmd1] cmd1 output...",
               "[Command][cmd2] cmd2 output...",
               "[Command][cmd3] cmd3 output...",
-              "[Timer] 5 seconds"
+              "[Status][0|3|0|0] 5 seconds"
             ],
           mkExample
             [ "2. Uses --edges to specify command dependencies. Commands cmd1 and",
@@ -154,7 +154,7 @@ parserInfoArgs prevKeys =
               "$ shrun --edges \"1 & 3, 2 & 3\" cmd1 cmd2 cmd3",
               "[Command][cmd1] cmd1 output...",
               "[Command][cmd2] cmd2 output...",
-              "[Timer] 5 seconds"
+              "[Status][1|2|0|0] 5 seconds"
             ],
           mkExample
             [ "3. Uses config file aliases i.e. builds frontend, backend, and db",
@@ -177,7 +177,7 @@ parserInfoArgs prevKeys =
               "[Command][frontend] Running npm...",
               "[Command][backend] Running javac...",
               "[Command][db] Running db.sh...",
-              "[Timer] 5 seconds"
+              "[Status][1|3|0|0] 5 seconds"
             ]
         ]
 

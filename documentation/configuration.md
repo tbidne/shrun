@@ -340,7 +340,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-length 1 "printf hi && sleep 1 && printf b && sleep 2"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 1 && printf b && sleep 1] hi</span>
-<span style="color: #d6acff">[Timer] 1 second</span></code>
+<span style="color: #d6acff">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 #### Buffer Timeout
@@ -357,13 +357,13 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] hi</span>
-<span style="color: #d6acff">[Timer] 1 second</span></code>
+<span style="color: #d6acff">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] b</span>
-<span style="color: #d6acff">[Timer] 3 seconds</span></code>
+<span style="color: #d6acff">[Status][0|1|0|0] 3 seconds</span></code>
 </pre>
 
 #### Poll Interval
@@ -380,7 +380,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --command-log-poll-interval 100 --console-log-command on "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
-<span style="color: #a3fefe">[Timer] 7 seconds</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 7 seconds</span></code>
 </pre>
 
 #### Read Size
@@ -397,13 +397,13 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcde</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] f</span>
-<span style="color: #a3fefe">[Timer] 2 seconds</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 2 seconds</span></code>
 </pre>
 
 
@@ -428,7 +428,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 --command-log-read-strategy block-line-buffer "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcdef</span>
-<span style="color: #a3fefe">[Timer] 2 seconds</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 2 seconds</span></code>
 </pre>
 
 ### Console Logging
@@ -449,14 +449,14 @@ Config related to console logs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun "for i in {1..2}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..2}; do echo hi; sleep 1; done] hi</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 vs.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command off "for i in {1..2}; do echo hi; sleep 1; done"</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 > [!NOTE]
@@ -493,7 +493,7 @@ vs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
 <span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 #### Strip Control
@@ -513,21 +513,21 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo  hello  bye</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 `off` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control off "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 #### Timer Format
@@ -545,22 +545,22 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format digital_compact "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 01</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 01</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format digital_full "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 00:00:00:01</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 00:00:00:01</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format prose_compact "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-timer-format prose_full "sleep 2"</span>
-<span style="color: #a3fefe">[Timer] 0 days, 0 hours, 0 minutes, 1 second</span></code>
+<span style="color: #a3fefe">[Status][0|1|0|0] 0 days, 0 hours, 0 minutes, 1 second</span></code>
 </pre>
 
 ### File Logging
