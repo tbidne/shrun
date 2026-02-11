@@ -172,7 +172,7 @@ timerFormatDigitalCompact = testCase "Runs timer format with digital_compact" $ 
           "sleep 2"
         ]
     expected =
-      [ withTimerPrefix "01"
+      [ withTimerPrefix (0, 1, 0, 0) "01"
       ]
 
 timerFormatDigitalFull :: TestTree
@@ -187,7 +187,7 @@ timerFormatDigitalFull = testCase "Runs timer format with digital_full" $ do
           "sleep 2"
         ]
     expected =
-      [ withTimerPrefix "00:00:00:01"
+      [ withTimerPrefix (0, 1, 0, 0) "00:00:00:01"
       ]
 
 timerFormatProseCompact :: TestTree
@@ -202,7 +202,7 @@ timerFormatProseCompact = testCase "Runs timer format with prose_compact" $ do
           "sleep 2"
         ]
     expected =
-      [ withTimerPrefix "1 second"
+      [ withTimerPrefix (0, 1, 0, 0) "1 second"
       ]
 
 timerFormatProseFull :: TestTree
@@ -217,5 +217,5 @@ timerFormatProseFull = testCase "Runs timer format with prose_full" $ do
           "sleep 2"
         ]
     expected =
-      [ withTimerPrefix "0 days, 0 hours, 0 minutes, 1 second"
+      [ withTimerPrefix (0, 1, 0, 0) "0 days, 0 hours, 0 minutes, 1 second"
       ]

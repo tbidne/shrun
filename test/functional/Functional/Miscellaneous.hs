@@ -508,7 +508,7 @@ testReadStrategyMultiCmdsFileBlock testArgs = testCase desc $ do
         withCommandPrefix readStrategyDefaultCmdLog "o",
         withCommandPrefix readStrategyDefaultCmdLog "by",
         withCommandPrefix readStrategyDefaultCmdLog "e",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 2)
       ]
 
 testReadStrategyMultiCmdsBuffer :: TestTree
@@ -531,7 +531,7 @@ testReadStrategyMultiCmdsBuffer = testCase desc $ do
     expected =
       [ withCommandPrefix readStrategyDefaultCmdLog "hello",
         withCommandPrefix readStrategyDefaultCmdLog "bye",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 2)
       ]
 
 testReadStrategyOneCmdFileLogBuffer :: IO TestArgs -> TestTree
@@ -560,7 +560,7 @@ testReadStrategyOneCmdFileLogBuffer testArgs = testCase desc $ do
     expected =
       [ withCommandPrefix readStrategyDefaultCmdLog "hello",
         withCommandPrefix readStrategyDefaultCmdLog "bye",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 1)
       ]
 
 testImplicitConfigLookup :: TestTree

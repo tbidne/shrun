@@ -51,13 +51,13 @@ notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
         ]
     expected =
       [ MkShrunNote
-          { summary = "[sleep 3]  Finished",
+          { summary = "[sleep 3] Finished",
             body = "3 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 10
           },
         MkShrunNote
-          { summary = "[sleep 2]  Finished",
+          { summary = "[sleep 2] Finished",
             body = "2 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 10
@@ -80,13 +80,13 @@ notifyActionCommand = testCase "Runs --notify-action-complete command" $ do
         ]
     expected =
       [ MkShrunNote
-          { summary = "[sleep 3]  Finished",
+          { summary = "[sleep 3] Finished",
             body = "3 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 10
           },
         MkShrunNote
-          { summary = "[sleep 2]  Finished",
+          { summary = "[sleep 2] Finished",
             body = "2 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 10
@@ -115,13 +115,13 @@ notifyActionAll = testCase "Runs --notify-action-complete all" $ do
             timeout = NotifyTimeoutSeconds 10
           },
         MkShrunNote
-          { summary = "[sleep 3]  Finished",
+          { summary = "[sleep 3] Finished",
             body = "3 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 10
           },
         MkShrunNote
-          { summary = "[sleep 2]  Finished",
+          { summary = "[sleep 2] Finished",
             body = "2 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 10
@@ -152,13 +152,13 @@ notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
             timeout = NotifyTimeoutSeconds 5
           },
         MkShrunNote
-          { summary = "[sleep 3]  Finished",
+          { summary = "[sleep 3] Finished",
             body = "3 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 5
           },
         MkShrunNote
-          { summary = "[sleep 2]  Finished",
+          { summary = "[sleep 2] Finished",
             body = "2 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutSeconds 5

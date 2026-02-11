@@ -85,6 +85,7 @@ mkVertexSemMap cdg = do
 runCommand ::
   forall m env.
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
     MonadAsync m,
     MonadAtomic m,
@@ -299,6 +300,7 @@ getPredecessorsStatus cdg commandStatusMap v =
 
 logCommandAction ::
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
     MonadAtomic m,
     MonadEvaluate m,

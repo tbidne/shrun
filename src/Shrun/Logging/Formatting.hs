@@ -26,9 +26,18 @@ where
 
 import Data.Foldable qualified as F
 import Data.List.NonEmpty qualified as NE
+import Data.Monoid (Sum, getSum)
 import Data.Text qualified as T
 import Effects.Time (getSystemTimeString)
-import Shrun.Command.Types (CommandP1)
+import Shrun.Command.Types
+  ( CommandP1,
+    CommandStatus
+      ( CommandFailure,
+        CommandRunning,
+        CommandSuccess,
+        CommandWaiting
+      ),
+  )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch (MkKeyHideSwitch),
   )
@@ -44,6 +53,7 @@ import Shrun.Configuration.Data.Truncation
       ),
     Truncation (MkTruncation),
   )
+import Shrun.Configuration.Env.Types (HasCommands, getReadCommandStatus)
 import Shrun.Data.Text (UnlinedText)
 import Shrun.Data.Text qualified as ShrunText
 import Shrun.Logging.Types
@@ -74,11 +84,27 @@ import System.Console.Pretty qualified as P
 
 -- | Formats a log to be printed to the console.
 formatConsoleLog ::
+  ( HasCallStack,
+    HasCommands env,
+    MonadAtomic m,
+    MonadReader env m
+  ) =>
   KeyHideSwitch ->
   ConsoleLoggingEnv ->
   Log ->
-  ConsoleLog
-formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
+  m ConsoleLog
+formatConsoleLog keyHide consoleLogging log = do
+  line <-
+    coreFormatting
+      False
+      ((,Nothing) <$> consoleLogging ^. #lineTrunc)
+      (consoleLogging ^. #commandNameTrunc)
+      True
+      (consoleLogging ^. #stripControl)
+      keyHide
+      log
+
+  pure $ UnsafeConsoleLog (colorize line)
   where
     -- NOTE: We want colorize on the outside for two reasons:
     --
@@ -91,30 +117,27 @@ formatConsoleLog keyHide consoleLogging log = UnsafeConsoleLog (colorize line)
     -- occasionally noticed.
     colorize = P.color $ logToColor log
 
-    line =
-      coreFormatting
-        False
-        ((,Nothing) <$> consoleLogging ^. #lineTrunc)
-        (consoleLogging ^. #commandNameTrunc)
-        True
-        (consoleLogging ^. #stripControl)
-        keyHide
-        log
-
 -- | Like 'formatConsoleLog', but for multiple logs. Concatenates all
 -- together with a newline.
 formatConsoleMultiLineLogs ::
+  ( HasCallStack,
+    HasCommands env,
+    MonadAtomic m,
+    MonadReader env m
+  ) =>
   KeyHideSwitch ->
   ConsoleLoggingEnv ->
   NonEmpty Log ->
-  ConsoleLog
+  m ConsoleLog
 formatConsoleMultiLineLogs keyHide consoleLogging logs@(l :| _) =
-  UnsafeConsoleLog
-    -- No need to color each line individually: we can just do it once.
-    . color
-    . T.intercalate "\n"
-    . F.toList
-    . fmap mkLine
+  fmap
+    ( UnsafeConsoleLog
+        -- No need to color each line individually: we can just do it once.
+        . color
+        . T.intercalate "\n"
+        . F.toList
+    )
+    . traverse mkLine
     . zipMultilineSpacePrefix
     $ logs
   where
@@ -136,6 +159,9 @@ maybeApply = maybe id
 -- | Formats a 'Log' into a 'FileLog'. Applies prefix and timestamp.
 formatFileLog ::
   ( HasCallStack,
+    HasCommands env,
+    MonadAtomic m,
+    MonadReader env m,
     MonadTime m
   ) =>
   KeyHideSwitch ->
@@ -144,20 +170,20 @@ formatFileLog ::
   m FileLog
 formatFileLog keyHide fileLogging log = do
   currTime <- getSystemTimeString
-  let timestamp = brackets False (pack currTime)
+  let timestamp = brackets (pack currTime)
       timestampLen = T.length timestamp
 
-      line =
-        coreFormatting
-          False
-          ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
-          (fileLogging ^. #commandNameTrunc)
-          False
-          (fileLogging ^. #stripControl)
-          keyHide
-          log
+  line <-
+    coreFormatting
+      False
+      ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
+      (fileLogging ^. #commandNameTrunc)
+      False
+      (fileLogging ^. #stripControl)
+      keyHide
+      log
 
-      withTimestamp =
+  let withTimestamp =
         mconcat
           [ timestamp,
             line,
@@ -174,6 +200,9 @@ zipMultilineSpacePrefix = NE.zip (False :| [True, True ..])
 -- together.
 formatFileMultiLineLogs ::
   ( HasCallStack,
+    HasCommands env,
+    MonadAtomic m,
+    MonadReader env m,
     MonadTime m
   ) =>
   KeyHideSwitch ->
@@ -182,23 +211,23 @@ formatFileMultiLineLogs ::
   m FileLog
 formatFileMultiLineLogs keyHide fileLogging logs = do
   currTime <- getSystemTimeString
-  let timestamp = brackets False (pack currTime)
+  let timestamp = brackets (pack currTime)
       timestampLen = T.length timestamp
 
-      mkLine (prefixSpace, log) =
+      mkLine (prefixSpace, log) = do
         let withTs =
               if prefixSpace
                 then withNoTimestamp
                 else withTimestamp
-         in withTs
-              $ coreFormatting
-                prefixSpace
-                ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
-                (fileLogging ^. #commandNameTrunc)
-                False
-                (fileLogging ^. #stripControl)
-                keyHide
-                log
+        withTs
+          <$> coreFormatting
+            prefixSpace
+            ((,Just timestampLen) <$> fileLogging ^. #lineTrunc)
+            (fileLogging ^. #commandNameTrunc)
+            False
+            (fileLogging ^. #stripControl)
+            keyHide
+            log
 
       withTimestamp line =
         mconcat
@@ -213,11 +242,12 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
             "\n"
           ]
 
-  pure
-    . UnsafeFileLog
-    . mconcat
-    . F.toList
-    . fmap mkLine
+  fmap
+    ( UnsafeFileLog
+        . mconcat
+        . F.toList
+    )
+    . traverse mkLine
     . zipMultilineSpacePrefix
     $ logs
 {-# INLINEABLE formatFileMultiLineLogs #-}
@@ -236,6 +266,11 @@ formatFileMultiLineLogs keyHide fileLogging logs = do
 --    line truncation is 15, then we only have 5 chars for the message before
 --    truncation kicks in.
 coreFormatting ::
+  ( HasCallStack,
+    HasCommands env,
+    MonadAtomic m,
+    MonadReader env m
+  ) =>
   -- | If true, the prefix is replaced with whitespace. This is for multiline,
   -- final logs, where we only want the prefix on the first line. Normal usage
   -- includes the prefix.
@@ -262,7 +297,7 @@ coreFormatting ::
   KeyHideSwitch ->
   -- | Log to format
   Log ->
-  Text
+  m Text
 coreFormatting
   spacePrefix
   mLineTrunc
@@ -270,36 +305,66 @@ coreFormatting
   stripLeading
   stripControl
   keyHide
-  log =
-    concatWithLineTrunc mLineTrunc finalPrefix (msgStripped ^. #unLogMessage)
+  log = do
+    statusPrefix <- case log ^. #lvl of
+      LevelTimer -> mkStatus
+      LevelFinished -> mkStatus
+      _ -> pure ""
+
+    let -- prefix is something like "[Success] " or "[Command][some cmd] ".
+        -- Notice this does not include ANSI codes or a timestamp.
+        prefix =
+          mconcat
+            [ brackets logPrefix,
+              statusPrefix,
+              cmdPrefix,
+              " "
+            ]
+
+        finalPrefix =
+          if spacePrefix
+            then "  "
+            else prefix
+
+        msgStripControlled = stripChars (log ^. #msg) stripControl
+        msgStripped =
+          if stripLeading
+            then Types.unsafeMapLogMessage T.stripStart msgStripControlled
+            else msgStripControlled
+
+        logPrefix = logToPrefix log
+
+        cmdPrefix = case log ^. #cmd of
+          Nothing -> ""
+          Just cmd ->
+            formatCommand keyHide mCommandNameTrunc cmd ^. #unUnlinedText
+
+    pure $ concatWithLineTrunc mLineTrunc finalPrefix (msgStripped ^. #unLogMessage)
     where
-      -- prefix is something like "[Success] " or "[Command][some cmd] ".
-      -- Notice this does not include ANSI codes or a timestamp.
-      prefix = case log ^. #cmd of
-        Nothing -> brackets True logPrefix
-        Just cmd ->
-          let cmd' =
-                formatCommand
-                  keyHide
-                  mCommandNameTrunc
-                  cmd
-           in mconcat
-                [ brackets False logPrefix,
-                  cmd' ^. #unUnlinedText
-                ]
+      mkStatus = do
+        statusMap <- getReadCommandStatus
+        let countStatuses (_, status) = case status of
+              CommandWaiting -> (1, 0, 0, 0)
+              CommandRunning _ -> (0, 1, 0, 0)
+              CommandFailure -> (0, 0, 1, 0)
+              CommandSuccess -> (0, 0, 0, 1)
 
-      finalPrefix =
-        if spacePrefix
-          then "  "
-          else prefix
+            (w, r, f, s) = foldMap countStatuses statusMap
 
-      msgStripControlled = stripChars (log ^. #msg) stripControl
-      msgStripped =
-        if stripLeading
-          then Types.unsafeMapLogMessage T.stripStart msgStripControlled
-          else msgStripControlled
+        pure
+          $ brackets
+          $ mconcat
+            [ tos w,
+              "|",
+              tos r,
+              "|",
+              tos f,
+              "|",
+              tos s
+            ]
 
-      logPrefix = logToPrefix log
+      tos :: Sum Int -> Text
+      tos = showt . getSum
 
 formatCommand ::
   KeyHideSwitch ->
@@ -307,7 +372,7 @@ formatCommand ::
   CommandP1 ->
   UnlinedText
 formatCommand keyHide commandNameTrunc com =
-  ShrunText.reallyUnsafeMap (brackets True . truncateNameFn) cmdName
+  ShrunText.reallyUnsafeMap (brackets . truncateNameFn) cmdName
   where
     -- Get cmd name to display. Always strip control sequences. Futhermore,
     -- strip leading/trailing whitespace.
@@ -402,14 +467,10 @@ stripChars txt =
 --
 -- ==== __Examples__
 --
--- >>> brackets False "text"
+-- >>> brackets "text"
 -- "[text]"
---
--- >>> brackets True "text"
--- "[text] "
-brackets :: Bool -> Text -> Text
-brackets False s = "[" <> s <> "]"
-brackets True s = "[" <> s <> "] "
+brackets :: Text -> Text
+brackets s = "[" <> s <> "]"
 
 -- | Transforms log to a color based on its 'LogLevel'.
 logToColor :: Log -> Color
@@ -436,7 +497,7 @@ levelToPrefix :: LogLevel -> Text
 levelToPrefix LevelDebug = "Debug"
 levelToPrefix LevelCommand = "Command"
 levelToPrefix LevelFinished = "Finished"
-levelToPrefix LevelTimer = "Timer"
+levelToPrefix LevelTimer = "Status"
 levelToPrefix LevelSuccess = "Success"
 levelToPrefix LevelWarn = "Warn"
 levelToPrefix LevelError = "Error"

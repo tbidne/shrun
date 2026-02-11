@@ -40,7 +40,7 @@ gif = testCase "Runs gif example" $ do
           "takeover"
         ]
     expected =
-      [ withFinishedPrefix "13 seconds",
+      [ withFinishedPrefix (0, 0, 1, 3) "13 seconds",
         withSuccessPrefix "skynet",
         withSuccessPrefix "ui",
         -- NOTE: The final error message is unreliable, so we would occasionally
@@ -53,7 +53,7 @@ gif = testCase "Runs gif example" $ do
         withCommandPrefix "ui" "adding emojis. we like to have fun :-)",
         withCommandPrefix "querying-targets" "finding targets...",
         withCommandPrefix "sign-peace-treaty" "play it cool...",
-        withTimerPrefix "8 seconds"
+        withTimerPrefix (0, 2, 1, 1) "8 seconds"
       ]
 
 core :: TestTree
@@ -71,5 +71,5 @@ core = testCase "Runs core example" $ do
         withSuccessPrefix "echo hi",
         withSuccessPrefix "cmd1",
         withErrorPrefix "cmd4",
-        withFinishedPrefix "0 seconds"
+        withFinishedPrefix (0, 0, 1, 3) "0 seconds"
       ]

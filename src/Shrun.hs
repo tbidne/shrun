@@ -225,17 +225,17 @@ runCommand globalStartTime cmd = do
           startTimeMsg = TimerFormat.formatRelativeTime ProseCompact rt
           notifyMsg = "Started after " <> startTimeMsg
       Notify.sendNotif
-        (MonadNotify.fromUnlined $ formattedCmd <> "Started")
+        (MonadNotify.fromUnlined $ formattedCmd <> " Started")
         (MonadNotify.fromUnlined notifyMsg)
         Normal
     _ -> pure ()
 
   cmdResult <- tryCommandLogging cmd
 
-  let (urgency, consoleLog, mkFileLog, notifyMsg) =
+  let (urgency, mkConsoleLog, mkFileLog, notifyMsg) =
         mkResultData commonLogging consoleLogging cmd cmdResult
 
-  putCommandFinalLog consoleQueue consoleLog mkFileLog
+  putCommandFinalLog consoleQueue mkConsoleLog mkFileLog
 
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteCommand is set
   case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
@@ -258,10 +258,11 @@ putCommandFinalLog ::
     MonadRegionLogger m
   ) =>
   TBQueue (LogRegion (Region m)) ->
-  ConsoleLog ->
+  m ConsoleLog ->
   (FileLoggingEnv -> m FileLog) ->
   m ()
-putCommandFinalLog consoleQueue consoleLog mkFileLog = do
+putCommandFinalLog consoleQueue mkConsoleLog mkFileLog = do
+  consoleLog <- mkConsoleLog
   withRegion Linear $ \r -> writeTBQueueA' consoleQueue (LogRegion mode r consoleLog)
 
   mFileLogging <- asks getFileLogging
@@ -278,7 +279,7 @@ type CommandResultData m =
     -- Urgency level for notifs
     UrgencyLevel
     -- Console log
-    ConsoleLog
+    (m ConsoleLog)
     -- File log, if active
     (FileLoggingEnv -> m FileLog)
     -- Notif body
@@ -286,8 +287,13 @@ type CommandResultData m =
 
 -- | Gets log data from CommandResult.
 mkResultData ::
-  forall m.
-  (MonadTime m) =>
+  forall env m.
+  ( HasCallStack,
+    HasCommands env,
+    MonadAtomic m,
+    MonadReader env m,
+    MonadTime m
+  ) =>
   CommonLoggingEnv ->
   ConsoleLoggingEnv ->
   CommandP1 ->
@@ -452,6 +458,7 @@ counter ::
   forall env m.
   ( HasAnyError env,
     HasCallStack,
+    HasCommands env,
     HasLogging env m,
     HasTimeout env,
     MonadAtomic m,
@@ -500,6 +507,7 @@ drainStdinLoop = go
 logCounter ::
   forall m env.
   ( HasCallStack,
+    HasCommands env,
     HasCommonLogging env,
     HasConsoleLogging env (Region m),
     MonadAtomic m,
@@ -510,8 +518,8 @@ logCounter ::
   m ()
 logCounter region elapsed = do
   (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
-
   keyHide <- asks (view #keyHide . getCommonLogging)
+
   let timerFormat = consoleLogging ^. #timerFormat
       msg = Types.fromUnlined $ TimerFormat.formatSeconds timerFormat elapsed
       lg =
@@ -521,8 +529,8 @@ logCounter region elapsed = do
             lvl = LevelTimer,
             mode = LogModeSet
           }
-      formatted = Formatting.formatConsoleLog keyHide consoleLogging lg
-      regionLog = LogRegion LogModeSet region formatted
+  formatted <- Formatting.formatConsoleLog keyHide consoleLogging lg
+  let regionLog = LogRegion LogModeSet region formatted
   Logging.regionLogToConsoleQueue queue regionLog
 {-# INLINEABLE logCounter #-}
 
@@ -530,6 +538,7 @@ keepRunning ::
   forall m env.
   ( HasAnyError env,
     HasCallStack,
+    HasCommands env,
     HasLogging env m,
     MonadAtomic m,
     MonadIORef m,
@@ -676,7 +685,9 @@ teardown startTime = do
 handleTerminate ::
   forall m env.
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadHandleWriter m,
     MonadPosixSignals m,
     MonadRegionLogger m,

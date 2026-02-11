@@ -21,6 +21,9 @@ module Shrun.Prelude
     -- * Optparse
     DocOA,
 
+    -- * Fold utils
+    foldMapA,
+
     -- * Pretty printing
     PrettySwitch (..),
     indentField,
@@ -187,7 +190,7 @@ import Data.Maybe as X (Maybe (Just, Nothing), fromMaybe, maybe)
 import Data.Monoid as X (Ap (Ap, getAp), Monoid (mconcat, mempty))
 import Data.Ord as X (Ord ((<), (<=), (>), (>=)), Ordering)
 import Data.Proxy as X (Proxy (Proxy))
-import Data.Semigroup as X (Semigroup ((<>)))
+import Data.Semigroup as X (Semigroup (sconcat, (<>)))
 import Data.Sequence as X (Seq ((:<|), (:|>)), pattern Empty)
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty as X (NESeq ((:<||), (:||>)), pattern IsEmpty)
@@ -664,3 +667,6 @@ prettyToText =
   PrettyprinterT.renderStrict
     . Prettyprinter.layoutPretty Prettyprinter.defaultLayoutOptions
     . pretty
+
+foldMapA :: (Applicative m, Foldable t, Monoid b) => (a -> m b) -> t a -> m b
+foldMapA f = getAp <$> foldMap (Ap . f)

@@ -72,14 +72,14 @@ logsNoBuffer =
         withCommandPrefix cmdPrefix "0.5",
         withCommandPrefix cmdPrefix "1.5",
         withCommandPrefix cmdPrefix "2.5",
-        withTimerPrefix "4 seconds",
-        withTimerPrefix "5 seconds"
+        withTimerPrefix (0, 1, 0, 0) "4 seconds",
+        withTimerPrefix (0, 1, 0, 0) "5 seconds"
       ]
 
     expectedOrdered2 :: (IsString a, Semigroup a) => List a
     expectedOrdered2 =
-      [ withTimerPrefix "1 second",
-        withTimerPrefix "2 seconds",
+      [ withTimerPrefix (0, 1, 0, 0) "1 second",
+        withTimerPrefix (0, 1, 0, 0) "2 seconds",
         withCommandPrefix cmdPrefix "3.5",
         withCommandPrefix cmdPrefix "4.5"
       ]
@@ -90,5 +90,5 @@ logsNoBuffer =
       expectedOrdered1
         ++ expectedOrdered2
         ++ [ withSuccessPrefix cmdPrefix,
-             withFinishedPrefix ""
+             withFinishedPrefix (0, 0, 0, 1) ""
            ]

@@ -9,6 +9,7 @@ import DBus.Notify (UrgencyLevel)
 import Data.Text qualified as T
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
+    HasCommands,
     HasLogging,
     HasNotifyConfig (getNotifyConfig),
     setAnyErrorTrue,
@@ -36,6 +37,7 @@ import Shrun.Utils qualified as U
 sendNotif ::
   ( HasAnyError env,
     HasCallStack,
+    HasCommands env,
     HasLogging env m,
     HasNotifyConfig env,
     MonadAtomic m,

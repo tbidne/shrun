@@ -27,6 +27,7 @@ module Shrun.Command.Types
 
     -- * Misc
     CommandPhase (..),
+    CommandStatusMap,
     Internal.Vertex,
     Internal.LVertex,
   )
@@ -41,6 +42,8 @@ import Shrun.Prelude
 
 -- $setup
 -- >>> :set -XOverloadedLists
+
+type CommandStatusMap = HashMap CommandIndex (CommandP1, CommandStatus)
 
 data CommandPhase
   = CommandPhase1

@@ -78,6 +78,7 @@ import Shrun.Prelude
 putRegionLog ::
   forall m env.
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
     MonadAtomic m,
     MonadReader env m,
@@ -96,8 +97,8 @@ putRegionLog region lg = do
 
   (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
 
-  let formatted = Formatting.formatConsoleLog keyHide consoleLogging lg
-      regionLog = LogRegion (lg ^. #mode) region formatted
+  formatted <- Formatting.formatConsoleLog keyHide consoleLogging lg
+  let regionLog = LogRegion (lg ^. #mode) region formatted
 
   regionLogToConsoleQueue queue regionLog
   for_ mFileLogging $ \fl -> do
@@ -111,6 +112,7 @@ putRegionLog region lg = do
 putRegionMultiLineLog ::
   forall m env.
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
     MonadAtomic m,
     MonadReader env m,
@@ -129,8 +131,8 @@ putRegionMultiLineLog region logs = do
 
   (consoleLogging, queue, _) <- asks (getConsoleLogging @_ @(Region m))
 
-  let formatted = Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
-      regionLog = LogRegion mode region formatted
+  formatted <- Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
+  let regionLog = LogRegion mode region formatted
 
   regionLogToConsoleQueue queue regionLog
   for_ mFileLogging $ \fl -> do
@@ -237,7 +239,9 @@ logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
 putRegionLogDirect ::
   forall env m.
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadHandleWriter m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -251,7 +255,7 @@ putRegionLogDirect log = do
   mFileLogging <- asks getFileLogging
 
   let keyHide = view #keyHide commonLogging
-      consoleLog = Formatting.formatConsoleLog keyHide consoleLogging log
+  consoleLog <- Formatting.formatConsoleLog keyHide consoleLogging log
 
   MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
 
@@ -267,7 +271,9 @@ putRegionLogDirect log = do
 putRegionMultiLineLogDirect ::
   forall env m.
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadHandleWriter m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -281,7 +287,7 @@ putRegionMultiLineLogDirect logs@(log :| _) = do
   mFileLogging <- asks getFileLogging
 
   let keyHide = view #keyHide commonLogging
-      consoleLog = Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
+  consoleLog <- Formatting.formatConsoleMultiLineLogs keyHide consoleLogging logs
 
   MRL.withRegion Linear $ \r -> MRL.logRegion (log ^. #mode) r (consoleLog ^. #unConsoleLog)
 
@@ -292,7 +298,9 @@ putRegionMultiLineLogDirect logs@(log :| _) = do
 
 putDebugLogDirect ::
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadHandleWriter m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -305,6 +313,7 @@ putDebugLogDirect = putDebugLogHelper putRegionLogDirect
 
 putDebugLog ::
   ( HasCallStack,
+    HasCommands env,
     HasLogging env m,
     MonadAtomic m,
     MonadReader env m,

@@ -3,7 +3,7 @@
 -- | Tests for Shrun.Logging.Formatting.
 module Unit.Shrun.Logging.Formatting (tests) where
 
-import Data.Functor.Identity (Identity (Identity))
+import Data.HashMap.Strict qualified as Map
 import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Time (midday)
@@ -13,7 +13,12 @@ import Effects.Time
     MonadTime (getMonotonicTime, getSystemZonedTime),
     ZonedTime (ZonedTime),
   )
-import Shrun.Command.Types (CommandP (MkCommandP, command, index, key))
+import Shrun.Command.Types
+  ( CommandIndex,
+    CommandP (MkCommandP, command, index, key),
+    CommandP1,
+    CommandStatus (CommandFailure, CommandRunning, CommandSuccess, CommandWaiting),
+  )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch
       ( MkKeyHideSwitch
@@ -58,9 +63,11 @@ import Shrun.Configuration.Data.StripControl
         StripControlSmart
       ),
   )
+import Shrun.Configuration.Env.Types (HasCommands (getCleanup, getCommandDepGraph, getCommandStatusMap))
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
-  ( Log (MkLog, cmd, lvl, mode, msg),
+  ( ConsoleLog,
+    Log (MkLog, cmd, lvl, mode, msg),
     LogLevel (LevelCommand, LevelError, LevelFinished, LevelSuccess),
     LogMode (LogModeSet),
   )
@@ -98,7 +105,7 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
   -- keyHide should make no difference for NoCmd
   keyHide <- forAll LGens.genKeyHide
 
-  let fmt = Formatting.formatConsoleLog keyHide baseConsoleLoggingEnv
+  let fmt = runFmtConsole . Formatting.formatConsoleLog keyHide baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
@@ -108,7 +115,7 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
             <> T.stripStart (log ^. (#msg % #unLogMessage))
             <> suffix
 
-        result = fmt log ^. #unConsoleLog
+    result <- liftIO $ fmt log
     expected === result
   where
     desc = "Formats with no command"
@@ -116,8 +123,8 @@ testFormatsCLNoCmd = testPropertyNamed desc "testFormatsConsoleLogNoCmd" $ prope
     prefixes =
       [ "\ESC[97m[Debug] ",
         "\ESC[97m[Command] ",
-        "\ESC[94m[Finished] ",
-        "\ESC[96m[Timer] ",
+        "\ESC[94m[Finished][1|2|3|4] ",
+        "\ESC[96m[Status][1|2|3|4] ",
         "\ESC[92m[Success] ",
         "\ESC[93m[Warn] ",
         "\ESC[91m[Error] ",
@@ -140,8 +147,8 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmtKeyHideOff = Formatting.formatConsoleLog (MkKeyHideSwitch False) baseConsoleLoggingEnv
-      fmtKeyHideOn = Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
+  let fmtKeyHideOff = runFmtConsole . Formatting.formatConsoleLog (MkKeyHideSwitch False) baseConsoleLoggingEnv
+      fmtKeyHideOn = runFmtConsole . Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -156,9 +163,9 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
               T.stripStart (log ^. #msg % #unLogMessage),
               suffix
             ]
-        resultKeyHideOff = fmtKeyHideOff log ^. #unConsoleLog
+    resultKeyHideOff <- liftIO $ fmtKeyHideOff log
 
-        expectedKeyHideOn =
+    let expectedKeyHideOn =
           mconcat
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
@@ -166,7 +173,7 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
               T.stripStart (log ^. #msg % #unLogMessage),
               suffix
             ]
-        resultKeyHideOn = fmtKeyHideOn log ^. #unConsoleLog
+    resultKeyHideOn <- liftIO $ fmtKeyHideOn log
 
     expectedKeyHideOff === resultKeyHideOff
     expectedKeyHideOn === resultKeyHideOn
@@ -176,8 +183,8 @@ testFormatsCLCmdKey = testPropertyNamed desc "testFormatsCLCmdKey" $ property $ 
     prefixes =
       [ "\ESC[97m[Debug][",
         "\ESC[97m[Command][",
-        "\ESC[94m[Finished][",
-        "\ESC[96m[Timer][",
+        "\ESC[94m[Finished][1|2|3|4][",
+        "\ESC[96m[Status][1|2|3|4][",
         "\ESC[92m[Success][",
         "\ESC[93m[Warn][",
         "\ESC[91m[Error][",
@@ -202,7 +209,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
           }
       baseLog' = set' #cmd (Just cmd) baseLog
 
-  let fmt = Formatting.formatConsoleLog keyHide baseConsoleLoggingEnv
+  let fmt = runFmtConsole . Formatting.formatConsoleLog keyHide baseConsoleLoggingEnv
 
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog'
@@ -215,7 +222,7 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
               T.stripStart (log ^. #msg % #unLogMessage),
               suffix
             ]
-        result = fmt log ^. #unConsoleLog
+    result <- liftIO $ fmt log
 
     expected === result
   where
@@ -224,8 +231,8 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
     prefixes =
       [ "\ESC[97m[Debug][",
         "\ESC[97m[Command][",
-        "\ESC[94m[Finished][",
-        "\ESC[96m[Timer][",
+        "\ESC[94m[Finished][1|2|3|4][",
+        "\ESC[96m[Status][1|2|3|4][",
         "\ESC[92m[Success][",
         "\ESC[93m[Warn][",
         "\ESC[91m[Error][",
@@ -236,13 +243,13 @@ testFormatsCLCmdNoKey = testPropertyNamed desc "testFormatsCLCmdNoKey" $ propert
 
 testFormatsCLCommandNameTrunc :: TestTree
 testFormatsCLCommandNameTrunc = testCase desc $ do
-  "\ESC[92m[Success][some long key] msg len 10\ESC[0m" @=? fmt 13 baseLog ^. #unConsoleLog
-  "\ESC[92m[Success][some long...] msg len 10\ESC[0m" @=? fmt 12 baseLog ^. #unConsoleLog
-  "\ESC[92m[Success][...] msg len 10\ESC[0m" @=? fmt 0 baseLog ^. #unConsoleLog
+  ("\ESC[92m[Success][some long key] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmt 13 baseLog)
+  ("\ESC[92m[Success][some long...] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmt 12 baseLog)
+  ("\ESC[92m[Success][...] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmt 0 baseLog)
 
-  "\ESC[92m[Success][an even longer command] msg len 10\ESC[0m" @=? fmtKh 22 baseLog ^. #unConsoleLog
-  "\ESC[92m[Success][an even longer com...] msg len 10\ESC[0m" @=? fmtKh 21 baseLog ^. #unConsoleLog
-  "\ESC[92m[Success][...] msg len 10\ESC[0m" @=? fmtKh 0 baseLog ^. #unConsoleLog
+  ("\ESC[92m[Success][an even longer command] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmtKh 22 baseLog)
+  ("\ESC[92m[Success][an even longer com...] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmtKh 21 baseLog)
+  ("\ESC[92m[Success][...] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmtKh 0 baseLog)
   where
     baseLog =
       MkLog
@@ -260,11 +267,11 @@ testFormatsCLCommandNameTrunc = testCase desc $ do
 testFormatsCLLineTrunc :: TestTree
 testFormatsCLLineTrunc = testCase desc $ do
   -- 20 is just at the limit. Note that ASCII codes do not count
-  "\ESC[92m[Success] msg len 10\ESC[0m" @=? fmt 20 baseLog ^. #unConsoleLog
+  ("\ESC[92m[Success] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmt 20 baseLog)
   -- 19 is too low, we start to truncate
-  "\ESC[92m[Success] msg le...\ESC[0m" @=? fmt 19 baseLog ^. #unConsoleLog
+  ("\ESC[92m[Success] msg le...\ESC[0m" @=?) =<< runFmtConsole (fmt 19 baseLog)
   -- we always print the prefix
-  "\ESC[92m[Success] ...\ESC[0m" @=? fmt 0 baseLog ^. #unConsoleLog
+  ("\ESC[92m[Success] ...\ESC[0m" @=?) =<< runFmtConsole (fmt 0 baseLog)
 
   let logCmd =
         set'
@@ -272,11 +279,11 @@ testFormatsCLLineTrunc = testCase desc $ do
           (Just $ MkCommandP (mkIdx 1) (Just "key") "some cmd")
           (set' #lvl LevelFinished baseLog)
 
-  "\ESC[94m[Finished][key] msg len 10\ESC[0m" @=? fmt 26 logCmd ^. #unConsoleLog
-  "\ESC[94m[Finished][key] msg le...\ESC[0m" @=? fmt 25 logCmd ^. #unConsoleLog
-  "\ESC[94m[Finished][some cmd] msg len 10\ESC[0m" @=? fmtKh 31 logCmd ^. #unConsoleLog
-  "\ESC[94m[Finished][some cmd] msg le...\ESC[0m" @=? fmtKh 30 logCmd ^. #unConsoleLog
-  "\ESC[94m[Finished][some cmd] ...\ESC[0m" @=? fmtKh 0 logCmd ^. #unConsoleLog
+  ("\ESC[94m[Finished][1|2|3|4][key] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmt 35 logCmd)
+  ("\ESC[94m[Finished][1|2|3|4][key] msg le...\ESC[0m" @=?) =<< runFmtConsole (fmt 34 logCmd)
+  ("\ESC[94m[Finished][1|2|3|4][some cmd] msg len 10\ESC[0m" @=?) =<< runFmtConsole (fmtKh 40 logCmd)
+  ("\ESC[94m[Finished][1|2|3|4][some cmd] msg le...\ESC[0m" @=?) =<< runFmtConsole (fmtKh 39 logCmd)
+  ("\ESC[94m[Finished][1|2|3|4][some cmd] ...\ESC[0m" @=?) =<< runFmtConsole (fmtKh 0 logCmd)
   where
     baseLog =
       MkLog
@@ -297,10 +304,12 @@ testFormatsCLSpecs = testCase "Specific specs" $ do
       cmd1 = MkCommandP (mkIdx 1) (Just "") "!\n!"
 
       expectedKeyHideOn1 = "\ESC[97m[Command][! !] \ESC[0m"
-      resultKeyHideOn1 = fmtKeyHideOn l1 ^. #unConsoleLog
+  resultKeyHideOn1 <- fmtKeyHideOn l1
   expectedKeyHideOn1 @=? resultKeyHideOn1
   where
-    fmtKeyHideOn = Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
+    fmtKeyHideOn =
+      runFmtConsole
+        . Formatting.formatConsoleLog (MkKeyHideSwitch True) baseConsoleLoggingEnv
 
 testFormatsCLMultiLine :: TestTree
 testFormatsCLMultiLine = testCase "Formats multiline" $ do
@@ -308,13 +317,20 @@ testFormatsCLMultiLine = testCase "Formats multiline" $ do
       l2 = MkLog (Just cmd1) "more output" LevelError LogModeSet
       cmd1 = MkCommandP (mkIdx 1) (Just "") "cmd"
 
-      result = fmt (l1 :| [l2]) ^. #unConsoleLog
+  result <- fmt (l1 :| [l2])
 
   expected @=? result
   where
-    fmt = Formatting.formatConsoleMultiLineLogs (MkKeyHideSwitch False) baseConsoleLoggingEnv
+    fmt =
+      runFmtConsole
+        . Formatting.formatConsoleMultiLineLogs (MkKeyHideSwitch False) baseConsoleLoggingEnv
 
     expected = "\ESC[91m[Error][] some error\n  more output\ESC[0m"
+
+runFmtConsole :: MockFormat ConsoleLog -> IO Text
+runFmtConsole mf = do
+  log <- runMockFormat mf
+  pure $ log ^. #unConsoleLog
 
 baseConsoleLoggingEnv :: ConsoleLoggingEnv
 baseConsoleLoggingEnv =
@@ -349,7 +365,7 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
   for_ (L.zip3 lvls prefixes suffixes) $ \(lvl, prefix, suffix) -> do
     let log = set' #lvl lvl baseLog
         expected = prefix <> (log ^. #msg % #unLogMessage) <> suffix
-        result = fmt log
+    result <- liftIO $ fmt log
     expected === result
   where
     desc = "Formats with no command"
@@ -358,8 +374,8 @@ testFormatsFLNoCmd = testPropertyNamed desc "testFormatsFLNoCmd" $ property $ do
       (sysTimeNE <>)
         <$> [ "[Debug] ",
               "[Command] ",
-              "[Finished] ",
-              "[Timer] ",
+              "[Finished][1|2|3|4] ",
+              "[Status][1|2|3|4] ",
               "[Success] ",
               "[Warn] ",
               "[Error] ",
@@ -399,9 +415,9 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
               log ^. #msg % #unLogMessage,
               suffix
             ]
-        resultKeyHideOff = fmtKeyHideOff log
+    resultKeyHideOff <- liftIO $ fmtKeyHideOff log
 
-        expectedKeyHideOn =
+    let expectedKeyHideOn =
           mconcat
             [ prefix,
               Formatting.formatCommandText command ^. #unUnlinedText,
@@ -409,7 +425,7 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
               log ^. #msg % #unLogMessage,
               suffix
             ]
-        resultKeyHideOn = fmtKeyHideOn log
+    resultKeyHideOn <- liftIO $ fmtKeyHideOn log
 
     expectedKeyHideOff === resultKeyHideOff
     expectedKeyHideOn === resultKeyHideOn
@@ -420,8 +436,8 @@ testFormatsFLCmdKey = testPropertyNamed desc "testFormatsFLCmdKey" $ property $ 
       (sysTimeNE <>)
         <$> [ "[Debug][",
               "[Command][",
-              "[Finished][",
-              "[Timer][",
+              "[Finished][1|2|3|4][",
+              "[Status][1|2|3|4][",
               "[Success][",
               "[Warn][",
               "[Error][",
@@ -459,7 +475,7 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
               log ^. #msg % #unLogMessage,
               suffix
             ]
-        result = fmt log
+    result <- liftIO $ fmt log
 
     expected === result
   where
@@ -469,8 +485,8 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
       (sysTimeNE <>)
         <$> [ "[Debug][",
               "[Command][",
-              "[Finished][",
-              "[Timer][",
+              "[Finished][1|2|3|4][",
+              "[Status][1|2|3|4][",
               "[Success][",
               "[Warn][",
               "[Error][",
@@ -481,13 +497,13 @@ testFormatsFLCmdNoKey = testPropertyNamed desc "testFormatsFLCmdNoKey" $ propert
 
 testFormatsFLCommandNameTrunc :: TestTree
 testFormatsFLCommandNameTrunc = testCase desc $ do
-  sysTimeNE <> "[Success][some long key] msg len 10\n" @=? fmt 13 baseLog
-  sysTimeNE <> "[Success][some long...] msg len 10\n" @=? fmt 12 baseLog
-  sysTimeNE <> "[Success][...] msg len 10\n" @=? fmt 0 baseLog
+  (sysTimeNE <> "[Success][some long key] msg len 10\n" @=?) =<< fmt 13 baseLog
+  (sysTimeNE <> "[Success][some long...] msg len 10\n" @=?) =<< fmt 12 baseLog
+  (sysTimeNE <> "[Success][...] msg len 10\n" @=?) =<< fmt 0 baseLog
 
-  sysTimeNE <> "[Success][an even longer command] msg len 10\n" @=? fmtKh 22 baseLog
-  sysTimeNE <> "[Success][an even longer com...] msg len 10\n" @=? fmtKh 21 baseLog
-  sysTimeNE <> "[Success][...] msg len 10\n" @=? fmtKh 0 baseLog
+  (sysTimeNE <> "[Success][an even longer command] msg len 10\n" @=?) =<< fmtKh 22 baseLog
+  (sysTimeNE <> "[Success][an even longer com...] msg len 10\n" @=?) =<< fmtKh 21 baseLog
+  (sysTimeNE <> "[Success][...] msg len 10\n" @=?) =<< fmtKh 0 baseLog
   where
     baseLog =
       MkLog
@@ -505,11 +521,11 @@ testFormatsFLCommandNameTrunc = testCase desc $ do
 testFormatsFLLineTrunc :: TestTree
 testFormatsFLLineTrunc = testCase desc $ do
   -- 20 is just at the limit. Note that the timestamp (21 chars) counts
-  sysTimeNE <> "[Success] msg len 10\n" @=? fmt 41 baseLog
+  (sysTimeNE <> "[Success] msg len 10\n" @=?) =<< fmt 41 baseLog
   -- 19 is too low, we start to truncate
-  sysTimeNE <> "[Success] msg le...\n" @=? fmt 40 baseLog
+  (sysTimeNE <> "[Success] msg le...\n" @=?) =<< fmt 40 baseLog
   -- we always print the prefix
-  sysTimeNE <> "[Success] ...\n" @=? fmt 21 baseLog
+  (sysTimeNE <> "[Success] ...\n" @=?) =<< fmt 21 baseLog
 
   let logCmd =
         set'
@@ -517,11 +533,11 @@ testFormatsFLLineTrunc = testCase desc $ do
           (Just $ MkCommandP (mkIdx 1) (Just "key") "some cmd")
           (set' #lvl LevelFinished baseLog)
 
-  sysTimeNE <> "[Finished][key] msg len 10\n" @=? fmt 47 logCmd
-  sysTimeNE <> "[Finished][key] msg le...\n" @=? fmt 46 logCmd
-  sysTimeNE <> "[Finished][some cmd] msg len 10\n" @=? fmtKh 52 logCmd
-  sysTimeNE <> "[Finished][some cmd] msg le...\n" @=? fmtKh 51 logCmd
-  sysTimeNE <> "[Finished][some cmd] ...\n" @=? fmtKh 0 logCmd
+  (sysTimeNE <> "[Finished][1|2|3|4][key] msg len 10\n" @=?) =<< fmt 56 logCmd
+  (sysTimeNE <> "[Finished][1|2|3|4][key] msg le...\n" @=?) =<< fmt 55 logCmd
+  (sysTimeNE <> "[Finished][1|2|3|4][some cmd] msg len 10\n" @=?) =<< fmtKh 61 logCmd
+  (sysTimeNE <> "[Finished][1|2|3|4][some cmd] msg le...\n" @=?) =<< fmtKh 60 logCmd
+  (sysTimeNE <> "[Finished][1|2|3|4][some cmd] ...\n" @=?) =<< fmtKh 0 logCmd
   where
     baseLog =
       MkLog
@@ -536,11 +552,10 @@ testFormatsFLLineTrunc = testCase desc $ do
     fmt n = runFormatFileLog (MkKeyHideSwitch False) (set' #lineTrunc (Just n) baseFileLoggingEnv)
     fmtKh n = runFormatFileLog (MkKeyHideSwitch True) (set' #lineTrunc (Just n) baseFileLoggingEnv)
 
-runFormatFileLog :: KeyHideSwitch -> FileLoggingEnv -> Log -> Text
-runFormatFileLog keyHide env log =
-  view #unFileLog
-    $ Formatting.formatFileLog @MockTime keyHide env log
-    ^. #runMockTime
+runFormatFileLog :: KeyHideSwitch -> FileLoggingEnv -> Log -> IO Text
+runFormatFileLog keyHide env log = do
+  flog <- runMockTime $ Formatting.formatFileLog @_ @MockTime keyHide env log
+  pure $ flog ^. #unFileLog
 
 -- The mock time our 'MonadTime' returns. Needs to be kept in sync with
 -- getSystemZonedTime below.
@@ -551,22 +566,79 @@ sysTime = "2020-05-31 12:00:00"
 sysTimeNE :: Text
 sysTimeNE = "[" <> sysTime <> "]"
 
-newtype MockEnv = MkMockEnv ()
+newtype MockEnv = MkMockEnv
+  { commandStatusMap :: HashMap CommandIndex (CommandP1, TVar CommandStatus)
+  }
+  deriving stock (Generic)
+
+mkMockEnv :: IO MockEnv
+mkMockEnv = do
+  tvars <- atomically $ for statuses $ \(i, s) -> do
+    let idx = toEnum i
+        cmd = MkCommandP idx Nothing ("cmd" <> showt i)
+    ts <- newTVar' s
+    pure (idx, (cmd, ts))
+  let commandStatusMap = Map.fromList tvars
+
+  pure
+    $ MkMockEnv
+      { commandStatusMap
+      }
+  where
+    statuses =
+      zip
+        [1 ..]
+        [ CommandWaiting,
+          CommandRunning (Nothing, []),
+          CommandRunning (Nothing, []),
+          CommandFailure,
+          CommandFailure,
+          CommandFailure,
+          CommandSuccess,
+          CommandSuccess,
+          CommandSuccess,
+          CommandSuccess
+        ]
+
+instance HasCommands MockEnv where
+  getCleanup _ = Nothing
+
+  getCommandDepGraph _ = error "todo"
+
+  getCommandStatusMap = view #commandStatusMap
 
 -- Monad with mock implementation for 'MonadTime'.
-newtype MockTime a = MkMockTime
-  { runMockTime :: a
-  }
-  deriving stock (Eq, Generic, Show)
-  deriving (Applicative, Functor, Monad) via Identity
+newtype MockTime a = MkMockTime (ReaderT MockEnv IO a)
+  deriving newtype
+    ( Applicative,
+      Functor,
+      Monad,
+      MonadAtomic,
+      MonadReader MockEnv
+    )
+
+runMockTime :: MockTime a -> IO a
+runMockTime (MkMockTime io) = do
+  env <- mkMockEnv
+  runReaderT io env
 
 instance MonadTime MockTime where
   getSystemZonedTime = pure $ ZonedTime (LocalTime (toEnum 59_000) midday) utc
   getMonotonicTime = pure 0
 
-instance MonadReader MockEnv MockTime where
-  ask = pure $ MkMockEnv ()
-  local _ = id
+newtype MockFormat a = MkMockFormat (ReaderT MockEnv IO a)
+  deriving newtype
+    ( Applicative,
+      Functor,
+      Monad,
+      MonadAtomic,
+      MonadReader MockEnv
+    )
+
+runMockFormat :: MockFormat a -> IO a
+runMockFormat (MkMockFormat io) = do
+  env <- mkMockEnv
+  runReaderT io env
 
 baseFileLoggingEnv :: FileLoggingEnv
 baseFileLoggingEnv =

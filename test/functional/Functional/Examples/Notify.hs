@@ -110,13 +110,13 @@ notifyTimeoutNever = testCase "Runs --notify-timeout off" $ do
             timeout = NotifyTimeoutNever
           },
         MkShrunNote
-          { summary = "[sleep 3]  Finished",
+          { summary = "[sleep 3] Finished",
             body = "3 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutNever
           },
         MkShrunNote
-          { summary = "[sleep 2]  Finished",
+          { summary = "[sleep 2] Finished",
             body = "2 seconds",
             urgency = Normal,
             timeout = NotifyTimeoutNever

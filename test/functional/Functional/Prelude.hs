@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE OverloadedLists #-}
 
 {- HLINT ignore "Functor law" -}
 
@@ -296,8 +297,19 @@ fatalPrefix :: (IsString s) => s
 fatalPrefix = "[Fatal]"
 
 -- | Expected timer text.
-timerPrefix :: (IsString s) => s
-timerPrefix = "[Timer]"
+timerPrefix :: (IsString s, Semigroup s) => (Int, Int, Int, Int) -> s
+timerPrefix (w, r, f, s) =
+  sconcat
+    [ "[Status][",
+      fromString $ show w,
+      "|",
+      fromString $ show r,
+      "|",
+      fromString $ show f,
+      "|",
+      fromString $ show s,
+      "] "
+    ]
 
 warnPrefix :: (IsString s) => s
 warnPrefix = "[Warn]"
@@ -315,8 +327,19 @@ timedOut :: (IsString s, Semigroup s) => s
 timedOut = warnPrefix <> " Timed out"
 
 -- | Expected finished prefix.
-finishedPrefix :: (IsString s) => s
-finishedPrefix = "[Finished] "
+finishedPrefix :: (IsString s, Semigroup s) => (Int, Int, Int, Int) -> s
+finishedPrefix (w, r, f, s) =
+  sconcat
+    [ "[Finished][",
+      fromString $ show w,
+      "|",
+      fromString $ show r,
+      "|",
+      fromString $ show f,
+      "|",
+      fromString $ show s,
+      "] "
+    ]
 
 -- | Expected command text.
 withDebugPrefix :: (IsString s, Semigroup s) => s -> s -> s
@@ -349,11 +372,11 @@ withFatalPrefix :: (IsString s, Semigroup s) => s -> s
 withFatalPrefix = ("[Fatal] " <>)
 
 -- | Expected timing text.
-withTimerPrefix :: (Semigroup a, IsString a) => a -> a
-withTimerPrefix s = timerPrefix <> " " <> s
+withTimerPrefix :: (Semigroup s, IsString s) => (Int, Int, Int, Int) -> s -> s
+withTimerPrefix s = (timerPrefix s <>)
 
-withFinishedPrefix :: (Semigroup s, IsString s) => s -> s
-withFinishedPrefix = (finishedPrefix <>)
+withFinishedPrefix :: (Semigroup s, IsString s) => (Int, Int, Int, Int) -> s -> s
+withFinishedPrefix s = (finishedPrefix s <>)
 
 withKilledPrefix :: (Semigroup s, IsString s) => s -> s
 withKilledPrefix = withPrefix killedPrefix

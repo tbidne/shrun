@@ -630,5 +630,5 @@ timeoutSequential = testCase desc $ do
         "  - sleep 4",
         "  - sleep 8",
         timedOut,
-        withFinishedPrefix "3 seconds"
+        withFinishedPrefix (2, 2, 0, 0) "3 seconds"
       ]

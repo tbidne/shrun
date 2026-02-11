@@ -35,7 +35,7 @@ initOn =
         ]
     expected =
       [ withSuccessPrefix "bash_function",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 1)
       ]
 
 initOff :: TestTree
@@ -50,7 +50,7 @@ initOff =
         ]
     expected =
       [ withErrorPrefix "bash_function",
-        finishedPrefix
+        finishedPrefix (0, 0, 1, 0)
       ]
 
 legendKeysCacheTests :: IO TestArgs -> TestTree
@@ -183,5 +183,5 @@ timeout =
         "  - sleep 6",
         "  - sleep 8",
         timedOut,
-        finishedPrefix
+        finishedPrefix (0, 2, 0, 1)
       ]

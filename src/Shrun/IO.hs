@@ -224,7 +224,7 @@ tryCommandLogging command = do
       pure $ CommandResultFailure (U.timeSpecToRelTime rt) err
   where
     logConsole keyHide consoleQueue region consoleLogging log = do
-      let formatted = formatConsoleLog keyHide consoleLogging log
+      formatted <- formatConsoleLog keyHide consoleLogging log
       writeTBQueueA' consoleQueue (LogRegion (log ^. #mode) region formatted)
 
     logFile keyHide fileLogging log = do
@@ -755,6 +755,7 @@ killPids ::
   ( HasCallStack,
     HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,
@@ -775,6 +776,7 @@ canKillPid ::
   ( HasCallStack,
     HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,
@@ -791,6 +793,7 @@ runKill ::
   ( HasCallStack,
     HasCommands env,
     HasLogging env m,
+    MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
     MonadProcess m,

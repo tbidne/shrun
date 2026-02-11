@@ -48,7 +48,7 @@ fileLog testArgs = testCase "Runs file-log example" $ do
       [ withErrorPrefix "bad",
         withSuccessPrefix "sleep 2",
         withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done",
-        finishedPrefix
+        finishedPrefix (0, 0, 1, 2)
       ]
     expectedFile =
       zip [1, 1 ..] expectedConsole
@@ -76,11 +76,11 @@ fileLogCommandNameTruncN testArgs = testCase "Runs --file-log-command-name-trunc
   where
     expectedConsole =
       [ withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done", -- not truncated
-        withFinishedPrefix "3 seconds"
+        withFinishedPrefix (0, 0, 0, 1) "3 seconds"
       ]
     expectedFile =
       [ (3, withCommandPrefix "for i i..." "hi"),
-        (1, withFinishedPrefix "3 seconds")
+        (1, withFinishedPrefix (0, 0, 0, 1) "3 seconds")
       ]
 
 fileLogDeleteOnSuccess :: IO TestArgs -> TestTree
@@ -105,7 +105,7 @@ fileLogDeleteOnSuccess testArgs = testCase "Runs file-log-delete-on-success exam
   where
     expectedConsole =
       [ withSuccessPrefix "sleep 2",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 1)
       ]
 
 fileLogDeleteOnSuccessFail :: IO TestArgs -> TestTree
@@ -135,7 +135,7 @@ fileLogDeleteOnSuccessFail testArgs = testCase "Runs file-log-delete-on-success 
     expectedConsole =
       [ withErrorPrefix "bad",
         withSuccessPrefix "sleep 2",
-        finishedPrefix
+        finishedPrefix (0, 0, 1, 1)
       ]
     expectedFile = expectedConsole
 
@@ -239,7 +239,7 @@ fileLogModeAppend testArgs = testCase "Runs file-log-mode append" $ do
     baseName = [osp|fileLogModeAppend_|]
     expectedConsole =
       [ withSuccessPrefix "sleep 2",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 1)
       ]
     expectedFile = zip [3, 3] expectedConsole
 
@@ -281,7 +281,7 @@ fileLogModeRename testArgs = testCase "Runs file-log-mode rename" $ do
     baseName = [osp|fileLogModeRename|]
     expectedConsole =
       [ withSuccessPrefix "sleep 2",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 1)
       ]
     expectedFile = expectedConsole
 
@@ -322,7 +322,7 @@ fileLogModeWrite testArgs = testCase "Runs file-log-mode write" $ do
     baseName = [osp|fileLogModeWrite|]
     expectedConsole =
       [ withSuccessPrefix "sleep 2",
-        finishedPrefix
+        finishedPrefix (0, 0, 0, 1)
       ]
     expectedFile = expectedConsole
 
