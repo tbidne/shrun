@@ -11,14 +11,14 @@ import Data.HashMap.Strict qualified as Map
 import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Shrun.Command.Types
-  ( CommandIndex,
-    CommandP1,
+  ( CommandP1,
     CommandStatus
       ( CommandFailure,
         CommandRunning,
         CommandSuccess,
         CommandWaiting
       ),
+    TCommandStatusMap,
   )
 import Shrun.Command.Types qualified as Command.Types
 import Shrun.Configuration.Data.Graph
@@ -101,7 +101,7 @@ runCommand ::
   -- | Command dependency graph.
   CommandGraph ->
   -- | Command status ref.
-  HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
+  TCommandStatusMap ->
   -- | Vertex semaphore map, for preventing the same command being kicked off
   -- by multiple commands.
   HashMap Vertex (MVar ()) ->
@@ -256,7 +256,7 @@ getPredecessorsStatus ::
     MonadThrow m
   ) =>
   CommandGraph ->
-  HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
+  TCommandStatusMap ->
   Vertex ->
   m PredecessorResult
 getPredecessorsStatus cdg commandStatusMap v =
@@ -277,7 +277,7 @@ getPredecessorsStatus cdg commandStatusMap v =
     toResult :: Tuple2 Vertex EdgeLabel -> STM (Result Text PredecessorResult)
     toResult (p, lbl) =
       let idx = Command.Types.fromVertex p
-       in case Map.lookup idx commandStatusMap of
+       in case Map.lookup idx (commandStatusMap ^. #unCommandStatusMap) of
             Nothing ->
               pure
                 . Err

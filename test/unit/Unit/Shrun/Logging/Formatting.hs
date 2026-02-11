@@ -14,10 +14,15 @@ import Effects.Time
     ZonedTime (ZonedTime),
   )
 import Shrun.Command.Types
-  ( CommandIndex,
-    CommandP (MkCommandP, command, index, key),
-    CommandP1,
-    CommandStatus (CommandFailure, CommandRunning, CommandSuccess, CommandWaiting),
+  ( CommandP (MkCommandP, command, index, key),
+    CommandStatus
+      ( CommandFailure,
+        CommandRunning,
+        CommandSuccess,
+        CommandWaiting
+      ),
+    CommandStatusMapP (MkCommandStatusMapP),
+    TCommandStatusMap,
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch
   ( KeyHideSwitch
@@ -63,7 +68,13 @@ import Shrun.Configuration.Data.StripControl
         StripControlSmart
       ),
   )
-import Shrun.Configuration.Env.Types (HasCommands (getCleanup, getCommandDepGraph, getCommandStatusMap))
+import Shrun.Configuration.Env.Types
+  ( HasCommands
+      ( getCleanup,
+        getCommandDepGraph,
+        getCommandStatusMap
+      ),
+  )
 import Shrun.Logging.Formatting qualified as Formatting
 import Shrun.Logging.Types
   ( ConsoleLog,
@@ -567,7 +578,7 @@ sysTimeNE :: Text
 sysTimeNE = "[" <> sysTime <> "]"
 
 newtype MockEnv = MkMockEnv
-  { commandStatusMap :: HashMap CommandIndex (CommandP1, TVar CommandStatus)
+  { commandStatusMap :: TCommandStatusMap
   }
   deriving stock (Generic)
 
@@ -578,7 +589,7 @@ mkMockEnv = do
         cmd = MkCommandP idx Nothing ("cmd" <> showt i)
     ts <- newTVar' s
     pure (idx, (cmd, ts))
-  let commandStatusMap = Map.fromList tvars
+  let commandStatusMap = MkCommandStatusMapP $ Map.fromList tvars
 
   pure
     $ MkMockEnv

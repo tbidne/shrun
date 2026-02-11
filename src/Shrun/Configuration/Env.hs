@@ -23,7 +23,10 @@ import Data.Text qualified as T
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter qualified as PW
 import Shrun (runShellT, shrun)
-import Shrun.Command.Types (CommandStatus (CommandWaiting))
+import Shrun.Command.Types
+  ( CommandStatus (CommandWaiting),
+    CommandStatusMapP (MkCommandStatusMapP),
+  )
 import Shrun.Configuration (mergeConfig)
 import Shrun.Configuration.Args.Parsing qualified as P
 import Shrun.Configuration.Data.Core qualified as CoreConfig
@@ -285,7 +288,7 @@ fromMergedConfig cfg onEnv = do
     kvs <- for commands $ \cmd -> do
       statusVar <- newTVar' CommandWaiting
       pure (cmd ^. #index, (cmd, statusVar))
-    pure $ Map.fromList $ toList kvs
+    pure $ MkCommandStatusMapP $ Map.fromList $ toList kvs
 
   anyError <- newTVarA' False
   consoleLogQueue <- newTBQueueA 1_000

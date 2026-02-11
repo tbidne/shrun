@@ -342,7 +342,7 @@ coreFormatting
     pure $ concatWithLineTrunc mLineTrunc finalPrefix (msgStripped ^. #unLogMessage)
     where
       mkStatus = do
-        statusMap <- getReadCommandStatus
+        statusMap <- getReadCommandStatus <&> view #unCommandStatusMap
         let countStatuses (_, status) = case status of
               CommandWaiting -> (1, 0, 0, 0)
               CommandRunning _ -> (0, 1, 0, 0)

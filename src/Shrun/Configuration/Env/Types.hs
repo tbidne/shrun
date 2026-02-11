@@ -30,9 +30,11 @@ where
 
 import Data.HashMap.Strict qualified as Map
 import Shrun.Command.Types
-  ( CommandIndex,
-    CommandP1,
+  ( CommandP1,
     CommandStatus,
+    CommandStatusMap,
+    TCommandStatusMap,
+    readCommandStatus,
   )
 import Shrun.Configuration.Data.CommandLogging (CommandLoggingEnv)
 import Shrun.Configuration.Data.CommonLogging (CommonLoggingEnv)
@@ -97,9 +99,7 @@ class HasCommands env where
   getCommandDepGraph :: env -> CommandGraph
 
   -- | Retrieves commands and their statuses.
-  getCommandStatusMap ::
-    env ->
-    HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus))
+  getCommandStatusMap :: env -> TCommandStatusMap
 
 -- | Timeout, if any.
 class HasTimeout env where
@@ -153,7 +153,7 @@ data Env r = MkEnv
     -- can be pure since its structure is fixed at initialization. In fact,
     -- we could probably swap TVar for IORef since we only update the
     -- status from a single thread (each command has its own thread).
-    commandStatusMap :: HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)),
+    commandStatusMap :: TCommandStatusMap,
     -- | Core config.
     config :: CoreConfigP ConfigPhaseEnv,
     -- | Console log queue.
@@ -227,8 +227,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)),
-    b ~ HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus))
+    a ~ TCommandStatusMap,
+    b ~ TCommandStatusMap
   ) =>
   LabelOptic "commandStatusMap" k (Env r) (Env r) a b
   where
@@ -343,7 +343,7 @@ updateCommandStatus ::
   CommandStatus ->
   m ()
 updateCommandStatus command result = do
-  commandStatusMap <- asks getCommandStatusMap
+  commandStatusMap <- asks getCommandStatusMap <&> view #unCommandStatusMap
   case Map.lookup idx commandStatusMap of
     Nothing -> throwText $ prettyToText idx
     Just (_, statusVar) -> writeTVarA' statusVar result
@@ -386,18 +386,8 @@ getReadCommandStatus ::
     MonadAtomic m,
     MonadReader env m
   ) =>
-  m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
+  m CommandStatusMap
 getReadCommandStatus = asks getCommandStatusMap >>= readCommandStatus
-
--- | Reads a map of TVars into a pure map via a single STM transaction.
-readCommandStatus ::
-  ( HasCallStack,
-    MonadAtomic m
-  ) =>
-  HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus)) ->
-  m (HashMap CommandIndex (Tuple2 CommandP1 CommandStatus))
-readCommandStatus commandStatusMap =
-  atomically $ for commandStatusMap (traverse readTVar')
 
 -- | Sets timedout to true.
 setTimedOut :: (HasTimeout env, MonadAtomic m, MonadReader env m) => m ()

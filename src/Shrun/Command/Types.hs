@@ -25,9 +25,14 @@ module Shrun.Command.Types
     -- * Status
     CommandStatus (..),
 
+    -- ** Map
+    CommandStatusMapP (..),
+    TCommandStatusMap,
+    CommandStatusMap,
+    readCommandStatus,
+
     -- * Misc
     CommandPhase (..),
-    CommandStatusMap,
     Internal.Vertex,
     Internal.LVertex,
   )
@@ -42,8 +47,6 @@ import Shrun.Prelude
 
 -- $setup
 -- >>> :set -XOverloadedLists
-
-type CommandStatusMap = HashMap CommandIndex (CommandP1, CommandStatus)
 
 data CommandPhase
   = CommandPhase1
@@ -172,3 +175,43 @@ instance
   where
   labelOptic = iso (\(MkCommandOrd x) -> x) MkCommandOrd
   {-# INLINE labelOptic #-}
+
+-- | Command status map index.
+data CommandStatusMapIndex
+  = CommandStatusMapStm
+  | CommandStatusMapPure
+
+-- | Relates index to command status type.
+type CommandStatusMapIndexF :: CommandStatusMapIndex -> Type
+type family CommandStatusMapIndexF i where
+  CommandStatusMapIndexF CommandStatusMapStm = HashMap CommandIndex (Tuple2 CommandP1 (TVar CommandStatus))
+  CommandStatusMapIndexF CommandStatusMapPure = HashMap CommandIndex (Tuple2 CommandP1 CommandStatus)
+
+-- | Command status map.
+type CommandStatusMapP :: CommandStatusMapIndex -> Type
+newtype CommandStatusMapP p = MkCommandStatusMapP
+  { unCommandStatusMap :: CommandStatusMapIndexF p
+  }
+
+-- | Normal status map, mutable in stm.
+type TCommandStatusMap = CommandStatusMapP CommandStatusMapStm
+
+-- | Pure status map i.e. after the stm map has been read.
+type CommandStatusMap = CommandStatusMapP CommandStatusMapPure
+
+instance
+  (k ~ An_Iso, a ~ CommandStatusMapIndexF p, b ~ CommandStatusMapIndexF p) =>
+  LabelOptic "unCommandStatusMap" k (CommandStatusMapP p) (CommandStatusMapP p) a b
+  where
+  labelOptic = iso (\(MkCommandStatusMapP x) -> x) MkCommandStatusMapP
+  {-# INLINE labelOptic #-}
+
+-- | Reads a map of TVars into a pure map via a single STM transaction.
+readCommandStatus ::
+  ( HasCallStack,
+    MonadAtomic m
+  ) =>
+  TCommandStatusMap ->
+  m CommandStatusMap
+readCommandStatus (MkCommandStatusMapP mp) =
+  MkCommandStatusMapP <$> atomically (for mp (traverse readTVar'))

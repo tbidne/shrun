@@ -785,7 +785,7 @@ cleanupCommands = do
   --
   -- We cannot process the status in the same transaction -- in any case --
   -- because that would involve mixing IO effects in STM.
-  commandsStatusMap <- getReadCommandStatus
+  commandsStatusMap <- getReadCommandStatus <&> view #unCommandStatusMap
 
   for_ commandsStatusMap $ \(_cmd, status) ->
     case status of

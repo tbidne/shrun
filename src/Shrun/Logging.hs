@@ -188,7 +188,7 @@ mkUnfinishedCmdLogs = do
 
   -- Statuses receive no updates at this point (command threads have finished
   -- or been killed), so this should be safe.
-  commandsStatus <- getReadCommandStatus
+  commandsStatus <- getReadCommandStatus <&> view #unCommandStatusMap
 
   let (waiting, running) = foldl' go (Set.empty, Set.empty) commandsStatus
       go acc@(ws, rs) (cmd, status) = case status of
