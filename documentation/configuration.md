@@ -99,7 +99,7 @@ Will run `echo "command one"`, `command four`, `echo hi` and `echo cat` concurre
 <span style="color: #69ff94">[Success][echo hi] 0 seconds</span>
 <span style="color: #69ff94">[Success][cmd1] 0 seconds</span>
 <span style="color: #ff6e6e">[Error][cmd4] 0 seconds: /bin/sh: line 1: four: command not found</span>
-<span style="color: #d6acff">[Finished] 0 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|1|3] 0 seconds</span></code>
 </pre>
 
 > [!CAUTION]
@@ -126,7 +126,7 @@ The literals are equivalent to placing edges between all commands e.g. `&&&` put
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #69ff94">[Success][sleep 3] 3 seconds</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 seconds</span>
-<span style="color: #d6acff">[Finished] 3 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|4] 3 seconds</span></code>
 </pre>
 
 > [!TIP]
@@ -143,7 +143,7 @@ The literals are equivalent to placing edges between all commands e.g. `&&&` put
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --init ". examples/bashrc" bash_function</span>
 <span style="color: #69ff94">[Success][bash_function] 0 seconds</span>
-<span style="color: #d6acff">[Finished] 0 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 0 seconds</span></code>
 </pre>
 
 vs.
@@ -151,7 +151,7 @@ vs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun bash_function</span>
 <span style="color: #ff6e6e">[Error][bash_function] 0 seconds: /bin/sh: line 1: bash_function: command not found</span>
-<span style="color: #d6acff">[Finished] 0 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|1|0] 0 seconds</span></code>
 </pre>
 
 ### Legend Keys Cache
@@ -189,7 +189,7 @@ legend = [
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache add "sleep 1"</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-<span style="color: #d6acff">[Finished] 1 second</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
 <pre>
@@ -204,7 +204,7 @@ legend = [
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache add "sleep 1"</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-<span style="color: #d6acff">[Finished] 1 second</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
 <pre>
@@ -221,7 +221,7 @@ legend = [
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -c config2.toml --legend-keys-cache write "sleep 1"</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-<span style="color: #d6acff">[Finished] 1 second</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
 <pre>
@@ -236,7 +236,7 @@ legend = [
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache off "sleep 1"</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-<span style="color: #d6acff">[Finished] 1 second</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
 <pre>
@@ -251,7 +251,7 @@ legend = [
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun -c config1.toml --legend-keys-cache clear "sleep 1"</span>
 <span style="color: #69ff94">[Success][sleep 1] 1 second</span>
-<span style="color: #d6acff">[Finished] 1 second</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 1 second</span></code>
 </pre>
 
 <pre>
@@ -274,7 +274,7 @@ legend = [
 <span style="color: #d3d38e">[Warn] Attempting to cancel:</span>
 <span style="color: #d3d38e">  - sleep 6</span>
 <span style="color: #d3d38e">  - sleep 8</span>
-<span style="color: #d6acff">[Finished] 5 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|2|0|1] 5 seconds</span></code>
 </pre>
 
 ## Logging
@@ -295,7 +295,7 @@ This is general logging config.
 <code><span style="color: #ff79c6">$</span><span> shrun --common-log-debug "sleep 2"</span>
 <span style="color:">[Debug][sleep 2] Command: 'ShellCommand "sleep 2"'</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 #### Key Hide
@@ -309,7 +309,7 @@ This is general logging config.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --common-log-key-hide --config=examples/config.toml some-key</span>
 <span style="color: #69ff94">[Success][echo hi && sleep 2] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 rather than the usual
@@ -317,7 +317,7 @@ rather than the usual
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --config=examples/config.toml some-key</span>
 <span style="color: #69ff94">[Success][some-key] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 Naturally, this does not affect commands that do not have a key (i.e. those not in a legend file). Also, if the commands are defined recursively, then the key name will be the _final_ key.
@@ -338,7 +338,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > In this example, the log 'hi' is printed even though it is not newline-terminated, because the `--command-log-buffer-length 1` is exceeded (2 characters). On the other hand, the final log 'b' is not printed until the very end since it is within the buffer limit.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-length 1 "printf hi && sleep 1 && printf b && sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-buffer-length 1 "printf hi && sleep 1 && printf b && sleep 2"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 1 && printf b && sleep 1] hi</span>
 <span style="color: #d6acff">[Status][0|1|0|0] 1 second</span></code>
 </pre>
@@ -355,13 +355,13 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > In this example, the logs 'hi' and 'b' are printed even though they are not newline-terminated, because the `--command-log-buffer-timeout 1` is exceeded (1 second).
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] hi</span>
 <span style="color: #d6acff">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-buffer-timeout 1 "printf hi && sleep 3 && printf b && sleep 1"</span>
 <span style="color: #69ff94">[Command][printf hi && sleep 3 && printf b && sleep 1] b</span>
 <span style="color: #d6acff">[Status][0|1|0|0] 3 seconds</span></code>
 </pre>
@@ -378,7 +378,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --command-log-poll-interval 100 --console-log-command on "for i in {1..10}; do echo hi; sleep 1; done"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-poll-interval 100 "for i in {1..10}; do echo hi; sleep 1; done"</span>
 <span style="color:">[Command][for i in {1..10}; do echo hi; sleep 1; done] hi</span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 7 seconds</span></code>
 </pre>
@@ -395,13 +395,13 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > In this example we also use `--command-log-poll-interval 1_000_000` to slow down the reads, so that we can see `acbde` and `f` are indeed read separately. Ordinarily this would be too fast to see the difference.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcde</span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-read-size 5b --command-log-poll-interval 1_000_000 "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] f</span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 2 seconds</span></code>
 </pre>
@@ -426,7 +426,7 @@ Configuration for **command logs**, enabled by `console-log.command` and/or `fil
 > This is the previous example, but with `--command-log-read-strategy block-line-buffer` enabled. Notice the entire 'abcdef' is printed, since 'abcd' is read first, buffered, then 'f\n' is read, and the buffer flushed.
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --command-log-read-size 5b --command-log-poll-interval 1_000_000 --command-log-read-strategy block-line-buffer "echo abcdef && sleep 2" </span>
+<code><span style="color: #ff79c6">$</span><span> shrun --command-log-read-size 5b --command-log-poll-interval 1_000_000 --command-log-read-strategy block-line-buffer "echo abcdef && sleep 2" </span>
 <span style="color:">[Command][echo abcdef && sleep 2] abcdef</span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 2 seconds</span></code>
 </pre>
@@ -475,7 +475,7 @@ vs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --console-log-command-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #69ff94">[Success][for i i...] 3 seconds</span>
-<span style="color: #d6acff">[Finished] 3 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 3 seconds</span></code>
 </pre>
 
 #### Line Truncation
@@ -491,7 +491,7 @@ vs.
 **Example:**
 
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-line-trunc 80 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
 <span style="color:">[Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] ...</span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
@@ -511,21 +511,21 @@ Note: In the following examples, `\033[35m` and `\033[3D` are ansi escape codes.
 
 `all` strips _all_ control characters: `\033` in this case. The means all special formatting / control will be omitted.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command-name-trunc 10 --console-log-strip-control all "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo  hello  bye</span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 `off` leaves all control characters in place. In this case, we will apply both the text coloring (`\033[35m`) and text overwriting (`\033[3D`).
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control off "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command-name-trunc 10 --console-log-strip-control off "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hel bye</span></span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
 
 `smart` removes the control chars but leaves the text coloring, so we will have the magenta text but not overwriting.
 <pre>
-<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command on --console-log-command-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
+<code><span style="color: #ff79c6">$</span><span> shrun --console-log-command-name-trunc 10 --console-log-strip-control smart "echo -e ' foo \033[35m hello \033[3D bye '; sleep 2"</span>
 <span style="color:">[Command][echo -e...] foo <span style="color: magenta"> hello  bye</span</span>
 <span style="color: #a3fefe">[Status][0|1|0|0] 1 second</span></code>
 </pre>
@@ -580,7 +580,7 @@ Config related to file logs.
 <span style="color: #ff6e6e">[Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
 <span style="color: #69ff94">[Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
-<span style="color: #d6acff">[Finished] 3 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|1|2] 3 seconds</span></code>
 </pre>
 
 <pre>
@@ -592,7 +592,7 @@ Config related to file logs.
 <span style="color:">[2022-12-12 23:17:57][Success][sleep 2] 2 seconds</span>
 <span style="color:">[2022-12-12 23:17:57][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
 <span style="color:">[2022-12-12 23:17:58][Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
-<span style="color:">[2022-12-12 23:17:58][Finished] 3 seconds</span></code>
+<span style="color:">[2022-12-12 23:17:58][Finished][0|0|1|2] 3 seconds</span></code>
 </pre>
 
 #### File Command Name Truncation
@@ -606,7 +606,7 @@ Config related to file logs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log out.log --file-log-command-name-trunc 10 "for i in {1..3}; do echo hi; sleep 1; done"</span>
 <span style="color: #69ff94">[Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
-<span style="color: #d6acff">[Finished] 3 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 3 seconds</span></code>
 </pre>
 
 <pre>
@@ -616,7 +616,7 @@ Config related to file logs.
 <span style="color:">[2024-04-23 01:05:22][Command][for i i...] hi</span>
 <span style="color:">[2024-04-23 01:05:23][Command][for i i...] hi</span>
 <span style="color:">[2024-04-23 01:05:24][Success][for i i...] 3 seconds</span>
-<span style="color:">[2024-04-23 01:05:24][Finished] 3 seconds</span></code>
+<span style="color:">[2024-04-23 01:05:24][Finished][0|0|0|1] 3 seconds</span></code>
 </pre>
 
 #### File Delete On Success
@@ -630,7 +630,7 @@ Config related to file logs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success on "sleep 2"</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 <pre>
@@ -644,7 +644,7 @@ vs.
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log del-on-success.log --file-log-delete-on-success on bad "sleep 2"</span>
 <span style="color: #ff6e6e">[Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|1|1] 2 seconds</span></code>
 </pre>
 
 <pre>
@@ -653,7 +653,7 @@ vs.
 <span style="color:">[2024-04-23 01:05:21][Command][sleep 2] Starting...</span>
 <span style="color:">[2024-04-23 01:05:21][Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
 <span style="color:">[2024-04-23 01:05:24][Success][sleep 2] 2 seconds</span>
-<span style="color:">[2024-04-23 01:05:24][Finished] 2 seconds</span></code>
+<span style="color:">[2024-04-23 01:05:24][Finished][0|0|1|1] 2 seconds</span></code>
 </pre>
 
 > [!TIP]
@@ -679,7 +679,7 @@ vs.
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log line-trunc.log --file-log-line-trunc 120 "echo 'some ridiculously long command i mean is this really necessary' && sleep 2"</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 <pre>
@@ -687,7 +687,7 @@ vs.
 <span style="color:">[2024-04-23 01:05:21][Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] Star...</span>
 <span style="color:">[2024-04-23 01:05:22][Command][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] som...</span>
 <span style="color:">[2024-04-23 01:05:24][Success][echo 'some ridiculously long command i mean is this really necessary' && sleep 2] 2 se...</span>
-<span style="color:">[2024-04-23 01:05:24][Finished] 2 seconds</span></code>
+<span style="color:">[2024-04-23 01:05:24][Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 #### File Log Mode
@@ -708,13 +708,13 @@ vs.
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log size_mode_warn.log --file-log-size-mode "warn 1 b" "sleep 2"</span>
 <span>Warning: log file 'size_mode_warn.log' has size: 11.00 b, but specified threshold is: 1.00 b.</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 <pre>
 <code><span style="color: #ff79c6">$</span><span> shrun --file-log size_mode_warn.log --file-log-size-mode off "sleep 2"</span>
 <span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
-<span style="color: #d6acff">[Finished] 2 seconds</span></code>
+<span style="color: #d6acff">[Finished][0|0|0|1] 2 seconds</span></code>
 </pre>
 
 #### File Log Strip Control

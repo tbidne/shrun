@@ -59,7 +59,7 @@ bar () {
 $ shrun foo bar
 [Error][bar] 0 seconds: /bin/sh: line 1: bar: command not found
 [Error][foo] 0 seconds: /bin/sh: line 1: foo: command not found
-[Finished] 0 seconds
+[Finished][0|0|2|0] 0 seconds
 ```
 
 Fortunately, the [`init`](configuration.md#init) option exists exactly for this purpose:
