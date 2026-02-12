@@ -1,30 +1,17 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Main (main) where
+module Exe.Help (tests) where
 
 import Data.Text qualified as T
-import Effects.FileSystem.PathReader qualified as PR
-import Effects.FileSystem.PathWriter qualified as PW
 import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude hiding (IO)
-import System.Environment.Guard (guardOrElse')
-import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
-import Test.Shrun.Installer qualified as Test.Installer
 import Test.Shrun.Logger qualified as Test.Logger
 import Test.Shrun.Process qualified as Test.Process
 import Prelude (IO)
 
 -- | Entry point for functional tests.
-main :: IO ()
-main = do
-  guardOrElse' "TEST_HELP" ExpectEnvSet runTests dontRun
-  where
-    runTests = bracket setup teardown testHelp
-
-    dontRun = Test.Logger.putLog "Help tests disabled. Enable with TEST_HELP=1"
-
-testHelp :: (HasCallStack) => OsPath -> IO ()
-testHelp testDir = do
+tests :: (HasCallStack) => OsPath -> IO ()
+tests testDir = do
   Test.Logger.putLogHeader "Testing --help"
   results <- runShrun testDir
 
@@ -35,20 +22,6 @@ runShrun :: (HasCallStack) => OsPath -> IO Text
 runShrun testDir = Test.Process.runProcessOrDieQuiet $ exePath ++ " --help"
   where
     exePath = unsafeDecode $ testDir </> [osp|shrun|]
-
-setup :: (HasCallStack) => IO OsPath
-setup = do
-  tmpDir <- PR.getTemporaryDirectory
-  let testDir = tmpDir </> [ospPathSep|shrun/test/help|]
-
-  PW.createDirectoryIfMissing True testDir
-
-  Test.Installer.installShrunOnce testDir
-
-  pure testDir
-
-teardown :: (HasCallStack) => OsPath -> IO ()
-teardown = PW.removePathForciblyIfExists_
 
 assertTextLines :: [Text] -> [Text] -> IO ()
 assertTextLines = go

@@ -1,65 +1,23 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Main (main) where
+module Exe.Terminate (tests) where
 
 import Data.List qualified as L
 import Data.List.NonEmpty qualified as NE
 import Data.Text qualified as T
 import Effects.Concurrent.Async qualified as Async
 import Effects.FileSystem.PathReader qualified as PR
-import Effects.FileSystem.PathWriter qualified as PW
 import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude
-import System.Environment qualified as Env
-import System.Environment.Guard (guardOrElse')
-import System.Environment.Guard.Lifted (ExpectEnv (ExpectEnvSet))
-import Test.Shrun.Installer qualified as Test.Installer
 import Test.Shrun.Logger qualified as Test.Logger
 import Test.Shrun.Process qualified as Test.Process
 import Text.Read qualified as TR
 
-data VerifyCancel
-  = -- | Tests that shrun is cancelled.
-    VerifyCancelShrun
-  | -- | Tests that shrun and commands are cancelled.
-    VerifyCancelCommand
-
-strToCancelled :: (HasCallStack) => Text -> IO VerifyCancel
-strToCancelled =
-  T.toLower . T.strip >>> \case
-    "shrun" -> pure VerifyCancelShrun
-    "command" -> pure VerifyCancelCommand
-    other -> throwText $ "Expected (command|shrun), received: " <> other
-
--- | Entry point for functional tests.
-main :: IO ()
-main = do
-  Env.lookupEnv "TEST_TERMINATE" >>= \case
-    Nothing -> dontRun
-    Just v -> strToCancelled (pack v) >>= runTests
-  where
-    runTests c = bracket (setup c) cleanup $ \params -> tests params
-
-    dontRun = Test.Logger.putLog "Terminate tests disabled. Enable with TEST_TERMINATE=(command|shrun)"
-
-    cleanup sp =
-      guardOrElse'
-        "NO_CLEANUP"
-        ExpectEnvSet
-        doNothing
-        (teardown sp)
-      where
-        doNothing =
-          Test.Logger.putLog
-            $ "Not cleaning up test dir: '"
-            <> decodeLenient (sp ^. #testDir)
-            <> "'"
-
-tests :: (HasCallStack) => SuiteParams -> IO ()
-tests sp =
+tests :: (HasCallStack) => OsPath -> IO ()
+tests testDir =
   for_ idxCombs $ \((command, commandLogging, signalType), idx) -> do
-    runTest sp idx (MkTestParams {command, commandLogging, signalType})
+    runTest testDir idx (MkTestParams {command, commandLogging, signalType})
   where
     idxCombs = zip combs [1 ..]
 
@@ -73,11 +31,11 @@ tests sp =
     universe :: (Bounded a, Enum a) => [a]
     universe = [minBound .. maxBound]
 
-runTest :: (HasCallStack) => SuiteParams -> Int -> TestParams -> IO ()
-runTest sp idx tp = do
+runTest :: (HasCallStack) => OsPath -> Int -> TestParams -> IO ()
+runTest testDir idx tp = do
   Test.Logger.putLogHeader $ "TEST " ++ show idx ++ ": " ++ desc
 
-  bracket (testSetup sp tp) testTeardown $ \(cmd, shrunPid) -> do
+  bracket (testSetup testDir tp) testTeardown $ \(cmd, shrunPid) -> do
     -- 1. Kill shrun, give it time to clean up.
     killPid (tp ^. #signalType) shrunPid True
     sleep testDelay
@@ -114,16 +72,7 @@ runTest sp idx tp = do
     -- Curiously, this is not a problem on osx, nor is it a problem on my
     -- linux machine. Even more curious, I don't see the './bin/sh -c ...'
     -- process locally.
-    --
-    -- Whatever the reason, this is proving hard to fix, and the current
-    -- behavior is a pretty good test:
-    --
-    -- 1. Locally, run with TEST_TERMINATE=command
-    -- 2. CI + macos, run with TEST_TERMINATE=command
-    -- 3. CI + linux, run with TEST_TERMINATE=shrun
-    case sp ^. #verifyCancel of
-      VerifyCancelShrun -> pure ()
-      VerifyCancelCommand -> assertNotExists "sleep" output
+    assertNotExists "sleep" output
   where
     desc =
       mconcat
@@ -289,8 +238,8 @@ killPid sigType pid failIfNone = case sigType of
 killShrunName :: (HasCallStack) => IO ()
 killShrunName = void . Test.Process.runProcess $ "pkill -15 shrun || true"
 
-runShrun :: (HasCallStack) => SuiteParams -> TestParams -> IO Text
-runShrun sp tp = do
+runShrun :: (HasCallStack) => OsPath -> TestParams -> IO Text
+runShrun testDir tp = do
   async <- Async.async io
   -- Link so that an an unexpected exception kills the test. However,
   -- the expectation is that we exit with a specific ExitFailure, so we test
@@ -339,7 +288,6 @@ runShrun sp tp = do
                 ]
             throwString msg
 
-    testDir = sp ^. #testDir
     exePath = unsafeDecode $ testDir </> [osp|shrun|]
 
     args =
@@ -400,8 +348,8 @@ psLineToPid line =
 -- testSetup/testTeardown is for individual test setup i.e. run and kill
 -- shrun process.
 
-testSetup :: (HasCallStack) => SuiteParams -> TestParams -> IO (Text, Int)
-testSetup sp tp = do
+testSetup :: (HasCallStack) => OsPath -> TestParams -> IO (Text, Int)
+testSetup testDir tp = do
   -- Slightly convoluted. We want to:
   --
   --   1. Run shrun and make sure it matches expectations.
@@ -411,7 +359,7 @@ testSetup sp tp = do
   -- where shrun has launched but we have no pid to then cancel it.
   -- Thus we surround this logic w/ onException which kills the process by
   -- name.
-  cmd <- runShrun sp tp
+  cmd <- runShrun testDir tp
   sleep shrunDelay
   let getPid = do
         output1 <- runPs
@@ -501,60 +449,10 @@ instance
           (f a3)
   {-# INLINE labelOptic #-}
 
--- setup/teardown is for overall suite setup i.e. install the shrun exe
--- to the temp directory.
-
-data SuiteParams = MkSuiteParams
-  { testDir :: OsPath,
-    verifyCancel :: VerifyCancel
-  }
-
-instance
-  (k ~ A_Lens, a ~ OsPath, b ~ OsPath) =>
-  LabelOptic "testDir" k SuiteParams SuiteParams a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkSuiteParams a1 a2) ->
-        fmap
-          (\b -> MkSuiteParams b a2)
-          (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  (k ~ A_Lens, a ~ VerifyCancel, b ~ VerifyCancel) =>
-  LabelOptic "verifyCancel" k SuiteParams SuiteParams a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkSuiteParams a1 a2) ->
-        fmap
-          (MkSuiteParams a1)
-          (f a2)
-  {-# INLINE labelOptic #-}
-
-setup :: (HasCallStack) => VerifyCancel -> IO SuiteParams
-setup verifyCancel = do
-  tmpDir <- PR.getTemporaryDirectory
-  let testDir = tmpDir </> [ospPathSep|shrun/test/terminate|]
-
-  PW.createDirectoryIfMissing True testDir
-
-  Test.Installer.installShrunOnce testDir
-
-  pure
-    $ MkSuiteParams
-      { testDir,
-        verifyCancel
-      }
-
-teardown :: (HasCallStack) => SuiteParams -> IO ()
-teardown sp = PW.removePathForciblyIfExists_ $ sp ^. #testDir
-
 mkCommandStr :: TestParams -> String
 mkCommandStr tp = case tp ^. #command of
   TestCommandSingle -> "sleep 77"
-  TestCommandScript -> "test/terminate/test_script.sh"
+  TestCommandScript -> "test/exe/terminate_script.sh"
 
 runCat :: Bool -> String -> IO ()
 runCat fatalErr str = do

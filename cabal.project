@@ -77,5 +77,6 @@ source-repository-package
     location: https://github.com/tbidne/smart-math.git
     tag: 4e10a4134f825ba825113955bb97be7f7e28ad6e
 
+multi-repl: True
 optimization: 2
 test-show-details: direct

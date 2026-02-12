@@ -28,6 +28,7 @@ extra-source-files:
   examples/demo.gif
   LICENSE
   README.md
+  test/exe/terminate_script.sh
   test/functional/*.toml
   test/functional/cwd/*.toml
   test/functional/scripts/*.sh
@@ -35,7 +36,6 @@ extra-source-files:
   test/functional/xdg_state/shrun/*.txt
   test/integration/toml/*.toml
   test/integration/toml/osx/*.toml
-  test/terminate/test_script.sh
 
 extra-doc-files:    CHANGELOG.md
 
@@ -356,10 +356,12 @@ test-suite notify
 
   hs-source-dirs: test/notify
 
-executable terminate
+executable test-exe
   import:         common-lang
   main-is:        Main.hs
   other-modules:
+    Exe.Help
+    Exe.Terminate
   build-depends:
     , base
     , effects-async
@@ -369,21 +371,7 @@ executable terminate
     , test-utils
     , text
 
-  hs-source-dirs: test/terminate
-
-executable help
-  import:         common-lang
-  main-is:        Main.hs
-  other-modules:
-  build-depends:
-    , base
-    , effects-fs
-    , env-guard
-    , shrun
-    , test-utils
-    , text
-
-  hs-source-dirs: test/help
+  hs-source-dirs: test/exe
 
 benchmark benchmarks
   import:         common-lang

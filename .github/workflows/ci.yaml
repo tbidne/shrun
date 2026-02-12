@@ -35,9 +35,7 @@ jobs:
             proj-file: "--project-file cabal.ghc9122.project"
         platform:
           - os: "macos-latest"
-            test-terminate: "command"
           - os: "ubuntu-latest"
-            test-terminate: "command"
     name: "cabal (${{ matrix.ghc.vers }}, ${{ matrix.platform.os }})"
     runs-on: ${{ matrix.platform.os }}
     steps:
@@ -83,15 +81,10 @@ jobs:
           TEST_FUNCTIONAL=1 cabal test ${{ matrix.ghc.proj-file }} functional \
             --test-options '--read-strategy all'
 
-      - name: Help Tests
+      - name: Exe Tests
         shell: bash
         run: |
-          TEST_HELP=1 cabal run ${{ matrix.ghc.proj-file }} help
-
-      - name: Terminate Tests
-        shell: bash
-        run: |
-          TEST_TERMINATE=${{ matrix.platform.test-terminate }} cabal run ${{ matrix.ghc.proj-file }} terminate
+          TEST_EXE=1 cabal run ${{ matrix.ghc.proj-file }} test-exe
 
       - name: Benchmarks
         if: ${{ matrix.platform.os == 'ubuntu-latest' }}
