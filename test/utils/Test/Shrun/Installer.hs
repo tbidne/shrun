@@ -20,7 +20,7 @@ installShrunOnce testDir =
     exeExpectedPath = testDir </> [osp|shrun|]
 
 installShrun :: (HasCallStack) => OsPath -> IO ()
-installShrun testDir = Test.Process.runProcessOrDie cmd
+installShrun testDir = Test.Process.runProcessOrDie testDir cmd
   where
     cmd =
       mconcat
@@ -29,7 +29,8 @@ installShrun testDir = Test.Process.runProcessOrDie cmd
           "--installdir=",
           testDirStr,
           " --install-method=copy ",
-          "--overwrite-policy=always"
+          "--overwrite-policy=always",
+          " > /dev/null"
         ]
 
     testDirStr = unsafeDecode testDir

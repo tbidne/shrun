@@ -5,21 +5,25 @@ module Exe.Help (tests) where
 import Data.Text qualified as T
 import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude hiding (IO)
-import Test.Shrun.Logger qualified as Test.Logger
 import Test.Shrun.Process qualified as Test.Process
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.HUnit (assertFailure, testCase)
 import Prelude (IO)
 
--- | Entry point for functional tests.
-tests :: (HasCallStack) => OsPath -> IO ()
+tests :: OsPath -> TestTree
 tests testDir = do
-  Test.Logger.putLogHeader "Testing --help"
-  results <- runShrun testDir
+  testGroup
+    "Help"
+    [ test testDir
+    ]
 
+test :: OsPath -> TestTree
+test testDir = testCase "Testing --help" $ do
+  results <- runShrun testDir
   assertTextLines expected (T.lines results)
-  Test.Logger.putLog "Test succeeded"
 
 runShrun :: (HasCallStack) => OsPath -> IO Text
-runShrun testDir = Test.Process.runProcessOrDieQuiet $ exePath ++ " --help"
+runShrun testDir = Test.Process.runProcessOrDieQuiet testDir $ exePath ++ " --help"
   where
     exePath = unsafeDecode $ testDir </> [osp|shrun|]
 
@@ -27,8 +31,8 @@ assertTextLines :: [Text] -> [Text] -> IO ()
 assertTextLines = go
   where
     go [] [] = pure ()
-    go (e : _) [] = throwText $ "Empty results, expected: " <> quote e
-    go [] (r : _) = throwText $ "Empty expected, results: " <> quote r
+    go (e : _) [] = assertFailure $ unpack $ "Empty results, expected: " <> quote e
+    go [] (r : _) = assertFailure $ unpack $ "Empty expected, results: " <> quote r
     go (e : es) (r : rs)
       | e == r = go es rs
       | isHashLine e r = go es rs

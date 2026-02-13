@@ -1,6 +1,8 @@
+test_dir=$1
+
 log () {
   echo $1
-  echo $1 >> handler.txt
+  echo $1 >> "$test_dir/handler.txt"
 }
 
 handler () {
@@ -16,7 +18,7 @@ handler () {
 # latter (the shrun logs reveal the error 'trap: SIGINT: bad trap').
 trap handler INT TERM
 
-echo "" > handler.txt
+echo "" > "$test_dir/handler.txt"
 
 log "PID: $$"
 
