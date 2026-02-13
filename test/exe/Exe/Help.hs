@@ -7,7 +7,7 @@ import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude hiding (IO)
 import Test.Shrun.Process qualified as Test.Process
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (assertFailure, testCase)
+import Test.Tasty.HUnit (assertBool, assertFailure, testCase)
 import Prelude (IO)
 
 tests :: OsPath -> TestTree
@@ -35,14 +35,23 @@ assertTextLines = go
     go [] (r : _) = assertFailure $ unpack $ "Empty expected, results: " <> quote r
     go (e : es) (r : rs)
       | e == r = go es rs
-      | isHashLine e r = go es rs
-      | otherwise = throwText $ quote e <> " /= " <> quote r
+      | isHashLine e = checkHashLine r *> go es rs
+      | otherwise = assertFailure $ unpack $ quote e <> " /= " <> quote r
 
-    isHashLine e r =
-      e
-        == "Shrun: <vers> (<hash>)"
-        && "Shrun: "
-        `T.isPrefixOf` r
+    isHashLine = (== "Shrun: <vers> (<hash>)")
+
+    checkHashLine r = do
+      let pfx = "Shrun: "
+          err =
+            unpack
+              $ mconcat
+                [ "Expected '",
+                  pfx,
+                  "' prefix of hash line: '",
+                  r,
+                  "'"
+                ]
+      assertBool err (pfx `T.isPrefixOf` r)
 
     quote t = "'" <> t <> "'"
 
