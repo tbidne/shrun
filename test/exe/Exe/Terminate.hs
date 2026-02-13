@@ -12,12 +12,17 @@ import FileSystem.OsPath (unsafeDecode)
 import Shrun.Prelude
 import Test.Shrun.Logger qualified as Test.Logger
 import Test.Shrun.Process qualified as Test.Process
+import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.HUnit (assertFailure, testCase)
 import Text.Read qualified as TR
 
-tests :: (HasCallStack) => OsPath -> IO ()
+tests :: OsPath -> TestTree
 tests testDir =
-  for_ idxCombs $ \((command, commandLogging, signalType), idx) -> do
-    runTest testDir idx (MkTestParams {command, commandLogging, signalType})
+  testGroup
+    "Terminate"
+    $ idxCombs
+    <&> \((command, commandLogging, signalType), idx) ->
+      runTest testDir idx (MkTestParams {command, commandLogging, signalType})
   where
     idxCombs = zip combs [1 ..]
 
@@ -31,19 +36,17 @@ tests testDir =
     universe :: (Bounded a, Enum a) => [a]
     universe = [minBound .. maxBound]
 
-runTest :: (HasCallStack) => OsPath -> Int -> TestParams -> IO ()
-runTest testDir idx tp = do
-  Test.Logger.putLogHeader $ "TEST " ++ show idx ++ ": " ++ desc
-
-  bracket (testSetup testDir tp) testTeardown $ \(cmd, shrunPid) -> do
+runTest :: OsPath -> Int -> TestParams -> TestTree
+runTest testDir idx tp = testCase ("TEST " ++ show idx ++ ": " ++ desc) $ do
+  bracket (testSetup testDir tp) (testTeardown testDir) $ \(cmd, shrunPid) -> do
     -- 1. Kill shrun, give it time to clean up.
-    killPid (tp ^. #signalType) shrunPid True
+    killPid testDir (tp ^. #signalType) shrunPid True
     sleep testDelay
     -- 2. Get the output, assert processes have been killed.
-    output <- runPs
+    output <- runPs testDir
 
-    runCat True "shrun.log"
-    runCat False "handler.txt"
+    runCat testDir True (mkShrunLogPathStr testDir)
+    runCat testDir False (mkHandlerLogPathStr testDir)
 
     assertNotExists cmd output
 
@@ -92,14 +95,14 @@ runTest testDir idx tp = do
       SignalTypeSIGTERM -> "SIGTERM"
       SignalTypeTimeout -> "--timeout"
 
-    commandStr = ", " <> mkCommandStr tp
+    commandStr = ", " <> mkCommandStr testDir tp
 
     assertNotExists :: (HasCallStack) => Text -> [Text] -> IO ()
     assertNotExists t o = do
-      Test.Logger.putLog $ "Asserting that '" ++ unpack t ++ "' is not found"
+      Test.Logger.putLog testDir $ "Asserting that '" ++ unpack t ++ "' is not found"
       let found = L.any (foundLine t) o
       when found $ do
-        throwString
+        assertFailure
           $ mconcat
             [ "Found '",
               unpack t,
@@ -109,11 +112,11 @@ runTest testDir idx tp = do
 
     foundLine t l = t `T.isInfixOf` l
 
-runPs :: (HasCallStack) => IO (List Text)
-runPs = do
+runPs :: (HasCallStack) => OsPath -> IO (List Text)
+runPs testDir = do
   -- Split up the pgrep and ps calls so that if pgrep does not find anything,
   -- we do not error.
-  (ec1, out1, err1) <- Test.Process.runProcessArgs "pgrep" ["-f", grepStr]
+  (ec1, out1, err1) <- Test.Process.runProcessArgs testDir "pgrep" ["-f", grepStr]
   case ec1 of
     ExitFailure i -> do
       -- pgrep returns error if it doesn't find anything, which might happen
@@ -140,14 +143,14 @@ runPs = do
               ]
       if failOk
         then do
-          Test.Logger.putLog "No processes found, OK"
+          Test.Logger.putLog testDir "No processes found, OK"
           pure []
-        else throwString errMsg
+        else assertFailure errMsg
     ExitSuccess -> do
-      (ec2, out2, err2) <- Test.Process.runProcessArgs "ps" ("-fp" : L.lines out1)
+      (ec2, out2, err2) <- Test.Process.runProcessArgs testDir "ps" ("-fp" : L.lines out1)
       case ec2 of
         ExitFailure i ->
-          throwString
+          assertFailure
             $ mconcat
               [ "runPs: ps failed: ",
                 show i,
@@ -160,7 +163,7 @@ runPs = do
         ExitSuccess -> do
           let outLines = T.lines $ pack out2
               msg = "ps output: " <> tlinesToStr outLines
-          Test.Logger.putLogLines msg
+          Test.Logger.putLogLines testDir msg
           pure outLines
   where
     -- Search for 'sleep N' since CI randomly has a 'sleep 10'
@@ -172,7 +175,7 @@ assertProcesses :: (HasCallStack) => Int -> Int -> List Text -> IO Int
 assertProcesses low high ps = do
   if numPs < low || numPs > high
     then do
-      throwString
+      assertFailure
         $ mconcat
           [ "Expected ",
             show low,
@@ -202,25 +205,25 @@ findShrunPid expectedCmd ls = do
       case NE.filter (not . containsSh) procs of
         [x] -> pure x
         [] ->
-          throwString
+          assertFailure
             $ "Received empty list with /bin/sh filter: "
             ++ tlinesToStr ls
         xs@(_ : _ : _) ->
-          throwString $ "Found too many processes: " ++ tlinesToStr xs
+          assertFailure $ "Found too many processes: " ++ tlinesToStr xs
 
     dieIfEmpty [] =
-      throwString
+      assertFailure
         $ "Received empty list with shrun filter: "
         ++ tlinesToStr ls
     dieIfEmpty (x : xs) = pure (x :| xs)
 
     containsSh = T.isInfixOf "/bin/sh"
 
-killPid :: (HasCallStack) => SignalType -> Int -> Bool -> IO ()
-killPid sigType pid failIfNone = case sigType of
+killPid :: (HasCallStack) => OsPath -> SignalType -> Int -> Bool -> IO ()
+killPid testDir sigType pid failIfNone = case sigType of
   SignalTypeTimeout -> pure ()
-  SignalTypeSIGINT -> Test.Process.runProcessOrDie $ killCmd " -2 "
-  SignalTypeSIGTERM -> Test.Process.runProcessOrDie $ killCmd " -15 "
+  SignalTypeSIGINT -> Test.Process.runProcessOrDie testDir $ killCmd " -2 "
+  SignalTypeSIGTERM -> Test.Process.runProcessOrDie testDir $ killCmd " -15 "
   where
     killCmd signalStr =
       mkKill signalStr
@@ -235,8 +238,8 @@ killPid sigType pid failIfNone = case sigType of
           show pid
         ]
 
-killShrunName :: (HasCallStack) => IO ()
-killShrunName = void . Test.Process.runProcess $ "pkill -15 shrun || true"
+killShrunName :: (HasCallStack) => OsPath -> IO ()
+killShrunName testDir = void . Test.Process.runProcess testDir $ "pkill -15 shrun || true"
 
 runShrun :: (HasCallStack) => OsPath -> TestParams -> IO Text
 runShrun testDir tp = do
@@ -261,7 +264,7 @@ runShrun testDir tp = do
       -- Note we use runProcessArgs due to problems with runProcess, though
       -- it is possible the latter would also work with the non-symlink
       -- (have not tried).
-      (ec, out, err) <- Test.Process.runProcessArgs exePath args
+      (ec, out, err) <- Test.Process.runProcessArgs testDir exePath args
       let msg =
             mconcat
               [ "cmd '",
@@ -276,18 +279,19 @@ runShrun testDir tp = do
               ]
       -- This message is in our expected exception.
       if
-        | "Received cancel after running for" `T.isInfixOf` pack msg -> Test.Logger.putLogLines msg
-        | "Timed out" `T.isInfixOf` pack msg -> Test.Logger.putLogLines msg
+        | "Received cancel after running for" `T.isInfixOf` pack msg -> Test.Logger.putLogLines testDir msg
+        | "Timed out" `T.isInfixOf` pack msg -> Test.Logger.putLogLines testDir msg
         | otherwise -> do
             cs <- PR.listDirectory testDir
-            Test.Logger.putLogLines
+            Test.Logger.putLogLines testDir
               $ mconcat
                 [ show testDir,
                   " contents: ",
                   tlinesToStr (showt <$> cs)
                 ]
-            throwString msg
+            assertFailure msg
 
+    shrunLogPath = mkShrunLogPathStr testDir
     exePath = unsafeDecode $ testDir </> [osp|shrun|]
 
     args =
@@ -298,7 +302,7 @@ runShrun testDir tp = do
             "--common-log-debug",
             "on",
             "--file-log",
-            "shrun.log",
+            shrunLogPath,
             "--file-log-mode",
             "write",
             commandStr
@@ -322,7 +326,7 @@ runShrun testDir tp = do
         SignalTypeTimeout -> "--timeout" : timeoutLen : as
         _ -> as
 
-    commandStr = mkCommandStr tp
+    commandStr = mkCommandStr testDir tp
 
 -- | Timeout duration when cancelling shrun via --timeout. This needs to be
 -- longer than 'shrunDelay', so the the first 'ps' is valid, but also shorter
@@ -343,7 +347,7 @@ psLineToPid :: (HasCallStack) => Text -> IO Int
 psLineToPid line =
   case L.filter (not . T.null) $ T.split (== ' ') line of
     (_ : pidStr : _) -> pure $ TR.read $ unpack pidStr
-    _ -> throwString $ "Unexpected ps format: " ++ unpack line
+    _ -> assertFailure $ "Unexpected ps format: " ++ unpack line
 
 -- testSetup/testTeardown is for individual test setup i.e. run and kill
 -- shrun process.
@@ -362,14 +366,14 @@ testSetup testDir tp = do
   cmd <- runShrun testDir tp
   sleep shrunDelay
   let getPid = do
-        output1 <- runPs
+        output1 <- runPs testDir
         -- The ps output on CI seems to be between 2 (osx) and 4 (linux)
         -- processes. See NOTE: [PS Output].
         --
         -- We need an extra one for the header.
         _ <- assertProcesses low high output1
         findShrunPid cmd output1
-  (cmd,) <$> getPid `onException` killShrunName
+  (cmd,) <$> getPid `onException` killShrunName testDir
   where
     (low, high) = case tp ^. #command of
       -- See NOTE: [PS Output].
@@ -382,14 +386,14 @@ testSetup testDir tp = do
       -- - /bin/sh (CI linux)
       -- - <cmd>
       TestCommandSingle -> (3, 5)
-      -- - two sub commands (Script command)
-      TestCommandScript -> (5, 7)
+      -- - three sub commands (Script command)
+      TestCommandScript -> (5, 8)
 
-testTeardown :: (HasCallStack) => (Text, Int) -> IO ()
-testTeardown (_, shrunPid) = do
-  killPid SignalTypeSIGTERM shrunPid False
+testTeardown :: (HasCallStack) => OsPath -> (Text, Int) -> IO ()
+testTeardown testDir (_, shrunPid) = do
+  killPid testDir SignalTypeSIGTERM shrunPid False
   -- Kill leftover sleeps so tests do not interfere.
-  Test.Process.runProcessOrDie "pkill -15 sleep || true"
+  Test.Process.runProcessOrDie testDir "pkill -15 sleep || true"
 
 -- Ways to terminate shrun.
 data SignalType
@@ -449,15 +453,26 @@ instance
           (f a3)
   {-# INLINE labelOptic #-}
 
-mkCommandStr :: TestParams -> String
-mkCommandStr tp = case tp ^. #command of
+mkCommandStr :: OsPath -> TestParams -> String
+mkCommandStr testDir tp = case tp ^. #command of
   TestCommandSingle -> "sleep 77"
-  TestCommandScript -> "test/exe/terminate_script.sh"
-
-runCat :: Bool -> String -> IO ()
-runCat fatalErr str = do
-  Test.Logger.putLog $ "start " <> str
-  f $ "cat " <> str
-  Test.Logger.putLog $ "end " <> str
+  TestCommandScript -> "test/exe/terminate_script.sh " ++ testDirStr
   where
-    f = if fatalErr then Test.Process.runProcessOrDie else Test.Process.runProcessTotal
+    testDirStr = unsafeDecode testDir
+
+runCat :: OsPath -> Bool -> String -> IO ()
+runCat testDir fatalErr str = do
+  Test.Logger.putLog testDir $ "start " <> str
+  f $ "cat " <> str
+  Test.Logger.putLog testDir $ "end " <> str
+  where
+    f =
+      if fatalErr
+        then Test.Process.runProcessOrDie testDir
+        else Test.Process.runProcessTotal testDir
+
+mkShrunLogPathStr :: OsPath -> FilePath
+mkShrunLogPathStr testDir = unsafeDecode $ testDir </> [osp|shrun-terminate.log|]
+
+mkHandlerLogPathStr :: OsPath -> FilePath
+mkHandlerLogPathStr testDir = unsafeDecode $ testDir </> [osp|handler.txt|]

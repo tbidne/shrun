@@ -84,7 +84,7 @@ jobs:
       - name: Exe Tests
         shell: bash
         run: |
-          TEST_EXE=1 cabal run ${{ matrix.ghc.proj-file }} test-exe
+          TEST_EXE=1 cabal test ${{ matrix.ghc.proj-file }} test-exe
 
       - name: Benchmarks
         if: ${{ matrix.platform.os == 'ubuntu-latest' }}

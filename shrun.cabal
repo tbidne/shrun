@@ -356,18 +356,22 @@ test-suite notify
 
   hs-source-dirs: test/notify
 
-executable test-exe
+test-suite test-exe
   import:         common-lang
+  type:           exitcode-stdio-1.0
   main-is:        Main.hs
   other-modules:
     Exe.Help
     Exe.Terminate
+
   build-depends:
     , base
     , effects-async
     , effects-fs
     , env-guard
     , shrun
+    , tasty
+    , tasty-hunit
     , test-utils
     , text
 
