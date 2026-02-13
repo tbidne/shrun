@@ -410,7 +410,7 @@ testTranslateEdges3 = testCase desc $ do
 testTranslateEdgesOneBoundsFailure :: TestTree
 testTranslateEdgesOneBoundsFailure = testCase desc $ do
   ex <- translateCommandsEx @StringException map cmds
-  "Index '2' in edge '1 & 2' is out-of-bounds." @=? displayException ex
+  "Key some_aliases: Index '2' in edge '1 & 2' is out-of-bounds." @=? displayException ex
   where
     desc = "Single command with edges fails"
 
@@ -424,7 +424,7 @@ testTranslateEdgesOneBoundsFailure = testCase desc $ do
 testTranslateEdgesBoundsFailure :: TestTree
 testTranslateEdgesBoundsFailure = testCase desc $ do
   ex <- translateCommandsEx @StringException map cmds
-  "Index '3' in edge '1 & 3' is out-of-bounds." @=? displayException ex
+  "Key some_aliases: Index '3' in edge '1 & 3' is out-of-bounds." @=? displayException ex
   where
     desc = "Command with out-of-bounds edges fails"
 

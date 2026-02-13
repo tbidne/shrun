@@ -498,7 +498,7 @@ testCommandGraphLegendEdgeFailure :: TestTree
 testCommandGraphLegendEdgeFailure = testCase desc $ do
   (_, ex) <- runExceptionE @StringException args
 
-  "Index '3' in edge '1 & 3' is out-of-bounds." @=? displayException ex
+  "Key bad_edge: Index '3' in edge '1 & 3' is out-of-bounds." @=? displayException ex
   where
     desc = "Runs with legend edges failure"
 

@@ -250,14 +250,21 @@ translateMap mp initKey = do
                 -- return here is idxMap.
                 idxMap = Map.singleton origIdx (startIdx, endIdx)
 
+                -- If this is the init key, let's give it a better name in
+                -- error messages.
+                errKeyName =
+                  if line == initKey
+                    then "command_line"
+                    else line
+
             -- Repair the edges.
             repairedEdges <- case mEdges of
               Nothing -> pure mempty
               Just (EdgeArgsSequential s) ->
                 -- If our graph is sequential, make an edge list (sequential
                 -- edges for original values), then repair it.
-                repairEdges (mkSequentialEdges s vals) subCmdIdxMap
-              Just (EdgeArgsList es) -> repairEdges es subCmdIdxMap
+                repairEdges errKeyName (mkSequentialEdges s vals) subCmdIdxMap
+              Just (EdgeArgsList es) -> repairEdges errKeyName es subCmdIdxMap
 
             let newEdges = repairedEdges <> subEdges
                 allData = (subCmds, newEdges, idxMap)
@@ -335,10 +342,11 @@ repairEdges ::
   ( HasCallStack,
     MonadThrow m
   ) =>
+  Text ->
   Edges ->
   HashMap CommandIndex (Tuple2 CommandIndex CommandIndex) ->
   m Edges
-repairEdges (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
+repairEdges key (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
   where
     mapEdge (src, dest, lbl) mAcc = do
       (srcStart, srcEnd) <- lookupEdge src
@@ -356,7 +364,9 @@ repairEdges (MkEdges es) idxMap = MkEdges <$> foldr mapEdge (pure Empty) es
           Nothing ->
             throwText
               $ mconcat
-                [ "Index '",
+                [ "Key ",
+                  key,
+                  ": Index '",
                   prettyToText i,
                   "' in edge '",
                   prettyToText src,
