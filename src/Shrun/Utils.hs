@@ -419,6 +419,7 @@ hHide ::
 hHide h = do
   HW.hSetBuffering h HW.NoBuffering
   HW.hSetEcho h False
+{-# INLINEABLE hHide #-}
 
 -- | Drains stdin.
 drainStdin ::
@@ -435,3 +436,4 @@ drainStdin =
         HR.hIsReadable IO.stdin >>= \case
           False -> pure ()
           True -> void $ HR.hGetNonBlocking IO.stdin 1_000
+{-# INLINEABLE drainStdin #-}

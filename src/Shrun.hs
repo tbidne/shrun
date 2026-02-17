@@ -500,7 +500,34 @@ drainStdinLoop = go
   where
     go = do
       Utils.drainStdin
-      sleep 1
+      -- Choosing a good drain period is pretty ad-hoc. We have two goals:
+      --
+      --   1. Prevent stdin from appearing after shrun exits.
+      --   2. Prevent stdin from being held in memory for shrun's duration.
+      --
+      -- 1 is mostly accomplished by having a single drain at the end, so we
+      -- theoretically do not need this loop at all. The loop is only
+      -- necessary for 2.
+      --
+      -- However, it could be the case that the amount of stdin is greater
+      -- than a single drain amount, in which case having periodic drains
+      -- would be a mitigation. This is pretty unlikely as any stdin is
+      -- likely to be a mistake (i.e. merely a few keystrokes), but it is
+      -- worth mentioning.
+      --
+      -- We therefore have the following considerations:
+      --
+      --   - The importance of periodic drains is pretty low, and we do
+      --     not want performance to be impacted.
+      --
+      --   - This is likely only a benefit to long-lived commands i.e.
+      --     minutes.
+      --
+      --   - Hence while _some_ periodic drain is probably a good idea,
+      --     we should make the period long enough that it is not
+      --     noticeable.
+      --
+      sleep 60
       go
 {-# INLINEABLE drainStdinLoop #-}
 
