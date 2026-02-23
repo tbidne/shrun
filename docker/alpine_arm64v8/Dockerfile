@@ -51,8 +51,6 @@ echo "*** Building shrun ***"
 
 cd /opt/shrun
 
-arch=$(uname -m)
-
 cabal update
 export SHRUN_HOME=$(pwd); cabal install --installdir bin/ --enable-executable-static --enable-executable-stripping exe:shrun --project-file $CABAL_PROJ --ghc-options -Werror
 
