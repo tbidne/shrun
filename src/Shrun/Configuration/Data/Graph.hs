@@ -392,27 +392,50 @@ type EdgeAcc =
     (HashSet Int)
 
 verifyUniqueEdges :: (HasCallStack, MonadThrow m) => Seq GEdge -> m ()
-verifyUniqueEdges edges = case toList duplicates of
+verifyUniqueEdges edges = case duplicates of
   [] -> pure ()
   es@(_ : _) -> do
-    let msg = "Found duplicates: " <> T.intercalate " " (renderEdge <$> es)
+    let msg =
+          mconcat
+            [ "Found multiple edges between the same commands:",
+              mconcat $ ("\n  - " <>) . renderDuplicates <$> es
+            ]
     throwText msg
   where
-    (_, duplicates) = foldl' go (HSet.empty, HSet.empty) edges
+    duplicates =
+      -- sort for determinism
+      L.sort
+        . fmap (\((s, d), ls) -> ((s, d), Seq.sort ls))
+        . HMap.toList
+        . HMap.filter ((> 1) . length)
+        . foldl' go HMap.empty
+        $ edges
 
-    go :: Tuple2 (HashSet GEdge) (HashSet GEdge) -> GEdge -> Tuple2 (HashSet GEdge) (HashSet GEdge)
-    go (found, dupes) edge
-      | HSet.member edge found = (found, HSet.insert edge dupes)
-      | otherwise = (HSet.insert edge found, dupes)
+    go :: EdgeDupeAcc -> GEdge -> EdgeDupeAcc
+    go found (s, d, l) = HMap.alter combineLabels (s, d) found
+      where
+        combineLabels Nothing = Just $ Seq.singleton l
+        combineLabels (Just ls) = Just $ ls :|> l
 
-    renderEdge (s, t, _) =
+    renderDuplicates :: Tuple2 (Tuple2 Node Node) (Seq EdgeLabel) -> Text
+    renderDuplicates ((s, d), ls) =
+      T.intercalate ", " $ (\l -> renderEdge (s, d, l)) <$> toList ls
+
+    renderEdge :: (Node, Node, EdgeLabel) -> Text
+    renderEdge (s, d, l) =
       mconcat
-        [ "(",
+        [ "'",
           showt s,
-          ",",
-          showt t,
-          ")"
+          " ",
+          displayEdgeLabel l,
+          " ",
+          showt d,
+          "'"
         ]
+
+type EdgeNoLabel = Tuple2 Node Node
+
+type EdgeDupeAcc = HashMap EdgeNoLabel (Seq EdgeLabel)
 
 -- | Verifies all commands references in the edges exist.
 allEdgesExist :: (HasCallStack, MonadThrow m) => Seq GEdge -> HashSet Int -> m ()

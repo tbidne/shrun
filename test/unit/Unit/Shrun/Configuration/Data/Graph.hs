@@ -13,7 +13,7 @@ import Shrun.Command.Types
   )
 import Shrun.Configuration.Data.Graph
   ( EdgeArgs (EdgeArgsList, EdgeArgsSequential),
-    EdgeLabel (EdgeAnd),
+    EdgeLabel (EdgeAnd, EdgeAny, EdgeOr),
     EdgeSequential (EdgeSequentialAnd),
     Edges (MkEdges),
     Vertex,
@@ -23,13 +23,12 @@ import Shrun.Configuration.Default (Default (def))
 import Unit.Prelude
 import Unit.Shrun.Logging.Generators qualified as Logging.G
 
--- - fromV vertex always == returned tuple index
-
 tests :: TestTree
 tests =
   testGroup
     "Shrun.Configuration.Data.Graph"
     [ testDuplicateEdgesFails,
+      testDuplicateDiffTypeEdgesFails,
       testNonExtantEdgeSrc,
       testNonExtantEdgeDest,
       testNoRootsFails,
@@ -45,8 +44,33 @@ testDuplicateEdgesFails :: TestTree
 testDuplicateEdgesFails = testCase "Duplicate edges fails" $ do
   runFailure expected es cmds
   where
-    expected = "Found duplicates: (1,2) (1,3)"
+    expected =
+      mconcat
+        [ "Found multiple edges between the same commands:",
+          "\n  - '1 & 2', '1 & 2'",
+          "\n  - '1 & 3', '1 & 3'"
+        ]
     es = [(1, 2), (1, 3), (1, 2), (2, 3), (1, 3)]
+    cmds = unsafeListToNESeq $ mkCmds [1]
+
+testDuplicateDiffTypeEdgesFails :: TestTree
+testDuplicateDiffTypeEdgesFails = testCase desc $ do
+  runFailureEdgeLabels expected es cmds
+  where
+    desc = "Duplicate edges with different types fails"
+    expected =
+      mconcat
+        [ "Found multiple edges between the same commands:",
+          "\n  - '1 & 2', '1 | 2'",
+          "\n  - '1 | 3', '1 ; 3'"
+        ]
+    es =
+      [ (1, 2, EdgeAnd),
+        (1, 3, EdgeOr),
+        (1, 2, EdgeOr),
+        (2, 3, EdgeAny),
+        (1, 3, EdgeAny)
+      ]
     cmds = unsafeListToNESeq $ mkCmds [1]
 
 testNonExtantEdgeSrc :: TestTree
@@ -202,14 +226,19 @@ testSeqAnd = testProp desc "testSeqAnd" $ do
     desc = "Creates sequenced indexes"
 
 runFailure :: String -> Seq (Int, Int) -> NESeq CommandP1 -> IO ()
-runFailure expected edgeInts cmds =
+runFailure expected =
+  runFailureEdgeLabels expected
+    . fmap (\(s, d) -> (s, d, EdgeAnd))
+
+runFailureEdgeLabels :: String -> Seq (Int, Int, EdgeLabel) -> NESeq CommandP1 -> IO ()
+runFailureEdgeLabels expected edgeInts cmds =
   -- Specifically catching the TextException to avoid callstacks for GHC 9.10.
   -- We may want to replace this with a specific exception at some point.
   try (CDG.mkGraph (EdgeArgsList edges) cmds) >>= \case
     Right g -> assertFailure $ "Expected failure, received success: " ++ show g
     Left (MkStringException str) -> expected @=? str
   where
-    edges = MkEdges $ (\(s, d) -> (mkIdx s, mkIdx d, EdgeAnd)) <$> edgeInts
+    edges = MkEdges $ (\(s, d, l) -> (mkIdx s, mkIdx d, l)) <$> edgeInts
 
 genCmds :: Gen (NESeq CommandP1)
 genCmds =
