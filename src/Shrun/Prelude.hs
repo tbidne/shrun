@@ -270,6 +270,7 @@ import Effects.IORef as X
   )
 import Effects.Optparse as X (MonadOptparse (customExecParser, execParser))
 import Effects.System.Environment as X (MonadEnv (withArgs))
+import Effects.System.Posix.Files as X (MonadPosixFiles)
 import Effects.System.Posix.Signals as X (MonadPosixSignals)
 import Effects.System.Process as X (CreateProcess, MonadProcess)
 import Effects.System.Terminal as X

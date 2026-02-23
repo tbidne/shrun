@@ -4,6 +4,7 @@ module Shrun.Configuration.Args.Parsing.FileLogging
   )
 where
 
+import Effects.Optparse.Completer qualified as EOC
 import Options.Applicative (Parser)
 import Options.Applicative qualified as OA
 import Shrun.Configuration.Args.Parsing.Utils qualified as Utils
@@ -76,6 +77,7 @@ fileLogParser =
     opts =
       [ OA.long "file-log",
         OA.completeWith ["default"],
+        OA.completer EOC.compgenCwdDirsCompleter,
         OA.short 'f',
         Utils.mkHelp helpTxt
       ]

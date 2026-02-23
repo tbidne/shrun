@@ -81,13 +81,14 @@ makeEnvAndShrun ::
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadMask m,
+    MonadMVar m,
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadPosixFiles m,
     MonadPosixSignals m,
     MonadProcess m,
-    MonadMask m,
-    MonadMVar m,
     MonadRegionLogger m,
     MonadTerminal m,
     MonadThread m,
@@ -112,6 +113,7 @@ withEnv ::
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadPosixFiles m,
     MonadTerminal m
   ) =>
   (Env r -> m a) ->
@@ -272,6 +274,7 @@ fromMergedConfig ::
     MonadIORef m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadPosixFiles m,
     MonadTerminal m
   ) =>
   MergedConfig ->

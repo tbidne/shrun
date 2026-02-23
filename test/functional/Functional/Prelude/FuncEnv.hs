@@ -13,7 +13,7 @@ module Functional.Prelude.FuncEnv
 where
 
 import Effects.FileSystem.PathReader
-  ( MonadPathReader (getCurrentDirectory, getXdgDirectory),
+  ( MonadPathReader (doesPathExist, getCurrentDirectory, getXdgDirectory),
     XdgDirectory,
   )
 import Effects.System.Posix.Signals (MonadPosixSignals (installHandler))
@@ -138,6 +138,7 @@ newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
       MonadMVar,
       MonadOptparse,
       MonadPathWriter,
+      MonadPosixFiles,
       MonadProcess,
       MonadReader ConfigIOEnv,
       MonadThread,
@@ -150,6 +151,7 @@ unConfigIO (MkConfigIO rdr) = rdr
 
 instance MonadPathReader ConfigIO where
   doesFileExist = liftIO . doesFileExist
+  doesPathExist = liftIO . doesPathExist
 
   getCurrentDirectory = do
     mCwd <- asks (view #cwdDir)

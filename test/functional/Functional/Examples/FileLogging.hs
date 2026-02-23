@@ -22,7 +22,8 @@ tests args =
       fileLogModeWrite args,
       fileLogStripControlAll args,
       fileLogStripControlNone args,
-      fileLogStripControlSmart args
+      fileLogStripControlSmart args,
+      fileLogDirPathFail args
     ]
 
 fileLog :: IO TestArgs -> TestTree
@@ -392,6 +393,43 @@ fileLogStripControlSmart testArgs = testCase "Runs file-log strip-control smart 
           "printf ' foo  hello  bye '; sleep 2"
           " foo \ESC[35m hello  bye "
       ]
+
+-- | Not an example test, but placed here w/ other file tests.
+fileLogDirPathFail :: IO TestArgs -> TestTree
+fileLogDirPathFail _testArgs = testCase desc $ do
+  let args =
+        withNoConfig
+          [ "--file-log",
+            "documentation",
+            "sleep 2"
+          ]
+
+  (resultsConsole, ex) <- runException @StringException args
+  V.verifyExpected resultsConsole []
+
+  -- Checking we didn't do anything here...
+  dirExists <- doesDirectoryExist [osp|documentation|]
+  assertBool "Dir should exist" dirExists
+  for_ expectedFiles $ \p -> do
+    let fp = [osp|documentation|] </> p
+    fileExists <- doesFileExist fp
+    assertBool ("File " ++ show fp ++ " should exist") fileExists
+
+  expected @=? displayException ex
+  where
+    desc = "file-log with extant directory fails"
+
+    expectedFiles =
+      [ [osp|configuration.md|],
+        [osp|development.md|],
+        [osp|faq.md|]
+      ]
+
+    expected =
+      mconcat
+        [ "Requested log file 'documentation' already exists and has ",
+          "invalid type: directory."
+        ]
 
 -- | mkLogPath is used to make log paths, based on the base path
 -- (used for uniqueness) and sequential number (for file-log-mode rename)

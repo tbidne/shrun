@@ -143,8 +143,20 @@ runException ::
   forall e.
   (Exception e) =>
   List String ->
-  IO (List ResultText)
-runException = fmap (view _2) . baseRunner Nothing (Just $ Proxy @e)
+  IO (List ResultText, e)
+runException args = do
+  (_, results, _, mEx) <- baseRunner Nothing proxy args
+  case mEx of
+    Nothing ->
+      error
+        $ mconcat
+          [ "Expected exception <",
+            show (typeRep proxy),
+            ">, received none"
+          ]
+    Just ex -> pure (results, ex)
+  where
+    proxy = Just $ Proxy @e
 
 -- | Runs shrun potentially catching an expected exception.
 baseRunner ::
@@ -153,6 +165,7 @@ baseRunner ::
   Maybe ConfigIOEnv ->
   Maybe (Proxy e) ->
   List String ->
+  -- | (Config logs, logs, notifications, maybe exception)
   IO (List Text, List ResultText, List ShrunNote, Maybe e)
 baseRunner mConfigIOEnv mExProxy argList = do
   (action, configLogs, ls, shrunNotes) <- mkShrunAction mConfigIOEnv argList

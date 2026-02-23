@@ -39,7 +39,8 @@ import Data.Text qualified as T
 import Effects.FileSystem.FileWriter (MonadFileWriter (writeBinaryFile))
 import Effects.FileSystem.PathReader
   ( MonadPathReader
-      ( getCurrentDirectory,
+      ( doesPathExist,
+        getCurrentDirectory,
         getHomeDirectory,
         getXdgDirectory
       ),
@@ -72,6 +73,7 @@ newtype ConfigIO a = MkConfigIO (ReaderT (IORef (List Text)) IO a)
       MonadIO,
       MonadMask,
       MonadOptparse,
+      MonadPosixFiles,
       MonadIORef,
       MonadReader (IORef (List Text)),
       MonadThrow
@@ -96,6 +98,8 @@ instance MonadPathReader ConfigIO where
   doesFileExist = doesFileExistIgnoreLocalShrun
 
   doesDirectoryExist = liftIO . doesDirectoryExist
+
+  doesPathExist = doesFileExist
 
   getXdgDirectory _ _ = pure xdgDirPathOS
 
@@ -148,6 +152,7 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
       MonadIORef,
       MonadMask,
       MonadOptparse,
+      MonadPosixFiles,
       MonadThrow
     )
     via (ReaderT (IORef (List Text))) IO
@@ -164,6 +169,7 @@ instance MonadPathReader NoConfigIO where
   getXdgDirectory _ _ = pure [osp|./|]
   getHomeDirectory = error "getHomeDirectory: unimplemented"
   doesFileExist = doesFileExistIgnoreLocalShrun
+  doesPathExist = doesFileExist
 
 instance MonadPathWriter NoConfigIO where
   createDirectoryIfMissing _ _ = pure ()

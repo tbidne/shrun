@@ -24,7 +24,11 @@ import Data.Bytes
 import Data.Text qualified as T
 import Data.Word (Word16)
 import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile), die)
+import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
+import Effects.System.Posix.Files (PathType (PathTypeFile))
+import Effects.System.Posix.Files qualified as PosixFiles
+import FileSystem.PathType qualified as PT
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -73,6 +77,7 @@ import Shrun.Logging.Types (FileLog)
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 import System.OsPath qualified as OsPath
+import System.OsString.Internal.Types (OsString (OsString))
 
 -- | Switch for deleting the log file upon success.
 newtype DeleteOnSuccessSwitch = MkDeleteOnSuccessSwitch Bool
@@ -531,6 +536,7 @@ withFileLoggingEnv ::
     MonadHandleWriter m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadPosixFiles m,
     MonadTerminal m,
     MonadThrow m
   ) =>
@@ -565,6 +571,7 @@ withMLogging ::
     MonadHandleWriter m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadPosixFiles m,
     MonadTerminal m,
     MonadThrow m
   ) =>
@@ -660,6 +667,7 @@ createLogFile ::
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadPathReader m,
+    MonadPosixFiles m,
     MonadThrow m
   ) =>
   -- | Mode in which to open the new log file.
@@ -667,16 +675,37 @@ createLogFile ::
   -- | Full path of the desired file.
   OsPath ->
   m OsPath
-createLogFile mode fp = do
-  exists <- doesFileExist fp
-
+createLogFile mode fp@(OsString posixPath) = do
+  exists <- PR.doesPathExist fp
+  -- 1. Requested log path exists.
   if exists
-    then case mode of
-      FileModeRename -> do
-        newFp <- uniqName fp
-        writeFileUtf8 newFp "" $> newFp
-      _ -> pure fp
-    else writeFileUtf8 fp "" $> fp
+    then do
+      PosixFiles.getPathType posixPath >>= \case
+        -- 1.1. Log path is an extant file.
+        PathTypeFile -> case mode of
+          -- 1.1.1. Rename mode: Find new name and create.
+          FileModeRename -> do
+            newFp <- uniqName fp
+            writeBlankFile newFp
+          -- 1.1.2. Write or Append mode: Fine, nothing to do.
+          _ -> pure fp
+        -- 1.2. Log path is an extant non-file (directory, symlink): Error.
+        -- Technically this already errors elsewhere (presumably withFile),
+        -- but we can provide another check here out of paranoia and include
+        -- a better error message.
+        otherPathType -> do
+          throwText
+            $ mconcat
+              [ "Requested log file '",
+                T.pack $ decodeLenient fp,
+                "' already exists and has invalid type: ",
+                PT.displayPathType otherPathType,
+                "."
+              ]
+    -- 2. Log path does not exist: Create.
+    else writeBlankFile fp
+  where
+    writeBlankFile p = writeFileUtf8 p "" $> p
 {-# INLINEABLE createLogFile #-}
 
 uniqName ::

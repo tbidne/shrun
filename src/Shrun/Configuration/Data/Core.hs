@@ -357,6 +357,7 @@ withCoreEnv ::
     MonadHandleWriter m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadPosixFiles m,
     MonadTerminal m,
     MonadThrow m
   ) =>
