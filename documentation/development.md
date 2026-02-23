@@ -8,7 +8,7 @@ We use effectful-style programming, that is, writing type signatures like:
 
 ```haskell
 logToFileQueue ::
-  ( MonadSTM m,
+  ( MonadAtomic m,
     MonadTime m
   ) =>
   KeyHideSwitch ->
@@ -27,6 +27,7 @@ Threads are spawned for each of the following:
 - (Optional) printing file logs.
 - Printing timer logs, checking `--timeout` if necessary.
 - Each command.
+- Draining stdin.
 
 Shrun and each command send their logs to `STM` containers, and the logger threads poll these queues, writing the results to their respective locations.
 
