@@ -14,9 +14,9 @@ import Text.Megaparsec qualified as MP
 parseSequential :: MParser EdgeSequential
 parseSequential = MP.label label $ do
   asum
-    [ EdgeSequentialAnd <$ Utils.string "&&&",
-      EdgeSequentialOr <$ Utils.string "|||",
-      EdgeSequentialAny <$ Utils.string ";;;"
+    [ EdgeSequentialAnd <$ Utils.string "&&",
+      EdgeSequentialOr <$ Utils.string "||",
+      EdgeSequentialAny <$ Utils.string ";;"
     ]
   where
-    label = "sequential literals (\"&&&\", \"|||\", \";;;\")"
+    label = "sequential literals (\"&&\", \"||\", \";;\")"

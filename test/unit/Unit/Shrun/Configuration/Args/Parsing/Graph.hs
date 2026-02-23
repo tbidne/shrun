@@ -238,26 +238,26 @@ mkEdges =
 
 testCommandGraphSeqAnd :: TestTree
 testCommandGraphSeqAnd =
-  testPropertyNamed "Parses --edges &&&" "testCommandGraphSeqAnd"
+  testPropertyNamed "Parses --edges &&" "testCommandGraphSeqAnd"
     $ U.verifyResult argList expected
   where
-    argList = ["--edges", "&&&", "command"]
+    argList = ["--edges", "&&", "command"]
     expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialAnd))
 
 testCommandGraphSeqOr :: TestTree
 testCommandGraphSeqOr =
-  testPropertyNamed "Parses --edges |||" "testCommandGraphSeqOr"
+  testPropertyNamed "Parses --edges ||" "testCommandGraphSeqOr"
     $ U.verifyResult argList expected
   where
-    argList = ["--edges", "|||", "command"]
+    argList = ["--edges", "||", "command"]
     expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialOr))
 
 testCommandGraphSeqAny :: TestTree
 testCommandGraphSeqAny =
-  testPropertyNamed "Parses --edges ;;;" "testCommandGraphSeqAny"
+  testPropertyNamed "Parses --edges ;;" "testCommandGraphSeqAny"
     $ U.verifyResult argList expected
   where
-    argList = ["--edges", ";;;", "command"]
+    argList = ["--edges", ";;", "command"]
     expected = U.updateDefArgs #edges (With (EdgeArgsSequential EdgeSequentialAny))
 
 failureTests :: TestTree
@@ -346,36 +346,36 @@ testCommandGraphNoDestDotsFail =
 
 testCommandGraphGeneralFail :: TestTree
 testCommandGraphGeneralFail =
-  testPropertyNamed "Parses --edges && 3" "testCommandGraphGeneralFail"
+  testPropertyNamed "Parses --edges ## 3" "testCommandGraphGeneralFail"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", " && 3", "command"]
+    argList = ["--edges", " ## 3", "command"]
 
     expected =
       T.unlines
         [ "option --edges: 1:1:",
           "  |",
-          "1 | && 3",
-          "  | ^^^",
-          "unexpected \"&& \"",
-          "expecting comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\") or sequential literals (\"&&&\", \"|||\", \";;;\")"
+          "1 | ## 3",
+          "  | ^^",
+          "unexpected \"##\"",
+          "expecting comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\") or sequential literals (\"&&\", \"||\", \";;\")"
         ]
 
 testCommandGraphGeneralFail2 :: TestTree
 testCommandGraphGeneralFail2 =
-  testPropertyNamed "Parses --edges &&" "testCommandGraphGeneralFail2"
+  testPropertyNamed "Parses --edges ##" "testCommandGraphGeneralFail2"
     $ U.verifyFailureString argList expected
   where
-    argList = ["--edges", " &&", "command"]
+    argList = ["--edges", "##", "command"]
 
     expected =
       T.unlines
         [ "option --edges: 1:1:",
           "  |",
-          "1 | &&",
+          "1 | ##",
           "  | ^^",
-          "unexpected \"&&\"",
-          "expecting comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\") or sequential literals (\"&&&\", \"|||\", \";;;\")"
+          "unexpected \"##\"",
+          "expecting comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\") or sequential literals (\"&&\", \"||\", \";;\")"
         ]
 
 testCommandGraphGeneralFail3 :: TestTree
@@ -392,7 +392,7 @@ testCommandGraphGeneralFail3 =
           "1 | &",
           "  | ^",
           "unexpected '&'",
-          "expecting comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\") or sequential literals (\"&&&\", \"|||\", \";;;\")"
+          "expecting comma-delimited edge(s) (e.g. \"1 & 2, {3,4} ; 1, 4 &.. 6\") or sequential literals (\"&&\", \"||\", \";;\")"
         ]
 
 testCommandGraphEmptySetFails :: TestTree

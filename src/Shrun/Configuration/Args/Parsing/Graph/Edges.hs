@@ -36,7 +36,7 @@ parseEdges = MP.label label $ do
     edgeErr = Utils.mkMpError "label" vertexLabel
 
     -- Improving the error message for e.g. '& 3' specifically, as this is
-    -- probably an intended edge (not a literal e.g. '&&&'). We only want to
+    -- probably an intended edge (not a literal e.g. '&&'). We only want to
     -- use this error when we have a correct edge and dest, otherwise fall
     -- back to general error message.
     parseEdgeDest = MP.try $ do

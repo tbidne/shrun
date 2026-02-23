@@ -316,7 +316,7 @@ testCommandGraphBlockedFailure = testCase desc $ do
       ]
 
 testCommandGraphSeqAnd :: TestTree
-testCommandGraphSeqAnd = testCase "Runs with --edges '&&&'" $ do
+testCommandGraphSeqAnd = testCase "Runs with --edges '&&'" $ do
   (ts, resultsConsole) <- withTiming $ run args
 
   V.verifyExpected resultsConsole expected
@@ -333,7 +333,7 @@ testCommandGraphSeqAnd = testCase "Runs with --edges '&&&'" $ do
       -- doesn't explode).
       withNoConfig
         [ "--edges",
-          "&&&",
+          "&&",
           "--common-log-debug",
           "on",
           "--console-log-command",
@@ -352,7 +352,7 @@ testCommandGraphSeqAnd = testCase "Runs with --edges '&&&'" $ do
       ]
 
 testCommandGraphSeqOr :: TestTree
-testCommandGraphSeqOr = testCase "Runs with --edges '|||'" $ do
+testCommandGraphSeqOr = testCase "Runs with --edges '||'" $ do
   (ts, resultsConsole) <- withTiming $ runExitFailure args
 
   V.verifyExpectedUnexpected resultsConsole expected unexpected
@@ -365,7 +365,7 @@ testCommandGraphSeqOr = testCase "Runs with --edges '|||'" $ do
     args =
       withNoConfig
         [ "--edges",
-          "|||",
+          "||",
           "--common-log-debug",
           "on",
           "--console-log-command",
@@ -386,7 +386,7 @@ testCommandGraphSeqOr = testCase "Runs with --edges '|||'" $ do
       ]
 
 testCommandGraphSeqAny :: TestTree
-testCommandGraphSeqAny = testCase "Runs with --edges ';;;'" $ do
+testCommandGraphSeqAny = testCase "Runs with --edges ';;'" $ do
   (ts, resultsConsole) <- withTiming $ runExitFailure args
 
   V.verifyExpected resultsConsole expected
@@ -399,7 +399,7 @@ testCommandGraphSeqAny = testCase "Runs with --edges ';;;'" $ do
     args =
       withNoConfig
         [ "--edges",
-          ";;;",
+          ";;",
           "--common-log-debug",
           "on",
           "--console-log-command",

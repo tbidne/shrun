@@ -67,7 +67,7 @@ notifyActionStartOn = testCase "Runs --notify-action-start on" $ do
           "--notify-action-start",
           "on",
           "--edges",
-          ";;;",
+          ";;",
           "sleep 2",
           "sleep 3"
         ]

@@ -32,7 +32,7 @@ edgesParser =
   Utils.mWithDisabledParser
     readEdges
     opts
-    "EDGES_STR | &&& | ||| | ;;;"
+    "EDGES_STR | && | || | ;;"
   where
     opts =
       [ OA.long "edges",
@@ -70,7 +70,7 @@ edgesParser =
       Chunk.paragraph
         $ mconcat
           [ "The literals are equivalent to placing edges between all ",
-            "commands e.g. '&&&' puts an 'and'-edge between all commands."
+            "commands e.g. '&&' puts an 'and'-edge between all commands."
           ]
 
 readEdges :: ReadM EdgeArgs
