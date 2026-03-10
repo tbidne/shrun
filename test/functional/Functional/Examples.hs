@@ -36,24 +36,27 @@ gif = testCase "Runs gif example" $ do
   where
     args =
       withBaseArgs
-        [ "sign-peace-treaty",
-          "takeover"
+        [ "stats",
+          "deploy"
         ]
     expected =
-      [ withFinishedPrefix (0, 0, 1, 3) "13 seconds",
-        withSuccessPrefix "skynet",
-        withSuccessPrefix "ui",
+      [ withFinishedPrefix (1, 0, 1, 3) "7 seconds",
+        withSuccessPrefix "backend",
+        withSuccessPrefix "frontend",
+        withSuccessPrefix "stats",
         -- NOTE: The final error message is unreliable, so we would occasionally
         -- run into an error where we received a different message. This led
         -- to the mistaken belief that there was a concurrency bug, which is
         -- perhaps technically true, but it is regarding messages we receive,
         -- not from any output getting mangled.
-        withErrorPrefix "sign-peace-treaty",
-        withCommandPrefix "skynet" "preparing nuclear missil-- i mean gift baskets",
-        withCommandPrefix "ui" "adding emojis. we like to have fun :-)",
-        withCommandPrefix "querying-targets" "finding targets...",
-        withCommandPrefix "sign-peace-treaty" "play it cool...",
-        withTimerPrefix (0, 2, 1, 1) "8 seconds"
+        withErrorPrefix "db",
+        withCommandPrefix "backend" "building backend...",
+        withCommandPrefix "db" "building database...",
+        withCommandPrefix "frontend" "building frontend...",
+        withCommandPrefix "stats" "running stats...",
+        waitingPrefix,
+        "  - ds",
+        withTimerPrefix (1, 1, 1, 2) "6 seconds"
       ]
 
 core :: TestTree

@@ -223,8 +223,15 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
 -- otherwise takes the greatest in
 --
 -- @
---   PredecessorSuccess < PredecessorUnfinished < PredecessorFailure
+--   PredecessorSuccess < PredecessorFailure < PredecessorUnfinished
 -- @
+--
+-- We have unfinished higher than failed as we only need to consider the
+-- overall success/failed status once, when everything has finished. This also
+-- makes logging simpler, as we only print non-debug messages for
+-- failure, and having unfinished first means we do not have multiple commands
+-- all printing the same "cannot start command ... due to other failure"
+-- log.
 data PredecessorResult
   = -- | Some predecessor unfinished.
     PredecessorUnfinished Vertex
@@ -238,10 +245,10 @@ data PredecessorResult
   deriving stock (Eq, Show)
 
 instance Semigroup PredecessorResult where
-  PredecessorFailure b v <> _ = PredecessorFailure b v
-  _ <> PredecessorFailure b v = PredecessorFailure b v
   PredecessorUnfinished v <> _ = PredecessorUnfinished v
   _ <> PredecessorUnfinished v = PredecessorUnfinished v
+  PredecessorFailure b v <> _ = PredecessorFailure b v
+  _ <> PredecessorFailure b v = PredecessorFailure b v
   PredecessorSuccess <> PredecessorSuccess = PredecessorSuccess
 
 instance Monoid PredecessorResult where

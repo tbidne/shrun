@@ -35,11 +35,13 @@ legend-keys-cache = "write"
 # Cycles are not allowed, nor are duplicate keys.
 legend = [
   # GIF Demo
-  { key = 'sign-peace-treaty', val = 'echo play it cool... && sleep 5 && "lol psyche"' },
-  { key = 'querying-targets', val = 'echo finding targets... && sleep 7' },
-  { key = 'skynet', val = 'echo "preparing nuclear missil-- i mean gift baskets"; sleep 13' },
-  { key = 'ui', val = 'echo "adding emojis. we like to have fun :-)"; sleep 10' },
-  { key = 'takeover', val = ['querying-targets', 'ui', 'skynet'] },
+  { key = 'stats', val = 'echo "running stats..."; sleep 3' },
+  { key = 'deploy', val = [ 'build', 'ds' ], edges = '1 & 2' },
+  { key = 'build', val = [ 'frontend', 'backend', 'db' ] },
+  { key = 'frontend', val = 'echo "building frontend..."; sleep 2' },
+  { key = 'backend', val = 'echo "building backend..."; sleep 7' },
+  { key = 'db', val = 'echo "building database..."; sleep 4; echo "database failed"; sleep 1; exit 1' },
+  { key = 'ds', val = 'echo "deploying app..."; sleep 2' },
 
   # fast key-hide example
   { key = 'some-key', val = 'echo hi && sleep 2' },

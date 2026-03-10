@@ -270,7 +270,6 @@ testCommandGraphFailure = testCase "Runs with --edges failure" $ do
     expected =
       [ withSuccessPrefix "sleep 3.5",
         withSuccessPrefix "sleep 4",
-        withErrorPrefix "sleep 2 && sdf" <> "Not starting 'sleep 8' due to dependency failure: '(2) sleep 2 && sdf'.",
         withErrorPrefix "sleep 3.5" <> "Not starting 'sleep 8' due to dependency failure: '(2) sleep 2 && sdf'."
       ]
 
