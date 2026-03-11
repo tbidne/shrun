@@ -250,15 +250,19 @@ jobs:
         run: .github/scripts/verify_env.sh
 
       - uses: docker/setup-docker-action@v4
-        if: ${{ matrix.platform.name == 'alpine_amd64' || matrix.platform.name == 'alpine_arm64v8' }}
+        if: ${{ matrix.platform.name == 'alpine_amd64'
+          || matrix.platform.name == 'alpine_arm64v8'
+          }}
 
       # So we have sha256sum
       - name: Install coreutils
-        if: ${{ matrix.platform.os == 'macos-13' || matrix.platform.os == 'macos-14' }}
+        if: ${{ matrix.platform.os == 'macos-14' }}
         run: brew install coreutils
 
       - uses: haskell-actions/setup@v2
-        if: ${{ matrix.platform.name != 'alpine_amd64' && matrix.platform.name != 'alpine_arm64v8' }}
+        if: ${{ matrix.platform.name != 'alpine_amd64'
+          && matrix.platform.name != 'alpine_arm64v8'
+          }}
         with:
           ghc-version: ${{ env.GHC_VERS }}
           cabal-version: ${{ env.CABAL_VERS }}
