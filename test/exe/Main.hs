@@ -22,7 +22,7 @@ main = do
     runTests = bracket setup teardown $ \testDir ->
       defaultMain
         $ testGroup
-          "Unit tests"
+          "Exe tests"
           [ Help.tests testDir,
             Terminate.tests testDir
           ]
@@ -52,11 +52,7 @@ setup = do
     else
       PW.createDirectoryIfMissing True testDir
 
-  -- If exe does not exist, install it.
-  exeExists <- PR.doesPathExist (testDir </> [osp|shrun|])
-  if exeExists
-    then putStrLn "*** shrun exe exists, skipping installation. ***"
-    else Test.Installer.installShrunOnce testDir
+  Test.Installer.installShrunOnce testDir
 
   pure testDir
 

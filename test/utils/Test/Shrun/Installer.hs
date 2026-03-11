@@ -14,7 +14,7 @@ import Test.Shrun.Process qualified as Test.Process
 installShrunOnce :: (HasCallStack) => OsPath -> IO ()
 installShrunOnce testDir =
   PR.findExecutable exeExpectedPath >>= \case
-    Just _ -> pure ()
+    Just _ -> putStrLn "*** shrun exe exists, skipping installation. ***"
     Nothing -> installShrun testDir
   where
     exeExpectedPath = testDir </> [osp|shrun|]
