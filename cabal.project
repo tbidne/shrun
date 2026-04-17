@@ -47,7 +47,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 327b79a1c668acebf0ff2f7bc2490b029c38b783
+    tag: 55d442843fa1e48f89c485b3db47d07cee3b1056
     subdir:
       lib/effects-async
       lib/effects-env
