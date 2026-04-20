@@ -10,10 +10,6 @@ import Data.Text qualified as T
 import Integration.Prelude
 import Integration.Utils (runConfigIO)
 import Shrun.Configuration.Data.CommandLogging (ReadStrategyException)
-import Shrun.Configuration.Data.Notify.System
-  ( LinuxNotifySystemMismatch,
-    OsxNotifySystemMismatch,
-  )
 import Shrun.Configuration.Env (TomlPathError, withEnv)
 import Shrun.Configuration.Legend
   ( CyclicKeyError (MkCyclicKeyError),
@@ -239,33 +235,51 @@ osxNotifyConfigError = testCase "OSX with linux notify config throws exception" 
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", p, "cmd"]
-  result <- runCaptureError @OsxNotifySystemMismatch args logsRef
+  result <- runCaptureError @NotifyParseException args logsRef
 
   case result of
-    Just ex -> exContains "Detected osx, but NotifySend is only available on linux!" ex
+    Just ex -> exContains expected ex
     Nothing -> assertFailure "Expected exception"
   where
     p = decodeLenient $ [ospPathSep|examples/config.toml|]
+
+    expected =
+      mconcat
+        [ "Notification system 'notify-send' is unavailable on os osx. ",
+          "Available systems: apple-script."
+        ]
 
 osxDBusError :: TestTree
 osxDBusError = testCase "OSX with dbus throws exception" $ do
   logsRef <- newIORef' []
   let args = ["--notify-system", "dbus" ,"cmd"]
-  result <- runCaptureError @OsxNotifySystemMismatch args logsRef
+  result <- runCaptureError @NotifyParseException args logsRef
 
   case result of
-    Just ex -> exContains "Detected osx, but DBus is only available on linux!" ex
+    Just ex -> exContains expected ex
     Nothing -> assertFailure "Expected exception"
+  where
+    expected =
+      mconcat
+        [ "Notification system 'dbus' is unavailable on os osx. ",
+          "Available systems: apple-script."
+        ]
 
 osxNotifySendError :: TestTree
 osxNotifySendError = testCase "OSX with notify-send throws exception" $ do
   logsRef <- newIORef' []
   let args = ["--notify-system", "notify-send" ,"cmd"]
-  result <- runCaptureError @OsxNotifySystemMismatch args logsRef
+  result <- runCaptureError @NotifyParseException args logsRef
 
   case result of
-    Just ex -> exContains "Detected osx, but NotifySend is only available on linux!" ex
+    Just ex -> exContains expected ex
     Nothing -> assertFailure "Expected exception"
+  where
+    expected =
+      mconcat
+        [ "Notification system 'notify-send' is unavailable on os osx. ",
+          "Available systems: apple-script."
+        ]
 #else
 osTests :: List TestTree
 osTests =
@@ -279,23 +293,40 @@ linuxNotifyConfigError = testCase "Linux with osx notify config throws exception
   -- Not getExampleConfigOS since we want to use the linux one w/ notify
   -- configuration
   let args = ["-c", p, "cmd"]
-  result <- runCaptureError @LinuxNotifySystemMismatch args logsRef
+  result <- runCaptureError @NotifyParseException args logsRef
+
+  -- Also note that if we do not get these exceptions, we may receive a later
+  -- exception about shrun.log not being found, as that is not setup properly
+  -- (e.g. existence is mocked but file is not actually written).
 
   case result of
-    Just ex -> exContains "Detected linux, but AppleScript is only available on osx!" ex
+    Just ex -> exContains expected ex
     Nothing -> assertFailure "Expected exception"
   where
     p = decodeLenient [ospPathSep|test/functional/example_osx.toml|]
 
+    expected =
+      mconcat
+        [ "Notification system 'apple-script' is unavailable on os linux. ",
+          "Available systems: dbus, notify-send."
+        ]
+
 linuxAppleScriptError :: TestTree
 linuxAppleScriptError = testCase "Linux with apple-script throws exception" $ do
   logsRef <- newIORef' []
-  let args = ["--notify-system", "apple-script" ,"cmd"]
-  result <- runCaptureError @LinuxNotifySystemMismatch args logsRef
+  let args = ["--notify-system", "apple-script", "cmd"]
+  result <- runCaptureError @NotifyParseException args logsRef
 
   case result of
-    Just ex -> exContains "Detected linux, but AppleScript is only available on osx!" ex
+    Just ex -> exContains expected ex
     Nothing -> assertFailure "Expected exception"
+
+  where
+    expected =
+      mconcat
+        [ "Notification system 'apple-script' is unavailable on os linux. ",
+          "Available systems: dbus, notify-send."
+        ]
 #endif
 
 runCaptureError :: (Exception e) => List String -> IORef (List Text) -> IO (Maybe e)

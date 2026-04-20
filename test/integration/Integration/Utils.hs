@@ -18,22 +18,11 @@ module Integration.Utils
 
     -- * Misc
     defaultConfig,
-    notifySystemOSDBus,
-    notifySystemOSNotifySend,
+    notifySystemDBus,
+    notifySystemNotifySend,
   )
 where
 
-import DBus.Client
-  ( Client
-      ( Client,
-        clientInterfaces,
-        clientObjects,
-        clientPendingCalls,
-        clientSignalHandlers,
-        clientSocket,
-        clientThreadID
-      ),
-  )
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text qualified as T
 import Effects.FileSystem.FileWriter (MonadFileWriter (writeBinaryFile))
@@ -46,6 +35,7 @@ import Effects.FileSystem.PathReader
       ),
   )
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
+import Effects.Notify qualified as Notify
 import Effects.System.Terminal
   ( MonadTerminal (getChar),
   )
@@ -53,10 +43,7 @@ import Integration.Prelude as X
 import Shrun.Configuration qualified as Config
 import Shrun.Configuration.Args qualified as Args
 import Shrun.Configuration.Data.MergedConfig (MergedConfig)
-import Shrun.Configuration.Data.Notify.System (NotifySystemMerged)
-import Shrun.Configuration.Data.Notify.System qualified as Notify.System
 import Shrun.Configuration.Env qualified as Env
-import Shrun.Notify.DBus (MonadDBus (connectSession, notify))
 import System.OsPath qualified as OsP
 
 -- IO that has a default config file specified at test/unit/Unit/toml/config.toml
@@ -124,17 +111,8 @@ instance MonadTerminal ConfigIO where
   -- hardcoded so we can test 'detect'
   getTerminalSize = pure (Window 23 87)
 
-instance MonadDBus ConfigIO where
-  connectSession =
-    pure
-      $ Client
-        { clientSocket = error "todo",
-          clientPendingCalls = error "todo",
-          clientSignalHandlers = error "todo",
-          clientObjects = error "todo",
-          clientThreadID = error "todo",
-          clientInterfaces = error "todo"
-        }
+instance MonadNotify ConfigIO where
+  initNotifyEnv _ = pure $ error "initNotifyEnv: unimplemented"
   notify = error "notify: unimplemented"
 
 -- IO with no default config file
@@ -156,7 +134,7 @@ newtype NoConfigIO a = MkNoConfigIO (ReaderT (IORef (List Text)) IO a)
       MonadThrow
     )
     via (ReaderT (IORef (List Text))) IO
-  deriving (MonadDBus) via ConfigIO
+  deriving (MonadNotify) via ConfigIO
 
 runNoConfigIO :: NoConfigIO a -> IORef (List Text) -> IO a
 runNoConfigIO (MkNoConfigIO rdr) = runReaderT rdr
@@ -317,18 +295,18 @@ instance MonadTerminal DefaultIO where
     r <- newIORef' []
     liftIO $ runNoConfigIO getTerminalSize r
 
-notifySystemOSDBus :: NotifySystemMerged
+notifySystemDBus :: NotifySystem
 #if OSX
-notifySystemOSDBus = Notify.System.AppleScript
+notifySystemDBus = Notify.NotifySystemAppleScript
 #else
-notifySystemOSDBus = Notify.System.DBus ()
+notifySystemDBus = Notify.NotifySystemDBus
 #endif
 
-notifySystemOSNotifySend :: NotifySystemMerged
+notifySystemNotifySend :: NotifySystem
 #if OSX
-notifySystemOSNotifySend = Notify.System.AppleScript
+notifySystemNotifySend = Notify.NotifySystemAppleScript
 #else
-notifySystemOSNotifySend = Notify.System.NotifySend
+notifySystemNotifySend = Notify.NotifySystemNotifySend
 #endif
 
 -- Ignore these so that local files do not interfere with tests.

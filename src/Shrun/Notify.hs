@@ -1,12 +1,16 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Module for sending notifications.
 module Shrun.Notify
-  ( sendNotif,
+  ( NotifyMessage (..),
+    fromUnlined,
+    sendNotif,
     formatNotifyMessage,
   )
 where
 
-import DBus.Notify (UrgencyLevel)
 import Data.Text qualified as T
+import Effects.Notify qualified as Notify
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommands,
@@ -24,13 +28,25 @@ import Shrun.Logging.Types
     LogMode (LogModeFinish),
   )
 import Shrun.Logging.Types qualified as Types
-import Shrun.Notify.MonadNotify
-  ( MonadNotify (notify),
-    NotifyMessage (UnsafeNotifyMessage),
-    ShrunNote (MkShrunNote, body, summary, timeout, urgency),
-  )
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+
+newtype NotifyMessage = UnsafeNotifyMessage {unNotifyMessage :: Text}
+  deriving stock (Eq, Show)
+  deriving newtype (IsString)
+
+instance
+  ( k ~ A_Getter,
+    a ~ Text,
+    b ~ Text
+  ) =>
+  LabelOptic "unNotifyMessage" k NotifyMessage NotifyMessage a b
+  where
+  labelOptic = to (\(UnsafeNotifyMessage x) -> x)
+  {-# INLINE labelOptic #-}
+
+fromUnlined :: UnlinedText -> NotifyMessage
+fromUnlined = UnsafeNotifyMessage . view #unUnlinedText
 
 -- | Sends a notification if they are With (linux only). Logs any failed
 -- sends.
@@ -41,6 +57,7 @@ sendNotif ::
     HasLogging env m,
     HasNotifyConfig env,
     MonadAtomic m,
+    MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -51,14 +68,18 @@ sendNotif ::
   -- | Notif body
   NotifyMessage ->
   -- | Notif urgency
-  UrgencyLevel ->
+  NotifyUrgency ->
   m ()
 sendNotif summary body urgency = do
-  cfg <- asks getNotifyConfig
-  traverse_ notifyWithErrorLogging (cfg ^? (_Just % #timeout))
+  asks getNotifyConfig >>= \case
+    Nothing -> pure ()
+    Just notifyConfig ->
+      notifyWithErrorLogging
+        (notifyConfig ^. #system)
+        (notifyConfig ^. #timeout)
   where
-    notifyWithErrorLogging timeout =
-      notify (mkNote timeout) >>= \case
+    notifyWithErrorLogging notifyEnv timeout =
+      Notify.tryNonFatalNotify notifyEnv (mkNote timeout) >>= \case
         Nothing -> pure ()
         Just notifyEx -> withRegion Linear (logEx notifyEx)
 
@@ -77,12 +98,10 @@ sendNotif summary body urgency = do
           }
 
     mkNote timeout =
-      MkShrunNote
-        { summary,
-          body,
-          urgency,
-          timeout
-        }
+      Notify.mkNote (summary ^. #unNotifyMessage)
+        & Notify.setBody (Just $ body ^. #unNotifyMessage)
+        & Notify.setTimeout (Just timeout)
+        & Notify.setUrgency (Just urgency)
 
 formatNotifyMessage :: UnlinedText -> [UnlinedText] -> NotifyMessage
 formatNotifyMessage timeTxt messages =

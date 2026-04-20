@@ -44,7 +44,7 @@ import Shrun.Configuration.Data.Core (CoreConfigP)
 import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingEnv)
 import Shrun.Configuration.Data.Graph (CommandGraph)
-import Shrun.Configuration.Data.Notify (NotifyEnv)
+import Shrun.Configuration.Data.Notify (NotificationEnv)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
 import Shrun.Logging.Types (LogRegion)
@@ -368,10 +368,10 @@ setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA' ref True
 -- | Class for retrieving the notify config.
 class HasNotifyConfig env where
   -- | Retrieves the notify config.
-  getNotifyConfig :: env -> Maybe NotifyEnv
+  getNotifyConfig :: env -> Maybe NotificationEnv
 
 instance HasNotifyConfig (Env r) where
-  getNotifyConfig = view (#config % #notify)
+  getNotifyConfig = view (#config % #notifications)
 
 -- | Run the action when the debug flag is active.
 whenDebug :: (HasCommonLogging env, MonadReader env m) => m () -> m ()

@@ -114,6 +114,7 @@
                 "effects-fs"
                 "effects-ioref"
                 "effects-optparse"
+                "effects-notify"
                 "effects-process"
                 "effects-stm"
                 "effects-terminal"

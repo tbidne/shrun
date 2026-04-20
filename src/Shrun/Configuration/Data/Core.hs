@@ -41,12 +41,11 @@ import Shrun.Configuration.Data.Core.Timeout (Timeout)
 import Shrun.Configuration.Data.FileLogging (FileLoggingP, mergeFileLogging)
 import Shrun.Configuration.Data.FileLogging qualified as FileLogging
 import Shrun.Configuration.Data.LegendKeysCache (LegendKeysCache)
-import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifyLogging)
+import Shrun.Configuration.Data.Notify (NotifyP, mergeNotifications)
 import Shrun.Configuration.Data.Notify qualified as Notify
 import Shrun.Configuration.Data.Truncation (DetectResult (DetectNotRun))
 import Shrun.Configuration.Data.WithDisabled (WithDisabled, (<|?|>))
 import Shrun.Configuration.Default (Default (def), (<.>))
-import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Prelude
 
 -- | For types that are only guaranteed to exist for Args. Generally this
@@ -97,7 +96,7 @@ data CoreConfigP p = MkCoreConfigP
     -- | File log config.
     fileLogging :: ArgsOnlyDetF p (FileLoggingP p),
     -- | Notify config.
-    notify :: ArgsOnlyDetF p (NotifyP p)
+    notifications :: ArgsOnlyDetF p (NotifyP p)
   }
 
 instance
@@ -210,7 +209,7 @@ instance
     a ~ ArgsOnlyDetF p (NotifyP p),
     b ~ ArgsOnlyDetF p (NotifyP p)
   ) =>
-  LabelOptic "notify" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "notifications" k (CoreConfigP p) (CoreConfigP p) a b
   where
   labelOptic =
     lensVL
@@ -230,7 +229,7 @@ instance Semigroup CoreConfigToml where
         commandLogging = l ^. #commandLogging <> r ^. #commandLogging,
         consoleLogging = l ^. #consoleLogging <> r ^. #consoleLogging,
         fileLogging = l ^. #fileLogging <> r ^. #fileLogging,
-        notify = l ^. #notify <> r ^. #notify
+        notifications = l ^. #notifications <> r ^. #notifications
       }
 
 instance Monoid CoreConfigToml where
@@ -243,7 +242,7 @@ instance Monoid CoreConfigToml where
         commandLogging = Nothing,
         consoleLogging = Nothing,
         fileLogging = Nothing,
-        notify = Nothing
+        notifications = Nothing
       }
 
 instance Pretty CoreConfigMerged where
@@ -259,7 +258,7 @@ instance Pretty CoreConfigMerged where
       <> prettyCommandLogging
       <> ["console-logging:", indentField $ pretty (c ^. #consoleLogging)]
       <> prettyMField "file-logging:" (c ^. #fileLogging)
-      <> prettyMField "notify:" (c ^. #notify)
+      <> prettyMField "notify:" (c ^. #notifications)
     where
       -- If command logging is not on then there is no reason to print its
       -- config.
@@ -327,6 +326,11 @@ mergeCoreConfig cmds args toml = do
       (args ^. #commandLogging)
       (toml ^. #commandLogging)
 
+  let notifications =
+        mergeNotifications
+          (args ^. #notifications)
+          (toml ^. #notifications)
+
   pure
     $ MkCoreConfigP
       { timeout = (args ^. #timeout) <.> (toml ^. #timeout),
@@ -339,10 +343,7 @@ mergeCoreConfig cmds args toml = do
         consoleLogging,
         commandLogging,
         fileLogging,
-        notify =
-          mergeNotifyLogging
-            (args ^. #notify)
-            (toml ^. #notify)
+        notifications
       }
 {-# INLINEABLE mergeCoreConfig #-}
 
@@ -352,9 +353,9 @@ withCoreEnv ::
   forall m a.
   ( HasCallStack,
     MonadAtomic m,
-    MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
+    MonadNotify m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadPosixFiles m,
@@ -365,7 +366,7 @@ withCoreEnv ::
   (CoreConfigEnv -> m a) ->
   m a
 withCoreEnv merged onCoreConfigEnv = do
-  notify <- traverse Notify.toEnv (merged ^. #notify)
+  notifications <- traverse Notify.toEnv (merged ^. #notifications)
 
   FileLogging.withFileLoggingEnv (merged ^. #fileLogging) $ \fileLoggingEnv -> do
     let coreConfigEnv =
@@ -377,7 +378,7 @@ withCoreEnv merged onCoreConfigEnv = do
               commandLogging = CommandLogging.toEnv (merged ^. #commandLogging),
               consoleLogging = ConsoleLogging.toEnv (merged ^. #consoleLogging),
               fileLogging = fileLoggingEnv,
-              notify
+              notifications
             }
      in onCoreConfigEnv coreConfigEnv
 {-# INLINEABLE withCoreEnv #-}
@@ -392,5 +393,5 @@ instance Default (CoreConfigP ConfigPhaseArgs) where
         commandLogging = def,
         consoleLogging = def,
         fileLogging = def,
-        notify = def
+        notifications = def
       }

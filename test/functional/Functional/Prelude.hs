@@ -94,7 +94,6 @@ import Functional.ReadStrategyTest
 import Functional.ReadStrategyTest qualified as ReadStrategyTest
 import Shrun qualified as SR
 import Shrun.Configuration.Env qualified as Env
-import Shrun.Notify.MonadNotify (ShrunNote)
 import Shrun.Prelude as X
 import Test.Shrun.Verifier (ResultText (MkResultText))
 import Test.Tasty as X
@@ -121,7 +120,7 @@ runConfigIO :: ConfigIOEnv -> List String -> IO (List ResultText)
 runConfigIO env = fmap (view _2) . baseRunner @SomeException (Just env) Nothing
 
 -- | Runs the args and retrieves the sent notifications.
-runNotes :: List String -> IO (List ShrunNote)
+runNotes :: List String -> IO (List Note)
 runNotes = fmap (view _3) . baseRunner @SomeException Nothing Nothing
 
 runExitConfigLogs :: List String -> IO (List Text)
@@ -133,7 +132,7 @@ runExitFailure =
   fmap (view _2)
     . baseRunner Nothing (Just $ Proxy @ExitCode)
 
-runAllExitFailure :: List String -> IO (Tuple2 (List ResultText) (List ShrunNote))
+runAllExitFailure :: List String -> IO (Tuple2 (List ResultText) (List Note))
 runAllExitFailure =
   fmap (\(_, y, z, _) -> (y, z))
     . baseRunner Nothing (Just $ Proxy @ExitCode)
@@ -166,7 +165,7 @@ baseRunner ::
   Maybe (Proxy e) ->
   List String ->
   -- | (Config logs, logs, notifications, maybe exception)
-  IO (List Text, List ResultText, List ShrunNote, Maybe e)
+  IO (List Text, List ResultText, List Note, Maybe e)
 baseRunner mConfigIOEnv mExProxy argList = do
   (action, configLogs, ls, shrunNotes) <- mkShrunAction mConfigIOEnv argList
 
@@ -239,7 +238,7 @@ runExceptionE argList = do
 runCancelled ::
   Natural ->
   List String ->
-  IO (List ResultText, List ShrunNote)
+  IO (List ResultText, List Note)
 runCancelled secToSleep argList = do
   (action, configLogs, ls, shrunNotes) <- mkShrunAction Nothing argList
 
@@ -252,7 +251,7 @@ runCancelled secToSleep argList = do
 mkShrunAction ::
   Maybe ConfigIOEnv ->
   List String ->
-  IO (Tuple4 (IO ()) (IORef (List Text)) (IORef (List Text)) (IORef (List ShrunNote)))
+  IO (Tuple4 (IO ()) (IORef (List Text)) (IORef (List Text)) (IORef (List Note)))
 mkShrunAction mConfigIOEnv argList = do
   configLogsRef <- newIORef' []
   ls <- newIORef' []
@@ -289,8 +288,8 @@ mkShrunAction mConfigIOEnv argList = do
 readRefs ::
   IORef (List Text) ->
   IORef (List Text) ->
-  IORef (List ShrunNote) ->
-  IO (List Text, List ResultText, List ShrunNote)
+  IORef (List Note) ->
+  IO (List Text, List ResultText, List Note)
 readRefs configLogs ls ns =
   (,,)
     <$> (L.reverse <$> readIORef' configLogs)

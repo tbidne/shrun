@@ -11,8 +11,8 @@ import Integration.Utils
     defaultConfig,
     makeConfigAndAssertEq,
     makeConfigAndAssertFieldEq,
-    notifySystemOSDBus,
-    notifySystemOSNotifySend,
+    notifySystemDBus,
+    notifySystemNotifySend,
     runConfigIO,
     runNoConfigIO,
     (^=@),
@@ -69,7 +69,7 @@ import Shrun.Configuration.Data.Core
         fileLogging,
         init,
         legendKeysCache,
-        notify,
+        notifications,
         timeout
       ),
   )
@@ -137,12 +137,6 @@ import Shrun.Configuration.Data.Notify.Action
         NotifyActionCompleteFinal
       ),
     NotifyActionStartSwitch (MkNotifyActionStartSwitch),
-  )
-import Shrun.Configuration.Data.Notify.System
-  ( NotifySystemP (AppleScript, DBus, NotifySend),
-  )
-import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
   )
 import Shrun.Configuration.Data.StripControl
   ( StripControl
@@ -232,11 +226,11 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                         deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                         stripControl = StripControlNone
                       },
-                notify =
+                notifications =
                   Just
                     $ MkNotifyP
                       { actions = NotifyActionsActiveAll NotifyActionCompleteAll,
-                        system = notifySystemOSDBus,
+                        system = notifySystemDBus,
                         timeout = NotifyTimeoutNever
                       }
               },
@@ -358,12 +352,12 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                         lineTrunc = Just 180,
                         stripControl = StripControlNone
                       },
-                notify =
+                notifications =
                   Just
                     $ MkNotifyP
                       { actions = NotifyActionsActiveComplete NotifyActionCompleteFinal,
-                        system = notifySystemOSNotifySend,
-                        timeout = NotifyTimeoutSeconds 10
+                        system = notifySystemNotifySend,
+                        timeout = NotifyTimeoutMillis 10_000
                       }
               },
           commandGraph = Graph.mkEdgelessGraph commands,

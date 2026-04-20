@@ -9,8 +9,8 @@ import Integration.Prelude
 import Integration.Utils
   ( defaultConfig,
     makeConfigAndAssertEq,
-    notifySystemOSDBus,
-    notifySystemOSNotifySend,
+    notifySystemDBus,
+    notifySystemNotifySend,
     runConfigIO,
   )
 import Shrun.Command.Types (CommandP (MkCommandP))
@@ -66,7 +66,7 @@ import Shrun.Configuration.Data.Core
         fileLogging,
         init,
         legendKeysCache,
-        notify,
+        notifications,
         timeout
       ),
   )
@@ -94,12 +94,6 @@ import Shrun.Configuration.Data.Notify
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete (NotifyActionCompleteCommand),
     NotifyActionStartSwitch (MkNotifyActionStartSwitch),
-  )
-import Shrun.Configuration.Data.Notify.System
-  ( NotifySystemP (AppleScript, NotifySend),
-  )
-import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout (NotifyTimeoutNever),
   )
 import Shrun.Configuration.Data.StripControl (StripControl (StripControlSmart))
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
@@ -151,11 +145,11 @@ examplesConfig = testProp1 desc "examplesConfig" $ do
                       reportReadErrors = MkReportReadErrorsSwitch False
                     },
                 fileLogging = Nothing,
-                notify =
+                notifications =
                   Just
                     $ MkNotifyP
                       { actions = NotifyActionsActiveAll NotifyActionCompleteCommand,
-                        system = notifySystemOSNotifySend,
+                        system = notifySystemNotifySend,
                         timeout = NotifyTimeoutNever
                       }
               },

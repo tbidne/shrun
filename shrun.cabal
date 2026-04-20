@@ -136,10 +136,6 @@ library
     Shrun.Logging.Types
     Shrun.Logging.Types.Internal
     Shrun.Notify
-    Shrun.Notify.AppleScript
-    Shrun.Notify.DBus
-    Shrun.Notify.MonadNotify
-    Shrun.Notify.NotifySend
     Shrun.Prelude
     Shrun.ShellT
     Shrun.Utils
@@ -150,13 +146,13 @@ library
     , bytestring            >=0.10.12   && <0.13
     , concurrent-output     ^>=1.10.7
     , containers            >=0.6.2.1   && <0.9
-    , dbus                  >=1.2.14    && <1.5
     , deepseq               >=1.4.4.0   && <1.6
     , effects-async         ^>=0.1
     , effects-env           ^>=0.1
     , effects-evaluate      ^>=0.1
     , effects-fs            ^>=0.1
     , effects-ioref         ^>=0.1
+    , effects-notify        ^>=0.1
     , effects-optparse      ^>=0.1
     , effects-process       ^>=0.1
     , effects-stm           ^>=0.1
@@ -166,7 +162,6 @@ library
     , effects-unix          ^>=0.1
     , exception-utils       ^>=0.1
     , exceptions            ^>=0.10.4
-    , fdo-notify            ^>=0.3.1
     , fgl                   ^>=5.8.0.0
     , filepath              >=1.4.100.1 && <1.6
     , gitrev-typed          ^>=0.1
@@ -186,6 +181,7 @@ library
     , stm                   ^>=2.5.0.0
     , template-haskell      >=2.17.0.0  && <2.24
     , text                  >=1.2.3.2   && <2.2
+    , text-display          ^>=1.0.0.0
     , time                  >=1.9.3     && <1.16
     , toml-reader           >=0.2.0.0   && <0.4
     , unix                  >=2.7.2.2   && <2.9
@@ -288,8 +284,8 @@ test-suite integration
 
   build-depends:
     , base
-    , dbus
     , effects-fs
+    , effects-notify
     , effects-terminal
     , env-guard
     , filepath
@@ -328,9 +324,9 @@ test-suite functional
     , base
     , effects-async
     , effects-fs
+    , effects-notify
     , effects-unix
     , env-guard
-    , fdo-notify
     , optparse-applicative
     , shrun
     , tagged                ^>=0.8.6

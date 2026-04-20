@@ -16,7 +16,7 @@ import Shrun.Configuration.Data.Core
         fileLogging,
         init,
         legendKeysCache,
-        notify,
+        notifications,
         timeout
       ),
     CoreConfigToml,
@@ -60,7 +60,7 @@ instance DecodeTOML Toml where
     commandLogging <- getFieldOptWith tomlDecoder "command-log"
     consoleLogging <- getFieldOptWith tomlDecoder "console-log"
     fileLogging <- getFieldOptWith tomlDecoder "file-log"
-    notify <- getFieldOptWith tomlDecoder "notify"
+    notifications <- getFieldOptWith tomlDecoder "notify"
 
     legend <- decodeLegend
     pure
@@ -74,7 +74,7 @@ instance DecodeTOML Toml where
                 commandLogging,
                 consoleLogging,
                 fileLogging,
-                notify
+                notifications
               },
           legend
         }

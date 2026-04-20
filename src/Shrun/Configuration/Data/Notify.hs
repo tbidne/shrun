@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 
@@ -16,8 +15,8 @@ module Shrun.Configuration.Data.Notify
     NotifyArgs,
     NotifyToml,
     NotifyMerged,
-    NotifyEnv,
-    mergeNotifyLogging,
+    NotificationEnv,
+    mergeNotifications,
     toEnv,
   )
 where
@@ -37,18 +36,12 @@ import Shrun.Configuration.Data.Notify.Action
     NotifyActionStartSwitch,
   )
 import Shrun.Configuration.Data.Notify.System
-  ( LinuxNotifySystemMismatch (LinuxNotifySystemMismatchAppleScript),
-    NotifySystemEnv,
-    NotifySystemP (AppleScript, DBus, NotifySend),
-    OsxNotifySystemMismatch
-      ( OsxNotifySystemMismatchDBus,
-        OsxNotifySystemMismatchNotifySend
-      ),
-    displayNotifySystem,
-    mergeNotifySystem,
+  ( mergeNotifySystem,
+    parseNotifySystem,
   )
 import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout,
+  ( notifyTimeoutDecoder,
+    prettyNotifyTimeout,
   )
 import Shrun.Configuration.Data.WithDisabled
   ( WithDisabled (Disabled, With),
@@ -56,7 +49,6 @@ import Shrun.Configuration.Data.WithDisabled
   )
 import Shrun.Configuration.Data.WithDisabled qualified as WD
 import Shrun.Configuration.Default (Default, def, (<.>))
-import Shrun.Notify.DBus (MonadDBus (connectSession))
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
@@ -194,6 +186,13 @@ type family NotifyActionsF p where
   NotifyActionsF ConfigPhaseMerged = NotifyActionsActive
   NotifyActionsF ConfigPhaseEnv = NotifyActionsActive
 
+type NotifySystemF :: ConfigPhase -> Type
+type family NotifySystemF p where
+  NotifySystemF ConfigPhaseArgs = Maybe NotifySystem
+  NotifySystemF ConfigPhaseToml = Maybe NotifySystem
+  NotifySystemF ConfigPhaseMerged = NotifySystem
+  NotifySystemF ConfigPhaseEnv = NotifyEnv
+
 -- | Holds notification config. We have an invariant that if the notify config
 -- exists (i.e. is 'Just'), then at least one of actionComplete, actionStart
 -- should be Just/True.
@@ -202,7 +201,7 @@ data NotifyP p = MkNotifyP
   { -- | Notify actions.
     actions :: NotifyActionsF p,
     -- | The notification system to use.
-    system :: ConfigPhaseF p (NotifySystemP p),
+    system :: NotifySystemF p,
     -- | when to timeout successful notifications.
     timeout :: ConfigPhaseF p NotifyTimeout
   }
@@ -224,8 +223,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ ConfigPhaseF p (NotifySystemP p),
-    b ~ ConfigPhaseF p (NotifySystemP p)
+    a ~ NotifySystemF p,
+    b ~ NotifySystemF p
   ) =>
   LabelOptic "system" k (NotifyP p) (NotifyP p) a b
   where
@@ -272,8 +271,8 @@ instance Pretty NotifyMerged where
   pretty c =
     vcat
       [ pretty (c ^. #actions),
-        "system: " <> pretty (c ^. #system),
-        "timeout: " <> pretty (c ^. #timeout)
+        "system: " <> pretty (display $ c ^. #system),
+        "timeout: " <> prettyNotifyTimeout (c ^. #timeout)
       ]
 
 type NotifyArgs = NotifyP ConfigPhaseArgs
@@ -282,7 +281,7 @@ type NotifyToml = NotifyP ConfigPhaseToml
 
 type NotifyMerged = NotifyP ConfigPhaseMerged
 
-type NotifyEnv = NotifyP ConfigPhaseEnv
+type NotificationEnv = NotifyP ConfigPhaseEnv
 
 deriving stock instance Eq (NotifyP ConfigPhaseArgs)
 
@@ -306,19 +305,24 @@ instance Default NotifyArgs where
       }
 
 -- | Merges args and toml configs.
-mergeNotifyLogging ::
+mergeNotifications ::
   NotifyArgs ->
   Maybe NotifyToml ->
   Maybe NotifyMerged
-mergeNotifyLogging args mToml =
-  mActions <&> \actions ->
-    MkNotifyP
-      { actions,
-        system =
-          mergeNotifySystem (args ^. #system) (mToml ^? Utils.surroundJust #system),
-        timeout =
-          (args ^. #timeout) <.> (mToml ^? Utils.surroundJust #timeout)
-      }
+mergeNotifications args mToml = do
+  case mActions of
+    Nothing -> Nothing
+    Just actions -> do
+      -- Also, no need to do this unless we are actually running with
+      -- notifications.
+      let system = mergeNotifySystem (args ^. #system) (mToml ^? Utils.surroundJust #system)
+      Just
+        $ MkNotifyP
+          { actions,
+            system,
+            timeout =
+              (args ^. #timeout) <.> (mToml ^? Utils.surroundJust #timeout)
+          }
   where
     mActionComplete :: Maybe NotifyActionComplete
     mActionComplete =
@@ -345,8 +349,8 @@ instance DecodeTOML NotifyToml where
               start
             }
 
-    system <- getFieldOptWith tomlDecoder "system"
-    timeout <- getFieldOptWith tomlDecoder "timeout"
+    system <- getFieldOptWith (parseNotifySystem tomlDecoder) "system"
+    timeout <- getFieldOptWith notifyTimeoutDecoder "timeout"
     pure
       $ MkNotifyP
         { actions,
@@ -354,42 +358,22 @@ instance DecodeTOML NotifyToml where
           timeout
         }
 
-#if OSX
-
 toEnv ::
   ( HasCallStack,
+    MonadNotify m,
     MonadThrow m
   ) =>
   NotifyMerged ->
-  m NotifyEnv
-toEnv notifyMerged = case systemMerged of
-  DBus _ -> throwM OsxNotifySystemMismatchDBus
-  NotifySend -> throwM OsxNotifySystemMismatchNotifySend
-  AppleScript -> pure $ mkNotify notifyMerged AppleScript
+  m (NotifyP ConfigPhaseEnv)
+toEnv notifyMerged = do
+  system <- notifySystemToOs systemMerged
+  notifyEnv <- initNotifyEnv system
+  pure $ mkNotify notifyMerged notifyEnv
   where
     systemMerged = notifyMerged ^. #system
-
-#else
-
-toEnv ::
-  ( HasCallStack,
-    MonadDBus m,
-    MonadThrow m
-  ) =>
-  NotifyMerged ->
-  m NotifyEnv
-toEnv notifyMerged = case systemMerged of
-  AppleScript -> throwM LinuxNotifySystemMismatchAppleScript
-  DBus _ -> mkNotify notifyMerged . DBus <$> connectSession
-  NotifySend -> pure $ mkNotify notifyMerged NotifySend
-  where
-    systemMerged = notifyMerged ^. #system
-
-#endif
-
 {-# INLINEABLE toEnv #-}
 
-mkNotify :: NotifyMerged -> NotifySystemEnv -> NotifyEnv
+mkNotify :: NotifyMerged -> NotifySystemF ConfigPhaseEnv -> NotifyP ConfigPhaseEnv
 mkNotify notifyToml systemP2 =
   MkNotifyP
     { actions = notifyToml ^. #actions,

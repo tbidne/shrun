@@ -25,16 +25,8 @@ import Effects.System.Posix.Signals
       ),
   )
 import Effects.System.Posix.Signals qualified as Signals
-import Shrun.Configuration.Data.Notify.System
-  ( NotifySystemP (AppleScript, DBus, NotifySend),
-  )
 import Shrun.Configuration.Env.Types (Env)
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger)
-import Shrun.Notify.AppleScript qualified as AppleScript
-import Shrun.Notify.DBus (MonadDBus)
-import Shrun.Notify.DBus qualified as DBus
-import Shrun.Notify.MonadNotify (MonadNotify (notify))
-import Shrun.Notify.NotifySend qualified as NotifySend
 import Shrun.Prelude
 
 -- | `ShellT` is the main application type that runs shell commands.
@@ -46,7 +38,6 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       Monad,
       MonadAsync,
       MonadAtomic,
-      MonadDBus,
       MonadCatch,
       MonadEvaluate,
       MonadFileReader,
@@ -57,6 +48,7 @@ newtype ShellT env m a = MkShellT (ReaderT env m a)
       MonadIORef,
       MonadMask,
       MonadMVar,
+      MonadNotify,
       MonadPathWriter,
       MonadPosixFiles,
       MonadProcess,
@@ -82,21 +74,6 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- https://gitlab.haskell.org/ghc/ghc/-/issues/15376
 
 deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT (Env r) m)
-
-instance
-  ( MonadDBus m,
-    MonadProcess m
-  ) =>
-  MonadNotify (ShellT (Env r) m)
-  where
-  notify note =
-    asks (preview (#config % #notify %? #system)) >>= \case
-      Nothing -> pure Nothing
-      Just nenv -> sendNote nenv
-    where
-      sendNote (DBus client) = DBus.notifyDBus client note
-      sendNote NotifySend = NotifySend.notifyNotifySend note
-      sendNote AppleScript = AppleScript.notifyAppleScript note
 
 -- REVIEW: Would be nice if we could derive this...
 

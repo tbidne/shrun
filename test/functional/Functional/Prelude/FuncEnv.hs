@@ -40,8 +40,6 @@ import Shrun.Logging.MonadRegionLogger
         withRegion
       ),
   )
-import Shrun.Notify.DBus (MonadDBus)
-import Shrun.Notify.MonadNotify (MonadNotify (notify), ShrunNote)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 
@@ -124,7 +122,6 @@ newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
       Monad,
       MonadAsync,
       MonadAtomic,
-      MonadDBus,
       MonadCatch,
       MonadEnv,
       MonadEvaluate,
@@ -136,6 +133,7 @@ newtype ConfigIO a = MkConfigIO (ReaderT ConfigIOEnv IO a)
       MonadIORef,
       MonadMask,
       MonadMVar,
+      MonadNotify,
       MonadOptparse,
       MonadPathWriter,
       MonadPosixFiles,
@@ -201,7 +199,7 @@ instance MonadTerminal ConfigIO where
 data FuncEnv = MkFuncEnv
   { coreEnv :: Env (),
     logs :: IORef (List Text),
-    shrunNotes :: IORef (List ShrunNote)
+    shrunNotes :: IORef (List Note)
   }
 
 instance
@@ -236,8 +234,8 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ IORef (List ShrunNote),
-    b ~ IORef (List ShrunNote)
+    a ~ IORef (List Note),
+    b ~ IORef (List Note)
   ) =>
   LabelOptic "shrunNotes" k FuncEnv FuncEnv a b
   where
@@ -294,8 +292,8 @@ instance (MonadIO m) => MonadRegionLogger (ShellT FuncEnv m) where
 
   regionList = liftIO $ atomically $ newTMVar []
 
-instance (MonadIO m) => MonadNotify (ShellT FuncEnv m) where
-  notify note = do
+instance {-# OVERLAPS #-} (MonadIO m) => MonadNotify (ShellT FuncEnv m) where
+  notify _ note = do
     notesRef <- asks (view #shrunNotes)
     liftIO $ modifyIORef' notesRef (note :)
-    pure Nothing
+    pure ()

@@ -1,20 +1,8 @@
 -- | Functional tests for notifications
 module Functional.Notify (specs) where
 
-import DBus.Notify (UrgencyLevel (Normal))
+import Effects.Notify qualified as Notify
 import Functional.Prelude
-import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout (NotifyTimeoutSeconds),
-  )
-import Shrun.Notify.MonadNotify
-  ( ShrunNote
-      ( MkShrunNote,
-        body,
-        summary,
-        timeout,
-        urgency
-      ),
-  )
 
 specs :: TestTree
 specs = testGroup "Notify" notifyTests
@@ -50,18 +38,14 @@ notifySystem = testCase ("Runs --notify-system " <> notifySystemArg) $ do
           "sleep 3"
         ]
     expected =
-      [ MkShrunNote
-          { summary = "[sleep 3] Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          },
-        MkShrunNote
-          { summary = "[sleep 2] Finished",
-            body = "2 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          }
+      [ Notify.mkNote "[sleep 3] Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 2] Finished"
+          & Notify.setBody (Just "2 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
 
 notifyActionCommand :: TestTree
@@ -79,18 +63,14 @@ notifyActionCommand = testCase "Runs --notify-action-complete command" $ do
           "sleep 3"
         ]
     expected =
-      [ MkShrunNote
-          { summary = "[sleep 3] Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          },
-        MkShrunNote
-          { summary = "[sleep 2] Finished",
-            body = "2 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          }
+      [ Notify.mkNote "[sleep 3] Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 2] Finished"
+          & Notify.setBody (Just "2 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
 
 notifyActionAll :: TestTree
@@ -108,24 +88,18 @@ notifyActionAll = testCase "Runs --notify-action-complete all" $ do
           "sleep 3"
         ]
     expected =
-      [ MkShrunNote
-          { summary = "Shrun Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          },
-        MkShrunNote
-          { summary = "[sleep 3] Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          },
-        MkShrunNote
-          { summary = "[sleep 2] Finished",
-            body = "2 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          }
+      [ Notify.mkNote "Shrun Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 3] Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 2] Finished"
+          & Notify.setBody (Just "2 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
 
 notifyTimeout5 :: TestTree
@@ -145,22 +119,16 @@ notifyTimeout5 = testCase "Runs --notify-timeout 5" $ do
           "sleep 3"
         ]
     expected =
-      [ MkShrunNote
-          { summary = "Shrun Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 5
-          },
-        MkShrunNote
-          { summary = "[sleep 3] Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 5
-          },
-        MkShrunNote
-          { summary = "[sleep 2] Finished",
-            body = "2 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 5
-          }
+      [ Notify.mkNote "Shrun Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 5_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 3] Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 5_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 2] Finished"
+          & Notify.setBody (Just "2 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 5_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
