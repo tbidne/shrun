@@ -8,7 +8,6 @@ module Shrun
   )
 where
 
-import DBus.Notify (UrgencyLevel (Critical, Normal))
 import Data.List qualified as L
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread (throwTo), ThreadId, myThreadId)
@@ -91,9 +90,8 @@ import Shrun.Logging.Types
     LogRegion (LogNoRegion, LogRegion),
   )
 import Shrun.Logging.Types qualified as Types
+import Shrun.Notify (NotifyMessage)
 import Shrun.Notify qualified as Notify
-import Shrun.Notify.MonadNotify (MonadNotify, NotifyMessage)
-import Shrun.Notify.MonadNotify qualified as MonadNotify
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import Shrun.Utils qualified as Utils
@@ -225,9 +223,9 @@ runCommand globalStartTime cmd = do
           startTimeMsg = TimerFormat.formatRelativeTime ProseCompact rt
           notifyMsg = "Started after " <> startTimeMsg
       Notify.sendNotif
-        (MonadNotify.fromUnlined $ formattedCmd <> " Started")
-        (MonadNotify.fromUnlined notifyMsg)
-        Normal
+        (Notify.fromUnlined $ formattedCmd <> " Started")
+        (Notify.fromUnlined notifyMsg)
+        NotifyUrgencyNormal
     _ -> pure ()
 
   cmdResult <- tryCommandLogging cmd
@@ -240,9 +238,9 @@ runCommand globalStartTime cmd = do
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteCommand is set
   case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
     Just NotifyActionCompleteAll ->
-      Notify.sendNotif (MonadNotify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
+      Notify.sendNotif (Notify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
     Just NotifyActionCompleteCommand ->
-      Notify.sendNotif (MonadNotify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
+      Notify.sendNotif (Notify.fromUnlined $ formattedCmd <> " Finished") notifyMsg urgency
     _ -> pure ()
 {-# INLINEABLE runCommand #-}
 
@@ -277,7 +275,7 @@ putCommandFinalLog consoleQueue mkConsoleLog mkFileLog = do
 type CommandResultData m =
   Tuple4
     -- Urgency level for notifs
-    UrgencyLevel
+    NotifyUrgency
     -- Console log
     (m ConsoleLog)
     -- File log, if active
@@ -306,9 +304,9 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
     keyHide = commonLogging ^. #keyHide
 
     (urgency, lvl, rt, messages) = case cmdResult of
-      CommandResultFailure t (MkStderr []) -> (Critical, LevelError, t, ["<no error message>"])
-      CommandResultFailure t (MkStderr errs) -> (Critical, LevelError, t, errs)
-      CommandResultSuccess t -> (Normal, LevelSuccess, t, [])
+      CommandResultFailure t (MkStderr []) -> (NotifyUrgencyCritical, LevelError, t, ["<no error message>"])
+      CommandResultFailure t (MkStderr errs) -> (NotifyUrgencyCritical, LevelError, t, errs)
+      CommandResultSuccess t -> (NotifyUrgencyNormal, LevelSuccess, t, [])
 
     timeMsg = TimerFormat.formatRelativeTime timerFormat rt
     notifyMsg = Notify.formatNotifyMessage timeMsg messages
@@ -379,6 +377,7 @@ printFinalResult ::
     HasLogging env m,
     HasNotifyConfig env,
     MonadAtomic m,
+    MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -424,7 +423,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
 
   -- Send off a 'finished' notification
   anyError <- readTVarA' =<< asks getAnyError
-  let urgency = if anyError then Critical else Normal
+  let urgency = if anyError then NotifyUrgencyCritical else NotifyUrgencyNormal
       notifyBody = Notify.formatNotifyMessage totalTimeTxt []
 
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteFinal is set
@@ -701,7 +700,7 @@ teardown startTime = do
   cfg <- asks getNotifyConfig
   case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
     -- If complete notifcations are on at all, send one
-    Just _ -> Notify.sendNotif notifyBody "" Critical
+    Just _ -> Notify.sendNotif notifyBody "" NotifyUrgencyCritical
     _ -> pure ()
 {-# INLINEABLE teardown #-}
 

@@ -19,9 +19,7 @@ import Shrun.Configuration.Data.Notify.Action
     NotifyActionStartSwitch (MkNotifyActionStartSwitch),
   )
 import Shrun.Configuration.Data.Notify.Action qualified as Action
-import Shrun.Configuration.Data.Notify.System (NotifySystemArgs)
 import Shrun.Configuration.Data.Notify.System qualified as System
-import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout)
 import Shrun.Configuration.Data.Notify.Timeout qualified as Timeout
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
@@ -76,7 +74,7 @@ notifyActionStartParser = Utils.switchParser MkNotifyActionStartSwitch "notify-a
   where
     helpTxt = "Sends a notification when a command is started."
 
-notifySystemParser :: Parser (Maybe NotifySystemArgs)
+notifySystemParser :: Parser (Maybe NotifySystem)
 notifySystemParser = mainParser
   where
     mainParser =

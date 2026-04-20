@@ -1,10 +1,8 @@
 -- | Functional tests for graph.
 module Functional.Graph (tests) where
 
-import DBus.Notify (UrgencyLevel (Critical))
 import Data.Text qualified as T
 import Functional.Prelude
-import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout (NotifyTimeoutSeconds))
 import Test.Shrun.Verifier qualified as V
 
 tests :: TestTree
@@ -530,15 +528,15 @@ cancelSequential = testCase desc $ do
 
   case notes of
     [n] -> do
-      "" @=? n ^. #body
+      Just "" @=? n ^. #body
 
-      let summary = n ^. (#summary % #unNotifyMessage)
+      let summary = n ^. #summary
           err = "Unexpected summary: " ++ unpack summary
 
       assertBool err $ expectedBody `T.isPrefixOf` summary
 
-      NotifyTimeoutSeconds 10 @=? n ^. #timeout
-      Critical @=? n ^. #urgency
+      Just (NotifyTimeoutMillis 10_000) @=? n ^. #timeout
+      Just NotifyUrgencyCritical @=? n ^. #urgency
     other ->
       assertFailure
         $ "Expected exactly one note, received: "
@@ -586,15 +584,15 @@ timeoutSequential = testCase desc $ do
 
   case notes of
     [n] -> do
-      "3 seconds" @=? n ^. #body
+      Just "3 seconds" @=? n ^. #body
 
-      let summary = n ^. (#summary % #unNotifyMessage)
+      let summary = n ^. #summary
           err = "Unexpected summary: " ++ unpack summary
 
       assertBool err $ "Shrun Finished" `T.isPrefixOf` summary
 
-      NotifyTimeoutSeconds 10 @=? n ^. #timeout
-      Critical @=? n ^. #urgency
+      Just (NotifyTimeoutMillis 10_000) @=? n ^. #timeout
+      Just NotifyUrgencyCritical @=? n ^. #urgency
     other ->
       assertFailure
         $ "Expected exactly one note, received: "

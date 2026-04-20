@@ -32,7 +32,6 @@ import Shrun.Logging.MonadRegionLogger
       ),
   )
 import Shrun.Logging.Types (LogRegion)
-import Shrun.Notify.MonadNotify (MonadNotify (notify))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT, runShellT)
 import System.Environment.Guard (guardOrElse')
@@ -88,7 +87,7 @@ notifySendHandlesLegendQuotes = testCase "notify-send handles legend quotes" $ d
         "5",
         "--config",
         "examples/config.toml",
-        "ui"
+        "frontend"
       ]
 #endif
 
@@ -115,53 +114,50 @@ mkArgs system =
 -- we are using the other fields, and it's not like we can only create
 -- one or two. Consider filing a GHC issue for this.
 
-data NotifyEnv = MkNotifyEnv
-  { unNotifyEnv :: Env (),
+data NotificationsEnv = MkNotificationsEnv
+  { unNotificationsEnv :: Env (),
     consoleQueue :: TBQueue (LogRegion ()),
     logsRef :: IORef (List Text)
   }
 
-instance HasAnyError NotifyEnv where
-  getAnyError = getAnyError . (.unNotifyEnv)
+instance HasAnyError NotificationsEnv where
+  getAnyError = getAnyError . (.unNotificationsEnv)
 
-instance HasCommands NotifyEnv where
-  getCleanup = getCleanup . (.unNotifyEnv)
-  getCommandDepGraph = getCommandDepGraph . (.unNotifyEnv)
-  getCommandStatusMap = getCommandStatusMap . (.unNotifyEnv)
+instance HasCommands NotificationsEnv where
+  getCleanup = getCleanup . (.unNotificationsEnv)
+  getCommandDepGraph = getCommandDepGraph . (.unNotificationsEnv)
+  getCommandStatusMap = getCommandStatusMap . (.unNotificationsEnv)
 
-instance HasCommandLogging NotifyEnv where
-  getCommandLogging = getCommandLogging . (.unNotifyEnv)
+instance HasCommandLogging NotificationsEnv where
+  getCommandLogging = getCommandLogging . (.unNotificationsEnv)
 
-instance HasCommonLogging NotifyEnv where
-  getCommonLogging = getCommonLogging . (.unNotifyEnv)
+instance HasCommonLogging NotificationsEnv where
+  getCommonLogging = getCommonLogging . (.unNotificationsEnv)
 
-instance HasConsoleLogging NotifyEnv () where
-  getConsoleLogging = getConsoleLogging . (.unNotifyEnv)
+instance HasConsoleLogging NotificationsEnv () where
+  getConsoleLogging = getConsoleLogging . (.unNotificationsEnv)
 
-instance HasFileLogging NotifyEnv where
-  getFileLogging = getFileLogging . (.unNotifyEnv)
+instance HasFileLogging NotificationsEnv where
+  getFileLogging = getFileLogging . (.unNotificationsEnv)
 
-instance HasInit NotifyEnv where
-  getInit = getInit . (.unNotifyEnv)
+instance HasInit NotificationsEnv where
+  getInit = getInit . (.unNotificationsEnv)
 
-instance HasNotifyConfig NotifyEnv where
-  getNotifyConfig = getNotifyConfig . (.unNotifyEnv)
+instance HasNotifyConfig NotificationsEnv where
+  getNotifyConfig = getNotifyConfig . (.unNotificationsEnv)
 
-instance HasTimeout NotifyEnv where
-  getTimeout = getTimeout . (.unNotifyEnv)
+instance HasTimeout NotificationsEnv where
+  getTimeout = getTimeout . (.unNotificationsEnv)
 
-  getHasTimedOut = getHasTimedOut . (.unNotifyEnv)
+  getHasTimedOut = getHasTimedOut . (.unNotificationsEnv)
 
-liftNotify :: ShellT (Env ()) IO a -> ShellT NotifyEnv IO a
+liftNotify :: ShellT (Env ()) IO a -> ShellT NotificationsEnv IO a
 liftNotify m = do
-  MkNotifyEnv env _ _ <- ask
+  MkNotificationsEnv env _ _ <- ask
   liftIO $ runShellT m env
 
-instance MonadNotify (ShellT NotifyEnv IO) where
-  notify = liftNotify . notify
-
-instance MonadRegionLogger (ShellT NotifyEnv IO) where
-  type Region (ShellT NotifyEnv IO) = ()
+instance MonadRegionLogger (ShellT NotificationsEnv IO) where
+  type Region (ShellT NotificationsEnv IO) = ()
 
   logGlobal t = asks (.logsRef) >>= \ref -> modifyIORef' ref (t :)
   logRegion _ _ t = asks (.logsRef) >>= \ref -> modifyIORef' ref (t :)
@@ -183,7 +179,7 @@ runShrun args = do
         ( withEnv
             ( \env ->
                 runShellT shrun
-                  $ MkNotifyEnv env consoleQueue logsRef
+                  $ MkNotificationsEnv env consoleQueue logsRef
             )
         )
 

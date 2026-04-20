@@ -53,7 +53,7 @@ import Shrun.Configuration.Data.Core
         fileLogging,
         init,
         legendKeysCache,
-        notify,
+        notifications,
         timeout
       ),
     CoreConfigToml,
@@ -89,9 +89,6 @@ import Shrun.Configuration.Data.Notify
     NotifyP (MkNotifyP, actions, system, timeout),
   )
 import Shrun.Configuration.Data.Notify.Action (NotifyActionStartSwitch (MkNotifyActionStartSwitch))
-import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
-  )
 import Shrun.Configuration.Data.Truncation
   ( LineTruncation (Detected, Undetected),
     Truncation (MkTruncation),
@@ -152,7 +149,7 @@ genCoreConfig = do
   commandLogging <- genMaybe genCommandLogging
   consoleLogging <- genMaybe genConsoleLogging
   fileLogging <- genMaybe genFileLogging
-  notify <- genMaybe genNotify
+  notifications <- genMaybe genNotify
   pure
     $ MkCoreConfigP
       { init,
@@ -162,7 +159,7 @@ genCoreConfig = do
         commandLogging,
         consoleLogging,
         fileLogging,
-        notify
+        notifications
       }
   where
     genTimeout = MkTimeout <$> genPos
@@ -264,7 +261,7 @@ genCoreConfig = do
     genNotifyTimeout =
       G.frequency
         [ (1, pure NotifyTimeoutNever),
-          (3, NotifyTimeoutSeconds <$> genNat)
+          (3, NotifyTimeoutMillis <$> genNat)
         ]
 
     genLineTruncation =

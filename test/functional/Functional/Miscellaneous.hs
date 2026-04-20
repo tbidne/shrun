@@ -5,12 +5,10 @@
 -- | Misc tests
 module Functional.Miscellaneous (specs) where
 
-import DBus.Notify (UrgencyLevel (Critical))
 import Data.Text qualified as T
 import Effects.FileSystem.PathReader (XdgDirectory (XdgConfig, XdgState))
 import Functional.Prelude
 import Functional.TestArgs (TestArgs)
-import Shrun.Configuration.Data.Notify.Timeout (NotifyTimeout (NotifyTimeoutSeconds))
 import Test.Shrun.Verifier (ExpectedText)
 import Test.Shrun.Verifier qualified as V
 
@@ -160,15 +158,15 @@ isCancelled testArgs = testCase "Shrun is cancelled" $ do
 
   case notes of
     [n] -> do
-      "" @=? n ^. #body
+      Just "" @=? n ^. #body
 
-      let summary = n ^. (#summary % #unNotifyMessage)
+      let summary = n ^. #summary
           err = "Unexpected summary: " ++ unpack summary
 
       assertBool err $ expectedBody `T.isPrefixOf` summary
 
-      NotifyTimeoutSeconds 10 @=? n ^. #timeout
-      Critical @=? n ^. #urgency
+      Just (NotifyTimeoutMillis 10_000) @=? n ^. #timeout
+      Just NotifyUrgencyCritical @=? n ^. #urgency
     other ->
       assertFailure
         $ "Expected exactly one note, received: "

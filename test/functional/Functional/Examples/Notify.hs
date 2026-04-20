@@ -1,22 +1,7 @@
 module Functional.Examples.Notify (tests) where
 
-import DBus.Notify (UrgencyLevel (Normal))
+import Effects.Notify qualified as Notify
 import Functional.Prelude
-import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout
-      ( NotifyTimeoutNever,
-        NotifyTimeoutSeconds
-      ),
-  )
-import Shrun.Notify.MonadNotify
-  ( ShrunNote
-      ( MkShrunNote,
-        body,
-        summary,
-        timeout,
-        urgency
-      ),
-  )
 
 -- NOTE: If tests in this module fail, fix then update configuration.md!
 
@@ -47,12 +32,10 @@ notifyActionCompleteFinal = testCase "Runs --notify-action-complete final" $ do
           "sleep 3"
         ]
     expected =
-      [ MkShrunNote
-          { summary = "Shrun Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          }
+      [ Notify.mkNote "Shrun Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
 
 notifyActionStartOn :: TestTree
@@ -72,18 +55,14 @@ notifyActionStartOn = testCase "Runs --notify-action-start on" $ do
           "sleep 3"
         ]
     expected =
-      [ MkShrunNote
-          { summary = "[sleep 3] Started",
-            body = "Started after 2 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          },
-        MkShrunNote
-          { summary = "[sleep 2] Started",
-            body = "Started after 0 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutSeconds 10
-          }
+      [ Notify.mkNote "[sleep 3] Started"
+          & Notify.setBody (Just "Started after 2 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 2] Started"
+          & Notify.setBody (Just "Started after 0 seconds")
+          & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
 
 notifyTimeoutNever :: TestTree
@@ -103,22 +82,16 @@ notifyTimeoutNever = testCase "Runs --notify-timeout off" $ do
           "sleep 3"
         ]
     expected =
-      [ MkShrunNote
-          { summary = "Shrun Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutNever
-          },
-        MkShrunNote
-          { summary = "[sleep 3] Finished",
-            body = "3 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutNever
-          },
-        MkShrunNote
-          { summary = "[sleep 2] Finished",
-            body = "2 seconds",
-            urgency = Normal,
-            timeout = NotifyTimeoutNever
-          }
+      [ Notify.mkNote "Shrun Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just NotifyTimeoutNever)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 3] Finished"
+          & Notify.setBody (Just "3 seconds")
+          & Notify.setTimeout (Just NotifyTimeoutNever)
+          & Notify.setUrgency (Just NotifyUrgencyNormal),
+        Notify.mkNote "[sleep 2] Finished"
+          & Notify.setBody (Just "2 seconds")
+          & Notify.setTimeout (Just NotifyTimeoutNever)
+          & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]

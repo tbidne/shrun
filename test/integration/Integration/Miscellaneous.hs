@@ -10,7 +10,7 @@ import Integration.Utils
   ( ConfigIO,
     makeConfigAndAssertEq,
     makeConfigAndAssertFieldEq,
-    notifySystemOSDBus,
+    notifySystemDBus,
     runConfigIO,
     runNoConfigIO,
     (^=@),
@@ -68,7 +68,7 @@ import Shrun.Configuration.Data.Core
         fileLogging,
         init,
         legendKeysCache,
-        notify,
+        notifications,
         timeout
       ),
   )
@@ -114,16 +114,12 @@ import Shrun.Configuration.Data.Notify
 import Shrun.Configuration.Data.Notify.Action
   ( NotifyActionComplete (NotifyActionCompleteAll),
   )
-import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
-  )
 import Shrun.Configuration.Data.StripControl (StripControl (StripControlAll, StripControlSmart))
 import Shrun.Configuration.Data.Truncation
   ( Truncation (MkTruncation, unTruncation),
   )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Shrun.Configuration.Env (withEnv)
-import Shrun.Notify.DBus (MonadDBus)
 
 specs :: IO TestArgs -> TestTree
 specs testArgs =
@@ -448,7 +444,7 @@ testNotifyTimeoutString = testProp1 desc "testNotifyTimeoutString" $ do
     args = ["-c", getIntConfig "misc", "cmd1"]
 
     expected =
-      [ #coreConfig % #notify %? #timeout ^?=@ Just (NotifyTimeoutSeconds 7203)
+      [ #coreConfig % #notifications %? #timeout ^?=@ Just (NotifyTimeoutMillis 7203_000)
       ]
 
 testConfigsMerged :: TestTree
@@ -519,7 +515,7 @@ testConfigsMergedDisabled = testProp1 desc "testConfigsMergedDisabled" $ do
           -- file logging
           MkSomeSetter (#coreConfig % #fileLogging %? #file % #path % _FPManual) [osp|cfg3 file|],
           -- notify
-          MkSomeSetter (#coreConfig % #notify) Nothing,
+          MkSomeSetter (#coreConfig % #notifications) Nothing,
           -- toml paths
           MkSomeSetter #tomlPaths tomlPaths
         ]
@@ -605,11 +601,11 @@ expectedMultiConfig =
                     lineTrunc = Just $ MkTruncation {unTruncation = 300},
                     stripControl = StripControlSmart
                   },
-            notify =
+            notifications =
               Just
                 $ MkNotifyP
                   { actions = NotifyActionsActiveAll NotifyActionCompleteAll,
-                    system = notifySystemOSDBus,
+                    system = notifySystemDBus,
                     timeout = NotifyTimeoutNever
                   }
           },
@@ -669,7 +665,6 @@ newtype TermWidthFailIO a = MkTermWidthFailIO (ConfigIO a)
       Monad,
       MonadAtomic,
       MonadCatch,
-      MonadDBus,
       MonadEnv,
       MonadFileReader,
       MonadFileWriter,

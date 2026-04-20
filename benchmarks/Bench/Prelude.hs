@@ -28,7 +28,6 @@ import Shrun.Logging.MonadRegionLogger
         withRegion
       ),
   )
-import Shrun.Notify.MonadNotify (MonadNotify (notify))
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 import System.Environment qualified as SysEnv
@@ -63,8 +62,9 @@ instance MonadRegionLogger (ShellT BenchEnv IO) where
 
   regionList = atomically $ newTMVar []
 
-instance MonadNotify (ShellT BenchEnv IO) where
-  notify _ = pure Nothing
+instance {-# OVERLAPS #-} MonadNotify (ShellT BenchEnv IO) where
+  initNotifyEnv _ = pure $ error "unimplemented"
+  notify _ _ = pure ()
 
 runBench :: List String -> IO ()
 runBench argList = do

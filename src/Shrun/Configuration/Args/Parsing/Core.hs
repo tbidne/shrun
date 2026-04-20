@@ -24,7 +24,7 @@ import Shrun.Configuration.Data.Core
         fileLogging,
         init,
         legendKeysCache,
-        notify,
+        notifications,
         timeout
       ),
   )
@@ -50,7 +50,7 @@ coreParser = do
   fileLogging <-
     OA.parserOptionGroup "File Logging options:" FileLogging.fileLoggingParser
 
-  notify <- OA.parserOptionGroup "Notifications options:" Notify.notifyParser
+  notifications <- OA.parserOptionGroup "Notifications options:" Notify.notifyParser
 
   pure
     $ MkCoreConfigP
@@ -61,7 +61,7 @@ coreParser = do
         consoleLogging,
         commandLogging,
         fileLogging,
-        notify
+        notifications
       }
 
 timeoutParser :: Parser (Maybe (WithDisabled Timeout))

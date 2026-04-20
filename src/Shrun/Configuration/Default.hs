@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Shrun.Configuration.Default
   ( Default (..),
     fromMaybe,
@@ -27,3 +29,14 @@ fromMaybe Nothing = def
 x <.> y = fromMaybe (x <|> y)
 
 infixr 6 <.>
+
+#if OSX
+instance Default NotifySystem where
+  def = NotifySystemAppleScript
+#else
+instance Default NotifySystem where
+  def = NotifySystemDBus
+#endif
+
+instance Default NotifyTimeout where
+  def = NotifyTimeoutMillis 10_000

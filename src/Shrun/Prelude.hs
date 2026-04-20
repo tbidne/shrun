@@ -204,6 +204,7 @@ import Data.Tuple as X (fst, snd, uncurry)
 #if MIN_VERSION_base(4, 20, 0)
 import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4)
 #endif
+import Data.Text.Display as X (Display, display)
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
 import Effects.Concurrent.Async as X (MonadAsync)
@@ -268,6 +269,28 @@ import Effects.IORef as X
         writeIORef'
       ),
   )
+import Effects.Notify as X
+  ( MonadNotify (initNotifyEnv, notify),
+    Note,
+    NotifyEnv,
+    NotifyParseException,
+    NotifySystem
+      ( NotifySystemAppleScript,
+        NotifySystemDBus,
+        NotifySystemNotifySend,
+        NotifySystemWindows
+      ),
+    NotifySystemOs,
+    NotifyTimeout (NotifyTimeoutMillis, NotifyTimeoutNever),
+    NotifyUrgency
+      ( NotifyUrgencyCritical,
+        NotifyUrgencyLow,
+        NotifyUrgencyNormal
+      ),
+    defaultNotifySystem,
+    defaultNotifySystemOs,
+    notifySystemToOs,
+  )
 import Effects.Optparse as X (MonadOptparse (customExecParser, execParser))
 import Effects.System.Environment as X (MonadEnv (withArgs))
 import Effects.System.Posix.Files as X (MonadPosixFiles)
@@ -304,7 +327,7 @@ import GHC.Generics as X (Generic)
 import GHC.Integer as X (Integer)
 import GHC.Natural as X (Natural)
 import GHC.Num as X (Num ((*), (+), (-)))
-import GHC.Real as X (Integral, truncate)
+import GHC.Real as X (Integral, div, truncate)
 import GHC.Show as X (Show (show, showsPrec))
 import GHC.Stack as X (HasCallStack, withFrozenCallStack)
 import Numeric.Algebra (MGroup)

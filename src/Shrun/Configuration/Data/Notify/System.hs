@@ -1,135 +1,38 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides type for notifications.
 module Shrun.Configuration.Data.Notify.System
   ( -- * Notify system
-    NotifySystemP (..),
-    NotifySystemArgs,
-    NotifySystemToml,
-    NotifySystemMerged,
-    NotifySystemEnv,
     parseNotifySystem,
     notifySystemStr,
-    showNotifySystem,
-    displayNotifySystem,
-    DBusF,
     mergeNotifySystem,
     defNotifySystemStr,
-
-    -- * Exceptions
-    OsxNotifySystemMismatch (..),
-    LinuxNotifySystemMismatch (..),
   )
 where
 
-import DBus.Client (Client)
-import Shrun.Configuration.Data.ConfigPhase
-  ( ConfigPhase
-      ( ConfigPhaseArgs,
-        ConfigPhaseEnv,
-        ConfigPhaseMerged,
-        ConfigPhaseToml
-      ),
-  )
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 import Shrun.Utils qualified as Utils
 
--- | Maps DBus to its phased param.
-type DBusF :: ConfigPhase -> Type
-type family DBusF p where
-  DBusF ConfigPhaseArgs = ()
-  DBusF ConfigPhaseToml = ()
-  DBusF ConfigPhaseMerged = ()
-  DBusF ConfigPhaseEnv = Client
-
-type NotifySystemArgs = NotifySystemP ConfigPhaseArgs
-
-type NotifySystemToml = NotifySystemP ConfigPhaseToml
-
-type NotifySystemMerged = NotifySystemP ConfigPhaseMerged
-
-type NotifySystemEnv = NotifySystemP ConfigPhaseEnv
-
--- | Notification systems.
-type NotifySystemP :: ConfigPhase -> Type
-data NotifySystemP p
-  = -- | Uses apple-script.
-    AppleScript
-  | -- | Uses DBus.
-    DBus (DBusF p)
-  | -- | Uses notify-send.
-    NotifySend
-
-instance Bounded NotifySystemToml where
-  minBound = AppleScript
-  maxBound = NotifySend
-
-instance Enum NotifySystemToml where
-  toEnum 0 = AppleScript
-  toEnum 1 = DBus ()
-  toEnum 2 = NotifySend
-  toEnum x = error $ "NotifySystemToml.toEnum: unrecognized " ++ show x
-
-  fromEnum AppleScript = 0
-  fromEnum (DBus ()) = 1
-  fromEnum NotifySend = 2
-
-instance Pretty NotifySystemMerged where
-  pretty = \case
-    AppleScript -> "apple-script"
-    DBus () -> "dbus"
-    NotifySend -> "notify-send"
-
-deriving stock instance Eq NotifySystemArgs
-
-deriving stock instance Show NotifySystemArgs
-
-deriving stock instance Eq NotifySystemToml
-
-deriving stock instance Show NotifySystemToml
-
-deriving stock instance Eq NotifySystemMerged
-
-deriving stock instance Show NotifySystemMerged
-
 -- | "Merges" notify systems.
 mergeNotifySystem ::
-  Maybe NotifySystemArgs ->
-  Maybe NotifySystemToml ->
-  NotifySystemMerged
+  Maybe NotifySystem ->
+  Maybe NotifySystem ->
+  NotifySystem
 mergeNotifySystem mArgs mToml =
   case mArgs of
-    Just (DBus ()) -> DBus ()
-    Just NotifySend -> NotifySend
-    Just AppleScript -> AppleScript
+    Just s -> s
     Nothing -> case mToml of
-      Just (DBus ()) -> DBus ()
-      Just NotifySend -> NotifySend
-      Just AppleScript -> AppleScript
-      Nothing -> def
+      Just t -> t
+      Nothing -> defaultNotifySystem
 
-showNotifySystem :: (IsString a) => NotifySystemP p -> a
-showNotifySystem (DBus _) = "DBus"
-showNotifySystem NotifySend = "NotifySend"
-showNotifySystem AppleScript = "AppleScript"
-
-displayNotifySystem :: (IsString a) => NotifySystemP p -> a
-displayNotifySystem (DBus _) = "dbus"
-displayNotifySystem NotifySend = "notify-send"
-displayNotifySystem AppleScript = "apple-script"
-
-instance DecodeTOML NotifySystemToml where
-  tomlDecoder = parseNotifySystem tomlDecoder
-
--- | Parses 'NotifySystem'.
-parseNotifySystem :: (DBusF p ~ (), MonadFail m) => m Text -> m (NotifySystemP p)
+-- | Parses 'NotifySystemOs'.
+parseNotifySystem :: (MonadFail m) => m Text -> m NotifySystem
 parseNotifySystem getTxt =
   getTxt >>= \case
-    "dbus" -> pure $ DBus ()
-    "notify-send" -> pure NotifySend
-    "apple-script" -> pure AppleScript
+    "dbus" -> pure NotifySystemDBus
+    "notify-send" -> pure NotifySystemNotifySend
+    "apple-script" -> pure NotifySystemAppleScript
     bad ->
       fail
         $ Utils.fmtUnrecognizedError
@@ -138,35 +41,9 @@ parseNotifySystem getTxt =
           (unpack bad)
 {-# INLINEABLE parseNotifySystem #-}
 
--- | Available 'NotifySystem' strings.
+-- | Available 'NotifySystemOs' strings.
 notifySystemStr :: (IsString a) => a
 notifySystemStr = "(apple-script | dbus | notify-send)"
 
-#if OSX
-instance Default (NotifySystemP p) where
-  def = AppleScript
-#else
-instance (DBusF p ~ ()) => Default (NotifySystemP p) where
-  def = DBus ()
-#endif
-
-data OsxNotifySystemMismatch
-  = OsxNotifySystemMismatchDBus
-  | OsxNotifySystemMismatchNotifySend
-  deriving stock (Eq, Show)
-
-instance Exception OsxNotifySystemMismatch where
-  displayException OsxNotifySystemMismatchDBus =
-    "Detected osx, but DBus is only available on linux!"
-  displayException OsxNotifySystemMismatchNotifySend =
-    "Detected osx, but NotifySend is only available on linux!"
-
-data LinuxNotifySystemMismatch = LinuxNotifySystemMismatchAppleScript
-  deriving stock (Eq, Show)
-
-instance Exception LinuxNotifySystemMismatch where
-  displayException LinuxNotifySystemMismatchAppleScript =
-    "Detected linux, but AppleScript is only available on osx!"
-
 defNotifySystemStr :: Text
-defNotifySystemStr = displayNotifySystem @_ @ConfigPhaseArgs def
+defNotifySystemStr = display @NotifySystem def

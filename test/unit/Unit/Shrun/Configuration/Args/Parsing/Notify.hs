@@ -10,12 +10,6 @@ import Shrun.Configuration.Data.Notify.Action
       ),
     NotifyActionStartSwitch (MkNotifyActionStartSwitch),
   )
-import Shrun.Configuration.Data.Notify.System
-  ( NotifySystemP (AppleScript, DBus, NotifySend),
-  )
-import Shrun.Configuration.Data.Notify.Timeout
-  ( NotifyTimeout (NotifyTimeoutNever, NotifyTimeoutSeconds),
-  )
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (With))
 import Unit.Prelude
 import Unit.Shrun.Configuration.Args.Parsing.TestUtils qualified as U
@@ -73,7 +67,7 @@ testActionCompleteDisabled =
     $ U.verifyResult argList expected
   where
     argList = ["--notify-action-complete", "off", "command"]
-    expected = U.disableDefCoreArgs (#notify % #actions % #complete)
+    expected = U.disableDefCoreArgs (#notifications % #actions % #complete)
 
 notifyActionStartTests :: TestTree
 notifyActionStartTests =
@@ -117,7 +111,7 @@ testSystemDBus =
   where
     desc = "Parses --notify-system dbus"
     argList = ["--notify-system", "dbus", "command"]
-    expected = updateDefNotifyArgs #system (DBus ())
+    expected = updateDefNotifyArgs #system NotifySystemDBus
 
 testSystemNotifySend :: TestTree
 testSystemNotifySend =
@@ -126,7 +120,7 @@ testSystemNotifySend =
   where
     desc = "Parses --notify-system notify-send"
     argList = ["--notify-system", "notify-send", "command"]
-    expected = updateDefNotifyArgs #system NotifySend
+    expected = updateDefNotifyArgs #system NotifySystemNotifySend
 
 testSystemAppleScript :: TestTree
 testSystemAppleScript =
@@ -135,7 +129,7 @@ testSystemAppleScript =
   where
     desc = "Parses --notify-system apple-script"
     argList = ["--notify-system", "apple-script", "command"]
-    expected = updateDefNotifyArgs #system AppleScript
+    expected = updateDefNotifyArgs #system NotifySystemAppleScript
 
 notifyTimeoutTests :: TestTree
 notifyTimeoutTests =
@@ -156,7 +150,7 @@ testTimeoutSeconds =
   where
     desc = "Parses --notify-timeout 5"
     argList = ["--notify-timeout", "5", "command"]
-    expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 5)
+    expected = updateDefNotifyArgs #timeout (NotifyTimeoutMillis 5_000)
 
 testTimeoutSecondsUnderscores :: TestTree
 testTimeoutSecondsUnderscores =
@@ -165,7 +159,7 @@ testTimeoutSecondsUnderscores =
   where
     desc = "Parses --notify-timeout 5_000"
     argList = ["--notify-timeout", "5_000", "command"]
-    expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 5_000)
+    expected = updateDefNotifyArgs #timeout (NotifyTimeoutMillis 5_000_000)
 
 testTimeoutString :: TestTree
 testTimeoutString =
@@ -173,7 +167,7 @@ testTimeoutString =
     $ U.verifyResult argList expected
   where
     argList = ["--notify-timeout", "1d2h3m4s", "command"]
-    expected = updateDefNotifyArgs #timeout (NotifyTimeoutSeconds 93_784)
+    expected = updateDefNotifyArgs #timeout (NotifyTimeoutMillis 93_784_000)
 
 testTimeoutWordFail :: TestTree
 testTimeoutWordFail =
@@ -206,7 +200,7 @@ updateDefNotifyArgsWD ::
 updateDefNotifyArgsWD l x = (l' ?~ With x) U.defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
-    l' = _Just % #coreConfig % #notify % l
+    l' = _Just % #coreConfig % #notifications % l
 
 updateDefNotifyArgs ::
   forall a.
@@ -216,4 +210,4 @@ updateDefNotifyArgs ::
 updateDefNotifyArgs l x = (l' ?~ x) U.defArgs
   where
     l' :: AffineTraversal' (Maybe Args) (Maybe a)
-    l' = _Just % #coreConfig % #notify % l
+    l' = _Just % #coreConfig % #notifications % l

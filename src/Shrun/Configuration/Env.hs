@@ -63,7 +63,6 @@ import Shrun.Configuration.Env.Types
 import Shrun.Configuration.Toml (Toml)
 import Shrun.Configuration.Toml qualified as Toml
 import Shrun.Logging.MonadRegionLogger (MonadRegionLogger (Region))
-import Shrun.Notify.DBus (MonadDBus)
 import Shrun.Prelude
 import Shrun.ShellT (ShellT)
 
@@ -74,7 +73,6 @@ makeEnvAndShrun ::
     HasConsoleLogging (Env r) (Region (ShellT (Env r) m)),
     MonadAsync m,
     MonadAtomic m,
-    MonadDBus m,
     MonadEvaluate m,
     MonadFileReader m,
     MonadFileWriter m,
@@ -83,6 +81,7 @@ makeEnvAndShrun ::
     MonadIORef m,
     MonadMask m,
     MonadMVar m,
+    MonadNotify m,
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
@@ -105,11 +104,11 @@ withEnv ::
   ( HasCallStack,
     MonadAtomic m,
     MonadCatch m,
-    MonadDBus m,
     MonadFileReader m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadNotify m,
     MonadOptparse m,
     MonadPathReader m,
     MonadPathWriter m,
@@ -268,10 +267,10 @@ fromMergedConfig ::
   ( HasCallStack,
     MonadAtomic m,
     MonadCatch m,
-    MonadDBus m,
     MonadFileWriter m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadNotify m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadPosixFiles m,
