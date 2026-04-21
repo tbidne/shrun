@@ -1,7 +1,7 @@
 -- | Provides type for notifications.
 module Shrun.Configuration.Data.Notify.Timeout
   ( parseNotifyTimeout,
-    notifyTimeoutStr,
+    notifyTimeoutMeta,
     notifyTimeoutDecoder,
     prettyNotifyTimeout,
   )
@@ -69,12 +69,11 @@ parseNotifyTimeoutStr txt = case RT.fromString str of
     fail
       $ Utils.fmtUnrecognizedError
         "notify timeout"
-        notifyTimeoutStr
+        notifyTimeoutMeta
         bad
   where
     str = unpack txt
 {-# INLINEABLE parseNotifyTimeoutStr #-}
 
--- | Available 'NotifyTimeout' strings.
-notifyTimeoutStr :: (IsString a) => a
-notifyTimeoutStr = "(NATURAL | TIME_STR | off)"
+notifyTimeoutMeta :: (IsString a) => Tuple2 Bool (List a)
+notifyTimeoutMeta = (True, ["NATURAL", "TIME_STR"])

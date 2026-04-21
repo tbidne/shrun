@@ -23,6 +23,7 @@ import Shrun.Configuration.Data.Notify.System qualified as System
 import Shrun.Configuration.Data.Notify.Timeout qualified as Timeout
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
+import Shrun.Utils qualified as ShrunUtils
 
 notifyParser :: Parser NotifyArgs
 notifyParser = do
@@ -47,7 +48,7 @@ notifyActionCompleteParser =
   Utils.mWithDisabledParser
     (OA.str >>= Action.parseNotifyAction)
     opts
-    Action.notifyActionStr
+    Action.notifyActionMeta
   where
     opts =
       [ OA.long "notify-action-complete",
@@ -84,7 +85,7 @@ notifySystemParser = mainParser
           [ OA.long "notify-system",
             OA.completeWith ["dbus", "notify-send", "apple-script"],
             Utils.mkHelp helpTxt,
-            OA.metavar System.notifySystemStr
+            OA.metavar (ShrunUtils.mkMetaStr System.notifySystemMeta)
           ]
     helpTxt =
       mconcat
@@ -101,7 +102,7 @@ notifyTimeoutParser = mainParser
         $ mconcat
           [ OA.long "notify-timeout",
             Utils.mkHelpNoLine helpTxt,
-            OA.metavar Timeout.notifyTimeoutStr
+            OA.metavar (ShrunUtils.mkMetaStr Timeout.notifyTimeoutMeta)
           ]
     helpTxt =
       mconcat

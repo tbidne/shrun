@@ -1,7 +1,7 @@
 module Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode (..),
     parseFileMode,
-    fileModeStr,
+    fileModeMeta,
   )
 where
 
@@ -33,11 +33,11 @@ parseFileMode getTxt =
     "write" -> pure FileModeWrite
     bad ->
       fail
-        $ Utils.fmtUnrecognizedError "file-mode" fileModeStr (unpack bad)
+        $ Utils.fmtUnrecognizedError "file-mode" fileModeMeta (unpack bad)
 {-# INLINEABLE parseFileMode #-}
 
 instance Default FileMode where
   def = FileModeWrite
 
-fileModeStr :: (IsString a) => a
-fileModeStr = "(append | rename | write)"
+fileModeMeta :: (IsString a) => Tuple2 Bool (List a)
+fileModeMeta = (False, ["append", "rename", "write"])

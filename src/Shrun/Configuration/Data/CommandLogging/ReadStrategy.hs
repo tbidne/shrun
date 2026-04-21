@@ -3,7 +3,7 @@
 module Shrun.Configuration.Data.CommandLogging.ReadStrategy
   ( ReadStrategy (..),
     parseReadStrategy,
-    readStrategyStr,
+    readStrategyMeta,
     defaultReadStrategy,
     readBlockLineBufferNotAllowed,
   )
@@ -52,10 +52,10 @@ parseReadStrategy getTxt =
       fail
         $ Utils.fmtUnrecognizedError
           "read strategy"
-          readStrategyStr
+          readStrategyMeta
           (unpack bad)
 {-# INLINEABLE parseReadStrategy #-}
 
 -- | Available 'ReadStrategy' strings.
-readStrategyStr :: (IsString a) => a
-readStrategyStr = "(block | block-line-buffer)"
+readStrategyMeta :: (IsString a) => Tuple2 Bool (List a)
+readStrategyMeta = (False, ["block", "block-line-buffer"])

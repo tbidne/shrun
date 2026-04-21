@@ -22,6 +22,7 @@ module Shrun.Utils
     -- * Misc Utils
     atomicReadWrite,
     fmtUnrecognizedError,
+    mkMetaStr,
     parseByteText,
     surroundJust,
     whileM_,
@@ -36,6 +37,7 @@ where
 import Data.Bytes (Conversion (convert_), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Either (either)
+import Data.List qualified as L
 import Data.Sequence qualified as Seq
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
@@ -315,22 +317,35 @@ fmtUnrecognizedError ::
   ) =>
   -- | Field name.
   a ->
-  -- | Valid values.
-  a ->
+  -- | (Include off?, Valid values).
+  (Bool, List a) ->
   -- | Bad unrecognized value or error message.
   a ->
   -- | Error message.
   a
-fmtUnrecognizedError fieldName validVals badValue =
+fmtUnrecognizedError fieldName meta badValue =
   mconcat
     [ "Error parsing ",
       fieldName,
       ": '",
       badValue,
       "'. Expected one of ",
-      validVals,
+      mkMetaStr meta,
       "."
     ]
+
+mkMetaStr :: (IsString a, Monoid a) => Tuple2 Bool (List a) -> a
+mkMetaStr (includeOff, xs) =
+  (\s -> "(" <> s <> ")")
+    . mconcat
+    . L.intersperse " | "
+    . appendOff
+    $ xs
+  where
+    appendOff =
+      if includeOff
+        then (++ ["off"])
+        else id
 
 -- | Reads from a queue and applies the function, if we receive a value.
 -- Atomic in the sense that if a read is successful, then we will apply the

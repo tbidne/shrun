@@ -267,7 +267,7 @@ instance IsOption ReadStrategyOpt where
   optionName = Tagged "read-strategy"
   optionHelp = Tagged "Runs tests with specified command-log read strategy"
   optionCLParser =
-    mkOptionCLParser (OA.metavar readStrategyStr)
+    mkOptionCLParser (OA.metavar $ Utils.mkMetaStr readStrategyStr)
 
-readStrategyStr :: (IsString a) => a
-readStrategyStr = "(block | block-line-buffer | all)"
+readStrategyStr :: (IsString a) => (Bool, List a)
+readStrategyStr = (False, ["block", "block-line-buffer", "all)"])

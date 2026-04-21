@@ -5,7 +5,7 @@ module Shrun.Configuration.Data.ConsoleLogging.TimerFormat
 
     -- * Parsing
     parseTimerFormat,
-    timerFormatStr,
+    timerFormatMeta,
 
     -- * Formatting
     formatRelativeTime,
@@ -62,13 +62,13 @@ parseTimerFormat getTxt =
       fail
         $ Utils.fmtUnrecognizedError
           "timer format"
-          timerFormatStr
+          timerFormatMeta
           (unpack bad)
 {-# INLINEABLE parseTimerFormat #-}
 
 -- | Available 'TimerFormat' strings.
-timerFormatStr :: (IsString a) => a
-timerFormatStr = "(digital_compact | digital_full | prose_compact | prose_full)"
+timerFormatMeta :: (IsString a) => Tuple2 Bool (List a)
+timerFormatMeta = (False, ["digital_compact", "digital_full", "prose_compact", "prose_full"])
 
 -- NOTE: Time formatting does not include newlines, so using UnsafeUnlinedText
 -- is safe. We use the constructor rather than unsafeUnlinedText.

@@ -42,6 +42,7 @@ import Shrun.Configuration.Data.Truncation
 import Shrun.Configuration.Data.Truncation qualified as Trunc
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
+import Shrun.Utils qualified as ShrunUtils
 
 fileLoggingParser :: Parser FileLoggingArgs
 fileLoggingParser = do
@@ -72,7 +73,7 @@ fileLogParser =
   Utils.mWithDisabledParser
     (OA.str >>= FilePathDefault.parseFilePathDefault)
     opts
-    "default | PATH"
+    (True, ["default", "PATH"])
   where
     opts =
       [ OA.long "file-log",
@@ -96,7 +97,7 @@ fileLogCommandNameTruncParser =
   Utils.mWithDisabledParser
     (Trunc.parseTruncation Utils.autoStripUnderscores)
     opts
-    "NATURAL"
+    (True, ["NATURAL"])
   where
     opts =
       [ OA.long "file-log-command-name-trunc",
@@ -119,7 +120,7 @@ lineTruncParser =
   Utils.mWithDisabledParser
     (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
     opts
-    Trunc.lineTruncStr
+    Trunc.lineTruncMeta
   where
     opts =
       [ OA.long "file-log-line-trunc",
@@ -139,7 +140,7 @@ fileLogStripControlParser = mainParser
               [ OA.long "file-log-strip-control",
                 OA.completeWith ["all", "smart", "off"],
                 Utils.mkHelpNoLine helpTxt,
-                OA.metavar StripControl.stripControlStr
+                OA.metavar (ShrunUtils.mkMetaStr StripControl.stripControlMeta)
               ]
           )
     helpTxt =
@@ -159,7 +160,7 @@ fileLogModeParser = mainParser
               [ OA.long "file-log-mode",
                 OA.completeWith ["append", "rename", "write"],
                 Utils.mkHelp helpTxt,
-                OA.metavar FileMode.fileModeStr
+                OA.metavar (ShrunUtils.mkMetaStr FileMode.fileModeMeta)
               ]
           )
     helpTxt =
@@ -180,7 +181,7 @@ fileLogSizeModeParser = mainParser
               [ OA.long "file-log-size-mode",
                 OA.completeWith ["warn", "delete"],
                 Utils.mkHelp helpTxt,
-                OA.metavar FileSizeMode.fileSizeModeStr
+                OA.metavar (ShrunUtils.mkMetaStr FileSizeMode.fileSizeModeMeta)
               ]
           )
     helpTxt =

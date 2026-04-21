@@ -3,7 +3,7 @@ module Shrun.Configuration.Data.StripControl
     parseStripControl,
     ConsoleLogStripControl,
     FileLogStripControl,
-    stripControlStr,
+    stripControlMeta,
   )
 where
 
@@ -52,7 +52,7 @@ parseStripControl getTxt =
       fail
         $ Utils.fmtUnrecognizedError
           "strip control"
-          stripControlStr
+          stripControlMeta
           (unpack bad)
 
 instance Default ConsoleLogStripControl where
@@ -61,5 +61,5 @@ instance Default ConsoleLogStripControl where
 instance Default FileLogStripControl where
   def = StripControlAll
 
-stripControlStr :: String
-stripControlStr = "(all | smart | off)"
+stripControlMeta :: (IsString a) => Tuple2 Bool (List a)
+stripControlMeta = (True, ["all", "smart"])

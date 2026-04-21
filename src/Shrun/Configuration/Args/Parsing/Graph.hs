@@ -32,7 +32,7 @@ edgesParser =
   Utils.mWithDisabledParser
     readEdges
     opts
-    "EDGES_STR | && | || | ;;"
+    (True, ["EDGES_STR", "&&", "||", ";;"])
   where
     opts =
       [ OA.long "edges",

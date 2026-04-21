@@ -33,6 +33,7 @@ import Shrun.Configuration.Data.Truncation
 import Shrun.Configuration.Data.Truncation qualified as Trunc
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
+import Shrun.Utils qualified as SUtils
 
 consoleLoggingParser :: Parser ConsoleLoggingArgs
 consoleLoggingParser = do
@@ -66,7 +67,7 @@ commandNameTruncParser =
   Utils.mWithDisabledParser
     (Trunc.parseTruncation Utils.autoStripUnderscores)
     opts
-    "NATURAL"
+    (True, ["NATURAL"])
   where
     opts =
       [ OA.long "console-log-command-name-trunc",
@@ -83,7 +84,7 @@ lineTruncParser =
   Utils.mWithDisabledParser
     (Trunc.parseLineTruncation Utils.autoStripUnderscores OA.str)
     opts
-    Trunc.lineTruncStr
+    Trunc.lineTruncMeta
   where
     opts =
       [ OA.long "console-log-line-trunc",
@@ -110,7 +111,7 @@ stripControlParser = mainParser
               [ OA.long "console-log-strip-control",
                 OA.completeWith ["all", "smart", "off"],
                 helpTxt,
-                OA.metavar StripControl.stripControlStr
+                OA.metavar (SUtils.mkMetaStr StripControl.stripControlMeta)
               ]
           )
 

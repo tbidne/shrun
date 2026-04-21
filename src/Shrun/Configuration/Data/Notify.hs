@@ -281,6 +281,7 @@ type NotifyToml = NotifyP ConfigPhaseToml
 
 type NotifyMerged = NotifyP ConfigPhaseMerged
 
+-- Named NotificationEnv vs NotifyEnv to avoid clash with effects-notify.
 type NotificationEnv = NotifyP ConfigPhaseEnv
 
 deriving stock instance Eq (NotifyP ConfigPhaseArgs)

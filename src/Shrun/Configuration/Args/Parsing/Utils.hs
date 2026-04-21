@@ -63,7 +63,7 @@ mWithDisabledParser ::
   -- | Modifier list e.g. option name, help text.
   List (Mod OA.OptionFields (WithDisabled a)) ->
   -- | Metavar string.
-  String ->
+  Tuple2 Bool (List String) ->
   Parser (Maybe (WithDisabled a))
 mWithDisabledParser rdr opts = OA.optional . withDisabledParser rdr opts
 
@@ -74,12 +74,12 @@ withDisabledParser ::
   -- | Modifier list e.g. option name, help text.
   List (Mod OA.OptionFields (WithDisabled a)) ->
   -- | Metavar string.
-  String ->
+  Tuple2 Bool (List String) ->
   Parser (WithDisabled a)
 withDisabledParser rdr opts mv =
   withDisabledParserNoOpts rdr opts'
   where
-    metavar = "(" <> mv <> " | off)"
+    metavar = ShrunUtils.mkMetaStr mv
 
     opts' =
       OA.completeWith ["off"]

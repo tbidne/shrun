@@ -12,7 +12,7 @@ module Shrun.Configuration.Data.Truncation
     decodeLineTrunc,
     DetectResult (..),
     mergeLineTrunc,
-    lineTruncStr,
+    lineTruncMeta,
   )
 where
 
@@ -96,12 +96,12 @@ parseDetected getTxt =
       fail
         $ Utils.fmtUnrecognizedError
           "line truncation"
-          lineTruncStr
+          lineTruncMeta
           (unpack bad)
 {-# INLINEABLE parseDetected #-}
 
-lineTruncStr :: String
-lineTruncStr = "NATURAL | detect"
+lineTruncMeta :: (IsString a) => Tuple2 Bool (List a)
+lineTruncMeta = (True, ["NATURAL", "detect"])
 
 decodeCommandNameTrunc :: Decoder (Maybe (WithDisabled (Truncation TruncCommandName)))
 decodeCommandNameTrunc = getFieldOptWith tomlDecoder "command-name-trunc"

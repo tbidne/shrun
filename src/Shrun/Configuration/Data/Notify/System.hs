@@ -4,7 +4,7 @@
 module Shrun.Configuration.Data.Notify.System
   ( -- * Notify system
     parseNotifySystem,
-    notifySystemStr,
+    notifySystemMeta,
     mergeNotifySystem,
     defNotifySystemStr,
   )
@@ -37,13 +37,13 @@ parseNotifySystem getTxt =
       fail
         $ Utils.fmtUnrecognizedError
           "notify system"
-          notifySystemStr
+          notifySystemMeta
           (unpack bad)
 {-# INLINEABLE parseNotifySystem #-}
 
--- | Available 'NotifySystemOs' strings.
-notifySystemStr :: (IsString a) => a
-notifySystemStr = "(apple-script | dbus | notify-send)"
+-- | Available 'NotifySystem' strings.
+notifySystemMeta :: (IsString a) => Tuple2 Bool (List a)
+notifySystemMeta = (False, ["apple-script", "dbus", "notify-send"])
 
 defNotifySystemStr :: Text
 defNotifySystemStr = display @NotifySystem def

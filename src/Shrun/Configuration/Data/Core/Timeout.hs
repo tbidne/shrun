@@ -5,7 +5,7 @@ module Shrun.Configuration.Data.Core.Timeout
   ( Timeout (..),
     parseTimeout,
     parseTimeoutStr,
-    timeoutStr,
+    timeoutMeta,
   )
 where
 
@@ -55,11 +55,11 @@ parseTimeoutStr txt = case RT.fromString str of
     fail
       $ Utils.fmtUnrecognizedError
         "timeout"
-        timeoutStr
+        timeoutMeta
         bad
   where
     str = unpack txt
 {-# INLINEABLE parseTimeoutStr #-}
 
-timeoutStr :: String
-timeoutStr = "NATURAL | TIME_STR"
+timeoutMeta :: (IsString a) => Tuple2 Bool (List a)
+timeoutMeta = (True, ["NATURAL", "TIME_STR"])

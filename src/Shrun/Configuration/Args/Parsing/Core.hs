@@ -34,6 +34,7 @@ import Shrun.Configuration.Data.LegendKeysCache (LegendKeysCache)
 import Shrun.Configuration.Data.LegendKeysCache qualified as LKS
 import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
+import Shrun.Utils qualified as ShrunUtils
 
 coreParser :: Parser CoreConfigArgs
 coreParser = do
@@ -69,7 +70,7 @@ timeoutParser =
   Utils.mWithDisabledParser
     (Timeout.parseTimeout Utils.autoStripUnderscores OA.str)
     opts
-    Timeout.timeoutStr
+    Timeout.timeoutMeta
   where
     opts =
       [ OA.long "timeout",
@@ -88,7 +89,7 @@ initParser =
   Utils.mWithDisabledParser
     OA.str
     opts
-    "STRING"
+    (True, ["STRING"])
   where
     opts =
       [ OA.long "init",
@@ -113,7 +114,7 @@ legendKeysCacheParser =
       mconcat
         [ OA.long "legend-keys-cache",
           OA.completeWith ["add", "clear", "write", "off"],
-          OA.metavar LKS.lksStrings,
+          OA.metavar (ShrunUtils.mkMetaStr LKS.lksMeta),
           helpTxt
         ]
 

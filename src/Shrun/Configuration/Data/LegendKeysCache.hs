@@ -1,7 +1,7 @@
 module Shrun.Configuration.Data.LegendKeysCache
   ( LegendKeysCache (..),
     parseLegendKeysCache,
-    lksStrings,
+    lksMeta,
   )
 where
 
@@ -46,10 +46,10 @@ parseLegendKeysCache getTxt =
       fail
         $ Utils.fmtUnrecognizedError
           "legend-key-cache"
-          lksStrings
+          lksMeta
           (unpack bad)
 {-# INLINEABLE parseLegendKeysCache #-}
 
 -- | Available 'LegendKeysCache' strings.
-lksStrings :: (IsString a) => a
-lksStrings = "(add | clear | write | off)"
+lksMeta :: (IsString a) => Tuple2 Bool (List a)
+lksMeta = (True, ["add", "clear", "write"])

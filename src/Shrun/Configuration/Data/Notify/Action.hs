@@ -8,7 +8,7 @@ module Shrun.Configuration.Data.Notify.Action
     -- * Complete
     NotifyActionComplete (..),
     parseNotifyAction,
-    notifyActionStr,
+    notifyActionMeta,
   )
 where
 
@@ -65,10 +65,10 @@ parseNotifyAction = \case
     fail
       $ Utils.fmtUnrecognizedError
         "notify action complete"
-        notifyActionStr
+        notifyActionMeta
         (unpack bad)
 {-# INLINEABLE parseNotifyAction #-}
 
 -- | Available 'NotifyActionComplete' strings.
-notifyActionStr :: (IsString a) => a
-notifyActionStr = "all | command | final"
+notifyActionMeta :: (IsString a) => Tuple2 Bool (List a)
+notifyActionMeta = (True, ["all", "command", "final"])

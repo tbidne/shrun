@@ -34,6 +34,7 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy qualified as ReadStr
 import Shrun.Configuration.Data.Core.Timeout qualified as Timeout
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
+import Shrun.Utils qualified as SUtils
 
 commandLoggingParser :: Parser CommandLoggingArgs
 commandLoggingParser = do
@@ -159,7 +160,7 @@ readStrategyParser = mainParser
         $ mconcat
           [ OA.long "command-log-read-strategy",
             OA.completeWith ["block", "block-line-buffer"],
-            OA.metavar ReadStrategy.readStrategyStr,
+            OA.metavar (SUtils.mkMetaStr ReadStrategy.readStrategyMeta),
             helpTxt
           ]
     helpTxt =

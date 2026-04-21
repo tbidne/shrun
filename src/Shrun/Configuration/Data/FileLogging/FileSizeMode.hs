@@ -1,7 +1,7 @@
 module Shrun.Configuration.Data.FileLogging.FileSizeMode
   ( FileSizeMode (..),
     parseFileSizeMode,
-    fileSizeModeStr,
+    fileSizeModeMeta,
   )
 where
 
@@ -48,7 +48,7 @@ parseFileSizeMode getTxt = do
           fail
             $ Utils.fmtUnrecognizedError
               "size mode"
-              fileSizeModeStr
+              fileSizeModeMeta
               (unpack bad)
       case U.parseByteText byteTxt of
         Right b -> pure $ cons b
@@ -61,5 +61,5 @@ instance Default FileSizeMode where
       defBytes :: Bytes M Natural
       defBytes = MkBytes 50
 
-fileSizeModeStr :: String
-fileSizeModeStr = "(delete BYTES | warn BYTES | off)"
+fileSizeModeMeta :: (IsString a) => Tuple2 Bool (List a)
+fileSizeModeMeta = (True, ["delete BYTES", "warn BYTES"])
