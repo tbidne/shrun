@@ -35,6 +35,7 @@ notifyActionCompleteFinal = testCase "Runs --notify-action-complete final" $ do
       [ Notify.mkNote "Shrun Finished"
           & Notify.setBody (Just "3 seconds")
           & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setTitle (Just "Shrun")
           & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
 
@@ -58,10 +59,12 @@ notifyActionStartOn = testCase "Runs --notify-action-start on" $ do
       [ Notify.mkNote "[sleep 3] Started"
           & Notify.setBody (Just "Started after 2 seconds")
           & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setTitle (Just "Shrun")
           & Notify.setUrgency (Just NotifyUrgencyNormal),
         Notify.mkNote "[sleep 2] Started"
           & Notify.setBody (Just "Started after 0 seconds")
           & Notify.setTimeout (Just $ NotifyTimeoutMillis 10_000)
+          & Notify.setTitle (Just "Shrun")
           & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]
 
@@ -85,13 +88,16 @@ notifyTimeoutNever = testCase "Runs --notify-timeout off" $ do
       [ Notify.mkNote "Shrun Finished"
           & Notify.setBody (Just "3 seconds")
           & Notify.setTimeout (Just NotifyTimeoutNever)
+          & Notify.setTitle (Just "Shrun")
           & Notify.setUrgency (Just NotifyUrgencyNormal),
         Notify.mkNote "[sleep 3] Finished"
           & Notify.setBody (Just "3 seconds")
           & Notify.setTimeout (Just NotifyTimeoutNever)
+          & Notify.setTitle (Just "Shrun")
           & Notify.setUrgency (Just NotifyUrgencyNormal),
         Notify.mkNote "[sleep 2] Finished"
           & Notify.setBody (Just "2 seconds")
           & Notify.setTimeout (Just NotifyTimeoutNever)
+          & Notify.setTitle (Just "Shrun")
           & Notify.setUrgency (Just NotifyUrgencyNormal)
       ]

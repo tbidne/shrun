@@ -101,6 +101,7 @@ sendNotif summary body urgency = do
       Notify.mkNote (summary ^. #unNotifyMessage)
         & Notify.setBody (Just $ body ^. #unNotifyMessage)
         & Notify.setTimeout (Just timeout)
+        & Notify.setTitle (Just "Shrun")
         & Notify.setUrgency (Just urgency)
 
 formatNotifyMessage :: UnlinedText -> [UnlinedText] -> NotifyMessage
