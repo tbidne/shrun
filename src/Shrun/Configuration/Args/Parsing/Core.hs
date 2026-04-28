@@ -36,7 +36,7 @@ import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 import Shrun.Utils qualified as ShrunUtils
 
-coreParser :: Parser CoreConfigArgs
+coreParser :: Parser (CoreConfigArgs m)
 coreParser = do
   init <- initParser
   legendKeysCache <- legendKeysCacheParser

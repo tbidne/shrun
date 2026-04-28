@@ -25,7 +25,7 @@ import Shrun.Configuration.Data.WithDisabled (WithDisabled)
 import Shrun.Prelude
 import Shrun.Utils qualified as ShrunUtils
 
-notifyParser :: Parser NotifyArgs
+notifyParser :: Parser (NotifyArgs r)
 notifyParser = do
   complete <- notifyActionCompleteParser
   start <- notifyActionStartParser

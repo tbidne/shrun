@@ -27,17 +27,17 @@ import Shrun.Configuration.Toml.Legend (KeyVal)
 import Shrun.Prelude
 
 -- | Holds toml config.
-data Toml = MkToml
+data Toml notifyEnv = MkToml
   { -- | Core config.
-    coreConfig :: CoreConfigToml,
+    coreConfig :: CoreConfigToml notifyEnv,
     -- | Legend.
     legend :: Maybe (Seq KeyVal)
   }
   deriving stock (Eq, Show)
 
 instance
-  (k ~ A_Lens, a ~ CoreConfigToml, b ~ CoreConfigToml) =>
-  LabelOptic "coreConfig" k Toml Toml a b
+  (k ~ A_Lens, a ~ CoreConfigToml notifyEnv, b ~ CoreConfigToml notifyEnv) =>
+  LabelOptic "coreConfig" k (Toml notifyEnv) (Toml notifyEnv) a b
   where
   labelOptic = lensVL $ \f (MkToml a1 a2) ->
     fmap (\b -> MkToml b a2) (f a1)
@@ -45,13 +45,13 @@ instance
 
 instance
   (k ~ A_Lens, a ~ Maybe (Seq KeyVal), b ~ Maybe (Seq KeyVal)) =>
-  LabelOptic "legend" k Toml Toml a b
+  LabelOptic "legend" k (Toml notifyEnv) (Toml notifyEnv) a b
   where
   labelOptic = lensVL $ \f (MkToml a1 a2) ->
     fmap (\b -> MkToml a1 b) (f a2)
   {-# INLINE labelOptic #-}
 
-instance DecodeTOML Toml where
+instance DecodeTOML (Toml notifyEnv) where
   tomlDecoder = do
     timeout <- decodeTimeout
     init <- decodeInit
@@ -91,7 +91,7 @@ decodeLegend = getFieldOptWith tomlDecoder "legend"
 -- | Note that our Semigroup is /not/ commutative, hence the order matters.
 -- In particular, mconcat is safe because it is foldr, hence respects the
 -- input order.
-mergeTomls :: Seq Toml -> Toml
+mergeTomls :: Seq (Toml notifyEnv) -> Toml notifyEnv
 mergeTomls = mconcat . toList
 
 -- NOTE: [Toml Semigroup]
@@ -124,7 +124,7 @@ mergeTomls = mconcat . toList
 -- CommandLogging. Instances should exist only for *Args, as Merged does
 -- not need them either.
 
-instance Semigroup Toml where
+instance Semigroup (Toml notifyEnv) where
   l <> r =
     MkToml
       { coreConfig = l ^. #coreConfig <> r ^. #coreConfig,
@@ -159,7 +159,7 @@ instance Semigroup Toml where
           key :: Text
           key = kv ^. #key
 
-instance Monoid Toml where
+instance Monoid (Toml notifyEnv) where
   mempty =
     MkToml
       { coreConfig = mempty,

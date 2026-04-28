@@ -79,8 +79,8 @@ type family LegendKeysCacheF a where
   LegendKeysCacheF ConfigPhaseEnv = ()
 
 -- | Holds core configuration data.
-type CoreConfigP :: ConfigPhase -> Type
-data CoreConfigP p = MkCoreConfigP
+type CoreConfigP :: ConfigPhase -> Type -> Type
+data CoreConfigP p notifyEnv = MkCoreConfigP
   { -- | Shell logic to run before each command.
     init :: ConfigPhaseDisabledMaybeF p Text,
     -- | Whether to save legend keys.
@@ -96,7 +96,7 @@ data CoreConfigP p = MkCoreConfigP
     -- | File log config.
     fileLogging :: ArgsOnlyDetF p (FileLoggingP p),
     -- | Notify config.
-    notifications :: ArgsOnlyDetF p (NotifyP p)
+    notifications :: ArgsOnlyDetF p (NotifyP p notifyEnv)
   }
 
 instance
@@ -104,7 +104,7 @@ instance
     a ~ ConfigPhaseDisabledMaybeF p Text,
     b ~ ConfigPhaseDisabledMaybeF p Text
   ) =>
-  LabelOptic "init" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "init" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -119,7 +119,7 @@ instance
     a ~ LegendKeysCacheF p,
     b ~ LegendKeysCacheF p
   ) =>
-  LabelOptic "legendKeysCache" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "legendKeysCache" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -134,7 +134,7 @@ instance
     a ~ TimeoutF p,
     b ~ TimeoutF p
   ) =>
-  LabelOptic "timeout" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "timeout" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -149,7 +149,7 @@ instance
     a ~ TomlOptF p (CommonLoggingP p),
     b ~ TomlOptF p (CommonLoggingP p)
   ) =>
-  LabelOptic "commonLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "commonLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -164,7 +164,7 @@ instance
     a ~ TomlOptF p (CommandLoggingP p),
     b ~ TomlOptF p (CommandLoggingP p)
   ) =>
-  LabelOptic "commandLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "commandLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -179,7 +179,7 @@ instance
     a ~ TomlOptF p (ConsoleLoggingP p),
     b ~ TomlOptF p (ConsoleLoggingP p)
   ) =>
-  LabelOptic "consoleLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "consoleLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -194,7 +194,7 @@ instance
     a ~ ArgsOnlyDetF p (FileLoggingP p),
     b ~ ArgsOnlyDetF p (FileLoggingP p)
   ) =>
-  LabelOptic "fileLogging" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "fileLogging" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -206,10 +206,10 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ ArgsOnlyDetF p (NotifyP p),
-    b ~ ArgsOnlyDetF p (NotifyP p)
+    a ~ ArgsOnlyDetF p (NotifyP p r),
+    b ~ ArgsOnlyDetF p (NotifyP p r)
   ) =>
-  LabelOptic "notifications" k (CoreConfigP p) (CoreConfigP p) a b
+  LabelOptic "notifications" k (CoreConfigP p r) (CoreConfigP p r) a b
   where
   labelOptic =
     lensVL
@@ -219,7 +219,7 @@ instance
           (f a8)
   {-# INLINE labelOptic #-}
 
-instance Semigroup CoreConfigToml where
+instance Semigroup (CoreConfigToml r) where
   l <> r =
     MkCoreConfigP
       { init = l ^. #init <|> r ^. #init,
@@ -232,7 +232,7 @@ instance Semigroup CoreConfigToml where
         notifications = l ^. #notifications <> r ^. #notifications
       }
 
-instance Monoid CoreConfigToml where
+instance Monoid (CoreConfigToml r) where
   mempty =
     MkCoreConfigP
       { init = Nothing,
@@ -245,7 +245,7 @@ instance Monoid CoreConfigToml where
         notifications = Nothing
       }
 
-instance Pretty CoreConfigMerged where
+instance Pretty (CoreConfigMerged r) where
   pretty c =
     vcat
       . toList @Seq
@@ -282,17 +282,17 @@ type CoreConfigMerged = CoreConfigP ConfigPhaseMerged
 
 type CoreConfigEnv = CoreConfigP ConfigPhaseEnv
 
-deriving stock instance Eq (CoreConfigP ConfigPhaseArgs)
+deriving stock instance Eq (CoreConfigP ConfigPhaseArgs r)
 
-deriving stock instance Show (CoreConfigP ConfigPhaseArgs)
+deriving stock instance Show (CoreConfigP ConfigPhaseArgs r)
 
-deriving stock instance Eq (CoreConfigP ConfigPhaseToml)
+deriving stock instance Eq (CoreConfigP ConfigPhaseToml r)
 
-deriving stock instance Show (CoreConfigP ConfigPhaseToml)
+deriving stock instance Show (CoreConfigP ConfigPhaseToml r)
 
-deriving stock instance Eq (CoreConfigP ConfigPhaseMerged)
+deriving stock instance Eq (CoreConfigP ConfigPhaseMerged r)
 
-deriving stock instance Show (CoreConfigP ConfigPhaseMerged)
+deriving stock instance Show (CoreConfigP ConfigPhaseMerged r)
 
 mergeCoreConfig ::
   ( HasCallStack,
@@ -301,9 +301,9 @@ mergeCoreConfig ::
     MonadTerminal m
   ) =>
   NESeq CommandP1 ->
-  CoreConfigArgs ->
-  CoreConfigToml ->
-  m CoreConfigMerged
+  CoreConfigArgs r ->
+  CoreConfigToml r ->
+  m (CoreConfigMerged r)
 mergeCoreConfig cmds args toml = do
   detectRef <- newIORef' DetectNotRun
 
@@ -350,7 +350,7 @@ mergeCoreConfig cmds args toml = do
 -- | Given a merged CoreConfig, constructs a ConfigEnv and calls the
 -- continuation.
 withCoreEnv ::
-  forall m a.
+  forall m r a.
   ( HasCallStack,
     MonadAtomic m,
     MonadFileWriter m,
@@ -360,10 +360,11 @@ withCoreEnv ::
     MonadPathWriter m,
     MonadPosixFiles m,
     MonadTerminal m,
-    MonadThrow m
+    MonadThrow m,
+    NotifyEnvF m ~ r
   ) =>
-  CoreConfigMerged ->
-  (CoreConfigEnv -> m a) ->
+  CoreConfigMerged r ->
+  (CoreConfigEnv r -> m a) ->
   m a
 withCoreEnv merged onCoreConfigEnv = do
   notifications <- traverse Notify.toEnv (merged ^. #notifications)
@@ -383,7 +384,7 @@ withCoreEnv merged onCoreConfigEnv = do
      in onCoreConfigEnv coreConfigEnv
 {-# INLINEABLE withCoreEnv #-}
 
-instance Default (CoreConfigP ConfigPhaseArgs) where
+instance Default (CoreConfigP ConfigPhaseArgs r) where
   def =
     MkCoreConfigP
       { init = Nothing,

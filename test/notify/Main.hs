@@ -115,7 +115,7 @@ mkArgs system =
 -- one or two. Consider filing a GHC issue for this.
 
 data NotificationsEnv = MkNotificationsEnv
-  { unNotificationsEnv :: Env (),
+  { unNotificationsEnv :: Env NotifyEnv (),
     consoleQueue :: TBQueue (LogRegion ()),
     logsRef :: IORef (List Text)
   }
@@ -143,7 +143,7 @@ instance HasFileLogging NotificationsEnv where
 instance HasInit NotificationsEnv where
   getInit = getInit . (.unNotificationsEnv)
 
-instance HasNotifyConfig NotificationsEnv where
+instance HasNotifyConfig NotificationsEnv NotifyEnv where
   getNotifyConfig = getNotifyConfig . (.unNotificationsEnv)
 
 instance HasTimeout NotificationsEnv where
@@ -151,7 +151,7 @@ instance HasTimeout NotificationsEnv where
 
   getHasTimedOut = getHasTimedOut . (.unNotificationsEnv)
 
-liftNotify :: ShellT (Env ()) IO a -> ShellT NotificationsEnv IO a
+liftNotify :: ShellT (Env NotifyEnv ()) IO a -> ShellT NotificationsEnv IO a
 liftNotify m = do
   MkNotificationsEnv env _ _ <- ask
   liftIO $ runShellT m env

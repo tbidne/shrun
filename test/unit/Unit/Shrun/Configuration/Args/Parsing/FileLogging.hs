@@ -346,27 +346,27 @@ updateDefFileLogArgsWD ::
   forall a.
   Lens' FileLoggingArgs (Maybe (WithDisabled a)) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefFileLogArgsWD l x = (l' ?~ With x) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe (WithDisabled a))
     l' = _Just % #coreConfig % #fileLogging % l
 
 updateDefFileLogArgs ::
   forall a.
   Lens' FileLoggingArgs (Maybe a) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefFileLogArgs l x = (l' ?~ x) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe a)
     l' = _Just % #coreConfig % #fileLogging % l
 
 disableDefFileLogArgsWD ::
   forall a.
   Lens' FileLoggingArgs (Maybe (WithDisabled a)) ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 disableDefFileLogArgsWD l = (l' ?~ Disabled) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe (WithDisabled a))
     l' = _Just % #coreConfig % #fileLogging % l

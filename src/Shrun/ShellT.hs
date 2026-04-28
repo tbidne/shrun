@@ -73,7 +73,7 @@ runShellT (MkShellT rdr) = runReaderT rdr
 -- Can't use @deriving via m@ due to a bug: GHC version 9.2.5: No skolem info:@.
 -- https://gitlab.haskell.org/ghc/ghc/-/issues/15376
 
-deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT (Env r) m)
+deriving newtype instance (MonadRegionLogger m) => MonadRegionLogger (ShellT (Env notifyEnv r) m)
 
 -- REVIEW: Would be nice if we could derive this...
 

@@ -46,10 +46,10 @@ mergeConfig ::
     MonadIORef m,
     MonadTerminal m
   ) =>
-  Args ->
-  Toml ->
+  Args notifyEnv ->
+  Toml notifyEnv ->
   Seq OsPath ->
-  m MergedConfig
+  m (MergedConfig notifyEnv)
 mergeConfig args toml tomlPaths = do
   (commands, ea) <- case toml ^. #legend of
     Nothing -> pure (mkCmd <$> cmdsTextIndexed, cliEdgeArgs)

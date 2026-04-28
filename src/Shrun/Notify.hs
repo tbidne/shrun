@@ -51,17 +51,19 @@ fromUnlined = UnsafeNotifyMessage . view #unUnlinedText
 -- | Sends a notification if they are With (linux only). Logs any failed
 -- sends.
 sendNotif ::
+  forall m env notifyEnv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasLogging env m,
-    HasNotifyConfig env,
+    HasNotifyConfig env notifyEnv,
     MonadAtomic m,
     MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTime m
+    MonadTime m,
+    NotifyEnvF m ~ notifyEnv
   ) =>
   -- | Notif summary
   NotifyMessage ->
@@ -71,7 +73,7 @@ sendNotif ::
   NotifyUrgency ->
   m ()
 sendNotif summary body urgency = do
-  asks getNotifyConfig >>= \case
+  asks (getNotifyConfig @env @notifyEnv) >>= \case
     Nothing -> pure ()
     Just notifyConfig ->
       notifyWithErrorLogging

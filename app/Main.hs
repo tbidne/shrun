@@ -9,7 +9,7 @@ main :: IO ()
 main = do
   setUncaughtExceptionHandler handleEx
 
-  makeEnvAndShrun @IO @ConsoleRegion
+  makeEnvAndShrun @IO @NotifyEnv @ConsoleRegion
   where
     handleEx ex = case fromException ex of
       -- Do not print ExitCode

@@ -12,9 +12,9 @@ import Shrun.Configuration.Data.Graph (CommandGraph)
 import Shrun.Prelude
 
 -- | Merged Args + Toml
-data MergedConfig = MkMergedConfig
+data MergedConfig notifyEnv = MkMergedConfig
   { -- | Core config.
-    coreConfig :: CoreConfigMerged,
+    coreConfig :: CoreConfigMerged notifyEnv,
     -- | Command graph.
     commandGraph :: CommandGraph,
     -- | Commands.
@@ -28,10 +28,10 @@ data MergedConfig = MkMergedConfig
 
 instance
   ( k ~ A_Lens,
-    a ~ CoreConfigMerged,
-    b ~ CoreConfigMerged
+    a ~ CoreConfigMerged r,
+    b ~ CoreConfigMerged r
   ) =>
-  LabelOptic "coreConfig" k MergedConfig MergedConfig a b
+  LabelOptic "coreConfig" k (MergedConfig r) (MergedConfig r) a b
   where
   labelOptic =
     lensVL
@@ -46,7 +46,7 @@ instance
     a ~ CommandGraph,
     b ~ CommandGraph
   ) =>
-  LabelOptic "commandGraph" k MergedConfig MergedConfig a b
+  LabelOptic "commandGraph" k (MergedConfig r) (MergedConfig r) a b
   where
   labelOptic =
     lensVL
@@ -61,7 +61,7 @@ instance
     a ~ NESeq CommandP1,
     b ~ NESeq CommandP1
   ) =>
-  LabelOptic "commands" k MergedConfig MergedConfig a b
+  LabelOptic "commands" k (MergedConfig r) (MergedConfig r) a b
   where
   labelOptic =
     lensVL
@@ -76,7 +76,7 @@ instance
     a ~ Bool,
     b ~ Bool
   ) =>
-  LabelOptic "dryRun" k MergedConfig MergedConfig a b
+  LabelOptic "dryRun" k (MergedConfig r) (MergedConfig r) a b
   where
   labelOptic =
     lensVL
@@ -91,7 +91,7 @@ instance
     a ~ Seq OsPath,
     b ~ Seq OsPath
   ) =>
-  LabelOptic "tomlPaths" k MergedConfig MergedConfig a b
+  LabelOptic "tomlPaths" k (MergedConfig r) (MergedConfig r) a b
   where
   labelOptic =
     lensVL
@@ -101,7 +101,7 @@ instance
           (f a5)
   {-# INLINE labelOptic #-}
 
-instance Pretty MergedConfig where
+instance Pretty (MergedConfig r) where
   pretty c =
     vcat
       . toList

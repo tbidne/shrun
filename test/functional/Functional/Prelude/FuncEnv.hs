@@ -197,15 +197,15 @@ instance MonadTerminal ConfigIO where
 -- simplified logging
 
 data FuncEnv = MkFuncEnv
-  { coreEnv :: Env (),
+  { coreEnv :: Env NotifyEnv (),
     logs :: IORef (List Text),
     shrunNotes :: IORef (List Note)
   }
 
 instance
   ( k ~ A_Lens,
-    a ~ Env (),
-    b ~ Env ()
+    a ~ Env NotifyEnv (),
+    b ~ Env NotifyEnv ()
   ) =>
   LabelOptic "coreEnv" k FuncEnv FuncEnv a b
   where
@@ -274,7 +274,7 @@ instance HasConsoleLogging FuncEnv () where
 instance HasFileLogging FuncEnv where
   getFileLogging = getFileLogging . view #coreEnv
 
-instance HasNotifyConfig FuncEnv where
+instance HasNotifyConfig FuncEnv NotifyEnv where
   getNotifyConfig = getNotifyConfig . view #coreEnv
 
 instance (MonadIO m) => MonadRegionLogger (ShellT FuncEnv m) where

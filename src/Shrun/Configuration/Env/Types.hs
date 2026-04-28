@@ -135,7 +135,7 @@ class HasAnyError env where
   getAnyError :: env -> TVar Bool
 
 -- | The main 'Env' type used by Shrun.
-data Env r = MkEnv
+data Env notifyEnv logRegion = MkEnv
   { -- | Holds the anyError flag, signaling if any command exited with an
     -- error.
     anyError :: TVar Bool,
@@ -155,14 +155,14 @@ data Env r = MkEnv
     -- status from a single thread (each command has its own thread).
     commandStatusMap :: TCommandStatusMap,
     -- | Core config.
-    config :: CoreConfigP ConfigPhaseEnv,
+    config :: CoreConfigP ConfigPhaseEnv notifyEnv,
     -- | Console log queue.
-    consoleLogQueue :: ~(TBQueue (LogRegion r)),
+    consoleLogQueue :: ~(TBQueue (LogRegion logRegion)),
     -- Flag for if shrun has timed out, for conditionally running cleanup.
     hasTimedOut :: TVar Bool,
     -- | Timer region. It's an IORef only because it is not initialized on
     -- startup. Once it is set it is no longer mutated.
-    timerRegion :: IORef (Maybe r)
+    timerRegion :: IORef (Maybe logRegion)
   }
 
 instance
@@ -170,7 +170,7 @@ instance
     a ~ TVar Bool,
     b ~ TVar Bool
   ) =>
-  LabelOptic "anyError" k (Env r) (Env r) a b
+  LabelOptic "anyError" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -185,7 +185,7 @@ instance
     a ~ Maybe CommandCleanup,
     b ~ Maybe CommandCleanup
   ) =>
-  LabelOptic "commandCleanup" k (Env r) (Env r) a b
+  LabelOptic "commandCleanup" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -200,7 +200,7 @@ instance
     a ~ NESeq CommandP1,
     b ~ NESeq CommandP1
   ) =>
-  LabelOptic "commands" k (Env r) (Env r) a b
+  LabelOptic "commands" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -215,7 +215,7 @@ instance
     a ~ CommandGraph,
     b ~ CommandGraph
   ) =>
-  LabelOptic "commandGraph" k (Env r) (Env r) a b
+  LabelOptic "commandGraph" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -230,7 +230,7 @@ instance
     a ~ TCommandStatusMap,
     b ~ TCommandStatusMap
   ) =>
-  LabelOptic "commandStatusMap" k (Env r) (Env r) a b
+  LabelOptic "commandStatusMap" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -242,10 +242,10 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ CoreConfigP ConfigPhaseEnv,
-    b ~ CoreConfigP ConfigPhaseEnv
+    a ~ CoreConfigP ConfigPhaseEnv notifyEnv,
+    b ~ CoreConfigP ConfigPhaseEnv notifyEnv
   ) =>
-  LabelOptic "config" k (Env r) (Env r) a b
+  LabelOptic "config" k (Env notifyEnv r) (Env notifyEnv r) a b
   where
   labelOptic =
     lensVL
@@ -260,7 +260,7 @@ instance
     a ~ TBQueue (LogRegion r),
     b ~ TBQueue (LogRegion r)
   ) =>
-  LabelOptic "consoleLogQueue" k (Env r) (Env r) a b
+  LabelOptic "consoleLogQueue" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -275,7 +275,7 @@ instance
     a ~ TVar Bool,
     b ~ TVar Bool
   ) =>
-  LabelOptic "hasTimedOut" k (Env r) (Env r) a b
+  LabelOptic "hasTimedOut" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -290,7 +290,7 @@ instance
     a ~ IORef (Maybe r),
     b ~ IORef (Maybe r)
   ) =>
-  LabelOptic "timerRegion" k (Env r) (Env r) a b
+  LabelOptic "timerRegion" k (Env m r) (Env m r) a b
   where
   labelOptic =
     lensVL
@@ -300,31 +300,31 @@ instance
           (f a9)
   {-# INLINE labelOptic #-}
 
-instance HasTimeout (Env r) where
+instance HasTimeout (Env m r) where
   getTimeout = view (#config % #timeout)
 
   getHasTimedOut = view #hasTimedOut
 
-instance HasInit (Env r) where
+instance HasInit (Env m r) where
   getInit = view (#config % #init)
 
-instance HasCommandLogging (Env r) where
+instance HasCommandLogging (Env m r) where
   getCommandLogging = view (#config % #commandLogging)
 
-instance HasCommonLogging (Env r) where
+instance HasCommonLogging (Env m r) where
   getCommonLogging = view (#config % #commonLogging)
 
-instance HasConsoleLogging (Env r) r where
+instance HasConsoleLogging (Env m r) r where
   getConsoleLogging env =
     ( env ^. #config % #consoleLogging,
       env ^. #consoleLogQueue,
       env ^. #timerRegion
     )
 
-instance HasFileLogging (Env r) where
+instance HasFileLogging (Env m r) where
   getFileLogging = view (#config % #fileLogging)
 
-instance HasCommands (Env r) where
+instance HasCommands (Env m r) where
   getCleanup = view #commandCleanup
 
   getCommandDepGraph = view #commandGraph
@@ -351,7 +351,7 @@ updateCommandStatus command result = do
     idx = command ^. #index
 {-# INLINEABLE updateCommandStatus #-}
 
-instance HasAnyError (Env r) where
+instance HasAnyError (Env m r) where
   getAnyError = view #anyError
 
 -- | Set anyError to 'True'.
@@ -366,11 +366,11 @@ setAnyErrorTrue = asks getAnyError >>= \ref -> writeTVarA' ref True
 {-# INLINEABLE setAnyErrorTrue #-}
 
 -- | Class for retrieving the notify config.
-class HasNotifyConfig env where
+class HasNotifyConfig env r where
   -- | Retrieves the notify config.
-  getNotifyConfig :: env -> Maybe NotificationEnv
+  getNotifyConfig :: env -> Maybe (NotificationEnv r)
 
-instance HasNotifyConfig (Env r) where
+instance HasNotifyConfig (Env notifyEnv r) notifyEnv where
   getNotifyConfig = view (#config % #notifications)
 
 -- | Run the action when the debug flag is active.

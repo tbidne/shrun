@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Integration.Utils
@@ -173,7 +174,7 @@ makeConfigAndAssertEq ::
   -- | Natural transformation from m to IO.
   (forall x. m x -> IO x) ->
   -- | Expectation.
-  MergedConfig ->
+  MergedConfig NotifyEnv ->
   PropertyT IO ()
 makeConfigAndAssertEq args toIO expected = do
   result <- makeMergedConfig args toIO
@@ -183,22 +184,22 @@ makeConfigAndAssertEq args toIO expected = do
 -- entire structure.
 data CompareField where
   -- | Tests a lens.
-  MkCompareField :: (Eq a, Show a) => Lens' MergedConfig a -> a -> CompareField
+  MkCompareField :: (Eq a, Show a) => Lens' (MergedConfig NotifyEnv) a -> a -> CompareField
   -- | Tests an affine traversal.
   MkCompareFieldMaybe ::
     (Eq a, Show a) =>
-    AffineTraversal' MergedConfig a ->
+    AffineTraversal' (MergedConfig NotifyEnv) a ->
     Maybe a ->
     CompareField
 
 -- | Alias for 'MkCompareField'.
-(^=@) :: (Eq a, Show a) => Lens' MergedConfig a -> a -> CompareField
+(^=@) :: (Eq a, Show a) => Lens' (MergedConfig NotifyEnv) a -> a -> CompareField
 l ^=@ r = MkCompareField l r
 
 infix 1 ^=@
 
 -- | Alias for 'MkCompareFieldMaybe'.
-(^?=@) :: (Eq a, Show a) => AffineTraversal' MergedConfig a -> Maybe a -> CompareField
+(^?=@) :: (Eq a, Show a) => AffineTraversal' (MergedConfig NotifyEnv) a -> Maybe a -> CompareField
 l ^?=@ r = MkCompareFieldMaybe l r
 
 infix 1 ^?=@
@@ -246,7 +247,7 @@ makeMergedConfig ::
   List String ->
   -- | Natural transformation from m to IO.
   (forall x. m x -> IO x) ->
-  PropertyT IO MergedConfig
+  PropertyT IO (MergedConfig NotifyEnv)
 makeMergedConfig args toIO = do
   eResult <- tryMySync $ liftIO $ toIO $ withArgs args Env.getMergedConfig
 
@@ -261,7 +262,7 @@ makeMergedConfig args toIO = do
 
 -- | Convenience for tests expecting a default config. The test should
 -- pass a single command 'cmd'.
-defaultConfig :: (MonadIO m) => m MergedConfig
+defaultConfig :: (MonadIO m) => m (MergedConfig NotifyEnv)
 defaultConfig = liftIO $ runDefaultIO $ Config.mergeConfig args mempty mempty
   where
     args = Args.defaultArgs (NESeq.singleton "cmd")

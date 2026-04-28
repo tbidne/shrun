@@ -30,16 +30,16 @@ import Shrun.Configuration.Data.Core (CoreConfigArgs)
 import Shrun.Configuration.Data.WithDisabled (WithDisabled (Disabled, With))
 import Unit.Prelude
 
-execParserUnit :: List String -> ParserResult Args
+execParserUnit :: List String -> ParserResult (Args NotifyEnv)
 execParserUnit = OA.execParserPure prefs (parserInfoArgs [])
 
-verifyResult :: List String -> Maybe Args -> Property
+verifyResult :: List String -> Maybe (Args NotifyEnv) -> Property
 verifyResult argList =
   withTests 1
     . property
     . verifyResultT argList
 
-verifyResultT :: [String] -> Maybe Args -> PropertyT IO ()
+verifyResultT :: [String] -> Maybe (Args NotifyEnv) -> PropertyT IO ()
 verifyResultT argList expected = do
   let parseResult = execParserUnit argList
 
@@ -94,63 +94,63 @@ prefs = OA.prefs mempty
 defCommand :: NESeq Text
 defCommand = "command" :<|| Seq.empty
 
-defArgs :: Maybe Args
+defArgs :: Maybe (Args NotifyEnv)
 defArgs = Just $ Args.defaultArgs defCommand
 
 updateDefArgs ::
   forall a.
-  Lens' Args (Maybe a) ->
+  Lens' (Args NotifyEnv) (Maybe a) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefArgs l x = (l' ?~ x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe a)
     l' = _Just % l
 
 updateDefArgsWD ::
   forall a.
-  Lens' Args (WithDisabled a) ->
+  Lens' (Args NotifyEnv) (WithDisabled a) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefArgsWD l x = (l' .~ With x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (WithDisabled a)
     l' = _Just % l
 
 disableDefArgs ::
   forall a.
-  Lens' Args (Maybe (WithDisabled a)) ->
-  Maybe Args
+  Lens' (Args NotifyEnv) (Maybe (WithDisabled a)) ->
+  Maybe (Args NotifyEnv)
 disableDefArgs l = (l' ?~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe (WithDisabled a))
     l' = _Just % l
 
 updateDefCoreArgs ::
   forall a.
-  Lens' CoreConfigArgs (Maybe a) ->
+  Lens' (CoreConfigArgs NotifyEnv) (Maybe a) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefCoreArgs l x = (l' ?~ x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe a)
     l' = _Just % #coreConfig % l
 
 updateDefCoreArgsWD ::
   forall a.
-  Lens' CoreConfigArgs (WithDisabled a) ->
+  Lens' (CoreConfigArgs NotifyEnv) (WithDisabled a) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefCoreArgsWD l x = (l' .~ With x) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (WithDisabled a)
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (WithDisabled a)
     l' = _Just % #coreConfig % l
 
 disableDefCoreArgs ::
   forall a.
-  Lens' CoreConfigArgs (Maybe (WithDisabled a)) ->
-  Maybe Args
+  Lens' (CoreConfigArgs NotifyEnv) (Maybe (WithDisabled a)) ->
+  Maybe (Args NotifyEnv)
 disableDefCoreArgs l = (l' ?~ Disabled) defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe (WithDisabled a))
     l' = _Just % #coreConfig % l

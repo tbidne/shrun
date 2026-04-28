@@ -50,11 +50,11 @@ import Shrun.Prelude
 import System.Info qualified as Info
 
 -- | CLI args.
-data Args = MkArgs
+data Args m = MkArgs
   { -- | Optional config file.
     configPaths :: Seq (WithDisabled OsPath),
     -- | Core config.
-    coreConfig :: CoreConfigArgs,
+    coreConfig :: CoreConfigArgs m,
     -- | List of commands.
     commands :: NESeq Text,
     -- | Whether to print the config.
@@ -66,15 +66,15 @@ data Args = MkArgs
 
 instance
   (k ~ A_Lens, a ~ Seq (WithDisabled OsPath), b ~ Seq (WithDisabled OsPath)) =>
-  LabelOptic "configPaths" k Args Args a b
+  LabelOptic "configPaths" k (Args m) (Args m) a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
     fmap (\b -> MkArgs b a2 a3 a4 a5) (f a1)
   {-# INLINE labelOptic #-}
 
 instance
-  (k ~ A_Lens, a ~ CoreConfigArgs, b ~ CoreConfigArgs) =>
-  LabelOptic "coreConfig" k Args Args a b
+  (k ~ A_Lens, a ~ CoreConfigArgs m, b ~ CoreConfigArgs m) =>
+  LabelOptic "coreConfig" k (Args m) (Args m) a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
     fmap (\b -> MkArgs a1 b a3 a4 a5) (f a2)
@@ -82,7 +82,7 @@ instance
 
 instance
   (k ~ A_Lens, a ~ NESeq Text, b ~ NESeq Text) =>
-  LabelOptic "commands" k Args Args a b
+  LabelOptic "commands" k (Args m) (Args m) a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
     fmap (\b -> MkArgs a1 a2 b a4 a5) (f a3)
@@ -90,7 +90,7 @@ instance
 
 instance
   (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
-  LabelOptic "dryRun" k Args Args a b
+  LabelOptic "dryRun" k (Args m) (Args m) a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
     fmap (\b -> MkArgs a1 a2 a3 b a5) (f a4)
@@ -98,14 +98,14 @@ instance
 
 instance
   (k ~ A_Lens, a ~ Maybe (WithDisabled EdgeArgs), b ~ Maybe (WithDisabled EdgeArgs)) =>
-  LabelOptic "edges" k Args Args a b
+  LabelOptic "edges" k (Args m) (Args m) a b
   where
   labelOptic = lensVL $ \f (MkArgs a1 a2 a3 a4 a5) ->
     fmap (\b -> MkArgs a1 a2 a3 a4 b) (f a5)
   {-# INLINE labelOptic #-}
 
 -- | 'ParserInfo' type for parsing 'Args'.
-parserInfoArgs :: List String -> ParserInfo Args
+parserInfoArgs :: List String -> ParserInfo (Args m)
 parserInfoArgs prevKeys =
   ParserInfo
     { infoParser = argsParser prevKeys,
@@ -219,7 +219,7 @@ parserPrefs =
       [ OA.helpIndent 6
       ]
 
-argsParser :: List String -> Parser Args
+argsParser :: List String -> Parser (Args m)
 argsParser prevKeys = do
   configPaths <- configParser
   edges <- Graph.edgesParser

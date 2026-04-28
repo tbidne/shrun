@@ -186,22 +186,22 @@ type family NotifyActionsF p where
   NotifyActionsF ConfigPhaseMerged = NotifyActionsActive
   NotifyActionsF ConfigPhaseEnv = NotifyActionsActive
 
-type NotifySystemF :: ConfigPhase -> Type
-type family NotifySystemF p where
-  NotifySystemF ConfigPhaseArgs = Maybe NotifySystem
-  NotifySystemF ConfigPhaseToml = Maybe NotifySystem
-  NotifySystemF ConfigPhaseMerged = NotifySystem
-  NotifySystemF ConfigPhaseEnv = NotifyEnv
+type NotifySystemF :: ConfigPhase -> Type -> Type
+type family NotifySystemF p r where
+  NotifySystemF ConfigPhaseArgs _ = Maybe NotifySystem
+  NotifySystemF ConfigPhaseToml _ = Maybe NotifySystem
+  NotifySystemF ConfigPhaseMerged _ = NotifySystem
+  NotifySystemF ConfigPhaseEnv r = r
 
 -- | Holds notification config. We have an invariant that if the notify config
 -- exists (i.e. is 'Just'), then at least one of actionComplete, actionStart
 -- should be Just/True.
-type NotifyP :: ConfigPhase -> Type
-data NotifyP p = MkNotifyP
+type NotifyP :: ConfigPhase -> Type -> Type
+data NotifyP p r = MkNotifyP
   { -- | Notify actions.
     actions :: NotifyActionsF p,
     -- | The notification system to use.
-    system :: NotifySystemF p,
+    system :: NotifySystemF p r,
     -- | when to timeout successful notifications.
     timeout :: ConfigPhaseF p NotifyTimeout
   }
@@ -211,7 +211,7 @@ instance
     a ~ NotifyActionsF p,
     b ~ NotifyActionsF p
   ) =>
-  LabelOptic "actions" k (NotifyP p) (NotifyP p) a b
+  LabelOptic "actions" k (NotifyP p r) (NotifyP p r) a b
   where
   labelOptic =
     lensVL
@@ -223,10 +223,10 @@ instance
 
 instance
   ( k ~ A_Lens,
-    a ~ NotifySystemF p,
-    b ~ NotifySystemF p
+    a ~ NotifySystemF p r,
+    b ~ NotifySystemF p r
   ) =>
-  LabelOptic "system" k (NotifyP p) (NotifyP p) a b
+  LabelOptic "system" k (NotifyP p r) (NotifyP p r) a b
   where
   labelOptic =
     lensVL
@@ -241,7 +241,7 @@ instance
     a ~ ConfigPhaseF p NotifyTimeout,
     b ~ ConfigPhaseF p NotifyTimeout
   ) =>
-  LabelOptic "timeout" k (NotifyP p) (NotifyP p) a b
+  LabelOptic "timeout" k (NotifyP p r) (NotifyP p r) a b
   where
   labelOptic =
     lensVL
@@ -251,7 +251,7 @@ instance
           (f a3)
   {-# INLINE labelOptic #-}
 
-instance Semigroup NotifyToml where
+instance Semigroup (NotifyToml r) where
   l <> r =
     MkNotifyP
       { actions = l ^. #actions <> r ^. #actions,
@@ -259,7 +259,7 @@ instance Semigroup NotifyToml where
         timeout = l ^. #timeout <|> r ^. #timeout
       }
 
-instance Monoid NotifyToml where
+instance Monoid (NotifyToml r) where
   mempty =
     MkNotifyP
       { actions = mempty,
@@ -267,7 +267,7 @@ instance Monoid NotifyToml where
         timeout = Nothing
       }
 
-instance Pretty NotifyMerged where
+instance Pretty (NotifyMerged r) where
   pretty c =
     vcat
       [ pretty (c ^. #actions),
@@ -284,20 +284,20 @@ type NotifyMerged = NotifyP ConfigPhaseMerged
 -- Named NotificationEnv vs NotifyEnv to avoid clash with effects-notify.
 type NotificationEnv = NotifyP ConfigPhaseEnv
 
-deriving stock instance Eq (NotifyP ConfigPhaseArgs)
+deriving stock instance Eq (NotifyP ConfigPhaseArgs r)
 
-deriving stock instance Show (NotifyP ConfigPhaseArgs)
+deriving stock instance Show (NotifyP ConfigPhaseArgs r)
 
-deriving stock instance Eq (NotifyP ConfigPhaseToml)
+deriving stock instance Eq (NotifyP ConfigPhaseToml r)
 
-deriving stock instance Show (NotifyP ConfigPhaseToml)
+deriving stock instance Show (NotifyP ConfigPhaseToml r)
 
-deriving stock instance Eq (NotifyP ConfigPhaseMerged)
+deriving stock instance Eq (NotifyP ConfigPhaseMerged r)
 
-deriving stock instance Show (NotifyP ConfigPhaseMerged)
+deriving stock instance Show (NotifyP ConfigPhaseMerged r)
 
 -- Only Default instance is for Args, since others require the action.
-instance Default NotifyArgs where
+instance Default (NotifyArgs r) where
   def =
     MkNotifyP
       { actions = mempty,
@@ -307,9 +307,9 @@ instance Default NotifyArgs where
 
 -- | Merges args and toml configs.
 mergeNotifications ::
-  NotifyArgs ->
-  Maybe NotifyToml ->
-  Maybe NotifyMerged
+  NotifyArgs r ->
+  Maybe (NotifyToml r) ->
+  Maybe (NotifyMerged r)
 mergeNotifications args mToml = do
   case mActions of
     Nothing -> Nothing
@@ -339,7 +339,7 @@ mergeNotifications args mToml = do
       (Nothing, True) -> Just NotifyActionsActiveStart
       (Just actionComplete, True) -> Just $ NotifyActionsActiveAll actionComplete
 
-instance DecodeTOML NotifyToml where
+instance DecodeTOML (NotifyToml r) where
   tomlDecoder = do
     complete <- getFieldOptWith tomlDecoder "action-complete"
     start <- getFieldOptWith tomlDecoder "action-start"
@@ -362,10 +362,11 @@ instance DecodeTOML NotifyToml where
 toEnv ::
   ( HasCallStack,
     MonadNotify m,
-    MonadThrow m
+    MonadThrow m,
+    NotifyEnvF m ~ r
   ) =>
-  NotifyMerged ->
-  m (NotifyP ConfigPhaseEnv)
+  NotifyMerged r ->
+  m (NotifyP ConfigPhaseEnv r)
 toEnv notifyMerged = do
   system <- notifySystemToOs systemMerged
   notifyEnv <- initNotifyEnv system
@@ -374,7 +375,7 @@ toEnv notifyMerged = do
     systemMerged = notifyMerged ^. #system
 {-# INLINEABLE toEnv #-}
 
-mkNotify :: NotifyMerged -> NotifySystemF ConfigPhaseEnv -> NotifyP ConfigPhaseEnv
+mkNotify :: NotifyMerged r -> NotifySystemF ConfigPhaseEnv r -> NotifyP ConfigPhaseEnv r
 mkNotify notifyToml systemP2 =
   MkNotifyP
     { actions = notifyToml ^. #actions,

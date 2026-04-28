@@ -99,13 +99,13 @@ import System.Posix.Signals qualified as Posix
 
 -- | Entry point
 shrun ::
-  forall m env.
+  forall m env notifyEnv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasInit env,
     HasLogging env m,
-    HasNotifyConfig env,
+    HasNotifyConfig env notifyEnv,
     HasTimeout env,
     MonadAsync m,
     MonadAtomic m,
@@ -121,7 +121,8 @@ shrun ::
     MonadReader env m,
     MonadRegionLogger m,
     MonadThread m,
-    MonadTime m
+    MonadTime m,
+    NotifyEnvF m ~ notifyEnv
   ) =>
   -- | .
   m ()
@@ -184,13 +185,13 @@ shrun = do
 {-# INLINEABLE shrun #-}
 
 runCommand ::
-  forall m env.
+  forall m env notifyEnv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasInit env,
     HasLogging env m,
-    HasNotifyConfig env,
+    HasNotifyConfig env notifyEnv,
     MonadAtomic m,
     MonadHandleReader m,
     MonadHandleWriter m,
@@ -201,13 +202,14 @@ runCommand ::
     MonadReader env m,
     MonadRegionLogger m,
     MonadThread m,
-    MonadTime m
+    MonadTime m,
+    NotifyEnvF m ~ notifyEnv
   ) =>
   Double ->
   CommandP1 ->
   m ()
 runCommand globalStartTime cmd = do
-  cfg <- asks getNotifyConfig
+  cfg <- asks (getNotifyConfig @_ @notifyEnv)
   commonLogging <- asks getCommonLogging
   (consoleLogging, consoleQueue, _) <- asks (getConsoleLogging @env @(Region m))
 
@@ -369,19 +371,20 @@ mkResultData commonLogging consoleLogging cmd cmdResult =
     mode = LogModeFinish
 
 printFinalResult ::
-  forall m env e b.
+  forall m env notifyEnv e b.
   ( Exception e,
     HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasLogging env m,
-    HasNotifyConfig env,
+    HasNotifyConfig env notifyEnv,
     MonadAtomic m,
     MonadCatch m,
     MonadNotify m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTime m
+    MonadTime m,
+    NotifyEnvF m ~ notifyEnv
   ) =>
   TimeSpec ->
   Either e b ->
@@ -427,7 +430,7 @@ printFinalResult totalTime result = withRegion Linear $ \r -> do
       notifyBody = Notify.formatNotifyMessage totalTimeTxt []
 
   -- Sent off notif if NotifyActionCompleteAll or NotifyActionCompleteFinal is set
-  cfg <- asks getNotifyConfig
+  cfg <- asks (getNotifyConfig @_ @notifyEnv)
   case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
     Just NotifyActionCompleteAll -> Notify.sendNotif "Shrun Finished" notifyBody urgency
     Just NotifyActionCompleteFinal -> Notify.sendNotif "Shrun Finished" notifyBody urgency
@@ -642,12 +645,12 @@ pollQueueToFile fileLogging = do
 -- | Cancels running commands and prints a final log message about going
 -- down. Intended to be used when shrun has been cancelled.
 teardown ::
-  forall m env.
+  forall m env notifyEnv.
   ( HasAnyError env,
     HasCallStack,
     HasCommands env,
     HasLogging env m,
-    HasNotifyConfig env,
+    HasNotifyConfig env notifyEnv,
     MonadAtomic m,
     MonadCatch m,
     MonadHandleWriter m,
@@ -655,7 +658,8 @@ teardown ::
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
-    MonadTime m
+    MonadTime m,
+    NotifyEnvF m ~ notifyEnv
   ) =>
   Double ->
   m ()
@@ -697,7 +701,7 @@ teardown startTime = do
   Logging.putRegionLogDirect finalLog
 
   -- 3. Send notification
-  cfg <- asks getNotifyConfig
+  cfg <- asks (getNotifyConfig @_ @notifyEnv)
   case cfg ^? (_Just % #actions % _NotifyActionsActiveCompleteAny) of
     -- If complete notifcations are on at all, send one
     Just _ -> Notify.sendNotif notifyBody "" NotifyUrgencyCritical

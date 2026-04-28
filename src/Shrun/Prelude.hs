@@ -270,7 +270,7 @@ import Effects.IORef as X
       ),
   )
 import Effects.Notify as X
-  ( MonadNotify (initNotifyEnv, notify),
+  ( MonadNotify (NotifyEnvF, initNotifyEnv, notify),
     Note,
     NotifyEnv,
     NotifyParseException,

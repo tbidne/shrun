@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 module Bench.Prelude
   ( BenchEnv (..),
     runBench,
@@ -15,7 +17,7 @@ import Shrun.Configuration.Env.Types
     HasConsoleLogging (getConsoleLogging),
     HasFileLogging,
     HasInit,
-    HasNotifyConfig,
+    HasNotifyConfig (getNotifyConfig),
     HasTimeout,
   )
 import Shrun.Logging.MonadRegionLogger
@@ -33,7 +35,7 @@ import Shrun.ShellT (ShellT)
 import System.Environment qualified as SysEnv
 
 newtype BenchEnv = MkBenchEnv
-  {unCoreEnv :: Env ()}
+  {unCoreEnv :: Env NotifyEnv ()}
   deriving
     ( HasAnyError,
       HasCommandLogging,
@@ -41,13 +43,15 @@ newtype BenchEnv = MkBenchEnv
       HasCommonLogging,
       HasFileLogging,
       HasInit,
-      HasNotifyConfig,
       HasTimeout
     )
-    via (Env ())
+    via (Env NotifyEnv ())
 
 instance HasConsoleLogging BenchEnv () where
   getConsoleLogging = getConsoleLogging . (.unCoreEnv)
+
+instance HasNotifyConfig BenchEnv NotifyEnv where
+  getNotifyConfig = getNotifyConfig . (.unCoreEnv)
 
 instance MonadRegionLogger (ShellT BenchEnv IO) where
   type Region (ShellT BenchEnv IO) = ()
@@ -63,6 +67,10 @@ instance MonadRegionLogger (ShellT BenchEnv IO) where
   regionList = atomically $ newTMVar []
 
 instance {-# OVERLAPS #-} MonadNotify (ShellT BenchEnv IO) where
+  -- The indirect definition here rather than e.g. NotifyEnv is due to
+  -- a conflicting def error, because of the overlapping instance.
+  type NotifyEnvF (ShellT BenchEnv IO) = NotifyEnvF (ReaderT BenchEnv IO)
+
   initNotifyEnv _ = pure $ error "unimplemented"
   notify _ _ = pure ()
 

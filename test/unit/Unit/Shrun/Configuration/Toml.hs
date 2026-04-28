@@ -130,7 +130,7 @@ testIdentity = testProp desc "testIdentity" $ do
   where
     desc = "Monoid identity"
 
-genToml :: Gen Toml
+genToml :: Gen (Toml NotifyEnv)
 genToml = do
   coreConfig <- genCoreConfig
   legend <- genLegend
@@ -140,7 +140,7 @@ genToml = do
         legend
       }
 
-genCoreConfig :: Gen CoreConfigToml
+genCoreConfig :: Gen (CoreConfigToml NotifyEnv)
 genCoreConfig = do
   init <- genMWithDisabled genText
   legendKeysCache <- genMaybe G.enumBounded

@@ -557,7 +557,7 @@ testOverridesDuplicate = testProp1 desc "testOverridesDuplicate" $ do
       [ #commands ^=@ unsafeListToNESeq [MkCommandP (mkIdx 1) (Just "key1") "val override"]
       ]
 
-expectedMultiConfig :: MergedConfig
+expectedMultiConfig :: MergedConfig NotifyEnv
 expectedMultiConfig =
   MkMergedConfig
     { coreConfig =

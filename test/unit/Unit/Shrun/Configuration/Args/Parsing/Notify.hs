@@ -194,20 +194,20 @@ testTimeoutDisabled =
 
 updateDefNotifyArgsWD ::
   forall a.
-  Lens' NotifyArgs (Maybe (WithDisabled a)) ->
+  Lens' (NotifyArgs NotifyEnv) (Maybe (WithDisabled a)) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefNotifyArgsWD l x = (l' ?~ With x) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe (WithDisabled a))
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe (WithDisabled a))
     l' = _Just % #coreConfig % #notifications % l
 
 updateDefNotifyArgs ::
   forall a.
-  Lens' NotifyArgs (Maybe a) ->
+  Lens' (NotifyArgs NotifyEnv) (Maybe a) ->
   a ->
-  Maybe Args
+  Maybe (Args NotifyEnv)
 updateDefNotifyArgs l x = (l' ?~ x) U.defArgs
   where
-    l' :: AffineTraversal' (Maybe Args) (Maybe a)
+    l' :: AffineTraversal' (Maybe (Args NotifyEnv)) (Maybe a)
     l' = _Just % #coreConfig % #notifications % l

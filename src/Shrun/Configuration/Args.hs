@@ -17,7 +17,7 @@ import Shrun.Configuration.Args.Parsing
 import Shrun.Configuration.Default (Default (def))
 import Shrun.Prelude
 
-defaultArgs :: NESeq Text -> Args
+defaultArgs :: NESeq Text -> Args m
 defaultArgs commands =
   MkArgs
     { configPaths = Empty,
