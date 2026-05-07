@@ -189,6 +189,13 @@ timer-format = "prose_compact"
 # 'shrun (1).log'.
 #mode = "write"
 
+# Logs each command to its own file, rather than all logs being sent to the
+# same file. This allows usage with
+# '--command-log-read-strategy block-line-buffer'. The filename is based on
+# '--file-log'. Note that '--file-log-mode' does not apply i.e. we always come
+# up with fresh filenames.
+#multi = "off"
+
 # Sets a threshold for the file log size, upon which we either print a
 # warning or delete the file, if it is exceeded. Format is value and units
 # e.g. warn 10 mb, warn 5 gigabytes, delete 20.5B. Defaults to warning at

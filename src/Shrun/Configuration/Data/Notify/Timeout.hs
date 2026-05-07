@@ -9,7 +9,6 @@ where
 
 import Data.Bits (toIntegralSized)
 import Data.Time.Relative qualified as RT
-import Data.Word (Word16)
 import Shrun.Prelude
 import Shrun.Utils qualified as U
 import Shrun.Utils qualified as Utils

@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
 -- | Tests for Shrun.Logging.Formatting.
@@ -49,6 +50,7 @@ import Shrun.Configuration.Data.FileLogging
     FileLogOpened
       ( MkFileLogOpened,
         handle,
+        path,
         queue
       ),
     FileLoggingEnv,
@@ -58,6 +60,7 @@ import Shrun.Configuration.Data.FileLogging
         deleteOnSuccess,
         file,
         lineTrunc,
+        multi,
         stripControl
       ),
   )
@@ -657,10 +660,15 @@ baseFileLoggingEnv =
     { file =
         MkFileLogOpened
           { handle = err "handle",
+            -- This value is not tested, but we need to set it because the
+            -- field is currently strict (StrictData). Alternatively, we
+            -- could change it to be lazy and use 'err'.
+            path = [osp|some_path|],
             queue = err "queue"
           },
       commandNameTrunc = Nothing,
       lineTrunc = Nothing,
+      multi = Nothing,
       deleteOnSuccess = MkDeleteOnSuccessSwitch False,
       stripControl = StripControlNone
     }

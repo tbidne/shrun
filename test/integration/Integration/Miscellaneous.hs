@@ -75,12 +75,14 @@ import Shrun.Configuration.Data.Core
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
     FileLogInitP (MkFileLogInitP, mode, path, sizeMode),
+    FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingP
       ( MkFileLoggingP,
         commandNameTrunc,
         deleteOnSuccess,
         file,
         lineTrunc,
+        multi,
         stripControl
       ),
   )
@@ -135,6 +137,7 @@ specs testArgs =
       testCmdLogLineTruncDefaults,
       testLineTruncDetectTotal,
       testFileLogDeleteOnSuccess,
+      testFileLogMulti,
       testFileSizeModeNothing,
       testReadBlockLineBufferReadStrategy,
       testNotifyTimeoutString,
@@ -419,6 +422,19 @@ testFileLogDeleteOnSuccess = testProp1 desc "testFileLogDeleteOnSuccess" $ do
 
     expected = [#coreConfig % #fileLogging %? #deleteOnSuccess % #unDeleteOnSuccessSwitch ^?=@ Just True]
 
+testFileLogMulti :: TestTree
+testFileLogMulti = testProp1 desc "testFileLogMulti" $ do
+  logsRef <- liftIO $ newIORef' []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef' logsRef
+  logs === []
+  where
+    desc = "delete-on-success reads true"
+    args = ["-c", "off", "-c", getIntConfig "basic-file-log", "cmd"]
+
+    expected = [#coreConfig % #fileLogging %? #multi % #unFileLogMultiSwitch ^?=@ Just True]
+
 testReadBlockLineBufferReadStrategy :: TestTree
 testReadBlockLineBufferReadStrategy = testProp1 desc "testReadBlockLineBufferReadStrategy" $ do
   logsRef <- liftIO $ newIORef' []
@@ -599,6 +615,7 @@ expectedMultiConfig =
                     commandNameTrunc = Just $ MkTruncation {unTruncation = 123},
                     deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                     lineTrunc = Just $ MkTruncation {unTruncation = 300},
+                    multi = MkFileLogMultiSwitch False,
                     stripControl = StripControlSmart
                   },
             notifications =

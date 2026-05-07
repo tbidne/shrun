@@ -12,19 +12,27 @@ tests :: IO TestArgs -> TestTree
 tests args =
   testGroup
     "FileLogging"
-    [ fileLog args,
-      fileLogDeleteOnSuccessFail args,
-      fileLogCommandNameTruncN args,
-      fileLogDeleteOnSuccess args,
-      fileLogLineTruncN args,
-      fileLogModeAppend args,
-      fileLogModeRename args,
-      fileLogModeWrite args,
-      fileLogStripControlAll args,
-      fileLogStripControlNone args,
-      fileLogStripControlSmart args,
-      fileLogDirPathFail args
-    ]
+    $ [ fileLog args,
+        fileLogMulti args,
+        fileLogDeleteOnSuccessFail args,
+        fileLogCommandNameTruncN args,
+        fileLogDeleteOnSuccess args,
+        fileLogMultiDeleteOnSuccess args,
+        fileLogLineTruncN args,
+        fileLogModeAppend args,
+        fileLogModeRename args,
+        fileLogModeWrite args,
+        fileLogStripControlAll args,
+        fileLogStripControlNone args,
+        fileLogStripControlSmart args,
+        fileLogDirPathFail args
+      ]
+    ++ readStrategyTests
+  where
+    readStrategyTests =
+      multiTestReadStrategy
+        [ fileLogMultiBuffer args
+        ]
 
 fileLog :: IO TestArgs -> TestTree
 fileLog testArgs = testCase "Runs file-log example" $ do
@@ -55,6 +63,63 @@ fileLog testArgs = testCase "Runs file-log example" $ do
       zip [1, 1 ..] expectedConsole
         ++ [ (3, withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi")
            ]
+
+fileLogMulti :: IO TestArgs -> TestTree
+fileLogMulti testArgs = testCase "Logs commands to each file" $ do
+  tmpDir <- view #tmpDir <$> testArgs
+  let outMain = tmpDir </> [osp|file-out-multi.log|]
+      outMainStr = unsafeDecode outMain
+
+      out1 = tmpDir </> [osp|file-out-multi_multi1.log|]
+      out2 = tmpDir </> [osp|file-out-multi_multi2.log|]
+      out3 = tmpDir </> [osp|file-out-multi_multi3.log|]
+
+      args =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "sleep 2",
+            "bad",
+            "for i in 1 2 3; do echo hi; sleep 1; done"
+          ]
+
+  resultsConsole <- runExitFailure args
+  V.verifyExpected resultsConsole expectedConsole
+
+  resultsFileMain <- readLogFile outMain
+  V.verifyExpectedN resultsFileMain expectedFileMain
+
+  resultsFileMulti1 <- readLogFile out1
+  resultsFileMulti2 <- readLogFile out2
+  resultsFileMulti3 <- readLogFile out3
+
+  -- combine results since file order is non-deterministic.
+  let resultsFileMulti =
+        resultsFileMulti1
+          ++ resultsFileMulti2
+          ++ resultsFileMulti3
+
+  V.verifyExpectedN resultsFileMulti expectedFileMulti
+  where
+    expectedConsole =
+      [ withErrorPrefix "bad",
+        withSuccessPrefix "sleep 2",
+        withSuccessPrefix "for i in 1 2 3; do echo hi; sleep 1; done",
+        finishedPrefix (0, 0, 1, 2)
+      ]
+    expectedFileMain = zip [1, 1 ..] expectedConsole
+
+    expectedFileMulti =
+      [ -- cmd 1
+        (1, withCommandPrefix "sleep 2" "Starting..."),
+        -- cmd 2
+        (1, withCommandPrefix "bad" "Starting..."),
+        -- cmd3
+        (1, withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "Starting..."),
+        (3, withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi")
+      ]
 
 fileLogCommandNameTruncN :: IO TestArgs -> TestTree
 fileLogCommandNameTruncN testArgs = testCase "Runs --file-log-command-name-trunc 10 example" $ do
@@ -139,6 +204,67 @@ fileLogDeleteOnSuccessFail testArgs = testCase "Runs file-log-delete-on-success 
         finishedPrefix (0, 0, 1, 1)
       ]
     expectedFile = expectedConsole
+
+fileLogMultiDeleteOnSuccess :: IO TestArgs -> TestTree
+fileLogMultiDeleteOnSuccess testArgs = testCase "file-log-multi with --delete-on-success" $ do
+  tmpDir <- view #tmpDir <$> testArgs
+  let outMain = tmpDir </> [osp|del-on-success-multi.log|]
+      outMainStr = unsafeDecode outMain
+
+      out1 = tmpDir </> [osp|del-on-success-multi_multi1.log|]
+      out2 = tmpDir </> [osp|del-on-success-multi_multi2.log|]
+
+      args =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "--file-log-delete-on-success",
+            "on",
+            "bad",
+            "sleep 2"
+          ]
+
+  resultsConsole <- runExitFailure args
+  V.verifyExpected resultsConsole expectedConsole
+
+  exists <- doesFileExist outMain
+  assertBool "Main file should exist" exists
+
+  resultsFile <- readLogFile outMain
+  V.verifyExpected resultsFile expectedFile
+
+  out1Exists <- doesFileExist out1
+  out2Exists <- doesFileExist out2
+  resultsFileMulti <-
+    if out1Exists
+      then do
+        assertBool "Log multi_2 file should not exist" (not out2Exists)
+        readLogFile out1
+      else do
+        assertBool "Log multi_2 file should exist" out2Exists
+        readLogFile out2
+
+  V.verifyExpectedN resultsFileMulti expectedFileMulti
+  V.verifyUnexpected resultsFileMulti unexpectedMulti
+  where
+    expectedConsole =
+      [ withSuccessPrefix "sleep 2",
+        finishedPrefix (0, 0, 1, 1)
+      ]
+
+    expectedFile = expectedConsole
+
+    expectedFileMulti =
+      [ -- cmd 2
+        (1, withCommandPrefix "bad" "Starting...")
+      ]
+
+    unexpectedMulti =
+      [ -- cmd1
+        withCommandPrefix "sleep 2" "Starting..."
+      ]
 
 fileLogLineTruncN :: IO TestArgs -> TestTree
 fileLogLineTruncN testArgs = testCase "Runs --file-log-line-trunc 120 example" $ do
@@ -430,6 +556,144 @@ fileLogDirPathFail _testArgs = testCase desc $ do
         [ "Requested log file 'documentation' already exists and has ",
           "invalid type: directory."
         ]
+
+-- Copy of formatsFileLogs test in Miscellaneous, but with --file-log-multi.
+fileLogMultiBuffer :: IO TestArgs -> ReadStrategyTestParams
+fileLogMultiBuffer testArgs =
+  ReadStrategyTestSetup
+    "Multi log with buffer read-strategy"
+    run
+    ( \pfx -> do
+        tmpDir <- view #tmpDir <$> testArgs
+        let outMain = tmpDir </> pfx <> [osp|_file-log-multi-buffer.log|]
+            out1 = tmpDir </> pfx <> [osp|_file-log-multi-buffer_multi1.log|]
+            out2 = tmpDir </> pfx <> [osp|_file-log-multi-buffer_multi2.log|]
+
+        let outMainStr = unsafeDecode outMain
+            args =
+              withNoConfig
+                [ "--file-log",
+                  outMainStr,
+                  "--file-log-multi",
+                  "on",
+                  "--console-log-command",
+                  "on",
+                  "--command-log-read-size",
+                  "5b",
+                  cmd1,
+                  cmd2
+                ]
+
+        pure (args, (outMain, out1, out2))
+    )
+    ( \(resultsConsole, (outMain, out1, out2)) -> do
+        V.verifyExpectedN resultsConsole blockConsoleExpected
+
+        resultsFileMain <- readLogFile outMain
+        V.verifyExpected resultsFileMain blockFileExpected
+
+        resultsFileMulti1 <- readLogFile out1
+        resultsFileMulti2 <- readLogFile out2
+
+        let resultsFileMulti = resultsFileMulti1 ++ resultsFileMulti2
+
+        V.verifyExpectedN resultsFileMulti blockFileMultiExpected
+    )
+    ( \(resultsConsole, (outMain, out1, out2)) -> do
+        V.verifyExpected resultsConsole bufferConsoleExpected
+
+        resultsFileMain <- readLogFile outMain
+        V.verifyExpected resultsFileMain bufferFileExpected
+
+        resultsFileMulti1 <- readLogFile out1
+        resultsFileMulti2 <- readLogFile out2
+
+        let resultsFileMulti = resultsFileMulti1 ++ resultsFileMulti2
+
+        V.verifyExpected resultsFileMulti bufferFileMultiExpected
+    )
+  where
+    cmd1 :: (IsString a, Semigroup a) => a
+    cmd1 = appendScriptsHome "formatting.sh"
+
+    cmd2 :: (IsString a) => a
+    cmd2 = "sleep 1 && echo '   hi' && sleep 2"
+
+    blockConsoleExpected =
+      [ (01, withCommandPrefix cmd1 "Starting"),
+        (01, withCommandPrefix cmd1 "A tit"),
+        (01, withCommandPrefix cmd1 "le"),
+        (22, withCommandPrefix cmd1 ""),
+        (01, withCommandPrefix cmd1 "A hea"),
+        (01, withCommandPrefix cmd1 "der"),
+        (22, withCommandPrefix cmd1 ""),
+        (02, withCommandPrefix cmd1 "-"),
+        (01, withCommandPrefix cmd1 "Runni"),
+        (01, withCommandPrefix cmd1 "ng ta"),
+        (01, withCommandPrefix cmd1 "sk A"),
+        (22, withCommandPrefix cmd1 ""),
+        (01, withCommandPrefix cmd1 "OK"),
+        (22, withCommandPrefix cmd1 ""),
+        (01, withCommandPrefix cmd1 "- R"),
+        (01, withCommandPrefix cmd1 "unnin"),
+        (01, withCommandPrefix cmd1 "g tas"),
+        (01, withCommandPrefix cmd1 "k B"),
+        (22, withCommandPrefix cmd1 ""),
+        (01, withCommandPrefix cmd1 "FAIL"),
+        (01, withCommandPrefix cmd1 "Finis"),
+        (01, withCommandPrefix cmd2 "hi")
+      ]
+
+    blockFileExpected =
+      [ withSuccessPrefix cmd1,
+        withSuccessPrefix cmd2,
+        finishedPrefix (0, 0, 0, 2)
+      ]
+
+    blockFileMultiExpected =
+      [ (1, withCommandPrefix cmd1 "Starting"),
+        (1, withCommandPrefix cmd1 "A tit"),
+        (1, withCommandPrefix cmd1 "le"),
+        (5, withCommandPrefix cmd1 "  "),
+        (1, withCommandPrefix cmd1 "A hea"),
+        (1, withCommandPrefix cmd1 "der"),
+        (7, withCommandPrefix cmd1 " "),
+        (1, withCommandPrefix cmd1 "   - "),
+        (1, withCommandPrefix cmd1 "Runni"),
+        (1, withCommandPrefix cmd1 "ng ta"),
+        (1, withCommandPrefix cmd1 "sk A "),
+        (5, withCommandPrefix cmd1 "  "),
+        (1, withCommandPrefix cmd1 "OK"),
+        (5, withCommandPrefix cmd1 "  "),
+        (1, withCommandPrefix cmd1 "  - R"),
+        (1, withCommandPrefix cmd1 "unnin"),
+        (1, withCommandPrefix cmd1 "g tas"),
+        (1, withCommandPrefix cmd1 "k B  "),
+        (7, withCommandPrefix cmd1 " "),
+        (1, withCommandPrefix cmd1 "FAIL"),
+        (1, withCommandPrefix cmd1 "Finis"),
+        (1, withCommandPrefix cmd2 "   hi")
+      ]
+
+    bufferConsoleExpected =
+      [ withCommandPrefix cmd1 "A title",
+        withCommandPrefix cmd1 "A header",
+        withCommandPrefix cmd1 "- Running task A   OK",
+        withCommandPrefix cmd1 "- Running task B   FAIL",
+        withCommandPrefix cmd1 "Finished",
+        withCommandPrefix cmd2 "hi"
+      ]
+
+    bufferFileExpected = blockFileExpected
+
+    bufferFileMultiExpected =
+      [ withCommandPrefix cmd1 "A title",
+        withCommandPrefix cmd1 "  A header",
+        withCommandPrefix cmd1 "    - Running task A   OK",
+        withCommandPrefix cmd1 "    - Running task B   FAIL",
+        withCommandPrefix cmd1 "Finished",
+        withCommandPrefix cmd2 "   hi"
+      ]
 
 -- | mkLogPath is used to make log paths, based on the base path
 -- (used for uniqueness) and sequential number (for file-log-mode rename)

@@ -92,6 +92,9 @@ for versions < 1.
 * `Timer` log now changed to more general `Status`, and status info added
   to final logs.
 
+* New `--file-log-multi` option for giving each command its own file, for
+  usage with `--command-log-read-strategy block-line-buffer`.
+
 ### Added
 * Option `--edges` (toml: legend `edges`) for declaring dependencies
   between commands e.g. `shrun cmd1 cmd2 --edges "1 & 2"` means `cmd2` will

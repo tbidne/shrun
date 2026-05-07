@@ -20,7 +20,6 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text.Lazy qualified as LazyT
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as LTBuilder
-import Data.Word (Word16)
 import Shrun.Command.Types
   ( CommandIndex,
     CommandP (MkCommandP),

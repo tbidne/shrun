@@ -29,6 +29,7 @@
       - [File Delete On Success](#file-delete-on-success)
       - [File Line Truncation](#file-line-truncation)
       - [File Log Mode](#file-log-mode)
+      - [File Log Multi](#file-log-multi)
       - [File Log Size Mode](#file-log-size-mode)
       - [File Log Strip Control](#file-log-strip-control)
   - [Notifications](#notifications)
@@ -695,6 +696,12 @@ vs.
 **Arg:** `--file-log-mode (append | rename | write)`
 
 **Description:** Mode in which to open the log file. Can be `write` (the default), `append`, or `rename`. The `rename` option will rename the requested log file if there is a collision e.g. `-f shrun.log` will become `shrun (1).log`.
+
+#### File Log Multi
+
+**Arg:** `--file-log-multi (on | off)`
+
+**Description:** Logs each command to its own file, rather than all logs being sent to the same file. This allows usage with `--command-log-read-strategy block-line-buffer`. The filename is based on `--file-log`. Note that `--file-log-mode` does not apply i.e. we always come up with fresh filenames.
 
 #### File Log Size Mode
 

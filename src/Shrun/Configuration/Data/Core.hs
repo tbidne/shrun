@@ -319,9 +319,13 @@ mergeCoreConfig cmds args toml = do
       (args ^. #fileLogging)
       (toml ^. #fileLogging)
 
+  let (isFileLog, isFileLogMulti) = case fileLogging of
+        Nothing -> (False, False)
+        Just fl -> (True, fl ^. (#multi % #unFileLogMultiSwitch))
   commandLogging <-
     mergeCommandLogging
-      (is _Just fileLogging)
+      isFileLog
+      isFileLogMulti
       cmds
       (args ^. #commandLogging)
       (toml ^. #commandLogging)

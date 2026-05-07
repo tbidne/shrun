@@ -10,8 +10,12 @@ module Shrun.Configuration.Data.FileLogging
     FileLoggingMerged,
     FileLoggingEnv,
     DeleteOnSuccessSwitch (..),
+    FileLogMultiSwitch (..),
     mergeFileLogging,
     withFileLoggingEnv,
+
+    -- * Misc
+    uniqMultiName,
   )
 where
 
@@ -22,7 +26,6 @@ import Data.Bytes
     sizedFormatterNatural,
   )
 import Data.Text qualified as T
-import Data.Word (Word16)
 import Effects.FileSystem.HandleWriter (MonadHandleWriter (withBinaryFile), die)
 import Effects.FileSystem.PathReader qualified as PR
 import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing))
@@ -102,6 +105,31 @@ instance
     b
   where
   labelOptic = iso (\(MkDeleteOnSuccessSwitch b) -> b) MkDeleteOnSuccessSwitch
+  {-# INLINE labelOptic #-}
+
+-- | Switch for logging to multiple files.
+newtype FileLogMultiSwitch = MkFileLogMultiSwitch Bool
+  deriving stock (Eq, Show)
+  deriving newtype (Bounded, Enum)
+  deriving (Pretty) via PrettySwitch
+
+instance Default FileLogMultiSwitch where
+  def = MkFileLogMultiSwitch False
+
+instance DecodeTOML FileLogMultiSwitch where
+  tomlDecoder = MkFileLogMultiSwitch <$> (tomlDecoder >>= parseSwitch)
+
+instance
+  (k ~ An_Iso, a ~ Bool, b ~ Bool) =>
+  LabelOptic
+    "unFileLogMultiSwitch"
+    k
+    FileLogMultiSwitch
+    FileLogMultiSwitch
+    a
+    b
+  where
+  labelOptic = iso (\(MkFileLogMultiSwitch b) -> b) MkFileLogMultiSwitch
   {-# INLINE labelOptic #-}
 
 -- NOTE: [Args vs. Toml mandatory fields]
@@ -252,6 +280,8 @@ decodeFileLogSizeMode = getFieldOptWith tomlDecoder "size-mode"
 data FileLogOpened = MkFileLogOpened
   { -- | File handle.
     handle :: ~Handle,
+    -- | File path.
+    path :: OsPath,
     -- | File log queue.
     queue :: ~(TBQueue FileLog)
   }
@@ -265,10 +295,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLogOpened a1 a2) ->
+      $ \f (MkFileLogOpened a1 a2 a3) ->
         fmap
-          (\b -> MkFileLogOpened b a2)
+          (\b -> MkFileLogOpened b a2 a3)
           (f a1)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ OsPath,
+    b ~ OsPath
+  ) =>
+  LabelOptic "path" k FileLogOpened FileLogOpened a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkFileLogOpened a1 a2 a3) ->
+        fmap
+          (\b -> MkFileLogOpened a1 b a3)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -280,10 +325,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLogOpened a1 a2) ->
+      $ \f (MkFileLogOpened a1 a2 a3) ->
         fmap
-          (\b -> MkFileLogOpened a1 b)
-          (f a2)
+          (\b -> MkFileLogOpened a1 a2 b)
+          (f a3)
   {-# INLINE labelOptic #-}
 
 type FileLogFileF :: ConfigPhase -> Type
@@ -292,6 +337,13 @@ type family FileLogFileF p where
   FileLogFileF ConfigPhaseToml = FileLogInitP ConfigPhaseToml
   FileLogFileF ConfigPhaseMerged = FileLogInitP ConfigPhaseMerged
   FileLogFileF ConfigPhaseEnv = FileLogOpened
+
+type FileLogMultiF :: ConfigPhase -> Type
+type family FileLogMultiF p where
+  FileLogMultiF ConfigPhaseArgs = Maybe FileLogMultiSwitch
+  FileLogMultiF ConfigPhaseToml = Maybe FileLogMultiSwitch
+  FileLogMultiF ConfigPhaseMerged = FileLogMultiSwitch
+  FileLogMultiF ConfigPhaseEnv = Maybe (TVar Word16)
 
 -- | Holds file logging config.
 type FileLoggingP :: ConfigPhase -> Type
@@ -305,6 +357,14 @@ data FileLoggingP p = MkFileLoggingP
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     lineTrunc :: LineTruncF p,
+    -- | Switch for multi logs.
+    --
+    -- FIXME: Maybe at the env level this should not be a switch? It could be
+    -- a Set of unique names based on the file log's name. E.g. if our file log
+    -- is shrun.log, then we will generate a TBQueue of
+    -- shrun_multi1, shrun_multi2, ... Then when creating a new multilog,
+    -- we take a name from the queue.
+    multi :: FileLogMultiF p,
     -- | Strip control
     stripControl :: ConfigPhaseF p FileLogStripControl
   }
@@ -318,9 +378,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkFileLoggingP b a2 a3 a4 a5)
+          (\b -> MkFileLoggingP b a2 a3 a4 a5 a6)
           (f a1)
   {-# INLINE labelOptic #-}
 
@@ -333,9 +393,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkFileLoggingP a1 b a3 a4 a5)
+          (\b -> MkFileLoggingP a1 b a3 a4 a5 a6)
           (f a2)
   {-# INLINE labelOptic #-}
 
@@ -348,9 +408,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkFileLoggingP a1 a2 b a4 a5)
+          (\b -> MkFileLoggingP a1 a2 b a4 a5 a6)
           (f a3)
   {-# INLINE labelOptic #-}
 
@@ -363,10 +423,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkFileLoggingP a1 a2 a3 b a5)
+          (\b -> MkFileLoggingP a1 a2 a3 b a5 a6)
           (f a4)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ FileLogMultiF p,
+    b ~ FileLogMultiF p
+  ) =>
+  LabelOptic "multi" k (FileLoggingP p) (FileLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
+        fmap
+          (\b -> MkFileLoggingP a1 a2 a3 a4 b a6)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 instance
@@ -378,10 +453,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
         fmap
-          (\b -> MkFileLoggingP a1 a2 a3 a4 b)
-          (f a5)
+          (\b -> MkFileLoggingP a1 a2 a3 a4 a5 b)
+          (f a6)
   {-# INLINE labelOptic #-}
 
 instance Semigroup FileLoggingToml where
@@ -391,6 +466,7 @@ instance Semigroup FileLoggingToml where
         commandNameTrunc = l ^. #commandNameTrunc <|> r ^. #commandNameTrunc,
         deleteOnSuccess = l ^. #deleteOnSuccess <|> r ^. #deleteOnSuccess,
         lineTrunc = l ^. #lineTrunc <|> r ^. #lineTrunc,
+        multi = l ^. #multi <|> r ^. #multi,
         stripControl = l ^. #stripControl <|> r ^. #stripControl
       }
 
@@ -401,6 +477,7 @@ instance Monoid FileLoggingToml where
         commandNameTrunc = Nothing,
         deleteOnSuccess = Nothing,
         lineTrunc = Nothing,
+        multi = Nothing,
         stripControl = Nothing
       }
 
@@ -443,6 +520,7 @@ instance Default FileLoggingArgs where
         commandNameTrunc = Nothing,
         deleteOnSuccess = Nothing,
         lineTrunc = Nothing,
+        multi = Nothing,
         stripControl = Nothing
       }
 
@@ -480,6 +558,10 @@ mergeFileLogging detectRef args mToml = for mPath $ \path -> do
             ^. #deleteOnSuccess
             <.> (toml ^. #deleteOnSuccess),
         lineTrunc,
+        multi =
+          args
+            ^. #multi
+            <.> (toml ^. #multi),
         stripControl =
           (args ^. #stripControl) <.> (toml ^. #stripControl)
       }
@@ -516,6 +598,7 @@ instance DecodeTOML FileLoggingToml where
       <*> decodeCommandNameTrunc
       <*> decodeFileDeleteOnSuccess
       <*> decodeLineTrunc
+      <*> getFieldOptWith tomlDecoder "multi"
       <*> decodeFileLogStripControl
 
 decodeFileDeleteOnSuccess :: Decoder (Maybe DeleteOnSuccessSwitch)
@@ -524,7 +607,15 @@ decodeFileDeleteOnSuccess = getFieldOptWith tomlDecoder "delete-on-success"
 decodeFileLogStripControl :: Decoder (Maybe FileLogStripControl)
 decodeFileLogStripControl = getFieldOptWith tomlDecoder "strip-control"
 
-type MLogging = Maybe (Tuple3 FileLoggingMerged Handle (TBQueue FileLog))
+type MLogging =
+  Maybe
+    ( Tuple5
+        FileLoggingMerged
+        Handle
+        OsPath
+        (TBQueue FileLog)
+        (Maybe (TVar Word16))
+    )
 
 -- | Given merged FileLogging config, constructs a FileLoggingEnv and calls
 -- the continuation.
@@ -546,17 +637,19 @@ withFileLoggingEnv ::
 withFileLoggingEnv mFileLogging onFileLoggingEnv = do
   let mkEnv :: MLogging -> Maybe FileLoggingEnv
       mkEnv Nothing = Nothing
-      mkEnv (Just (fl, h, q)) =
+      mkEnv (Just (fl, h, p, q, mMultiCounter)) =
         Just
           $ MkFileLoggingP
             { file =
                 MkFileLogOpened
                   { handle = h,
+                    path = p,
                     queue = q
                   },
               commandNameTrunc = fl ^. #commandNameTrunc,
               lineTrunc = fl ^. #lineTrunc,
               deleteOnSuccess = fl ^. #deleteOnSuccess,
+              multi = mMultiCounter,
               stripControl = fl ^. #stripControl
             }
 
@@ -601,9 +694,14 @@ withMLogging (Just fileLogging) onLogging = do
   handleLogFileSize (fileLogging ^. #file % #sizeMode) uniqFp
   fileQueue <- newTBQueueA 1000
 
+  mMultiCounter <-
+    if fileLogging ^. #multi % #unFileLogMultiSwitch
+      then Just <$> newTVarA' 1
+      else pure Nothing
+
   result <-
     withBinaryFile uniqFp ioMode $ \h ->
-      onLogging (Just (fileLogging, h, fileQueue))
+      onLogging (Just (fileLogging, h, uniqFp, fileQueue, mMultiCounter))
 
   -- If the above command succeeded and deleteOnSuccess is true, delete the
   -- log file. Otherwise we will not reach here due to withBinaryFile
@@ -728,9 +826,38 @@ uniqName fp = go 1
       | counter == maxBound = die $ "Failed renaming file: " <> show fp
       | otherwise = do
           newFp <- appendNum <$> encodeThrowM (show counter)
-          b <- doesFileExist newFp
+          b <- PR.doesPathExist newFp
           if b
             then go (counter + 1)
+            else pure newFp
+
+uniqMultiName ::
+  forall m.
+  ( HasCallStack,
+    MonadAtomic m,
+    MonadHandleWriter m,
+    MonadPathReader m,
+    MonadThrow m
+  ) =>
+  TVar Word16 ->
+  OsPath ->
+  m OsPath
+uniqMultiName counterRef fp = go
+  where
+    (base, ext) = OsPath.splitExtension fp
+
+    appendNum c = base <> [osp|_multi|] <> c <> ext
+
+    go :: m OsPath
+    go = do
+      counter <- atomically $ Utils.readIncCounter counterRef
+      if counter == maxBound
+        then die $ "Failed naming file: " <> show fp
+        else do
+          newFp <- appendNum <$> encodeThrowM (show counter)
+          b <- PR.doesPathExist newFp
+          if b
+            then go
             else pure newFp
 
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
@@ -749,5 +876,6 @@ defaultToml =
       commandNameTrunc = Nothing,
       deleteOnSuccess = Nothing,
       lineTrunc = Nothing,
+      multi = Nothing,
       stripControl = Nothing
     }

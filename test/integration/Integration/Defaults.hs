@@ -81,12 +81,14 @@ import Shrun.Configuration.Data.FileLogging
         path,
         sizeMode
       ),
+    FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingP
       ( MkFileLoggingP,
         commandNameTrunc,
         deleteOnSuccess,
         file,
         lineTrunc,
+        multi,
         stripControl
       ),
   )
@@ -223,6 +225,7 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                             },
                         commandNameTrunc = Just 45,
                         lineTrunc = Just 200,
+                        multi = MkFileLogMultiSwitch False,
                         deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                         stripControl = StripControlNone
                       },
@@ -271,9 +274,11 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
         "--file-log-command-name-trunc",
         "35",
         "--file-log-delete-on-success",
-        "on",
+        "off",
         "--file-log-line-trunc",
         "180",
+        "--file-log-multi",
+        "off",
         "--console-log-command",
         "on",
         "--common-log-debug",
@@ -348,8 +353,9 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                               sizeMode = FileSizeModeWarn $ fromℤ 50_000_000
                             },
                         commandNameTrunc = Just 35,
-                        deleteOnSuccess = MkDeleteOnSuccessSwitch True,
+                        deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                         lineTrunc = Just 180,
+                        multi = MkFileLogMultiSwitch False,
                         stripControl = StripControlNone
                       },
                 notifications =
@@ -415,6 +421,8 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         "180",
         "--file-log-mode",
         "write",
+        "--file-log-multi",
+        "on",
         "--file-log-strip-control",
         "smart",
         "--file-log-size-mode",
@@ -428,6 +436,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         #coreConfig % #fileLogging %? #lineTrunc ^?=@ Just (Just 180),
         #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
         #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeWrite,
+        #coreConfig % #fileLogging %? #multi % #unFileLogMultiSwitch ^?=@ Just True,
         #coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
       ]
 

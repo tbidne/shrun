@@ -58,6 +58,7 @@ module Shrun.Prelude
     Tuple2,
     Tuple3,
     Tuple4,
+    Tuple5,
 
 #endif
 
@@ -202,11 +203,12 @@ import Data.Text qualified as T
 import Data.Traversable as X (Traversable (sequenceA, traverse), for)
 import Data.Tuple as X (fst, snd, uncurry)
 #if MIN_VERSION_base(4, 20, 0)
-import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4)
+import Data.Tuple.Experimental as X (Tuple2, Tuple3, Tuple4, Tuple5)
 #endif
 import Data.Text.Display as X (Display, display)
 import Data.Type.Equality as X (type (~))
 import Data.Void as X (Void, absurd)
+import Data.Word as X (Word16)
 import Effects.Concurrent.Async as X (MonadAsync)
 import Effects.Concurrent.STM as X
   ( MonadAtomic (atomically),
@@ -214,13 +216,17 @@ import Effects.Concurrent.STM as X
     TVar,
     flushTBQueueA',
     modifyTVarA',
+    newTBQueue,
     newTBQueueA,
     newTVar',
     newTVarA',
     readTBQueueA',
     readTVar',
     readTVarA',
+    tryReadTBQueueA',
+    writeTBQueue',
     writeTBQueueA',
+    writeTVar',
     writeTVarA',
   )
 import Effects.Concurrent.Thread as X
@@ -498,6 +504,9 @@ type Tuple3 = (,,)
 
 -- | Alias for (,,,).
 type Tuple4 = (,,,)
+
+-- | Alias for (,,,,).
+type Tuple5 = (,,,,)
 
 #endif
 

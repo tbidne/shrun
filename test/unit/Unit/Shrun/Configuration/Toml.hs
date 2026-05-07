@@ -67,6 +67,7 @@ import Shrun.Configuration.Data.FileLogging
         deleteOnSuccess,
         file,
         lineTrunc,
+        multi,
         stripControl
       ),
   )
@@ -232,6 +233,7 @@ genCoreConfig = do
       commandNameTrunc <- genMWithDisabled genTruncation
       deleteOnSuccess <- genMaybe G.enumBounded
       lineTrunc <- genMWithDisabled genLineTruncation
+      multi <- genMaybe G.enumBounded
       stripControl <- genMaybe G.enumBounded
       pure
         $ MkFileLoggingP
@@ -239,6 +241,7 @@ genCoreConfig = do
             commandNameTrunc,
             deleteOnSuccess,
             lineTrunc,
+            multi,
             stripControl
           }
 

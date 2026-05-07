@@ -32,15 +32,26 @@ instance Pretty ReadStrategy where
     ReadBlock -> "block"
     ReadBlockLineBuffer -> "block-line-buffer"
 
-defaultReadStrategy :: Bool -> NESeq CommandP1 -> ReadStrategy
-defaultReadStrategy fileLogging cmds =
-  if readBlockLineBufferNotAllowed fileLogging cmds
-    then ReadBlock
-    else ReadBlockLineBuffer
+defaultReadStrategy :: Bool -> Bool -> NESeq CommandP1 -> ReadStrategy
+defaultReadStrategy isFileLog isFileLogMulti cmds =
+  -- We default to ReadBlockLineBuffer when both:
+  --
+  -- 1. ReadBlockLineBuffer is allowed.
+  -- 2. Multi log is not enabled.
+  --
+  -- Otherwise we use ReadBlock.
+  if
+    | readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds -> ReadBlock
+    | isFileLogMulti -> ReadBlock
+    | otherwise -> ReadBlockLineBuffer
 
-readBlockLineBufferNotAllowed :: Bool -> NESeq CommandP1 -> Bool
-readBlockLineBufferNotAllowed fileLogging cmds =
-  length cmds > 1 && fileLogging
+readBlockLineBufferNotAllowed :: Bool -> Bool -> NESeq CommandP1 -> Bool
+readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds =
+  isMulti
+    && isFileLog
+    && not isFileLogMulti
+  where
+    isMulti = length cmds > 1
 
 -- | Parses 'ReadStrategy'.
 parseReadStrategy :: (MonadFail m) => m Text -> m ReadStrategy
