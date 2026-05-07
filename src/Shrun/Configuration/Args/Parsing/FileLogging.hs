@@ -16,6 +16,7 @@ import Shrun.Configuration.Data.FileLogging
         path,
         sizeMode
       ),
+    FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingArgs,
     FileLoggingP
       ( MkFileLoggingP,
@@ -23,6 +24,7 @@ import Shrun.Configuration.Data.FileLogging
         deleteOnSuccess,
         file,
         lineTrunc,
+        multi,
         stripControl
       ),
   )
@@ -51,6 +53,7 @@ fileLoggingParser = do
   deleteOnSuccess <- deleteOnSuccessParser
   lineTrunc <- lineTruncParser
   mode <- fileLogModeParser
+  multi <- multiParser
   sizeMode <- fileLogSizeModeParser
   stripControl <- fileLogStripControlParser
 
@@ -65,6 +68,7 @@ fileLoggingParser = do
         commandNameTrunc,
         deleteOnSuccess,
         lineTrunc,
+        multi,
         stripControl
       }
 
@@ -128,6 +132,19 @@ lineTruncParser =
         Utils.mkHelp helpTxt
       ]
     helpTxt = "Like --console-log-line-trunc, but for --file-log. Defaults to 'off'."
+
+multiParser :: Parser (Maybe FileLogMultiSwitch)
+multiParser =
+  Utils.switchParser MkFileLogMultiSwitch "file-log-multi" helpTxt
+  where
+    helpTxt =
+      mconcat
+        [ "Logs each command to its own file, rather than all logs being ",
+          "sent to the same file. This allows usage with ",
+          "'--command-log-read-strategy block-line-buffer'. The filename is ",
+          "based on --file-log. Note that --file-log-mode does not apply i.e. ",
+          "we always come up with fresh filenames."
+        ]
 
 fileLogStripControlParser :: Parser (Maybe FileLogStripControl)
 fileLogStripControlParser = mainParser

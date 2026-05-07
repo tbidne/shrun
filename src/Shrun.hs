@@ -115,6 +115,8 @@ shrun ::
     MonadIORef m,
     MonadMask m,
     MonadNotify m,
+    MonadPathReader m,
+    MonadPathWriter m,
     MonadPosixSignals m,
     MonadProcess m,
     MonadMVar m,
@@ -169,7 +171,7 @@ shrun = do
         flushTBQueueA' fileQueue >>= traverse_ (Logging.logFile h)
         hFlush h
       where
-        MkFileLogOpened h fileQueue = fileLogging ^. #file
+        MkFileLogOpened h _ fileQueue = fileLogging ^. #file
 
     runCommands :: (HasCallStack) => Double -> m ()
     runCommands startTime = do
@@ -198,6 +200,8 @@ runCommand ::
     MonadIORef m,
     MonadMask m,
     MonadNotify m,
+    MonadPathReader m,
+    MonadPathWriter m,
     MonadProcess m,
     MonadReader env m,
     MonadRegionLogger m,
@@ -639,7 +643,7 @@ pollQueueToFile fileLogging = do
     -- Hence the mask.
     Utils.atomicReadWrite queue (Logging.logFile h)
   where
-    MkFileLogOpened h queue = fileLogging ^. #file
+    MkFileLogOpened h _ queue = fileLogging ^. #file
 {-# INLINEABLE pollQueueToFile #-}
 
 -- | Cancels running commands and prints a final log message about going

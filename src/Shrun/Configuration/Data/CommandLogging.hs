@@ -290,14 +290,15 @@ instance Default CommandLoggingArgs where
 
 defaultCommandLoggingMerged ::
   Bool ->
+  Bool ->
   NESeq CommandP1 ->
   CommandLoggingP ConfigPhaseMerged
-defaultCommandLoggingMerged fileLogging cmds =
+defaultCommandLoggingMerged isFileLog isFileLogMulti cmds =
   MkCommandLoggingP
     { bufferLength = def,
       bufferTimeout = def,
       pollInterval = def,
-      readStrategy = RS.defaultReadStrategy fileLogging cmds,
+      readStrategy = RS.defaultReadStrategy isFileLog isFileLogMulti cmds,
       readSize = def,
       reportReadErrors = def
     }
@@ -308,11 +309,12 @@ mergeCommandLogging ::
     MonadThrow m
   ) =>
   Bool ->
+  Bool ->
   NESeq CommandP1 ->
   CommandLoggingArgs ->
   Maybe CommandLoggingToml ->
   m CommandLoggingMerged
-mergeCommandLogging fileLogging cmds args mToml = do
+mergeCommandLogging isFileLog isFileLogMulti cmds args mToml = do
   readStrategy <-
     guardReadStrategy
       ((args ^. #readStrategy) <|> (toml ^. #readStrategy))
@@ -340,13 +342,13 @@ mergeCommandLogging fileLogging cmds args mToml = do
     guardReadStrategy = \case
       -- 1. User set ReadBlockLineBuffer, verify it's okay.
       Just ReadBlockLineBuffer ->
-        if RS.readBlockLineBufferNotAllowed fileLogging cmds
+        if RS.readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds
           then throwM MkReadStrategyException
           else pure ReadBlockLineBuffer
       -- 2. User set ReadBlock, fine.
       Just ReadBlock -> pure ReadBlock
       -- 3. User did not specify. Pick a good default.
-      Nothing -> pure $ RS.defaultReadStrategy fileLogging cmds
+      Nothing -> pure $ RS.defaultReadStrategy isFileLog isFileLogMulti cmds
 
 instance DecodeTOML CommandLoggingToml where
   tomlDecoder =

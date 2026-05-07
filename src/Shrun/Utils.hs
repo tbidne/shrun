@@ -24,6 +24,7 @@ module Shrun.Utils
     fmtUnrecognizedError,
     mkMetaStr,
     parseByteText,
+    readIncCounter,
     surroundJust,
     whileM_,
     whenLeft,
@@ -452,3 +453,9 @@ drainStdin =
           False -> pure ()
           True -> void $ HR.hGetNonBlocking IO.stdin 1_000
 {-# INLINEABLE drainStdin #-}
+
+readIncCounter :: TVar Word16 -> STM Word16
+readIncCounter counter = do
+  c <- readTVar' counter
+  writeTVar' counter (c + 1)
+  pure c

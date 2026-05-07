@@ -29,6 +29,7 @@
       - [File Delete On Success](#file-delete-on-success)
       - [File Line Truncation](#file-line-truncation)
       - [File Log Mode](#file-log-mode)
+      - [File Log Multi](#file-log-multi)
       - [File Log Size Mode](#file-log-size-mode)
       - [File Log Strip Control](#file-log-strip-control)
   - [Notifications](#notifications)
@@ -695,6 +696,49 @@ vs.
 **Arg:** `--file-log-mode (append | rename | write)`
 
 **Description:** Mode in which to open the log file. Can be `write` (the default), `append`, or `rename`. The `rename` option will rename the requested log file if there is a collision e.g. `-f shrun.log` will become `shrun (1).log`.
+
+#### File Log Multi
+
+**Arg:** `--file-log-multi (on | off)`
+
+**Description:** Logs each command to its own file, rather than all logs being sent to the same file. This allows usage with `--command-log-read-strategy block-line-buffer`. The filename is based on `--file-log`. Note that `--file-log-mode` does not apply i.e. we always come up with fresh filenames.
+
+**Example:**
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> shrun --file-log=out.log --file-log-multi on "sleep 2" "bad" "for i in 1 2 3; do echo hi; sleep 1; done"</span>
+<span style="color: #ff6e6e">[Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
+<span style="color: #69ff94">[Success][sleep 2] 2 seconds</span>
+<span style="color: #69ff94">[Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
+<span style="color: #d6acff">[Finished][0|0|1|2] 3 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat out.log</span>
+<span style="color:">[2022-12-12 23:17:55][Error][bad] 0 seconds: /bin/sh: line 1: bad: command not found</span>
+<span style="color:">[2022-12-12 23:17:57][Success][sleep 2] 2 seconds</span>
+<span style="color:">[2022-12-12 23:17:58][Success][for i in {1..3}; do echo hi; sleep 1; done] 3 seconds</span>
+<span style="color:">[2022-12-12 23:17:58][Finished][0|0|1|2] 3 seconds</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat out_multi1.log</span>
+<span style="color:">[2022-12-12 23:17:55][Command][for i in {1..3}; do echo hi; sleep 1; done] Starting...</span>
+<span style="color:">[2022-12-12 23:17:55][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2022-12-12 23:17:56][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span>
+<span style="color:">[2022-12-12 23:17:57][Command][for i in {1..3}; do echo hi; sleep 1; done] hi</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat out_multi2.log</span>
+<span style="color:">[2022-12-12 23:17:55][Command][bad] Starting...</span>
+<span style="color:">[2022-12-12 23:17:55][Command][bad] /bin/sh: line 1: bad: command not found</span></code>
+</pre>
+
+<pre>
+<code><span style="color: #ff79c6">$</span><span> cat out_multi3.log</span>
+<span style="color:">[2022-12-12 23:17:55][Command][sleep 2] Starting...</span></code>
+</pre>
 
 #### File Log Size Mode
 

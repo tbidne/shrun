@@ -39,6 +39,8 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
         ReadBlockLineBuffer
       ),
   )
+import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
+import Shrun.Configuration.Data.FileLogging qualified as FL
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommandLogging (getCommandLogging),
@@ -108,6 +110,8 @@ tryCommandLogging ::
     MonadHandleReader m,
     MonadHandleWriter m,
     MonadIORef m,
+    MonadPathReader m,
+    MonadPathWriter m,
     MonadProcess m,
     MonadMask m,
     MonadReader env m,
@@ -182,31 +186,29 @@ tryCommandLogging command = do
         -- 3. No CommandLogging but FileLogging: Stream (to file) but no console
         --    region.
         (False, Just fileLogging) -> \cmd -> do
-          let logFn :: Maybe (Region m) -> Log -> m ()
-              logFn mRegion log = do
+          let logConsoleRegion mRegion log = do
                 -- Even if cmdLogging is off, we still want to send debug
                 -- logs, if enabled.
                 for_ mRegion $ \region ->
                   logConsole keyHide consoleLogQueue region consoleLogging log
 
-                logFile keyHide fileLogging log
+          withFileLogging keyHide fileLogging logConsoleRegion $ \logFn -> do
+            logFn Nothing hello
+            tryCommandStream logFn cmd
 
-          logFn Nothing hello
-
-          tryCommandStream logFn cmd
         -- 4. CommandLogging and FileLogging: Stream (to both) and create console
         --    region.
         (True, Just fileLogging) -> \cmd ->
           withRegion Linear $ \cmdRegion -> do
             restoreTimerRegion timerRegion
-            let logFn mRegion log = do
+
+            let logConsoleRegion mRegion log = do
                   let region = fromMaybe cmdRegion mRegion
                   logConsole keyHide consoleLogQueue region consoleLogging log
-                  logFile keyHide fileLogging log
 
-            logFn Nothing hello
-
-            tryCommandStream logFn cmd
+            withFileLogging keyHide fileLogging logConsoleRegion $ \logFn -> do
+              logFn Nothing hello
+              tryCommandStream logFn cmd
 
   withTiming (cmdFn command) >>= \case
     (rt, Nothing) -> do
@@ -227,9 +229,57 @@ tryCommandLogging command = do
       formatted <- formatConsoleLog keyHide consoleLogging log
       writeTBQueueA' consoleQueue (LogRegion (log ^. #mode) region formatted)
 
-    logFile keyHide fileLogging log = do
+    logMainFile keyHide fileLogging log = do
       formatted <- formatFileLog keyHide fileLogging log
       writeTBQueueA' (fileLogging ^. #file % #queue) formatted
+
+    logMultiFile fileHandle keyHide fileLogging log = do
+      formatted <- formatFileLog keyHide fileLogging log
+      Logging.logFile fileHandle formatted
+
+    -- Augments an existing logger with a file logging.
+    withFileLogging ::
+      -- key hide
+      KeyHideSwitch ->
+      -- file logging env
+      FL.FileLoggingEnv ->
+      -- console logger
+      (Maybe (Region m) -> Log -> m ()) ->
+      -- continuation on combined logger
+      ((Maybe (Region m) -> Log -> m ()) -> m (Maybe Stderr)) ->
+      m (Maybe Stderr)
+    withFileLogging keyHide fileLogging consoleLog m = do
+      -- 1. Multi log is on. Need to do extra steps.
+      case fileLogging ^. #multi of
+        Just multiCounter -> do
+          multiPath <- FL.uniqMultiName multiCounter (fileLogging ^. #file % #path)
+
+          -- 1.2. Open file, run command.
+          r <- HW.withBinaryFile multiPath WriteMode $ \handle -> do
+            let logFn mRegion log = do
+                  consoleLog mRegion log
+                  logMultiFile handle keyHide fileLogging log
+
+            m logFn
+
+          -- Delete file if deleteOnSuccess is true and the return value
+          -- is Nothing (no error).
+          let deleteFile =
+                fileLogging
+                  ^. (#deleteOnSuccess % #unDeleteOnSuccessSwitch)
+                  && is _Nothing r
+
+          when deleteFile (removeFileIfExists_ multiPath)
+
+          pure r
+        -- 2. Multi log is not on: Easy, just invoke the given logger and
+        -- also send to main file queue.
+        Nothing -> do
+          let logFn mRegion log = do
+                consoleLog mRegion log
+                logMainFile keyHide fileLogging log
+
+          m logFn
 
     hello =
       MkLog

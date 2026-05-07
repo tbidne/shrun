@@ -105,6 +105,8 @@ for versions < 1.
   exiting.
 * Option `--file-log-mode rename`, that renames the requested log file if it
   already exists. E.g. `-f shrun.log` becomes `shrun (1).log`.
+* Option `--file-log-multi` option for giving each command its own file, for
+  usage with `--command-log-read-strategy block-line-buffer`.
 * GHC 9.12 support.
 * Git revision info in `--help` and `--version`.
 * Groups to `--help` options.

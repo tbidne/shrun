@@ -11,12 +11,12 @@ poll-interval = 100
 [console-log]
 command = "off"
 command-name-trunc = 100
-delete-on-success = "off"
 timer-format = 'digital_compact'
 
 [file-log]
 path = 'cfg2 file'
 command-name-trunc = 45
+delete-on-success = "off"
 line-trunc = 200
 mode = 'append'
 strip-control = 'off'

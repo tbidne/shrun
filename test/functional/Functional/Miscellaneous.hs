@@ -380,7 +380,6 @@ formatsFileLogs testArgs =
 
         resultsFile <- readLogFile outFile
         V.verifyExpectedN resultsFile blockFileExpected
-        pure ()
     )
     ( \(resultsConsole, outFile) -> do
         V.verifyExpected resultsConsole bufferConsoleExpected
