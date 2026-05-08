@@ -34,16 +34,9 @@ instance Pretty ReadStrategy where
 
 defaultReadStrategy :: Bool -> Bool -> NESeq CommandP1 -> ReadStrategy
 defaultReadStrategy isFileLog isFileLogMulti cmds =
-  -- We default to ReadBlockLineBuffer when both:
-  --
-  -- 1. ReadBlockLineBuffer is allowed.
-  -- 2. Multi log is not enabled.
-  --
-  -- Otherwise we use ReadBlock.
-  if
-    | readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds -> ReadBlock
-    | isFileLogMulti -> ReadBlock
-    | otherwise -> ReadBlockLineBuffer
+  if readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds
+    then ReadBlock
+    else ReadBlockLineBuffer
 
 readBlockLineBufferNotAllowed :: Bool -> Bool -> NESeq CommandP1 -> Bool
 readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds =

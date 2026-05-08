@@ -337,16 +337,22 @@ The `block-line-buffer` strategy is the primary solution to these problems, and 
 
 > [!WARNING]
 >
-> The `block-line-buffer` strategy can lead to nonsense file logs when there are multiple commands. More info below.
+> The `block-line-buffer` strategy can lead to nonsense file logs when there are multiple commands. See below.
 
 With that out of the way, we can now justify the default behavior.
 
-- When we have exactly one command and/or `file-logging` is disabled, we use the `block-line-buffer` strategy. This has the best chance at preserving formatting, but it can lead to nonsense file logs when there are multiple commands.
-- Otherwise (multiple commands and `file-logging` enabled), we use the `block` strategy.
+- If:
+  1. We have multiple commands.
+  2. `file-logging` is enabled.
+  3. `file-log-multi` is _disabled_.
+
+  Then we use the `block` strategy.
+
+- Otherwise, we use the `block-line-buffer` strategy, as this has the best chance at preserving formatting.
 
 > [!TIP]
 >
-> Multiple commands with file-logging and `block-line-buffer` is allowed if and only if `file-log-multi` is on. This option logs each command to its own file, hence we do not have the usual command interference.
+> There is little reason to explicitly set `--read-strategy block-line-buffer` manually, as the only cases where it is permissible (see above), `shrun` will automatically choose that strategy. Thus the only reason is to be explicit.
 
 There are various other tweaks one can try if the file log formatting is still damaged e.g. increasing `--command-log-buffer-(length|timeout)` and/or `--command-log-read-size`. Decreasing the `--command-log-poll-interval` _could_ help, though -- as we see from the description above -- this is not a general solution, and it may push the CPU usage unacceptably high regardless, so it is likely not a good solution.
 
