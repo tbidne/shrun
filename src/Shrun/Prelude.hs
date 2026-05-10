@@ -92,6 +92,7 @@ import Control.Applicative as X
   )
 import Control.Category as X (Category ((.)), (<<<), (>>>))
 import Control.Concurrent as X (threadDelay)
+import Control.Concurrent qualified as CC
 import Control.Concurrent.STM as X (STM)
 import Control.Concurrent.STM.TMVar as X (TMVar, newTMVar)
 import Control.DeepSeq as X (NFData, force)
@@ -122,6 +123,7 @@ import Control.Monad.Catch as X
     MonadMask,
     MonadThrow,
     bracket,
+    bracket_,
     catch,
     finally,
     mask,
@@ -576,11 +578,28 @@ todo :: forall {r :: RuntimeRep} (a :: TYPE r). (HasCallStack) => a
 todo = raise# (errorCallWithCallStackException "Prelude.todo: not yet implemented" ?callStack)
 {-# WARNING todo "todo remains in code" #-}
 
+traceSem :: CC.QSem
+traceSem = unsafePerformIO (CC.newQSem 1)
+{-# NOINLINE traceSem #-}
+
 traceFile :: FilePath -> Text -> a -> a
 traceFile path txt x = writeFn `seq` x
   where
     io = appendFileUtf8 (OsPath.unsafeEncode path) txt
-    writeFn = unsafePerformIO io
+
+    -- Guard writes behind a mutex. This is technically overkill for different
+    -- files, but it is in fact necessary when we have multiple threads
+    -- writing to the same file. E.g. if I run
+    --
+    --   TEST_FUNCTIONAL=1 cabal run shrun -- "cabal test functional"
+    --
+    -- Then tests will randomly die with a shrun error "Encountered an
+    -- exception ...". With the mutex, these errors disappear. Hence we use
+    -- this as it appears to be strictly helpful when debugging.
+    writeFn =
+      unsafePerformIO
+        . bracket_ (CC.waitQSem traceSem) (CC.signalQSem traceSem)
+        $ io
 
 traceFileA :: (Applicative f) => FilePath -> Text -> f ()
 traceFileA f t = traceFile f t (pure ())
