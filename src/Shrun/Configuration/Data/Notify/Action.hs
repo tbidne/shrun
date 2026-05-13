@@ -57,16 +57,7 @@ instance Pretty NotifyActionComplete where
 
 -- | Parses 'NotifyActionComplete'.
 parseNotifyAction :: (MonadFail m) => Text -> m NotifyActionComplete
-parseNotifyAction = \case
-  "final" -> pure NotifyActionCompleteFinal
-  "command" -> pure NotifyActionCompleteCommand
-  "all" -> pure NotifyActionCompleteAll
-  bad ->
-    fail
-      $ Utils.fmtUnrecognizedError
-        "notify action complete"
-        notifyActionMeta
-        (unpack bad)
+parseNotifyAction = Utils.inversePrettyFail "notify-action-complete" notifyActionMeta
 {-# INLINEABLE parseNotifyAction #-}
 
 -- | Available 'NotifyActionComplete' strings.

@@ -1,5 +1,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
+{- HLINT ignore "Redundant lambda" -}
+
 -- | Provides utilities.
 module Shrun.Utils
   ( -- * Text Utils
@@ -18,6 +20,12 @@ module Shrun.Utils
     withHiddenInput,
     hHide,
     drainStdin,
+
+    -- * Text parsing
+    inverseMap,
+    inverseMapFail,
+    inversePretty,
+    inversePrettyFail,
 
     -- * Misc Utils
     atomicReadWrite,
@@ -39,6 +47,7 @@ import Data.Bytes (Conversion (convert_), SomeSize, parse)
 import Data.Char (isControl, isLetter)
 import Data.Either (either)
 import Data.List qualified as L
+import Data.Map qualified as Map
 import Data.Sequence qualified as Seq
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as TL
@@ -459,3 +468,62 @@ readIncCounter counter = do
   c <- readTVar' counter
   writeTVar' counter (c + 1)
   pure c
+
+-- | Parses a finite type from an injective function.
+inverseMap ::
+  forall a k.
+  (Bounded a, Enum a, Ord k) =>
+  -- | Injection.
+  (a -> k) ->
+  -- | Key.
+  k ->
+  Maybe a
+inverseMap inj = \k -> Map.lookup k m
+  where
+    m = Map.fromList $ (\x -> (inj x, x)) <$> [minBound .. maxBound]
+
+-- | 'inverseMap' with text keys given by a Pretty instance.
+inversePretty ::
+  forall a.
+  (Bounded a, Enum a, Pretty a) =>
+  -- | Key.
+  Text ->
+  Maybe a
+inversePretty = inverseMap prettyToText
+
+-- | 'inverseMap' with a Text injection that fails via MonadFail and
+-- 'fmtUnrecognizedError'. Intended for parsing config values.
+inverseMapFail ::
+  forall a m.
+  (Bounded a, Enum a, MonadFail m) =>
+  -- | Text injection.
+  (a -> Text) ->
+  -- | Field name.
+  Text ->
+  -- | Field metavar.
+  Tuple2 Bool (List Text) ->
+  -- | Key.
+  Text ->
+  m a
+inverseMapFail inj name meta = \t -> case inverseMap inj t of
+  Just v -> pure v
+  Nothing ->
+    fail
+      . unpack
+      $ fmtUnrecognizedError
+        name
+        meta
+        t
+
+-- | inverseMapFail with 'Pretty' instance.
+inversePrettyFail ::
+  forall a m.
+  (Bounded a, Enum a, MonadFail m, Pretty a) =>
+  -- | Field name.
+  Text ->
+  -- | Field metavar.
+  Tuple2 Bool (List Text) ->
+  -- | Key.
+  Text ->
+  m a
+inversePrettyFail = inverseMapFail prettyToText

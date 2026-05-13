@@ -48,16 +48,7 @@ readBlockLineBufferNotAllowed isFileLog isFileLogMulti cmds =
 
 -- | Parses 'ReadStrategy'.
 parseReadStrategy :: (MonadFail m) => m Text -> m ReadStrategy
-parseReadStrategy getTxt =
-  getTxt >>= \case
-    "block" -> pure ReadBlock
-    "block-line-buffer" -> pure ReadBlockLineBuffer
-    bad ->
-      fail
-        $ Utils.fmtUnrecognizedError
-          "read strategy"
-          readStrategyMeta
-          (unpack bad)
+parseReadStrategy = (>>= Utils.inversePrettyFail "read-strategy" readStrategyMeta)
 {-# INLINEABLE parseReadStrategy #-}
 
 -- | Available 'ReadStrategy' strings.

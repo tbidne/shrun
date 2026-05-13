@@ -36,18 +36,7 @@ instance Pretty LegendKeysCache where
     LegendKeysWrite -> "write"
 
 parseLegendKeysCache :: (MonadFail m) => m Text -> m LegendKeysCache
-parseLegendKeysCache getTxt =
-  getTxt >>= \case
-    "add" -> pure LegendKeysAdd
-    "clear" -> pure LegendKeysClear
-    "write" -> pure LegendKeysWrite
-    "off" -> pure LegendKeysOff
-    bad ->
-      fail
-        $ Utils.fmtUnrecognizedError
-          "legend-key-cache"
-          lksMeta
-          (unpack bad)
+parseLegendKeysCache = (>>= Utils.inversePrettyFail "legend-key-cache" lksMeta)
 {-# INLINEABLE parseLegendKeysCache #-}
 
 -- | Available 'LegendKeysCache' strings.

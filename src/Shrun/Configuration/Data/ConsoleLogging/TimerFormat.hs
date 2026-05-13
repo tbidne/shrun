@@ -52,18 +52,7 @@ instance Pretty TimerFormat where
 
 -- | Parse timer format.
 parseTimerFormat :: (MonadFail m) => m Text -> m TimerFormat
-parseTimerFormat getTxt =
-  getTxt >>= \case
-    "digital_compact" -> pure DigitalCompact
-    "digital_full" -> pure DigitalFull
-    "prose_compact" -> pure ProseCompact
-    "prose_full" -> pure ProseFull
-    bad ->
-      fail
-        $ Utils.fmtUnrecognizedError
-          "timer format"
-          timerFormatMeta
-          (unpack bad)
+parseTimerFormat = (>>= Utils.inversePrettyFail "timer-format" timerFormatMeta)
 {-# INLINEABLE parseTimerFormat #-}
 
 -- | Available 'TimerFormat' strings.

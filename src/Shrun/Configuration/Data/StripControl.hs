@@ -42,18 +42,7 @@ type ConsoleLogStripControl = StripControl StripControlConsoleLog
 type FileLogStripControl = StripControl StripControlFileLog
 
 parseStripControl :: (MonadFail m) => m Text -> m (StripControl t)
-parseStripControl getTxt =
-  getTxt >>= \case
-    "all" -> pure StripControlAll
-    -- "off" over "none" just for consistency with other options.
-    "off" -> pure StripControlNone
-    "smart" -> pure StripControlSmart
-    bad ->
-      fail
-        $ Utils.fmtUnrecognizedError
-          "strip control"
-          stripControlMeta
-          (unpack bad)
+parseStripControl = (>>= Utils.inversePrettyFail "strip-control" stripControlMeta)
 
 instance Default ConsoleLogStripControl where
   def = StripControlSmart

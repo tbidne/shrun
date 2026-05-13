@@ -26,14 +26,7 @@ instance Pretty FileMode where
     FileModeWrite -> "write"
 
 parseFileMode :: (MonadFail m) => m Text -> m FileMode
-parseFileMode getTxt =
-  getTxt >>= \case
-    "append" -> pure FileModeAppend
-    "rename" -> pure FileModeRename
-    "write" -> pure FileModeWrite
-    bad ->
-      fail
-        $ Utils.fmtUnrecognizedError "file-mode" fileModeMeta (unpack bad)
+parseFileMode = (>>= Utils.inversePrettyFail "file-mode" fileModeMeta)
 {-# INLINEABLE parseFileMode #-}
 
 instance Default FileMode where

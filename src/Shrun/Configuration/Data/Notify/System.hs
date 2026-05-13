@@ -28,17 +28,7 @@ mergeNotifySystem mArgs mToml =
 
 -- | Parses 'NotifySystemOs'.
 parseNotifySystem :: (MonadFail m) => m Text -> m NotifySystem
-parseNotifySystem getTxt =
-  getTxt >>= \case
-    "dbus" -> pure NotifySystemDBus
-    "notify-send" -> pure NotifySystemNotifySend
-    "apple-script" -> pure NotifySystemAppleScript
-    bad ->
-      fail
-        $ Utils.fmtUnrecognizedError
-          "notify system"
-          notifySystemMeta
-          (unpack bad)
+parseNotifySystem = (>>= Utils.inverseMapFail display "notify-system" notifySystemMeta)
 {-# INLINEABLE parseNotifySystem #-}
 
 -- | Available 'NotifySystem' strings.
