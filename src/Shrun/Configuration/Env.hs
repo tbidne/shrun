@@ -179,13 +179,17 @@ findImplicitConfigs = do
   xdgConfig <- getShrunXdgConfig
   cwd <- PR.getCurrentDirectory
   let paths =
-        [ xdgConfig </> [osp|config.toml|],
-          cwd </> [osp|.shrun.toml|],
-          cwd </> [osp|shrun.toml|]
-        ]
+        (xdgConfig </> [osp|config.toml|])
+          :<| mkPaths xdgConfig
+          <> mkPaths cwd
 
   xs <- traverse configExists paths
   pure $ catSeqMaybes xs
+  where
+    mkPaths d =
+      [ d </> [osp|.shrun.toml|],
+        d </> [osp|shrun.toml|]
+      ]
 {-# INLINEABLE findImplicitConfigs #-}
 
 configExists :: (HasCallStack, MonadPathReader m) => OsPath -> m (Maybe OsPath)
