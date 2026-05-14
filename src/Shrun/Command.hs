@@ -72,14 +72,10 @@ runCommands runner = do
 -- | Builds a map for each Vertex -> MVar. This ensures that we only start
 -- each command at most once.
 mkVertexSemMap :: (MonadMVar m) => CommandGraph -> m (HashMap Vertex (MVar ()))
-mkVertexSemMap cdg = do
-  vs <- for vertices $ \v -> do
-    q <- newMVar' ()
-    pure (v, q)
-
-  pure $ Map.fromList vs
-  where
-    vertices = Graph.vertices cdg
+mkVertexSemMap =
+  fmap Map.fromList
+    . traverse (\v -> (v,) <$> newMVar' ())
+    . Graph.vertices
 {-# INLINEABLE mkVertexSemMap #-}
 
 runCommand ::
