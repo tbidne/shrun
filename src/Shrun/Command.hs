@@ -215,8 +215,13 @@ runCommand runner cdg commandStatusMap vtxSemMap = go Nothing
 {-# INLINEABLE runCommand #-}
 
 -- | Given a vertex v, 'PredecessorResult' represents the status of all of
--- its predecessors. The algebra is left-biased for identical constructors,
--- otherwise takes the greatest in
+-- its predecessors. Note that this refers to the status of the
+-- 'edge condition', /not/ the predecessor command itself. For instance,
+-- if we have 'cmd1 | cmd2' and cmd1 fails, that is considered
+-- PredecessorSuccess.
+--
+-- The algebra is left-biased for identical constructors, otherwise takes the
+-- greatest in
 --
 -- @
 --   PredecessorSuccess < PredecessorFailure < PredecessorUnfinished
