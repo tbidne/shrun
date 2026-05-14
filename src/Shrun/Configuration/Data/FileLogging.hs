@@ -483,6 +483,7 @@ instance Pretty FileLoggingMerged where
         "delete-on-success: " <> pretty (c ^. #deleteOnSuccess),
         "line-trunc: " <> prettyMaybe (c ^. #lineTrunc),
         "mode: " <> pretty (c ^. #file % #mode),
+        "multi: " <> pretty (c ^. #multi),
         "path: " <> pretty (c ^. #file % #path),
         "size-mode: " <> pretty (c ^. #file % #sizeMode),
         "strip-control: " <> pretty (c ^. #stripControl)

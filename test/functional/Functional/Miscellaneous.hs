@@ -777,6 +777,7 @@ testFileLogDryRun = testCase desc $ do
         "    delete-on-success: off",
         "    line-trunc: off",
         "    mode: write",
+        "    multi: off",
         "    path: shrun.log",
         "    size-mode: warn 50 mb",
         "    strip-control: all",
