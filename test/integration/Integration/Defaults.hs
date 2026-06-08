@@ -77,7 +77,6 @@ import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
     FileLogInitP
       ( MkFileLogInitP,
-        mode,
         path,
         sizeMode
       ),
@@ -88,6 +87,7 @@ import Shrun.Configuration.Data.FileLogging
         deleteOnSuccess,
         file,
         lineTrunc,
+        mode,
         multi,
         stripControl
       ),
@@ -220,11 +220,11 @@ usesDefaultConfigFile = testProp1 desc "usesDefaultConfigFile" $ do
                       { file =
                           MkFileLogInitP
                             { path = FPDefault,
-                              mode = FileModeAppend,
                               sizeMode = FileSizeModeWarn $ fromℤ 50_000_000
                             },
                         commandNameTrunc = Just 45,
                         lineTrunc = Just 200,
+                        mode = FileModeAppend,
                         multi = MkFileLogMultiSwitch False,
                         deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                         stripControl = StripControlNone
@@ -349,12 +349,12 @@ cliOverridesConfigFile testArgs = testProp1 desc "cliOverridesConfigFile" $ do
                       { file =
                           MkFileLogInitP
                             { path = FPManual logPath,
-                              mode = FileModeWrite,
                               sizeMode = FileSizeModeWarn $ fromℤ 50_000_000
                             },
                         commandNameTrunc = Just 35,
                         deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                         lineTrunc = Just 180,
+                        mode = FileModeWrite,
                         multi = MkFileLogMultiSwitch False,
                         stripControl = StripControlNone
                       },
@@ -435,7 +435,7 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         #coreConfig % #fileLogging %? #deleteOnSuccess % #unDeleteOnSuccessSwitch ^?=@ Just True,
         #coreConfig % #fileLogging %? #lineTrunc ^?=@ Just (Just 180),
         #coreConfig % #fileLogging %? #stripControl ^?=@ Just StripControlSmart,
-        #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeWrite,
+        #coreConfig % #fileLogging %? #mode ^?=@ Just FileModeWrite,
         #coreConfig % #fileLogging %? #multi % #unFileLogMultiSwitch ^?=@ Just True,
         #coreConfig % #fileLogging %? #file % #sizeMode ^?=@ Just (FileSizeModeWarn $ MkBytes 10_000_000)
       ]

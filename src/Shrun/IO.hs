@@ -41,6 +41,7 @@ import Shrun.Configuration.Data.CommandLogging.ReadStrategy
   )
 import Shrun.Configuration.Data.CommonLogging.KeyHideSwitch (KeyHideSwitch)
 import Shrun.Configuration.Data.FileLogging qualified as FL
+import Shrun.Configuration.Data.FileLogging.FileMode qualified as FileMode
 import Shrun.Configuration.Env.Types
   ( HasAnyError,
     HasCommandLogging (getCommandLogging),
@@ -112,6 +113,7 @@ tryCommandLogging ::
     MonadIORef m,
     MonadPathReader m,
     MonadPathWriter m,
+    MonadPosixFiles m,
     MonadProcess m,
     MonadMask m,
     MonadReader env m,
@@ -252,10 +254,16 @@ tryCommandLogging command = do
       -- 1. Multi log is on. Need to do extra steps.
       case fileLogging ^. #multi of
         Just multiCounter -> do
-          multiPath <- FL.uniqMultiName multiCounter (fileLogging ^. #file % #path)
+          let fileMode = fileLogging ^. #mode
+              ioMode = FileMode.toIOMode fileMode
+          multiPath <-
+            FL.createMultiLogFile
+              multiCounter
+              fileMode
+              (fileLogging ^. #file % #path)
 
           -- 1.2. Open file, run command.
-          r <- HW.withBinaryFile multiPath WriteMode $ \handle -> do
+          r <- HW.withBinaryFile multiPath ioMode $ \handle -> do
             let logFn mRegion log = do
                   consoleLog mRegion log
                   logMultiFile handle keyHide fileLogging log

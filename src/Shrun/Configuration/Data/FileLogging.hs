@@ -15,7 +15,7 @@ module Shrun.Configuration.Data.FileLogging
     withFileLoggingEnv,
 
     -- * Misc
-    uniqMultiName,
+    createMultiLogFile,
   )
 where
 
@@ -45,13 +45,8 @@ import Shrun.Configuration.Data.ConfigPhase
     SwitchF,
     parseSwitch,
   )
-import Shrun.Configuration.Data.FileLogging.FileMode
-  ( FileMode
-      ( FileModeAppend,
-        FileModeRename,
-        FileModeWrite
-      ),
-  )
+import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeRename))
+import Shrun.Configuration.Data.FileLogging.FileMode qualified as FileMode
 import Shrun.Configuration.Data.FileLogging.FilePathDefault
   ( FilePathDefault
       ( FPDefault,
@@ -166,8 +161,6 @@ type family FileLogPathF p where
 data FileLogInitP p = MkFileLogInitP
   { -- | Optional path to log file.
     path :: FileLogPathF p,
-    -- | Mode to use with the file log.
-    mode :: ConfigPhaseF p FileMode,
     -- | Threshold for when we should warn about the log file size.
     sizeMode :: ConfigPhaseF p FileSizeMode
   }
@@ -181,25 +174,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLogInitP a1 a2 a3) ->
+      $ \f (MkFileLogInitP a1 a2) ->
         fmap
-          (\b -> MkFileLogInitP b a2 a3)
+          (\b -> MkFileLogInitP b a2)
           (f a1)
-  {-# INLINE labelOptic #-}
-
-instance
-  ( k ~ A_Lens,
-    a ~ ConfigPhaseF p FileMode,
-    b ~ ConfigPhaseF p FileMode
-  ) =>
-  LabelOptic "mode" k (FileLogInitP p) (FileLogInitP p) a b
-  where
-  labelOptic =
-    lensVL
-      $ \f (MkFileLogInitP a1 a2 a3) ->
-        fmap
-          (\b -> MkFileLogInitP a1 b a3)
-          (f a2)
   {-# INLINE labelOptic #-}
 
 instance
@@ -211,17 +189,16 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLogInitP a1 a2 a3) ->
+      $ \f (MkFileLogInitP a1 a2) ->
         fmap
-          (\b -> MkFileLogInitP a1 a2 b)
-          (f a3)
+          (\b -> MkFileLogInitP a1 b)
+          (f a2)
   {-# INLINE labelOptic #-}
 
 instance Semigroup FileLogInitToml where
   l <> r =
     MkFileLogInitP
       { path = l ^. #path <|> r ^. #path,
-        mode = l ^. #mode <|> r ^. #mode,
         sizeMode = l ^. #sizeMode <|> r ^. #sizeMode
       }
 
@@ -229,7 +206,6 @@ instance Monoid FileLogInitToml where
   mempty =
     MkFileLogInitP
       { path = Nothing,
-        mode = Nothing,
         sizeMode = Nothing
       }
 
@@ -256,7 +232,6 @@ instance Default FileLogInitArgs where
   def =
     MkFileLogInitP
       { path = Nothing,
-        mode = Nothing,
         sizeMode = Nothing
       }
 
@@ -264,7 +239,6 @@ instance DecodeTOML FileLogInitToml where
   tomlDecoder =
     MkFileLogInitP
       <$> decodeFileLogging
-      <*> decodeFileLogMode
       <*> decodeFileLogSizeMode
 
 decodeFileLogging :: Decoder (Maybe (WithDisabled FilePathDefault))
@@ -357,6 +331,8 @@ data FileLoggingP p = MkFileLoggingP
     -- | Determines to what extent we should remove control characters
     -- from file logs.
     lineTrunc :: LineTruncF p,
+    -- | Mode to use with the file log.
+    mode :: ConfigPhaseF p FileMode,
     -- | Switch for multi logs. At the env stage, this is a counter for the
     -- file name index.
     multi :: FileLogMultiF p,
@@ -373,9 +349,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkFileLoggingP b a2 a3 a4 a5 a6)
+          (\b -> MkFileLoggingP b a2 a3 a4 a5 a6 a7)
           (f a1)
   {-# INLINE labelOptic #-}
 
@@ -388,9 +364,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkFileLoggingP a1 b a3 a4 a5 a6)
+          (\b -> MkFileLoggingP a1 b a3 a4 a5 a6 a7)
           (f a2)
   {-# INLINE labelOptic #-}
 
@@ -403,9 +379,9 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkFileLoggingP a1 a2 b a4 a5 a6)
+          (\b -> MkFileLoggingP a1 a2 b a4 a5 a6 a7)
           (f a3)
   {-# INLINE labelOptic #-}
 
@@ -418,10 +394,25 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkFileLoggingP a1 a2 a3 b a5 a6)
+          (\b -> MkFileLoggingP a1 a2 a3 b a5 a6 a7)
           (f a4)
+  {-# INLINE labelOptic #-}
+
+instance
+  ( k ~ A_Lens,
+    a ~ ConfigPhaseF p FileMode,
+    b ~ ConfigPhaseF p FileMode
+  ) =>
+  LabelOptic "mode" k (FileLoggingP p) (FileLoggingP p) a b
+  where
+  labelOptic =
+    lensVL
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
+        fmap
+          (\b -> MkFileLoggingP a1 a2 a3 a4 b a6 a7)
+          (f a5)
   {-# INLINE labelOptic #-}
 
 instance
@@ -433,10 +424,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkFileLoggingP a1 a2 a3 a4 b a6)
-          (f a5)
+          (\b -> MkFileLoggingP a1 a2 a3 a4 a5 b a7)
+          (f a6)
   {-# INLINE labelOptic #-}
 
 instance
@@ -448,10 +439,10 @@ instance
   where
   labelOptic =
     lensVL
-      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6) ->
+      $ \f (MkFileLoggingP a1 a2 a3 a4 a5 a6 a7) ->
         fmap
-          (\b -> MkFileLoggingP a1 a2 a3 a4 a5 b)
-          (f a6)
+          (\b -> MkFileLoggingP a1 a2 a3 a4 a5 a6 b)
+          (f a7)
   {-# INLINE labelOptic #-}
 
 instance Semigroup FileLoggingToml where
@@ -461,6 +452,7 @@ instance Semigroup FileLoggingToml where
         commandNameTrunc = l ^. #commandNameTrunc <|> r ^. #commandNameTrunc,
         deleteOnSuccess = l ^. #deleteOnSuccess <|> r ^. #deleteOnSuccess,
         lineTrunc = l ^. #lineTrunc <|> r ^. #lineTrunc,
+        mode = l ^. #mode <|> r ^. #mode,
         multi = l ^. #multi <|> r ^. #multi,
         stripControl = l ^. #stripControl <|> r ^. #stripControl
       }
@@ -472,6 +464,7 @@ instance Monoid FileLoggingToml where
         commandNameTrunc = Nothing,
         deleteOnSuccess = Nothing,
         lineTrunc = Nothing,
+        mode = Nothing,
         multi = Nothing,
         stripControl = Nothing
       }
@@ -482,7 +475,7 @@ instance Pretty FileLoggingMerged where
       [ "command-name-trunc: " <> prettyMaybe (c ^. #commandNameTrunc),
         "delete-on-success: " <> pretty (c ^. #deleteOnSuccess),
         "line-trunc: " <> prettyMaybe (c ^. #lineTrunc),
-        "mode: " <> pretty (c ^. #file % #mode),
+        "mode: " <> pretty (c ^. #mode),
         "multi: " <> pretty (c ^. #multi),
         "path: " <> pretty (c ^. #file % #path),
         "size-mode: " <> pretty (c ^. #file % #sizeMode),
@@ -516,6 +509,7 @@ instance Default FileLoggingArgs where
         commandNameTrunc = Nothing,
         deleteOnSuccess = Nothing,
         lineTrunc = Nothing,
+        mode = Nothing,
         multi = Nothing,
         stripControl = Nothing
       }
@@ -542,8 +536,6 @@ mergeFileLogging detectRef args mToml = for mPath $ \path -> do
       { file =
           MkFileLogInitP
             { path,
-              mode =
-                (args ^. #file % #mode) <.> (toml ^. #file % #mode),
               sizeMode =
                 (args ^. #file % #sizeMode) <.> (toml ^. #file % #sizeMode)
             },
@@ -554,6 +546,7 @@ mergeFileLogging detectRef args mToml = for mPath $ \path -> do
             ^. #deleteOnSuccess
             <.> (toml ^. #deleteOnSuccess),
         lineTrunc,
+        mode = (args ^. #mode) <.> (toml ^. #mode),
         multi =
           args
             ^. #multi
@@ -594,6 +587,7 @@ instance DecodeTOML FileLoggingToml where
       <*> decodeCommandNameTrunc
       <*> decodeFileDeleteOnSuccess
       <*> decodeLineTrunc
+      <*> decodeFileLogMode
       <*> getFieldOptWith tomlDecoder "multi"
       <*> decodeFileLogStripControl
 
@@ -645,6 +639,7 @@ withFileLoggingEnv mFileLogging onFileLoggingEnv = do
               commandNameTrunc = fl ^. #commandNameTrunc,
               lineTrunc = fl ^. #lineTrunc,
               deleteOnSuccess = fl ^. #deleteOnSuccess,
+              mode = fl ^. #mode,
               multi = mMultiCounter,
               stripControl = fl ^. #stripControl
             }
@@ -671,11 +666,8 @@ withMLogging ::
 withMLogging Nothing onLogging = onLogging Nothing
 -- 2. Use the default path.
 withMLogging (Just fileLogging) onLogging = do
-  let fileMode = fileLogging ^. #file % #mode
-      ioMode = case fileMode of
-        FileModeAppend -> AppendMode
-        FileModeRename -> WriteMode
-        FileModeWrite -> WriteMode
+  let fileMode = fileLogging ^. #mode
+      ioMode = FileMode.toIOMode fileMode
 
   fp <- case fileLogging ^. #file % #path of
     FPDefault -> do
@@ -827,18 +819,29 @@ uniqName fp = go 1
             then go (counter + 1)
             else pure newFp
 
-uniqMultiName ::
+-- | Like 'createLogFile', but for multi logs, which has different semantics.
+--
+-- While we allow overwriting / appending to existing files, what we absolutely
+-- do /not/ want to allow is two shrun commands actively logging to the
+-- /same/ file. This would mean logs get jumbled up.
+--
+-- Therefore, if we encounter an extant file, we use the TVar counter to append
+-- a number. This index is unique across all shrun commands, hence we will
+-- not have interference.
+createMultiLogFile ::
   forall m.
   ( HasCallStack,
     MonadAtomic m,
     MonadHandleWriter m,
     MonadPathReader m,
+    MonadPosixFiles m,
     MonadThrow m
   ) =>
   TVar Word16 ->
+  FileMode ->
   OsPath ->
   m OsPath
-uniqMultiName counterRef fp = go
+createMultiLogFile counterRef mode fp@(OsString posixPath) = go
   where
     (base, ext) = OsPath.splitExtension fp
 
@@ -851,10 +854,24 @@ uniqMultiName counterRef fp = go
         then die $ "Failed naming file: " <> show fp
         else do
           newFp <- appendNum <$> encodeThrowM (show counter)
-          b <- PR.doesPathExist newFp
-          if b
-            then go
+          exists <- PR.doesPathExist newFp
+          if exists
+            then do
+              PosixFiles.getPathType posixPath >>= \case
+                -- 1.1. Log path is an extant file.
+                PathTypeFile -> onFile newFp
+                -- 1.2. Log path is an extant non-file (directory, symlink):
+                -- Recurse to try a new name.
+                _otherPathType -> go
+            -- File does not exist; nothing to do.
             else pure newFp
+
+    onFile = case mode of
+      -- Rename mode: Recurse to find a new name.
+      FileModeRename -> const go
+      -- Write or Append mode: Fine, return the path.
+      _otherMode -> pure
+{-# INLINEABLE createMultiLogFile #-}
 
 getShrunXdgState :: (HasCallStack, MonadPathReader m) => m OsPath
 getShrunXdgState = getXdgState [osp|shrun|]
@@ -866,12 +883,12 @@ defaultToml =
     { file =
         MkFileLogInitP
           { path = Nothing,
-            mode = Nothing,
             sizeMode = Nothing
           },
       commandNameTrunc = Nothing,
       deleteOnSuccess = Nothing,
       lineTrunc = Nothing,
+      mode = Nothing,
       multi = Nothing,
       stripControl = Nothing
     }

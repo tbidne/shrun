@@ -74,7 +74,7 @@ import Shrun.Configuration.Data.Core
   )
 import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
-    FileLogInitP (MkFileLogInitP, mode, path, sizeMode),
+    FileLogInitP (MkFileLogInitP, path, sizeMode),
     FileLogMultiSwitch (MkFileLogMultiSwitch),
     FileLoggingP
       ( MkFileLoggingP,
@@ -82,6 +82,7 @@ import Shrun.Configuration.Data.FileLogging
         deleteOnSuccess,
         file,
         lineTrunc,
+        mode,
         multi,
         stripControl
       ),
@@ -319,7 +320,7 @@ testLineTruncDetect = testProp1 desc "testLineTruncDetect" $ do
     expected =
       [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 86,
         #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 86,
-        #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeRename
+        #coreConfig % #fileLogging %? #mode ^?=@ Just FileModeRename
       ]
 
 testLineTruncDefaults :: TestTree
@@ -391,7 +392,7 @@ testLineTruncDetectTotal = testProp1 desc "testLineTruncDetectTotal" $ do
       -- 80 is the fallback.
       [ #coreConfig % #consoleLogging % #lineTrunc % _Just ^?=@ Just 80,
         #coreConfig % #fileLogging %? #lineTrunc % _Just ^?=@ Just 80,
-        #coreConfig % #fileLogging %? #file % #mode ^?=@ Just FileModeRename
+        #coreConfig % #fileLogging %? #mode ^?=@ Just FileModeRename
       ]
 
     expectedLog = "Failed detecting terminal width, defaulting to 80: windows error"
@@ -609,12 +610,12 @@ expectedMultiConfig =
                   { file =
                       MkFileLogInitP
                         { path = FPManual [osp|cfg3 file|],
-                          mode = FileModeWrite,
                           sizeMode = FileSizeModeWarn (MkBytes 50_000_000)
                         },
                     commandNameTrunc = Just $ MkTruncation {unTruncation = 123},
                     deleteOnSuccess = MkDeleteOnSuccessSwitch False,
                     lineTrunc = Just $ MkTruncation {unTruncation = 300},
+                    mode = FileModeWrite,
                     multi = MkFileLogMultiSwitch False,
                     stripControl = StripControlSmart
                   },

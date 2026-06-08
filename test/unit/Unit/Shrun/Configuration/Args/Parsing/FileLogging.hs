@@ -246,7 +246,7 @@ testModeAppend =
   where
     desc = "Parses --file-log-mode append"
     argList = ["--file-log-mode", "append", "command"]
-    expected = updateDefFileLogArgs (#file % #mode) FileModeAppend
+    expected = updateDefFileLogArgs #mode FileModeAppend
 
 testModeRename :: TestTree
 testModeRename =
@@ -255,7 +255,7 @@ testModeRename =
   where
     desc = "Parses --file-log-mode rename"
     argList = ["--file-log-mode", "rename", "command"]
-    expected = updateDefFileLogArgs (#file % #mode) FileModeRename
+    expected = updateDefFileLogArgs #mode FileModeRename
 
 testModeWrite :: TestTree
 testModeWrite =
@@ -264,7 +264,7 @@ testModeWrite =
   where
     desc = "Parses --file-log-mode"
     argList = ["--file-log-mode", "write", "command"]
-    expected = updateDefFileLogArgs (#file % #mode) FileModeWrite
+    expected = updateDefFileLogArgs #mode FileModeWrite
 
 multiTests :: TestTree
 multiTests =

@@ -22,6 +22,9 @@ tests args =
         fileLogModeAppend args,
         fileLogModeRename args,
         fileLogModeWrite args,
+        fileLogMultiAppend args,
+        fileLogMultiRename args,
+        fileLogMultiWrite args,
         fileLogStripControlAll args,
         fileLogStripControlNone args,
         fileLogStripControlSmart args,
@@ -452,6 +455,327 @@ fileLogModeWrite testArgs = testCase "Runs file-log-mode write" $ do
         finishedPrefix (0, 0, 0, 1)
       ]
     expectedFile = expectedConsole
+
+fileLogMultiAppend :: IO TestArgs -> TestTree
+fileLogMultiAppend testArgs = testCase "Multi respects mode (append)" $ do
+  tmpDir <- view #tmpDir <$> testArgs
+  let outMain = tmpDir </> [osp|file-out-multi-append.log|]
+      outMainStr = unsafeDecode outMain
+
+      out1 = tmpDir </> [osp|file-out-multi-append_multi1.log|]
+      out2 = tmpDir </> [osp|file-out-multi-append_multi2.log|]
+
+      args1 =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "--file-log-mode",
+            "append",
+            "echo A && sleep 1",
+            "echo B && sleep 1"
+          ]
+
+      args2 =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "--file-log-mode",
+            "append",
+            "echo C && sleep 1",
+            "echo D && sleep 1"
+          ]
+
+  -- 1 ASSERTS
+  resultsConsole1 <- run args1
+  V.verifyExpected resultsConsole1 expectedConsole1
+
+  resultsFileMain1 <- readLogFile outMain
+  V.verifyExpectedN resultsFileMain1 expectedFileMain1
+
+  -- combine results since file order is non-deterministic.
+  resultsFileMulti1 <- liftA2 (++) (readLogFile out1) (readLogFile out2)
+  V.verifyExpectedN resultsFileMulti1 expectedFileMulti1
+
+  -- 2 ASSERTS
+  resultsConsole2 <- run args2
+  V.verifyExpected resultsConsole2 expectedConsole2
+
+  resultsFileMain2 <- readLogFile outMain
+  V.verifyExpectedN resultsFileMain2 expectedFileMain2
+
+  resultsFileMulti2 <- liftA2 (++) (readLogFile out1) (readLogFile out2)
+  V.verifyExpectedN resultsFileMulti2 expectedFileMulti2
+  where
+    expectedConsole1 =
+      [ withSuccessPrefix "echo A && sleep 1",
+        withSuccessPrefix "echo B && sleep 1",
+        finishedPrefix (0, 0, 0, 2)
+      ]
+    expectedFileMain1 = zip [1, 1 ..] expectedConsole1
+
+    expectedFileMulti1 =
+      [ -- cmd 1
+        (1, withCommandPrefix "echo A && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo A && sleep 1" "A"),
+        -- cmd 2
+        (1, withCommandPrefix "echo B && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo B && sleep 1" "B")
+      ]
+
+    expectedConsole2 =
+      [ withSuccessPrefix "echo C && sleep 1",
+        withSuccessPrefix "echo D && sleep 1",
+        finishedPrefix (0, 0, 0, 2)
+      ]
+    expectedFileMain2 =
+      [ -- Old logs
+        (1, withSuccessPrefix "echo A && sleep 1"),
+        (1, withSuccessPrefix "echo B && sleep 1"),
+        -- New logs
+        (1, withSuccessPrefix "echo C && sleep 1"),
+        (1, withSuccessPrefix "echo D && sleep 1"),
+        -- Both statuses
+        (2, finishedPrefix (0, 0, 0, 2))
+      ]
+
+    expectedFileMulti2 =
+      [ -- Old logs
+        (1, withCommandPrefix "echo A && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo A && sleep 1" "A"),
+        (1, withCommandPrefix "echo B && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo B && sleep 1" "B"),
+        -- New logs
+        (1, withCommandPrefix "echo C && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo C && sleep 1" "C"),
+        (1, withCommandPrefix "echo D && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo D && sleep 1" "D")
+      ]
+
+fileLogMultiRename :: IO TestArgs -> TestTree
+fileLogMultiRename testArgs = testCase "Multi respects mode (rename)" $ do
+  tmpDir <- view #tmpDir <$> testArgs
+  let outMain = tmpDir </> [osp|file-out-multi-rename.log|]
+      outMainStr = unsafeDecode outMain
+
+      out1 = tmpDir </> [osp|file-out-multi-rename_multi1.log|]
+      out2 = tmpDir </> [osp|file-out-multi-rename_multi2.log|]
+      out3 = tmpDir </> [osp|file-out-multi-rename_multi3.log|]
+      out4 = tmpDir </> [osp|file-out-multi-rename_multi4.log|]
+
+      args1 =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "--file-log-mode",
+            "rename",
+            "echo A && sleep 1",
+            "echo B && sleep 1"
+          ]
+
+      args2 =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "--file-log-mode",
+            "rename",
+            "echo C && sleep 1",
+            "echo D && sleep 1"
+          ]
+
+  -- 1 ASSERTS
+  resultsConsole1 <- run args1
+  V.verifyExpected resultsConsole1 expectedConsole1
+
+  resultsFileMain1 <- readLogFile outMain
+  V.verifyExpectedN resultsFileMain1 expectedFileMain1
+
+  -- combine results since file order is non-deterministic.
+  resultsFileMulti1 <- liftA2 (++) (readLogFile out1) (readLogFile out2)
+  V.verifyExpectedN resultsFileMulti1 expectedFileMulti1
+
+  -- Remove main log file from run 1. Why? After the first run, we will have
+  -- created:
+  --
+  --   - file-out-multi-rename.log
+  --   - file-out-multi-rename_multi1.log
+  --   - file-out-multi-rename_multi2.log
+  --
+  -- If we do not remove file-out-multi-rename.log, the renamer will create
+  --
+  --   - file-out-multi-rename (1).log
+  --
+  -- And the multi logs will be based off /this/ file:
+  --
+  --   - file-out-multi-rename (1)_multi1.log
+  --   - file-out-multi-rename (1)_multi2.log
+  --
+  -- But we want to test multi + renamer /not/ the normal renamer, hence we
+  -- need the multi names to clash. The easiest way is to simply delete
+  -- the main log file, so that shrun happily uses the same name, and
+  -- the multi logs collide.
+  removeFileIfExists_ outMain
+
+  -- 2 ASSERTS
+  resultsConsole2 <- run args2
+  V.verifyExpected resultsConsole2 expectedConsole2
+
+  resultsFileMain2 <- readLogFile outMain
+  V.verifyExpectedN resultsFileMain2 expectedFileMain2
+
+  resultsFileMulti2 <- liftA2 (++) (readLogFile out3) (readLogFile out4)
+  V.verifyExpectedN resultsFileMulti2 expectedFileMulti2
+  where
+    expectedConsole1 =
+      [ withSuccessPrefix "echo A && sleep 1",
+        withSuccessPrefix "echo B && sleep 1",
+        finishedPrefix (0, 0, 0, 2)
+      ]
+    expectedFileMain1 = zip [1, 1 ..] expectedConsole1
+
+    expectedFileMulti1 =
+      [ -- cmd 1
+        (1, withCommandPrefix "echo A && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo A && sleep 1" "A"),
+        -- cmd 2
+        (1, withCommandPrefix "echo B && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo B && sleep 1" "B")
+      ]
+
+    expectedConsole2 =
+      [ withSuccessPrefix "echo C && sleep 1",
+        withSuccessPrefix "echo D && sleep 1",
+        finishedPrefix (0, 0, 0, 2)
+      ]
+    expectedFileMain2 =
+      [ -- Old logs
+        (0, withSuccessPrefix "echo A && sleep 1"),
+        (0, withSuccessPrefix "echo B && sleep 1"),
+        -- New logs
+        (1, withSuccessPrefix "echo C && sleep 1"),
+        (1, withSuccessPrefix "echo D && sleep 1"),
+        -- 1 statuses
+        (1, finishedPrefix (0, 0, 0, 2))
+      ]
+
+    expectedFileMulti2 =
+      [ -- Old logs
+        (0, withCommandPrefix "echo A && sleep 1" "Starting..."),
+        (0, withCommandPrefix "echo A && sleep 1" "A"),
+        (0, withCommandPrefix "echo B && sleep 1" "Starting..."),
+        (0, withCommandPrefix "echo B && sleep 1" "B"),
+        -- New logs
+        (1, withCommandPrefix "echo C && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo C && sleep 1" "C"),
+        (1, withCommandPrefix "echo D && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo D && sleep 1" "D")
+      ]
+
+fileLogMultiWrite :: IO TestArgs -> TestTree
+fileLogMultiWrite testArgs = testCase "Multi respects mode (write)" $ do
+  tmpDir <- view #tmpDir <$> testArgs
+  let outMain = tmpDir </> [osp|file-out-multi-write.log|]
+      outMainStr = unsafeDecode outMain
+
+      out1 = tmpDir </> [osp|file-out-multi-write_multi1.log|]
+      out2 = tmpDir </> [osp|file-out-multi-write_multi2.log|]
+
+      args1 =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "--file-log-mode",
+            "write",
+            "echo A && sleep 1",
+            "echo B && sleep 1"
+          ]
+
+      args2 =
+        withNoConfig
+          [ "--file-log",
+            outMainStr,
+            "--file-log-multi",
+            "on",
+            "--file-log-mode",
+            "write",
+            "echo C && sleep 1",
+            "echo D && sleep 1"
+          ]
+
+  -- 1 ASSERTS
+  resultsConsole1 <- run args1
+  V.verifyExpected resultsConsole1 expectedConsole1
+
+  resultsFileMain1 <- readLogFile outMain
+  V.verifyExpectedN resultsFileMain1 expectedFileMain1
+
+  -- combine results since file order is non-deterministic.
+  resultsFileMulti1 <- liftA2 (++) (readLogFile out1) (readLogFile out2)
+  V.verifyExpectedN resultsFileMulti1 expectedFileMulti1
+
+  -- 2 ASSERTS
+  resultsConsole2 <- run args2
+  V.verifyExpected resultsConsole2 expectedConsole2
+
+  resultsFileMain2 <- readLogFile outMain
+  V.verifyExpectedN resultsFileMain2 expectedFileMain2
+
+  resultsFileMulti2 <- liftA2 (++) (readLogFile out1) (readLogFile out2)
+  V.verifyExpectedN resultsFileMulti2 expectedFileMulti2
+  where
+    expectedConsole1 =
+      [ withSuccessPrefix "echo A && sleep 1",
+        withSuccessPrefix "echo B && sleep 1",
+        finishedPrefix (0, 0, 0, 2)
+      ]
+    expectedFileMain1 = zip [1, 1 ..] expectedConsole1
+
+    expectedFileMulti1 =
+      [ -- cmd 1
+        (1, withCommandPrefix "echo A && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo A && sleep 1" "A"),
+        -- cmd 2
+        (1, withCommandPrefix "echo B && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo B && sleep 1" "B")
+      ]
+
+    expectedConsole2 =
+      [ withSuccessPrefix "echo C && sleep 1",
+        withSuccessPrefix "echo D && sleep 1",
+        finishedPrefix (0, 0, 0, 2)
+      ]
+    expectedFileMain2 =
+      [ -- Old logs
+        (0, withSuccessPrefix "echo A && sleep 1"),
+        (0, withSuccessPrefix "echo B && sleep 1"),
+        -- New logs
+        (1, withSuccessPrefix "echo C && sleep 1"),
+        (1, withSuccessPrefix "echo D && sleep 1"),
+        -- 1 statuses
+        (1, finishedPrefix (0, 0, 0, 2))
+      ]
+
+    expectedFileMulti2 =
+      [ -- Old logs
+        (0, withCommandPrefix "echo A && sleep 1" "Starting..."),
+        (0, withCommandPrefix "echo A && sleep 1" "A"),
+        (0, withCommandPrefix "echo B && sleep 1" "Starting..."),
+        (0, withCommandPrefix "echo B && sleep 1" "B"),
+        -- New logs
+        (1, withCommandPrefix "echo C && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo C && sleep 1" "C"),
+        (1, withCommandPrefix "echo D && sleep 1" "Starting..."),
+        (1, withCommandPrefix "echo D && sleep 1" "D")
+      ]
 
 fileLogStripControlAll :: IO TestArgs -> TestTree
 fileLogStripControlAll testArgs = testCase "Runs file-log strip-control all example" $ do

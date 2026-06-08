@@ -60,10 +60,12 @@ import Shrun.Configuration.Data.FileLogging
         deleteOnSuccess,
         file,
         lineTrunc,
+        mode,
         multi,
         stripControl
       ),
   )
+import Shrun.Configuration.Data.FileLogging.FileMode (FileMode (FileModeWrite))
 import Shrun.Configuration.Data.StripControl
   ( StripControl
       ( StripControlAll,
@@ -668,6 +670,7 @@ baseFileLoggingEnv =
           },
       commandNameTrunc = Nothing,
       lineTrunc = Nothing,
+      mode = FileModeWrite,
       multi = Nothing,
       deleteOnSuccess = MkDeleteOnSuccessSwitch False,
       stripControl = StripControlNone

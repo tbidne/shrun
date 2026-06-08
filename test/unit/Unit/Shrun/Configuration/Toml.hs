@@ -60,13 +60,14 @@ import Shrun.Configuration.Data.Core
   )
 import Shrun.Configuration.Data.Core.Timeout (Timeout (MkTimeout))
 import Shrun.Configuration.Data.FileLogging
-  ( FileLogInitP (MkFileLogInitP, mode, path, sizeMode),
+  ( FileLogInitP (MkFileLogInitP, path, sizeMode),
     FileLoggingP
       ( MkFileLoggingP,
         commandNameTrunc,
         deleteOnSuccess,
         file,
         lineTrunc,
+        mode,
         multi,
         stripControl
       ),
@@ -215,7 +216,6 @@ genCoreConfig = do
               [ (1, pure FPDefault),
                 (3, FPManual <$> genOsPath)
               ]
-        mode <- genMaybe G.enumBounded
         sizeMode <-
           genMaybe
             $ G.choice
@@ -226,13 +226,13 @@ genCoreConfig = do
         pure
           $ MkFileLogInitP
             { path,
-              mode,
               sizeMode
             }
 
       commandNameTrunc <- genMWithDisabled genTruncation
       deleteOnSuccess <- genMaybe G.enumBounded
       lineTrunc <- genMWithDisabled genLineTruncation
+      mode <- genMaybe G.enumBounded
       multi <- genMaybe G.enumBounded
       stripControl <- genMaybe G.enumBounded
       pure
@@ -241,6 +241,7 @@ genCoreConfig = do
             commandNameTrunc,
             deleteOnSuccess,
             lineTrunc,
+            mode,
             multi,
             stripControl
           }

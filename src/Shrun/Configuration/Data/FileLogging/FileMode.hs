@@ -2,6 +2,7 @@ module Shrun.Configuration.Data.FileLogging.FileMode
   ( FileMode (..),
     parseFileMode,
     fileModeMeta,
+    toIOMode,
   )
 where
 
@@ -34,3 +35,9 @@ instance Default FileMode where
 
 fileModeMeta :: (IsString a) => Tuple2 Bool (List a)
 fileModeMeta = (False, ["append", "rename", "write"])
+
+toIOMode :: FileMode -> IOMode
+toIOMode = \case
+  FileModeAppend -> AppendMode
+  FileModeRename -> WriteMode
+  FileModeWrite -> WriteMode

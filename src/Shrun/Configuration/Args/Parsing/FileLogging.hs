@@ -12,7 +12,6 @@ import Shrun.Configuration.Data.FileLogging
   ( DeleteOnSuccessSwitch (MkDeleteOnSuccessSwitch),
     FileLogInitP
       ( MkFileLogInitP,
-        mode,
         path,
         sizeMode
       ),
@@ -24,6 +23,7 @@ import Shrun.Configuration.Data.FileLogging
         deleteOnSuccess,
         file,
         lineTrunc,
+        mode,
         multi,
         stripControl
       ),
@@ -61,13 +61,13 @@ fileLoggingParser = do
     $ MkFileLoggingP
       { file =
           MkFileLogInitP
-            { mode,
-              path,
+            { path,
               sizeMode
             },
         commandNameTrunc,
         deleteOnSuccess,
         lineTrunc,
+        mode,
         multi,
         stripControl
       }
@@ -142,8 +142,8 @@ multiParser =
         [ "Logs each command to its own file, rather than all logs being ",
           "sent to the same file. This allows usage with ",
           "'--command-log-read-strategy block-line-buffer'. The filename is ",
-          "based on --file-log. Note that --file-log-mode does not apply i.e. ",
-          "we always come up with fresh filenames."
+          "based on --file-log. Note that --file-log-mode applies to the ",
+          "generated file."
         ]
 
 fileLogStripControlParser :: Parser (Maybe FileLogStripControl)
