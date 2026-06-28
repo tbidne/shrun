@@ -427,7 +427,8 @@ cliOverridesConfigFileFileLog = testPropertyNamed desc "cliOverridesConfigFileFi
         "smart",
         "--file-log-size-mode",
         "warn 10 mb",
-        "cmd"
+        "cmd",
+        "cmd2"
       ]
 
     expected =

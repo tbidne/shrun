@@ -139,6 +139,8 @@ specs testArgs =
       testLineTruncDetectTotal,
       testFileLogDeleteOnSuccess,
       testFileLogMulti,
+      testFileLogMultiOne,
+      testFileLogMultiAlias,
       testFileSizeModeNothing,
       testReadBlockLineBufferReadStrategy,
       testNotifyTimeoutString,
@@ -431,8 +433,34 @@ testFileLogMulti = testProp1 desc "testFileLogMulti" $ do
   logs <- liftIO $ readIORef' logsRef
   logs === []
   where
-    desc = "delete-on-success reads true"
+    desc = "file-log-multi reads true"
+    args = ["-c", "off", "-c", getIntConfig "basic-file-log", "cmd", "cmd2"]
+
+    expected = [#coreConfig % #fileLogging %? #multi % #unFileLogMultiSwitch ^?=@ Just True]
+
+testFileLogMultiOne :: TestTree
+testFileLogMultiOne = testProp1 desc "testFileLogMultiOne" $ do
+  logsRef <- liftIO $ newIORef' []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef' logsRef
+  logs === []
+  where
+    desc = "file-log-multi reads false for one command"
     args = ["-c", "off", "-c", getIntConfig "basic-file-log", "cmd"]
+
+    expected = [#coreConfig % #fileLogging %? #multi % #unFileLogMultiSwitch ^?=@ Just False]
+
+testFileLogMultiAlias :: TestTree
+testFileLogMultiAlias = testProp1 desc "testFileLogMultiAlias" $ do
+  logsRef <- liftIO $ newIORef' []
+  makeConfigAndAssertFieldEq args (`runNoConfigIO` logsRef) expected
+
+  logs <- liftIO $ readIORef' logsRef
+  logs === []
+  where
+    desc = "file-log-multi reads true for one multi-alias"
+    args = ["-c", "off", "-c", getIntConfig "basic-file-log", "multi-alias"]
 
     expected = [#coreConfig % #fileLogging %? #multi % #unFileLogMultiSwitch ^?=@ Just True]
 

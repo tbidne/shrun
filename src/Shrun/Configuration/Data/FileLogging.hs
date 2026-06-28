@@ -32,6 +32,7 @@ import Effects.FileSystem.PathWriter (MonadPathWriter (createDirectoryIfMissing)
 import Effects.System.Posix.Files (PathType (PathTypeFile))
 import Effects.System.Posix.Files qualified as PosixFiles
 import FileSystem.PathType qualified as PT
+import Shrun.Command.Types (CommandP1)
 import Shrun.Configuration.Data.ConfigPhase
   ( ConfigPhase
       ( ConfigPhaseArgs,
@@ -521,16 +522,25 @@ mergeFileLogging ::
     MonadIORef m,
     MonadTerminal m
   ) =>
+  NESeq CommandP1 ->
   IORef DetectResult ->
   FileLoggingArgs ->
   Maybe FileLoggingToml ->
   m (Maybe FileLoggingMerged)
-mergeFileLogging detectRef args mToml = for mPath $ \path -> do
+mergeFileLogging cmds detectRef args mToml = for mPath $ \path -> do
   let toml = fromMaybe defaultToml mToml
 
   lineTrunc <-
     mergeLineTrunc False detectRef (args ^. #lineTrunc) (toml ^. #lineTrunc)
 
+  -- Only enable multi logging if the flag is active and commands > 1.
+  let multi =
+        if length cmds < 2
+          then MkFileLogMultiSwitch False
+          else
+            args
+              ^. #multi
+              <.> (toml ^. #multi)
   pure
     $ MkFileLoggingP
       { file =
@@ -547,10 +557,7 @@ mergeFileLogging detectRef args mToml = for mPath $ \path -> do
             <.> (toml ^. #deleteOnSuccess),
         lineTrunc,
         mode = (args ^. #mode) <.> (toml ^. #mode),
-        multi =
-          args
-            ^. #multi
-            <.> (toml ^. #multi),
+        multi,
         stripControl =
           (args ^. #stripControl) <.> (toml ^. #stripControl)
       }

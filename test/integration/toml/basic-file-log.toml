@@ -1,3 +1,8 @@
+legend = [
+  { key = 'multi-alias', val = 'multi1' },
+  { key = 'multi1', val = ['m1', 'm2'] }
+]
+
 [file-log]
 path = "apath"
 delete-on-success = "on"

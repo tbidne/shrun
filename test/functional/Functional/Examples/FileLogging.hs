@@ -14,6 +14,7 @@ tests args =
     "FileLogging"
     $ [ fileLog args,
         fileLogMulti args,
+        fileLogMultiOne args,
         fileLogDeleteOnSuccessFail args,
         fileLogCommandNameTruncN args,
         fileLogDeleteOnSuccess args,
@@ -123,6 +124,32 @@ fileLogMulti testArgs = testCase "Logs commands to each file" $ do
         (1, withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "Starting..."),
         (3, withCommandPrefix "for i in 1 2 3; do echo hi; sleep 1; done" "hi")
       ]
+
+fileLogMultiOne :: IO TestArgs -> TestTree
+fileLogMultiOne testArgs = testCase "No multi-log with one command" $ do
+  outFile <- (</> [osp|multi-one.log|]) . view #tmpDir <$> testArgs
+  let outFileStr = unsafeDecode outFile
+      args =
+        withNoConfig
+          [ "--file-log",
+            outFileStr,
+            "--file-log-multi",
+            "on",
+            "sleep 2"
+          ]
+
+  resultsConsole <- run args
+  V.verifyExpected resultsConsole expectedConsole
+
+  resultsFile <- readLogFile outFile
+  V.verifyExpected resultsFile expectedFile
+  where
+    expectedConsole =
+      [ withSuccessPrefix "sleep 2",
+        finishedPrefix (0, 0, 0, 1)
+      ]
+    expectedFile =
+      expectedConsole ++ [withCommandPrefix "sleep 2" "Starting..."]
 
 fileLogCommandNameTruncN :: IO TestArgs -> TestTree
 fileLogCommandNameTruncN testArgs = testCase "Runs --file-log-command-name-trunc 10 example" $ do

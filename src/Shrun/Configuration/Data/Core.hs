@@ -315,6 +315,7 @@ mergeCoreConfig cmds args toml = do
 
   fileLogging <-
     mergeFileLogging
+      cmds
       detectRef
       (args ^. #fileLogging)
       (toml ^. #fileLogging)
