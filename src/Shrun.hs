@@ -170,7 +170,7 @@ shrun = do
 
         -- handle any remaining file logs
         flushTBQueueA' fileQueue >>= traverse_ (Logging.logFile h)
-        hFlush h
+        liftLocked hFlush h
       where
         MkFileLogOpened h _ fileQueue = fileLogging ^. #file
 

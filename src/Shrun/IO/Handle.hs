@@ -125,7 +125,8 @@ type BufferParams =
 
 -- | Attempts to read from the handle.
 readHandle ::
-  ( HasCallStack,
+  ( CanRead p,
+    HasCallStack,
     MonadCatch m,
     MonadHandleReader m,
     MonadIORef m,
@@ -133,7 +134,7 @@ readHandle ::
   ) =>
   Maybe BufferParams ->
   Int ->
-  Handle ->
+  Handle p ->
   m (Tuple2 Double ReadHandleResult)
 readHandle mBufferParams blockSize handle = do
   readTime <- getMonotonicTime
@@ -161,12 +162,13 @@ readHandle mBufferParams blockSize handle = do
 -- | Attempts to read from the handle. Returns Left error or Right
 -- success.
 readHandleRaw ::
-  ( HasCallStack,
+  ( CanRead p,
+    HasCallStack,
     MonadCatch m,
     MonadHandleReader m
   ) =>
   Int ->
-  Handle ->
+  Handle p ->
   m (Either (NonEmpty UnlinedText) ByteString)
 readHandleRaw blockSize handle = do
   -- The "nothingIfReady" check and reading step both need to go in the try as

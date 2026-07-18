@@ -360,12 +360,12 @@ withCoreEnv ::
     MonadAtomic m,
     MonadFileWriter m,
     MonadHandleWriter m,
+    MonadMask m,
     MonadNotify m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadPosixFiles m,
     MonadTerminal m,
-    MonadThrow m,
     NotifyEnvF m ~ r
   ) =>
   CoreConfigMerged r ->

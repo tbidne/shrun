@@ -250,10 +250,25 @@ import Effects.FileSystem.FileWriter as X
     appendFileUtf8,
     writeFileUtf8,
   )
+import Effects.FileSystem.Handle as X
+  ( CanRead,
+    CanWrite,
+    Handle,
+    HandleMode (HandleModeRead, HandleModeReadWrite, HandleModeWrite),
+    HandleR,
+    HandleRW,
+    HandleW,
+    LockedHandleR,
+    LockedHandleRW,
+    LockedHandleW,
+  )
 import Effects.FileSystem.HandleReader as X (MonadHandleReader)
 import Effects.FileSystem.HandleWriter as X
-  ( MonadHandleWriter (hClose, hFlush, openBinaryFile),
+  ( LockedHandle,
+    MonadHandleWriter (hClose, hFlush, openBinaryFile),
     hPutUtf8,
+    liftLocked,
+    withLockedFile,
   )
 import Effects.FileSystem.PathReader as X
   ( MonadPathReader (doesDirectoryExist, doesFileExist, getFileSize),
@@ -425,7 +440,7 @@ import Prettyprinter.Render.Text qualified as PrettyprinterT
 import Shrun.Data.Result as X
 import System.Console.Regions as X (ConsoleRegion, RegionLayout (Linear))
 import System.Exit as X (ExitCode (ExitFailure, ExitSuccess))
-import System.IO as X (FilePath, Handle, IO, IOMode (AppendMode, WriteMode), print)
+import System.IO as X (FilePath, IO, IOMode (AppendMode, WriteMode), print)
 import System.IO.Unsafe (unsafePerformIO)
 import TOML as X
   ( DecodeTOML (tomlDecoder),

@@ -229,8 +229,15 @@ mkUnfinishedCmdLogs = do
 
 -- | Logs to a file. This function is /not/ thread-safe! Hence care must be
 -- taken to avoid it being called by multiple threads.
-logFile :: (HasCallStack, MonadHandleWriter m) => Handle -> FileLog -> m ()
-logFile h = (\t -> hPutUtf8 h t *> hFlush h) . view #unFileLog
+logFile ::
+  ( CanWrite p,
+    HasCallStack,
+    MonadHandleWriter m
+  ) =>
+  LockedHandle p ->
+  FileLog ->
+  m ()
+logFile lh = liftLocked (\h t -> hPutUtf8 h t *> hFlush h) lh . view #unFileLog
 {-# INLINEABLE logFile #-}
 
 -- | Like 'putRegionLog', except this logs directly to the console / file,

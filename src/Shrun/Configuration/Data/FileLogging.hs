@@ -254,7 +254,7 @@ decodeFileLogSizeMode = getFieldOptWith tomlDecoder "size-mode"
 -- | Params after we have opened the file for logging.
 data FileLogOpened = MkFileLogOpened
   { -- | File handle.
-    handle :: ~Handle,
+    handle :: ~LockedHandleW,
     -- | File path.
     path :: OsPath,
     -- | File log queue.
@@ -263,8 +263,8 @@ data FileLogOpened = MkFileLogOpened
 
 instance
   ( k ~ A_Lens,
-    a ~ Handle,
-    b ~ Handle
+    a ~ LockedHandleW,
+    b ~ LockedHandleW
   ) =>
   LabelOptic "handle" k FileLogOpened FileLogOpened a b
   where
@@ -608,7 +608,7 @@ type MLogging =
   Maybe
     ( Tuple5
         FileLoggingMerged
-        Handle
+        LockedHandleW
         OsPath
         (TBQueue FileLog)
         (Maybe (TVar Word16))
@@ -622,11 +622,11 @@ withFileLoggingEnv ::
     MonadAtomic m,
     MonadFileWriter m,
     MonadHandleWriter m,
+    MonadMask m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadPosixFiles m,
-    MonadTerminal m,
-    MonadThrow m
+    MonadTerminal m
   ) =>
   Maybe FileLoggingMerged ->
   (Maybe FileLoggingEnv -> m a) ->
@@ -660,11 +660,11 @@ withMLogging ::
     MonadAtomic m,
     MonadFileWriter m,
     MonadHandleWriter m,
+    MonadMask m,
     MonadPathReader m,
     MonadPathWriter m,
     MonadPosixFiles m,
-    MonadTerminal m,
-    MonadThrow m
+    MonadTerminal m
   ) =>
   Maybe FileLoggingMerged ->
   (MLogging -> m a) ->
@@ -695,8 +695,8 @@ withMLogging (Just fileLogging) onLogging = do
       else pure Nothing
 
   result <-
-    withBinaryFile uniqFp ioMode $ \h ->
-      onLogging (Just (fileLogging, h, uniqFp, fileQueue, mMultiCounter))
+    withBinaryFile uniqFp ioMode $ \h -> withLockedFile h $ \lh ->
+      onLogging (Just (fileLogging, lh, uniqFp, fileQueue, mMultiCounter))
 
   -- If the above command succeeded and deleteOnSuccess is true, delete the
   -- log file. Otherwise we will not reach here due to withBinaryFile

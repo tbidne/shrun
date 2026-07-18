@@ -25,15 +25,15 @@ extra-deps:
   - gitrev-typed-0.1@sha256:905b696dec9c52486290cfef2d3156420de83f5b21bfb0821a37822f40ee1568,3783
   - random-1.2.1.3@sha256:117541ba0a177397a3333f94870f789ef050dca31b0688a19824b2bc401b8823,6237
   - git: https://github.com/tbidne/algebra-simple.git
-    commit: 37ec7127fbd0f591d4539e4bf72a0badd7569181
+    commit: 6c5b93bdbde9a5e1f92c9bb19d750227d079f114
   - git: https://github.com/tbidne/bounds.git
-    commit: b7ca541cfdd8564bcebe5d38456fe7abf77885b8
+    commit: 9acfd0f6b5c93ffc01df5a32352ee4f72e6661dd
   - git: https://github.com/tbidne/exception-utils.git
-    commit: 61a9e06a26adcca70d565105a1508a16022435a2
+    commit: a427d344663e8d9e64d56d576ebd53bf2240b9bd
   - git: https://github.com/tbidne/fs-utils.git
-    commit: 26136275027fd827574c5004ebd11b659d7abdab
+    commit: 35ca5fab0837e27179a89087b987ded3427c853c
   - git: https://github.com/tbidne/monad-effects.git
-    commit: d19f25ab0c8095953f41dcafc83f8c1508c4a565
+    commit: ebb962e4d3b41d352cb3f24fbe12488cad5f0bef
     subdirs:
       - lib/effects-async
       - lib/effects-env
@@ -49,11 +49,11 @@ extra-deps:
       - lib/effects-thread
       - lib/effects-unix
   - git: https://github.com/tbidne/relative-time.git
-    commit: be79249b8909dba64d3b301025d4d684f46ec2a1
+    commit: 73def4dbf4826dbc5446761ff7e66087603a937f
   - git: https://github.com/tbidne/si-bytes.git
-    commit: baf98b6945e32fc48b2e31e72ab3abaa966c4115
+    commit: 594f076da95793085be8f43ea9fcd332ed769679
   - git: https://github.com/tbidne/smart-math.git
-    commit: 4e10a4134f825ba825113955bb97be7f7e28ad6e
+    commit: b151022c0d806366ccb514434a14c84890ec753b
 allow-newer: true
 allow-newer-deps:
   - tasty

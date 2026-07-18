@@ -368,7 +368,9 @@ toEnv ::
   NotifyMerged r ->
   m (NotifyP ConfigPhaseEnv r)
 toEnv notifyMerged = do
-  system <- notifySystemToOs systemMerged
+  system <- case notifySystemToOs systemMerged of
+    Left ex -> throwM ex
+    Right x -> pure x
   notifyEnv <- initNotifyEnv system
   pure $ mkNotify notifyMerged notifyEnv
   where

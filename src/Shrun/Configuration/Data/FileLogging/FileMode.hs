@@ -36,8 +36,8 @@ instance Default FileMode where
 fileModeMeta :: (IsString a) => Tuple2 Bool (List a)
 fileModeMeta = (False, ["append", "rename", "write"])
 
-toIOMode :: FileMode -> IOMode
+toIOMode :: FileMode -> Bool
 toIOMode = \case
-  FileModeAppend -> AppendMode
-  FileModeRename -> WriteMode
-  FileModeWrite -> WriteMode
+  FileModeAppend -> True
+  FileModeRename -> False
+  FileModeWrite -> False

@@ -19,6 +19,7 @@ import Control.Monad (filterM)
 import Data.List qualified as L
 import Data.Text qualified as T
 import Data.Time.Relative (RelativeTime)
+import Effects.FileSystem.Handle qualified as H
 import Effects.FileSystem.HandleWriter qualified as HW
 import Effects.System.Process (Pid, ProcessHandle)
 import Effects.System.Process qualified as P
@@ -79,6 +80,7 @@ import Shrun.Logging.Types
 import Shrun.Logging.Types qualified as Types
 import Shrun.Prelude
 import Shrun.Utils qualified as U
+import System.IO qualified as IO
 import Text.Read qualified as TR
 
 -- | Newtype wrapper for stderr.
@@ -264,11 +266,12 @@ tryCommandLogging command = do
 
           -- 1.2. Open file, run command.
           r <- HW.withBinaryFile multiPath ioMode $ \handle -> do
-            let logFn mRegion log = do
-                  consoleLog mRegion log
-                  logMultiFile handle keyHide fileLogging log
+            withLockedFile handle $ \lockedHandle -> do
+              let logFn mRegion log = do
+                    consoleLog mRegion log
+                    logMultiFile lockedHandle keyHide fileLogging log
 
-            m logFn
+              m logFn
 
           -- Delete file if deleteOnSuccess is true and the return value
           -- is Nothing (no error).
@@ -324,11 +327,16 @@ tryCommandStream ::
   -- with an error, even if the error message itself is blank.
   m (Maybe Stderr)
 tryCommandStream logFn cmd = do
-  (recvOutH, sendOutH) <- P.createPipe
+  let liftHandle ::
+        Tuple2 IO.Handle IO.Handle ->
+        Tuple2 HandleRW HandleRW
+      liftHandle = bimap H.unsafeHandle H.unsafeHandle
+
+  (recvOutH, sendOutH) <- liftHandle <$> P.createPipe
   HW.hSetBuffering recvOutH HW.NoBuffering
   HW.hSetBuffering sendOutH HW.NoBuffering
 
-  (recvErrH, sendErrH) <- P.createPipe
+  (recvErrH, sendErrH) <- liftHandle <$> P.createPipe
   HW.hSetBuffering recvErrH HW.NoBuffering
   HW.hSetBuffering sendErrH HW.NoBuffering
 
@@ -373,9 +381,9 @@ tryCommandStream logFn cmd = do
   let initToConfig :: Maybe Text -> CreateProcess
       initToConfig mInit =
         (commandToProcess cmd mInit)
-          { P.std_out = P.UseHandle sendOutH,
+          { P.std_out = P.UseHandle $ H.unHandle sendOutH,
             P.std_in = P.Inherit,
-            P.std_err = P.UseHandle sendErrH,
+            P.std_err = P.UseHandle $ H.unHandle sendErrH,
             P.cwd = Nothing,
             -- We are possibly trying to read from these after the process
             -- closes (e.g. an error), so it is important they are not
@@ -402,11 +410,12 @@ tryCommandStream logFn cmd = do
     ExitFailure _ -> Just $ readHandleResultToStderr finalData
 {-# INLINEABLE tryCommandStream #-}
 
-type ProcessParams = Tuple3 Handle Handle ProcessHandle
+type ProcessParams p = Tuple3 (Handle p) (Handle p) ProcessHandle
 
 streamOutput ::
-  forall m env.
-  ( HasCallStack,
+  forall p m env.
+  ( CanRead p,
+    HasCallStack,
     HasCommandLogging env,
     MonadCatch m,
     MonadHandleReader m,
@@ -421,7 +430,7 @@ streamOutput ::
   -- | Command that was run.
   CommandP1 ->
   -- | Running process params.
-  ProcessParams ->
+  ProcessParams p ->
   -- | Exit code along w/ any leftover data.
   m (ExitCode, ReadHandleResult)
 streamOutput logFn cmd processParams = do
@@ -449,7 +458,7 @@ streamOutput logFn cmd processParams = do
       readStrategy = commandLogging ^. #readStrategy
 
       handleToParams ::
-        Handle ->
+        Handle p ->
         m
           ( Tuple3
               (IORef HandleResult)
@@ -559,7 +568,8 @@ streamOutput logFn cmd processParams = do
 
 -- | Create params for reading from the handle.
 mkHandleParams ::
-  ( HasCallStack,
+  ( CanRead p,
+    HasCallStack,
     MonadCatch m,
     MonadHandleReader m,
     MonadIORef m,
@@ -574,7 +584,7 @@ mkHandleParams ::
   -- | Max buffer time, for read-block-line-buffer strategy.
   BufferTimeout ->
   -- | Handle from which to read.
-  Handle ->
+  Handle p ->
   -- | Returns:
   --
   --  1. Ref for the last read (always active).
@@ -606,7 +616,8 @@ mkHandleParams blockSize readStrategy bufLength bufTimeout handle = do
 -- | Final read after the process has exited, to retrieve leftover data.
 -- Only used with the read-block-line-buffer strategy.
 readFinalWithPrev ::
-  ( HasCallStack,
+  ( CanRead p,
+    HasCallStack,
     MonadCatch m,
     MonadHandleReader m,
     MonadIORef m,
@@ -615,7 +626,7 @@ readFinalWithPrev ::
   -- | Block size.
   Int ->
   -- | Handle from which to read.
-  Handle ->
+  Handle p ->
   -- | Previous partial read.
   IORef (Maybe UnlinedText) ->
   -- | Result.

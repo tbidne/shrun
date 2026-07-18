@@ -54,12 +54,12 @@ import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder (Builder)
 import Data.Text.Lazy.Builder qualified as TLB
 import Data.Time.Relative (RelativeTime, fromSeconds)
+import Effects.FileSystem.Handle qualified as H
 import Effects.FileSystem.HandleReader qualified as HR
 import Effects.FileSystem.HandleWriter qualified as HW
 import Effects.Time (TimeSpec, diffTimeSpec)
 import Optics.Core qualified as O
 import Shrun.Prelude
-import System.IO qualified as IO
 import Text.Read (Read)
 import Text.Read qualified as TR
 
@@ -409,15 +409,17 @@ withHiddenInput ::
   ) =>
   m a ->
   m a
-withHiddenInput = hWithHidden IO.stdin
+withHiddenInput = hWithHidden H.stdin
 {-# INLINEABLE withHiddenInput #-}
 
 hWithHidden ::
-  ( MonadMask m,
+  ( CanRead p,
+    CanWrite p,
+    MonadMask m,
     MonadHandleReader m,
     MonadHandleWriter m
   ) =>
-  Handle ->
+  Handle p ->
   m a ->
   m a
 hWithHidden h m = bracket hideInput unhideInput (const m)
@@ -438,8 +440,8 @@ hWithHidden h m = bracket hideInput unhideInput (const m)
 {-# INLINEABLE hWithHidden #-}
 
 hHide ::
-  (MonadHandleWriter m) =>
-  Handle ->
+  (CanWrite p, MonadHandleWriter m) =>
+  Handle p ->
   m ()
 hHide h = do
   HW.hSetBuffering h HW.NoBuffering
@@ -454,13 +456,13 @@ drainStdin ::
   m ()
 drainStdin =
   tryMySync_
-    $ HR.hIsClosed IO.stdin
+    $ HR.hIsClosed H.stdin
     >>= \case
       True -> pure ()
       False ->
-        HR.hIsReadable IO.stdin >>= \case
+        HR.hIsReadable H.stdin >>= \case
           False -> pure ()
-          True -> void $ HR.hGetNonBlocking IO.stdin 1_000
+          True -> void $ HR.hGetNonBlocking H.stdin 1_000
 {-# INLINEABLE drainStdin #-}
 
 readIncCounter :: TVar Word16 -> STM Word16
